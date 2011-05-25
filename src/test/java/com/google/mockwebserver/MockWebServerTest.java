@@ -21,16 +21,26 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import junit.framework.TestCase;
 
 public final class MockWebServerTest extends TestCase {
+
+    private MockWebServer server = new MockWebServer();
+
+    @Override protected void setUp() throws Exception {
+        super.setUp();
+    }
+
+    @Override protected void tearDown() throws Exception {
+        server.shutdown();
+        super.tearDown();
+    }
+
     public void testRegularResponse() throws Exception {
-        // 1. Enqueue a response.
-        MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setBody("hello world"));
         server.play();
 
-        // 2. Make a request that retrieves that response.
         URL url = server.getUrl("/");
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestProperty("Accept-Language", "en-US");
@@ -39,9 +49,27 @@ public final class MockWebServerTest extends TestCase {
         assertEquals(HttpURLConnection.HTTP_OK, connection.getResponseCode());
         assertEquals("hello world", reader.readLine());
 
-        // 3. Validate the request.
         RecordedRequest request = server.takeRequest();
         assertEquals("GET / HTTP/1.1", request.getRequestLine());
         assertTrue(request.getHeaders().contains("Accept-Language: en-US"));
+    }
+
+    public void testRedirect() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+                .addHeader("Location: /new-path")
+                .setBody("This page has moved!"));
+        server.enqueue(new MockResponse().setBody("This is the new location!"));
+        server.play();
+
+        URLConnection connection = server.getUrl("/").openConnection();
+        InputStream in = connection.getInputStream();
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        assertEquals("This is the new location!", reader.readLine());
+
+        RecordedRequest first = server.takeRequest();
+        assertEquals("GET / HTTP/1.1", first.getRequestLine());
+        RecordedRequest redirect = server.takeRequest();
+        assertEquals("GET /new-path HTTP/1.1", redirect.getRequestLine());
     }
 }
