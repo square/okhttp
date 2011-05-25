@@ -3,9 +3,18 @@
 
     <target name="compile">
         <mkdir dir="build/classes"/>
+        <mkdir dir="build/test-classes"/>
         <javac srcdir="src/main/java" includes="**" destdir="build/classes"
                debug="on" source="1.6" target="1.6" includeantruntime="false">
             <compilerarg value="-Xlint"/>
+        </javac>
+        <javac srcdir="src/test/java" includes="**" destdir="build/test-classes"
+               debug="on" source="1.6" target="1.6" includeantruntime="false">
+            <compilerarg value="-Xlint"/>
+            <classpath>
+                <pathelement location="build/classes" />
+                <pathelement location="lib/junit.jar" />
+            </classpath>
         </javac>
     </target>
 
@@ -13,6 +22,22 @@
         <jar destfile="build/mockwebserver.jar" update="true" index="true">
             <fileset dir="build/classes"/>
         </jar>
+    </target>
+
+    <target name="test" depends="compile">
+        <junit printsummary="true" showoutput="false" fork="true"
+               errorProperty="test.failed" failureProperty="test.failed">
+            <assertions><enable/></assertions>
+            <classpath>
+                <pathelement location="build/classes"/>
+                <pathelement location="build/test-classes"/>
+                <pathelement location="lib/junit.jar"/>
+            </classpath>
+            <batchtest>
+                <fileset dir="build/test-classes" includes="**/**Test.class"/>
+            </batchtest>
+        </junit>
+        <fail message="Tests failed." if="test.failed"/>
     </target>
 
     <target name="clean">
