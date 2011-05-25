@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<project name="mockwebserver" default="jar">
+
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src/main/java" includes="**" destdir="build/classes"
+               debug="on" source="1.6" target="1.6" includeantruntime="false">
+            <compilerarg value="-Xlint"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar destfile="build/mockwebserver.jar" update="true" index="true">
+            <fileset dir="build/classes"/>
+        </jar>
+    </target>
+
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+
+</project>
