@@ -40,6 +40,13 @@
         <fail message="Tests failed." if="test.failed"/>
     </target>
 
+    <target name="docs">
+        <mkdir dir="build/api"/>
+		<javadoc destdir="build/api" windowtitle="MockWebServer" source="1.6">
+			<packageset dir="src/main/java"/>
+		</javadoc>
+	</target>
+
     <target name="clean">
         <delete dir="build"/>
     </target>
