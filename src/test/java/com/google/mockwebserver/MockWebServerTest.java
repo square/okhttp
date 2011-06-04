@@ -17,9 +17,11 @@
 package com.google.mockwebserver;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import junit.framework.TestCase;
@@ -55,12 +57,12 @@ public final class MockWebServerTest extends TestCase {
     }
 
     public void testRedirect() throws Exception {
+        server.play();
         server.enqueue(new MockResponse()
                 .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-                .addHeader("Location: /new-path")
+                .addHeader("Location: " + server.getUrl("/new-path"))
                 .setBody("This page has moved!"));
         server.enqueue(new MockResponse().setBody("This is the new location!"));
-        server.play();
 
         URLConnection connection = server.getUrl("/").openConnection();
         InputStream in = connection.getInputStream();
@@ -71,5 +73,53 @@ public final class MockWebServerTest extends TestCase {
         assertEquals("GET / HTTP/1.1", first.getRequestLine());
         RecordedRequest redirect = server.takeRequest();
         assertEquals("GET /new-path HTTP/1.1", redirect.getRequestLine());
+    }
+
+    public void testNonHexadecimalChunkSize() throws Exception {
+        server.enqueue(new MockResponse()
+                .setBody("G\r\nxxxxxxxxxxxxxxxx\r\n0\r\n\r\n")
+                .clearHeaders()
+                .addHeader("Transfer-encoding: chunked"));
+        server.play();
+
+        URLConnection connection = server.getUrl("/").openConnection();
+        InputStream in = connection.getInputStream();
+        try {
+            in.read();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testResponseTimeout() throws Exception {
+        server.enqueue(new MockResponse()
+                .setBody("ABC")
+                .clearHeaders()
+                .addHeader("Content-Length: 4"));
+        server.enqueue(new MockResponse()
+                .setBody("DEF"));
+        server.play();
+
+        URLConnection urlConnection = server.getUrl("/").openConnection();
+        urlConnection.setReadTimeout(1000);
+        InputStream in = urlConnection.getInputStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+        try {
+            in.read(); // if Content-Length was accurate, this would return -1 immediately
+            fail();
+        } catch (SocketTimeoutException expected) {
+        }
+
+        URLConnection urlConnection2 = server.getUrl("/").openConnection();
+        InputStream in2 = urlConnection2.getInputStream();
+        assertEquals('D', in2.read());
+        assertEquals('E', in2.read());
+        assertEquals('F', in2.read());
+        assertEquals(-1, in2.read());
+
+        assertEquals(0, server.takeRequest().getSequenceNumber());
+        assertEquals(0, server.takeRequest().getSequenceNumber());
     }
 }
