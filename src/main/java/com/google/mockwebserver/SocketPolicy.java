@@ -51,6 +51,11 @@ public enum SocketPolicy {
     DISCONNECT_AT_START,
 
     /**
+     * Don't trust the client during the SSL handshake.
+     */
+    FAIL_HANDSHAKE,
+
+    /**
      * Shutdown the socket input after sending the response. For testing bad
      * behavior.
      */

@@ -16,7 +16,9 @@
 
 package com.google.mockwebserver;
 
+import java.net.Socket;
 import java.util.List;
+import javax.net.ssl.SSLSocket;
 
 /**
  * An HTTP request that came into the mock web server.
@@ -28,15 +30,23 @@ public final class RecordedRequest {
     private final int bodySize;
     private final byte[] body;
     private final int sequenceNumber;
+    private final String sslProtocol;
 
     RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
-            int bodySize, byte[] body, int sequenceNumber) {
+            int bodySize, byte[] body, int sequenceNumber, Socket socket) {
         this.requestLine = requestLine;
         this.headers = headers;
         this.chunkSizes = chunkSizes;
         this.bodySize = bodySize;
         this.body = body;
         this.sequenceNumber = sequenceNumber;
+
+        if (socket instanceof SSLSocket) {
+            SSLSocket sslSocket = (SSLSocket) socket;
+            sslProtocol = sslSocket.getSession().getProtocol();
+        } else {
+            sslProtocol = null;
+        }
     }
 
     public String getRequestLine() {
@@ -77,6 +87,14 @@ public final class RecordedRequest {
      */
     public int getSequenceNumber() {
         return sequenceNumber;
+    }
+
+    /**
+     * Returns the connection's SSL protocol like {@code TLSv1}, {@code SSLv3},
+     * {@code NONE} or null if the connection doesn't use SSL.
+     */
+    public String getSslProtocol() {
+        return sslProtocol;
     }
 
     @Override public String toString() {
