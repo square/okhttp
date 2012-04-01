@@ -341,6 +341,7 @@ public final class MockWebServer {
                 } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
                     socket.shutdownOutput();
                 }
+                logger.info("Received request: " + request + " and responded: " + response);
                 sequenceNumber++;
                 return true;
             }
@@ -475,8 +476,24 @@ public final class MockWebServer {
             out.write((header + "\r\n").getBytes(ASCII));
         }
         out.write(("\r\n").getBytes(ASCII));
-        out.write(response.getBody());
         out.flush();
+
+        byte[] body = response.getBody();
+        int bytesPerSecond = response.getBytesPerSecond();
+
+        for (int offset = 0; offset < body.length; offset += bytesPerSecond) {
+            int count = Math.min(body.length - offset, bytesPerSecond);
+            out.write(body, offset, count);
+            out.flush();
+
+            if (offset + count < body.length) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new AssertionError();
+                }
+            }
+        }
     }
 
     /**

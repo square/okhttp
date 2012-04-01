@@ -25,6 +25,8 @@ import javax.net.ssl.SSLSocket;
  */
 public final class RecordedRequest {
     private final String requestLine;
+    private final String method;
+    private final String path;
     private final List<String> headers;
     private final List<Integer> chunkSizes;
     private final int bodySize;
@@ -47,6 +49,11 @@ public final class RecordedRequest {
         } else {
             sslProtocol = null;
         }
+
+        int methodEnd = requestLine.indexOf(' ');
+        int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
+        this.method = requestLine.substring(0, methodEnd);
+        this.path = requestLine.substring(methodEnd + 1, pathEnd);
     }
 
     public String getRequestLine() {
@@ -99,5 +106,13 @@ public final class RecordedRequest {
 
     @Override public String toString() {
         return requestLine;
+    }
+
+    public String getMethod() {
+        return method;
+    }
+
+    public String getPath() {
+        return path;
     }
 }

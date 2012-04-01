@@ -21,6 +21,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -34,6 +35,7 @@ public final class MockResponse implements Cloneable {
     private String status = "HTTP/1.1 200 OK";
     private List<String> headers = new ArrayList<String>();
     private byte[] body = EMPTY_BODY;
+    private int bytesPerSecond = Integer.MAX_VALUE;
     private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
     public MockResponse() {
@@ -81,6 +83,26 @@ public final class MockResponse implements Cloneable {
 
     public MockResponse addHeader(String header) {
         headers.add(header);
+        return this;
+    }
+
+    public MockResponse addHeader(String name, Object value) {
+        return addHeader(name + ": " + String.valueOf(value));
+    }
+
+    public MockResponse setHeader(String name, Object value) {
+        removeHeader(name);
+        return addHeader(name, value);
+    }
+
+    public MockResponse removeHeader(String name) {
+        name += ": ";
+        for (Iterator<String> i = headers.iterator(); i.hasNext();) {
+            String header = i.next();
+            if (name.regionMatches(true, 0, header, 0, name.length())) {
+                i.remove();
+            }
+        }
         return this;
     }
 
@@ -137,6 +159,18 @@ public final class MockResponse implements Cloneable {
 
     public MockResponse setSocketPolicy(SocketPolicy socketPolicy) {
         this.socketPolicy = socketPolicy;
+        return this;
+    }
+
+    public int getBytesPerSecond() {
+        return bytesPerSecond;
+    }
+
+    /**
+     * Set simulated network speed, in bytes per second.
+     */
+    public MockResponse setBytesPerSecond(int bytesPerSecond) {
+        this.bytesPerSecond = bytesPerSecond;
         return this;
     }
 
