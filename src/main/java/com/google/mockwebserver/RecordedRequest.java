@@ -50,10 +50,15 @@ public final class RecordedRequest {
             sslProtocol = null;
         }
 
-        int methodEnd = requestLine.indexOf(' ');
-        int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
-        this.method = requestLine.substring(0, methodEnd);
-        this.path = requestLine.substring(methodEnd + 1, pathEnd);
+        if (requestLine != null) {
+            int methodEnd = requestLine.indexOf(' ');
+            int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
+            this.method = requestLine.substring(0, methodEnd);
+            this.path = requestLine.substring(methodEnd + 1, pathEnd);
+        } else {
+            this.method = null;
+            this.path = null;
+        }
     }
 
     public String getRequestLine() {
