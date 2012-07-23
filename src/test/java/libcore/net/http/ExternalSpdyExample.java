@@ -22,11 +22,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
-import junit.framework.TestCase;
 
-public final class ExternalSpdyTest extends TestCase {
-
-    public void testSpdy() throws Exception {
+public final class ExternalSpdyExample {
+    public static void main(String[] args) throws Exception {
         URL url = new URL("https://www.google.ca/");
         OkHttpsConnection connection = OkHttpsConnection.open(url);
 
