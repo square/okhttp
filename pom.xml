@@ -23,7 +23,7 @@
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
-    <groupId>com.squareup.okhttp</groupId>
+    <groupId>com.squareup</groupId>
     <artifactId>okhttp</artifactId>
     <version>0.8-SNAPSHOT</version>
     <packaging>jar</packaging>
