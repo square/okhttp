@@ -160,6 +160,36 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <!--
+                  OkHttp requires with javac >= 1.7 for syncFlush on DeflaterOutputStream.
+                  Its language version must be <= 1.6 for dx.
+
+                  Running this code on Java 6 or earlier will fail at runtime due to the missing
+                  syncFlush API.
+
+                  Dalvik's core library includes syncFlush, but with an @hide tag so that it doesn't
+                  show up in the documentation or the android.jar stubs. This code works fine on
+                  Dalvik.
+                -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>enforce-java</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[1.7.0,)</version>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>
