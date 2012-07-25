@@ -112,9 +112,6 @@
                                     <pattern>libcore.**</pattern>
                                     <result>com.squareup.okhttp.libcore.@1</result>
                                 </rule>
-                                <keep>
-                                    <pattern>com.squareup.okhttp.**</pattern>
-                                </keep>
                             </rules>
                         </configuration>
                     </execution>
