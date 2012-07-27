@@ -228,12 +228,12 @@ public final class MockWebServer {
             }
 
             private void acceptConnections() throws Exception {
-                do {
+                while (true) {
                     Socket socket;
                     try {
                         socket = serverSocket.accept();
-                    } catch (SocketException ignored) {
-                        continue;
+                    } catch (SocketException e) {
+                        return;
                     }
                     MockResponse peek = responseQueue.peek();
                     if (peek != null && peek.getSocketPolicy() == DISCONNECT_AT_START) {
@@ -243,7 +243,7 @@ public final class MockWebServer {
                         openClientSockets.add(socket);
                         serveConnection(socket);
                     }
-                } while (!responseQueue.isEmpty());
+                }
             }
         }));
     }
@@ -290,7 +290,7 @@ public final class MockWebServer {
                 InputStream in = new BufferedInputStream(socket.getInputStream());
                 OutputStream out = new BufferedOutputStream(socket.getOutputStream());
 
-                while (!responseQueue.isEmpty() && processOneRequest(socket, in, out)) {}
+                while (processOneRequest(socket, in, out)) {}
 
                 if (sequenceNumber == 0) {
                     logger.warning("MockWebServer connection didn't make a request");
@@ -450,10 +450,6 @@ public final class MockWebServer {
      * Returns a response to satisfy {@code request}.
      */
     private MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-        if (responseQueue.isEmpty()) {
-            throw new IllegalStateException("Unexpected request: " + request);
-        }
-
         // to permit interactive/browser testing, ignore requests for favicons
         if (request.getRequestLine().equals("GET /favicon.ico HTTP/1.1")) {
             System.out.println("served " + request.getRequestLine());
