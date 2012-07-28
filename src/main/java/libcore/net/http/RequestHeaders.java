@@ -67,15 +67,15 @@ public final class RequestHeaders {
 
         HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
             @Override public void handle(String directive, String parameter) {
-                if (directive.equalsIgnoreCase("no-cache")) {
+                if ("no-cache".equalsIgnoreCase(directive)) {
                     noCache = true;
-                } else if (directive.equalsIgnoreCase("max-age")) {
+                } else if ("max-age".equalsIgnoreCase(directive)) {
                     maxAgeSeconds = HeaderParser.parseSeconds(parameter);
-                } else if (directive.equalsIgnoreCase("max-stale")) {
+                } else if ("max-stale".equalsIgnoreCase(directive)) {
                     maxStaleSeconds = HeaderParser.parseSeconds(parameter);
-                } else if (directive.equalsIgnoreCase("min-fresh")) {
+                } else if ("min-fresh".equalsIgnoreCase(directive)) {
                     minFreshSeconds = HeaderParser.parseSeconds(parameter);
-                } else if (directive.equalsIgnoreCase("only-if-cached")) {
+                } else if ("only-if-cached".equalsIgnoreCase(directive)) {
                     onlyIfCached = true;
                 }
             }
@@ -87,7 +87,7 @@ public final class RequestHeaders {
             if ("Cache-Control".equalsIgnoreCase(fieldName)) {
                 HeaderParser.parseCacheControl(value, handler);
             } else if ("Pragma".equalsIgnoreCase(fieldName)) {
-                if (value.equalsIgnoreCase("no-cache")) {
+                if ("no-cache".equalsIgnoreCase(value)) {
                     noCache = true;
                 }
             } else if ("If-None-Match".equalsIgnoreCase(fieldName)) {

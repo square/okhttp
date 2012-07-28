@@ -116,17 +116,17 @@ public final class ResponseHeaders {
 
         HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
             @Override public void handle(String directive, String parameter) {
-                if (directive.equalsIgnoreCase("no-cache")) {
+                if ("no-cache".equalsIgnoreCase(directive)) {
                     noCache = true;
-                } else if (directive.equalsIgnoreCase("no-store")) {
+                } else if ("no-store".equalsIgnoreCase(directive)) {
                     noStore = true;
-                } else if (directive.equalsIgnoreCase("max-age")) {
+                } else if ("max-age".equalsIgnoreCase(directive)) {
                     maxAgeSeconds = HeaderParser.parseSeconds(parameter);
-                } else if (directive.equalsIgnoreCase("s-maxage")) {
+                } else if ("s-maxage".equalsIgnoreCase(directive)) {
                     sMaxAgeSeconds = HeaderParser.parseSeconds(parameter);
-                } else if (directive.equalsIgnoreCase("public")) {
+                } else if ("public".equalsIgnoreCase(directive)) {
                     isPublic = true;
-                } else if (directive.equalsIgnoreCase("must-revalidate")) {
+                } else if ("must-revalidate".equalsIgnoreCase(directive)) {
                     mustRevalidate = true;
                 }
             }
@@ -146,7 +146,7 @@ public final class ResponseHeaders {
             } else if ("ETag".equalsIgnoreCase(fieldName)) {
                 etag = value;
             } else if ("Pragma".equalsIgnoreCase(fieldName)) {
-                if (value.equalsIgnoreCase("no-cache")) {
+                if ("no-cache".equalsIgnoreCase(value)) {
                     noCache = true;
                 }
             } else if ("Age".equalsIgnoreCase(fieldName)) {
@@ -468,7 +468,7 @@ public final class ResponseHeaders {
         for (int i = 0; i < headers.length(); i++) {
             String fieldName = headers.getFieldName(i);
             String value = headers.getValue(i);
-            if (fieldName.equals("Warning") && value.startsWith("1")) {
+            if ("Warning".equals(fieldName) && value.startsWith("1")) {
                 continue; // drop 100-level freshness warnings
             }
             if (!isEndToEnd(fieldName) || network.headers.get(fieldName) == null) {
@@ -491,13 +491,13 @@ public final class ResponseHeaders {
      * defined by RFC 2616, 13.5.1.
      */
     private static boolean isEndToEnd(String fieldName) {
-        return !fieldName.equalsIgnoreCase("Connection")
-                && !fieldName.equalsIgnoreCase("Keep-Alive")
-                && !fieldName.equalsIgnoreCase("Proxy-Authenticate")
-                && !fieldName.equalsIgnoreCase("Proxy-Authorization")
-                && !fieldName.equalsIgnoreCase("TE")
-                && !fieldName.equalsIgnoreCase("Trailers")
-                && !fieldName.equalsIgnoreCase("Transfer-Encoding")
-                && !fieldName.equalsIgnoreCase("Upgrade");
+        return !"Connection".equalsIgnoreCase(fieldName)
+                && !"Keep-Alive".equalsIgnoreCase(fieldName)
+                && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
+                && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
+                && !"TE".equalsIgnoreCase(fieldName)
+                && !"Trailers".equalsIgnoreCase(fieldName)
+                && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
+                && !"Upgrade".equalsIgnoreCase(fieldName);
     }
 }

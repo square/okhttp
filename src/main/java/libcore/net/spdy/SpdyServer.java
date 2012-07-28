@@ -52,7 +52,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         String path = null;
         for (int i = 0; i < requestHeaders.size(); i += 2) {
             String s = requestHeaders.get(i);
-            if (s.equals("url")) {
+            if ("url".equals(s)) {
                 path = requestHeaders.get(i + 1);
                 break;
             }

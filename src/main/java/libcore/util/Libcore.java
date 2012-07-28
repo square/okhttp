@@ -18,11 +18,14 @@ import org.eclipse.jetty.npn.NextProtoNego;
  * APIs for interacting with Android's core library. This mostly emulates the
  * Android core library for interoperability with other runtimes.
  */
-public class Libcore {
-    
+public final class Libcore {
+
+    private Libcore() {
+    }
+
     public static void makeTlsTolerant(SSLSocket socket, String socketHost, boolean tlsTolerant) {
         if (!tlsTolerant) {
-            socket.setEnabledProtocols(new String [] { "SSLv3" });
+            socket.setEnabledProtocols(new String[] {"SSLv3"});
             return;
         }
 
@@ -31,7 +34,7 @@ public class Libcore {
                     "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
             if (openSslSocketClass.isInstance(socket)) {
                 openSslSocketClass.getMethod("setEnabledCompressionMethods", String[].class)
-                        .invoke(socket, new Object[] { new String[]{"ZLIB"}});
+                        .invoke(socket, new Object[] {new String[] {"ZLIB"}});
                 openSslSocketClass.getMethod("setUseSessionTickets", boolean.class)
                         .invoke(socket, true);
                 openSslSocketClass.getMethod("setHostname", String.class)
@@ -47,7 +50,7 @@ public class Libcore {
             throw new AssertionError(e);
         }
     }
-    
+
     public static byte[] getNpnSelectedProtocol(SSLSocket socket) {
         // First try Android's APIs.
         try {
@@ -93,7 +96,7 @@ public class Libcore {
 
         // Next try OpenJDK.
         List<String> strings = new ArrayList<String>();
-        for (int i = 0; i < npnProtocols.length; ) {
+        for (int i = 0; i < npnProtocols.length;) {
             int length = npnProtocols[i++];
             strings.add(new String(npnProtocols, i, length, Charsets.US_ASCII));
             i += length;
@@ -139,7 +142,7 @@ public class Libcore {
         // okhttp-changed: was System.logw()
         System.out.println(warning);
     }
-    
+
     public static int getEffectivePort(URI uri) {
         return getEffectivePort(uri.getScheme(), uri.getPort());
     }
@@ -161,19 +164,19 @@ public class Libcore {
             return -1;
         }
     }
-    
+
     public static void checkOffsetAndCount(int arrayLength, int offset, int count) {
         if ((offset | count) < 0 || offset > arrayLength || arrayLength - offset < count) {
             throw new ArrayIndexOutOfBoundsException();
         }
     }
-    
+
     public static void tagSocket(Socket socket) {
     }
-    
+
     public static void untagSocket(Socket socket) throws SocketException {
     }
-    
+
     public static URI toUriLenient(URL url) throws URISyntaxException {
         return url.toURI(); // this isn't as good as the built-in toUriLenient
     }

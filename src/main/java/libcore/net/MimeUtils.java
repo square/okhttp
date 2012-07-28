@@ -29,9 +29,9 @@ import java.util.Properties;
  * Used to implement java.net.URLConnection and android.webkit.MimeTypeMap.
  */
 public final class MimeUtils {
-    private static final Map<String, String> mimeTypeToExtensionMap = new HashMap<String, String>();
+    private static final Map<String, String> MIME_TYPE_TO_EXTENSION_MAP = new HashMap<String, String>();
 
-    private static final Map<String, String> extensionToMimeTypeMap = new HashMap<String, String>();
+    private static final Map<String, String> EXTENSION_TO_MIME_TYPE_MAP = new HashMap<String, String>();
 
     static {
         // The following table is based on /etc/mime.types data minus
@@ -364,10 +364,10 @@ public final class MimeUtils {
         // the first extension is considered the most popular and is
         // added first; we do not want to overwrite it later).
         //
-        if (!mimeTypeToExtensionMap.containsKey(mimeType)) {
-            mimeTypeToExtensionMap.put(mimeType, extension);
+        if (!MIME_TYPE_TO_EXTENSION_MAP.containsKey(mimeType)) {
+            MIME_TYPE_TO_EXTENSION_MAP.put(mimeType, extension);
         }
-        extensionToMimeTypeMap.put(extension, mimeType);
+        EXTENSION_TO_MIME_TYPE_MAP.put(extension, mimeType);
     }
 
     private static InputStream getContentTypesPropertiesStream() {
@@ -437,7 +437,7 @@ public final class MimeUtils {
         if (mimeType == null || mimeType.isEmpty()) {
             return false;
         }
-        return mimeTypeToExtensionMap.containsKey(mimeType);
+        return MIME_TYPE_TO_EXTENSION_MAP.containsKey(mimeType);
     }
 
     /**
@@ -449,7 +449,7 @@ public final class MimeUtils {
         if (extension == null || extension.isEmpty()) {
             return null;
         }
-        return extensionToMimeTypeMap.get(extension);
+        return EXTENSION_TO_MIME_TYPE_MAP.get(extension);
     }
 
     /**
@@ -461,7 +461,7 @@ public final class MimeUtils {
         if (extension == null || extension.isEmpty()) {
             return false;
         }
-        return extensionToMimeTypeMap.containsKey(extension);
+        return EXTENSION_TO_MIME_TYPE_MAP.containsKey(extension);
     }
 
     /**
@@ -475,6 +475,6 @@ public final class MimeUtils {
         if (mimeType == null || mimeType.isEmpty()) {
             return null;
         }
-        return mimeTypeToExtensionMap.get(mimeType);
+        return MIME_TYPE_TO_EXTENSION_MAP.get(mimeType);
     }
 }

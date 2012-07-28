@@ -293,7 +293,7 @@ public final class DiskLruCache implements Closeable {
      */
     private void processJournal() throws IOException {
         deleteIfExists(journalFileTmp);
-        for (Iterator<Entry> i = lruEntries.values().iterator(); i.hasNext(); ) {
+        for (Iterator<Entry> i = lruEntries.values().iterator(); i.hasNext();) {
             Entry entry = i.next();
             if (entry.currentEditor == null) {
                 for (int t = 0; t < valueCount; t++) {
@@ -499,8 +499,8 @@ public final class DiskLruCache implements Closeable {
      * and eliminate at least 2000 ops.
      */
     private boolean journalRebuildRequired() {
-        final int REDUNDANT_OP_COMPACT_THRESHOLD = 2000;
-        return redundantOpCount >= REDUNDANT_OP_COMPACT_THRESHOLD
+        final int redundantOpCompactThreshold = 2000;
+        return redundantOpCount >= redundantOpCompactThreshold
                 && redundantOpCount >= lruEntries.size();
     }
 
@@ -735,7 +735,7 @@ public final class DiskLruCache implements Closeable {
             completeEdit(this, false);
         }
 
-        private class FaultHidingOutputStream extends FilterOutputStream {
+        private final class FaultHidingOutputStream extends FilterOutputStream {
             private FaultHidingOutputStream(OutputStream out) {
                 super(out);
             }
@@ -780,7 +780,7 @@ public final class DiskLruCache implements Closeable {
         /** Lengths of this entry's files. */
         private final long[] lengths;
 
-        /** True if this entry has ever been published */
+        /** True if this entry has ever been published. */
         private boolean readable;
 
         /** The ongoing edit or null if this entry is not being edited. */

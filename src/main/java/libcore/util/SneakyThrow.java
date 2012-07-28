@@ -53,7 +53,8 @@ package libcore.util;
  * }</pre>
  */
 public final class SneakyThrow {
-    private SneakyThrow() {}
+    private SneakyThrow() {
+    }
 
     public static void sneakyThrow(Throwable t) {
         SneakyThrow.<Error>sneakyThrow2(t);
