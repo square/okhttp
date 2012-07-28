@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.HttpRetryException;
-import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
@@ -463,12 +462,12 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
         return defaultPort;
     }
 
-    /** @see HttpURLConnection#setFixedLengthStreamingMode(int) */
+    /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
     final int getFixedContentLength() {
         return fixedContentLength;
     }
 
-    /** @see HttpURLConnection#setChunkedStreamingMode(int) */
+    /** @see java.net.HttpURLConnection#setChunkedStreamingMode(int) */
     final int getChunkLength() {
         return chunkLength;
     }

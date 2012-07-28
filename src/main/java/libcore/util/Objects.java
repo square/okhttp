@@ -17,7 +17,8 @@
 package libcore.util;
 
 public final class Objects {
-    private Objects() {}
+    private Objects() {
+    }
 
     /**
      * Returns true if two possibly-null objects are equal.

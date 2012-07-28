@@ -39,7 +39,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 public final class HttpsURLConnectionImpl extends OkHttpsConnection {
 
-    /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl */
+    /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
     private final HttpUrlConnectionDelegate delegate;
 
     public HttpsURLConnectionImpl(URL url, int port) {
@@ -397,7 +397,7 @@ public final class HttpsURLConnectionImpl extends OkHttpsConnection {
         }
     }
 
-    private static class HttpsEngine extends HttpEngine {
+    private static final class HttpsEngine extends HttpEngine {
 
         /**
          * Local stash of HttpsEngine.connection.sslSocket for answering

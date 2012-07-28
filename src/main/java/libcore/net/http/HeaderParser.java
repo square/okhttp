@@ -160,4 +160,7 @@ final class HeaderParser {
             return -1;
         }
     }
+
+    private HeaderParser() {
+    }
 }

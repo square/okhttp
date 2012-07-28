@@ -260,7 +260,7 @@ final class HttpTransport implements Transport {
     /**
      * An HTTP body with a fixed length known in advance.
      */
-    private static class FixedLengthOutputStream extends AbstractHttpOutputStream {
+    private static final class FixedLengthOutputStream extends AbstractHttpOutputStream {
         private final OutputStream socketOut;
         private int bytesRemaining;
 
@@ -303,15 +303,15 @@ final class HttpTransport implements Transport {
      * buffered until {@code maxChunkLength} bytes are ready, at which point the
      * chunk is written and the buffer is cleared.
      */
-    private static class ChunkedOutputStream extends AbstractHttpOutputStream {
-        private static final byte[] CRLF = { '\r', '\n' };
+    private static final class ChunkedOutputStream extends AbstractHttpOutputStream {
+        private static final byte[] CRLF = {'\r', '\n'};
         private static final byte[] HEX_DIGITS = {
                 '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
         };
-        private static final byte[] FINAL_CHUNK = new byte[] { '0', '\r', '\n', '\r', '\n' };
+        private static final byte[] FINAL_CHUNK = new byte[] {'0', '\r', '\n', '\r', '\n'};
 
-        /** Scratch space for up to 8 hex digits, and then a constant CRLF */
-        private final byte[] hex = { 0, 0, 0, 0, 0, 0, 0, 0, '\r', '\n' };
+        /** Scratch space for up to 8 hex digits, and then a constant CRLF. */
+        private final byte[] hex = {0, 0, 0, 0, 0, 0, 0, 0, '\r', '\n'};
 
         private final OutputStream socketOut;
         private final int maxChunkLength;
@@ -554,7 +554,7 @@ final class HttpTransport implements Transport {
     /**
      * An HTTP payload terminated by the end of the socket stream.
      */
-    private static class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
+    private static final class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
         private boolean inputExhausted;
 
         private UnknownLengthHttpInputStream(InputStream is, CacheRequest cacheRequest,

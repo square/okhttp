@@ -27,7 +27,7 @@ import java.nio.charset.Charset;
  *
  * @hide internal use only
  */
-public class Charsets {
+public final class Charsets {
     /**
      * A cheap and type-safe constant for the ISO-8859-1 Charset.
      */

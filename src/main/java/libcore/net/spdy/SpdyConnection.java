@@ -55,7 +55,7 @@ public final class SpdyConnection implements Closeable {
     static final int TYPE_HEADERS = 0x08;
     static final int VERSION = 2;
 
-    /** Guarded by this */
+    /** Guarded by this. */
     private int nextStreamId;
     private final SpdyReader spdyReader;
     private final SpdyWriter spdyWriter;
@@ -273,10 +273,11 @@ public final class SpdyConnection implements Closeable {
             case SpdyConnection.TYPE_GOAWAY:
             case SpdyConnection.TYPE_HEADERS:
                 throw new UnsupportedOperationException();
-            }
 
-            // TODO: throw IOException here?
-            return false;
+            default:
+                // TODO: throw IOException here?
+                return false;
+            }
         }
     }
 }

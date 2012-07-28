@@ -29,7 +29,7 @@ abstract class AbstractHttpOutputStream extends OutputStream {
     protected boolean closed;
 
     @Override public final void write(int data) throws IOException {
-        write(new byte[] { (byte) data });
+        write(new byte[] {(byte) data});
     }
 
     protected final void checkNotClosed() throws IOException {

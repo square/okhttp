@@ -17,14 +17,14 @@
 package libcore.util;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
 public final class CollectionUtils {
-    private CollectionUtils() {}
+    private CollectionUtils() {
+    }
 
     /**
      * Returns an iterator over the values referenced by the elements of {@code
