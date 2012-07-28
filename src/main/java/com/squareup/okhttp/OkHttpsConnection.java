@@ -112,7 +112,7 @@ public abstract class OkHttpsConnection extends OkHttpConnection {
 
     private static SSLSocketFactory defaultSSLSocketFactory = (SSLSocketFactory) SSLSocketFactory
             .getDefault();
-    
+
     public static OkHttpsConnection open(URL url) {
         return new libcore.net.http.HttpsURLConnectionImpl(url, 443);
     }

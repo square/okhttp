@@ -26,4 +26,7 @@ final class Threads {
             }
         };
     }
+
+    private Threads() {
+    }
 }

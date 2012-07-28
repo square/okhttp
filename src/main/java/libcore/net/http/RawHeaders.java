@@ -68,7 +68,8 @@ public final class RawHeaders {
     private int responseCode = -1;
     private String responseMessage;
 
-    public RawHeaders() {}
+    public RawHeaders() {
+    }
 
     public RawHeaders(RawHeaders copyFrom) {
         namesAndValues.addAll(copyFrom.namesAndValues);
@@ -112,9 +113,9 @@ public final class RawHeaders {
         String version = null;
         for (int i = 0; i < namesAndValues.size(); i += 2) {
             String name = namesAndValues.get(i);
-            if (name.equals("status")) {
+            if ("status".equals(name)) {
                 status = namesAndValues.get(i + 1);
-            } else if (name.equals("version")) {
+            } else if ("version".equals(name)) {
                 version = namesAndValues.get(i + 1);
             }
         }
@@ -374,7 +375,7 @@ public final class RawHeaders {
         for (int i = 0; i < nameValueBlock.size(); i += 2) {
             String name = nameValueBlock.get(i);
             String values = nameValueBlock.get(i + 1);
-            for (int start = 0; start < values.length(); ) {
+            for (int start = 0; start < values.length();) {
                 int end = values.indexOf(start, '\0');
                 if (end == -1) {
                     end = values.length();

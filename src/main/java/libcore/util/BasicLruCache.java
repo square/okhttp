@@ -93,7 +93,8 @@ public class BasicLruCache<K, V> {
      * Called for entries that have reached the tail of the least recently used
      * queue and are be removed. The default implementation does nothing.
      */
-    protected void entryEvicted(K key, V value) {}
+    protected void entryEvicted(K key, V value) {
+    }
 
     /**
      * Called after a cache miss to compute a value for the corresponding key.

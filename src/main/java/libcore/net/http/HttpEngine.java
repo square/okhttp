@@ -120,7 +120,7 @@ public class HttpEngine {
 
     final RequestHeaders requestHeaders;
 
-    /** Null until a response is received from the network or the cache */
+    /** Null until a response is received from the network or the cache. */
     ResponseHeaders responseHeaders;
 
     /*

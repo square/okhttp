@@ -29,7 +29,8 @@ import libcore.util.Libcore;
 public final class Streams {
     private static AtomicReference<byte[]> skipBuffer = new AtomicReference<byte[]>();
 
-    private Streams() {}
+    private Streams() {
+    }
 
     /**
      * Implements InputStream.read(int) in terms of InputStream.read(byte[], int, int).

@@ -17,7 +17,8 @@
 package libcore.util;
 
 public final class EmptyArray {
-    private EmptyArray() {}
+    private EmptyArray() {
+    }
 
     public static final boolean[] BOOLEAN = new boolean[0];
     public static final byte[] BYTE = new byte[0];

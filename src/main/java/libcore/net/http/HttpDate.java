@@ -88,4 +88,7 @@ public final class HttpDate {
     public static String format(Date value) {
         return STANDARD_DATE_FORMAT.get().format(value);
     }
+
+    private HttpDate() {
+    }
 }
