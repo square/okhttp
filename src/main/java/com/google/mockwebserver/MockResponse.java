@@ -16,13 +16,14 @@
 
 package com.google.mockwebserver;
 
-import static com.google.mockwebserver.MockWebServer.ASCII;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import static com.google.mockwebserver.MockWebServer.ASCII;
 
 /**
  * A scripted response to be replayed by the mock web server.
@@ -38,6 +39,9 @@ public final class MockResponse implements Cloneable {
     private int bytesPerSecond = Integer.MAX_VALUE;
     private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
+    /**
+     * Creates a new mock response with an empty body.
+     */
     public MockResponse() {
         headers.add(EMPTY_BODY_HEADER);
     }
@@ -76,27 +80,46 @@ public final class MockResponse implements Cloneable {
         return headers;
     }
 
+    /**
+     * Removes all HTTP headers including any "Content-Length" and
+     * "Transfer-encoding" headers that were added by default.
+     */
     public MockResponse clearHeaders() {
         headers.clear();
         return this;
     }
 
+    /**
+     * Adds {@code header} as an HTTP header. For well-formed HTTP {@code
+     * header} should contain a name followed by a colon and a value.
+     */
     public MockResponse addHeader(String header) {
         headers.add(header);
         return this;
     }
 
+    /**
+     * Adds a new header with the name and value. This may be used to add
+     * multiple headers with the same name.
+     */
     public MockResponse addHeader(String name, Object value) {
         return addHeader(name + ": " + String.valueOf(value));
     }
 
+    /**
+     * Removes all headers named {@code name}, then adds a new header with the
+     * name and value.
+     */
     public MockResponse setHeader(String name, Object value) {
         removeHeader(name);
         return addHeader(name, value);
     }
 
+    /**
+     * Removes all headers named {@code name}.
+     */
     public MockResponse removeHeader(String name) {
-        name += ": ";
+        name += ":";
         for (Iterator<String> i = headers.iterator(); i.hasNext();) {
             String header = i.next();
             if (name.regionMatches(true, 0, header, 0, name.length())) {
@@ -107,7 +130,7 @@ public final class MockResponse implements Cloneable {
     }
 
     /**
-     * Returns an input stream containing the raw HTTP payload.
+     * Returns the raw HTTP payload.
      */
     public byte[] getBody() {
         return body;
@@ -122,35 +145,54 @@ public final class MockResponse implements Cloneable {
         return this;
     }
 
+    /**
+     * Sets the response body to the UTF-8 encoded bytes of {@code body}.
+     */
     public MockResponse setBody(String body) {
         try {
-            return setBody(body.getBytes(ASCII));
+            return setBody(body.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError();
         }
     }
 
-    public MockResponse setChunkedBody(byte[] body, int maxChunkSize) throws IOException {
+    /**
+     * Sets the response body to {@code body}, chunked every {@code
+     * maxChunkSize} bytes.
+     */
+    public MockResponse setChunkedBody(byte[] body, int maxChunkSize) {
         headers.remove(EMPTY_BODY_HEADER);
         headers.add(CHUNKED_BODY_HEADER);
 
-        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-        int pos = 0;
-        while (pos < body.length) {
-            int chunkSize = Math.min(body.length - pos, maxChunkSize);
-            bytesOut.write(Integer.toHexString(chunkSize).getBytes(ASCII));
-            bytesOut.write("\r\n".getBytes(ASCII));
-            bytesOut.write(body, pos, chunkSize);
-            bytesOut.write("\r\n".getBytes(ASCII));
-            pos += chunkSize;
+        try {
+            ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+            int pos = 0;
+            while (pos < body.length) {
+                int chunkSize = Math.min(body.length - pos, maxChunkSize);
+                bytesOut.write(Integer.toHexString(chunkSize).getBytes(ASCII));
+                bytesOut.write("\r\n".getBytes(ASCII));
+                bytesOut.write(body, pos, chunkSize);
+                bytesOut.write("\r\n".getBytes(ASCII));
+                pos += chunkSize;
+            }
+            bytesOut.write("0\r\n\r\n".getBytes(ASCII)); // last chunk + empty trailer + crlf
+            this.body = bytesOut.toByteArray();
+            return this;
+        } catch (IOException e) {
+            throw new AssertionError(); // In-memory I/O doesn't throw IOExceptions.
         }
-        bytesOut.write("0\r\n\r\n".getBytes(ASCII)); // last chunk + empty trailer + crlf
-        this.body = bytesOut.toByteArray();
-        return this;
     }
 
-    public MockResponse setChunkedBody(String body, int maxChunkSize) throws IOException {
-        return setChunkedBody(body.getBytes(ASCII), maxChunkSize);
+    /**
+     * Sets the response body to the UTF-8 encoded bytes of {@code body},
+     * chunked every {@code maxChunkSize} bytes.
+     */
+    public MockResponse setChunkedBody(String body, int maxChunkSize) {
+        try {
+            return setChunkedBody(body.getBytes("UTF-8"), maxChunkSize);
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError();
+        }
     }
 
     public SocketPolicy getSocketPolicy() {
@@ -167,7 +209,8 @@ public final class MockResponse implements Cloneable {
     }
 
     /**
-     * Set simulated network speed, in bytes per second.
+     * Set simulated network speed, in bytes per second. This applies to the
+     * response body only; response headers are not throttled.
      */
     public MockResponse setBytesPerSecond(int bytesPerSecond) {
         this.bytesPerSecond = bytesPerSecond;

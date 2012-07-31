@@ -16,8 +16,6 @@
 
 package com.google.mockwebserver;
 
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.google.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -55,6 +53,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.google.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 
 /**
  * A scriptable web server. Callers supply canned responses and the server
@@ -105,10 +106,14 @@ public final class MockWebServer {
      *
      * @param path the request path, such as "/".
      */
-    public URL getUrl(String path) throws MalformedURLException, UnknownHostException {
-        return sslSocketFactory != null
-                ? new URL("https://" + getHostName() + ":" + getPort() + path)
-                : new URL("http://" + getHostName() + ":" + getPort() + path);
+    public URL getUrl(String path) {
+        try {
+            return sslSocketFactory != null
+                    ? new URL("https://" + getHostName() + ":" + getPort() + path)
+                    : new URL("http://" + getHostName() + ":" + getPort() + path);
+        } catch (MalformedURLException e) {
+            throw new AssertionError(e);
+        }
     }
 
     /**

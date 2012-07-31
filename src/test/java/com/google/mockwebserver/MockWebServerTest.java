@@ -24,19 +24,72 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import junit.framework.TestCase;
 
 public final class MockWebServerTest extends TestCase {
 
     private MockWebServer server = new MockWebServer();
 
-    @Override protected void setUp() throws Exception {
-        super.setUp();
-    }
-
     @Override protected void tearDown() throws Exception {
         server.shutdown();
         super.tearDown();
+    }
+
+    public void testRecordedRequestAccessors() {
+        List<String> headers = Arrays.asList(
+                "User-Agent: okhttp",
+                "Cookie: s=square",
+                "Cookie: a=android",
+                "X-Whitespace:  left",
+                "X-Whitespace:right  ",
+                "X-Whitespace:  both  "
+        );
+        List<Integer> chunkSizes = Collections.emptyList();
+        byte[] body = { 'A', 'B', 'C' };
+        String requestLine = "GET / HTTP/1.1";
+        RecordedRequest request = new RecordedRequest(
+                requestLine, headers, chunkSizes, body.length, body, 0, null);
+        assertEquals("s=square", request.getHeader("cookie"));
+        assertEquals(Arrays.asList("s=square", "a=android"), request.getHeaders("cookie"));
+        assertEquals("left", request.getHeader("x-whitespace"));
+        assertEquals(Arrays.asList("left", "right", "both"), request.getHeaders("x-whitespace"));
+        assertEquals("ABC", request.getUtf8Body());
+    }
+
+    public void testDefaultMockResponse() {
+        MockResponse response = new MockResponse();
+        assertEquals(Arrays.asList("Content-Length: 0"), response.getHeaders());
+        assertEquals("HTTP/1.1 200 OK", response.getStatus());
+    }
+
+    public void testSetBodyAdjustsHeaders() {
+        MockResponse response = new MockResponse().setBody("ABC");
+        assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
+        assertTrue(Arrays.equals(response.getBody(), new byte[] { 'A', 'B', 'C' }));
+        assertEquals("HTTP/1.1 200 OK", response.getStatus());
+    }
+
+    public void testMockResponseAddHeader() {
+        MockResponse response = new MockResponse()
+                .clearHeaders()
+                .addHeader("Cookie: s=square")
+                .addHeader("Cookie", "a=android");
+        assertEquals(Arrays.asList("Cookie: s=square", "Cookie: a=android"),
+                response.getHeaders());
+    }
+
+    public void testMockResponseSetHeader() {
+        MockResponse response = new MockResponse()
+                .clearHeaders()
+                .addHeader("Cookie: s=square")
+                .addHeader("Cookie: a=android")
+                .addHeader("Cookies: delicious");
+        response.setHeader("cookie", "r=robot");
+        assertEquals(Arrays.asList("Cookies: delicious", "cookie: r=robot"),
+                response.getHeaders());
     }
 
     public void testRegularResponse() throws Exception {

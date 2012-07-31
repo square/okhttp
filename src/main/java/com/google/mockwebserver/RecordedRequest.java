@@ -16,7 +16,9 @@
 
 package com.google.mockwebserver;
 
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 
@@ -65,8 +67,47 @@ public final class RecordedRequest {
         return requestLine;
     }
 
+    public String getMethod() {
+        return method;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    /**
+     * Returns all headers.
+     */
     public List<String> getHeaders() {
         return headers;
+    }
+
+    /**
+     * Returns the first header named {@code name}, or null if no such header
+     * exists.
+     */
+    public String getHeader(String name) {
+        name += ":";
+        for (String header : headers) {
+            if (name.regionMatches(true, 0, header, 0, name.length())) {
+                return header.substring(name.length()).trim();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the headers named {@code name}.
+     */
+    public List<String> getHeaders(String name) {
+        List<String> result = new ArrayList<String>();
+        name += ":";
+        for (String header : headers) {
+            if (name.regionMatches(true, 0, header, 0, name.length())) {
+                result.add(header.substring(name.length()).trim());
+            }
+        }
+        return result;
     }
 
     /**
@@ -93,6 +134,17 @@ public final class RecordedRequest {
     }
 
     /**
+     * Returns the body of this POST request decoded as a UTF-8 string.
+     */
+    public String getUtf8Body() {
+        try {
+            return new String(body, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError();
+        }
+    }
+
+    /**
      * Returns the index of this request on its HTTP connection. Since a single
      * HTTP connection may serve multiple requests, each request is assigned its
      * own sequence number.
@@ -111,13 +163,5 @@ public final class RecordedRequest {
 
     @Override public String toString() {
         return requestLine;
-    }
-
-    public String getMethod() {
-        return method;
-    }
-
-    public String getPath() {
-        return path;
     }
 }
