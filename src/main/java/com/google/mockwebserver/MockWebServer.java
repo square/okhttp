@@ -290,7 +290,8 @@ public final class MockWebServer {
                 InputStream in = new BufferedInputStream(socket.getInputStream());
                 OutputStream out = new BufferedOutputStream(socket.getOutputStream());
 
-                while (processOneRequest(socket, in, out)) {}
+                while (processOneRequest(socket, in, out)) {
+                }
 
                 if (sequenceNumber == 0) {
                     logger.warning("MockWebServer connection didn't make a request");
@@ -299,9 +300,6 @@ public final class MockWebServer {
                 in.close();
                 out.close();
                 socket.close();
-                if (responseQueue.isEmpty()) {
-                    shutdown();
-                }
                 openClientSockets.remove(socket);
             }
 
