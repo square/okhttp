@@ -514,12 +514,33 @@ public abstract class OkHttpConnection extends URLConnection {
      */
     public static final int HTTP_VERSION = 505;
 
+    /**
+     * Returns a new OkHttpConnection or OkHttpsConnection to {@code url}.
+     */
     public static OkHttpConnection open(URL url) {
-        return new libcore.net.http.HttpURLConnectionImpl(url, 443);
+        String protocol = url.getProtocol();
+        if (protocol.equals("http")) {
+            return new libcore.net.http.HttpURLConnectionImpl(url, 80);
+        } else if (protocol.equals("https")) {
+            return new libcore.net.http.HttpsURLConnectionImpl(url, 443);
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
+    /**
+     * Returns a new OkHttpConnection or OkHttpsConnection to {@code url} that
+     * connects via {@code proxy}.
+     */
     public static OkHttpConnection open(URL url, Proxy proxy) {
-        return new libcore.net.http.HttpURLConnectionImpl(url, 443, proxy);
+        String protocol = url.getProtocol();
+        if (protocol.equals("http")) {
+            return new libcore.net.http.HttpURLConnectionImpl(url, 80, proxy);
+        } else if (protocol.equals("https")) {
+            return new libcore.net.http.HttpsURLConnectionImpl(url, 443, proxy);
+        } else {
+            throw new IllegalArgumentException();
+        }
     }
 
     /**
