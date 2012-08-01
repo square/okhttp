@@ -17,7 +17,6 @@
 
 package com.squareup.okhttp;
 
-import java.net.Proxy;
 import java.net.URL;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -112,14 +111,6 @@ public abstract class OkHttpsConnection extends OkHttpConnection {
 
     private static SSLSocketFactory defaultSSLSocketFactory = (SSLSocketFactory) SSLSocketFactory
             .getDefault();
-
-    public static OkHttpsConnection open(URL url) {
-        return new libcore.net.http.HttpsURLConnectionImpl(url, 443);
-    }
-
-    public static OkHttpsConnection open(URL url, Proxy proxy) {
-        return new libcore.net.http.HttpsURLConnectionImpl(url, 443, proxy);
-    }
 
     /**
      * Sets the default hostname verifier to be used by new instances.
