@@ -21,6 +21,7 @@ import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.google.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.OkHttpConnection;
+import com.squareup.okhttp.OkHttpsConnection;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,7 @@ import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.ConnectException;
 import java.net.HttpRetryException;
+import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -53,9 +55,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
+import libcore.net.ssl.SslContextBuilder;
+
 import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
@@ -380,22 +385,24 @@ public final class URLConnectionTest extends TestCase {
         }
     }
 
-//    public void testConnectViaHttps() throws IOException, InterruptedException {
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
-//        server.play();
-//
-//        HttpsURLConnection connection = (HttpsURLConnection) server.getUrl("/foo").openConnection();
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//
-//        assertContent("this response comes via HTTPS", connection);
-//
-//        RecordedRequest request = server.takeRequest();
-//        assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-//    }
-//
+    public void testConnectViaHttps() throws Exception {
+        SSLContext sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName())
+                .build();
+
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
+        server.play();
+
+        OkHttpsConnection connection = OkHttpsConnection.open(server.getUrl("/foo"));
+        connection.setHostnameVerifier(new RecordingHostnameVerifier());
+        connection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+        assertContent("this response comes via HTTPS", connection);
+
+        RecordedRequest request = server.takeRequest();
+        assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    }
+
 //    public void testConnectViaHttpsReusingConnections() throws IOException, InterruptedException {
 //        TestSSLContext testSSLContext = TestSSLContext.create();
 //

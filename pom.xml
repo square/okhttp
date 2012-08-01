@@ -39,6 +39,7 @@
         <java.version>1.6</java.version>
         <npn.version>8.1.2.v20120308</npn.version>
         <mockwebserver.version>20120401</mockwebserver.version>
+        <bouncycastle.version>1.47</bouncycastle.version>
 
         <!-- Test Dependencies -->
         <junit.version>3.8.2</junit.version>
@@ -78,6 +79,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>${bouncycastle.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
