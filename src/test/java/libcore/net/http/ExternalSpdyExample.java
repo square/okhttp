@@ -16,6 +16,7 @@
 
 package libcore.net.http;
 
+import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -26,7 +27,7 @@ import javax.net.ssl.SSLSession;
 public final class ExternalSpdyExample {
     public static void main(String[] args) throws Exception {
         URL url = new URL("https://www.google.ca/");
-        OkHttpsConnection connection = OkHttpsConnection.open(url);
+        OkHttpsConnection connection = (OkHttpsConnection) OkHttpConnection.open(url);
 
         connection.setHostnameVerifier(new HostnameVerifier() {
             @Override public boolean verify(String s, SSLSession sslSession) {
