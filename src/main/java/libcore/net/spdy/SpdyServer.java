@@ -80,7 +80,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         );
         OutputStream out = stream.reply(responseHeaders);
         String text = "Not found: " + path;
-        out.write(text.getBytes());
+        out.write(text.getBytes("UTF-8"));
         out.close();
     }
 

@@ -20,10 +20,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import static java.nio.ByteOrder.BIG_ENDIAN;
 import java.util.List;
 import libcore.io.Streams;
 import libcore.util.Libcore;
+
+import static java.nio.ByteOrder.BIG_ENDIAN;
 
 /**
  * A logical bidirectional stream.

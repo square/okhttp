@@ -344,7 +344,7 @@ public final class RawHeaders {
             String value = namesAndValues.get(i + 1);
 
             // TODO: promote this check to where names and values are created
-            if (name.isEmpty() || value.isEmpty()
+            if (name.length() == 0 || value.length() == 0
                     || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
                 throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
             }
