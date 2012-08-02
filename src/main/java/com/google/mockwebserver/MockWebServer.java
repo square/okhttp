@@ -35,15 +35,13 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -69,9 +67,9 @@ public final class MockWebServer {
     private final BlockingQueue<RecordedRequest> requestQueue
             = new LinkedBlockingQueue<RecordedRequest>();
     private final BlockingQueue<MockResponse> responseQueue
-            = new LinkedBlockingDeque<MockResponse>();
-    private final Set<Socket> openClientSockets
-            = Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+            = new LinkedBlockingQueue<MockResponse>();
+    /** All map values are Boolean.TRUE. (Collections.newSetFromMap isn't available in Froyo) */
+    private final Map<Socket, Boolean> openClientSockets = new ConcurrentHashMap<Socket, Boolean>();
     private boolean singleResponse;
     private final AtomicInteger requestCount = new AtomicInteger();
     private int bodyLimit = Integer.MAX_VALUE;
@@ -217,7 +215,7 @@ public final class MockWebServer {
                 } catch (Throwable e) {
                     logger.log(Level.WARNING, "MockWebServer server socket close failed", e);
                 }
-                for (Iterator<Socket> s = openClientSockets.iterator(); s.hasNext();) {
+                for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext();) {
                     try {
                         s.next().close();
                         s.remove();
@@ -245,7 +243,7 @@ public final class MockWebServer {
                         responseQueue.take();
                         socket.close();
                     } else {
-                        openClientSockets.add(socket);
+                        openClientSockets.put(socket, true);
                         serveConnection(socket);
                     }
                 }
@@ -286,7 +284,7 @@ public final class MockWebServer {
                     socket = sslSocketFactory.createSocket(
                             raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
                     ((SSLSocket) socket).setUseClientMode(false);
-                    openClientSockets.add(socket);
+                    openClientSockets.put(socket, true);
                     openClientSockets.remove(raw);
                 } else {
                     socket = raw;
@@ -391,7 +389,7 @@ public final class MockWebServer {
         } catch (IOException streamIsClosed) {
             return null; // no request because we closed the stream
         }
-        if (request.isEmpty()) {
+        if (request.length() == 0) {
             return null; // no request because the stream is exhausted
         }
 
@@ -399,7 +397,7 @@ public final class MockWebServer {
         int contentLength = -1;
         boolean chunked = false;
         String header;
-        while (!(header = readAsciiUntilCrlf(in)).isEmpty()) {
+        while ((header = readAsciiUntilCrlf(in)).length() != 0) {
             headers.add(header);
             String lowercaseHeader = header.toLowerCase();
             if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
@@ -532,7 +530,7 @@ public final class MockWebServer {
 
     private void readEmptyLine(InputStream in) throws IOException {
         String line = readAsciiUntilCrlf(in);
-        if (!line.isEmpty()) {
+        if (line.length() != 0) {
             throw new IllegalStateException("Expected empty but was: " + line);
         }
     }
