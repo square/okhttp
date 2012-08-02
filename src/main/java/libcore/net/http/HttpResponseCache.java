@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -84,9 +85,11 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
     private String uriToKey(URI uri) {
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-            byte[] md5bytes = messageDigest.digest(uri.toString().getBytes(Charsets.UTF_8));
+            byte[] md5bytes = messageDigest.digest(uri.toString().getBytes("UTF-8"));
             return IntegralToString.bytesToHexString(md5bytes, false);
         } catch (NoSuchAlgorithmException e) {
+            throw new AssertionError(e);
+        } catch (UnsupportedEncodingException e) {
             throw new AssertionError(e);
         }
     }
@@ -381,7 +384,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
 
                 if (isHttps()) {
                     String blank = Streams.readAsciiLine(in);
-                    if (!blank.isEmpty()) {
+                    if (blank.length() != 0) {
                         throw new IOException("expected \"\" but was \"" + blank + "\"");
                     }
                     cipherSuite = Streams.readAsciiLine(in);
@@ -472,7 +475,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
                 Certificate[] result = new Certificate[length];
                 for (int i = 0; i < result.length; i++) {
                     String line = Streams.readAsciiLine(in);
-                    byte[] bytes = Base64.decode(line.getBytes(Charsets.US_ASCII));
+                    byte[] bytes = Base64.decode(line.getBytes("US-ASCII"));
                     result[i] = certificateFactory.generateCertificate(
                             new ByteArrayInputStream(bytes));
                 }

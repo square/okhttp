@@ -16,14 +16,14 @@
 
 package libcore.net.http;
 
-import libcore.net.spdy.SpdyConnection;
-import libcore.net.spdy.SpdyStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.util.List;
+import libcore.net.spdy.SpdyConnection;
+import libcore.net.spdy.SpdyStream;
 
 final class SpdyTransport implements Transport {
     private final HttpEngine httpEngine;

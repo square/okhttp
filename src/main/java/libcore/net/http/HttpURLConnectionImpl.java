@@ -31,7 +31,6 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
-import libcore.util.Charsets;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
@@ -444,7 +443,7 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
             // base64 encode the username and password
             String usernameAndPassword = auth.getUserName() + ":" + new String(auth.getPassword());
-            byte[] bytes = usernameAndPassword.getBytes(Charsets.ISO_8859_1);
+            byte[] bytes = usernameAndPassword.getBytes("ISO-8859-1");
             String encoded = Base64.encode(bytes);
             return challenge.scheme + " " + encoded;
         }

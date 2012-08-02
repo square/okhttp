@@ -2,7 +2,9 @@ package libcore.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
@@ -23,87 +25,120 @@ public final class Libcore {
     private Libcore() {
     }
 
+    private static boolean useAndroidTlsApis;
+    private static Class<?> openSslSocketClass;
+    private static Method setEnabledCompressionMethods;
+    private static Method setUseSessionTickets;
+    private static Method setHostname;
+    private static boolean android23TlsOptionsAvailable;
+    private static Method setNpnProtocols;
+    private static Method getNpnSelectedProtocol;
+    private static boolean android41TlsOptionsAvailable;
+
+    static {
+        try {
+            openSslSocketClass = Class.forName(
+                    "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
+            useAndroidTlsApis = true;
+            setEnabledCompressionMethods = openSslSocketClass.getMethod(
+                    "setEnabledCompressionMethods", String[].class);
+            setUseSessionTickets = openSslSocketClass.getMethod(
+                    "setUseSessionTickets", boolean.class);
+            setHostname = openSslSocketClass.getMethod("setHostname", String.class);
+            android23TlsOptionsAvailable = true;
+            setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
+            getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
+            android41TlsOptionsAvailable = true;
+        } catch (ClassNotFoundException ignored) {
+            // This isn't an Android runtime.
+        } catch (NoSuchMethodException ignored) {
+            // This Android runtime is missing some optional TLS options.
+        }
+    }
+
     public static void makeTlsTolerant(SSLSocket socket, String socketHost, boolean tlsTolerant) {
         if (!tlsTolerant) {
             socket.setEnabledProtocols(new String[] {"SSLv3"});
             return;
         }
 
-        try {
-            Class<?> openSslSocketClass = Class.forName(
-                    "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
-            if (openSslSocketClass.isInstance(socket)) {
-                openSslSocketClass.getMethod("setEnabledCompressionMethods", String[].class)
-                        .invoke(socket, new Object[] {new String[] {"ZLIB"}});
-                openSslSocketClass.getMethod("setUseSessionTickets", boolean.class)
-                        .invoke(socket, true);
-                openSslSocketClass.getMethod("setHostname", String.class)
-                        .invoke(socket, socketHost);
+        if (android23TlsOptionsAvailable && openSslSocketClass.isInstance(socket)) {
+            // This is Android: use reflection on OpenSslSocketImpl.
+            try {
+                String[] compressionMethods = {"ZLIB"};
+                setEnabledCompressionMethods.invoke(socket,
+                        new Object[] { compressionMethods });
+                setUseSessionTickets.invoke(socket, true);
+                setHostname.invoke(socket, socketHost);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            } catch (IllegalAccessException e) {
+                throw new AssertionError(e);
             }
-        } catch (ClassNotFoundException ignored) {
-            // TODO: support the RI's socket classes
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new AssertionError(e);
         }
     }
 
+    /**
+     * Returns the negotiated protocol, or null if no protocol was negotiated.
+     */
     public static byte[] getNpnSelectedProtocol(SSLSocket socket) {
-        // First try Android's APIs.
-        try {
-            Class<?> openSslSocketClass = Class.forName(
-                    "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
-            return (byte[]) openSslSocketClass.getMethod("getNpnSelectedProtocol").invoke(socket);
-        } catch (ClassNotFoundException ignored) {
-            // this isn't Android; fall through to try OpenJDK with Jetty
-        } catch (IllegalAccessException e) {
-            throw new AssertionError();
-        } catch (InvocationTargetException e) {
-            throw new AssertionError();
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError();
+        if (useAndroidTlsApis) {
+            // This is Android: use reflection on OpenSslSocketImpl.
+            if (android41TlsOptionsAvailable && openSslSocketClass.isInstance(socket)) {
+                try {
+                    return (byte[]) getNpnSelectedProtocol.invoke(socket);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                } catch (IllegalAccessException e) {
+                    throw new AssertionError(e);
+                }
+            }
+            return null;
+        } else {
+            // This is OpenJDK: use JettyNpnProvider.
+            JettyNpnProvider provider = (JettyNpnProvider) NextProtoNego.get(socket);
+            if (!provider.unsupported && provider.selected == null) {
+                throw new IllegalStateException(
+                        "No callback received. Is NPN configured properly?");
+            }
+            try {
+                return provider.unsupported
+                        ? null
+                        : provider.selected.getBytes("US-ASCII");
+            } catch (UnsupportedEncodingException e) {
+                throw new AssertionError(e);
+            }
         }
-
-        // Next try OpenJDK.
-        JettyNpnProvider provider = (JettyNpnProvider) NextProtoNego.get(socket);
-        if (!provider.unsupported && provider.selected == null) {
-            throw new IllegalStateException("No callback received. Is NPN configured properly?");
-        }
-        return provider.unsupported
-                ? null
-                : provider.selected.getBytes(Charsets.US_ASCII);
     }
 
     public static void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
-        // First try Android's APIs.
-        try {
-            Class<?> openSslSocketClass = Class.forName(
-                    "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
-            openSslSocketClass.getMethod("setNpnProtocols", byte[].class)
-                    .invoke(socket, npnProtocols);
-        } catch (ClassNotFoundException ignored) {
-            // this isn't Android; fall through to try OpenJDK with Jetty
-        } catch (IllegalAccessException e) {
-            throw new AssertionError();
-        } catch (InvocationTargetException e) {
-            throw new AssertionError();
-        } catch (NoSuchMethodException e) {
-            throw new AssertionError();
+        if (useAndroidTlsApis) {
+            // This is Android: use reflection on OpenSslSocketImpl.
+            if (android41TlsOptionsAvailable && openSslSocketClass.isInstance(socket)) {
+                try {
+                    setNpnProtocols.invoke(socket, new Object[] { npnProtocols });
+                } catch (IllegalAccessException e) {
+                    throw new AssertionError(e);
+                } catch (InvocationTargetException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } else {
+            // This is OpenJDK: use JettyNpnProvider.
+            try {
+                List<String> strings = new ArrayList<String>();
+                for (int i = 0; i < npnProtocols.length;) {
+                    int length = npnProtocols[i++];
+                    strings.add(new String(npnProtocols, i, length, "US-ASCII"));
+                    i += length;
+                }
+                JettyNpnProvider provider = new JettyNpnProvider();
+                provider.protocols = strings;
+                NextProtoNego.put(socket, provider);
+            } catch (UnsupportedEncodingException e) {
+                throw new AssertionError(e);
+            }
         }
-
-        // Next try OpenJDK.
-        List<String> strings = new ArrayList<String>();
-        for (int i = 0; i < npnProtocols.length;) {
-            int length = npnProtocols[i++];
-            strings.add(new String(npnProtocols, i, length, Charsets.US_ASCII));
-            i += length;
-        }
-        JettyNpnProvider provider = new JettyNpnProvider();
-        provider.protocols = strings;
-        NextProtoNego.put(socket, provider);
     }
 
     private static class JettyNpnProvider

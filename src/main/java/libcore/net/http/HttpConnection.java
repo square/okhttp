@@ -37,7 +37,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import libcore.io.IoUtils;
 import libcore.net.spdy.SpdyConnection;
-import libcore.util.Charsets;
 import libcore.util.Libcore;
 import libcore.util.Objects;
 
@@ -229,7 +228,7 @@ final class HttpConnection {
                 HttpConnectionPool.INSTANCE.share(this);
             } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
                 throw new IOException("Unexpected NPN transport "
-                        + new String(selectedProtocol, Charsets.ISO_8859_1));
+                        + new String(selectedProtocol, "ISO-8859-1"));
             }
         }
 

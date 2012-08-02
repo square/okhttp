@@ -21,7 +21,7 @@
 
 package libcore.io;
 
-import libcore.util.Charsets;
+import java.io.UnsupportedEncodingException;
 import libcore.util.EmptyArray;
 
 /**
@@ -156,6 +156,10 @@ public final class Base64 {
                 out[index++] = '=';
                 break;
         }
-        return new String(out, 0, index, Charsets.US_ASCII);
+        try {
+            return new String(out, 0, index, "US-ASCII");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError(e);
+        }
     }
 }
