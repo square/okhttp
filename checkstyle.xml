@@ -90,7 +90,7 @@
         <module name="CovariantEquals"/>
         <module name="DoubleCheckedLocking"/>
         <module name="EmptyStatement"/>
-        <module name="EqualsAvoidNull"/>
+        <!--<module name="EqualsAvoidNull"/>-->
         <module name="EqualsHashCode"/>
         <!--module name="HiddenField"/-->
         <module name="IllegalInstantiation"/>

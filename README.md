@@ -1,4 +1,4 @@
-okhttp
+OkHttp
 ======
 
 An HTTP+SPDY client for Android and Java applications.
@@ -20,10 +20,23 @@ You can also depend on the .jar through Maven:
 ```
 
 
+Known Issues
+------------
+
+The SPDY implementation is incomplete:
+
+* Settings frames are not honored. Flow control is not implemented.
+* It assumes a well-behaved peer. If the peer sends an invalid frame, OkHttp's SPDY client will not respond with the required `RST` frame.
+
+OkHttp uses the platform's [ProxySelector][2]. Prior to Android 4.0, `ProxySelector` didn't honor the `proxyHost` and `proxyPort` system properties for HTTPS connections. Work around this by specifying the `https.proxyHost` and `https.proxyPort` system properties when using a proxy with HTTPS.
+
+OkHttp's test suite creates an in-process HTTPS server. Prior to Android 2.3, SSL server sockets were broken, and so HTTPS tests will time out when run on such devices.
+
+
 Contributing
 ------------
 
-If you would like to contribute code to OKHTTP you can do so through GitHub by
+If you would like to contribute code to OkHttp you can do so through GitHub by
 forking the repository and sending a pull request.
 
 When submitting code, please make every effort to follow existing conventions
@@ -33,7 +46,7 @@ during compilation indicate errors in your style and can be viewed in the
 `checkstyle-result.xml` file.
 
 Before your code can be accepted into the project you must also sign the
-[Individual Contributor License Agreement (CLA)][2].
+[Individual Contributor License Agreement (CLA)][3].
 
 
 License
@@ -54,4 +67,5 @@ License
 
 
  [1]: http://github.com/square/okhttp/downloads
- [2]: https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1
+ [2]: http://developer.android.com/reference/java/net/ProxySelector.html
+ [3]: https://spreadsheets.google.com/spreadsheet/viewform?formkey=dDViT2xzUHAwRkI3X3k5Z0lQM091OGc6MQ&ndplr=1
