@@ -67,7 +67,7 @@ public final class Libcore {
             try {
                 String[] compressionMethods = {"ZLIB"};
                 setEnabledCompressionMethods.invoke(socket,
-                        new Object[] { compressionMethods });
+                        new Object[] {compressionMethods});
                 setUseSessionTickets.invoke(socket, true);
                 setHostname.invoke(socket, socketHost);
             } catch (InvocationTargetException e) {
@@ -116,7 +116,7 @@ public final class Libcore {
             // This is Android: use reflection on OpenSslSocketImpl.
             if (android41TlsOptionsAvailable && openSslSocketClass.isInstance(socket)) {
                 try {
-                    setNpnProtocols.invoke(socket, new Object[] { npnProtocols });
+                    setNpnProtocols.invoke(socket, new Object[] {npnProtocols});
                 } catch (IllegalAccessException e) {
                     throw new AssertionError(e);
                 } catch (InvocationTargetException e) {
