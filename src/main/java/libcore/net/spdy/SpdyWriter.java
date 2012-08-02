@@ -101,7 +101,7 @@ final class SpdyWriter {
         nameValueBlockOut.writeShort(numberOfPairs);
         for (String s : nameValueBlock) {
             nameValueBlockOut.writeShort(s.length());
-            nameValueBlockOut.write(s.getBytes(SpdyReader.UTF_8));
+            nameValueBlockOut.write(s.getBytes("UTF-8"));
         }
         nameValueBlockOut.flush();
     }

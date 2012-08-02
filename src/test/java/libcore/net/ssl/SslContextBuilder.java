@@ -28,7 +28,6 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -48,9 +47,10 @@ public final class SslContextBuilder {
         Security.addProvider(new BouncyCastleProvider());
     }
 
+    private static final long ONE_DAY_MILLIS = 1000L * 60 * 60 * 24;
     private final String hostName;
     private long notBefore = System.currentTimeMillis();
-    private long notAfter = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(1);
+    private long notAfter = System.currentTimeMillis() + ONE_DAY_MILLIS;
 
     /**
      * @param hostName the subject of the host. For TLS this should be the
@@ -120,7 +120,7 @@ public final class SslContextBuilder {
             keyStore.load(in, password);
             return keyStore;
         } catch (IOException e) {
-            throw new AssertionError();
+            throw new AssertionError(e);
         }
     }
 }

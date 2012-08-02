@@ -37,7 +37,7 @@ public final class SpdyConnectionTest extends TestCase {
         SpdyWriter replyData = peer.sendFrame();
         replyData.flags = SpdyConnection.FLAG_FIN;
         replyData.streamId = 1;
-        replyData.data("robot".getBytes());
+        replyData.data("robot".getBytes("UTF-8"));
         peer.acceptFrame();
         peer.play();
 
@@ -50,7 +50,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals("robot", reader.readLine());
         assertEquals(null, reader.readLine());
         OutputStream out = stream.getOutputStream();
-        out.write("c3po".getBytes());
+        out.write("c3po".getBytes("UTF-8"));
         out.close();
 
         // verify the peer received what was expected
@@ -60,7 +60,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(0, synStream.reader.associatedStreamId);
         assertEquals(Arrays.asList("b", "banana"), synStream.reader.nameValueBlock);
         MockSpdyPeer.InFrame requestData = peer.takeFrame();
-        assertTrue(Arrays.equals("c3po".getBytes(), requestData.data));
+        assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
     }
 
     public void testServerCreatesStreamAndClientReplies() throws Exception {

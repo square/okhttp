@@ -25,7 +25,6 @@ import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.URL;
 import libcore.io.Streams;
-import libcore.util.Charsets;
 import libcore.util.Libcore;
 
 final class HttpTransport implements Transport {
@@ -126,7 +125,7 @@ final class HttpTransport implements Transport {
 
         int contentLength = httpEngine.requestHeaders.getContentLength();
         RawHeaders headersToSend = getNetworkRequestHeaders();
-        byte[] bytes = headersToSend.toHeaderString().getBytes(Charsets.ISO_8859_1);
+        byte[] bytes = headersToSend.toHeaderString().getBytes("ISO-8859-1");
 
         if (contentLength != -1 && bytes.length + contentLength <= MAX_REQUEST_BUFFER_LENGTH) {
             requestOut = new BufferedOutputStream(socketOut, bytes.length + contentLength);
@@ -196,7 +195,7 @@ final class HttpTransport implements Transport {
     private void readHeaders(RawHeaders headers) throws IOException {
         // parse the result headers until the first blank line
         String line;
-        while (!(line = Streams.readAsciiLine(socketIn)).isEmpty()) {
+        while ((line = Streams.readAsciiLine(socketIn)).length() != 0) {
             headers.addLine(line);
         }
 

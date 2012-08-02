@@ -20,6 +20,7 @@ import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ import libcore.io.Streams;
  */
 final class SpdyReader {
     public static final Charset UTF_8 = Charset.forName("UTF-8");
-    public static final byte[] DICTIONARY = (""
+    private static final String DICTIONARY_STRING = ""
             + "optionsgetheadpostputdeletetraceacceptaccept-charsetaccept-encodingaccept-"
             + "languageauthorizationexpectfromhostif-modified-sinceif-matchif-none-matchi"
             + "f-rangeif-unmodifiedsincemax-forwardsproxy-authorizationrangerefererteuser"
@@ -47,7 +48,15 @@ final class SpdyReader {
             + "ndayTuesdayWednesdayThursdayFridaySaturdaySundayJanFebMarAprMayJunJulAugSe"
             + "pOctNovDecchunkedtext/htmlimage/pngimage/jpgimage/gifapplication/xmlapplic"
             + "ation/xhtmltext/plainpublicmax-agecharset=iso-8859-1utf-8gzipdeflateHTTP/1"
-            + ".1statusversionurl\0").getBytes(UTF_8);
+            + ".1statusversionurl\0";
+    public static final byte[] DICTIONARY;
+    static {
+        try {
+            DICTIONARY = DICTIONARY_STRING.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError(e);
+        }
+    }
 
     public final DataInputStream in;
     public int flags;
@@ -184,7 +193,7 @@ final class SpdyReader {
             for (int i = 0; i < numberOfPairs; i++) {
                 String name = readString();
                 String values = readString();
-                if (name.isEmpty() || values.isEmpty()) {
+                if (name.length() == 0 || values.length() == 0) {
                     throw new IOException(); // TODO: PROTOCOL ERROR
                 }
                 entries.add(name);
@@ -206,6 +215,6 @@ final class SpdyReader {
         int length = nameValueBlockIn.readShort();
         byte[] bytes = new byte[length];
         Streams.readFully(nameValueBlockIn, bytes);
-        return new String(bytes, 0, length, UTF_8);
+        return new String(bytes, 0, length, "UTF-8");
     }
 }

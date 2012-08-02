@@ -434,7 +434,7 @@ public final class MimeUtils {
      * @return True iff there is a mimeType entry in the map.
      */
     public static boolean hasMimeType(String mimeType) {
-        if (mimeType == null || mimeType.isEmpty()) {
+        if (mimeType == null || mimeType.length() == 0) {
             return false;
         }
         return MIME_TYPE_TO_EXTENSION_MAP.containsKey(mimeType);
@@ -446,7 +446,7 @@ public final class MimeUtils {
      * @return The MIME type for the given extension or null iff there is none.
      */
     public static String guessMimeTypeFromExtension(String extension) {
-        if (extension == null || extension.isEmpty()) {
+        if (extension == null || extension.length() == 0) {
             return null;
         }
         return EXTENSION_TO_MIME_TYPE_MAP.get(extension);
@@ -458,7 +458,7 @@ public final class MimeUtils {
      * @return True iff there is an extension entry in the map.
      */
     public static boolean hasExtension(String extension) {
-        if (extension == null || extension.isEmpty()) {
+        if (extension == null || extension.length() == 0) {
             return false;
         }
         return EXTENSION_TO_MIME_TYPE_MAP.containsKey(extension);
@@ -472,7 +472,7 @@ public final class MimeUtils {
      * @return The extension for the given MIME type or null iff there is none.
      */
     public static String guessExtensionFromMimeType(String mimeType) {
-        if (mimeType == null || mimeType.isEmpty()) {
+        if (mimeType == null || mimeType.length() == 0) {
             return null;
         }
         return MIME_TYPE_TO_EXTENSION_MAP.get(mimeType);

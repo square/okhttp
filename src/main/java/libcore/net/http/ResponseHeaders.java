@@ -17,7 +17,6 @@
 package libcore.net.http;
 
 import java.net.HttpURLConnection;
-import libcore.util.ResponseSource;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Date;
@@ -27,6 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import libcore.util.Objects;
+import libcore.util.ResponseSource;
 
 /**
  * Parsed HTTP response headers.
