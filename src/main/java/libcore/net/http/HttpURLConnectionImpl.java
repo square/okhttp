@@ -423,13 +423,15 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
     }
 
     /**
-     * Returns the authorization credentials on the base of provided challenge.
+     * Returns the authorization credentials that may satisfy the challenge.
+     * Returns null if a challenge header was not provided or if credentials
+     * were not available.
      */
     private String getAuthorizationCredentials(RawHeaders responseHeaders, String challengeHeader)
             throws IOException {
         List<Challenge> challenges = HeaderParser.parseChallenges(responseHeaders, challengeHeader);
         if (challenges.isEmpty()) {
-            throw new IOException("No authentication challenges found");
+            return null;
         }
 
         for (Challenge challenge : challenges) {
