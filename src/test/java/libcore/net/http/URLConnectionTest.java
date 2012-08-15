@@ -981,6 +981,39 @@ public final class URLConnectionTest extends TestCase {
         assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
     }
 
+    public void testNonStandardAuthenticationScheme() throws Exception {
+        RecordingAuthenticator authenticator = new RecordingAuthenticator();
+        Authenticator.setDefault(authenticator);
+        MockResponse pleaseAuthenticate = new MockResponse()
+                .setResponseCode(401)
+                .addHeader("WWW-Authenticate: Foo")
+                .setBody("Please authenticate.");
+        server.enqueue(pleaseAuthenticate);
+        server.play();
+
+        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        assertEquals(401, connection.getResponseCode());
+        assertEquals(Collections.<String>emptyList(), authenticator.calls);
+    }
+
+    public void testNonStandardAuthenticationSchemeWithRealm() throws Exception {
+        RecordingAuthenticator authenticator = new RecordingAuthenticator();
+        Authenticator.setDefault(authenticator);
+        MockResponse pleaseAuthenticate = new MockResponse()
+                .setResponseCode(401)
+                .addHeader("WWW-Authenticate: Foo realm=\"Bar\"")
+                .setBody("Please authenticate.");
+        server.enqueue(pleaseAuthenticate);
+        server.play();
+
+        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        assertEquals(401, connection.getResponseCode());
+        assertEquals(1, authenticator.calls.size());
+        String call = authenticator.calls.get(0);
+        assertTrue(call, call.contains("scheme=Foo"));
+        assertTrue(call, call.contains("prompt=Bar"));
+    }
+
     public void testSetValidRequestMethod() throws Exception {
         server.play();
         assertValidRequestMethod("GET");
@@ -2076,6 +2109,22 @@ public final class URLConnectionTest extends TestCase {
         public boolean verify(String hostname, SSLSession session) {
             calls.add("verify " + hostname);
             return true;
+        }
+    }
+
+    private static class RecordingAuthenticator extends Authenticator {
+        private final List<String> calls = new ArrayList<String>();
+
+        @Override protected PasswordAuthentication getPasswordAuthentication() {
+            this.calls.add("host=" + getRequestingHost()
+                    + " port=" + getRequestingPort()
+                    + " site=" + getRequestingSite()
+                    + " url=" + getRequestingURL()
+                    + " type=" + getRequestorType()
+                    + " prompt=" + getRequestingPrompt()
+                    + " protocol=" + getRequestingProtocol()
+                    + " scheme=" + getRequestingScheme());
+            return null;
         }
     }
 }
