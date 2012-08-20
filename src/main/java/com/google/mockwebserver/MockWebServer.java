@@ -16,19 +16,40 @@
 
 package com.google.mockwebserver;
 
-import javax.net.ssl.*;
-import java.io.*;
-import java.net.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.Proxy;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.google.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
@@ -136,8 +157,16 @@ public final class MockWebServer {
         return requestCount.get();
     }
 
+    /**
+     * Scripts {@code response} to be returned to a request made in sequence.
+     * The first request is served by the first enqueued response; the second
+     * request by the second enqueued response; and so on.
+     *
+     * @throws ClassCastException if the default dispatcher has been replaced
+     *     with {@link #setDispatcher(Dispatcher)}.
+     */
     public void enqueue(MockResponse response) {
-        ((QueueDispatcher)dispatcher).enqueueResponse(response.clone());
+        ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
     }
 
     /**
@@ -178,7 +207,7 @@ public final class MockWebServer {
                 } catch (Throwable e) {
                     logger.log(Level.WARNING, "MockWebServer server socket close failed", e);
                 }
-                for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext();) {
+                for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext(); ) {
                     try {
                         s.next().close();
                         s.remove();
@@ -483,7 +512,16 @@ public final class MockWebServer {
         }
     }
 
+    /**
+     * Sets the dispatcher used to match incoming requests to mock responses.
+     * The default dispatcher simply serves a fixed sequence of responses from
+     * a {@link #enqueue(MockResponse) queue}; custom dispatchers can vary the
+     * response based on timing or the content of the request.
+     */
     public void setDispatcher(Dispatcher dispatcher) {
+        if (dispatcher == null) {
+            throw new NullPointerException();
+        }
         this.dispatcher = dispatcher;
     }
 
