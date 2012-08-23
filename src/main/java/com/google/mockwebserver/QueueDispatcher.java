@@ -23,8 +23,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  * Default dispatcher that processes a script of responses.  Populate the script by calling
  * {@link #enqueueResponse(MockResponse)}.
  */
-final class QueueDispatcher extends Dispatcher {
-    private final BlockingQueue<MockResponse> responseQueue
+public class QueueDispatcher extends Dispatcher {
+    protected final BlockingQueue<MockResponse> responseQueue
             = new LinkedBlockingQueue<MockResponse>();
 
     public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
