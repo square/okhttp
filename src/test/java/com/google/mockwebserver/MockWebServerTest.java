@@ -16,6 +16,8 @@
 
 package com.google.mockwebserver;
 
+import junit.framework.TestCase;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +29,6 @@ import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import junit.framework.TestCase;
 
 public final class MockWebServerTest extends TestCase {
 
@@ -197,5 +198,18 @@ public final class MockWebServerTest extends TestCase {
 
         assertEquals(0, server.takeRequest().getSequenceNumber());
         assertEquals(0, server.takeRequest().getSequenceNumber());
+    }
+
+    public void testDisconnectAtStart() throws Exception {
+        server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+        server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
+        server.enqueue(new MockResponse());
+        server.play();
+        try {
+            server.getUrl("/a").openConnection().getInputStream();
+        } catch (IOException e) {
+            // Expected.
+        }
+        server.getUrl("/b").openConnection().getInputStream(); // Should succeed.
     }
 }
