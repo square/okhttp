@@ -26,6 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class QueueDispatcher extends Dispatcher {
     protected final BlockingQueue<MockResponse> responseQueue
             = new LinkedBlockingQueue<MockResponse>();
+    private boolean failFast;
 
     public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
         // to permit interactive/browser testing, ignore requests for favicons
@@ -34,6 +35,11 @@ public class QueueDispatcher extends Dispatcher {
             System.out.println("served " + requestLine);
             return new MockResponse()
                     .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
+        }
+
+        if (failFast && responseQueue.peek() == null) {
+            // Fail fast if there's no response queued up.
+            return new MockResponse().setResponseCode(404);
         }
 
         return responseQueue.take();
@@ -48,5 +54,9 @@ public class QueueDispatcher extends Dispatcher {
 
     public void enqueueResponse(MockResponse response) {
         responseQueue.add(response);
+    }
+
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
     }
 }
