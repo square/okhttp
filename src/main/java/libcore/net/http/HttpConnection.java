@@ -201,7 +201,7 @@ final class HttpConnection {
         // Create the wrapper over connected socket.
         sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket,
                 address.uriHost, address.uriPort, true /* autoClose */);
-        Libcore.makeTlsTolerant(sslSocket, address.socketHost, tlsTolerant);
+        Libcore.makeTlsTolerant(sslSocket, address.uriHost, tlsTolerant);
 
         if (tlsTolerant) {
             Libcore.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
