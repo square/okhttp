@@ -18,7 +18,7 @@ package libcore.net.http;
 
 import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
-import java.io.BufferedInputStream;
+
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -51,7 +51,6 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import libcore.io.Base64;
 import libcore.io.DiskLruCache;
 import libcore.io.IoUtils;
-import libcore.io.Streams;
 import libcore.io.StrictLineReader;
 import libcore.util.Charsets;
 import libcore.util.ExtendedResponseCache;
