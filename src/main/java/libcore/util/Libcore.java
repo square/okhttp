@@ -43,7 +43,6 @@ public final class Libcore {
 
     private static boolean useAndroidTlsApis;
     private static Class<?> openSslSocketClass;
-    private static Method setEnabledCompressionMethods;
     private static Method setUseSessionTickets;
     private static Method setHostname;
     private static boolean android23TlsOptionsAvailable;
@@ -56,8 +55,6 @@ public final class Libcore {
             openSslSocketClass = Class.forName(
                     "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
             useAndroidTlsApis = true;
-            setEnabledCompressionMethods = openSslSocketClass.getMethod(
-                    "setEnabledCompressionMethods", String[].class);
             setUseSessionTickets = openSslSocketClass.getMethod(
                     "setUseSessionTickets", boolean.class);
             setHostname = openSslSocketClass.getMethod("setHostname", String.class);
@@ -81,9 +78,6 @@ public final class Libcore {
         if (android23TlsOptionsAvailable && openSslSocketClass.isInstance(socket)) {
             // This is Android: use reflection on OpenSslSocketImpl.
             try {
-                String[] compressionMethods = {"ZLIB"};
-                setEnabledCompressionMethods.invoke(socket,
-                        new Object[] {compressionMethods});
                 setUseSessionTickets.invoke(socket, true);
                 setHostname.invoke(socket, uriHost);
             } catch (InvocationTargetException e) {
