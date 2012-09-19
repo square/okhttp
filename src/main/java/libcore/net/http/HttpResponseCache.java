@@ -425,7 +425,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
         }
 
         public void writeTo(DiskLruCache.Editor editor) throws IOException {
-            OutputStream out = editor.newOutputStream(0);
+            OutputStream out = editor.newOutputStream(ENTRY_METADATA);
             Writer writer = new BufferedWriter(new OutputStreamWriter(out, Charsets.UTF_8));
 
             writer.write(uri + '\n');
