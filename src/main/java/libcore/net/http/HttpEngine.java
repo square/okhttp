@@ -368,6 +368,11 @@ public class HttpEngine {
     }
 
     private void maybeCache() throws IOException {
+        // Never cache responses to proxy CONNECT requests.
+        if (method == CONNECT) {
+            return;
+        }
+
         // Are we caching at all?
         if (!policy.getUseCaches() || responseCache == null) {
             return;
