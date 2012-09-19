@@ -773,6 +773,50 @@ public final class URLConnectionTest extends TestCase {
         assertEquals(200, connection.getResponseCode());
     }
 
+//    public void testDisconnectAfterOnlyResponseCodeCausesNoCloseGuardWarning() throws IOException {
+//        CloseGuardGuard guard = new CloseGuardGuard();
+//        try {
+//            server.enqueue(new MockResponse()
+//                    .setBody(gzip("ABCABCABC".getBytes("UTF-8")))
+//                    .addHeader("Content-Encoding: gzip"));
+//            server.play();
+//
+//            HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
+//            assertEquals(200, connection.getResponseCode());
+//            connection.disconnect();
+//            connection = null;
+//            assertFalse(guard.wasCloseGuardCalled());
+//        } finally {
+//            guard.close();
+//        }
+//    }
+//
+//    public static class CloseGuardGuard implements Closeable, CloseGuard.Reporter  {
+//        private final CloseGuard.Reporter oldReporter = CloseGuard.getReporter();
+//
+//        private AtomicBoolean closeGuardCalled = new AtomicBoolean();
+//
+//        public CloseGuardGuard() {
+//            CloseGuard.setReporter(this);
+//        }
+//
+//        @Override public void report(String message, Throwable allocationSite) {
+//            oldReporter.report(message, allocationSite);
+//            closeGuardCalled.set(true);
+//        }
+//
+//        public boolean wasCloseGuardCalled() {
+//            // FinalizationTester.induceFinalization();
+//            close();
+//            return closeGuardCalled.get();
+//        }
+//
+//        @Override public void close() {
+//            CloseGuard.setReporter(oldReporter);
+//        }
+//
+//    }
+
     public void testDefaultRequestProperty() throws Exception {
         URLConnection.setDefaultRequestProperty("X-testSetDefaultRequestProperty", "A");
         assertNull(URLConnection.getDefaultRequestProperty("X-setDefaultRequestProperty"));

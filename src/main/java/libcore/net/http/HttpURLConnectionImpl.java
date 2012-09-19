@@ -35,6 +35,7 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import libcore.io.Base64;
+import libcore.io.IoUtils;
 import libcore.util.Libcore;
 
 /**
@@ -92,6 +93,14 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
     @Override public final void disconnect() {
         // Calling disconnect() before a connection exists should have no effect.
         if (httpEngine != null) {
+            // We close the response body here instead of in
+            // HttpEngine.release because that is called when input
+            // has been completely read from the underlying socket.
+            // However the response body can be a GZIPInputStream that
+            // still has unread data.
+            if (httpEngine.hasResponse()) {
+                IoUtils.closeQuietly(httpEngine.getResponseBody());
+            }
             httpEngine.release(false);
         }
     }
