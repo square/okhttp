@@ -67,10 +67,10 @@ import libcore.util.ResponseSource;
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
-    private static final CacheResponse BAD_GATEWAY_RESPONSE = new CacheResponse() {
+    private static final CacheResponse GATEWAY_TIMEOUT_RESPONSE = new CacheResponse() {
         @Override public Map<String, List<String>> getHeaders() throws IOException {
             Map<String, List<String>> result = new HashMap<String, List<String>>();
-            result.put(null, Collections.singletonList("HTTP/1.1 502 Bad Gateway"));
+            result.put(null, Collections.singletonList("HTTP/1.1 504 Gateway Timeout"));
             return result;
         }
         @Override public InputStream getBody() throws IOException {
@@ -188,14 +188,15 @@ public class HttpEngine {
         /*
          * The raw response source may require the network, but the request
          * headers may forbid network use. In that case, dispose of the network
-         * response and use a BAD_GATEWAY response instead.
+         * response and use a GATEWAY_TIMEOUT response instead, as specified
+         * by http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
          */
         if (requestHeaders.isOnlyIfCached() && responseSource.requiresConnection()) {
             if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
                 IoUtils.closeQuietly(cachedResponseBody);
             }
             this.responseSource = ResponseSource.CACHE;
-            this.cacheResponse = BAD_GATEWAY_RESPONSE;
+            this.cacheResponse = GATEWAY_TIMEOUT_RESPONSE;
             RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(cacheResponse.getHeaders());
             setResponse(new ResponseHeaders(uri, rawResponseHeaders), cacheResponse.getBody());
         }
