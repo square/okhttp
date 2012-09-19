@@ -43,8 +43,8 @@ import libcore.util.Charsets;
  * The default charset is US_ASCII.
  */
 public class StrictLineReader implements Closeable {
-    private static final byte CR = (byte)'\r';
-    private static final byte LF = (byte)'\n';
+    private static final byte CR = (byte) '\r';
+    private static final byte LF = (byte) '\n';
 
     private final InputStream in;
     private final Charset charset;
@@ -112,8 +112,8 @@ public class StrictLineReader implements Closeable {
         if (capacity < 0) {
             throw new IllegalArgumentException("capacity <= 0");
         }
-        if (!(charset.equals(Charsets.US_ASCII) || charset.equals(Charsets.UTF_8) ||
-                charset.equals(Charsets.ISO_8859_1))) {
+        if (!(charset.equals(Charsets.US_ASCII) || charset.equals(Charsets.UTF_8)
+                || charset.equals(Charsets.ISO_8859_1))) {
             throw new IllegalArgumentException("Unsupported encoding");
         }
 
