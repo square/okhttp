@@ -72,7 +72,7 @@ public final class Libcore {
         }
     }
 
-    public static void makeTlsTolerant(SSLSocket socket, String socketHost, boolean tlsTolerant) {
+    public static void makeTlsTolerant(SSLSocket socket, String uriHost, boolean tlsTolerant) {
         if (!tlsTolerant) {
             socket.setEnabledProtocols(new String[] {"SSLv3"});
             return;
@@ -85,7 +85,7 @@ public final class Libcore {
                 setEnabledCompressionMethods.invoke(socket,
                         new Object[] {compressionMethods});
                 setUseSessionTickets.invoke(socket, true);
-                setHostname.invoke(socket, socketHost);
+                setHostname.invoke(socket, uriHost);
             } catch (InvocationTargetException e) {
                 throw new RuntimeException(e);
             } catch (IllegalAccessException e) {
