@@ -279,7 +279,7 @@ public class HttpEngine {
 
     protected final HttpConnection openSocketConnection() throws IOException {
         HttpConnection result = HttpConnection.connect(uri, getSslSocketFactory(),
-                policy.getProxy(), requiresTunnel(), policy.getConnectTimeout());
+                policy.getProxy(), policy.getConnectTimeout());
         Proxy proxy = result.getAddress().getProxy();
         if (proxy != null) {
             policy.setProxy(proxy);
@@ -578,10 +578,6 @@ public class HttpEngine {
             result = result + ":" + port;
         }
         return result;
-    }
-
-    protected boolean requiresTunnel() {
-        return false;
     }
 
     /**
