@@ -23,6 +23,7 @@ import com.google.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -54,6 +55,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
@@ -636,48 +638,47 @@ public final class URLConnectionTest extends TestCase {
         assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
     }
 
-//    /**
-//     * Tolerate bad https proxy response when using HttpResponseCache. http://b/6754912
-//     */
-//    public void testConnectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
-//        ProxyConfig proxyConfig = ProxyConfig.PROXY_SYSTEM_PROPERTY;
-//
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//
-//        initResponseCache();
-//
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), true);
-//        server.enqueue(new MockResponse()
-//                .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
-//                .clearHeaders()
-//                .setBody("bogus proxy connect response content")); // Key to reproducing b/6754912
-//        server.play();
-//
-//        URL url = new URL("https://android.com/foo");
-//        HttpsURLConnection connection = (HttpsURLConnection) proxyConfig.connect(server, url);
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//
-//        try {
-//            connection.connect();
-//            fail();
-//        } catch (IOException expected) {
-//            // Thrown when the connect causes SSLSocket.startHandshake() to throw
-//            // when it sees the "bogus proxy connect response content"
-//            // instead of a ServerHello handshake message.
-//        }
-//
-//        RecordedRequest connect = server.takeRequest();
-//        assertEquals("Connect line failure on proxy",
-//                "CONNECT android.com:443 HTTP/1.1", connect.getRequestLine());
-//        assertContains(connect.getHeaders(), "Host: android.com");
-//    }
-//
-//    private void initResponseCache() throws IOException {
-//        String tmp = System.getProperty("java.io.tmpdir");
-//        File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-//        cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
-//        ResponseCache.setDefault(cache);
-//    }
+    /**
+     * Tolerate bad https proxy response when using HttpResponseCache. http://b/6754912
+     */
+    public void testConnectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
+        ProxyConfig proxyConfig = ProxyConfig.PROXY_SYSTEM_PROPERTY;
+
+        initResponseCache();
+
+        server.useHttps(sslContext.getSocketFactory(), true);
+        MockResponse response = new MockResponse() // Key to reproducing b/6754912
+                .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+                .setBody("bogus proxy connect response content");
+        server.enqueue(response); // For the first TLS tolerant connection
+        server.enqueue(response); // For the backwards-compatible SSLv3 retry
+        server.play();
+
+        URL url = new URL("https://android.com/foo");
+        OkHttpsConnection connection = (OkHttpsConnection) proxyConfig.connect(server, url);
+        connection.setSSLSocketFactory(sslContext.getSocketFactory());
+
+        try {
+            connection.connect();
+            fail();
+        } catch (IOException expected) {
+            // Thrown when the connect causes SSLSocket.startHandshake() to throw
+            // when it sees the "bogus proxy connect response content"
+            // instead of a ServerHello handshake message.
+        }
+
+        RecordedRequest connect = server.takeRequest();
+        assertEquals("Connect line failure on proxy",
+                "CONNECT android.com:443 HTTP/1.1", connect.getRequestLine());
+        assertContains(connect.getHeaders(), "Host: android.com");
+    }
+
+    private void initResponseCache() throws IOException {
+        String tmp = System.getProperty("java.io.tmpdir");
+        File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
+        cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
+        ResponseCache.setDefault(cache);
+    }
 
     /**
      * Test which headers are sent unencrypted to the HTTP proxy.

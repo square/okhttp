@@ -266,8 +266,6 @@ public abstract class OkHttpsConnection extends OkHttpConnection {
 
     /**
      * Returns the hostname verifier used by this instance.
-     *
-     * @return the hostname verifier used by this instance.
      */
     public HostnameVerifier getHostnameVerifier() {
         return hostnameVerifier;
@@ -290,8 +288,6 @@ public abstract class OkHttpsConnection extends OkHttpConnection {
 
     /**
      * Returns the SSL socket factory used by this instance.
-     *
-     * @return the SSL socket factory used by this instance.
      */
     public SSLSocketFactory getSSLSocketFactory() {
         return sslSocketFactory;

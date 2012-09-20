@@ -116,21 +116,21 @@ final class HttpConnection {
          * for the SSL socket.
          */
         int bufferSize = 128;
-        inputStream = address.requiresTunnel
+        inputStream = address.requiresTunnel()
                 ? socket.getInputStream()
                 : new BufferedInputStream(socket.getInputStream(), bufferSize);
         outputStream = socket.getOutputStream();
     }
 
     public static HttpConnection connect(URI uri, SSLSocketFactory sslSocketFactory,
-            Proxy proxy, boolean requiresTunnel, int connectTimeout) throws IOException {
+            Proxy proxy, int connectTimeout) throws IOException {
         /*
          * Try an explicitly-specified proxy.
          */
         if (proxy != null) {
             Address address = (proxy.type() == Proxy.Type.DIRECT)
                     ? new Address(uri, sslSocketFactory)
-                    : new Address(uri, sslSocketFactory, proxy, requiresTunnel);
+                    : new Address(uri, sslSocketFactory, proxy);
             return HttpConnectionPool.INSTANCE.get(address, connectTimeout);
         }
 
@@ -148,8 +148,7 @@ final class HttpConnection {
                     continue;
                 }
                 try {
-                    Address address = new Address(uri, sslSocketFactory,
-                            selectedProxy, requiresTunnel);
+                    Address address = new Address(uri, sslSocketFactory, selectedProxy);
                     return HttpConnectionPool.INSTANCE.get(address, connectTimeout);
                 } catch (IOException e) {
                     // failed to connect, tell it to the selector
@@ -293,7 +292,6 @@ final class HttpConnection {
      */
     public static final class Address {
         private final Proxy proxy;
-        private final boolean requiresTunnel;
         private final String uriHost;
         private final int uriPort;
         private final String socketHost;
@@ -302,7 +300,6 @@ final class HttpConnection {
 
         public Address(URI uri, SSLSocketFactory sslSocketFactory) throws UnknownHostException {
             this.proxy = null;
-            this.requiresTunnel = false;
             this.uriHost = uri.getHost();
             this.uriPort = Libcore.getEffectivePort(uri);
             this.sslSocketFactory = sslSocketFactory;
@@ -313,16 +310,9 @@ final class HttpConnection {
             }
         }
 
-        /**
-         * @param requiresTunnel true if the HTTP connection needs to tunnel one
-         *     protocol over another, such as when using HTTPS through an HTTP
-         *     proxy. When doing so, we must avoid buffering bytes intended for
-         *     the higher-level protocol.
-         */
-        public Address(URI uri, SSLSocketFactory sslSocketFactory,
-                Proxy proxy, boolean requiresTunnel) throws UnknownHostException {
+        public Address(URI uri, SSLSocketFactory sslSocketFactory, Proxy proxy)
+                throws UnknownHostException {
             this.proxy = proxy;
-            this.requiresTunnel = requiresTunnel;
             this.uriHost = uri.getHost();
             this.uriPort = Libcore.getEffectivePort(uri);
             this.sslSocketFactory = sslSocketFactory;
@@ -350,8 +340,7 @@ final class HttpConnection {
                 return Objects.equal(this.proxy, that.proxy)
                         && this.uriHost.equals(that.uriHost)
                         && this.uriPort == that.uriPort
-                        && Objects.equal(this.sslSocketFactory, that.sslSocketFactory)
-                        && this.requiresTunnel == that.requiresTunnel;
+                        && Objects.equal(this.sslSocketFactory, that.sslSocketFactory);
             }
             return false;
         }
@@ -362,12 +351,20 @@ final class HttpConnection {
             result = 31 * result + uriPort;
             result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
             result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
-            result = 31 * result + (requiresTunnel ? 1 : 0);
             return result;
         }
 
         public HttpConnection connect(int connectTimeout) throws IOException {
             return new HttpConnection(this, connectTimeout);
+        }
+
+        /**
+         * Returns true if the HTTP connection needs to tunnel one protocol over
+         * another, such as when using HTTPS through an HTTP proxy. When doing so,
+         * we must avoid buffering bytes intended for the higher-level protocol.
+         */
+        public boolean requiresTunnel() {
+            return sslSocketFactory != null && proxy != null && proxy.type() == Proxy.Type.HTTP;
         }
     }
 }

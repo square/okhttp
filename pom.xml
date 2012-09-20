@@ -38,7 +38,7 @@
         <!-- Compilation -->
         <java.version>1.6</java.version>
         <npn.version>8.1.2.v20120308</npn.version>
-        <mockwebserver.version>20120731</mockwebserver.version>
+        <mockwebserver.version>20120905</mockwebserver.version>
         <bouncycastle.version>1.47</bouncycastle.version>
 
         <!-- Test Dependencies -->
