@@ -748,6 +748,26 @@ public final class URLConnectionTest extends TestCase {
         assertContainsNoneMatching(get.getHeaders(), "Proxy\\-Authorization.*");
     }
 
+    // Don't disconnect after building a tunnel with CONNECT
+    // http://code.google.com/p/android/issues/detail?id=37221
+    public void testProxyWithConnectionClose() throws IOException {
+        server.useHttps(sslContext.getSocketFactory(), true);
+        server.enqueue(new MockResponse()
+                .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+                .clearHeaders());
+        server.enqueue(new MockResponse().setBody("this response comes via a proxy"));
+        server.play();
+
+        URL url = new URL("https://android.com/foo");
+        OkHttpsConnection connection = (OkHttpsConnection) openConnection(
+                url, server.toProxyAddress());
+        connection.setRequestProperty("Connection", "close");
+        connection.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection.setHostnameVerifier(new RecordingHostnameVerifier());
+
+        assertContent("this response comes via a proxy", connection);
+    }
+
     public void testDisconnectedConnection() throws IOException {
         server.enqueue(new MockResponse().setBody("ABCDEFGHIJKLMNOPQR"));
         server.play();

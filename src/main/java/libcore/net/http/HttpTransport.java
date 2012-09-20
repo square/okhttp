@@ -211,10 +211,16 @@ final class HttpTransport implements Transport {
             return false;
         }
 
-        // If the headers specify that the connection shouldn't be reused, don't reuse it.
+        // If the request specified that the connection shouldn't be reused,
+        // don't reuse it. This advice doesn't apply to CONNECT requests because
+        // the "Connection: close" header goes the origin server, not the proxy.
         if (httpEngine.requestHeaders.hasConnectionClose()
-                || (httpEngine.responseHeaders != null
-                && httpEngine.responseHeaders.hasConnectionClose())) {
+                && httpEngine.method != HttpEngine.CONNECT) {
+            return false;
+        }
+
+        // If the response specified that the connection shouldn't be reused, don't reuse it.
+        if (httpEngine.responseHeaders != null && httpEngine.responseHeaders.hasConnectionClose()) {
             return false;
         }
 
