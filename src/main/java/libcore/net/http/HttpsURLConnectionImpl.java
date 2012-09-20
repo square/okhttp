@@ -452,7 +452,7 @@ public final class HttpsURLConnectionImpl extends OkHttpsConnection {
             // make an SSL Tunnel on the first message pair of each SSL + proxy connection
             if (connection == null) {
                 connection = openSocketConnection();
-                if (connection.getAddress().getProxy() != null) {
+                if (connection.getAddress().requiresTunnel()) {
                     makeTunnel(policy, connection, getRequestHeaders());
                 }
             }
@@ -526,10 +526,6 @@ public final class HttpsURLConnectionImpl extends OkHttpsConnection {
         public ProxyConnectEngine(HttpURLConnectionImpl policy, RawHeaders requestHeaders,
                 HttpConnection connection) throws IOException {
             super(policy, HttpEngine.CONNECT, requestHeaders, connection, null);
-        }
-
-        @Override protected boolean requiresTunnel() {
-            return true;
         }
     }
 }
