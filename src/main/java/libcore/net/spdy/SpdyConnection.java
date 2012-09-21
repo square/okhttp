@@ -43,6 +43,27 @@ public final class SpdyConnection implements Closeable {
     static final int FLAG_FIN = 0x01;
     static final int FLAG_UNIDIRECTIONAL = 0x02;
 
+    /** Peer request to clear durable settings. */
+    static final int FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x01;
+    /** Sent by servers only. The peer requests this setting persisted for future connections. */
+    static final int FLAG_SETTINGS_PERSIST_VALUE = 0x1;
+    /** Sent by clients only. The client is reminding the server of a persisted value. */
+    static final int FLAG_SETTINGS_PERSISTED = 0x2;
+    /** Sender's estimate of max incoming kbps. */
+    static final int SETTINGS_UPLOAD_BANDWIDTH = 0x01;
+    /** Sender's estimate of max outgoing kbps. */
+    static final int SETTINGS_DOWNLOAD_BANDWIDTH = 0x02;
+    /** Sender's estimate of milliseconds between sending a request and receiving a response. */
+    static final int SETTINGS_ROUND_TRIP_TIME = 0x03;
+    /** Sender's maximum number of concurrent streams. */
+    static final int SETTINGS_MAX_CONCURRENT_STREAMS = 0x04;
+    /** Current CWND in Packets. */
+    static final int SETTINGS_CURRENT_CWND = 0x05;
+    /** Retransmission rate. Percentage */
+    static final int SETTINGS_DOWNLOAD_RETRANS_RATE = 0x06;
+    /** Window size in bytes. */
+    static final int SETTINGS_INITIAL_WINDOW_SIZE = 0x07;
+
     static final int TYPE_EOF = -1;
     static final int TYPE_DATA = 0x00;
     static final int TYPE_SYN_STREAM = 0x01;
@@ -61,6 +82,9 @@ public final class SpdyConnection implements Closeable {
     private final SpdyWriter spdyWriter;
     private final Executor executor;
 
+    /** The maximum number of concurrent streams permitted by the peer, or -1 for no limit. */
+    int peerMaxConcurrentStreams;
+
     /**
      * User code to run in response to an incoming stream. This must not be run
      * on the read thread, otherwise a deadlock is possible.
@@ -75,11 +99,12 @@ public final class SpdyConnection implements Closeable {
         spdyReader = new SpdyReader(builder.in);
         spdyWriter = new SpdyWriter(builder.out);
         handler = builder.handler;
+        clearSettings();
 
         String name = isClient() ? "ClientReader" : "ServerReader";
         executor = builder.executor != null
                 ? builder.executor
-                : Executors.newCachedThreadPool(Threads.newThreadFactory(name));
+                : Executors.newCachedThreadPool(Threads.newThreadFactory(name, true));
         executor.execute(new Reader());
     }
 
@@ -88,6 +113,26 @@ public final class SpdyConnection implements Closeable {
      */
     public boolean isClient() {
         return nextStreamId % 2 == 1;
+    }
+
+    /**
+     * Resets this connection's settings to their default values.
+     */
+    private synchronized void clearSettings() {
+        peerMaxConcurrentStreams = -1;
+    }
+
+    /**
+     * Receive an incoming setting from a peer. This SPDY client doesn't care
+     * about most settings, and so it doesn't save them.
+     * https://github.com/square/okhttp/issues/32
+     */
+    private synchronized void receiveSetting(int id, int idFlags, int value) {
+        switch (id) {
+        case SETTINGS_MAX_CONCURRENT_STREAMS:
+            peerMaxConcurrentStreams = value;
+            break;
+        }
     }
 
     private SpdyStream getStream(int id) {
@@ -264,8 +309,23 @@ public final class SpdyConnection implements Closeable {
                 return true;
 
             case SpdyConnection.TYPE_SETTINGS:
-                // TODO: implement
-                System.out.println("Unimplemented TYPE_SETTINGS frame discarded");
+                int numberOfEntries = spdyReader.in.readInt();
+                if (spdyReader.length != 4 + numberOfEntries * 8) {
+                    // TODO: DIE
+                }
+                if ((spdyReader.flags & FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0) {
+                    clearSettings();
+                }
+                for (int i = 0; i < numberOfEntries; i++) {
+                    int w1 = spdyReader.in.readInt();
+                    int value = spdyReader.in.readInt();
+                    // The ID is a 24 bit little-endian value, so 0xabcdefxx becomes 0x00efcdab.
+                    int id = ((w1 & 0xff000000) >>> 24)
+                            | ((w1 & 0xff0000) >>> 8)
+                            | ((w1 & 0xff00) << 8);
+                    int idFlags = (w1 & 0xff);
+                    receiveSetting(id, idFlags, value);
+                }
                 return true;
 
             case SpdyConnection.TYPE_NOOP:

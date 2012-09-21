@@ -93,4 +93,33 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(0, synStream.reader.associatedStreamId);
         assertEquals(Arrays.asList("b", "banana"), synStream.reader.nameValueBlock);
     }
+
+    public void testServerSendsSettingsToClient() throws Exception {
+        // write the mocking script
+        SpdyWriter newStream = peer.sendFrame();
+        newStream.flags = SpdyConnection.FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS;
+        newStream.settings(1);
+        newStream.setting(SpdyConnection.SETTINGS_MAX_CONCURRENT_STREAMS,
+                SpdyConnection.FLAG_SETTINGS_PERSIST_VALUE, 10);
+        // TODO: send a 'ping' frame.
+        peer.play();
+
+        // play it back
+        IncomingStreamHandler handler = new IncomingStreamHandler() {
+            @Override public void receive(SpdyStream stream) throws IOException {
+                assertEquals(Arrays.asList("a", "android"), stream.getRequestHeaders());
+                assertEquals(-1, stream.getRstStatusCode());
+                stream.reply(Arrays.asList("b", "banana"));
+            }
+        };
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+                .handler(handler)
+                .build();
+
+        // TODO: wait for the ping response, which better and faster than this fragile sleep.
+        Thread.sleep(1000);
+        synchronized (connection) {
+            assertEquals(10, connection.peerMaxConcurrentStreams);
+        }
+    }
 }
