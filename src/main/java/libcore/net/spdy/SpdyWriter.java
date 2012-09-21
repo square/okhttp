@@ -38,6 +38,7 @@ final class SpdyWriter {
     public List<String> nameValueBlock;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
+    private int settingsRemaining = 0;
 
     SpdyWriter(OutputStream out) {
         this.out = new DataOutputStream(out);
@@ -85,6 +86,7 @@ final class SpdyWriter {
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(streamId & 0x7fffffff);
         out.writeInt(statusCode);
+        out.flush();
     }
 
     public void data(byte[] data) throws IOException {
@@ -104,5 +106,37 @@ final class SpdyWriter {
             nameValueBlockOut.write(s.getBytes("UTF-8"));
         }
         nameValueBlockOut.flush();
+    }
+
+    /**
+     * Begins a settings frame with {@code numberOfEntries} settings. Calls to
+     * this method <strong>must</strong> be followed by {@code numberOfEntries}
+     * calls to {@link #setting}.
+     */
+    public void settings(int numberOfEntries) throws IOException {
+        if (settingsRemaining != 0) throw new IllegalStateException();
+        settingsRemaining = numberOfEntries;
+        int type = SpdyConnection.TYPE_SETTINGS;
+        int length = 4 + numberOfEntries * 8;
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.writeInt(numberOfEntries);
+    }
+
+    /**
+     * Writes a single setting. Must be preceded by a call to {@link #settings}.
+     */
+    public void setting(int settingId, int settingFlag, int value) throws IOException {
+        if (settingsRemaining < 1) throw new IllegalStateException();
+        settingsRemaining--;
+        // settingId 0x00efcdab and settingFlag 0x12 combine to 0xabcdef12.
+        out.writeInt(((settingId & 0xff0000) >>> 8)
+                | ((settingId & 0xff00) << 8)
+                | ((settingId & 0xff) << 24)
+                | (settingFlag & 0xff));
+        out.writeInt(value);
+        if (settingsRemaining == 0) {
+            out.flush();
+        }
     }
 }
