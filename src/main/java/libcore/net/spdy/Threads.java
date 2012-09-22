@@ -19,10 +19,12 @@ package libcore.net.spdy;
 import java.util.concurrent.ThreadFactory;
 
 final class Threads {
-    public static ThreadFactory newThreadFactory(final String name) {
+    public static ThreadFactory newThreadFactory(final String name, final boolean daemon) {
         return new ThreadFactory() {
             @Override public Thread newThread(Runnable r) {
-                return new Thread(r, name);
+                Thread result = new Thread(r, name);
+                result.setDaemon(daemon);
+                return result;
             }
         };
     }

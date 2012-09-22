@@ -112,6 +112,9 @@ final class SpdyReader {
                 readSynReset();
                 return SpdyConnection.TYPE_RST_STREAM;
 
+            case SpdyConnection.TYPE_SETTINGS:
+                return SpdyConnection.TYPE_SETTINGS;
+
             default:
                 readControlFrame();
                 return type;
@@ -128,7 +131,7 @@ final class SpdyReader {
         int s3 = in.readShort();
         streamId = w1 & 0x7fffffff;
         associatedStreamId = w2 & 0x7fffffff;
-        priority = s3 & 0xc000 >> 14;
+        priority = s3 & 0xc000 >>> 14;
         // int unused = s3 & 0x3fff;
         nameValueBlock = readNameValueBlock(length - 10);
     }

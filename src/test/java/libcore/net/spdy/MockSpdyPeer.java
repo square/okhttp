@@ -40,7 +40,7 @@ public final class MockSpdyPeer {
     private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
     private int port;
     private final Executor executor = Executors.newCachedThreadPool(
-            Threads.newThreadFactory("MockSpdyPeer"));
+            Threads.newThreadFactory("MockSpdyPeer", true));
 
     public void acceptFrame() {
         frameCount++;
