@@ -114,7 +114,9 @@ final class SpdyWriter {
      * calls to {@link #setting}.
      */
     public void settings(int numberOfEntries) throws IOException {
-        if (settingsRemaining != 0) throw new IllegalStateException();
+        if (settingsRemaining != 0) {
+            throw new IllegalStateException();
+        }
         settingsRemaining = numberOfEntries;
         int type = SpdyConnection.TYPE_SETTINGS;
         int length = 4 + numberOfEntries * 8;
@@ -127,7 +129,9 @@ final class SpdyWriter {
      * Writes a single setting. Must be preceded by a call to {@link #settings}.
      */
     public void setting(int settingId, int settingFlag, int value) throws IOException {
-        if (settingsRemaining < 1) throw new IllegalStateException();
+        if (settingsRemaining < 1) {
+            throw new IllegalStateException();
+        }
         settingsRemaining--;
         // settingId 0x00efcdab and settingFlag 0x12 combine to 0xabcdef12.
         out.writeInt(((settingId & 0xff0000) >>> 8)
