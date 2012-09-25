@@ -376,7 +376,7 @@ public final class RawHeaders {
             String name = nameValueBlock.get(i);
             String values = nameValueBlock.get(i + 1);
             for (int start = 0; start < values.length();) {
-                int end = values.indexOf(start, '\0');
+                int end = values.indexOf('\0', start);
                 if (end == -1) {
                     end = values.length();
                 }
