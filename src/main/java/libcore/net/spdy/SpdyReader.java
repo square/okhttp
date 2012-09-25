@@ -87,7 +87,7 @@ final class SpdyReader {
         try {
             w1 = in.readInt();
         } catch (EOFException e) {
-            return SpdyConnection.TYPE_EOF;
+            return type = SpdyConnection.TYPE_EOF;
         }
         int w2 = in.readInt();
 
@@ -125,7 +125,7 @@ final class SpdyReader {
             }
         } else {
             id = w1 & 0x7fffffff;
-            return SpdyConnection.TYPE_DATA;
+            return type = SpdyConnection.TYPE_DATA;
         }
     }
 
