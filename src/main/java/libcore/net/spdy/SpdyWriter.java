@@ -30,8 +30,8 @@ import java.util.zip.DeflaterOutputStream;
 final class SpdyWriter {
     final DataOutputStream out;
     public int flags;
-    public int streamId;
-    public int associatedStreamId;
+    public int id;
+    public int associatedId;
     public int priority;
     public int statusCode;
 
@@ -58,8 +58,8 @@ final class SpdyWriter {
         int unused = 0;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(streamId & 0x7fffffff);
-        out.writeInt(associatedStreamId & 0x7fffffff);
+        out.writeInt(id & 0x7fffffff);
+        out.writeInt(associatedId & 0x7fffffff);
         out.writeShort((priority & 0x3) << 30 | (unused & 0x3FFF) << 16);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
@@ -73,7 +73,7 @@ final class SpdyWriter {
 
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(streamId & 0x7fffffff);
+        out.writeInt(id & 0x7fffffff);
         out.writeShort(unused);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
@@ -84,14 +84,14 @@ final class SpdyWriter {
         int length = 8;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(streamId & 0x7fffffff);
+        out.writeInt(id & 0x7fffffff);
         out.writeInt(statusCode);
         out.flush();
     }
 
     public void data(byte[] data) throws IOException {
         int length = data.length;
-        out.writeInt(streamId & 0x7fffffff);
+        out.writeInt(id & 0x7fffffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.write(data);
         out.flush();
@@ -142,5 +142,14 @@ final class SpdyWriter {
         if (settingsRemaining == 0) {
             out.flush();
         }
+    }
+
+    public void ping() throws IOException {
+        int type = SpdyConnection.TYPE_PING;
+        int length = 4;
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.writeInt(id);
+        out.flush();
     }
 }
