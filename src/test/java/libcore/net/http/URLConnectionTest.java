@@ -78,13 +78,6 @@ import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
  * Android's URLConnectionTest.
  */
 public final class URLConnectionTest extends TestCase {
-
-    private static final Authenticator SIMPLE_AUTHENTICATOR = new Authenticator() {
-        protected PasswordAuthentication getPasswordAuthentication() {
-            return new PasswordAuthentication("username", "password".toCharArray());
-        }
-    };
-
     /** base64("username:password") */
     private static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
@@ -717,7 +710,7 @@ public final class URLConnectionTest extends TestCase {
     }
 
     public void testProxyAuthenticateOnConnect() throws Exception {
-        Authenticator.setDefault(SIMPLE_AUTHENTICATOR);
+        Authenticator.setDefault(new RecordingAuthenticator());
         server.useHttps(sslContext.getSocketFactory(), true);
         server.enqueue(new MockResponse()
                 .setResponseCode(407)
@@ -1069,7 +1062,7 @@ public final class URLConnectionTest extends TestCase {
         server.enqueue(pleaseAuthenticate);
         server.play();
 
-        Authenticator.setDefault(SIMPLE_AUTHENTICATOR);
+        Authenticator.setDefault(new RecordingAuthenticator());
         OkHttpConnection connection = openConnection(server.getUrl("/"));
         connection.setDoOutput(true);
         byte[] requestBody = { 'A', 'B', 'C', 'D' };
@@ -1094,36 +1087,78 @@ public final class URLConnectionTest extends TestCase {
     }
 
     public void testNonStandardAuthenticationScheme() throws Exception {
-        RecordingAuthenticator authenticator = new RecordingAuthenticator();
-        Authenticator.setDefault(authenticator);
-        MockResponse pleaseAuthenticate = new MockResponse()
-                .setResponseCode(401)
-                .addHeader("WWW-Authenticate: Foo")
-                .setBody("Please authenticate.");
-        server.enqueue(pleaseAuthenticate);
-        server.play();
-
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
-        assertEquals(401, connection.getResponseCode());
-        assertEquals(Collections.<String>emptyList(), authenticator.calls);
+        List<String> calls = authCallsForHeader("WWW-Authenticate: Foo");
+        assertEquals(Collections.<String>emptyList(), calls);
     }
 
     public void testNonStandardAuthenticationSchemeWithRealm() throws Exception {
-        RecordingAuthenticator authenticator = new RecordingAuthenticator();
+        List<String> calls = authCallsForHeader("WWW-Authenticate: Foo realm=\"Bar\"");
+        assertEquals(1, calls.size());
+        String call = calls.get(0);
+        assertTrue(call, call.contains("scheme=Foo"));
+        assertTrue(call, call.contains("prompt=Bar"));
+    }
+
+    // Digest auth is currently unsupported. Test that digest requests should fail reasonably.
+    // http://code.google.com/p/android/issues/detail?id=11140
+    public void testDigestAuthentication() throws Exception {
+        List<String> calls = authCallsForHeader("WWW-Authenticate: Digest "
+                + "realm=\"testrealm@host.com\", qop=\"auth,auth-int\", "
+                + "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\", "
+                + "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\"");
+        assertEquals(1, calls.size());
+        String call = calls.get(0);
+        assertTrue(call, call.contains("scheme=Digest"));
+        assertTrue(call, call.contains("prompt=testrealm@host.com"));
+    }
+
+    public void testAllAttributesSetInServerAuthenticationCallbacks() throws Exception {
+        List<String> calls = authCallsForHeader("WWW-Authenticate: Basic realm=\"Bar\"");
+        assertEquals(1, calls.size());
+        URL url = server.getUrl("/");
+        String call = calls.get(0);
+        assertTrue(call, call.contains("host=" + url.getHost()));
+        assertTrue(call, call.contains("port=" + url.getPort()));
+        assertTrue(call, call.contains("site=" + InetAddress.getAllByName(url.getHost())[0]));
+        assertTrue(call, call.contains("url=" + url));
+        assertTrue(call, call.contains("type=" + Authenticator.RequestorType.SERVER));
+        assertTrue(call, call.contains("prompt=Bar"));
+        assertTrue(call, call.contains("protocol=http"));
+        assertTrue(call, call.toLowerCase().contains("scheme=basic")); // lowercase for the RI.
+    }
+
+    public void testAllAttributesSetInProxyAuthenticationCallbacks() throws Exception {
+        List<String> calls = authCallsForHeader("Proxy-Authenticate: Basic realm=\"Bar\"");
+        assertEquals(1, calls.size());
+        URL url = server.getUrl("/");
+        String call = calls.get(0);
+        assertTrue(call, call.contains("host=" + url.getHost()));
+        assertTrue(call, call.contains("port=" + url.getPort()));
+        assertTrue(call, call.contains("site=" + InetAddress.getAllByName(url.getHost())[0]));
+        assertTrue(call, call.contains("url=http://android.com"));
+        assertTrue(call, call.contains("type=" + Authenticator.RequestorType.PROXY));
+        assertTrue(call, call.contains("prompt=Bar"));
+        assertTrue(call, call.contains("protocol=http"));
+        assertTrue(call, call.toLowerCase().contains("scheme=basic")); // lowercase for the RI.
+    }
+
+    private List<String> authCallsForHeader(String authHeader) throws IOException {
+        boolean proxy = authHeader.startsWith("Proxy-");
+        int responseCode = proxy ? 407 : 401;
+        RecordingAuthenticator authenticator = new RecordingAuthenticator(null);
         Authenticator.setDefault(authenticator);
         MockResponse pleaseAuthenticate = new MockResponse()
-                .setResponseCode(401)
-                .addHeader("WWW-Authenticate: Foo realm=\"Bar\"")
+                .setResponseCode(responseCode)
+                .addHeader(authHeader)
                 .setBody("Please authenticate.");
         server.enqueue(pleaseAuthenticate);
         server.play();
 
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
-        assertEquals(401, connection.getResponseCode());
-        assertEquals(1, authenticator.calls.size());
-        String call = authenticator.calls.get(0);
-        assertTrue(call, call.contains("scheme=Foo"));
-        assertTrue(call, call.contains("prompt=Bar"));
+        OkHttpConnection connection = proxy
+                ? openConnection(new URL("http://android.com"), server.toProxyAddress())
+                : openConnection(server.getUrl("/"));
+        assertEquals(responseCode, connection.getResponseCode());
+        return authenticator.calls;
     }
 
     public void testSetValidRequestMethod() throws Exception {
@@ -1283,7 +1318,7 @@ public final class URLConnectionTest extends TestCase {
         server.enqueue(new MockResponse().setBody("Successful auth!"));
         server.play();
 
-        Authenticator.setDefault(SIMPLE_AUTHENTICATOR);
+        Authenticator.setDefault(new RecordingAuthenticator());
         OkHttpConnection connection = openConnection(server.getUrl("/"));
         connection.setDoOutput(true);
         byte[] requestBody = { 'A', 'B', 'C', 'D' };
@@ -1318,7 +1353,7 @@ public final class URLConnectionTest extends TestCase {
         server.enqueue(new MockResponse().setBody("Successful auth!"));
         server.play();
 
-        Authenticator.setDefault(SIMPLE_AUTHENTICATOR);
+        Authenticator.setDefault(new RecordingAuthenticator());
         OkHttpConnection connection = openConnection(server.getUrl("/"));
         assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -2226,6 +2261,15 @@ public final class URLConnectionTest extends TestCase {
 
     private static class RecordingAuthenticator extends Authenticator {
         private final List<String> calls = new ArrayList<String>();
+        private final PasswordAuthentication authentication;
+
+        public RecordingAuthenticator(PasswordAuthentication authentication) {
+            this.authentication = authentication;
+        }
+
+        public RecordingAuthenticator() {
+            this(new PasswordAuthentication("username", "password".toCharArray()));
+        }
 
         @Override protected PasswordAuthentication getPasswordAuthentication() {
             this.calls.add("host=" + getRequestingHost()
@@ -2236,7 +2280,7 @@ public final class URLConnectionTest extends TestCase {
                     + " prompt=" + getRequestingPrompt()
                     + " protocol=" + getRequestingProtocol()
                     + " scheme=" + getRequestingScheme());
-            return null;
+            return authentication;
         }
     }
 }
