@@ -118,9 +118,13 @@ public final class SpdyStream {
 
     /**
      * Returns the reason why this stream was closed, or -1 if it closed
-     * normally or has not yet been closed.
+     * normally or has not yet been closed. Valid reasons are {@link
+     * #RST_PROTOCOL_ERROR}, {@link #RST_INVALID_STREAM}, {@link
+     * #RST_REFUSED_STREAM}, {@link #RST_UNSUPPORTED_VERSION}, {@link
+     * #RST_CANCEL}, {@link #RST_INTERNAL_ERROR} and {@link
+     * #RST_FLOW_CONTROL_ERROR}.
      */
-    public synchronized int getRstStatusCode() { // TODO: rename this?
+    public synchronized int getRstStatusCode() {
         return rstStatusCode;
     }
 

@@ -29,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import libcore.io.Streams;
 
 import static libcore.net.spdy.Threads.newThreadFactory;
 
@@ -162,16 +163,11 @@ public final class SpdyConnection implements Closeable {
     }
 
     private synchronized SpdyStream getStream(int id) {
-        SpdyStream stream = streams.get(id);
-        if (stream == null) {
-            // TODO: rst stream
-            throw new UnsupportedOperationException("TODO " + id + "; " + streams);
-        }
-        return stream;
+        return streams.get(id);
     }
 
-    synchronized void removeStream(int streamId) {
-        streams.remove(streamId);
+    synchronized SpdyStream removeStream(int streamId) {
+        return streams.remove(streamId);
     }
 
     /**
@@ -185,8 +181,8 @@ public final class SpdyConnection implements Closeable {
     public SpdyStream newStream(List<String> requestHeaders, boolean out, boolean in)
             throws IOException {
         int flags = (out ? 0 : FLAG_FIN) | (in ? 0 : FLAG_UNIDIRECTIONAL);
-        int associatedStreamId = 0;  // TODO
-        int priority = 0; // TODO
+        int associatedStreamId = 0;  // TODO: permit the caller to specify an associated stream.
+        int priority = 0; // TODO: permit the caller to specify a priority.
         SpdyStream stream;
         int streamId;
 
@@ -211,7 +207,7 @@ public final class SpdyConnection implements Closeable {
 
     void writeSynReply(int streamId, List<String> alternating) throws IOException {
         synchronized (spdyWriter) {
-            int flags = 0; // TODO
+            int flags = 0; // TODO: permit the caller to send FLAG_FIN
             spdyWriter.flags = flags;
             spdyWriter.id = streamId;
             spdyWriter.nameValueBlock = alternating;
@@ -239,8 +235,7 @@ public final class SpdyConnection implements Closeable {
 
     void writeSynReset(int streamId, int statusCode) throws IOException {
         synchronized (spdyWriter) {
-            int flags = 0; // TODO
-            spdyWriter.flags = flags;
+            spdyWriter.flags = 0;
             spdyWriter.id = streamId;
             spdyWriter.statusCode = statusCode;
             spdyWriter.synReset();
@@ -294,6 +289,11 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void close() throws IOException {
+        close(null);
+    }
+
+    private synchronized void close(Throwable reason) throws IOException {
+        // TODO: forward 'reason' to forced closed streams?
         // TODO: graceful close; send RST frames
         // TODO: close all streams to release waiting readers
         writeExecutor.shutdown();
@@ -337,12 +337,17 @@ public final class SpdyConnection implements Closeable {
 
     private class Reader implements Runnable {
         @Override public void run() {
+            Throwable failure = null;
             try {
                 while (readFrame()) {
                 }
-                close();
             } catch (Throwable e) {
-                e.printStackTrace(); // TODO
+                failure = e;
+            }
+
+            try {
+                close(failure);
+            } catch (IOException ignored) {
             }
         }
 
@@ -355,21 +360,26 @@ public final class SpdyConnection implements Closeable {
                 return false;
 
             case TYPE_DATA:
-                getStream(spdyReader.id)
-                        .receiveData(spdyReader.in, spdyReader.flags, spdyReader.length);
+                SpdyStream dataStream = getStream(spdyReader.id);
+                if (dataStream != null) {
+                    dataStream.receiveData(spdyReader.in, spdyReader.flags, spdyReader.length);
+                } else {
+                    writeSynResetLater(spdyReader.id, SpdyStream.RST_INVALID_STREAM);
+                    Streams.skipByReading(spdyReader.in, spdyReader.length);
+                }
                 return true;
 
             case TYPE_SYN_STREAM:
-                final SpdyStream stream = new SpdyStream(spdyReader.id, SpdyConnection.this,
+                final SpdyStream synStream = new SpdyStream(spdyReader.id, SpdyConnection.this,
                         spdyReader.nameValueBlock, spdyReader.flags);
-                SpdyStream previous = streams.put(spdyReader.id, stream);
+                SpdyStream previous = streams.put(spdyReader.id, synStream);
                 if (previous != null) {
                     previous.close(SpdyStream.RST_PROTOCOL_ERROR);
                 }
                 callbackExecutor.execute(new Runnable() {
                     @Override public void run() {
                         try {
-                            handler.receive(stream);
+                            handler.receive(synStream);
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }
@@ -378,18 +388,27 @@ public final class SpdyConnection implements Closeable {
                 return true;
 
             case TYPE_SYN_REPLY:
-                // TODO: honor flags
-                getStream(spdyReader.id).receiveReply(spdyReader.nameValueBlock);
+                SpdyStream replyStream = getStream(spdyReader.id);
+                if (replyStream != null) {
+                    // TODO: honor incoming FLAG_FIN.
+                    replyStream.receiveReply(spdyReader.nameValueBlock);
+                } else {
+                    writeSynResetLater(spdyReader.id, SpdyStream.RST_INVALID_STREAM);
+                }
                 return true;
 
             case TYPE_RST_STREAM:
-                getStream(spdyReader.id).receiveRstStream(spdyReader.statusCode);
+                SpdyStream rstStream = removeStream(spdyReader.id);
+                if (rstStream != null) {
+                    rstStream.receiveRstStream(spdyReader.statusCode);
+                }
                 return true;
 
             case SpdyConnection.TYPE_SETTINGS:
                 int numberOfEntries = spdyReader.in.readInt();
-                if (spdyReader.length != 4 + numberOfEntries * 8) {
-                    // TODO: DIE
+                if (spdyReader.length != 4 + 8 * numberOfEntries) {
+                    throw new IOException("TYPE_SETTINGS frame length is inconsistent: "
+                            + spdyReader.length + " != 4 + 8 * " + numberOfEntries);
                 }
                 if ((spdyReader.flags & FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0) {
                     clearSettings();
@@ -427,8 +446,7 @@ public final class SpdyConnection implements Closeable {
                 throw new UnsupportedOperationException();
 
             default:
-                // TODO: throw IOException here?
-                return false;
+                throw new IOException("Unexpected frame: " + Integer.toHexString(spdyReader.type));
             }
         }
     }
