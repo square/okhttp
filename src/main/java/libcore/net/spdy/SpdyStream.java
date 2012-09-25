@@ -139,7 +139,7 @@ public final class SpdyStream {
      * Sends a reply.
      */
     // TODO: support reply with FIN
-    public synchronized OutputStream reply(List<String> responseHeaders) throws IOException {
+    public OutputStream reply(List<String> responseHeaders) throws IOException {
         if (responseHeaders == null) {
             throw new NullPointerException("responseHeaders == null");
         }
@@ -159,16 +159,19 @@ public final class SpdyStream {
     /**
      * Abnormally terminate this stream.
      */
-    public synchronized void close(int rstStatusCode) {
-        // TODO: no-op if inFinished == true and outFinished == true ?
-        if (this.rstStatusCode != -1) {
+    public void close(int rstStatusCode) {
+        synchronized (this) {
+            // TODO: no-op if inFinished == true and outFinished == true ?
+            if (this.rstStatusCode == -1) {
+                return; // Already closed.
+            }
             this.rstStatusCode = rstStatusCode;
             inFinished = true;
             outFinished = true;
-            connection.removeStream(id);
             notifyAll();
             connection.writeSynResetLater(id, rstStatusCode);
         }
+        connection.removeStream(id);
     }
 
     synchronized void receiveReply(List<String> strings) throws IOException {
