@@ -52,6 +52,13 @@ public final class MockSpdyPeer {
         return new SpdyWriter(frame.out);
     }
 
+    public void sendPing(int id) throws IOException {
+        SpdyWriter newStream = sendFrame();
+        newStream.flags = 0;
+        newStream.id = id;
+        newStream.ping();
+    }
+
     public int getPort() {
         return port;
     }

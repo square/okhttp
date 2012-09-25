@@ -61,7 +61,7 @@ final class SpdyReader {
     public final DataInputStream in;
     public int flags;
     public int length;
-    public int streamId;
+    public int id;
     public int associatedStreamId;
     public int version;
     public int type;
@@ -115,12 +115,16 @@ final class SpdyReader {
             case SpdyConnection.TYPE_SETTINGS:
                 return SpdyConnection.TYPE_SETTINGS;
 
+            case SpdyConnection.TYPE_PING:
+                readPing();
+                return SpdyConnection.TYPE_PING;
+
             default:
                 readControlFrame();
                 return type;
             }
         } else {
-            streamId = w1 & 0x7fffffff;
+            id = w1 & 0x7fffffff;
             return SpdyConnection.TYPE_DATA;
         }
     }
@@ -129,7 +133,7 @@ final class SpdyReader {
         int w1 = in.readInt();
         int w2 = in.readInt();
         int s3 = in.readShort();
-        streamId = w1 & 0x7fffffff;
+        id = w1 & 0x7fffffff;
         associatedStreamId = w2 & 0x7fffffff;
         priority = s3 & 0xc000 >>> 14;
         // int unused = s3 & 0x3fff;
@@ -139,12 +143,12 @@ final class SpdyReader {
     private void readSynReply() throws IOException {
         int w1 = in.readInt();
         in.readShort(); // unused
-        streamId = w1 & 0x7fffffff;
+        id = w1 & 0x7fffffff;
         nameValueBlock = readNameValueBlock(length - 6);
     }
 
     private void readSynReset() throws IOException {
-        streamId = in.readInt() & 0x7fffffff;
+        id = in.readInt() & 0x7fffffff;
         statusCode = in.readInt();
     }
 
@@ -219,5 +223,9 @@ final class SpdyReader {
         byte[] bytes = new byte[length];
         Streams.readFully(nameValueBlockIn, bytes);
         return new String(bytes, 0, length, "UTF-8");
+    }
+
+    private void readPing() throws IOException {
+        id = in.readInt();
     }
 }
