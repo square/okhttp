@@ -445,9 +445,18 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
         for (Challenge challenge : challenges) {
             // use the global authenticator to get the password
-            PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(
-                    getConnectToInetAddress(), getConnectToPort(), url.getProtocol(),
-                    challenge.realm, challenge.scheme);
+            PasswordAuthentication auth;
+            if (responseHeaders.getResponseCode() == HTTP_PROXY_AUTH) {
+                InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
+                auth = Authenticator.requestPasswordAuthentication(
+                        proxyAddress.getHostName(), getConnectToInetAddress(),
+                        proxyAddress.getPort(), url.getProtocol(), challenge.realm,
+                        challenge.scheme, url, Authenticator.RequestorType.PROXY);
+            } else {
+                auth = Authenticator.requestPasswordAuthentication(
+                        url.getHost(), getConnectToInetAddress(), url.getPort(), url.getProtocol(),
+                        challenge.realm, challenge.scheme, url, Authenticator.RequestorType.SERVER);
+            }
             if (auth == null) {
                 continue;
             }
