@@ -95,7 +95,7 @@ final class HttpConnectionPool {
      */
     public void recycle(HttpConnection connection) {
         if (connection.isSpdy()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException(); // TODO: just 'return' here?
         }
 
         Socket socket = connection.getSocket();
