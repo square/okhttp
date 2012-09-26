@@ -61,27 +61,6 @@ public final class SpdyConnection implements Closeable {
     static final int FLAG_FIN = 0x1;
     static final int FLAG_UNIDIRECTIONAL = 0x2;
 
-    /** Peer request to clear durable settings. */
-    static final int FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x1;
-    /** Sent by servers only. The peer requests this setting persisted for future connections. */
-    static final int FLAG_SETTINGS_PERSIST_VALUE = 0x1;
-    /** Sent by clients only. The client is reminding the server of a persisted value. */
-    static final int FLAG_SETTINGS_PERSISTED = 0x2;
-    /** Sender's estimate of max incoming kbps. */
-    static final int SETTINGS_UPLOAD_BANDWIDTH = 0x1;
-    /** Sender's estimate of max outgoing kbps. */
-    static final int SETTINGS_DOWNLOAD_BANDWIDTH = 0x2;
-    /** Sender's estimate of milliseconds between sending a request and receiving a response. */
-    static final int SETTINGS_ROUND_TRIP_TIME = 0x3;
-    /** Sender's maximum number of concurrent streams. */
-    static final int SETTINGS_MAX_CONCURRENT_STREAMS = 0x4;
-    /** Current CWND in Packets. */
-    static final int SETTINGS_CURRENT_CWND = 0x5;
-    /** Retransmission rate. Percentage */
-    static final int SETTINGS_DOWNLOAD_RETRANS_RATE = 0x6;
-    /** Window size in bytes. */
-    static final int SETTINGS_INITIAL_WINDOW_SIZE = 0x7;
-
     static final int TYPE_EOF = -1;
     static final int TYPE_DATA = 0x0;
     static final int TYPE_SYN_STREAM = 0x1;
@@ -113,8 +92,8 @@ public final class SpdyConnection implements Closeable {
     private Map<Integer, Ping> pings;
     private int nextPingId;
 
-    /** The maximum number of concurrent streams permitted by the peer, or -1 for no limit. */
-    int peerMaxConcurrentStreams;
+    /** Lazily-created settings for this connection. */
+    Settings settings;
 
     private SpdyConnection(Builder builder) {
         spdyReader = new SpdyReader(builder.in);
@@ -122,7 +101,6 @@ public final class SpdyConnection implements Closeable {
         handler = builder.handler;
         nextStreamId = builder.client ? 1 : 2;
         nextPingId = builder.client ? 1 : 2;
-        clearSettings();
 
         String prefix = isClient() ? "Spdy Client " : "Spdy Server ";
         readExecutor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
@@ -143,22 +121,14 @@ public final class SpdyConnection implements Closeable {
     }
 
     /**
-     * Resets this connection's settings to their default values.
+     * Receive an incoming setting from a peer.
      */
-    private synchronized void clearSettings() {
-        peerMaxConcurrentStreams = -1;
-    }
-
-    /**
-     * Receive an incoming setting from a peer. This SPDY client doesn't care
-     * about most settings, and so it doesn't save them.
-     * https://github.com/square/okhttp/issues/32
-     */
-    private synchronized void receiveSetting(int id, int idFlags, int value) {
-        switch (id) {
-        case SETTINGS_MAX_CONCURRENT_STREAMS:
-            peerMaxConcurrentStreams = value;
-            break;
+    private synchronized void receiveSettings(int flags, Settings settings) {
+        if (this.settings == null
+                || (flags & Settings.FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0) {
+            this.settings = settings;
+        } else {
+            this.settings.merge(settings);
         }
     }
 
@@ -194,12 +164,7 @@ public final class SpdyConnection implements Closeable {
                 streams.put(streamId, stream);
             }
 
-            spdyWriter.flags = flags;
-            spdyWriter.id = streamId;
-            spdyWriter.associatedId = associatedStreamId;
-            spdyWriter.priority = priority;
-            spdyWriter.nameValueBlock = requestHeaders;
-            spdyWriter.synStream();
+            spdyWriter.synStream(flags, streamId, associatedStreamId, priority, requestHeaders);
         }
 
         return stream;
@@ -208,10 +173,7 @@ public final class SpdyConnection implements Closeable {
     void writeSynReply(int streamId, List<String> alternating) throws IOException {
         synchronized (spdyWriter) {
             int flags = 0; // TODO: permit the caller to send FLAG_FIN
-            spdyWriter.flags = flags;
-            spdyWriter.id = streamId;
-            spdyWriter.nameValueBlock = alternating;
-            spdyWriter.synReply();
+            spdyWriter.synReply(flags, streamId, alternating);
         }
     }
 
@@ -235,10 +197,7 @@ public final class SpdyConnection implements Closeable {
 
     void writeSynReset(int streamId, int statusCode) throws IOException {
         synchronized (spdyWriter) {
-            spdyWriter.flags = 0;
-            spdyWriter.id = streamId;
-            spdyWriter.statusCode = statusCode;
-            spdyWriter.synReset();
+            spdyWriter.synReset(streamId, statusCode);
         }
     }
 
@@ -272,9 +231,7 @@ public final class SpdyConnection implements Closeable {
         if (ping != null) ping.send();
 
         synchronized (spdyWriter) {
-            spdyWriter.flags = 0;
-            spdyWriter.id = id;
-            spdyWriter.ping();
+            spdyWriter.ping(0, id);
         }
     }
 
@@ -405,24 +362,7 @@ public final class SpdyConnection implements Closeable {
                 return true;
 
             case SpdyConnection.TYPE_SETTINGS:
-                int numberOfEntries = spdyReader.in.readInt();
-                if (spdyReader.length != 4 + 8 * numberOfEntries) {
-                    throw new IOException("TYPE_SETTINGS frame length is inconsistent: "
-                            + spdyReader.length + " != 4 + 8 * " + numberOfEntries);
-                }
-                if ((spdyReader.flags & FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0) {
-                    clearSettings();
-                }
-                for (int i = 0; i < numberOfEntries; i++) {
-                    int w1 = spdyReader.in.readInt();
-                    int value = spdyReader.in.readInt();
-                    // The ID is a 24 bit little-endian value, so 0xabcdefxx becomes 0x00efcdab.
-                    int id = ((w1 & 0xff000000) >>> 24)
-                            | ((w1 & 0xff0000) >>> 8)
-                            | ((w1 & 0xff00) << 8);
-                    int idFlags = (w1 & 0xff);
-                    receiveSetting(id, idFlags, value);
-                }
+                receiveSettings(spdyReader.flags, spdyReader.settings);
                 return true;
 
             case SpdyConnection.TYPE_NOOP:

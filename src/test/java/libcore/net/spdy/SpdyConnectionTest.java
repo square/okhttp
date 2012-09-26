@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 
+import static libcore.net.spdy.Settings.PERSIST_VALUE;
 import static libcore.net.spdy.SpdyConnection.TYPE_PING;
 import static libcore.net.spdy.SpdyConnection.TYPE_RST_STREAM;
 import static libcore.net.spdy.SpdyConnection.TYPE_SYN_REPLY;
@@ -43,14 +44,8 @@ public final class SpdyConnectionTest extends TestCase {
     public void testClientCreatesStreamAndServerReplies() throws Exception {
         // write the mocking script
         peer.acceptFrame();
-        SpdyWriter reply = peer.sendFrame();
-        reply.id = 1;
-        reply.nameValueBlock = Arrays.asList("a", "android");
-        reply.synReply();
-        SpdyWriter replyData = peer.sendFrame();
-        replyData.flags = SpdyConnection.FLAG_FIN;
-        replyData.id = 1;
-        replyData.data("robot".getBytes("UTF-8"));
+        peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+        peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "robot".getBytes("UTF-8"));
         peer.acceptFrame();
         peer.play();
 
@@ -74,12 +69,7 @@ public final class SpdyConnectionTest extends TestCase {
 
     public void testServerCreatesStreamAndClientReplies() throws Exception {
         // write the mocking script
-        SpdyWriter newStream = peer.sendFrame();
-        newStream.flags = 0;
-        newStream.id = 2;
-        newStream.associatedId = 0;
-        newStream.nameValueBlock = Arrays.asList("a", "android");
-        newStream.synStream();
+        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
         peer.acceptFrame();
         peer.play();
 
@@ -110,7 +100,7 @@ public final class SpdyConnectionTest extends TestCase {
 
     public void testServerPingsClient() throws Exception {
         // write the mocking script
-        peer.sendPing(2);
+        peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
         peer.play();
 
@@ -129,7 +119,7 @@ public final class SpdyConnectionTest extends TestCase {
     public void testClientPingsServer() throws Exception {
         // write the mocking script
         peer.acceptFrame();
-        peer.sendPing(1);
+        peer.sendFrame().ping(0, 1);
         peer.play();
 
         // play it back
@@ -149,10 +139,10 @@ public final class SpdyConnectionTest extends TestCase {
 
     public void testUnexpectedPingIsNotReturned() throws Exception {
         // write the mocking script
-        peer.sendPing(2);
+        peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
-        peer.sendPing(3); // This ping will not be returned.
-        peer.sendPing(4);
+        peer.sendFrame().ping(0, 3); // This ping will not be returned.
+        peer.sendFrame().ping(0, 4);
         peer.acceptFrame();
         peer.play();
 
@@ -171,11 +161,10 @@ public final class SpdyConnectionTest extends TestCase {
     public void testServerSendsSettingsToClient() throws Exception {
         // write the mocking script
         SpdyWriter newStream = peer.sendFrame();
-        newStream.flags = SpdyConnection.FLAG_SETTINGS_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS;
-        newStream.settings(1);
-        newStream.setting(SpdyConnection.SETTINGS_MAX_CONCURRENT_STREAMS,
-                SpdyConnection.FLAG_SETTINGS_PERSIST_VALUE, 10);
-        peer.sendPing(2);
+        Settings settings = new Settings();
+        settings.set(Settings.MAX_CONCURRENT_STREAMS, PERSIST_VALUE, 10);
+        newStream.settings(Settings.FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS, settings);
+        peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
         peer.play();
 
@@ -186,18 +175,50 @@ public final class SpdyConnectionTest extends TestCase {
 
         peer.takeFrame(); // Guarantees that the Settings frame has been processed.
         synchronized (connection) {
-            assertEquals(10, connection.peerMaxConcurrentStreams);
+            assertEquals(10, connection.settings.getMaxConcurrentStreams(-1));
+        }
+    }
+
+    public void testMultipleSettingsFramesAreMerged() throws Exception {
+        // write the mocking script
+        SpdyWriter newStream = peer.sendFrame();
+        Settings settings1 = new Settings();
+        settings1.set(Settings.UPLOAD_BANDWIDTH, PERSIST_VALUE, 100);
+        settings1.set(Settings.DOWNLOAD_BANDWIDTH, PERSIST_VALUE, 200);
+        settings1.set(Settings.DOWNLOAD_RETRANS_RATE, 0, 300);
+        newStream.settings(0, settings1);
+        Settings settings2 = new Settings();
+        settings2.set(Settings.DOWNLOAD_BANDWIDTH, 0, 400);
+        settings2.set(Settings.DOWNLOAD_RETRANS_RATE, PERSIST_VALUE, 500);
+        settings2.set(Settings.MAX_CONCURRENT_STREAMS, PERSIST_VALUE, 600);
+        newStream.settings(0, settings2);
+        peer.sendFrame().ping(0, 2);
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+                .handler(REJECT_INCOMING_STREAMS)
+                .build();
+
+        peer.takeFrame(); // Guarantees that the Settings frame has been processed.
+        synchronized (connection) {
+            assertEquals(100, connection.settings.getUploadBandwidth(-1));
+            assertEquals(PERSIST_VALUE, connection.settings.flags(Settings.UPLOAD_BANDWIDTH));
+            assertEquals(400, connection.settings.getDownloadBandwidth(-1));
+            assertEquals(0, connection.settings.flags(Settings.DOWNLOAD_BANDWIDTH));
+            assertEquals(500, connection.settings.getDownloadRetransRate(-1));
+            assertEquals(PERSIST_VALUE, connection.settings.flags(Settings.DOWNLOAD_RETRANS_RATE));
+            assertEquals(600, connection.settings.getMaxConcurrentStreams(-1));
+            assertEquals(PERSIST_VALUE, connection.settings.flags(Settings.MAX_CONCURRENT_STREAMS));
         }
     }
 
     public void testBogusDataFrameDoesNotDisruptConnection() throws Exception {
         // write the mocking script
-        SpdyWriter unexpectedData = peer.sendFrame();
-        unexpectedData.flags = SpdyConnection.FLAG_FIN;
-        unexpectedData.id = 42;
-        unexpectedData.data("bogus".getBytes("UTF-8"));
+        peer.sendFrame().data(SpdyConnection.FLAG_FIN, 42, "bogus".getBytes("UTF-8"));
         peer.acceptFrame(); // RST_STREAM
-        peer.sendPing(2);
+        peer.sendFrame().ping(0, 2);
         peer.acceptFrame(); // PING
         peer.play();
 
@@ -219,13 +240,9 @@ public final class SpdyConnectionTest extends TestCase {
 
     public void testBogusReplyFrameDoesNotDisruptConnection() throws Exception {
         // write the mocking script
-        SpdyWriter unexpectedReply = peer.sendFrame();
-        unexpectedReply.nameValueBlock = Arrays.asList("a", "android");
-        unexpectedReply.flags = 0;
-        unexpectedReply.id = 42;
-        unexpectedReply.synReply();
+        peer.sendFrame().synReply(0, 42, Arrays.asList("a", "android"));
         peer.acceptFrame(); // RST_STREAM
-        peer.sendPing(2);
+        peer.sendFrame().ping(0, 2);
         peer.acceptFrame(); // PING
         peer.play();
 
