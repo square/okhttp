@@ -38,7 +38,7 @@ final class Settings {
     static final int DOWNLOAD_RETRANS_RATE = 0x6;
     /** Window size in bytes. */
     static final int INITIAL_WINDOW_SIZE = 0x7;
-    /** Total number of settings */
+    /** Total number of settings. */
     static final int COUNT = 0x8;
 
     /** Bitfield of which flags that values. */
