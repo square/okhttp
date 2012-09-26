@@ -29,16 +29,8 @@ import java.util.zip.DeflaterOutputStream;
  */
 final class SpdyWriter {
     final DataOutputStream out;
-    public int flags;
-    public int id;
-    public int associatedId;
-    public int priority;
-    public int statusCode;
-
-    public List<String> nameValueBlock;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
-    private int settingsRemaining = 0;
 
     SpdyWriter(OutputStream out) {
         this.out = new DataOutputStream(out);
@@ -50,54 +42,56 @@ final class SpdyWriter {
                 new DeflaterOutputStream(nameValueBlockBuffer, deflater, true));
     }
 
-    public void synStream() throws IOException {
-        writeNameValueBlockToBuffer();
+    public void synStream(int flags, int streamId, int associatedStreamId, int priority,
+            List<String> nameValueBlock) throws IOException {
+        writeNameValueBlockToBuffer(nameValueBlock);
         int length = 10 + nameValueBlockBuffer.size();
         int type = SpdyConnection.TYPE_SYN_STREAM;
 
         int unused = 0;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(id & 0x7fffffff);
-        out.writeInt(associatedId & 0x7fffffff);
+        out.writeInt(streamId & 0x7fffffff);
+        out.writeInt(associatedStreamId & 0x7fffffff);
         out.writeShort((priority & 0x3) << 30 | (unused & 0x3FFF) << 16);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
     }
 
-    public void synReply() throws IOException {
-        writeNameValueBlockToBuffer();
+    public void synReply(int flags, int streamId, List<String> nameValueBlock) throws IOException {
+        writeNameValueBlockToBuffer(nameValueBlock);
         int type = SpdyConnection.TYPE_SYN_REPLY;
         int length = nameValueBlockBuffer.size() + 6;
         int unused = 0;
 
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(id & 0x7fffffff);
+        out.writeInt(streamId & 0x7fffffff);
         out.writeShort(unused);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
     }
 
-    public void synReset() throws IOException {
+    public void synReset(int streamId, int statusCode) throws IOException {
+        int flags = 0;
         int type = SpdyConnection.TYPE_RST_STREAM;
         int length = 8;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(id & 0x7fffffff);
+        out.writeInt(streamId & 0x7fffffff);
         out.writeInt(statusCode);
         out.flush();
     }
 
-    public void data(byte[] data) throws IOException {
+    public void data(int flags, int streamId, byte[] data) throws IOException {
         int length = data.length;
-        out.writeInt(id & 0x7fffffff);
+        out.writeInt(streamId & 0x7fffffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.write(data);
         out.flush();
     }
 
-    private void writeNameValueBlockToBuffer() throws IOException {
+    private void writeNameValueBlockToBuffer(List<String> nameValueBlock) throws IOException {
         nameValueBlockBuffer.reset();
         int numberOfPairs = nameValueBlock.size() / 2;
         nameValueBlockOut.writeShort(numberOfPairs);
@@ -108,43 +102,27 @@ final class SpdyWriter {
         nameValueBlockOut.flush();
     }
 
-    /**
-     * Begins a settings frame with {@code numberOfEntries} settings. Calls to
-     * this method <strong>must</strong> be followed by {@code numberOfEntries}
-     * calls to {@link #setting}.
-     */
-    public void settings(int numberOfEntries) throws IOException {
-        if (settingsRemaining != 0) {
-            throw new IllegalStateException();
-        }
-        settingsRemaining = numberOfEntries;
+    public void settings(int flags, Settings settings) throws IOException {
         int type = SpdyConnection.TYPE_SETTINGS;
-        int length = 4 + numberOfEntries * 8;
+        int size = settings.size();
+        int length = 4 + size * 8;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-        out.writeInt(numberOfEntries);
+        out.writeInt(size);
+        for (int i = 0; i <= Settings.COUNT; i++) {
+            if (!settings.isSet(i)) continue;
+            int settingsFlags = settings.flags(i);
+            // settingId 0x00efcdab and settingFlags 0x12 combine to 0xabcdef12.
+            out.writeInt(((i & 0xff0000) >>> 8)
+                    | ((i & 0xff00) << 8)
+                    | ((i & 0xff) << 24)
+                    | (settingsFlags & 0xff));
+            out.writeInt(settings.get(i));
+        }
+        out.flush();
     }
 
-    /**
-     * Writes a single setting. Must be preceded by a call to {@link #settings}.
-     */
-    public void setting(int settingId, int settingFlag, int value) throws IOException {
-        if (settingsRemaining < 1) {
-            throw new IllegalStateException();
-        }
-        settingsRemaining--;
-        // settingId 0x00efcdab and settingFlag 0x12 combine to 0xabcdef12.
-        out.writeInt(((settingId & 0xff0000) >>> 8)
-                | ((settingId & 0xff00) << 8)
-                | ((settingId & 0xff) << 24)
-                | (settingFlag & 0xff));
-        out.writeInt(value);
-        if (settingsRemaining == 0) {
-            out.flush();
-        }
-    }
-
-    public void ping() throws IOException {
+    public void ping(int flags, int id) throws IOException {
         int type = SpdyConnection.TYPE_PING;
         int length = 4;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);

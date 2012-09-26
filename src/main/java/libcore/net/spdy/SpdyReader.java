@@ -71,6 +71,7 @@ final class SpdyReader {
     public List<String> nameValueBlock;
     private final DataInputStream nameValueBlockIn;
     private int compressedLimit;
+    public Settings settings;
 
     SpdyReader(InputStream in) {
         this.in = new DataInputStream(in);
@@ -113,6 +114,7 @@ final class SpdyReader {
                 return SpdyConnection.TYPE_RST_STREAM;
 
             case SpdyConnection.TYPE_SETTINGS:
+                readSettings();
                 return SpdyConnection.TYPE_SETTINGS;
 
             case SpdyConnection.TYPE_PING:
@@ -227,5 +229,24 @@ final class SpdyReader {
 
     private void readPing() throws IOException {
         id = in.readInt();
+    }
+
+    private void readSettings() throws IOException {
+        int numberOfEntries = in.readInt();
+        if (length != 4 + 8 * numberOfEntries) {
+            throw new IOException("TYPE_SETTINGS frame length is inconsistent: "
+                    + length + " != 4 + 8 * " + numberOfEntries);
+        }
+        settings = new Settings();
+        for (int i = 0; i < numberOfEntries; i++) {
+            int w1 = in.readInt();
+            int value = in.readInt();
+            // The ID is a 24 bit little-endian value, so 0xabcdefxx becomes 0x00efcdab.
+            int id = ((w1 & 0xff000000) >>> 24)
+                    | ((w1 & 0xff0000) >>> 8)
+                    | ((w1 & 0xff00) << 8);
+            int idFlags = (w1 & 0xff);
+            settings.set(id, idFlags, value);
+        }
     }
 }
