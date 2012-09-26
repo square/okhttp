@@ -181,17 +181,16 @@ public final class SpdyConnectionTest extends TestCase {
 
     public void testMultipleSettingsFramesAreMerged() throws Exception {
         // write the mocking script
-        SpdyWriter newStream = peer.sendFrame();
         Settings settings1 = new Settings();
         settings1.set(Settings.UPLOAD_BANDWIDTH, PERSIST_VALUE, 100);
         settings1.set(Settings.DOWNLOAD_BANDWIDTH, PERSIST_VALUE, 200);
         settings1.set(Settings.DOWNLOAD_RETRANS_RATE, 0, 300);
-        newStream.settings(0, settings1);
+        peer.sendFrame().settings(0, settings1);
         Settings settings2 = new Settings();
         settings2.set(Settings.DOWNLOAD_BANDWIDTH, 0, 400);
         settings2.set(Settings.DOWNLOAD_RETRANS_RATE, PERSIST_VALUE, 500);
         settings2.set(Settings.MAX_CONCURRENT_STREAMS, PERSIST_VALUE, 600);
-        newStream.settings(0, settings2);
+        peer.sendFrame().settings(0, settings2);
         peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
         peer.play();
