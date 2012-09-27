@@ -140,13 +140,24 @@ public final class SpdyStream {
     }
 
     /**
-     * Sends a reply.
+     * Sends a reply with 0 or more bytes of data to follow, which should be
+     * written to the returned output stream.
      */
-    // TODO: support reply with FIN
     public OutputStream reply(List<String> responseHeaders) throws IOException {
-        if (responseHeaders == null) {
-            throw new NullPointerException("responseHeaders == null");
-        }
+        reply(responseHeaders, 0);
+        return out;
+    }
+
+    /**
+     * Sends a reply with 0 bytes to follow.
+     */
+    public void replyNoContent(List<String> responseHeaders) throws IOException {
+        reply(responseHeaders, SpdyConnection.FLAG_FIN);
+        outFinished = true;
+    }
+
+    private void reply(List<String> responseHeaders, int flags) throws IOException {
+        if (responseHeaders == null) throw new NullPointerException("responseHeaders == null");
         if (isLocallyInitiated()) {
             throw new IllegalStateException("cannot reply to a locally initiated stream");
         }
@@ -156,8 +167,7 @@ public final class SpdyStream {
             }
             this.responseHeaders = responseHeaders;
         }
-        connection.writeSynReply(id, responseHeaders);
-        return out;
+        connection.writeSynReply(id, flags, responseHeaders);
     }
 
     /**

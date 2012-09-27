@@ -37,14 +37,18 @@ public final class SpdyServer implements IncomingStreamHandler {
         this.baseDirectory = baseDirectory;
     }
 
-    private void run() throws IOException {
+    private void run() throws Exception {
         ServerSocket serverSocket = new ServerSocket(8888);
         serverSocket.setReuseAddress(true);
 
         Socket socket = serverSocket.accept();
-        new SpdyConnection.Builder(false, socket)
+        SpdyConnection connection = new SpdyConnection.Builder(false, socket)
                 .handler(this)
                 .build();
+
+        // Chrome doesn't seem to like pings coming from the server:
+        // https://groups.google.com/forum/?fromgroups=#!topic/spdy-dev/NgTHYUQKWBY
+        // System.out.println("PING RTT TIME " + connection.ping().roundTripTime());
     }
 
     @Override public void receive(final SpdyStream stream) throws IOException {
@@ -103,7 +107,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         return file.getName().endsWith(".html") ? "text/html" : "text/plain";
     }
 
-    public static void main(String... args) throws IOException {
+    public static void main(String... args) throws Exception {
         if (args.length != 1 || args[0].startsWith("-")) {
             System.out.println("Usage: SpdyServer <base directory>");
             return;

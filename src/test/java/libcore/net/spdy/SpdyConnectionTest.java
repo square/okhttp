@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import junit.framework.TestCase;
 
 import static libcore.net.spdy.Settings.PERSIST_VALUE;
+import static libcore.net.spdy.SpdyConnection.FLAG_FIN;
 import static libcore.net.spdy.SpdyConnection.TYPE_PING;
 import static libcore.net.spdy.SpdyConnection.TYPE_RST_STREAM;
 import static libcore.net.spdy.SpdyConnection.TYPE_SYN_REPLY;
@@ -94,6 +95,32 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(0, reply.reader.flags);
         assertEquals(2, reply.reader.id);
         assertEquals(0, reply.reader.associatedStreamId);
+        assertEquals(Arrays.asList("b", "banana"), reply.reader.nameValueBlock);
+        assertEquals(1, receiveCount.get());
+    }
+
+    public void testReplyWithNoData() throws Exception {
+        // write the mocking script
+        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        final AtomicInteger receiveCount = new AtomicInteger();
+        IncomingStreamHandler handler = new IncomingStreamHandler() {
+            @Override public void receive(SpdyStream stream) throws IOException {
+                stream.replyNoContent(Arrays.asList("b", "banana"));
+                receiveCount.incrementAndGet();
+            }
+        };
+        new SpdyConnection.Builder(true, peer.openSocket())
+                .handler(handler)
+                .build();
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame reply = peer.takeFrame();
+        assertEquals(TYPE_SYN_REPLY, reply.reader.type);
+        assertEquals(FLAG_FIN, reply.reader.flags);
         assertEquals(Arrays.asList("b", "banana"), reply.reader.nameValueBlock);
         assertEquals(1, receiveCount.get());
     }
