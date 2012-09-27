@@ -102,13 +102,13 @@ public final class SpdyConnection implements Closeable {
         nextStreamId = builder.client ? 1 : 2;
         nextPingId = builder.client ? 1 : 2;
 
-        String prefix = isClient() ? "Spdy Client " : "Spdy Server ";
+        String prefix = builder.client ? "Spdy Client " : "Spdy Server ";
         readExecutor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Reader", true));
+                new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Reader", false));
         writeExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(), newThreadFactory(prefix + "Writer", true));
+                new LinkedBlockingQueue<Runnable>(), newThreadFactory(prefix + "Writer", false));
         callbackExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Callbacks", true));
+                new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Callbacks", false));
 
         readExecutor.execute(new Reader());
     }
@@ -170,9 +170,8 @@ public final class SpdyConnection implements Closeable {
         return stream;
     }
 
-    void writeSynReply(int streamId, List<String> alternating) throws IOException {
+    void writeSynReply(int streamId, int flags, List<String> alternating) throws IOException {
         synchronized (spdyWriter) {
-            int flags = 0; // TODO: permit the caller to send FLAG_FIN
             spdyWriter.synReply(flags, streamId, alternating);
         }
     }
