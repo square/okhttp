@@ -21,7 +21,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
@@ -34,7 +33,6 @@ import libcore.io.Streams;
  * Read version 2 SPDY frames.
  */
 final class SpdyReader {
-    public static final Charset UTF_8 = Charset.forName("UTF-8");
     private static final String DICTIONARY_STRING = ""
             + "optionsgetheadpostputdeletetraceacceptaccept-charsetaccept-encodingaccept-"
             + "languageauthorizationexpectfromhostif-modified-sinceif-matchif-none-matchi"
