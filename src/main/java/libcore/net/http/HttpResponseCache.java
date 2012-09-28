@@ -181,8 +181,8 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
      * not updated. If the stored response has changed since {@code
      * conditionalCacheHit} was returned, this does nothing.
      */
-    @Override
-    public void update(CacheResponse conditionalCacheHit, OkHttpConnection httpConnection) {
+    @Override public void update(CacheResponse conditionalCacheHit, OkHttpConnection httpConnection)
+            throws IOException {
         HttpEngine httpEngine = getHttpEngine(httpConnection);
         URI uri = httpEngine.getUri();
         ResponseHeaders response = httpEngine.getResponseHeaders();
@@ -408,11 +408,12 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
             }
         }
 
-        public Entry(URI uri, RawHeaders varyHeaders, OkHttpConnection httpConnection) {
+        public Entry(URI uri, RawHeaders varyHeaders, OkHttpConnection httpConnection)
+                throws IOException {
             this.uri = uri.toString();
             this.varyHeaders = varyHeaders;
             this.requestMethod = httpConnection.getRequestMethod();
-            this.responseHeaders = RawHeaders.fromMultimap(httpConnection.getHeaderFields());
+            this.responseHeaders = RawHeaders.fromMultimap(httpConnection.getHeaderFields(), true);
 
             if (isHttps()) {
                 OkHttpsConnection httpsConnection
@@ -506,7 +507,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
             return this.uri.equals(uri.toString())
                     && this.requestMethod.equals(requestMethod)
                     && new ResponseHeaders(uri, responseHeaders)
-                            .varyMatches(varyHeaders.toMultimap(), requestHeaders);
+                            .varyMatches(varyHeaders.toMultimap(false), requestHeaders);
         }
     }
 
@@ -535,7 +536,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
         }
 
         @Override public Map<String, List<String>> getHeaders() {
-            return entry.responseHeaders.toMultimap();
+            return entry.responseHeaders.toMultimap(true);
         }
 
         @Override public InputStream getBody() {
@@ -555,7 +556,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
         }
 
         @Override public Map<String, List<String>> getHeaders() {
-            return entry.responseHeaders.toMultimap();
+            return entry.responseHeaders.toMultimap(true);
         }
 
         @Override public InputStream getBody() {

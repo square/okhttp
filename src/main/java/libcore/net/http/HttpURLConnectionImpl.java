@@ -160,7 +160,7 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
     @Override public final Map<String, List<String>> getHeaderFields() {
         try {
-            return getResponse().getResponseHeaders().getHeaders().toMultimap();
+            return getResponse().getResponseHeaders().getHeaders().toMultimap(true);
         } catch (IOException e) {
             return null;
         }
@@ -171,7 +171,7 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
             throw new IllegalStateException(
                     "Cannot access request header fields after connection is set");
         }
-        return rawRequestHeaders.toMultimap();
+        return rawRequestHeaders.toMultimap(false);
     }
 
     @Override public final InputStream getInputStream() throws IOException {

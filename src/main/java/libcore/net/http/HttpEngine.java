@@ -197,7 +197,8 @@ public class HttpEngine {
             }
             this.responseSource = ResponseSource.CACHE;
             this.cacheResponse = GATEWAY_TIMEOUT_RESPONSE;
-            RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(cacheResponse.getHeaders());
+            RawHeaders rawResponseHeaders
+                    = RawHeaders.fromMultimap(cacheResponse.getHeaders(), true);
             setResponse(new ResponseHeaders(uri, rawResponseHeaders), cacheResponse.getBody());
         }
 
@@ -220,7 +221,7 @@ public class HttpEngine {
         }
 
         CacheResponse candidate = responseCache.get(uri, method,
-                requestHeaders.getHeaders().toMultimap());
+                requestHeaders.getHeaders().toMultimap(false));
         if (candidate == null) {
             return;
         }
@@ -234,7 +235,7 @@ public class HttpEngine {
             return;
         }
 
-        RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(responseHeadersMap);
+        RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(responseHeadersMap, true);
         cachedResponseHeaders = new ResponseHeaders(uri, rawResponseHeaders);
         long now = System.currentTimeMillis();
         this.responseSource = cachedResponseHeaders.chooseResponseSource(now, requestHeaders);
@@ -284,7 +285,7 @@ public class HttpEngine {
         if (proxy != null) {
             policy.setProxy(proxy);
             // Add the authority to the request line when we're using a proxy.
-            requestHeaders.getHeaders().setStatusLine(getRequestLine());
+            requestHeaders.getHeaders().setRequestLine(getRequestLine());
         }
         result.setSoTimeout(policy.getReadTimeout());
         return result;
@@ -481,7 +482,7 @@ public class HttpEngine {
      * doesn't know what content types the application is interested in.
      */
     private void prepareRawRequestHeaders() throws IOException {
-        requestHeaders.getHeaders().setStatusLine(getRequestLine());
+        requestHeaders.getHeaders().setRequestLine(getRequestLine());
 
         if (requestHeaders.getUserAgent() == null) {
             requestHeaders.setUserAgent(getDefaultUserAgent());
@@ -515,7 +516,7 @@ public class HttpEngine {
         CookieHandler cookieHandler = CookieHandler.getDefault();
         if (cookieHandler != null) {
             requestHeaders.addCookies(
-                    cookieHandler.get(uri, requestHeaders.getHeaders().toMultimap()));
+                    cookieHandler.get(uri, requestHeaders.getHeaders().toMultimap(false)));
         }
     }
 
