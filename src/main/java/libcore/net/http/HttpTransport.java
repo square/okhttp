@@ -125,7 +125,7 @@ final class HttpTransport implements Transport {
 
         int contentLength = httpEngine.requestHeaders.getContentLength();
         RawHeaders headersToSend = getNetworkRequestHeaders();
-        byte[] bytes = headersToSend.toHeaderString().getBytes("ISO-8859-1");
+        byte[] bytes = headersToSend.toRequestHeader().getBytes("ISO-8859-1");
 
         if (contentLength != -1 && bytes.length + contentLength <= MAX_REQUEST_BUFFER_LENGTH) {
             requestOut = new BufferedOutputStream(socketOut, bytes.length + contentLength);
@@ -150,7 +150,7 @@ final class HttpTransport implements Transport {
         URL url = httpEngine.policy.getURL();
 
         RawHeaders result = new RawHeaders();
-        result.setStatusLine("CONNECT " + url.getHost() + ":" + Libcore.getEffectivePort(url)
+        result.setRequestLine("CONNECT " + url.getHost() + ":" + Libcore.getEffectivePort(url)
                 + " HTTP/1.1");
 
         // Always set Host and User-Agent.
@@ -201,7 +201,7 @@ final class HttpTransport implements Transport {
 
         CookieHandler cookieHandler = CookieHandler.getDefault();
         if (cookieHandler != null) {
-            cookieHandler.put(httpEngine.uri, headers.toMultimap());
+            cookieHandler.put(httpEngine.uri, headers.toMultimap(true));
         }
     }
 

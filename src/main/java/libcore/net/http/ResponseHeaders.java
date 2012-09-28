@@ -16,6 +16,7 @@
 
 package libcore.net.http;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Collections;
@@ -461,7 +462,7 @@ public final class ResponseHeaders {
      * Combines this cached header with a network header as defined by RFC 2616,
      * 13.5.3.
      */
-    public ResponseHeaders combine(ResponseHeaders network) {
+    public ResponseHeaders combine(ResponseHeaders network) throws IOException {
         RawHeaders result = new RawHeaders();
         result.setStatusLine(headers.getStatusLine());
 
