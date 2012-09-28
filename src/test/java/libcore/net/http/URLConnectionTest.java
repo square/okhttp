@@ -233,6 +233,54 @@ public final class URLConnectionTest extends TestCase {
         assertEquals("e", urlConnection.getHeaderField(2));
     }
 
+    public void testServerSendsInvalidResponseHeaders() throws Exception {
+        server.enqueue(new MockResponse().setStatus("HTP/1.1 200 OK"));
+        server.play();
+
+        OkHttpConnection urlConnection = openConnection(server.getUrl("/"));
+        try {
+            urlConnection.getResponseCode();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testServerSendsInvalidCodeTooLarge() throws Exception {
+        server.enqueue(new MockResponse().setStatus("HTTP/1.1 2147483648 OK"));
+        server.play();
+
+        OkHttpConnection urlConnection = openConnection(server.getUrl("/"));
+        try {
+            urlConnection.getResponseCode();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testServerSendsInvalidCodeNotANumber() throws Exception {
+        server.enqueue(new MockResponse().setStatus("HTTP/1.1 00a OK"));
+        server.play();
+
+        OkHttpConnection urlConnection = openConnection(server.getUrl("/"));
+        try {
+            urlConnection.getResponseCode();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testServerSendsUnnecessaryWhitespace() throws Exception {
+        server.enqueue(new MockResponse().setStatus(" HTTP/1.1 2147483648 OK"));
+        server.play();
+
+        OkHttpConnection urlConnection = openConnection(server.getUrl("/"));
+        try {
+            urlConnection.getResponseCode();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
     public void testGetErrorStreamOnSuccessfulRequest() throws Exception {
         server.enqueue(new MockResponse().setBody("A"));
         server.play();

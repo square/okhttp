@@ -17,6 +17,7 @@
 package libcore.util;
 
 import com.squareup.okhttp.OkHttpConnection;
+import java.io.IOException;
 import java.net.CacheResponse;
 
 /**
@@ -50,5 +51,5 @@ public interface ExtendedResponseCache {
      * Updates stored HTTP headers using a hit on a conditional GET.
      * @hide
      */
-    void update(CacheResponse conditionalCacheHit, OkHttpConnection httpConnection);
+    void update(CacheResponse conditionalCacheHit, OkHttpConnection httpConnection) throws IOException;
 }
