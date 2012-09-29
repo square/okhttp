@@ -204,13 +204,16 @@ public final class SpdyConnection implements Closeable {
      * Sends a ping frame to the peer. Use the returned object to await the
      * ping's response and observe its round trip time.
      */
-    public synchronized Ping ping() {
+    public Ping ping() throws IOException {
         Ping ping = new Ping();
-        int pingId = nextPingId;
-        nextPingId += 2;
-        if (pings == null) pings = new HashMap<Integer, Ping>();
-        pings.put(pingId, ping);
-        writePingLater(pingId, ping);
+        int pingId;
+        synchronized (this) {
+            pingId = nextPingId;
+            nextPingId += 2;
+            if (pings == null) pings = new HashMap<Integer, Ping>();
+            pings.put(pingId, ping);
+        }
+        writePing(pingId, ping);
         return ping;
     }
 
@@ -226,16 +229,24 @@ public final class SpdyConnection implements Closeable {
     }
 
     private void writePing(int id, Ping ping) throws IOException {
-        // Observe the sent time immediately before performing I/O.
-        if (ping != null) ping.send();
-
         synchronized (spdyWriter) {
+            // Observe the sent time immediately before performing I/O.
+            if (ping != null) ping.send();
             spdyWriter.ping(0, id);
         }
     }
 
     private synchronized Ping removePing(int id) {
         return pings != null ? pings.remove(id) : null;
+    }
+
+    /**
+     * Sends a noop frame to the peer.
+     */
+    public void noop() throws IOException {
+        synchronized (spdyWriter) {
+            spdyWriter.noop();
+        }
     }
 
     public void flush() throws IOException {
@@ -365,7 +376,7 @@ public final class SpdyConnection implements Closeable {
                 return true;
 
             case SpdyConnection.TYPE_NOOP:
-                throw new UnsupportedOperationException();
+                return true;
 
             case SpdyConnection.TYPE_PING:
                 int id = spdyReader.id;
