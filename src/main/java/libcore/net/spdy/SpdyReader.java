@@ -115,6 +115,10 @@ final class SpdyReader {
                 readSettings();
                 return SpdyConnection.TYPE_SETTINGS;
 
+            case SpdyConnection.TYPE_NOOP:
+              if (length != 0) throw ioException("TYPE_NOOP length: %d != 0", length);
+              return SpdyConnection.TYPE_NOOP;
+
             case SpdyConnection.TYPE_PING:
                 readPing();
                 return SpdyConnection.TYPE_PING;
@@ -226,14 +230,14 @@ final class SpdyReader {
     }
 
     private void readPing() throws IOException {
+        if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
         id = in.readInt();
     }
 
     private void readSettings() throws IOException {
         int numberOfEntries = in.readInt();
         if (length != 4 + 8 * numberOfEntries) {
-            throw new IOException("TYPE_SETTINGS frame length is inconsistent: "
-                    + length + " != 4 + 8 * " + numberOfEntries);
+            throw ioException("TYPE_SETTINGS length: %d != 4 + 8 * %d", length, numberOfEntries);
         }
         settings = new Settings();
         for (int i = 0; i < numberOfEntries; i++) {
@@ -246,5 +250,9 @@ final class SpdyReader {
             int idFlags = (w1 & 0xff);
             settings.set(id, idFlags, value);
         }
+    }
+
+    private static IOException ioException(String message, Object... args) throws IOException {
+        throw new IOException(String.format(message, args));
     }
 }
