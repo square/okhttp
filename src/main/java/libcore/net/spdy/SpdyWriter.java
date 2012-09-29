@@ -122,6 +122,15 @@ final class SpdyWriter {
         out.flush();
     }
 
+    public void noop() throws IOException {
+        int type = SpdyConnection.TYPE_NOOP;
+        int length = 0;
+        int flags = 0;
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.flush();
+    }
+
     public void ping(int flags, int id) throws IOException {
         int type = SpdyConnection.TYPE_PING;
         int length = 4;
