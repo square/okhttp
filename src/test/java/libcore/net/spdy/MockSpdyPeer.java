@@ -96,13 +96,9 @@ public final class MockSpdyPeer {
             } else {
                 // read a frame
                 SpdyReader reader = new SpdyReader(in);
-                byte[] data = null;
-                int type = reader.nextFrame();
-                if (type == SpdyConnection.TYPE_DATA) {
-                    data = new byte[reader.length];
-                    Streams.readFully(in, data);
-                }
-                inFrames.add(new InFrame(i, reader, data));
+                InFrame inFrame = new InFrame(i, reader);
+                reader.nextFrame(inFrame);
+                inFrames.add(inFrame);
             }
         }
     }
@@ -120,15 +116,78 @@ public final class MockSpdyPeer {
         }
     }
 
-    public static class InFrame {
+    public static class InFrame implements SpdyReader.Handler {
         public final int sequence;
         public final SpdyReader reader;
-        public final byte[] data;
+        public int type = -1;
+        public int flags;
+        public int streamId;
+        public int associatedStreamId;
+        public int priority;
+        public int statusCode;
+        public List<String> nameValueBlock;
+        public byte[] data;
+        public Settings settings;
 
-        public InFrame(int sequence, SpdyReader reader, byte[] data) {
+        public InFrame(int sequence, SpdyReader reader) {
             this.sequence = sequence;
             this.reader = reader;
-            this.data = data;
+        }
+
+        @Override public void settings(int flags, Settings settings) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_SETTINGS;
+            this.flags = flags;
+            this.settings = settings;
+        }
+
+        @Override public void synStream(int flags, int streamId, int associatedStreamId,
+                int priority, List<String> nameValueBlock) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_SYN_STREAM;
+            this.flags = flags;
+            this.streamId = streamId;
+            this.associatedStreamId = associatedStreamId;
+            this.priority = priority;
+            this.nameValueBlock = nameValueBlock;
+        }
+
+        @Override public void synReply(int flags, int streamId, List<String> nameValueBlock) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_SYN_REPLY;
+            this.streamId = streamId;
+            this.flags = flags;
+            this.nameValueBlock = nameValueBlock;
+        }
+
+        @Override public void data(int flags, int streamId, InputStream in, int length)
+                throws IOException {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_DATA;
+            this.flags = flags;
+            this.streamId = streamId;
+            this.data = new byte[length];
+            Streams.readFully(in, this.data);
+        }
+
+        @Override public void rstStream(int flags, int streamId, int statusCode) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_RST_STREAM;
+            this.flags = flags;
+            this.streamId = streamId;
+            this.statusCode = statusCode;
+        }
+
+        @Override public void ping(int flags, int streamId) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_PING;
+            this.flags = flags;
+            this.streamId = streamId;
+        }
+
+        @Override public void noop() {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_NOOP;
         }
     }
 }
