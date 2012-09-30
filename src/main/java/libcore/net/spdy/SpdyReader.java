@@ -56,20 +56,9 @@ final class SpdyReader {
         }
     }
 
-    public final DataInputStream in;
-    public int flags;
-    public int length;
-    public int id;
-    public int associatedStreamId;
-    public int version;
-    public int type;
-    public int priority;
-    public int statusCode;
-
-    public List<String> nameValueBlock;
+    private final DataInputStream in;
     private final DataInputStream nameValueBlockIn;
     private int compressedLimit;
-    public Settings settings;
 
     SpdyReader(InputStream in) {
         this.in = new DataInputStream(in);
@@ -77,87 +66,92 @@ final class SpdyReader {
     }
 
     /**
-     * Advance to the next frame in the source data. If the frame is of
-     * TYPE_DATA, it's the caller's responsibility to read length bytes from
-     * the input stream before the next call to nextFrame().
+     * Send the next frame to {@code handler}. Returns true unless there are no
+     * more frames on the stream.
      */
-    public int nextFrame() throws IOException {
+    public boolean nextFrame(Handler handler) throws IOException {
         int w1;
         try {
             w1 = in.readInt();
         } catch (EOFException e) {
-            return type = SpdyConnection.TYPE_EOF;
+            return false;
         }
         int w2 = in.readInt();
 
         boolean control = (w1 & 0x80000000) != 0;
-        flags = (w2 & 0xff000000) >>> 24;
-        length = (w2 & 0xffffff);
+        int flags = (w2 & 0xff000000) >>> 24;
+        int length = (w2 & 0xffffff);
 
         if (control) {
-            version = (w1 & 0x7fff0000) >>> 16;
-            type = (w1 & 0xffff);
+            int version = (w1 & 0x7fff0000) >>> 16;
+            int type = (w1 & 0xffff);
 
             switch (type) {
             case SpdyConnection.TYPE_SYN_STREAM:
-                readSynStream();
-                return SpdyConnection.TYPE_SYN_STREAM;
+                readSynStream(handler, flags, length);
+                return true;
 
             case SpdyConnection.TYPE_SYN_REPLY:
-                readSynReply();
-                return SpdyConnection.TYPE_SYN_REPLY;
+                readSynReply(handler, flags, length);
+                return true;
 
             case SpdyConnection.TYPE_RST_STREAM:
-                readSynReset();
-                return SpdyConnection.TYPE_RST_STREAM;
+                readRstStream(handler, flags, length);
+                return true;
 
             case SpdyConnection.TYPE_SETTINGS:
-                readSettings();
-                return SpdyConnection.TYPE_SETTINGS;
+                readSettings(handler, flags, length);
+                return true;
 
             case SpdyConnection.TYPE_NOOP:
-              if (length != 0) throw ioException("TYPE_NOOP length: %d != 0", length);
-              return SpdyConnection.TYPE_NOOP;
+                if (length != 0) throw ioException("TYPE_NOOP length: %d != 0", length);
+                handler.noop();
+                return true;
 
             case SpdyConnection.TYPE_PING:
-                readPing();
-                return SpdyConnection.TYPE_PING;
+                readPing(handler, flags, length);
+                return true;
+
+            case SpdyConnection.TYPE_GOAWAY:
+            case SpdyConnection.TYPE_HEADERS:
+                Streams.skipByReading(in, length);
+                throw new UnsupportedOperationException("TODO");
 
             default:
-                readControlFrame();
-                return type;
+                throw new IOException("Unexpected frame");
             }
         } else {
-            id = w1 & 0x7fffffff;
-            return type = SpdyConnection.TYPE_DATA;
+            int streamId = w1 & 0x7fffffff;
+            handler.data(flags, streamId, in, length);
+            return true;
         }
     }
 
-    private void readSynStream() throws IOException {
+    private void readSynStream(Handler handler, int flags, int length) throws IOException {
         int w1 = in.readInt();
         int w2 = in.readInt();
         int s3 = in.readShort();
-        id = w1 & 0x7fffffff;
-        associatedStreamId = w2 & 0x7fffffff;
-        priority = s3 & 0xc000 >>> 14;
+        int streamId = w1 & 0x7fffffff;
+        int associatedStreamId = w2 & 0x7fffffff;
+        int priority = s3 & 0xc000 >>> 14;
         // int unused = s3 & 0x3fff;
-        nameValueBlock = readNameValueBlock(length - 10);
+        List<String> nameValueBlock = readNameValueBlock(length - 10);
+        handler.synStream(flags, streamId, associatedStreamId, priority, nameValueBlock);
     }
 
-    private void readSynReply() throws IOException {
+    private void readSynReply(Handler handler, int flags, int length) throws IOException {
         int w1 = in.readInt();
         in.readShort(); // unused
-        id = w1 & 0x7fffffff;
-        nameValueBlock = readNameValueBlock(length - 6);
+        int streamId = w1 & 0x7fffffff;
+        List<String> nameValueBlock = readNameValueBlock(length - 6);
+        handler.synReply(flags, streamId, nameValueBlock);
     }
 
-    private void readSynReset() throws IOException {
-        id = in.readInt() & 0x7fffffff;
-        statusCode = in.readInt();
-    }
-
-    private void readControlFrame() throws IOException {
-        Streams.skipByReading(in, length);
+    private void readRstStream(Handler handler, int flags, int length) throws IOException {
+        if (length != 8) throw ioException("TYPE_RST_STREAM length: %d != 8", length);
+        int streamId = in.readInt() & 0x7fffffff;
+        int statusCode = in.readInt();
+        handler.rstStream(flags, streamId, statusCode);
     }
 
     private DataInputStream newNameValueBlockStream() {
@@ -198,22 +192,20 @@ final class SpdyReader {
     private List<String> readNameValueBlock(int length) throws IOException {
         this.compressedLimit += length;
         try {
-            List<String> entries = new ArrayList<String>();
-
             int numberOfPairs = nameValueBlockIn.readShort();
+            List<String> entries = new ArrayList<String>(numberOfPairs * 2);
             for (int i = 0; i < numberOfPairs; i++) {
                 String name = readString();
                 String values = readString();
-                if (name.length() == 0 || values.length() == 0) {
-                    throw new IOException(); // TODO: PROTOCOL ERROR
-                }
+                if (name.length() == 0) throw ioException("name.length == 0");
+                if (values.length() == 0) throw ioException("values.length == 0");
                 entries.add(name);
                 entries.add(values);
             }
 
             if (compressedLimit != 0) {
                 Logger.getLogger(getClass().getName())
-                        .warning("compressedLimit > 0" + compressedLimit);
+                        .warning("compressedLimit > 0: " + compressedLimit);
             }
 
             return entries;
@@ -229,17 +221,18 @@ final class SpdyReader {
         return new String(bytes, 0, length, "UTF-8");
     }
 
-    private void readPing() throws IOException {
+    private void readPing(Handler handler, int flags, int length) throws IOException {
         if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
-        id = in.readInt();
+        int id = in.readInt();
+        handler.ping(flags, id);
     }
 
-    private void readSettings() throws IOException {
+    private void readSettings(Handler handler, int flags, int length) throws IOException {
         int numberOfEntries = in.readInt();
         if (length != 4 + 8 * numberOfEntries) {
             throw ioException("TYPE_SETTINGS length: %d != 4 + 8 * %d", length, numberOfEntries);
         }
-        settings = new Settings();
+        Settings settings = new Settings();
         for (int i = 0; i < numberOfEntries; i++) {
             int w1 = in.readInt();
             int value = in.readInt();
@@ -250,9 +243,23 @@ final class SpdyReader {
             int idFlags = (w1 & 0xff);
             settings.set(id, idFlags, value);
         }
+        handler.settings(flags, settings);
     }
 
     private static IOException ioException(String message, Object... args) throws IOException {
         throw new IOException(String.format(message, args));
+    }
+
+    public interface Handler {
+        void data(int flags, int streamId, InputStream in, int length) throws IOException;
+        void synStream(int flags, int streamId, int associatedStreamId, int priority,
+                List<String> nameValueBlock);
+        void synReply(int flags, int streamId, List<String> nameValueBlock) throws IOException;
+        void rstStream(int flags, int streamId, int statusCode);
+        void settings(int flags, Settings settings);
+        void noop();
+        void ping(int flags, int streamId);
+        // TODO: goaway
+        // TODO: headers
     }
 }
