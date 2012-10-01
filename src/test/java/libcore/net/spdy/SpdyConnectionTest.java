@@ -60,11 +60,11 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame synStream = peer.takeFrame();
-        assertEquals(TYPE_SYN_STREAM, synStream.reader.type);
-        assertEquals(0, synStream.reader.flags);
-        assertEquals(1, synStream.reader.id);
-        assertEquals(0, synStream.reader.associatedStreamId);
-        assertEquals(Arrays.asList("b", "banana"), synStream.reader.nameValueBlock);
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        assertEquals(0, synStream.flags);
+        assertEquals(1, synStream.streamId);
+        assertEquals(0, synStream.associatedStreamId);
+        assertEquals(Arrays.asList("b", "banana"), synStream.nameValueBlock);
         MockSpdyPeer.InFrame requestData = peer.takeFrame();
         assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
     }
@@ -92,11 +92,10 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame reply = peer.takeFrame();
-        assertEquals(TYPE_SYN_REPLY, reply.reader.type);
-        assertEquals(0, reply.reader.flags);
-        assertEquals(2, reply.reader.id);
-        assertEquals(0, reply.reader.associatedStreamId);
-        assertEquals(Arrays.asList("b", "banana"), reply.reader.nameValueBlock);
+        assertEquals(TYPE_SYN_REPLY, reply.type);
+        assertEquals(0, reply.flags);
+        assertEquals(2, reply.streamId);
+        assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
         assertEquals(1, receiveCount.get());
     }
 
@@ -120,9 +119,9 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame reply = peer.takeFrame();
-        assertEquals(TYPE_SYN_REPLY, reply.reader.type);
-        assertEquals(FLAG_FIN, reply.reader.flags);
-        assertEquals(Arrays.asList("b", "banana"), reply.reader.nameValueBlock);
+        assertEquals(TYPE_SYN_REPLY, reply.type);
+        assertEquals(FLAG_FIN, reply.flags);
+        assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
         assertEquals(1, receiveCount.get());
     }
 
@@ -139,9 +138,8 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame ping = peer.takeFrame();
-        assertEquals(TYPE_NOOP, ping.reader.type);
-        assertEquals(0, ping.reader.flags);
-        assertEquals(0, ping.reader.length);
+        assertEquals(TYPE_NOOP, ping.type);
+        assertEquals(0, ping.flags);
     }
 
     public void testServerPingsClient() throws Exception {
@@ -157,9 +155,9 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame ping = peer.takeFrame();
-        assertEquals(TYPE_PING, ping.reader.type);
-        assertEquals(0, ping.reader.flags);
-        assertEquals(2, ping.reader.id);
+        assertEquals(TYPE_PING, ping.type);
+        assertEquals(0, ping.flags);
+        assertEquals(2, ping.streamId);
     }
 
     public void testClientPingsServer() throws Exception {
@@ -178,9 +176,9 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame pingFrame = peer.takeFrame();
-        assertEquals(TYPE_PING, pingFrame.reader.type);
-        assertEquals(0, pingFrame.reader.flags);
-        assertEquals(1, pingFrame.reader.id);
+        assertEquals(TYPE_PING, pingFrame.type);
+        assertEquals(0, pingFrame.flags);
+        assertEquals(1, pingFrame.streamId);
     }
 
     public void testUnexpectedPingIsNotReturned() throws Exception {
@@ -199,9 +197,9 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame ping2 = peer.takeFrame();
-        assertEquals(2, ping2.reader.id);
+        assertEquals(2, ping2.streamId);
         MockSpdyPeer.InFrame ping4 = peer.takeFrame();
-        assertEquals(4, ping4.reader.id);
+        assertEquals(4, ping4.streamId);
     }
 
     public void testServerSendsSettingsToClient() throws Exception {
@@ -273,13 +271,12 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame rstStream = peer.takeFrame();
-        assertEquals(TYPE_RST_STREAM, rstStream.reader.type);
-        assertEquals(0, rstStream.reader.flags);
-        assertEquals(8, rstStream.reader.length);
-        assertEquals(42, rstStream.reader.id);
-        assertEquals(RST_INVALID_STREAM, rstStream.reader.statusCode);
+        assertEquals(TYPE_RST_STREAM, rstStream.type);
+        assertEquals(0, rstStream.flags);
+        assertEquals(42, rstStream.streamId);
+        assertEquals(RST_INVALID_STREAM, rstStream.statusCode);
         MockSpdyPeer.InFrame ping = peer.takeFrame();
-        assertEquals(2, ping.reader.id);
+        assertEquals(2, ping.streamId);
     }
 
     public void testBogusReplyFrameDoesNotDisruptConnection() throws Exception {
@@ -297,13 +294,12 @@ public final class SpdyConnectionTest extends TestCase {
 
         // verify the peer received what was expected
         MockSpdyPeer.InFrame rstStream = peer.takeFrame();
-        assertEquals(TYPE_RST_STREAM, rstStream.reader.type);
-        assertEquals(0, rstStream.reader.flags);
-        assertEquals(8, rstStream.reader.length);
-        assertEquals(42, rstStream.reader.id);
-        assertEquals(RST_INVALID_STREAM, rstStream.reader.statusCode);
+        assertEquals(TYPE_RST_STREAM, rstStream.type);
+        assertEquals(0, rstStream.flags);
+        assertEquals(42, rstStream.streamId);
+        assertEquals(RST_INVALID_STREAM, rstStream.statusCode);
         MockSpdyPeer.InFrame ping = peer.takeFrame();
-        assertEquals(2, ping.reader.id);
+        assertEquals(2, ping.streamId);
     }
 
     private void writeAndClose(SpdyStream stream, String data) throws IOException {
