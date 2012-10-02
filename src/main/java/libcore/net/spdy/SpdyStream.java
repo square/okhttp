@@ -65,18 +65,6 @@ public final class SpdyStream {
      */
     private int rstStatusCode = -1;
 
-    /**
-     * True if either side has shut down the input stream. We will receive no
-     * more bytes beyond those already in the buffer. Guarded by this.
-     */
-    private boolean inFinished;
-
-    /**
-     * True if either side has shut down the output stream. We will write no
-     * more bytes to the output stream. Guarded by this.
-     */
-    private boolean outFinished;
-
     SpdyStream(int id, SpdyConnection connection, List<String> requestHeaders, int flags) {
         this.id = id;
         this.connection = connection;
@@ -84,12 +72,12 @@ public final class SpdyStream {
 
         if (isLocallyInitiated()) {
             // I am the sender
-            inFinished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
-            outFinished = (flags & SpdyConnection.FLAG_FIN) != 0;
+            in.finished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
+            out.finished = (flags & SpdyConnection.FLAG_FIN) != 0;
         } else {
             // I am the receiver
-            inFinished = (flags & SpdyConnection.FLAG_FIN) != 0;
-            outFinished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
+            in.finished = (flags & SpdyConnection.FLAG_FIN) != 0;
+            out.finished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
         }
     }
 
@@ -98,7 +86,7 @@ public final class SpdyStream {
      */
     public boolean isLocallyInitiated() {
         boolean streamIsClient = (id % 2 == 1);
-        return connection.isClient() == streamIsClient;
+        return connection.client == streamIsClient;
     }
 
     public SpdyConnection getConnection() {
@@ -109,10 +97,16 @@ public final class SpdyStream {
         return requestHeaders;
     }
 
+    /**
+     * Returns the stream's response headers, blocking if necessary if they
+     * have not been received yet.
+     */
     public synchronized List<String> getResponseHeaders() throws InterruptedException {
         while (responseHeaders == null && rstStatusCode == -1) {
             wait();
         }
+        // TODO: throw InterruptedIOException?
+        // TODO: throw if responseHeaders == null
         return responseHeaders;
     }
 
@@ -128,63 +122,70 @@ public final class SpdyStream {
         return rstStatusCode;
     }
 
-    public InputStream getInputStream() {
-        return in;
-    }
-
-    public OutputStream getOutputStream() {
-        if (!isLocallyInitiated()) {
-            throw new IllegalStateException("use reply for a remotely initiated stream");
-        }
-        return out;
-    }
-
     /**
-     * Sends a reply with 0 or more bytes of data to follow, which should be
-     * written to the returned output stream.
+     * Sends a reply to an incoming stream.
+     *
+     * @param out true to create an output stream that we can use to send data
+     *     to the remote peer. Corresponds to {@code FLAG_FIN}.
      */
-    public OutputStream reply(List<String> responseHeaders) throws IOException {
-        reply(responseHeaders, 0);
-        return out;
-    }
-
-    /**
-     * Sends a reply with 0 bytes to follow.
-     */
-    public void replyNoContent(List<String> responseHeaders) throws IOException {
-        reply(responseHeaders, SpdyConnection.FLAG_FIN);
-        outFinished = true;
-    }
-
-    private void reply(List<String> responseHeaders, int flags) throws IOException {
-        if (responseHeaders == null) throw new NullPointerException("responseHeaders == null");
-        if (isLocallyInitiated()) {
-            throw new IllegalStateException("cannot reply to a locally initiated stream");
-        }
+    public void reply(List<String> responseHeaders, boolean out) throws IOException {
+        int flags = 0;
         synchronized (this) {
+            if (responseHeaders == null) {
+                throw new NullPointerException("responseHeaders == null");
+            }
+            if (isLocallyInitiated()) {
+                throw new IllegalStateException("cannot reply to a locally initiated stream");
+            }
             if (this.responseHeaders != null) {
                 throw new IllegalStateException("reply already sent");
             }
             this.responseHeaders = responseHeaders;
+            if (!out) {
+                this.out.finished = true;
+                flags |= SpdyConnection.FLAG_FIN;
+            }
         }
         connection.writeSynReply(id, flags, responseHeaders);
     }
 
     /**
+     * Returns an input stream that can be used to read data from the peer.
+     */
+    public InputStream getInputStream() {
+        return in;
+    }
+
+    /**
+     * Returns an output stream that can be used to write data to the peer.
+     *
+     * @throws IllegalStateException if this stream was initiated by the peer
+     *     and a {@link #reply} has not yet been sent.
+     */
+    public OutputStream getOutputStream() {
+        synchronized (this) {
+            if (responseHeaders == null && !isLocallyInitiated()) {
+                throw new IllegalStateException("reply before requesting the output stream");
+            }
+        }
+        return out;
+    }
+
+    /**
      * Abnormally terminate this stream.
      */
-    public void close(int rstStatusCode) {
+    public void close(int rstStatusCode) throws IOException {
         synchronized (this) {
             // TODO: no-op if inFinished == true and outFinished == true ?
-            if (this.rstStatusCode == -1) {
+            if (this.rstStatusCode != -1) {
                 return; // Already closed.
             }
             this.rstStatusCode = rstStatusCode;
-            inFinished = true;
-            outFinished = true;
+            in.finished = true;
+            out.finished = true;
             notifyAll();
-            connection.writeSynResetLater(id, rstStatusCode);
         }
+        connection.writeSynReset(id, rstStatusCode);
         connection.removeStream(id);
     }
 
@@ -196,19 +197,21 @@ public final class SpdyStream {
         notifyAll();
     }
 
+    // TODO: locking here broken. Writing threads are blocked by potentially slow reads.
     synchronized void receiveData(InputStream in, int flags, int length) throws IOException {
         this.in.receive(in, length);
         if ((flags & SpdyConnection.FLAG_FIN) != 0) {
-            inFinished = true;
+            this.in.finished = true;
+            streamStateChanged();
             notifyAll();
         }
     }
 
     synchronized void receiveRstStream(int statusCode) {
-        if (rstStatusCode != -1) {
+        if (rstStatusCode == -1) {
             rstStatusCode = statusCode;
-            inFinished = true;
-            outFinished = true;
+            in.finished = true;
+            out.finished = true;
             notifyAll();
         }
     }
@@ -234,12 +237,21 @@ public final class SpdyStream {
          */
 
         private final byte[] buffer = new byte[64 * 1024]; // 64KiB specified by TODO
+
         /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
         private int pos = -1;
+
         /** the last byte to be read. Never buffer.length */
         private int limit;
+
         /** True if the caller has closed this stream. */
         private boolean closed;
+
+        /**
+         * True if either side has shut down this stream. We will receive no
+         * more bytes beyond those already in the buffer.
+         */
+        private boolean finished;
 
         @Override public int available() throws IOException {
             synchronized (SpdyStream.this) {
@@ -263,7 +275,7 @@ public final class SpdyStream {
                 checkNotClosed();
                 Libcore.checkOffsetAndCount(b.length, offset, count);
 
-                while (pos == -1 && !inFinished) {
+                while (pos == -1 && !finished) {
                     try {
                         SpdyStream.this.wait();
                     } catch (InterruptedException e) {
@@ -308,7 +320,7 @@ public final class SpdyStream {
         }
 
         void receive(InputStream in, int byteCount) throws IOException {
-            if (inFinished) {
+            if (finished) {
                 return; // ignore this; probably a benign race
             }
             if (byteCount == 0) {
@@ -343,14 +355,26 @@ public final class SpdyStream {
         }
 
         @Override public void close() throws IOException {
-            closed = true;
-            // TODO: send RST to peer if !inFinished
+            synchronized (SpdyStream.this) {
+                closed = true;
+                streamStateChanged();
+            }
         }
 
         private void checkNotClosed() throws IOException {
             if (closed) {
                 throw new IOException("stream closed");
             }
+        }
+    }
+
+    private synchronized void streamStateChanged() throws IOException {
+        // If we closed the input stream before bytes ran out, we want to cancel
+        // it. But we can only cancel it once the output stream's bytes have all
+        // been sent, otherwise we'll terminate that innocent bystander.
+        if (in.closed && !in.finished && (out.finished || out.closed)) {
+            in.finished = true;
+            SpdyStream.this.close(RST_CANCEL);
         }
     }
 
@@ -364,6 +388,12 @@ public final class SpdyStream {
 
         /** True if the caller has closed this stream. */
         private boolean closed;
+
+        /**
+         * True if either side has shut down this stream. We shall send no more
+         * bytes.
+         */
+        private boolean finished;
 
         @Override public void write(int b) throws IOException {
             Streams.writeSingleByte(this, b);
@@ -394,11 +424,15 @@ public final class SpdyStream {
         }
 
         @Override public void close() throws IOException {
-            if (!closed) {
+            synchronized (SpdyStream.this) {
+                if (closed) {
+                    return;
+                }
                 closed = true;
-                writeFrame(true);
-                connection.flush();
             }
+            writeFrame(true);
+            connection.flush();
+            streamStateChanged();
         }
 
         private void writeFrame(boolean last) throws IOException {
@@ -418,7 +452,7 @@ public final class SpdyStream {
                 if (closed) {
                     throw new IOException("stream closed");
                 }
-                if (outFinished) {
+                if (finished) {
                     throw new IOException("output stream finished "
                             + "(RST status code=" + rstStatusCode + ")");
                 }
