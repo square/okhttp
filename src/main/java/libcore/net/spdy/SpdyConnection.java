@@ -72,17 +72,22 @@ public final class SpdyConnection implements Closeable {
     static final int TYPE_HEADERS = 0x8;
     static final int VERSION = 2;
 
-    private final SpdyReader spdyReader;
-    private final SpdyWriter spdyWriter;
-    private final ExecutorService readExecutor;
-    private final ExecutorService writeExecutor;
-    private final ExecutorService callbackExecutor;
+    /**
+     * True if this peer initiated the connection.
+     */
+    final boolean client;
 
     /**
      * User code to run in response to an incoming stream. Callbacks must not be
      * run on the callback executor.
      */
     private final IncomingStreamHandler handler;
+
+    private final SpdyReader spdyReader;
+    private final SpdyWriter spdyWriter;
+    private final ExecutorService readExecutor;
+    private final ExecutorService writeExecutor;
+    private final ExecutorService callbackExecutor;
 
     private final Map<Integer, SpdyStream> streams = new HashMap<Integer, SpdyStream>();
     private int nextStreamId;
@@ -95,9 +100,10 @@ public final class SpdyConnection implements Closeable {
     Settings settings;
 
     private SpdyConnection(Builder builder) {
+        client = builder.client;
+        handler = builder.handler;
         spdyReader = new SpdyReader(builder.in);
         spdyWriter = new SpdyWriter(builder.out);
-        handler = builder.handler;
         nextStreamId = builder.client ? 1 : 2;
         nextPingId = builder.client ? 1 : 2;
 
@@ -106,17 +112,10 @@ public final class SpdyConnection implements Closeable {
                 new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Reader", false));
         writeExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(), newThreadFactory(prefix + "Writer", false));
-        callbackExecutor = new ThreadPoolExecutor(1, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+        callbackExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
                 new SynchronousQueue<Runnable>(), newThreadFactory(prefix + "Callbacks", false));
 
         readExecutor.execute(new Reader());
-    }
-
-    /**
-     * Returns true if this peer initiated the connection.
-     */
-    public synchronized boolean isClient() {
-        return nextStreamId % 2 == 1;
     }
 
     private synchronized SpdyStream getStream(int id) {
@@ -320,12 +319,19 @@ public final class SpdyConnection implements Closeable {
                 int priority, List<String> nameValueBlock) {
             final SpdyStream synStream = new SpdyStream(streamId, SpdyConnection.this,
                     nameValueBlock, flags);
-            SpdyStream previous;
+            final SpdyStream previous;
             synchronized (SpdyConnection.this) {
                 previous = streams.put(streamId, synStream);
             }
             if (previous != null) {
-                previous.close(SpdyStream.RST_PROTOCOL_ERROR);
+                writeExecutor.execute(new Runnable() {
+                    @Override public void run() {
+                        try {
+                            previous.close(SpdyStream.RST_PROTOCOL_ERROR);
+                        } catch (IOException ignored) {
+                        }
+                    }
+                });
                 return;
             }
             callbackExecutor.execute(new Runnable() {
@@ -372,7 +378,7 @@ public final class SpdyConnection implements Closeable {
         }
 
         @Override public void ping(int flags, int streamId) {
-            if (isClient() != (streamId % 2 == 1)) {
+            if (client != (streamId % 2 == 1)) {
                 // Respond to a client ping if this is a server and vice versa.
                 writePingLater(streamId, null);
             } else {
