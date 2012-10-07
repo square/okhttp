@@ -82,7 +82,8 @@ public final class SpdyServer implements IncomingStreamHandler {
                 "version", "HTTP/1.1",
                 "content-type", "text/plain"
         );
-        OutputStream out = stream.reply(responseHeaders);
+        stream.reply(responseHeaders, true);
+        OutputStream out = stream.getOutputStream();
         String text = "Not found: " + path;
         out.write(text.getBytes("UTF-8"));
         out.close();
@@ -91,11 +92,12 @@ public final class SpdyServer implements IncomingStreamHandler {
     private void serveFile(SpdyStream stream, File file) throws IOException {
         InputStream in = new FileInputStream(file);
         byte[] buffer = new byte[8192];
-        OutputStream out = stream.reply(Arrays.asList(
+        stream.reply(Arrays.asList(
                 "status", "200",
                 "version", "HTTP/1.1",
                 "content-type", contentType(file)
-        ));
+        ), true);
+        OutputStream out = stream.getOutputStream();
         int count;
         while ((count = in.read(buffer)) != -1) {
             out.write(buffer, 0, count);
