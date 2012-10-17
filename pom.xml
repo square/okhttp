@@ -171,6 +171,7 @@
                 <configuration>
                     <failsOnError>true</failsOnError>
                     <configLocation>checkstyle.xml</configLocation>
+                    <consoleOutput>true</consoleOutput>
                     <excludes>**/OsConstants.java</excludes>
                 </configuration>
                 <executions>
