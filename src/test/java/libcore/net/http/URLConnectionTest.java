@@ -1024,11 +1024,19 @@ public final class URLConnectionTest extends TestCase {
     }
 
     public void testGzipAndConnectionReuseWithFixedLength() throws Exception {
-        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.FIXED_LENGTH);
+        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.FIXED_LENGTH, false);
     }
 
     public void testGzipAndConnectionReuseWithChunkedEncoding() throws Exception {
-        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.CHUNKED);
+        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.CHUNKED, false);
+    }
+
+    public void testGzipAndConnectionReuseWithFixedLengthAndTls() throws Exception {
+        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.FIXED_LENGTH, true);
+    }
+
+    public void testGzipAndConnectionReuseWithChunkedEncodingAndTls() throws Exception {
+        testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind.CHUNKED, true);
     }
 
     public void testClientConfiguredCustomContentEncoding() throws Exception {
@@ -1047,11 +1055,20 @@ public final class URLConnectionTest extends TestCase {
 
     /**
      * Test a bug where gzip input streams weren't exhausting the input stream,
-     * which corrupted the request that followed.
+     * which corrupted the request that followed or prevented connection reuse.
      * http://code.google.com/p/android/issues/detail?id=7059
+     * http://code.google.com/p/android/issues/detail?id=38817
      */
     private void testClientConfiguredGzipContentEncodingAndConnectionReuse(
-            TransferKind transferKind) throws Exception {
+            TransferKind transferKind, boolean tls) throws Exception {
+        SSLSocketFactory socketFactory = null;
+        RecordingHostnameVerifier hostnameVerifier = null;
+        if (tls) {
+            socketFactory = sslContext.getSocketFactory();
+            hostnameVerifier = new RecordingHostnameVerifier();
+            server.useHttps(socketFactory, false);
+        }
+
         MockResponse responseOne = new MockResponse();
         responseOne.addHeader("Content-Encoding: gzip");
         transferKind.setBody(responseOne, gzip("one (gzipped)".getBytes("UTF-8")), 5);
@@ -1062,12 +1079,20 @@ public final class URLConnectionTest extends TestCase {
         server.play();
 
         URLConnection connection = openConnection(server.getUrl("/"));
+        if (tls) {
+            ((OkHttpsConnection) connection).setSSLSocketFactory(socketFactory);
+            ((OkHttpsConnection) connection).setHostnameVerifier(hostnameVerifier);
+        }
         connection.addRequestProperty("Accept-Encoding", "gzip");
         InputStream gunzippedIn = new GZIPInputStream(connection.getInputStream());
         assertEquals("one (gzipped)", readAscii(gunzippedIn, Integer.MAX_VALUE));
         assertEquals(0, server.takeRequest().getSequenceNumber());
 
         connection = openConnection(server.getUrl("/"));
+        if (tls) {
+            ((OkHttpsConnection) connection).setSSLSocketFactory(socketFactory);
+            ((OkHttpsConnection) connection).setHostnameVerifier(hostnameVerifier);
+        }
         assertEquals("two (identity)", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
         assertEquals(1, server.takeRequest().getSequenceNumber());
     }
