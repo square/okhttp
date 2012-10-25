@@ -501,12 +501,12 @@ final class HttpTransport implements Transport {
             cacheWrite(buffer, offset, read);
 
             /*
-            * If we're at the end of a chunk and the next chunk size is readable,
-            * read it! Reading the last chunk causes the underlying connection to
-            * be recycled and we want to do that as early as possible. Otherwise
-            * self-delimiting streams like gzip will never be recycled.
-            * http://code.google.com/p/android/issues/detail?id=7059
-            */
+             * If we're at the end of a chunk and the next chunk size is readable,
+             * read it! Reading the last chunk causes the underlying connection to
+             * be recycled and we want to do that as early as possible. Otherwise
+             * self-delimiting streams like gzip will never be recycled.
+             * http://code.google.com/p/android/issues/detail?id=7059
+             */
             if (bytesRemainingInChunk == 0 && in.available() >= MIN_LAST_CHUNK_LENGTH) {
                 readChunkSize();
             }
