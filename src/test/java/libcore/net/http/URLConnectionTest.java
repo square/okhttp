@@ -809,6 +809,32 @@ public final class URLConnectionTest extends TestCase {
         assertContent("this response comes via a proxy", connection);
     }
 
+    public void testProxyWithConnectionReuse() throws IOException {
+        SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+        RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+
+        server.useHttps(socketFactory, true);
+        server.enqueue(new MockResponse()
+                .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+                .clearHeaders());
+        server.enqueue(new MockResponse().setBody("response 1"));
+        server.enqueue(new MockResponse().setBody("response 2"));
+        server.play();
+
+        URL url = new URL("https://android.com/foo");
+        OkHttpsConnection connection1 = (OkHttpsConnection) openConnection(
+                url, server.toProxyAddress());
+        connection1.setSSLSocketFactory(socketFactory);
+        connection1.setHostnameVerifier(hostnameVerifier);
+        assertContent("response 1", connection1);
+
+        OkHttpsConnection connection2 = (OkHttpsConnection) openConnection(
+                url, server.toProxyAddress());
+        connection2.setSSLSocketFactory(socketFactory);
+        connection2.setHostnameVerifier(hostnameVerifier);
+        assertContent("response 2", connection2);
+    }
+
     public void testDisconnectedConnection() throws IOException {
         server.enqueue(new MockResponse().setBody("ABCDEFGHIJKLMNOPQR"));
         server.play();
