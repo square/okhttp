@@ -449,25 +449,21 @@ public final class HttpsURLConnectionImpl extends OkHttpsConnection {
          * an SSL3 only fallback mode without compression.
          */
         private void makeSslConnection(boolean tlsTolerant) throws IOException {
-            // make an SSL Tunnel on the first message pair of each SSL + proxy connection
+            // Get a connection. This may return a pooled connection!
             if (connection == null) {
                 connection = openSocketConnection();
-                if (connection.getAddress().requiresTunnel()) {
-                    makeTunnel(policy, connection, getRequestHeaders());
-                }
             }
-
-            // if super.makeConnection returned a connection from the
-            // pool, sslSocket needs to be initialized here. If it is
-            // a new connection, it will be initialized by
-            // getSecureSocket below.
             sslSocket = connection.getSecureSocketIfConnected();
 
-            // we already have an SSL connection,
+            // If the TLS connection is ready, use it.
             if (sslSocket != null) {
                 return;
             }
 
+            // The TLS connection isn't ready. Build a tunnel if necessary and then handshake.
+            if (connection.getAddress().requiresTunnel()) {
+                makeTunnel(policy, connection, getRequestHeaders());
+            }
             sslSocket = connection.setupSecureSocket(
                     enclosing.getSSLSocketFactory(), enclosing.getHostnameVerifier(), tlsTolerant);
         }
