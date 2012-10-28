@@ -101,6 +101,7 @@ public class HttpEngine {
 
     private Transport transport;
 
+    private InputStream responseTransferIn;
     private InputStream responseBodyIn;
 
     private final ResponseCache responseCache = ResponseCache.getDefault();
@@ -421,7 +422,7 @@ public class HttpEngine {
         if (!connectionReleased && connection != null) {
             connectionReleased = true;
 
-            if (!reusable || !transport.makeReusable(requestBodyOut, responseBodyIn)) {
+            if (!reusable || !transport.makeReusable(requestBodyOut, responseTransferIn)) {
                 connection.closeSocketAndStreams();
                 connection = null;
             } else if (automaticallyReleaseConnectionToPool) {
@@ -432,6 +433,7 @@ public class HttpEngine {
     }
 
     private void initContentStream(InputStream transferStream) throws IOException {
+        responseTransferIn = transferStream;
         if (transparentGzip && responseHeaders.isContentEncodingGzip()) {
             /*
              * If the response was transparently gzipped, remove the gzip header field

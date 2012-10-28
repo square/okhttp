@@ -214,9 +214,14 @@ final class HttpConnection {
             throw new IOException("Hostname '" + address.uriHost + "' was not verified");
         }
 
-        // SSL success. Prepare to hand out Transport instances.
+        /*
+         * Buffer the input to mask SSL InputStream's degenerate available()
+         * implementation. That way we can read the end of a chunked response
+         * without blocking and will recycle the connection more reliably.
+         * http://code.google.com/p/android/issues/detail?id=38817
+         */
         sslOutputStream = sslSocket.getOutputStream();
-        sslInputStream = sslSocket.getInputStream();
+        sslInputStream = new BufferedInputStream(sslSocket.getInputStream(), 128);
 
         byte[] selectedProtocol;
         if (tlsTolerant
