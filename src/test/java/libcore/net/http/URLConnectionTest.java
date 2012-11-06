@@ -20,10 +20,6 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.google.mockwebserver.SocketPolicy;
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
 import java.io.ByteArrayOutputStream;
@@ -73,6 +69,11 @@ import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
 import libcore.net.ssl.SslContextBuilder;
 
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+
 /**
  * Android's URLConnectionTest.
  */
@@ -117,7 +118,7 @@ public final class URLConnectionTest extends TestCase {
         }
         super.tearDown();
     }
-    
+
     private static OkHttpConnection openConnection(URL url) {
         return OkHttpConnection.open(url);
     }

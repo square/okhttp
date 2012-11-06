@@ -33,13 +33,16 @@ import libcore.io.Base64;
  * Handles HTTP authentication headers from origin and proxy servers.
  */
 public final class HttpAuthenticator {
+    private HttpAuthenticator() {
+    }
+
     /**
      * React to a failed authorization response by looking up new credentials.
      *
      * @return true if credentials have been added to successorRequestHeaders
      *     and another request should be attempted.
      */
-    public static final boolean processAuthHeader(int responseCode, RawHeaders responeHeaders,
+    public static boolean processAuthHeader(int responseCode, RawHeaders responeHeaders,
             RawHeaders successorRequestHeaders, Proxy proxy, URL url) throws IOException {
         if (responseCode != HTTP_PROXY_AUTH && responseCode != HTTP_UNAUTHORIZED) {
             throw new IllegalArgumentException();

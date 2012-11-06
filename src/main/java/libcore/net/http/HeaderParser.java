@@ -16,9 +16,6 @@
 
 package libcore.net.http;
 
-import java.util.ArrayList;
-import java.util.List;
-
 final class HeaderParser {
 
     public interface CacheControlHandler {
