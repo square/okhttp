@@ -17,22 +17,26 @@
 
 package libcore.net.http;
 
+import static com.squareup.okhttp.OkHttpConnection.HTTP_PROXY_AUTH;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import static java.net.HttpURLConnection.HTTP_OK;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.net.URI;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import libcore.io.IoUtils;
@@ -62,14 +66,18 @@ final class HttpConnection {
     };
 
     private final Address address;
-    private final Socket socket;
-    private InputStream inputStream;
-    private OutputStream outputStream;
-    private SSLSocket sslSocket;
-    private InputStream sslInputStream;
-    private OutputStream sslOutputStream;
+    private Socket socket;
+    private InputStream in;
+    private OutputStream out;
     private boolean recycled = false;
     private SpdyConnection spdyConnection;
+
+    HttpConnection(Address address, Socket socket, InputStream in, OutputStream out) {
+        this.address = address;
+        this.socket = socket;
+        this.in = in;
+        this.out = out;
+    }
 
     /**
      * The version this client will use. Either 0 for HTTP/1.0, or 1 for
@@ -78,66 +86,30 @@ final class HttpConnection {
      */
     int httpMinorVersion = 1; // Assume HTTP/1.1
 
-    private HttpConnection(Address config, int connectTimeout) throws IOException {
-        this.address = config;
-
-        /*
-         * Try each of the host's addresses for best behavior in mixed IPv4/IPv6
-         * environments. See http://b/2876927
-         * TODO: add a hidden method so that Socket.tryAllAddresses can does this for us
-         */
-        Socket socketCandidate = null;
-        InetAddress[] addresses = InetAddress.getAllByName(config.socketHost);
-        for (int i = 0; i < addresses.length; i++) {
-            socketCandidate = (config.proxy != null && config.proxy.type() != Proxy.Type.HTTP)
-                    ? new Socket(config.proxy)
-                    : new Socket();
-            try {
-                socketCandidate.connect(
-                        new InetSocketAddress(addresses[i], config.socketPort), connectTimeout);
-                break;
-            } catch (IOException e) {
-                if (i == addresses.length - 1) {
-                    throw e;
-                }
-            }
-        }
-
-        if (socketCandidate == null) {
-            throw new IOException();
-        }
-
-        this.socket = socketCandidate;
-
-        /*
-         * Buffer the socket stream to permit efficient parsing of HTTP headers
-         * and chunk sizes. Benchmarks suggest 128 is sufficient. We cannot
-         * buffer when setting up a tunnel because we may consume bytes intended
-         * for the SSL socket.
-         */
-        int bufferSize = 128;
-        inputStream = address.requiresTunnel()
-                ? socket.getInputStream()
-                : new BufferedInputStream(socket.getInputStream(), bufferSize);
-        outputStream = socket.getOutputStream();
+    public static HttpConnection connect(URI uri, SSLSocketFactory sslSocketFactory,
+            HostnameVerifier hostnameVerifier, Proxy proxy, int connectTimeout, int readTimeout,
+            TunnelConfig tunnelConfig) throws IOException {
+        HttpConnection result = getConnection(uri, sslSocketFactory, hostnameVerifier, proxy,
+                connectTimeout, tunnelConfig);
+        result.socket.setSoTimeout(readTimeout);
+        return result;
     }
 
-    public static HttpConnection connect(URI uri, SSLSocketFactory sslSocketFactory,
-            Proxy proxy, int connectTimeout) throws IOException {
-        /*
-         * Try an explicitly-specified proxy.
-         */
+    /**
+     * Selects a proxy and gets a connection with that proxy.
+     */
+    private static HttpConnection getConnection(URI uri, SSLSocketFactory sslSocketFactory,
+            HostnameVerifier hostnameVerifier, Proxy proxy, int connectTimeout,
+            TunnelConfig tunnelConfig) throws IOException {
+        // Try an explicitly-specified proxy.
         if (proxy != null) {
             Address address = (proxy.type() == Proxy.Type.DIRECT)
-                    ? new Address(uri, sslSocketFactory)
-                    : new Address(uri, sslSocketFactory, proxy);
-            return HttpConnectionPool.INSTANCE.get(address, connectTimeout);
+                    ? new Address(uri, sslSocketFactory, hostnameVerifier)
+                    : new Address(uri, sslSocketFactory, hostnameVerifier, proxy);
+            return getConnectionToAddress(address, connectTimeout, tunnelConfig);
         }
 
-        /*
-         * Try connecting to each of the proxies provided by the ProxySelector
-         * until a connection succeeds.
-         */
+        // Try each proxy provided by the ProxySelector until a connection succeeds.
         ProxySelector selector = ProxySelector.getDefault();
         List<Proxy> proxyList = selector.select(uri);
         if (proxyList != null) {
@@ -148,8 +120,8 @@ final class HttpConnection {
                     continue;
                 }
                 try {
-                    Address address = new Address(uri, sslSocketFactory, selectedProxy);
-                    return HttpConnectionPool.INSTANCE.get(address, connectTimeout);
+                    return getConnectionToAddress(new Address(uri, sslSocketFactory,
+                            hostnameVerifier, selectedProxy), connectTimeout, tunnelConfig);
                 } catch (IOException e) {
                     // failed to connect, tell it to the selector
                     selector.connectFailed(uri, selectedProxy.address(), e);
@@ -157,49 +129,109 @@ final class HttpConnection {
             }
         }
 
-        /*
-         * Try a direct connection. If this fails, this method will throw.
-         */
-        return HttpConnectionPool.INSTANCE.get(new Address(uri, sslSocketFactory), connectTimeout);
-    }
-
-    public void closeSocketAndStreams() {
-        IoUtils.closeQuietly(sslOutputStream);
-        IoUtils.closeQuietly(sslInputStream);
-        IoUtils.closeQuietly(sslSocket);
-        IoUtils.closeQuietly(outputStream);
-        IoUtils.closeQuietly(inputStream);
-        IoUtils.closeQuietly(socket);
-    }
-
-    public void setSoTimeout(int readTimeout) throws SocketException {
-        socket.setSoTimeout(readTimeout);
-    }
-
-    Socket getSocket() {
-        return sslSocket != null ? sslSocket : socket;
-    }
-
-    public Address getAddress() {
-        return address;
+        // Try a direct connection. If this fails, this method will throw.
+        return getConnectionToAddress(new Address(uri, sslSocketFactory, hostnameVerifier),
+                connectTimeout, tunnelConfig);
     }
 
     /**
-     * Create an {@code SSLSocket} and perform the SSL handshake
-     * (performing certificate validation.
-     *
-     * @param sslSocketFactory Source of new {@code SSLSocket} instances.
-     * @param tlsTolerant If true, assume server can handle common
+     * Selects a proxy and gets a connection with that proxy.
      */
-    public SSLSocket setupSecureSocket(SSLSocketFactory sslSocketFactory,
-            HostnameVerifier hostnameVerifier, boolean tlsTolerant) throws IOException {
-        if (spdyConnection != null || sslOutputStream != null || sslInputStream != null) {
-            throw new IllegalStateException();
+    private static HttpConnection getConnectionToAddress(Address address, int connectTimeout,
+            TunnelConfig tunnelConfig) throws IOException {
+        HttpConnection pooled = HttpConnectionPool.INSTANCE.get(address);
+        if (pooled != null) {
+            return pooled;
+        }
+
+        Socket socket = connectSocket(address, connectTimeout);
+        HttpConnection result = new HttpConnection(
+                address, socket, socket.getInputStream(), socket.getOutputStream());
+
+        if (address.sslSocketFactory != null) {
+            // First try an SSL connection with compression and various TLS
+            // extensions enabled, if it fails (and its not unheard of that it
+            // will) fallback to a barebones connection.
+            try {
+                result = new HttpConnection(
+                        address, socket, socket.getInputStream(), socket.getOutputStream());
+                result.upgradeToTls(true, tunnelConfig);
+            } catch (IOException e) {
+                // If the problem was a CertificateException from the X509TrustManager,
+                // do not retry, we didn't have an abrupt server initiated exception.
+                if (e instanceof SSLHandshakeException
+                        && e.getCause() instanceof CertificateException) {
+                    throw e;
+                }
+                result.closeSocketAndStreams();
+
+                socket = connectSocket(address, connectTimeout);
+                result = new HttpConnection(
+                        address, socket, socket.getInputStream(), socket.getOutputStream());
+                result.upgradeToTls(false, tunnelConfig);
+            }
+        }
+
+        /*
+         * Buffer the socket stream to permit efficient parsing of HTTP headers
+         * and chunk sizes. This also masks SSL InputStream's degenerate
+         * available() implementation. That way we can read the end of a chunked
+         * response without blocking and will recycle connections more reliably.
+         * http://code.google.com/p/android/issues/detail?id=38817
+         */
+        int bufferSize = 128;
+        result.in = new BufferedInputStream(result.in, bufferSize);
+
+        return result;
+    }
+
+    /**
+     * Try each of the host's addresses for best behavior in mixed IPv4/IPv6
+     * environments. See http://b/2876927
+     */
+    private static Socket connectSocket(Address address, int connectTimeout) throws IOException {
+        Socket socket = null;
+        InetAddress[] addresses = InetAddress.getAllByName(address.socketHost);
+        for (int i = 0; i < addresses.length; i++) {
+            socket = (address.proxy != null && address.proxy.type() != Proxy.Type.HTTP)
+                    ? new Socket(address.proxy)
+                    : new Socket();
+            try {
+                socket.connect(
+                        new InetSocketAddress(addresses[i], address.socketPort), connectTimeout);
+                break;
+            } catch (IOException e) {
+                if (i == addresses.length - 1) {
+                    throw e;
+                }
+            }
+        }
+
+        if (socket == null) {
+            throw new IOException();
+        }
+
+        return socket;
+    }
+
+    /**
+     * Create an {@code SSLSocket} and perform the TLS handshake and certificate
+     * validation.
+     *
+     * @param tlsTolerant If true, assume server can handle common TLS
+     *     extensions and SSL deflate compression. If false, use an SSL3 only
+     *     fallback mode without compression.
+     */
+    private void upgradeToTls(boolean tlsTolerant, TunnelConfig tunnelConfig) throws IOException {
+        // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
+        if (address.requiresTunnel()) {
+            makeTunnel(tunnelConfig);
         }
 
         // Create the wrapper over connected socket.
-        sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket,
-                address.uriHost, address.uriPort, true /* autoClose */);
+        socket = address.sslSocketFactory.createSocket(
+                socket, address.uriHost, address.uriPort, true /* autoClose */);
+        SSLSocket sslSocket = (SSLSocket) socket;
         Libcore.makeTlsTolerant(sslSocket, address.uriHost, tlsTolerant);
 
         if (tlsTolerant) {
@@ -210,40 +242,38 @@ final class HttpConnection {
         sslSocket.startHandshake();
 
         // Verify that the socket's certificates are acceptable for the target host.
-        if (!hostnameVerifier.verify(address.uriHost, sslSocket.getSession())) {
+        if (!address.hostnameVerifier.verify(address.uriHost, sslSocket.getSession())) {
             throw new IOException("Hostname '" + address.uriHost + "' was not verified");
         }
 
-        /*
-         * Buffer the input to mask SSL InputStream's degenerate available()
-         * implementation. That way we can read the end of a chunked response
-         * without blocking and will recycle the connection more reliably.
-         * http://code.google.com/p/android/issues/detail?id=38817
-         */
-        sslOutputStream = sslSocket.getOutputStream();
-        sslInputStream = new BufferedInputStream(sslSocket.getInputStream(), 128);
+        out = sslSocket.getOutputStream();
+        in = sslSocket.getInputStream();
 
         byte[] selectedProtocol;
         if (tlsTolerant
                 && (selectedProtocol = Libcore.getNpnSelectedProtocol(sslSocket)) != null) {
             if (Arrays.equals(selectedProtocol, SPDY2)) {
-                spdyConnection = new SpdyConnection.Builder(
-                        true, sslInputStream, sslOutputStream).build();
+                spdyConnection = new SpdyConnection.Builder(true, in, out).build();
                 HttpConnectionPool.INSTANCE.share(this);
             } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
                 throw new IOException("Unexpected NPN transport "
                         + new String(selectedProtocol, "ISO-8859-1"));
             }
         }
-
-        return sslSocket;
     }
 
-    /**
-     * Return an {@code SSLSocket} if already connected, otherwise null.
-     */
-    public SSLSocket getSecureSocketIfConnected() {
-        return sslSocket;
+    public void closeSocketAndStreams() {
+        IoUtils.closeQuietly(out);
+        IoUtils.closeQuietly(in);
+        IoUtils.closeQuietly(socket);
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public Address getAddress() {
+        return address;
     }
 
     /**
@@ -274,10 +304,8 @@ final class HttpConnection {
     public Transport newTransport(HttpEngine httpEngine) throws IOException {
         if (spdyConnection != null) {
             return new SpdyTransport(httpEngine, spdyConnection);
-        } else if (sslSocket != null) {
-            return new HttpTransport(httpEngine, sslOutputStream, sslInputStream);
         } else {
-            return new HttpTransport(httpEngine, outputStream, inputStream);
+            return new HttpTransport(httpEngine, out, in);
         }
     }
 
@@ -287,6 +315,76 @@ final class HttpConnection {
      */
     public boolean isSpdy() {
         return spdyConnection != null;
+    }
+
+    public static final class TunnelConfig {
+        private final URL url;
+        private final String host;
+        private final String userAgent;
+        private final String proxyAuthorization;
+
+        public TunnelConfig(URL url, String host, String userAgent, String proxyAuthorization) {
+            if (url == null || host == null || userAgent == null) throw new NullPointerException();
+            this.url = url;
+            this.host = host;
+            this.userAgent = userAgent;
+            this.proxyAuthorization = proxyAuthorization;
+        }
+
+        /**
+         * If we're establishing an HTTPS tunnel with CONNECT (RFC 2817 5.2), send
+         * only the minimum set of headers. This avoids sending potentially
+         * sensitive data like HTTP cookies to the proxy unencrypted.
+         */
+        RawHeaders getRequestHeaders() {
+            RawHeaders result = new RawHeaders();
+            result.setRequestLine("CONNECT " + url.getHost() + ":"
+                    + Libcore.getEffectivePort(url) + " HTTP/1.1");
+
+            // Always set Host and User-Agent.
+            result.set("Host", host);
+            result.set("User-Agent", userAgent);
+
+            // Copy over the Proxy-Authorization header if it exists.
+            if (proxyAuthorization != null) {
+                result.set("Proxy-Authorization", proxyAuthorization);
+            }
+
+            // Always set the Proxy-Connection to Keep-Alive for the benefit of
+            // HTTP/1.0 proxies like Squid.
+            result.set("Proxy-Connection", "Keep-Alive");
+            return result;
+        }
+    }
+
+    /**
+     * To make an HTTPS connection over an HTTP proxy, send an unencrypted
+     * CONNECT request to create the proxy connection. This may need to be
+     * retried if the proxy requires authorization.
+     */
+    private void makeTunnel(TunnelConfig tunnelConfig) throws IOException {
+        RawHeaders requestHeaders = tunnelConfig.getRequestHeaders();
+        while (true) {
+            out.write(requestHeaders.toBytes());
+            RawHeaders responseHeaders = RawHeaders.fromBytes(in);
+
+            switch (responseHeaders.getResponseCode()) {
+            case HTTP_OK:
+                return;
+            case HTTP_PROXY_AUTH:
+                requestHeaders = new RawHeaders(requestHeaders);
+                boolean credentialsFound = HttpAuthenticator.processAuthHeader(HTTP_PROXY_AUTH,
+                        responseHeaders, requestHeaders, address.proxy, tunnelConfig.url);
+                if (credentialsFound) {
+                    continue;
+                } else {
+                    throw new IOException("Failed to authenticate with proxy");
+                }
+            default:
+                throw new IOException("Unexpected response code for CONNECT: "
+                        + responseHeaders.getResponseCode());
+            }
+        }
     }
 
     /**
@@ -302,12 +400,15 @@ final class HttpConnection {
         private final String socketHost;
         private final int socketPort;
         private final SSLSocketFactory sslSocketFactory;
+        private final HostnameVerifier hostnameVerifier;
 
-        public Address(URI uri, SSLSocketFactory sslSocketFactory) throws UnknownHostException {
+        public Address(URI uri, SSLSocketFactory sslSocketFactory,
+                HostnameVerifier hostnameVerifier) throws UnknownHostException {
             this.proxy = null;
             this.uriHost = uri.getHost();
             this.uriPort = Libcore.getEffectivePort(uri);
             this.sslSocketFactory = sslSocketFactory;
+            this.hostnameVerifier = hostnameVerifier;
             this.socketHost = uriHost;
             this.socketPort = uriPort;
             if (uriHost == null) {
@@ -315,12 +416,13 @@ final class HttpConnection {
             }
         }
 
-        public Address(URI uri, SSLSocketFactory sslSocketFactory, Proxy proxy)
-                throws UnknownHostException {
+        public Address(URI uri, SSLSocketFactory sslSocketFactory,
+                HostnameVerifier hostnameVerifier, Proxy proxy) throws UnknownHostException {
             this.proxy = proxy;
             this.uriHost = uri.getHost();
             this.uriPort = Libcore.getEffectivePort(uri);
             this.sslSocketFactory = sslSocketFactory;
+            this.hostnameVerifier = hostnameVerifier;
 
             SocketAddress proxyAddress = proxy.address();
             if (!(proxyAddress instanceof InetSocketAddress)) {
@@ -345,7 +447,8 @@ final class HttpConnection {
                 return Objects.equal(this.proxy, that.proxy)
                         && this.uriHost.equals(that.uriHost)
                         && this.uriPort == that.uriPort
-                        && Objects.equal(this.sslSocketFactory, that.sslSocketFactory);
+                        && Objects.equal(this.sslSocketFactory, that.sslSocketFactory)
+                        && Objects.equal(this.hostnameVerifier, that.hostnameVerifier);
             }
             return false;
         }
@@ -355,12 +458,9 @@ final class HttpConnection {
             result = 31 * result + uriHost.hashCode();
             result = 31 * result + uriPort;
             result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
+            result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
             result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
             return result;
-        }
-
-        public HttpConnection connect(int connectTimeout) throws IOException {
-            return new HttpConnection(this, connectTimeout);
         }
 
         /**

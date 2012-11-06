@@ -22,11 +22,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.Authenticator;
 import java.net.HttpRetryException;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
@@ -34,7 +31,6 @@ import java.net.URL;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-import libcore.io.Base64;
 import libcore.io.IoUtils;
 import libcore.util.Libcore;
 
@@ -367,8 +363,8 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
             }
             // fall-through
         case HTTP_UNAUTHORIZED:
-            boolean credentialsFound = processAuthHeader(getResponseCode(),
-                    httpEngine.getResponseHeaders(), rawRequestHeaders);
+            boolean credentialsFound = HttpAuthenticator.processAuthHeader(getResponseCode(),
+                    httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders, proxy, url);
             return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
 
         case HTTP_MULT_CHOICE:
@@ -400,81 +396,6 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
         default:
             return Retry.NONE;
         }
-    }
-
-    /**
-     * React to a failed authorization response by looking up new credentials.
-     *
-     * @return true if credentials have been added to successorRequestHeaders
-     *     and another request should be attempted.
-     */
-    final boolean processAuthHeader(int responseCode, ResponseHeaders response,
-            RawHeaders successorRequestHeaders) throws IOException {
-        if (responseCode != HTTP_PROXY_AUTH && responseCode != HTTP_UNAUTHORIZED) {
-            throw new IllegalArgumentException();
-        }
-
-        // keep asking for username/password until authorized
-        String challengeHeader = responseCode == HTTP_PROXY_AUTH
-                ? "Proxy-Authenticate"
-                : "WWW-Authenticate";
-        String credentials = getAuthorizationCredentials(response.getHeaders(), challengeHeader);
-        if (credentials == null) {
-            return false; // could not find credentials, end request cycle
-        }
-
-        // add authorization credentials, bypassing the already-connected check
-        String fieldName = responseCode == HTTP_PROXY_AUTH
-                ? "Proxy-Authorization"
-                : "Authorization";
-        successorRequestHeaders.set(fieldName, credentials);
-        return true;
-    }
-
-    /**
-     * Returns the authorization credentials that may satisfy the challenge.
-     * Returns null if a challenge header was not provided or if credentials
-     * were not available.
-     */
-    private String getAuthorizationCredentials(RawHeaders responseHeaders, String challengeHeader)
-            throws IOException {
-        List<Challenge> challenges = HeaderParser.parseChallenges(responseHeaders, challengeHeader);
-        if (challenges.isEmpty()) {
-            return null;
-        }
-
-        for (Challenge challenge : challenges) {
-            // use the global authenticator to get the password
-            PasswordAuthentication auth;
-            if (responseHeaders.getResponseCode() == HTTP_PROXY_AUTH) {
-                InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-                auth = Authenticator.requestPasswordAuthentication(
-                        proxyAddress.getHostName(), getConnectToInetAddress(),
-                        proxyAddress.getPort(), url.getProtocol(), challenge.realm,
-                        challenge.scheme, url, Authenticator.RequestorType.PROXY);
-            } else {
-                auth = Authenticator.requestPasswordAuthentication(
-                        url.getHost(), getConnectToInetAddress(), url.getPort(), url.getProtocol(),
-                        challenge.realm, challenge.scheme, url, Authenticator.RequestorType.SERVER);
-            }
-            if (auth == null) {
-                continue;
-            }
-
-            // base64 encode the username and password
-            String usernameAndPassword = auth.getUserName() + ":" + new String(auth.getPassword());
-            byte[] bytes = usernameAndPassword.getBytes("ISO-8859-1");
-            String encoded = Base64.encode(bytes);
-            return challenge.scheme + " " + encoded;
-        }
-
-        return null;
-    }
-
-    private InetAddress getConnectToInetAddress() throws IOException {
-        return usingProxy()
-                ? ((InetSocketAddress) proxy.address()).getAddress()
-                : InetAddress.getByName(getURL().getHost());
     }
 
     final int getDefaultPort() {
