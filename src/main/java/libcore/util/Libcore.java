@@ -197,10 +197,12 @@ public final class Libcore {
     }
 
     private static int getEffectivePort(String scheme, int specifiedPort) {
-        if (specifiedPort != -1) {
-            return specifiedPort;
-        }
+        return specifiedPort != -1
+                ? specifiedPort
+                : getDefaultPort(scheme);
+    }
 
+    public static int getDefaultPort(String scheme) {
         if ("http".equalsIgnoreCase(scheme)) {
             return 80;
         } else if ("https".equalsIgnoreCase(scheme)) {

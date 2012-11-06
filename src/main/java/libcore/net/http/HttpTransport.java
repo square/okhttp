@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
-import java.net.URL;
 import libcore.io.Streams;
 import libcore.util.Libcore;
 
@@ -124,8 +123,8 @@ final class HttpTransport implements Transport {
         httpEngine.sentRequestMillis = System.currentTimeMillis();
 
         int contentLength = httpEngine.requestHeaders.getContentLength();
-        RawHeaders headersToSend = getNetworkRequestHeaders();
-        byte[] bytes = headersToSend.toRequestHeader().getBytes("ISO-8859-1");
+        RawHeaders headersToSend = httpEngine.requestHeaders.getHeaders();
+        byte[] bytes = headersToSend.toBytes();
 
         if (contentLength != -1 && bytes.length + contentLength <= MAX_REQUEST_BUFFER_LENGTH) {
             requestOut = new BufferedOutputStream(socketOut, bytes.length + contentLength);
@@ -134,71 +133,14 @@ final class HttpTransport implements Transport {
         requestOut.write(bytes);
     }
 
-    private RawHeaders getNetworkRequestHeaders() {
-        return httpEngine.method == HttpEngine.CONNECT
-                ? getTunnelNetworkRequestHeaders()
-                : httpEngine.requestHeaders.getHeaders();
-    }
-
-    /**
-     * If we're establishing an HTTPS tunnel with CONNECT (RFC 2817 5.2), send
-     * only the minimum set of headers. This avoids sending potentially
-     * sensitive data like HTTP cookies to the proxy unencrypted.
-     */
-    private RawHeaders getTunnelNetworkRequestHeaders() {
-        RequestHeaders privateHeaders = httpEngine.requestHeaders;
-        URL url = httpEngine.policy.getURL();
-
-        RawHeaders result = new RawHeaders();
-        result.setRequestLine("CONNECT " + url.getHost() + ":" + Libcore.getEffectivePort(url)
-                + " HTTP/1.1");
-
-        // Always set Host and User-Agent.
-        String host = privateHeaders.getHost();
-        if (host == null) {
-            host = httpEngine.getOriginAddress(url);
-        }
-        result.set("Host", host);
-
-        String userAgent = privateHeaders.getUserAgent();
-        if (userAgent == null) {
-            userAgent = httpEngine.getDefaultUserAgent();
-        }
-        result.set("User-Agent", userAgent);
-
-        // Copy over the Proxy-Authorization header if it exists.
-        String proxyAuthorization = privateHeaders.getProxyAuthorization();
-        if (proxyAuthorization != null) {
-            result.set("Proxy-Authorization", proxyAuthorization);
-        }
-
-        // Always set the Proxy-Connection to Keep-Alive for the benefit of
-        // HTTP/1.0 proxies like Squid.
-        result.set("Proxy-Connection", "Keep-Alive");
-        return result;
-    }
-
     @Override public ResponseHeaders readResponseHeaders() throws IOException {
-        RawHeaders headers;
-        do {
-            headers = new RawHeaders();
-            headers.setStatusLine(Streams.readAsciiLine(socketIn));
-            httpEngine.connection.httpMinorVersion = headers.getHttpMinorVersion();
-            readHeaders(headers);
-        } while (headers.getResponseCode() == HttpEngine.HTTP_CONTINUE);
+        RawHeaders headers = RawHeaders.fromBytes(socketIn);
+        httpEngine.connection.httpMinorVersion = headers.getHttpMinorVersion();
+        receiveHeaders(headers);
         return new ResponseHeaders(httpEngine.uri, headers);
     }
 
-    /**
-     * Reads headers or trailers and updates the cookie store.
-     */
-    private void readHeaders(RawHeaders headers) throws IOException {
-        // parse the result headers until the first blank line
-        String line;
-        while ((line = Streams.readAsciiLine(socketIn)).length() != 0) {
-            headers.addLine(line);
-        }
-
+    private void receiveHeaders(RawHeaders headers) throws IOException {
         CookieHandler cookieHandler = CookieHandler.getDefault();
         if (cookieHandler != null) {
             cookieHandler.put(httpEngine.uri, headers.toMultimap(true));
@@ -211,11 +153,8 @@ final class HttpTransport implements Transport {
             return false;
         }
 
-        // If the request specified that the connection shouldn't be reused,
-        // don't reuse it. This advice doesn't apply to CONNECT requests because
-        // the "Connection: close" header goes the origin server, not the proxy.
-        if (httpEngine.requestHeaders.hasConnectionClose()
-                && httpEngine.method != HttpEngine.CONNECT) {
+        // If the request specified that the connection shouldn't be reused, don't reuse it.
+        if (httpEngine.requestHeaders.hasConnectionClose()) {
             return false;
         }
 
@@ -531,7 +470,9 @@ final class HttpTransport implements Transport {
             }
             if (bytesRemainingInChunk == 0) {
                 hasMoreChunks = false;
-                transport.readHeaders(httpEngine.responseHeaders.getHeaders());
+                RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
+                RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
+                transport.receiveHeaders(rawResponseHeaders);
                 endOfInput(true);
             }
         }

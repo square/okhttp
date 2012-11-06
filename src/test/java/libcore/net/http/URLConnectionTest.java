@@ -118,7 +118,7 @@ public final class URLConnectionTest extends TestCase {
         }
         super.tearDown();
     }
-    
+
     private static OkHttpConnection openConnection(URL url) {
         return OkHttpConnection.open(url);
     }
@@ -478,15 +478,16 @@ public final class URLConnectionTest extends TestCase {
 
         // The pool will only reuse sockets if the SSL socket factories are the same.
         SSLSocketFactory clientSocketFactory = sslContext.getSocketFactory();
+        RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
 
         OkHttpsConnection connection = (OkHttpsConnection) openConnection(server.getUrl("/"));
         connection.setSSLSocketFactory(clientSocketFactory);
-        connection.setHostnameVerifier(new RecordingHostnameVerifier());
+        connection.setHostnameVerifier(hostnameVerifier);
         assertContent("this response comes via HTTPS", connection);
 
         connection = (OkHttpsConnection) openConnection(server.getUrl("/"));
         connection.setSSLSocketFactory(clientSocketFactory);
-        connection.setHostnameVerifier(new RecordingHostnameVerifier());
+        connection.setHostnameVerifier(hostnameVerifier);
         assertContent("another response via HTTPS", connection);
 
         assertEquals(0, server.takeRequest().getSequenceNumber());
@@ -516,7 +517,7 @@ public final class URLConnectionTest extends TestCase {
 
     public void testConnectViaHttpsWithSSLFallback() throws IOException, InterruptedException {
         server.useHttps(sslContext.getSocketFactory(), false);
-        server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
         server.enqueue(new MockResponse().setBody("this response comes via SSL"));
         server.play();
 

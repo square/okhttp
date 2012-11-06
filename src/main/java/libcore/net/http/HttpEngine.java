@@ -36,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import libcore.io.IoUtils;
 import libcore.util.EmptyArray;
@@ -86,7 +87,6 @@ public class HttpEngine {
     public static final String PUT = "PUT";
     public static final String DELETE = "DELETE";
     public static final String TRACE = "TRACE";
-    public static final String CONNECT = "CONNECT";
 
     public static final int HTTP_CONTINUE = 100;
 
@@ -274,22 +274,18 @@ public class HttpEngine {
      * Connect to the origin server either directly or via a proxy.
      */
     protected void connect() throws IOException {
-        if (connection == null) {
-            connection = openSocketConnection();
+        if (connection != null) {
+            return;
         }
-    }
-
-    protected final HttpConnection openSocketConnection() throws IOException {
-        HttpConnection result = HttpConnection.connect(uri, getSslSocketFactory(),
-                policy.getProxy(), policy.getConnectTimeout());
-        Proxy proxy = result.getAddress().getProxy();
+        connection = HttpConnection.connect(uri, getSslSocketFactory(), getHostnameVerifier(),
+                policy.getProxy(), policy.getConnectTimeout(), policy.getReadTimeout(),
+                getTunnelConfig());
+        Proxy proxy = connection.getAddress().getProxy();
         if (proxy != null) {
             policy.setProxy(proxy);
             // Add the authority to the request line when we're using a proxy.
             requestHeaders.getHeaders().setRequestLine(getRequestLine());
         }
-        result.setSoTimeout(policy.getReadTimeout());
-        return result;
     }
 
     /**
@@ -371,11 +367,6 @@ public class HttpEngine {
     }
 
     private void maybeCache() throws IOException {
-        // Never cache responses to proxy CONNECT requests.
-        if (method == CONNECT) {
-            return;
-        }
-
         // Are we caching at all?
         if (!policy.getUseCaches() || responseCache == null) {
             return;
@@ -458,8 +449,7 @@ public class HttpEngine {
             return false;
         }
 
-        if (method != CONNECT
-                && (responseCode < HTTP_CONTINUE || responseCode >= 200)
+        if ((responseCode < HTTP_CONTINUE || responseCode >= 200)
                 && responseCode != HttpURLConnectionImpl.HTTP_NO_CONTENT
                 && responseCode != HttpURLConnectionImpl.HTTP_NOT_MODIFIED) {
             return true;
@@ -569,15 +559,23 @@ public class HttpEngine {
         return null;
     }
 
-    protected final String getDefaultUserAgent() {
+    /**
+     * Returns the hostname verifier for connections created by this engine. We
+     * cannot reuse HTTPS connections if the hostname verifier has changed.
+     */
+    protected HostnameVerifier getHostnameVerifier() {
+        return null;
+    }
+
+    public static final String getDefaultUserAgent() {
         String agent = System.getProperty("http.agent");
         return agent != null ? agent : ("Java" + System.getProperty("java.version"));
     }
 
-    protected final String getOriginAddress(URL url) {
+    public static String getOriginAddress(URL url) {
         int port = url.getPort();
         String result = url.getHost();
-        if (port > 0 && port != policy.getDefaultPort()) {
+        if (port > 0 && port != Libcore.getDefaultPort(url.getProtocol())) {
             result = result + ":" + port;
         }
         return result;
@@ -641,5 +639,9 @@ public class HttpEngine {
         }
 
         initContentStream(transport.getTransferStream(cacheRequest));
+    }
+
+    protected HttpConnection.TunnelConfig getTunnelConfig() {
+        return null;
     }
 }

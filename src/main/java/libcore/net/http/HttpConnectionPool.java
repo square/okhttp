@@ -17,7 +17,6 @@
 
 package libcore.net.http;
 
-import java.io.IOException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -59,8 +58,7 @@ final class HttpConnectionPool {
                 : 5;
     }
 
-    public HttpConnection get(HttpConnection.Address address, int connectTimeout)
-            throws IOException {
+    public HttpConnection get(HttpConnection.Address address) {
         // First try to reuse an existing HTTP connection.
         synchronized (connectionPool) {
             List<HttpConnection> connections = connectionPool.get(address);
@@ -81,12 +79,7 @@ final class HttpConnectionPool {
                 }
             }
         }
-
-        /*
-         * We couldn't find a reusable connection, so we need to create a new
-         * connection. We're careful not to do so while holding a lock!
-         */
-        return address.connect(connectTimeout);
+        return null;
     }
 
     /**

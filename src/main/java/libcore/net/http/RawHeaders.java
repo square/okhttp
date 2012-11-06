@@ -18,6 +18,8 @@
 package libcore.net.http;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -28,6 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import libcore.io.Streams;
 import libcore.util.Libcore;
 
 /**
@@ -74,6 +77,7 @@ public final class RawHeaders {
 
     public RawHeaders(RawHeaders copyFrom) {
         namesAndValues.addAll(copyFrom.namesAndValues);
+        requestLine = copyFrom.requestLine;
         statusLine = copyFrom.statusLine;
         httpMinorVersion = copyFrom.httpMinorVersion;
         responseCode = copyFrom.responseCode;
@@ -284,7 +288,10 @@ public final class RawHeaders {
         return result;
     }
 
-    public String toRequestHeader() {
+    /**
+     * Returns bytes of a request header for sending on an HTTP transport.
+     */
+    public byte[] toBytes() throws UnsupportedEncodingException {
         StringBuilder result = new StringBuilder(256);
         result.append(requestLine).append("\r\n");
         for (int i = 0; i < namesAndValues.size(); i += 2) {
@@ -292,7 +299,31 @@ public final class RawHeaders {
                     .append(namesAndValues.get(i + 1)).append("\r\n");
         }
         result.append("\r\n");
-        return result.toString();
+        return result.toString().getBytes("ISO-8859-1");
+    }
+
+    /**
+     * Parses bytes of a response header from an HTTP transport.
+     */
+    public static RawHeaders fromBytes(InputStream in) throws IOException {
+        RawHeaders headers;
+        do {
+            headers = new RawHeaders();
+            headers.setStatusLine(Streams.readAsciiLine(in));
+            readHeaders(in, headers);
+        } while (headers.getResponseCode() == HttpEngine.HTTP_CONTINUE);
+        return headers;
+    }
+
+    /**
+     * Reads headers or trailers into {@code out}.
+     */
+    public static void readHeaders(InputStream in, RawHeaders out) throws IOException {
+        // parse the result headers until the first blank line
+        String line;
+        while ((line = Streams.readAsciiLine(in)).length() != 0) {
+            out.addLine(line);
+        }
     }
 
     /**
