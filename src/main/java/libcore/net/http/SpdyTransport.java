@@ -51,7 +51,7 @@ final class SpdyTransport implements Transport {
         RawHeaders requestHeaders = httpEngine.requestHeaders.getHeaders();
         String version = httpEngine.connection.httpMinorVersion == 1 ? "HTTP/1.1" : "HTTP/1.0";
         requestHeaders.addSpdyRequestHeaders(httpEngine.method, httpEngine.uri.getScheme(),
-                httpEngine.uri.getPath(), version);
+                HttpEngine.requestPath(httpEngine.policy.getURL()), version);
         boolean hasRequestBody = httpEngine.hasRequestBody();
         boolean hasResponseBody = true;
         stream = spdyConnection.newStream(requestHeaders.toNameValueBlock(),

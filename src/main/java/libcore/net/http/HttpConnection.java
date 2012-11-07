@@ -153,8 +153,6 @@ final class HttpConnection {
             // extensions enabled, if it fails (and its not unheard of that it
             // will) fallback to a barebones connection.
             try {
-                result = new HttpConnection(
-                        address, socket, socket.getInputStream(), socket.getOutputStream());
                 result.upgradeToTls(true, tunnelConfig);
             } catch (IOException e) {
                 // If the problem was a CertificateException from the X509TrustManager,
