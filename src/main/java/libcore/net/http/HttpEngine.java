@@ -529,12 +529,22 @@ public class HttpEngine {
         if (includeAuthorityInRequestLine()) {
             return url.toString();
         } else {
-            String fileOnly = url.getFile();
-            if (fileOnly == null) {
-                fileOnly = "/";
-            } else if (!fileOnly.startsWith("/")) {
-                fileOnly = "/" + fileOnly;
-            }
+            return requestPath(url);
+        }
+    }
+
+    /**
+     * Returns the path to request, like the '/' in 'GET / HTTP/1.1'. Never
+     * empty, even if the request URL is. Includes the query component if it
+     * exists.
+     */
+    public static String requestPath(URL url) {
+        String fileOnly = url.getFile();
+        if (fileOnly == null) {
+            return "/";
+        } else if (!fileOnly.startsWith("/")) {
+            return "/" + fileOnly;
+        } else {
             return fileOnly;
         }
     }
