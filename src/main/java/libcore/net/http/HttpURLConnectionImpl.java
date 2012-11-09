@@ -29,8 +29,10 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.SSLHandshakeException;
 import libcore.io.IoUtils;
 import libcore.util.Libcore;
 
@@ -78,12 +80,7 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
     @Override public final void connect() throws IOException {
         initHttpEngine();
-        try {
-            httpEngine.sendRequest();
-        } catch (IOException e) {
-            httpEngineFailure = e;
-            throw e;
-        }
+        execute(false);
     }
 
     @Override public final void disconnect() {
@@ -189,7 +186,8 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
         InputStream result = response.getResponseBody();
         if (result == null) {
-            throw new IOException("No response body exists; responseCode=" + getResponseCode());
+            throw new ProtocolException("No response body exists; responseCode="
+                    + getResponseCode());
         }
         return result;
     }
@@ -279,24 +277,8 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
         }
 
         while (true) {
-            try {
-                httpEngine.sendRequest();
-                httpEngine.readResponse();
-            } catch (IOException e) {
-                /*
-                 * If the connection was recycled, its staleness may have caused
-                 * the failure. Silently retry with a different connection.
-                 */
-                OutputStream requestBody = httpEngine.getRequestBody();
-                if (httpEngine.hasRecycledConnection()
-                        && (requestBody == null || requestBody instanceof RetryableOutputStream)) {
-                    httpEngine.release(false);
-                    httpEngine = newHttpEngine(method, rawRequestHeaders, null,
-                            (RetryableOutputStream) requestBody);
-                    continue;
-                }
-                httpEngineFailure = e;
-                throw e;
+            if (!execute(true)) {
+                continue;
             }
 
             Retry retry = processResponseHeaders();
@@ -339,6 +321,46 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
         }
     }
 
+    /**
+     * Sends a request and optionally reads a response. Returns true if the
+     * request was successfully executed, and false if the request can be
+     * retried. Throws an exception if the request failed permanently.
+     */
+    private boolean execute(boolean readResponse) throws IOException {
+        try {
+            httpEngine.sendRequest();
+            if (readResponse) {
+                httpEngine.readResponse();
+            }
+            return true;
+        } catch (IOException e) {
+            RouteSelector routeSelector = httpEngine.routeSelector;
+            routeSelector.connectFailed(httpEngine.connection, e);
+
+            // The connection failure isn't fatal if there's another route to attempt.
+            OutputStream requestBody = httpEngine.getRequestBody();
+            if (routeSelector.hasNext() && isRecoverable(e)
+                    && (requestBody == null || requestBody instanceof RetryableOutputStream)) {
+                httpEngine.release(false);
+                httpEngine = newHttpEngine(method, rawRequestHeaders, null,
+                        (RetryableOutputStream) requestBody);
+                httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
+                return false;
+            }
+            httpEngineFailure = e;
+            throw e;
+        }
+    }
+
+    private boolean isRecoverable(IOException e) {
+        // If the problem was a CertificateException from the X509TrustManager,
+        // do not retry, we didn't have an abrupt server initiated exception.
+        boolean sslFailure = e instanceof SSLHandshakeException
+                && e.getCause() instanceof CertificateException;
+        boolean protocolFailure = e instanceof ProtocolException;
+        return !sslFailure && !protocolFailure;
+    }
+
     HttpEngine getHttpEngine() {
         return httpEngine;
     }
@@ -358,7 +380,7 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
         switch (getResponseCode()) {
         case HTTP_PROXY_AUTH:
             if (!usingProxy()) {
-                throw new IOException(
+                throw new ProtocolException(
                         "Received HTTP_PROXY_AUTH (407) code while not using proxy");
             }
             // fall-through

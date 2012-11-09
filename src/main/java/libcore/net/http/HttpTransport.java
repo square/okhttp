@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
+import java.net.ProtocolException;
 import libcore.io.Streams;
 import libcore.util.Libcore;
 
@@ -217,7 +218,7 @@ final class HttpTransport implements Transport {
             checkNotClosed();
             Libcore.checkOffsetAndCount(buffer.length, offset, count);
             if (count > bytesRemaining) {
-                throw new IOException("expected " + bytesRemaining
+                throw new ProtocolException("expected " + bytesRemaining
                         + " bytes but received " + count);
             }
             socketOut.write(buffer, offset, count);
@@ -237,7 +238,7 @@ final class HttpTransport implements Transport {
             }
             closed = true;
             if (bytesRemaining > 0) {
-                throw new IOException("unexpected end of stream");
+                throw new ProtocolException("unexpected end of stream");
             }
         }
     }
@@ -376,7 +377,7 @@ final class HttpTransport implements Transport {
             int read = in.read(buffer, offset, Math.min(count, bytesRemaining));
             if (read == -1) {
                 unexpectedEndOfInput(); // the server didn't supply the promised content length
-                throw new IOException("unexpected end of stream");
+                throw new ProtocolException("unexpected end of stream");
             }
             bytesRemaining -= read;
             cacheWrite(buffer, offset, read);
@@ -466,7 +467,7 @@ final class HttpTransport implements Transport {
             try {
                 bytesRemainingInChunk = Integer.parseInt(chunkSizeString.trim(), 16);
             } catch (NumberFormatException e) {
-                throw new IOException("Expected a hex chunk size, but was " + chunkSizeString);
+                throw new ProtocolException("Expected a hex chunk size but was " + chunkSizeString);
             }
             if (bytesRemainingInChunk == 0) {
                 hasMoreChunks = false;
