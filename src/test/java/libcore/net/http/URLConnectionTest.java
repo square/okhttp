@@ -20,6 +20,10 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.google.mockwebserver.SocketPolicy;
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
 import java.io.ByteArrayOutputStream;
@@ -69,11 +73,6 @@ import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
 import libcore.net.ssl.SslContextBuilder;
 
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
-
 /**
  * Android's URLConnectionTest.
  */
@@ -82,15 +81,15 @@ public final class URLConnectionTest extends TestCase {
     private static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
     private MockWebServer server = new MockWebServer();
+    private MockWebServer server2 = new MockWebServer();
+
     private HttpResponseCache cache;
     private String hostName;
 
     private static final SSLContext sslContext;
-
     static {
         try {
-            sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName())
-                    .build();
+            sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
         } catch (GeneralSecurityException e) {
             throw new RuntimeException(e);
         } catch (UnknownHostException e) {
@@ -113,6 +112,7 @@ public final class URLConnectionTest extends TestCase {
         System.clearProperty("https.proxyHost");
         System.clearProperty("https.proxyPort");
         server.shutdown();
+        server2.shutdown();
         if (cache != null) {
             cache.getCache().delete();
         }
@@ -126,6 +126,11 @@ public final class URLConnectionTest extends TestCase {
     private static OkHttpConnection openConnection(URL url, Proxy proxy) {
         return OkHttpConnection.open(url, proxy);
     }
+
+    // TODO: test that request bodies are retransmitted on IP address failures
+    // TODO: pooled proxy failures are not reported to the proxy selector
+    // TODO: a URI with no host should fail in Address creation.
+    // TODO: make HttpURLConnection.connect() include a loop around execute
 
     public void testRequestHeaders() throws IOException, InterruptedException {
         server.enqueue(new MockResponse());
@@ -684,24 +689,29 @@ public final class URLConnectionTest extends TestCase {
      * Tolerate bad https proxy response when using HttpResponseCache. http://b/6754912
      */
     public void testConnectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
-        ProxyConfig proxyConfig = ProxyConfig.PROXY_SYSTEM_PROPERTY;
-
         initResponseCache();
 
         server.useHttps(sslContext.getSocketFactory(), true);
         MockResponse response = new MockResponse() // Key to reproducing b/6754912
                 .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
                 .setBody("bogus proxy connect response content");
-        server.enqueue(response); // For the first TLS tolerant connection
-        server.enqueue(response); // For the backwards-compatible SSLv3 retry
+
+        // Enqueue a pair of responses for every IP address held by localhost, because the
+        // route selector will try each in sequence.
+        // TODO: use the fake Dns implementation instead of a loop
+        for (InetAddress inetAddress : InetAddress.getAllByName(server.getHostName())) {
+            server.enqueue(response); // For the first TLS tolerant connection
+            server.enqueue(response); // For the backwards-compatible SSLv3 retry
+        }
         server.play();
 
         URL url = new URL("https://android.com/foo");
-        OkHttpsConnection connection = (OkHttpsConnection) proxyConfig.connect(server, url);
+        OkHttpsConnection connection = (OkHttpsConnection) openConnection(
+                url, server.toProxyAddress());
         connection.setSSLSocketFactory(sslContext.getSocketFactory());
 
         try {
-            connection.connect();
+            connection.getResponseCode();
             fail();
         } catch (IOException expected) {
             // Thrown when the connect causes SSLSocket.startHandshake() to throw
@@ -1855,7 +1865,12 @@ public final class URLConnectionTest extends TestCase {
     }
 
     public void testGetHeadersThrows() throws IOException {
-        server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        // Enqueue a response for every IP address held by localhost, because the route selector
+        // will try each in sequence.
+        // TODO: use the fake Dns implementation instead of a loop
+        for (InetAddress inetAddress : InetAddress.getAllByName(server.getHostName())) {
+            server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        }
         server.play();
 
         OkHttpConnection connection = openConnection(server.getUrl("/"));

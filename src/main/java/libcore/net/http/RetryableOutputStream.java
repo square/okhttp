@@ -19,6 +19,7 @@ package libcore.net.http;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.ProtocolException;
 import libcore.util.Libcore;
 
 /**
@@ -40,13 +41,13 @@ final class RetryableOutputStream extends AbstractHttpOutputStream {
         this.content = new ByteArrayOutputStream();
     }
 
-    @Override public synchronized void close() {
+    @Override public synchronized void close() throws IOException {
         if (closed) {
             return;
         }
         closed = true;
         if (content.size() < limit) {
-            throw new IllegalStateException("content-length promised "
+            throw new ProtocolException("content-length promised "
                     + limit + " bytes, but received " + content.size());
         }
     }
@@ -56,12 +57,12 @@ final class RetryableOutputStream extends AbstractHttpOutputStream {
         checkNotClosed();
         Libcore.checkOffsetAndCount(buffer.length, offset, count);
         if (limit != -1 && content.size() > limit - count) {
-            throw new IOException("exceeded content-length limit of " + limit + " bytes");
+            throw new ProtocolException("exceeded content-length limit of " + limit + " bytes");
         }
         content.write(buffer, offset, count);
     }
 
-    public synchronized int contentLength() {
+    public synchronized int contentLength() throws IOException {
         close();
         return content.size();
     }

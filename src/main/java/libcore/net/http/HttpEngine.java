@@ -26,6 +26,7 @@ import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.Proxy;
+import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -39,6 +40,7 @@ import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import libcore.io.IoUtils;
+import libcore.net.Dns;
 import libcore.util.EmptyArray;
 import libcore.util.ExtendedResponseCache;
 import libcore.util.Libcore;
@@ -97,6 +99,7 @@ public class HttpEngine {
     private ResponseSource responseSource;
 
     protected HttpConnection connection;
+    protected RouteSelector routeSelector;
     private OutputStream requestBodyOut;
 
     private Transport transport;
@@ -273,14 +276,21 @@ public class HttpEngine {
     /**
      * Connect to the origin server either directly or via a proxy.
      */
-    protected void connect() throws IOException {
+    protected final void connect() throws IOException {
         if (connection != null) {
             return;
         }
-        connection = HttpConnection.connect(uri, getSslSocketFactory(), getHostnameVerifier(),
-                policy.getProxy(), policy.getConnectTimeout(), policy.getReadTimeout(),
-                getTunnelConfig());
-        Proxy proxy = connection.getAddress().getProxy();
+        if (routeSelector == null) {
+            HttpConnection.Address address = new HttpConnection.Address(uri, getSslSocketFactory(),
+                    getHostnameVerifier(), policy.getProxy());
+            routeSelector = new RouteSelector(address, uri, ProxySelector.getDefault(), Dns.DEFAULT);
+        }
+        connection = routeSelector.next();
+        if (!connection.isRecycled()) {
+            connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(),
+                    getTunnelConfig());
+        }
+        Proxy proxy = connection.getProxy();
         if (proxy != null) {
             policy.setProxy(proxy);
             // Add the authority to the request line when we're using a proxy.
