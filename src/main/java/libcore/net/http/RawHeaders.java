@@ -20,6 +20,7 @@ package libcore.net.http;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -101,17 +102,17 @@ public final class RawHeaders {
         if (!statusLine.startsWith("HTTP/1.")
                 || statusLine.charAt(8) != ' '
                 || statusLine.charAt(12) != ' ') {
-            throw new IOException("Unexpected status line: " + statusLine);
+            throw new ProtocolException("Unexpected status line: " + statusLine);
         }
         int httpMinorVersion = statusLine.charAt(7) - '0';
         if (httpMinorVersion < 0 || httpMinorVersion > 9) {
-            throw new IOException("Unexpected status line: " + statusLine);
+            throw new ProtocolException("Unexpected status line: " + statusLine);
         }
         int responseCode;
         try {
             responseCode = Integer.parseInt(statusLine.substring(9, 12));
         } catch (NumberFormatException e) {
-            throw new IOException("Unexpected status line: " + statusLine);
+            throw new ProtocolException("Unexpected status line: " + statusLine);
         }
         this.responseMessage = statusLine.substring(13);
         this.responseCode = responseCode;
@@ -131,7 +132,7 @@ public final class RawHeaders {
             }
         }
         if (status == null || version == null) {
-            throw new IOException("Expected 'status' and 'version' headers not present");
+            throw new ProtocolException("Expected 'status' and 'version' headers not present");
         }
         setStatusLine(version + " " + status);
     }
