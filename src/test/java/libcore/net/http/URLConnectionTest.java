@@ -41,7 +41,9 @@ import java.net.InetAddress;
 import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.ProxySelector;
 import java.net.ResponseCache;
+import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -80,6 +82,7 @@ public final class URLConnectionTest extends TestCase {
     /** base64("username:password") */
     private static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
+    private ProxySelector defaultProxySelector = ProxySelector.getDefault();
     private MockWebServer server = new MockWebServer();
     private MockWebServer server2 = new MockWebServer();
 
@@ -105,6 +108,7 @@ public final class URLConnectionTest extends TestCase {
     @Override protected void tearDown() throws Exception {
         ResponseCache.setDefault(null);
         Authenticator.setDefault(null);
+        ProxySelector.setDefault(defaultProxySelector);
         System.clearProperty("proxyHost");
         System.clearProperty("proxyPort");
         System.clearProperty("http.proxyHost");
@@ -284,6 +288,51 @@ public final class URLConnectionTest extends TestCase {
             fail();
         } catch (IOException expected) {
         }
+    }
+
+    public void testConnectRetriesUntilConnectedOrFailed() throws Exception {
+        server.play();
+        URL url = server.getUrl("/foo");
+        server.shutdown();
+
+        OkHttpConnection connection = openConnection(url);
+        try {
+            connection.connect();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testRequestBodySurvivesRetriesWithFixedLength() throws Exception {
+        testRequestBodySurvivesRetries(TransferKind.FIXED_LENGTH);
+    }
+
+    public void testRequestBodySurvivesRetriesWithChunkedStreaming() throws Exception {
+        testRequestBodySurvivesRetries(TransferKind.CHUNKED);
+    }
+
+    public void testRequestBodySurvivesRetriesWithBufferedBody() throws Exception {
+        testRequestBodySurvivesRetries(TransferKind.END_OF_STREAM);
+    }
+
+    private void testRequestBodySurvivesRetries(TransferKind transferKind) throws Exception {
+        server.enqueue(new MockResponse().setBody("abc"));
+        server.play();
+
+        // Use a misconfigured proxy to guarantee that the request is retried.
+        server2.play();
+        FakeProxySelector proxySelector = new FakeProxySelector();
+        proxySelector.proxies.add(server2.toProxyAddress());
+        ProxySelector.setDefault(proxySelector);
+        server2.shutdown();
+
+        OkHttpConnection connection = openConnection(server.getUrl("/def"));
+        connection.setDoOutput(true);
+        transferKind.setForRequest(connection, 4);
+        connection.getOutputStream().write("body".getBytes("UTF-8"));
+        assertContent("abc", connection);
+
+        assertEquals("body", server.takeRequest().getUtf8Body());
     }
 
     public void testGetErrorStreamOnSuccessfulRequest() throws Exception {
@@ -2266,10 +2315,16 @@ public final class URLConnectionTest extends TestCase {
                     throws IOException {
                 response.setChunkedBody(content, chunkSize);
             }
+            @Override void setForRequest(OkHttpConnection connection, int contentLength) {
+                connection.setChunkedStreamingMode(5);
+            }
         },
         FIXED_LENGTH() {
             @Override void setBody(MockResponse response, byte[] content, int chunkSize) {
                 response.setBody(content);
+            }
+            @Override void setForRequest(OkHttpConnection connection, int contentLength) {
+                connection.setChunkedStreamingMode(contentLength);
             }
         },
         END_OF_STREAM() {
@@ -2283,10 +2338,14 @@ public final class URLConnectionTest extends TestCase {
                     }
                 }
             }
+            @Override void setForRequest(OkHttpConnection connection, int contentLength) {
+            }
         };
 
         abstract void setBody(MockResponse response, byte[] content, int chunkSize)
                 throws IOException;
+
+        abstract void setForRequest(OkHttpConnection connection, int contentLength);
 
         void setBody(MockResponse response, String content, int chunkSize) throws IOException {
             setBody(response, content.getBytes("UTF-8"), chunkSize);
@@ -2396,6 +2455,20 @@ public final class URLConnectionTest extends TestCase {
                     + " protocol=" + getRequestingProtocol()
                     + " scheme=" + getRequestingScheme());
             return authentication;
+        }
+    }
+
+    private static class FakeProxySelector extends ProxySelector {
+        List<Proxy> proxies = new ArrayList<Proxy>();
+
+        @Override public List<Proxy> select(URI uri) {
+            // Don't handle 'socket' schemes, which the RI's Socket class may request (for SOCKS).
+            return uri.getScheme().equals("http") || uri.getScheme().equals("https")
+                    ? proxies
+                    : Collections.singletonList(Proxy.NO_PROXY);
+        }
+
+        @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
         }
     }
 }

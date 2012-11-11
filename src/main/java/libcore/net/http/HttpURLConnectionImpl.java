@@ -80,7 +80,10 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
 
     @Override public final void connect() throws IOException {
         initHttpEngine();
-        execute(false);
+        boolean success;
+        do {
+            success = execute(false);
+        } while (!success);
     }
 
     @Override public final void disconnect() {
