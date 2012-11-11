@@ -26,9 +26,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class QueueDispatcher extends Dispatcher {
     protected final BlockingQueue<MockResponse> responseQueue
             = new LinkedBlockingQueue<MockResponse>();
-    private boolean failFast;
+    private MockResponse failFastResponse;
 
-    public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+  @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
         // to permit interactive/browser testing, ignore requests for favicons
         final String requestLine = request.getRequestLine();
         if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
@@ -37,18 +37,21 @@ public class QueueDispatcher extends Dispatcher {
                     .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
         }
 
-        if (failFast && responseQueue.peek() == null) {
+        if (failFastResponse != null && responseQueue.peek() == null) {
             // Fail fast if there's no response queued up.
-            return new MockResponse().setResponseCode(404);
+            return failFastResponse;
         }
 
         return responseQueue.take();
     }
 
-    @Override
-    public SocketPolicy peekSocketPolicy() {
-        final MockResponse peek = responseQueue.peek();
-        if (peek == null) return SocketPolicy.KEEP_OPEN;
+    @Override public SocketPolicy peekSocketPolicy() {
+        MockResponse peek = responseQueue.peek();
+        if (peek == null) {
+          return failFastResponse != null
+              ? failFastResponse.getSocketPolicy()
+              : SocketPolicy.KEEP_OPEN;
+        }
         return peek.getSocketPolicy();
     }
 
@@ -57,6 +60,13 @@ public class QueueDispatcher extends Dispatcher {
     }
 
     public void setFailFast(boolean failFast) {
-        this.failFast = failFast;
+      MockResponse failFastResponse = failFast
+          ? new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+          : null;
+      setFailFast(failFastResponse);
+    }
+
+    public void setFailFast(MockResponse failFastResponse) {
+        this.failFastResponse = failFastResponse;
     }
 }
