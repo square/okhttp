@@ -133,8 +133,6 @@ public final class URLConnectionTest extends TestCase {
 
     // TODO: test that request bodies are retransmitted on IP address failures
     // TODO: pooled proxy failures are not reported to the proxy selector
-    // TODO: a URI with no host should fail in Address creation.
-    // TODO: make HttpURLConnection.connect() include a loop around execute
 
     public void testRequestHeaders() throws IOException, InterruptedException {
         server.enqueue(new MockResponse());
@@ -1933,6 +1931,24 @@ public final class URLConnectionTest extends TestCase {
             connection.getInputStream();
             fail();
         } catch (IOException expected) {
+        }
+    }
+
+    public void testDnsFailureThrowsIOException() throws IOException {
+        OkHttpConnection connection = openConnection(new URL("http://host.unlikelytld"));
+        try {
+            connection.connect();
+            fail();
+        } catch (IOException expected) {
+        }
+    }
+
+    public void testMalformedUrlThrowsUnknownHostException() throws IOException {
+        OkHttpConnection connection = openConnection(new URL("http:///foo.html"));
+        try {
+            connection.connect();
+            fail();
+        } catch (UnknownHostException expected) {
         }
     }
 
