@@ -338,7 +338,11 @@ public class HttpURLConnectionImpl extends OkHttpConnection {
             return true;
         } catch (IOException e) {
             RouteSelector routeSelector = httpEngine.routeSelector;
-            routeSelector.connectFailed(httpEngine.connection, e);
+            if (routeSelector == null) {
+                throw e; // Without a route selector, we can't retry.
+            } else if (httpEngine.connection != null) {
+                routeSelector.connectFailed(httpEngine.connection, e);
+            }
 
             // The connection failure isn't fatal if there's another route to attempt.
             OutputStream requestBody = httpEngine.getRequestBody();
