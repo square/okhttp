@@ -33,6 +33,7 @@ import java.util.Arrays;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import libcore.Platform;
 import libcore.io.IoUtils;
 import libcore.net.spdy.SpdyConnection;
 import libcore.util.Libcore;
@@ -131,6 +132,8 @@ final class HttpConnection {
      * validation.
      */
     private void upgradeToTls(TunnelConfig tunnelConfig) throws IOException {
+        Platform platform = Platform.get();
+
         // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
         if (requiresTunnel()) {
             makeTunnel(tunnelConfig);
@@ -140,10 +143,10 @@ final class HttpConnection {
         socket = address.sslSocketFactory.createSocket(
                 socket, address.uriHost, address.uriPort, true /* autoClose */);
         SSLSocket sslSocket = (SSLSocket) socket;
-        Libcore.makeTlsTolerant(sslSocket, address.uriHost, tlsMode == TLS_MODE_AGGRESSIVE);
+        platform.makeTlsTolerant(sslSocket, address.uriHost, tlsMode == TLS_MODE_AGGRESSIVE);
 
         if (tlsMode == TLS_MODE_AGGRESSIVE) {
-            Libcore.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
+            platform.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
         }
 
         // Force handshake. This can throw!
@@ -159,7 +162,7 @@ final class HttpConnection {
 
         byte[] selectedProtocol;
         if (tlsMode == TLS_MODE_AGGRESSIVE
-                && (selectedProtocol = Libcore.getNpnSelectedProtocol(sslSocket)) != null) {
+                && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
             if (Arrays.equals(selectedProtocol, SPDY2)) {
                 spdyConnection = new SpdyConnection.Builder(true, in, out).build();
                 HttpConnectionPool.INSTANCE.share(this);

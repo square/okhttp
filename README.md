@@ -33,6 +33,36 @@ OkHttp uses the platform's [ProxySelector][2]. Prior to Android 4.0, `ProxySelec
 OkHttp's test suite creates an in-process HTTPS server. Prior to Android 2.3, SSL server sockets were broken, and so HTTPS tests will time out when run on such devices.
 
 
+Building
+--------
+
+### On the Desktop
+Run OkHttp tests on the desktop with Maven.
+```
+mvn clean test
+```
+SPDY support uses a Deflater API that wasn't available in Java 6. For this reason SPDY tests will fail with this error: `Cannot SPDY; no SYNC_FLUSH available`. All other tests should run fine.
+
+### On the Desktop with NPN
+Using NPN on the desktop uses [Jetty-NPN](http://wiki.eclipse.org/Jetty/Feature/NPN) which requires OpenJDK 7+.
+```
+mvn clean test -Pspdy-tls
+```
+
+### On a Device
+Test on a USB-attached Android using [Vogar](https://code.google.com/p/vogar/). Unfortunately `dx` requires that you build with Java 6, otherwise the test class will be silently omitted from the `.dex` file.
+```
+mvn clean
+mvn package -DskipTests
+vogar \
+    --classpath ~/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar \
+    --classpath ~/.m2/repository/com/google/mockwebserver/mockwebserver/20121111/mockwebserver-20121111.jar \
+    --classpath target/okhttp-0.8-SNAPSHOT.jar \
+    ./src/test/java/libcore/net/http/URLConnectionTest.java
+```
+Because the OkHttp uses `jarjar` to repackage classes in `libcore`, OkHttp tests that use those classes directly cannot be run on a device.
+
+
 License
 -------
 
