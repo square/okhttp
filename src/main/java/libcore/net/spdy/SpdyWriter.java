@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
+import libcore.Platform;
 
 /**
  * Write version 2 SPDY frames.
@@ -39,7 +39,7 @@ final class SpdyWriter {
         deflater.setDictionary(SpdyReader.DICTIONARY);
         nameValueBlockBuffer = new ByteArrayOutputStream();
         nameValueBlockOut = new DataOutputStream(
-                new DeflaterOutputStream(nameValueBlockBuffer, deflater, true));
+                Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
     }
 
     public void synStream(int flags, int streamId, int associatedStreamId, int priority,
