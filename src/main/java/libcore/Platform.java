@@ -42,12 +42,12 @@ import javax.net.ssl.SSLSocket;
  * public API in Java 7 and callable via reflection in Android 4.1+.
  */
 public class Platform {
-    private static final Platform platform = findPlatform();
+    private static final Platform PLATFORM = findPlatform();
 
     private Constructor<DeflaterOutputStream> deflaterConstructor;
 
     public static Platform get() {
-        return platform;
+        return PLATFORM;
     }
 
     public void makeTlsTolerant(SSLSocket socket, String uriHost, boolean tlsTolerant) {
@@ -244,7 +244,7 @@ public class Platform {
                     i += length;
                 }
                 Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-                        new Class[] { clientProviderClass }, new JettyNpnProvider(strings));
+                        new Class[] {clientProviderClass}, new JettyNpnProvider(strings));
                 putMethod.invoke(null, socket, provider);
             } catch (UnsupportedEncodingException e) {
                 throw new AssertionError(e);
