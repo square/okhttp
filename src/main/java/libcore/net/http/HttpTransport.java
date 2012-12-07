@@ -24,6 +24,7 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
+import java.net.Socket;
 import libcore.io.Streams;
 import libcore.util.Libcore;
 
@@ -35,6 +36,13 @@ final class HttpTransport implements Transport {
      * buffer sped up some uploads by half.
      */
     private static final int MAX_REQUEST_BUFFER_LENGTH = 32768;
+
+    /**
+     * The timeout to use while discarding a stream of input data. Since this is
+     * used for connection reuse, this timeout should be significantly less than
+     * the time it takes to establish a new connection.
+     */
+    private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 30;
 
     private final HttpEngine httpEngine;
     private final InputStream socketIn;
@@ -169,15 +177,34 @@ final class HttpTransport implements Transport {
         }
 
         if (responseBodyIn != null) {
-            // Discard the response body before the connection can be reused.
-            try {
-                Streams.skipAll(responseBodyIn);
-            } catch (IOException e) {
-                return false;
-            }
+            return discardStream(httpEngine, responseBodyIn);
         }
 
         return true;
+    }
+
+    /**
+     * Discards the response body so that the connection can be reused. This
+     * needs to be done judiciously, since it delays the current request in
+     * order to speed up a potential future request that may never occur.
+     */
+    private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
+        HttpConnection connection = httpEngine.connection;
+        if (connection == null) return false;
+        Socket socket = connection.getSocket();
+        if (socket == null) return false;
+        try {
+            int socketTimeout = socket.getSoTimeout();
+            socket.setSoTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
+            try {
+                Streams.skipAll(responseBodyIn);
+                return true;
+            } finally {
+                socket.setSoTimeout(socketTimeout);
+            }
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
@@ -396,10 +423,10 @@ final class HttpTransport implements Transport {
             if (closed) {
                 return;
             }
-            closed = true;
-            if (bytesRemaining != 0) {
+            if (bytesRemaining != 0 && !discardStream(httpEngine, this)) {
                 unexpectedEndOfInput();
             }
+            closed = true;
         }
     }
 
@@ -407,7 +434,6 @@ final class HttpTransport implements Transport {
      * An HTTP body with alternating chunk sizes and chunk bodies.
      */
     private static class ChunkedInputStream extends AbstractHttpInputStream {
-        private static final int MIN_LAST_CHUNK_LENGTH = "\r\n0\r\n\r\n".length();
         private static final int NO_CHUNK_YET = -1;
         private final HttpTransport transport;
         private int bytesRemainingInChunk = NO_CHUNK_YET;
@@ -439,18 +465,6 @@ final class HttpTransport implements Transport {
             }
             bytesRemainingInChunk -= read;
             cacheWrite(buffer, offset, read);
-
-            /*
-             * If we're at the end of a chunk and the next chunk size is readable,
-             * read it! Reading the last chunk causes the underlying connection to
-             * be recycled and we want to do that as early as possible. Otherwise
-             * self-delimiting streams like gzip will never be recycled.
-             * http://code.google.com/p/android/issues/detail?id=7059
-             */
-            if (bytesRemainingInChunk == 0 && in.available() >= MIN_LAST_CHUNK_LENGTH) {
-                readChunkSize();
-            }
-
             return read;
         }
 
@@ -490,11 +504,10 @@ final class HttpTransport implements Transport {
             if (closed) {
                 return;
             }
-
-            closed = true;
-            if (hasMoreChunks) {
+            if (hasMoreChunks && !discardStream(httpEngine, this)) {
                 unexpectedEndOfInput();
             }
+            closed = true;
         }
     }
 

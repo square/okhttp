@@ -20,10 +20,6 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.google.mockwebserver.SocketPolicy;
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import com.squareup.okhttp.OkHttpConnection;
 import com.squareup.okhttp.OkHttpsConnection;
 import java.io.ByteArrayOutputStream;
@@ -74,6 +70,11 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
 import libcore.net.ssl.SslContextBuilder;
+
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 
 /**
  * Android's URLConnectionTest.
@@ -1179,6 +1180,39 @@ public final class URLConnectionTest extends TestCase {
         }
         assertEquals("two (identity)", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
         assertEquals(1, server.takeRequest().getSequenceNumber());
+    }
+
+    public void testEarlyDisconnectDoesntHarmPoolingWithChunkedEncoding() throws Exception {
+        testEarlyDisconnectDoesntHarmPooling(TransferKind.CHUNKED);
+    }
+
+    public void testEarlyDisconnectDoesntHarmPoolingWithFixedLengthEncoding() throws Exception {
+        testEarlyDisconnectDoesntHarmPooling(TransferKind.FIXED_LENGTH);
+    }
+
+    private void testEarlyDisconnectDoesntHarmPooling(TransferKind transferKind) throws Exception {
+        MockResponse response1 = new MockResponse();
+        transferKind.setBody(response1, "ABCDEFGHIJK", 1024);
+        server.enqueue(response1);
+
+        MockResponse response2 = new MockResponse();
+        transferKind.setBody(response2, "LMNOPQRSTUV", 1024);
+        server.enqueue(response2);
+
+        server.play();
+
+        URLConnection connection1 = openConnection(server.getUrl("/"));
+        InputStream in1 = connection1.getInputStream();
+        assertEquals("ABCDE", readAscii(in1, 5));
+        in1.close();
+
+        OkHttpConnection connection2 = openConnection(server.getUrl("/"));
+        InputStream in2 = connection2.getInputStream();
+        assertEquals("LMNOP", readAscii(in2, 5));
+        in2.close();
+
+        assertEquals(0, server.takeRequest().getSequenceNumber());
+        assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection is pooled!
     }
 
     /**
