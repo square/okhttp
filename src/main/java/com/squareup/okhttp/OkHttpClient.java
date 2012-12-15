@@ -15,6 +15,8 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.net.http.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.net.http.HttpsURLConnectionImpl;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -33,9 +35,9 @@ public final class OkHttpClient {
     public HttpURLConnection open(URL url) {
         String protocol = url.getProtocol();
         if (protocol.equals("http")) {
-            return new libcore.net.http.HttpURLConnectionImpl(url, 80, proxy);
+            return new HttpURLConnectionImpl(url, 80, proxy);
         } else if (protocol.equals("https")) {
-            return new libcore.net.http.HttpsURLConnectionImpl(url, 443, proxy);
+            return new HttpsURLConnectionImpl(url, 443, proxy);
         } else {
             throw new IllegalArgumentException();
         }
