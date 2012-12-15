@@ -17,7 +17,6 @@
 
 package libcore.net.http;
 
-import com.squareup.okhttp.OkHttpConnection;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +24,7 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieHandler;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
@@ -391,7 +391,7 @@ public class HttpEngine {
         cacheRequest = responseCache.put(uri, getHttpConnectionToCache());
     }
 
-    protected OkHttpConnection getHttpConnectionToCache() {
+    protected HttpURLConnection getHttpConnectionToCache() {
         return policy;
     }
 

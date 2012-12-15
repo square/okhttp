@@ -19,7 +19,7 @@ package libcore.net.http;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.OkHttpConnection;
+import com.squareup.okhttp.OkHttpClient;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -89,8 +89,8 @@ public final class HttpResponseCacheTest extends TestCase {
         super.tearDown();
     }
 
-    private static OkHttpConnection openConnection(URL url) {
-        return OkHttpConnection.open(url);
+    private static HttpURLConnection openConnection(URL url) {
+        return new OkHttpClient().open(url);
     }
 
     /**
@@ -142,7 +142,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         URL url = server.getUrl("/");
-        OkHttpConnection conn = openConnection(url);
+        HttpURLConnection conn = openConnection(url);
         try {
             conn.getResponseCode();
             fail();
@@ -172,7 +172,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         URL url = server.getUrl("/");
-        OkHttpConnection conn = openConnection(url);
+        HttpURLConnection conn = openConnection(url);
         assertEquals(responseCode, conn.getResponseCode());
 
         // exhaust the content stream
@@ -209,7 +209,7 @@ public final class HttpResponseCacheTest extends TestCase {
                 return null;
             }
             @Override public CacheRequest put(URI uri, URLConnection conn) throws IOException {
-                OkHttpConnection httpConnection = (OkHttpConnection) conn;
+                HttpURLConnection httpConnection = (HttpURLConnection) conn;
                 try {
                     httpConnection.getRequestProperties();
                     fail();
@@ -238,7 +238,7 @@ public final class HttpResponseCacheTest extends TestCase {
         });
 
         URL url = server.getUrl("/");
-        OkHttpConnection connection = openConnection(url);
+        HttpURLConnection connection = openConnection(url);
         assertEquals(body, readAscii(connection));
         assertEquals(1, cacheCount.get());
     }
@@ -270,7 +270,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         // Make sure that calling skip() doesn't omit bytes from the cache.
-        OkHttpConnection urlConnection = openConnection(server.getUrl("/"));
+        HttpURLConnection urlConnection = openConnection(server.getUrl("/"));
         InputStream in = urlConnection.getInputStream();
         assertEquals("I love ", readAscii(urlConnection, "I love ".length()));
         reliableSkip(in, "puppies but hate ".length());
@@ -361,7 +361,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.enqueue(new MockResponse().setBody("DEF"));
         server.play();
 
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        HttpURLConnection connection = openConnection(server.getUrl("/"));
         assertEquals("ABC", readAscii(connection));
 
         connection = openConnection(server.getUrl("/")); // cached!
@@ -721,7 +721,7 @@ public final class HttpResponseCacheTest extends TestCase {
 
         URL url = server.getUrl("/");
 
-        OkHttpConnection request1 = (OkHttpConnection) openConnection(url);
+        HttpURLConnection request1 = (HttpURLConnection) openConnection(url);
         request1.setRequestMethod(requestMethod);
         addRequestBodyIfNecessary(requestMethod, request1);
         assertEquals("1", request1.getHeaderField("X-Response-ID"));
@@ -762,7 +762,7 @@ public final class HttpResponseCacheTest extends TestCase {
 
         assertEquals("A", readAscii(openConnection(url)));
 
-        OkHttpConnection invalidate = openConnection(url);
+        HttpURLConnection invalidate = openConnection(url);
         invalidate.setRequestMethod(requestMethod);
         addRequestBodyIfNecessary(requestMethod, invalidate);
         assertEquals("B", readAscii(invalidate));
@@ -960,7 +960,7 @@ public final class HttpResponseCacheTest extends TestCase {
         // (no responses enqueued)
         server.play();
 
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        HttpURLConnection connection = openConnection(server.getUrl("/"));
         connection.addRequestProperty("Cache-Control", "only-if-cached");
         assertGatewayTimeout(connection);
     }
@@ -984,7 +984,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        HttpURLConnection connection = openConnection(server.getUrl("/"));
         connection.addRequestProperty("Cache-Control", "only-if-cached");
         assertGatewayTimeout(connection);
     }
@@ -994,7 +994,7 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        HttpURLConnection connection = openConnection(server.getUrl("/"));
         connection.addRequestProperty("Cache-Control", "only-if-cached");
         assertGatewayTimeout(connection);
     }
@@ -1065,7 +1065,7 @@ public final class HttpResponseCacheTest extends TestCase {
         URL url = server.getUrl("/");
         assertEquals("A", readAscii(openConnection(url)));
 
-        OkHttpConnection connection = openConnection(url);
+        HttpURLConnection connection = openConnection(url);
         connection.addRequestProperty(conditionName, conditionValue);
         assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, connection.getResponseCode());
         assertEquals("", readAscii(connection));
@@ -1092,7 +1092,7 @@ public final class HttpResponseCacheTest extends TestCase {
                 .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
         server.play();
 
-        OkHttpConnection connection = openConnection(server.getUrl("/"));
+        HttpURLConnection connection = openConnection(server.getUrl("/"));
         String clientIfModifiedSince = formatDate(-24, TimeUnit.HOURS);
         connection.addRequestProperty("If-Modified-Since", clientIfModifiedSince);
         assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, connection.getResponseCode());
@@ -1281,11 +1281,11 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         URL url = server.getUrl("/");
-        OkHttpConnection frConnection = openConnection(url);
+        HttpURLConnection frConnection = openConnection(url);
         frConnection.addRequestProperty("Accept-Language", "fr-CA");
         assertEquals("A", readAscii(frConnection));
 
-        OkHttpConnection enConnection = openConnection(url);
+        HttpURLConnection enConnection = openConnection(url);
         enConnection.addRequestProperty("Accept-Language", "en-US");
         assertEquals("B", readAscii(enConnection));
     }
@@ -1635,18 +1635,18 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         // cache miss; seed the cache
-        OkHttpConnection connection1 = openConnection(server.getUrl("/a"));
+        HttpURLConnection connection1 = openConnection(server.getUrl("/a"));
         assertEquals("A", readAscii(connection1));
         assertEquals(null, connection1.getHeaderField("Allow"));
 
         // conditional cache hit; update the cache
-        OkHttpConnection connection2 = openConnection(server.getUrl("/a"));
+        HttpURLConnection connection2 = openConnection(server.getUrl("/a"));
         assertEquals(HttpURLConnection.HTTP_OK, connection2.getResponseCode());
         assertEquals("A", readAscii(connection2));
         assertEquals("GET, HEAD", connection2.getHeaderField("Allow"));
 
         // full cache hit
-        OkHttpConnection connection3 = openConnection(server.getUrl("/a"));
+        HttpURLConnection connection3 = openConnection(server.getUrl("/a"));
         assertEquals("A", readAscii(connection3));
         assertEquals("GET, HEAD", connection3.getHeaderField("Allow"));
 
@@ -1668,7 +1668,7 @@ public final class HttpResponseCacheTest extends TestCase {
         return rfc1123.format(date);
     }
 
-    private void addRequestBodyIfNecessary(String requestMethod, OkHttpConnection invalidate)
+    private void addRequestBodyIfNecessary(String requestMethod, HttpURLConnection invalidate)
             throws IOException {
         if (requestMethod.equals("POST") || requestMethod.equals("PUT")) {
             invalidate.setDoOutput(true);
@@ -1728,21 +1728,21 @@ public final class HttpResponseCacheTest extends TestCase {
         server.play();
 
         URL valid = server.getUrl("/valid");
-        OkHttpConnection connection1 = openConnection(valid);
+        HttpURLConnection connection1 = openConnection(valid);
         assertEquals("A", readAscii(connection1));
         assertEquals(HttpURLConnection.HTTP_OK, connection1.getResponseCode());
         assertEquals("A-OK", connection1.getResponseMessage());
-        OkHttpConnection connection2 = openConnection(valid);
+        HttpURLConnection connection2 = openConnection(valid);
         assertEquals("A", readAscii(connection2));
         assertEquals(HttpURLConnection.HTTP_OK, connection2.getResponseCode());
         assertEquals("A-OK", connection2.getResponseMessage());
 
         URL invalid = server.getUrl("/invalid");
-        OkHttpConnection connection3 = openConnection(invalid);
+        HttpURLConnection connection3 = openConnection(invalid);
         assertEquals("B", readAscii(connection3));
         assertEquals(HttpURLConnection.HTTP_OK, connection3.getResponseCode());
         assertEquals("B-OK", connection3.getResponseMessage());
-        OkHttpConnection connection4 = openConnection(invalid);
+        HttpURLConnection connection4 = openConnection(invalid);
         assertEquals("C", readAscii(connection4));
         assertEquals(HttpURLConnection.HTTP_OK, connection4.getResponseCode());
         assertEquals("C-OK", connection4.getResponseMessage());
@@ -1781,7 +1781,7 @@ public final class HttpResponseCacheTest extends TestCase {
      * characters are returned and the stream is closed.
      */
     private String readAscii(URLConnection connection, int count) throws IOException {
-        OkHttpConnection httpConnection = (OkHttpConnection) connection;
+        HttpURLConnection httpConnection = (HttpURLConnection) connection;
         InputStream in = httpConnection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST
                 ? connection.getInputStream()
                 : httpConnection.getErrorStream();
@@ -1807,7 +1807,7 @@ public final class HttpResponseCacheTest extends TestCase {
         }
     }
 
-    private void assertGatewayTimeout(OkHttpConnection connection) throws IOException {
+    private void assertGatewayTimeout(HttpURLConnection connection) throws IOException {
         try {
             connection.getInputStream();
             fail();

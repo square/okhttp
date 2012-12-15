@@ -17,12 +17,12 @@
 
 package libcore.net.http;
 
-import com.squareup.okhttp.OkHttpConnection;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpRetryException;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -50,7 +50,7 @@ import libcore.util.Libcore;
  * connection} field on this class for null/non-null to determine of an instance
  * is currently connected to a server.
  */
-public class HttpURLConnectionImpl extends OkHttpConnection {
+public class HttpURLConnectionImpl extends HttpURLConnection {
     /**
      * HTTP 1.1 doesn't specify how many redirects to follow, but HTTP/1.0
      * recommended 5. http://www.w3.org/Protocols/HTTP/1.0/spec.html#Code3xx

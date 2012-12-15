@@ -16,9 +16,6 @@
 
 package libcore.net.http;
 
-import com.squareup.okhttp.OkHttpConnection;
-import com.squareup.okhttp.OkHttpsConnection;
-
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -32,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
+import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
@@ -47,6 +45,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import libcore.io.Base64;
 import libcore.io.DiskLruCache;
@@ -121,11 +120,11 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
     }
 
     @Override public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        if (!(urlConnection instanceof OkHttpConnection)) {
+        if (!(urlConnection instanceof HttpURLConnection)) {
             return null;
         }
 
-        OkHttpConnection httpConnection = (OkHttpConnection) urlConnection;
+        HttpURLConnection httpConnection = (HttpURLConnection) urlConnection;
         String requestMethod = httpConnection.getRequestMethod();
         String key = uriToKey(uri);
 
@@ -181,8 +180,8 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
      * not updated. If the stored response has changed since {@code
      * conditionalCacheHit} was returned, this does nothing.
      */
-    @Override public void update(CacheResponse conditionalCacheHit, OkHttpConnection httpConnection)
-            throws IOException {
+    @Override public void update(CacheResponse conditionalCacheHit,
+            HttpURLConnection httpConnection) throws IOException {
         HttpEngine httpEngine = getHttpEngine(httpConnection);
         URI uri = httpEngine.getUri();
         ResponseHeaders response = httpEngine.getResponseHeaders();
@@ -408,7 +407,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
             }
         }
 
-        public Entry(URI uri, RawHeaders varyHeaders, OkHttpConnection httpConnection)
+        public Entry(URI uri, RawHeaders varyHeaders, HttpURLConnection httpConnection)
                 throws IOException {
             this.uri = uri.toString();
             this.varyHeaders = varyHeaders;
@@ -416,8 +415,7 @@ public final class HttpResponseCache extends ResponseCache implements ExtendedRe
             this.responseHeaders = RawHeaders.fromMultimap(httpConnection.getHeaderFields(), true);
 
             if (isHttps()) {
-                OkHttpsConnection httpsConnection
-                        = (OkHttpsConnection) httpConnection;
+                HttpsURLConnection httpsConnection = (HttpsURLConnection) httpConnection;
                 cipherSuite = httpsConnection.getCipherSuite();
                 Certificate[] peerCertificatesNonFinal = null;
                 try {

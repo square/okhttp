@@ -16,18 +16,18 @@
 
 package libcore.net.http;
 
-import com.squareup.okhttp.OkHttpConnection;
-import com.squareup.okhttp.OkHttpsConnection;
+import com.squareup.okhttp.OkHttpClient;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
 public final class ExternalSpdyExample {
     public static void main(String[] args) throws Exception {
         URL url = new URL("https://www.google.ca/");
-        OkHttpsConnection connection = (OkHttpsConnection) OkHttpConnection.open(url);
+        HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient().open(url);
 
         connection.setHostnameVerifier(new HostnameVerifier() {
             @Override public boolean verify(String s, SSLSession sslSession) {

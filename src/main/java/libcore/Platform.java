@@ -16,7 +16,7 @@
  */
 package libcore;
 
-import com.squareup.okhttp.OkHttpsConnection;
+import com.squareup.okhttp.OkHttpClient;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -260,7 +260,7 @@ public class Platform {
                 JettyNpnProvider provider = (JettyNpnProvider) Proxy.getInvocationHandler(
                         getMethod.invoke(null, socket));
                 if (!provider.unsupported && provider.selected == null) {
-                    Logger logger = Logger.getLogger(OkHttpsConnection.class.getName());
+                    Logger logger = Logger.getLogger(OkHttpClient.class.getName());
                     logger.log(Level.INFO, "NPN callback dropped so SPDY is disabled. "
                             + "Is npn-boot on the boot class path?");
                     return null;

@@ -16,12 +16,11 @@
  */
 package libcore.net.http;
 
-import com.squareup.okhttp.OkHttpConnection;
-import com.squareup.okhttp.OkHttpsConnection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheResponse;
+import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SecureCacheResponse;
@@ -32,11 +31,12 @@ import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-public final class HttpsURLConnectionImpl extends OkHttpsConnection {
+public final class HttpsURLConnectionImpl extends HttpsURLConnection {
 
     /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
     private final HttpUrlConnectionDelegate delegate;
@@ -439,7 +439,7 @@ public final class HttpsURLConnectionImpl extends OkHttpsConnection {
             return enclosing.getHostnameVerifier();
         }
 
-        @Override protected OkHttpConnection getHttpConnectionToCache() {
+        @Override protected HttpURLConnection getHttpConnectionToCache() {
             return enclosing;
         }
 
