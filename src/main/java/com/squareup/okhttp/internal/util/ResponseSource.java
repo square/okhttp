@@ -18,8 +18,6 @@ package com.squareup.okhttp.internal.util;
 
 /**
  * Where the HTTP client should look for a response.
- *
- * @hide
  */
 public enum ResponseSource {
 

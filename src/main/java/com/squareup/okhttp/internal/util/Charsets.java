@@ -22,10 +22,6 @@ import java.nio.charset.Charset;
  * Provides convenient access to the most important built-in charsets. Saves a hash lookup and
  * unnecessary handling of UnsupportedEncodingException at call sites, compared to using the
  * charset's name.
- *
- * Also various special-case charset conversions (for performance).
- *
- * @hide internal use only
  */
 public final class Charsets {
     /**

@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal.io;
 
 import com.squareup.okhttp.internal.util.Libcore;
-import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -86,30 +85,6 @@ public final class Streams {
             offset += bytesRead;
             byteCount -= bytesRead;
         }
-    }
-
-    /**
-     * Returns a byte[] containing the remainder of 'in', closing it when done.
-     */
-    public static byte[] readFully(InputStream in) throws IOException {
-        try {
-            return readFullyNoClose(in);
-        } finally {
-            in.close();
-        }
-    }
-
-    /**
-     * Returns a byte[] containing the remainder of 'in'.
-     */
-    public static byte[] readFullyNoClose(InputStream in) throws IOException {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int count;
-        while ((count = in.read(buffer)) != -1) {
-            bytes.write(buffer, 0, count);
-        }
-        return bytes.toByteArray();
     }
 
     /**

@@ -31,8 +31,6 @@ package com.squareup.okhttp.internal.util;
  *
  * One day the performance advantage of the binary/hex/octal specializations will be small enough
  * that we can lose the duplication, but until then this class offers the full set.
- *
- * @hide
  */
 public final class IntegralToString {
     /**

@@ -213,16 +213,6 @@ public class StrictLineReader implements Closeable {
     }
 
     /**
-     * Check whether there was an unterminated line at end of input after the line reader reported
-     * end-of-input with EOFException. The value is meaningless in any other situation.
-     *
-     * @return true if there was an unterminated line at end of input.
-     */
-    public boolean hasUnterminatedLine() {
-        return end == -1;
-    }
-
-    /**
      * Reads new input data into the buffer. Call only with pos == end or end == -1,
      * depending on the desired outcome if the function throws.
      *
