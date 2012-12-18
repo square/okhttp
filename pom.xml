@@ -25,7 +25,7 @@
     </parent>
     <groupId>com.squareup</groupId>
     <artifactId>okhttp</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.9-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>okhttp</name>

@@ -56,11 +56,10 @@ mvn clean
 mvn package -DskipTests
 vogar \
     --classpath ~/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar \
-    --classpath ~/.m2/repository/com/google/mockwebserver/mockwebserver/20121111/mockwebserver-20121111.jar \
-    --classpath target/okhttp-0.8-SNAPSHOT.jar \
-    ./src/test/java/libcore/net/http/URLConnectionTest.java
+    --classpath ~/.m2/repository/com/google/mockwebserver/mockwebserver/20120905/mockwebserver-20120905.jar \
+    --classpath target/okhttp-0.9-SNAPSHOT.jar \
+    ./src/test/java
 ```
-Because the OkHttp uses `jarjar` to repackage classes in `libcore`, OkHttp tests that use those classes directly cannot be run on a device.
 
 
 License
