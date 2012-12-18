@@ -25,7 +25,7 @@
     </parent>
     <groupId>com.squareup</groupId>
     <artifactId>okhttp</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.9-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>okhttp</name>
@@ -100,31 +100,6 @@
                     <source>${java.version}</source>
                     <target>${java.version}</target>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>jarjar-maven-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jarjar</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>asm:asm</include>
-                                <include>org.sonatype.sisu.inject:cglib</include>
-                            </includes>
-                            <rules>
-                                <rule>
-                                    <pattern>libcore.**</pattern>
-                                    <result>com.squareup.okhttp.libcore.@1</result>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
