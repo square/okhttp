@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.util;
+package com.squareup.okhttp;
 
 import java.io.IOException;
 import java.net.CacheResponse;

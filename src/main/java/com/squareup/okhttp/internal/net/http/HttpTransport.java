@@ -150,7 +150,7 @@ final class HttpTransport implements Transport {
     }
 
     private void receiveHeaders(RawHeaders headers) throws IOException {
-        CookieHandler cookieHandler = CookieHandler.getDefault();
+        CookieHandler cookieHandler = httpEngine.policy.cookieHandler;
         if (cookieHandler != null) {
             cookieHandler.put(httpEngine.uri, headers.toMultimap(true));
         }
