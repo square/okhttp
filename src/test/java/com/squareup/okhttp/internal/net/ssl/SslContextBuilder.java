@@ -103,7 +103,7 @@ public final class SslContextBuilder {
         X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
         X500Principal issuer = new X500Principal("CN=" + hostName);
         X500Principal subject = new X500Principal("CN=" + hostName);
-        generator.setSerialNumber(BigInteger.valueOf(System.currentTimeMillis()));
+        generator.setSerialNumber(BigInteger.ONE);
         generator.setIssuerDN(issuer);
         generator.setNotBefore(new Date(notBefore));
         generator.setNotAfter(new Date(notAfter));
