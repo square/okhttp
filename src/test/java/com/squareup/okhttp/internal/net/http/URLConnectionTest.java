@@ -72,6 +72,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import junit.framework.TestCase;
 
@@ -919,50 +920,6 @@ public final class URLConnectionTest extends TestCase {
         assertEquals(200, connection.getResponseCode());
     }
 
-//    public void testDisconnectAfterOnlyResponseCodeCausesNoCloseGuardWarning() throws IOException {
-//        CloseGuardGuard guard = new CloseGuardGuard();
-//        try {
-//            server.enqueue(new MockResponse()
-//                    .setBody(gzip("ABCABCABC".getBytes("UTF-8")))
-//                    .addHeader("Content-Encoding: gzip"));
-//            server.play();
-//
-//            HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
-//            assertEquals(200, connection.getResponseCode());
-//            connection.disconnect();
-//            connection = null;
-//            assertFalse(guard.wasCloseGuardCalled());
-//        } finally {
-//            guard.close();
-//        }
-//    }
-//
-//    public static class CloseGuardGuard implements Closeable, CloseGuard.Reporter  {
-//        private final CloseGuard.Reporter oldReporter = CloseGuard.getReporter();
-//
-//        private AtomicBoolean closeGuardCalled = new AtomicBoolean();
-//
-//        public CloseGuardGuard() {
-//            CloseGuard.setReporter(this);
-//        }
-//
-//        @Override public void report(String message, Throwable allocationSite) {
-//            oldReporter.report(message, allocationSite);
-//            closeGuardCalled.set(true);
-//        }
-//
-//        public boolean wasCloseGuardCalled() {
-//            // FinalizationTester.induceFinalization();
-//            close();
-//            return closeGuardCalled.get();
-//        }
-//
-//        @Override public void close() {
-//            CloseGuard.setReporter(oldReporter);
-//        }
-//
-//    }
-
     public void testDefaultRequestProperty() throws Exception {
         URLConnection.setDefaultRequestProperty("X-testSetDefaultRequestProperty", "A");
         assertNull(URLConnection.getDefaultRequestProperty("X-setDefaultRequestProperty"));
@@ -1733,59 +1690,36 @@ public final class URLConnectionTest extends TestCase {
         assertEquals(1, server.getRequestCount());
     }
 
-//    public void testHttpsWithCustomTrustManager() throws Exception {
-//        RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-//        RecordingTrustManager trustManager = new RecordingTrustManager();
-//        SSLContext sc = SSLContext.getInstance("TLS");
-//        sc.init(null, new TrustManager[] { trustManager }, new java.security.SecureRandom());
-//
-//        HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
-//        HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
-//        SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
-//        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-//        try {
-//            TestSSLContext testSSLContext = TestSSLContext.create();
-//            server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//            server.enqueue(new MockResponse().setBody("ABC"));
-//            server.enqueue(new MockResponse().setBody("DEF"));
-//            server.enqueue(new MockResponse().setBody("GHI"));
-//            server.play();
-//
-//            URL url = server.getUrl("/");
-//            assertEquals("ABC", readAscii(url.openStream(), Integer.MAX_VALUE));
-//            assertEquals("DEF", readAscii(url.openStream(), Integer.MAX_VALUE));
-//            assertEquals("GHI", readAscii(url.openStream(), Integer.MAX_VALUE));
-//
-//            assertEquals(Arrays.asList("verify " + hostName), hostnameVerifier.calls);
-//            assertEquals(Arrays.asList("checkServerTrusted ["
-//                    + "CN=" + hostName + " 1, "
-//                    + "CN=Test Intermediate Certificate Authority 1, "
-//                    + "CN=Test Root Certificate Authority 1"
-//                    + "] RSA"),
-//                    trustManager.calls);
-//        } finally {
-//            HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
-//            HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSocketFactory);
-//        }
-//    }
-//
-//    public void testConnectTimeouts() throws IOException {
-//        StuckServer ss = new StuckServer();
-//        int serverPort = ss.getLocalPort();
-//        URLConnection urlConnection = new URL("http://localhost:" + serverPort).openConnection();
-//        int timeout = 1000;
-//        urlConnection.setConnectTimeout(timeout);
-//        long start = System.currentTimeMillis();
-//        try {
-//            urlConnection.getInputStream();
-//            fail();
-//        } catch (SocketTimeoutException expected) {
-//            long actual = System.currentTimeMillis() - start;
-//            assertTrue(Math.abs(timeout - actual) < 500);
-//        } finally {
-//            ss.close();
-//        }
-//    }
+    public void testHttpsWithCustomTrustManager() throws Exception {
+        RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+        RecordingTrustManager trustManager = new RecordingTrustManager();
+        SSLContext sc = SSLContext.getInstance("TLS");
+        sc.init(null, new TrustManager[] { trustManager }, new java.security.SecureRandom());
+
+        HostnameVerifier defaultHostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+        HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
+        SSLSocketFactory defaultSSLSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+        HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        try {
+            server.useHttps(sslContext.getSocketFactory(), false);
+            server.enqueue(new MockResponse().setBody("ABC"));
+            server.enqueue(new MockResponse().setBody("DEF"));
+            server.enqueue(new MockResponse().setBody("GHI"));
+            server.play();
+
+            URL url = server.getUrl("/");
+            assertContent("ABC", openConnection(url));
+            assertContent("DEF", openConnection(url));
+            assertContent("GHI", openConnection(url));
+
+            assertEquals(Arrays.asList("verify " + hostName), hostnameVerifier.calls);
+            assertEquals(Arrays.asList("checkServerTrusted [CN=" + hostName + " 1]"),
+                    trustManager.calls);
+        } finally {
+            HttpsURLConnection.setDefaultHostnameVerifier(defaultHostnameVerifier);
+            HttpsURLConnection.setDefaultSSLSocketFactory(defaultSSLSocketFactory);
+        }
+    }
 
     public void testReadTimeouts() throws IOException {
         /*
@@ -2450,18 +2384,17 @@ public final class URLConnectionTest extends TestCase {
         private final List<String> calls = new ArrayList<String>();
 
         public X509Certificate[] getAcceptedIssuers() {
-            calls.add("getAcceptedIssuers");
             return new X509Certificate[] {};
         }
 
         public void checkClientTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException {
-            calls.add("checkClientTrusted " + certificatesToString(chain) + " " + authType);
+            calls.add("checkClientTrusted " + certificatesToString(chain));
         }
 
         public void checkServerTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException {
-            calls.add("checkServerTrusted " + certificatesToString(chain) + " " + authType);
+            calls.add("checkServerTrusted " + certificatesToString(chain));
         }
 
         private String certificatesToString(X509Certificate[] certificates) {
