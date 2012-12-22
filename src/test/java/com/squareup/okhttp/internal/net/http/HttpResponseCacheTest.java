@@ -21,6 +21,7 @@ import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.internal.net.ssl.SslContextBuilder;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -35,12 +36,17 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
+import java.security.Principal;
+import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -57,30 +63,47 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import junit.framework.TestCase;
 
 /**
  * Android's HttpResponseCacheTest.
  */
 public final class HttpResponseCacheTest extends TestCase {
+    private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
+        @Override public boolean verify(String s, SSLSession sslSession) {
+            return true;
+        }
+    };
+    private final OkHttpClient client = new OkHttpClient();
     private MockWebServer server = new MockWebServer();
     private HttpResponseCache cache;
-//    private final MockOs mockOs = new MockOs();
     private final CookieManager cookieManager = new CookieManager();
+
+    private static final SSLContext sslContext;
+    static {
+        try {
+            sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override protected void setUp() throws Exception {
         super.setUp();
-
         String tmp = System.getProperty("java.io.tmpdir");
         File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
         cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
         ResponseCache.setDefault(cache);
-//        mockOs.install();
         CookieHandler.setDefault(cookieManager);
     }
 
     @Override protected void tearDown() throws Exception {
-//        mockOs.uninstall();
         server.shutdown();
         ResponseCache.setDefault(null);
         cache.getCache().delete();
@@ -88,8 +111,8 @@ public final class HttpResponseCacheTest extends TestCase {
         super.tearDown();
     }
 
-    private static HttpURLConnection openConnection(URL url) {
-        return new OkHttpClient().open(url);
+    private HttpURLConnection openConnection(URL url) {
+        return client.open(url);
     }
 
     /**
@@ -294,58 +317,61 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(1, cache.getHitCount());
     }
 
-//    public void testSecureResponseCaching() throws IOException {
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse()
-//                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-//                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-//                .setBody("ABC"));
-//        server.play();
-//
-//        HttpsURLConnection connection = (HttpsURLConnection) server.getUrl("/").openConnection();
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("ABC", readAscii(connection));
-//
-//        // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
-//        String suite = connection.getCipherSuite();
-//        List<Certificate> localCerts = toListOrNull(connection.getLocalCertificates());
-//        List<Certificate> serverCerts = toListOrNull(connection.getServerCertificates());
-//        Principal peerPrincipal = connection.getPeerPrincipal();
-//        Principal localPrincipal = connection.getLocalPrincipal();
-//
-//        connection = (HttpsURLConnection) server.getUrl("/").openConnection(); // cached!
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("ABC", readAscii(connection));
-//
-//        assertEquals(2, cache.getRequestCount());
-//        assertEquals(1, cache.getNetworkCount());
-//        assertEquals(1, cache.getHitCount());
-//
-//        assertEquals(suite, connection.getCipherSuite());
-//        assertEquals(localCerts, toListOrNull(connection.getLocalCertificates()));
-//        assertEquals(serverCerts, toListOrNull(connection.getServerCertificates()));
-//        assertEquals(peerPrincipal, connection.getPeerPrincipal());
-//        assertEquals(localPrincipal, connection.getLocalPrincipal());
-//    }
-//
-//    public void testCacheReturnsInsecureResponseForSecureRequest() throws IOException {
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse().setBody("ABC"));
-//        server.enqueue(new MockResponse().setBody("DEF"));
-//        server.play();
-//
-//        ResponseCache.setDefault(new InsecureResponseCache());
-//
-//        HttpsURLConnection connection = (HttpsURLConnection) server.getUrl("/").openConnection();
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("ABC", readAscii(connection));
-//
-//        connection = (HttpsURLConnection) server.getUrl("/").openConnection(); // not cached!
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("DEF", readAscii(connection));
-//    }
+    public void testSecureResponseCaching() throws IOException {
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse()
+                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+                .setBody("ABC"));
+        server.play();
+
+        HttpsURLConnection connection = (HttpsURLConnection) client.open(server.getUrl("/"));
+        connection.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("ABC", readAscii(connection));
+
+        // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
+        String suite = connection.getCipherSuite();
+        List<Certificate> localCerts = toListOrNull(connection.getLocalCertificates());
+        List<Certificate> serverCerts = toListOrNull(connection.getServerCertificates());
+        Principal peerPrincipal = connection.getPeerPrincipal();
+        Principal localPrincipal = connection.getLocalPrincipal();
+
+        connection = (HttpsURLConnection) client.open(server.getUrl("/")); // cached!
+        connection.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("ABC", readAscii(connection));
+
+        assertEquals(2, cache.getRequestCount());
+        assertEquals(1, cache.getNetworkCount());
+        assertEquals(1, cache.getHitCount());
+
+        assertEquals(suite, connection.getCipherSuite());
+        assertEquals(localCerts, toListOrNull(connection.getLocalCertificates()));
+        assertEquals(serverCerts, toListOrNull(connection.getServerCertificates()));
+        assertEquals(peerPrincipal, connection.getPeerPrincipal());
+        assertEquals(localPrincipal, connection.getLocalPrincipal());
+    }
+
+    public void testCacheReturnsInsecureResponseForSecureRequest() throws IOException {
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse().setBody("ABC"));
+        server.enqueue(new MockResponse().setBody("DEF"));
+        server.play();
+
+        ResponseCache.setDefault(new InsecureResponseCache());
+
+        HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
+        connection1.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("ABC", readAscii(connection1));
+
+        // Not cached!
+        HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
+        connection2.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("DEF", readAscii(connection2));
+    }
 
     public void testResponseCachingAndRedirects() throws Exception {
         server.enqueue(new MockResponse()
@@ -398,32 +424,34 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, request3.getSequenceNumber());
     }
 
-//    public void testSecureResponseCachingAndRedirects() throws IOException {
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse()
-//                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-//                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-//                .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
-//                .addHeader("Location: /foo"));
-//        server.enqueue(new MockResponse()
-//                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-//                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-//                .setBody("ABC"));
-//        server.enqueue(new MockResponse().setBody("DEF"));
-//        server.play();
-//
-//        HttpsURLConnection connection = (HttpsURLConnection) server.getUrl("/").openConnection();
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("ABC", readAscii(connection));
-//
-//        connection = (HttpsURLConnection) server.getUrl("/").openConnection(); // cached!
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        assertEquals("ABC", readAscii(connection));
-//
-//        assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
-//        assertEquals(2, cache.getHitCount());
-//    }
+    public void testSecureResponseCachingAndRedirects() throws IOException {
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse()
+                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+                .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
+                .addHeader("Location: /foo"));
+        server.enqueue(new MockResponse()
+                .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+                .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+                .setBody("ABC"));
+        server.enqueue(new MockResponse().setBody("DEF"));
+        server.play();
+
+        HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
+        connection1.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("ABC", readAscii(connection1));
+
+        // Cached!
+        HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
+        connection1.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        assertEquals("ABC", readAscii(connection2));
+
+        assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
+        assertEquals(2, cache.getHitCount());
+    }
 
     public void testResponseCacheRequestHeaders() throws IOException, URISyntaxException {
         server.enqueue(new MockResponse().setBody("ABC"));
@@ -1459,28 +1487,29 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(server.getUrl("/"))));
     }
 
-//    public void testVaryAndHttps() throws Exception {
-//        TestSSLContext testSSLContext = TestSSLContext.create();
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse()
-//                .addHeader("Cache-Control: max-age=60")
-//                .addHeader("Vary: Accept-Language")
-//                .setBody("A"));
-//        server.enqueue(new MockResponse().setBody("B"));
-//        server.play();
-//
-//        URL url = server.getUrl("/");
-//        HttpsURLConnection connection1 = (HttpsURLConnection) url.openConnection();
-//        connection1.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        connection1.addRequestProperty("Accept-Language", "en-US");
-//        assertEquals("A", readAscii(connection1));
-//
-//        HttpsURLConnection connection2 = (HttpsURLConnection) url.openConnection();
-//        connection2.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        connection2.addRequestProperty("Accept-Language", "en-US");
-//        assertEquals("A", readAscii(connection2));
-//    }
-//
+    public void testVaryAndHttps() throws Exception {
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse()
+                .addHeader("Cache-Control: max-age=60")
+                .addHeader("Vary: Accept-Language")
+                .setBody("A"));
+        server.enqueue(new MockResponse().setBody("B"));
+        server.play();
+
+        URL url = server.getUrl("/");
+        HttpsURLConnection connection1 = (HttpsURLConnection) client.open(url);
+        connection1.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        connection1.addRequestProperty("Accept-Language", "en-US");
+        assertEquals("A", readAscii(connection1));
+
+        HttpsURLConnection connection2 = (HttpsURLConnection) client.open(url);
+        connection2.setSSLSocketFactory(sslContext.getSocketFactory());
+        connection2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        connection2.addRequestProperty("Accept-Language", "en-US");
+        assertEquals("A", readAscii(connection2));
+    }
+
 //    public void testDiskWriteFailureCacheDegradation() throws Exception {
 //        Deque<InvocationHandler> writeHandlers = mockOs.getHandlers("write");
 //        int i = 0;

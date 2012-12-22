@@ -287,12 +287,20 @@ public class HttpEngine {
             connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(),
                     getTunnelConfig());
         }
+        connected(connection);
         Proxy proxy = connection.getProxy();
         if (proxy != null) {
             policy.setProxy(proxy);
             // Add the authority to the request line when we're using a proxy.
             requestHeaders.getHeaders().setRequestLine(getRequestLine());
         }
+    }
+
+    /**
+     * Called after a socket connection has been created or retrieved from the
+     * pool. Subclasses use this hook to get a reference to the TLS data.
+     */
+    protected void connected(HttpConnection connection) {
     }
 
     /**

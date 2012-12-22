@@ -395,14 +395,9 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     }
 
     private static final class HttpsEngine extends HttpEngine {
-
         /**
-         * Local stash of HttpsEngine.connection.sslSocket for answering
-         * queries such as getCipherSuite even after
-         * httpsEngine.Connection has been recycled. It's presence is also
-         * used to tell if the HttpsURLConnection is considered connected,
-         * as opposed to the connected field of URLConnection or the a
-         * non-null connect in HttpURLConnectionImpl
+         * Stash of HttpsEngine.connection.socket to implement requests like
+         * {@link #getCipherSuite} even after the connection has been recycled.
          */
         private SSLSocket sslSocket;
 
@@ -418,6 +413,10 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
             super(policy, method, requestHeaders, connection, requestBody);
             this.sslSocket = connection != null ? (SSLSocket) connection.getSocket() : null;
             this.enclosing = enclosing;
+        }
+
+        @Override protected void connected(HttpConnection connection) {
+            this.sslSocket = (SSLSocket) connection.getSocket();
         }
 
         @Override protected boolean acceptCacheResponseType(CacheResponse cacheResponse) {
