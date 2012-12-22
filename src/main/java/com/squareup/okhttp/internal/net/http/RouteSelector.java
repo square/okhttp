@@ -16,9 +16,6 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.internal.net.Dns;
-import static com.squareup.okhttp.internal.net.http.HttpConnection.TLS_MODE_AGGRESSIVE;
-import static com.squareup.okhttp.internal.net.http.HttpConnection.TLS_MODE_COMPATIBLE;
-import static com.squareup.okhttp.internal.net.http.HttpConnection.TLS_MODE_NULL;
 import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -38,6 +35,23 @@ import java.util.NoSuchElementException;
  * recycled.
  */
 public final class RouteSelector {
+    /**
+     * A TLS connection with useful extensions enabled. This mode supports more
+     * features, but is less likely to be compatible with older HTTP servers.
+     */
+    private static final int TLS_MODE_MODERN = 1;
+
+    /**
+     * A fallback connection with only basic functionality. Currently this uses
+     * SSL 3.0.
+     */
+    private static final int TLS_MODE_COMPATIBLE = 0;
+
+    /**
+     * Unknown TLS mode.
+     */
+    private static final int TLS_MODE_NULL = -1;
+
     private final HttpConnection.Address address;
     private final URI uri;
     private final ProxySelector proxySelector;
@@ -102,9 +116,9 @@ public final class RouteSelector {
             lastInetSocketAddress = nextInetSocketAddress();
             resetNextTlsMode();
         }
-        int tlsMode = nextTlsMode();
+        boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
 
-        return new HttpConnection(address, lastProxy, lastInetSocketAddress, tlsMode);
+        return new HttpConnection(address, lastProxy, lastInetSocketAddress, modernTls);
     }
 
     /**
@@ -112,9 +126,9 @@ public final class RouteSelector {
      * failure on a connection returned by this route selector.
      */
     public void connectFailed(HttpConnection connection, IOException failure) {
-        if (connection.proxy.type() != Proxy.Type.DIRECT && proxySelector != null) {
+        if (connection.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
             // Tell the proxy selector when we fail to connect on a fresh connection.
-            proxySelector.connectFailed(uri, connection.proxy.address(), failure);
+            proxySelector.connectFailed(uri, connection.getProxy().address(), failure);
         }
     }
 
@@ -203,7 +217,7 @@ public final class RouteSelector {
     /** Resets {@link #nextTlsMode} to the first option. */
     private void resetNextTlsMode() {
         nextTlsMode = (address.sslSocketFactory != null)
-                ? TLS_MODE_AGGRESSIVE
+                ? TLS_MODE_MODERN
                 : TLS_MODE_COMPATIBLE;
     }
 
@@ -214,9 +228,9 @@ public final class RouteSelector {
 
     /** Returns the next TLS mode to try. */
     private int nextTlsMode() {
-        if (nextTlsMode == TLS_MODE_AGGRESSIVE) {
+        if (nextTlsMode == TLS_MODE_MODERN) {
             nextTlsMode = TLS_MODE_COMPATIBLE;
-            return TLS_MODE_AGGRESSIVE;
+            return TLS_MODE_MODERN;
         } else if (nextTlsMode == TLS_MODE_COMPATIBLE) {
             nextTlsMode = TLS_MODE_NULL;  // So that hasNextTlsMode() returns false.
             return TLS_MODE_COMPATIBLE;
