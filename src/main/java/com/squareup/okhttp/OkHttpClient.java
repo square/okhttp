@@ -23,6 +23,9 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URL;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Configures and creates HTTP connections.
@@ -32,6 +35,8 @@ public final class OkHttpClient {
     private ProxySelector proxySelector;
     private CookieHandler cookieHandler;
     private ResponseCache responseCache;
+    private SSLSocketFactory sslSocketFactory;
+    private HostnameVerifier hostnameVerifier;
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this
@@ -81,6 +86,29 @@ public final class OkHttpClient {
         return this;
     }
 
+    /**
+     * Sets the socket factory used to secure HTTPS connections.
+     *
+     * <p>If unset, the {@link HttpsURLConnection#getDefaultSSLSocketFactory()
+     * system-wide default} SSL socket factory will be used.
+     */
+    public OkHttpClient setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+        this.sslSocketFactory = sslSocketFactory;
+        return this;
+    }
+
+    /**
+     * Sets the verifier used to confirm that response certificates apply to
+     * requested hostnames for HTTPS connections.
+     *
+     * <p>If unset, the {@link HttpsURLConnection#getDefaultHostnameVerifier()
+     * system-wide default} hostname verifier will be used.
+     */
+    public OkHttpClient setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+        this.hostnameVerifier = hostnameVerifier;
+        return this;
+    }
+
     public HttpURLConnection open(URL url) {
         ProxySelector proxySelector = this.proxySelector != null
                 ? this.proxySelector
@@ -97,8 +125,15 @@ public final class OkHttpClient {
             return new HttpURLConnectionImpl(
                     url, 80, proxy, proxySelector, cookieHandler, responseCache);
         } else if (protocol.equals("https")) {
-            return new HttpsURLConnectionImpl(
+            HttpsURLConnectionImpl result = new HttpsURLConnectionImpl(
                     url, 443, proxy, proxySelector, cookieHandler, responseCache);
+            result.setSSLSocketFactory(this.sslSocketFactory != null
+                    ? this.sslSocketFactory
+                    : HttpsURLConnection.getDefaultSSLSocketFactory());
+            result.setHostnameVerifier(this.hostnameVerifier != null
+                    ? this.hostnameVerifier
+                    : HttpsURLConnection.getDefaultHostnameVerifier());
+            return result;
         } else {
             throw new IllegalArgumentException();
         }
