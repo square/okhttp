@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.util;
+package com.squareup.okhttp;
 
 /**
- * Where the HTTP client should look for a response.
+ * The source of an HTTP response.
  */
 public enum ResponseSource {
 
     /**
-     * Return the response from the cache immediately.
+     * The response was returned from the local cache.
      */
     CACHE,
 
     /**
-     * Make a conditional request to the host, returning the cache response if
-     * the cache is valid and the network response otherwise.
+     * The response is available in the cache but must be validated with the
+     * network. The cache result will be used if it is still valid; otherwise
+     * the network's response will be used.
      */
     CONDITIONAL_CACHE,
 
     /**
-     * Return the response from the network.
+     * The response was returned from the network.
      */
     NETWORK;
 

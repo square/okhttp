@@ -20,9 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheResponse;
+import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URL;
 import java.security.Permission;
@@ -41,14 +44,11 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
     private final HttpUrlConnectionDelegate delegate;
 
-    public HttpsURLConnectionImpl(URL url, int port) {
+    public HttpsURLConnectionImpl(URL url, int defaultPort, Proxy proxy,
+            ProxySelector proxySelector, CookieHandler cookieHandler, ResponseCache responseCache) {
         super(url);
-        delegate = new HttpUrlConnectionDelegate(url, port);
-    }
-
-    public HttpsURLConnectionImpl(URL url, int port, Proxy proxy) {
-        super(url);
-        delegate = new HttpUrlConnectionDelegate(url, port, proxy);
+        delegate = new HttpUrlConnectionDelegate(url, defaultPort, proxy, proxySelector,
+                cookieHandler, responseCache);
     }
 
     private void checkConnected() {
@@ -371,12 +371,10 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     }
 
     private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-        private HttpUrlConnectionDelegate(URL url, int port) {
-            super(url, port);
-        }
-
-        private HttpUrlConnectionDelegate(URL url, int port, Proxy proxy) {
-            super(url, port, proxy);
+        private HttpUrlConnectionDelegate(URL url, int defaultPort, Proxy proxy,
+                ProxySelector proxySelector, CookieHandler cookieHandler,
+                ResponseCache responseCache) {
+            super(url, defaultPort, proxy, proxySelector, cookieHandler, responseCache);
         }
 
         @Override protected HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,

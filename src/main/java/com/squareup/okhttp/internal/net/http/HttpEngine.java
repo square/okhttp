@@ -17,12 +17,12 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.ExtendedResponseCache;
+import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.net.Dns;
 import com.squareup.okhttp.internal.util.EmptyArray;
-import com.squareup.okhttp.internal.util.ExtendedResponseCache;
 import com.squareup.okhttp.internal.util.Libcore;
-import com.squareup.okhttp.internal.util.ResponseSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,8 +32,6 @@ import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -107,7 +105,6 @@ public class HttpEngine {
     private InputStream responseTransferIn;
     private InputStream responseBodyIn;
 
-    private final ResponseCache responseCache = ResponseCache.getDefault();
     private CacheResponse cacheResponse;
     private CacheRequest cacheRequest;
 
@@ -185,8 +182,8 @@ public class HttpEngine {
 
         prepareRawRequestHeaders();
         initResponseSource();
-        if (responseCache instanceof ExtendedResponseCache) {
-            ((ExtendedResponseCache) responseCache).trackResponse(responseSource);
+        if (policy.responseCache instanceof ExtendedResponseCache) {
+            ((ExtendedResponseCache) policy.responseCache).trackResponse(responseSource);
         }
 
         /*
@@ -220,11 +217,11 @@ public class HttpEngine {
      */
     private void initResponseSource() throws IOException {
         responseSource = ResponseSource.NETWORK;
-        if (!policy.getUseCaches() || responseCache == null) {
+        if (!policy.getUseCaches() || policy.responseCache == null) {
             return;
         }
 
-        CacheResponse candidate = responseCache.get(uri, method,
+        CacheResponse candidate = policy.responseCache.get(uri, method,
                 requestHeaders.getHeaders().toMultimap(false));
         if (candidate == null) {
             return;
@@ -283,7 +280,7 @@ public class HttpEngine {
         if (routeSelector == null) {
             HttpConnection.Address address = new HttpConnection.Address(uri, getSslSocketFactory(),
                     getHostnameVerifier(), policy.getProxy());
-            routeSelector = new RouteSelector(address, uri, ProxySelector.getDefault(), Dns.DEFAULT);
+            routeSelector = new RouteSelector(address, uri, policy.proxySelector, Dns.DEFAULT);
         }
         connection = routeSelector.next();
         if (!connection.isRecycled()) {
@@ -378,7 +375,7 @@ public class HttpEngine {
 
     private void maybeCache() throws IOException {
         // Are we caching at all?
-        if (!policy.getUseCaches() || responseCache == null) {
+        if (!policy.getUseCaches() || policy.responseCache == null) {
             return;
         }
 
@@ -388,7 +385,7 @@ public class HttpEngine {
         }
 
         // Offer this request to the cache.
-        cacheRequest = responseCache.put(uri, getHttpConnectionToCache());
+        cacheRequest = policy.responseCache.put(uri, getHttpConnectionToCache());
     }
 
     protected HttpURLConnection getHttpConnectionToCache() {
@@ -515,7 +512,7 @@ public class HttpEngine {
             requestHeaders.setIfModifiedSince(new Date(ifModifiedSince));
         }
 
-        CookieHandler cookieHandler = CookieHandler.getDefault();
+        CookieHandler cookieHandler = policy.cookieHandler;
         if (cookieHandler != null) {
             requestHeaders.addCookies(
                     cookieHandler.get(uri, requestHeaders.getHeaders().toMultimap(false)));
@@ -643,8 +640,9 @@ public class HttpEngine {
                 release(true);
                 ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
                 setResponse(combinedHeaders, cachedResponseBody);
-                if (responseCache instanceof ExtendedResponseCache) {
-                    ExtendedResponseCache httpResponseCache = (ExtendedResponseCache) responseCache;
+                if (policy.responseCache instanceof ExtendedResponseCache) {
+                    ExtendedResponseCache httpResponseCache
+                            = (ExtendedResponseCache) policy.responseCache;
                     httpResponseCache.trackConditionalCacheHit();
                     httpResponseCache.update(cacheResponse, getHttpConnectionToCache());
                 }
