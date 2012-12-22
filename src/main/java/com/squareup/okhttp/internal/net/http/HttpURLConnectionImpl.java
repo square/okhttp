@@ -23,11 +23,14 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.CookieHandler;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.ResponseCache;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
@@ -60,6 +63,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     private final int defaultPort;
 
     private Proxy proxy;
+    final ProxySelector proxySelector;
+    final CookieHandler cookieHandler;
+    final ResponseCache responseCache;
 
     private final RawHeaders rawRequestHeaders = new RawHeaders();
 
@@ -68,14 +74,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     protected IOException httpEngineFailure;
     protected HttpEngine httpEngine;
 
-    public HttpURLConnectionImpl(URL url, int port) {
+    public HttpURLConnectionImpl(URL url, int defaultPort, Proxy proxy, ProxySelector proxySelector,
+            CookieHandler cookieHandler, ResponseCache responseCache) {
         super(url);
-        defaultPort = port;
-    }
-
-    public HttpURLConnectionImpl(URL url, int port, Proxy proxy) {
-        this(url, port);
+        this.defaultPort = defaultPort;
         this.proxy = proxy;
+        this.proxySelector = proxySelector;
+        this.cookieHandler = cookieHandler;
+        this.responseCache = responseCache;
     }
 
     @Override public final void connect() throws IOException {
