@@ -18,7 +18,6 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.internal.util.Libcore;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,8 +72,7 @@ final class HttpConnectionPool {
                 }
                 if (connection.isEligibleForRecycling()) {
                     // Since Socket is recycled, re-tag before using
-                    Socket socket = connection.getSocket();
-                    Libcore.tagSocket(socket);
+                    Libcore.tagSocket(connection.getSocket());
                     return connection;
                 }
             }
@@ -91,9 +89,8 @@ final class HttpConnectionPool {
             throw new IllegalArgumentException(); // TODO: just 'return' here?
         }
 
-        Socket socket = connection.getSocket();
         try {
-            Libcore.untagSocket(socket);
+            Libcore.untagSocket(connection.getSocket());
         } catch (SocketException e) {
             // When unable to remove tagging, skip recycling and close
             Libcore.logW("Unable to untagSocket(): " + e);
