@@ -18,11 +18,11 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.net.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.util.Libcore;
 import com.squareup.okhttp.internal.util.Objects;
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -46,9 +46,23 @@ import javax.net.ssl.SSLSocketFactory;
  * the {@link Address} inner class.
  *
  * <p>Do not confuse this class with the misnamed {@code HttpURLConnection},
- * which isn't so much a connection as a single request/response pair.
+ * which isn't so much a connection as a single request/response exchange.
+ *
+ * <h3>Modern TLS</h3>
+ * There are tradeoffs when selecting which options to include when negotiating
+ * a secure connection to a remote host. Newer TLS options are quite useful:
+ * <ul>
+ *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
+ *       connections for multiple domain names.
+ *   <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
+ *       for both HTTP and SPDY transports.
+ * </ul>
+ * Unfortunately, older HTTPS servers refuse to connect when such options are
+ * presented. Rather than avoiding these options entirely, this class allows a
+ * connection to be attempted with modern options and then retried without them
+ * should the attempt fail.
  */
-final class HttpConnection {
+public final class HttpConnection implements Closeable {
     private static final byte[] NPN_PROTOCOLS = new byte[] {
             6, 's', 'p', 'd', 'y', '/', '2',
             8, 'h', 't', 't', 'p', '/', '1', '.', '1',
@@ -60,46 +74,27 @@ final class HttpConnection {
             'h', 't', 't', 'p', '/', '1', '.', '1',
     };
 
-    /** First try a TLS connection with various extensions enabled. */
-    public static final int TLS_MODE_AGGRESSIVE = 1;
-
-    /**
-     * If that TLS connection fails (and its not unheard of that it will)
-     * fall back to a basic SSLv3 connection.
-     */
-    public static final int TLS_MODE_COMPATIBLE = 0;
-
-    /**
-     * Unknown TLS mode.
-     */
-    public static final int TLS_MODE_NULL = -1;
-
-    final Address address;
-    final Proxy proxy;
-    final InetSocketAddress inetSocketAddress;
-    final int tlsMode;
+    private final Address address;
+    private final Proxy proxy;
+    private final InetSocketAddress inetSocketAddress;
+    private final boolean modernTls;
 
     private Socket socket;
     private InputStream in;
     private OutputStream out;
     private boolean recycled = false;
     private SpdyConnection spdyConnection;
+    private int httpMinorVersion = 1; // Assume HTTP/1.1
 
-    /**
-     * The version this client will use. Either 0 for HTTP/1.0, or 1 for
-     * HTTP/1.1. Upon receiving a non-HTTP/1.1 response, this client
-     * automatically sets its version to HTTP/1.0.
-     */
-    int httpMinorVersion = 1; // Assume HTTP/1.1
-
-    HttpConnection(Address address, Proxy proxy, InetSocketAddress inetSocketAddress, int tlsMode) {
+    public HttpConnection(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
+            boolean modernTls) {
         if (address == null || proxy == null || inetSocketAddress == null) {
             throw new IllegalArgumentException();
         }
         this.address = address;
         this.proxy = proxy;
         this.inetSocketAddress = inetSocketAddress;
-        this.tlsMode = tlsMode;
+        this.modernTls = modernTls;
     }
 
     public void connect(int connectTimeout, int readTimeout, TunnelConfig tunnelConfig)
@@ -143,9 +138,9 @@ final class HttpConnection {
         socket = address.sslSocketFactory.createSocket(
                 socket, address.uriHost, address.uriPort, true /* autoClose */);
         SSLSocket sslSocket = (SSLSocket) socket;
-        platform.makeTlsTolerant(sslSocket, address.uriHost, tlsMode == TLS_MODE_AGGRESSIVE);
+        platform.makeTlsTolerant(sslSocket, address.uriHost, modernTls);
 
-        if (tlsMode == TLS_MODE_AGGRESSIVE) {
+        if (modernTls) {
             platform.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
         }
 
@@ -161,7 +156,7 @@ final class HttpConnection {
         in = sslSocket.getInputStream();
 
         byte[] selectedProtocol;
-        if (tlsMode == TLS_MODE_AGGRESSIVE
+        if (modernTls
                 && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
             if (Arrays.equals(selectedProtocol, SPDY2)) {
                 spdyConnection = new SpdyConnection.Builder(true, in, out).build();
@@ -173,10 +168,8 @@ final class HttpConnection {
         }
     }
 
-    public void closeSocketAndStreams() {
-        IoUtils.closeQuietly(out);
-        IoUtils.closeQuietly(in);
-        IoUtils.closeQuietly(socket);
+    @Override public void close() throws IOException {
+        socket.close();
     }
 
     /**
@@ -196,6 +189,18 @@ final class HttpConnection {
         return address;
     }
 
+    public InetSocketAddress getSocketAddress() {
+        return inetSocketAddress;
+    }
+
+    public boolean isModernTls() {
+        return modernTls;
+    }
+
+    /**
+     * Returns the socket that this connection uses, or null if the connection
+     * is not currently connected.
+     */
     public Socket getSocket() {
         return socket;
     }
@@ -225,7 +230,7 @@ final class HttpConnection {
     /**
      * Returns the transport appropriate for this connection.
      */
-    public Transport newTransport(HttpEngine httpEngine) throws IOException {
+    public Object newTransport(HttpEngine httpEngine) throws IOException {
         if (spdyConnection != null) {
             return new SpdyTransport(httpEngine, spdyConnection);
         } else {
@@ -239,6 +244,19 @@ final class HttpConnection {
      */
     public boolean isSpdy() {
         return spdyConnection != null;
+    }
+
+    /**
+     * Returns the minor HTTP version that should be used for future requests on
+     * this connection. Either 0 for HTTP/1.0, or 1 for HTTP/1.1. The default
+     * value is 1 for new connections.
+     */
+    public int getHttpMinorVersion() {
+        return httpMinorVersion;
+    }
+
+    public void setHttpMinorVersion(int httpMinorVersion) {
+        this.httpMinorVersion = httpMinorVersion;
     }
 
     public static final class TunnelConfig {
