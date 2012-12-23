@@ -68,7 +68,7 @@ final class HttpTransport implements Transport {
         boolean chunked = httpEngine.requestHeaders.isChunked();
         if (!chunked
                 && httpEngine.policy.getChunkLength() > 0
-                && httpEngine.connection.httpMinorVersion != 0) {
+                && httpEngine.connection.getHttpMinorVersion() != 0) {
             httpEngine.requestHeaders.setChunked();
             chunked = true;
         }
@@ -144,7 +144,7 @@ final class HttpTransport implements Transport {
 
     @Override public ResponseHeaders readResponseHeaders() throws IOException {
         RawHeaders headers = RawHeaders.fromBytes(socketIn);
-        httpEngine.connection.httpMinorVersion = headers.getHttpMinorVersion();
+        httpEngine.connection.setHttpMinorVersion(headers.getHttpMinorVersion());
         receiveHeaders(headers);
         return new ResponseHeaders(httpEngine.uri, headers);
     }

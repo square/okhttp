@@ -17,6 +17,7 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.util.Libcore;
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -72,8 +73,11 @@ final class HttpConnectionPool {
                 }
                 if (connection.isEligibleForRecycling()) {
                     // Since Socket is recycled, re-tag before using
+                    // TODO: don't tag SPDY connections
                     Libcore.tagSocket(connection.getSocket());
                     return connection;
+                } else {
+                    // TODO: is the connection leaked here?
                 }
             }
         }
@@ -94,7 +98,7 @@ final class HttpConnectionPool {
         } catch (SocketException e) {
             // When unable to remove tagging, skip recycling and close
             Libcore.logW("Unable to untagSocket(): " + e);
-            connection.closeSocketAndStreams();
+            IoUtils.closeQuietly(connection);
             return;
         }
 
@@ -115,7 +119,7 @@ final class HttpConnectionPool {
         }
 
         // don't close streams while holding a lock!
-        connection.closeSocketAndStreams();
+        IoUtils.closeQuietly(connection);
     }
 
     /**

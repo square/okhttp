@@ -261,7 +261,7 @@ public class HttpEngine {
             throw new IllegalStateException();
         }
 
-        transport = connection.newTransport(this);
+        transport = (Transport) connection.newTransport(this);
 
         if (hasRequestBody() && requestBodyOut == null) {
             // Create a request body if we don't have one already. We'll already
@@ -429,7 +429,7 @@ public class HttpEngine {
             connectionReleased = true;
 
             if (!reusable || !transport.makeReusable(requestBodyOut, responseTransferIn)) {
-                connection.closeSocketAndStreams();
+                IoUtils.closeQuietly(connection);
                 connection = null;
             } else if (automaticallyReleaseConnectionToPool) {
                 HttpConnectionPool.INSTANCE.recycle(connection);
@@ -500,7 +500,7 @@ public class HttpEngine {
         }
 
         // TODO: this shouldn't be set for SPDY (it's ignored)
-        if ((connection == null || connection.httpMinorVersion != 0)
+        if ((connection == null || connection.getHttpMinorVersion() != 0)
                 && requestHeaders.getConnection() == null) {
             requestHeaders.setConnection("Keep-Alive");
         }
@@ -533,7 +533,7 @@ public class HttpEngine {
      * it needs to be set even if the transport is SPDY.
      */
     String getRequestLine() {
-        String protocol = (connection == null || connection.httpMinorVersion != 0)
+        String protocol = (connection == null || connection.getHttpMinorVersion() != 0)
                 ? "HTTP/1.1"
                 : "HTTP/1.0";
         return method + " " + requestString() + " " + protocol;
