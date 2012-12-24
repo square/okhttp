@@ -15,6 +15,9 @@
  */
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.Address;
+import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.internal.net.Dns;
 import com.squareup.okhttp.internal.net.ssl.SslContextBuilder;
 import java.io.IOException;
@@ -51,11 +54,13 @@ public final class RouteSelectorTest extends TestCase {
     private static final SSLContext sslContext;
     private static final SSLSocketFactory socketFactory;
     private static final HostnameVerifier hostnameVerifier;
+    private static final ConnectionPool pool;
     static {
         try {
             uri = new URI("http://" + uriHost + ":" + uriPort + "/path");
             sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
             socketFactory = sslContext.getSocketFactory();
+            pool = ConnectionPool.getDefault();
             hostnameVerifier = HttpsURLConnectionImpl.getDefaultHostnameVerifier();
         } catch (Exception e) {
             throw new AssertionError(e);
@@ -66,8 +71,8 @@ public final class RouteSelectorTest extends TestCase {
     private final FakeProxySelector proxySelector = new FakeProxySelector();
 
     public void testSingleRoute() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        Address address = new Address(uriHost, uriPort, null, null, null);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         assertTrue(routeSelector.hasNext());
         dns.inetAddresses = makeFakeAddresses(255, 1);
@@ -84,8 +89,8 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testExplicitProxyTriesThatProxiesAddressesOnly() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, proxyA);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        Address address = new Address(uriHost, uriPort, null, null, proxyA);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         assertTrue(routeSelector.hasNext());
         dns.inetAddresses = makeFakeAddresses(255, 2);
@@ -100,8 +105,8 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testExplicitDirectProxy() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, NO_PROXY);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        Address address = new Address(uriHost, uriPort, null, null, NO_PROXY);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         assertTrue(routeSelector.hasNext());
         dns.inetAddresses = makeFakeAddresses(255, 2);
@@ -116,10 +121,10 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testProxySelectorReturnsNull() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
+        Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies = null;
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
         proxySelector.assertRequests(uri);
 
         assertTrue(routeSelector.hasNext());
@@ -132,8 +137,8 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testProxySelectorReturnsNoProxies() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        Address address = new Address(uriHost, uriPort, null, null, null);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         assertTrue(routeSelector.hasNext());
         dns.inetAddresses = makeFakeAddresses(255, 2);
@@ -148,11 +153,11 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testProxySelectorReturnsMultipleProxies() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
+        Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(proxyA);
         proxySelector.proxies.add(proxyB);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
         proxySelector.assertRequests(uri);
 
         // First try the IP addresses of the first proxy, in sequence.
@@ -182,10 +187,10 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testProxySelectorDirectConnectionsAreSkipped() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
+        Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(NO_PROXY);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
         proxySelector.assertRequests(uri);
 
         // Only the origin server will be attempted.
@@ -199,12 +204,12 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testProxyDnsFailureContinuesToNextProxy() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(uri, null, null, null);
+        Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(proxyA);
         proxySelector.proxies.add(proxyB);
         proxySelector.proxies.add(proxyA);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
         proxySelector.assertRequests(uri);
 
         assertTrue(routeSelector.hasNext());
@@ -238,9 +243,9 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testMultipleTlsModes() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(
-                uri, socketFactory, hostnameVerifier, Proxy.NO_PROXY);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        Address address = new Address(
+                uriHost, uriPort, socketFactory, hostnameVerifier, Proxy.NO_PROXY);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         assertTrue(routeSelector.hasNext());
         dns.inetAddresses = makeFakeAddresses(255, 1);
@@ -257,11 +262,11 @@ public final class RouteSelectorTest extends TestCase {
     }
 
     public void testMultipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
-        HttpConnection.Address address = new HttpConnection.Address(
-                uri, socketFactory, hostnameVerifier, null);
+        Address address = new Address(
+                uriHost, uriPort, socketFactory, hostnameVerifier, null);
         proxySelector.proxies.add(proxyA);
         proxySelector.proxies.add(proxyB);
-        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, dns);
+        RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
         // Proxy A
         dns.inetAddresses = makeFakeAddresses(255, 2);
@@ -302,7 +307,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    private void assertConnection(HttpConnection connection, HttpConnection.Address address,
+    private void assertConnection(Connection connection, Address address,
             Proxy proxy, InetAddress socketAddress, int socketPort, boolean modernTls) {
         assertEquals(address, connection.getAddress());
         assertEquals(proxy, connection.getProxy());

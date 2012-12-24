@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.internal.io.Streams;
 import com.squareup.okhttp.internal.util.Libcore;
 import java.io.BufferedOutputStream;
@@ -28,7 +29,7 @@ import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Socket;
 
-final class HttpTransport implements Transport {
+public final class HttpTransport implements Transport {
     /**
      * The maximum number of bytes to buffer when sending headers and a request
      * body. When the headers and body can be sent in a single write, the
@@ -189,7 +190,7 @@ final class HttpTransport implements Transport {
      * order to speed up a potential future request that may never occur.
      */
     private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
-        HttpConnection connection = httpEngine.connection;
+        Connection connection = httpEngine.connection;
         if (connection == null) return false;
         Socket socket = connection.getSocket();
         if (socket == null) return false;
@@ -222,9 +223,9 @@ final class HttpTransport implements Transport {
         }
 
         /*
-         * Wrap the input stream from the HttpConnection (rather than
-         * just returning "socketIn" directly here), so that we can control
-         * its use after the reference escapes.
+         * Wrap the input stream from the connection (rather than just returning
+         * "socketIn" directly here), so that we can control its use after the
+         * reference escapes.
          */
         return new UnknownLengthHttpInputStream(socketIn, cacheRequest, httpEngine);
     }

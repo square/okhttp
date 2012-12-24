@@ -16,12 +16,12 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.internal.io.Base64;
 import com.squareup.okhttp.internal.io.DiskLruCache;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.io.StrictLineReader;
 import com.squareup.okhttp.internal.util.Charsets;
-import com.squareup.okhttp.ExtendedResponseCache;
 import com.squareup.okhttp.internal.util.IntegralToString;
 import com.squareup.okhttp.ResponseSource;
 import java.io.BufferedWriter;
@@ -61,7 +61,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
  * {@code android.net.HttpResponseCache}, the stable, documented front end for
  * this.
  */
-public final class HttpResponseCache extends ResponseCache implements ExtendedResponseCache {
+public final class HttpResponseCache extends ResponseCache implements OkResponseCache {
     // TODO: add APIs to iterate the cache?
     private static final int VERSION = 201105;
     private static final int ENTRY_METADATA = 0;
