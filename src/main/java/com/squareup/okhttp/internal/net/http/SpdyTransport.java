@@ -25,7 +25,7 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.util.List;
 
-final class SpdyTransport implements Transport {
+public final class SpdyTransport implements Transport {
     private final HttpEngine httpEngine;
     private final SpdyConnection spdyConnection;
     private SpdyStream stream;
@@ -33,7 +33,7 @@ final class SpdyTransport implements Transport {
     // TODO: set sentMillis
     // TODO: set cookie stuff
 
-    SpdyTransport(HttpEngine httpEngine, SpdyConnection spdyConnection) {
+    public SpdyTransport(HttpEngine httpEngine, SpdyConnection spdyConnection) {
         this.httpEngine = httpEngine;
         this.spdyConnection = spdyConnection;
     }

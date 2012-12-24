@@ -16,6 +16,10 @@
  */
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.TunnelRequest;
+import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,10 +49,11 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     private final HttpUrlConnectionDelegate delegate;
 
     public HttpsURLConnectionImpl(URL url, int defaultPort, Proxy proxy,
-            ProxySelector proxySelector, CookieHandler cookieHandler, ResponseCache responseCache) {
+            ProxySelector proxySelector, CookieHandler cookieHandler, ResponseCache responseCache,
+            ConnectionPool connectionPool) {
         super(url);
         delegate = new HttpUrlConnectionDelegate(url, defaultPort, proxy, proxySelector,
-                cookieHandler, responseCache);
+                cookieHandler, responseCache, connectionPool);
     }
 
     private void checkConnected() {
@@ -373,12 +378,13 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
         private HttpUrlConnectionDelegate(URL url, int defaultPort, Proxy proxy,
                 ProxySelector proxySelector, CookieHandler cookieHandler,
-                ResponseCache responseCache) {
-            super(url, defaultPort, proxy, proxySelector, cookieHandler, responseCache);
+                ResponseCache responseCache, ConnectionPool connectionPool) {
+            super(url, defaultPort, proxy, proxySelector, cookieHandler, responseCache,
+                    connectionPool);
         }
 
         @Override protected HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
-                HttpConnection connection, RetryableOutputStream requestBody) throws IOException {
+                Connection connection, RetryableOutputStream requestBody) throws IOException {
             return new HttpsEngine(this, method, requestHeaders, connection, requestBody,
                     HttpsURLConnectionImpl.this);
         }
@@ -408,14 +414,14 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
          * @param enclosing the HttpsURLConnection with HTTPS features
          */
         private HttpsEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
-                HttpConnection connection, RetryableOutputStream requestBody,
+                Connection connection, RetryableOutputStream requestBody,
                 HttpsURLConnectionImpl enclosing) throws IOException {
             super(policy, method, requestHeaders, connection, requestBody);
             this.sslSocket = connection != null ? (SSLSocket) connection.getSocket() : null;
             this.enclosing = enclosing;
         }
 
-        @Override protected void connected(HttpConnection connection) {
+        @Override protected void connected(Connection connection) {
             this.sslSocket = (SSLSocket) connection.getSocket();
         }
 
@@ -440,20 +446,15 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
             return enclosing;
         }
 
-        @Override protected HttpConnection.TunnelConfig getTunnelConfig() {
-            String host = requestHeaders.getHost();
-            if (host == null) {
-                host = HttpEngine.getOriginAddress(policy.getURL());
-            }
-
+        @Override protected TunnelRequest getTunnelConfig() {
             String userAgent = requestHeaders.getUserAgent();
             if (userAgent == null) {
                 userAgent = HttpEngine.getDefaultUserAgent();
             }
 
-            String proxyAuthorization = requestHeaders.getProxyAuthorization();
-            return new HttpConnection.TunnelConfig(
-                    policy.getURL(), host, userAgent, proxyAuthorization);
+            URL url = policy.getURL();
+            return new TunnelRequest(url.getHost(), Libcore.getEffectivePort(url), userAgent,
+                    requestHeaders.getProxyAuthorization());
         }
     }
 }

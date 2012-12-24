@@ -37,6 +37,7 @@ public final class OkHttpClient {
     private ResponseCache responseCache;
     private SSLSocketFactory sslSocketFactory;
     private HostnameVerifier hostnameVerifier;
+    private ConnectionPool connectionPool;
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this
@@ -109,6 +110,17 @@ public final class OkHttpClient {
         return this;
     }
 
+    /**
+     * Sets the connection pool used to recycle HTTP and HTTPS connections.
+     *
+     * <p>If unset, the {@link ConnectionPool#getDefault() system-wide
+     * default} connection pool will be used.
+     */
+    public OkHttpClient setConnectionPool(ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
+        return this;
+    }
+
     public HttpURLConnection open(URL url) {
         ProxySelector proxySelector = this.proxySelector != null
                 ? this.proxySelector
@@ -119,14 +131,17 @@ public final class OkHttpClient {
         ResponseCache responseCache = this.responseCache != null
                 ? this.responseCache
                 : ResponseCache.getDefault();
+        ConnectionPool connectionPool = this.connectionPool != null
+                ? this.connectionPool
+                : ConnectionPool.getDefault();
 
         String protocol = url.getProtocol();
         if (protocol.equals("http")) {
             return new HttpURLConnectionImpl(
-                    url, 80, proxy, proxySelector, cookieHandler, responseCache);
+                    url, 80, proxy, proxySelector, cookieHandler, responseCache, connectionPool);
         } else if (protocol.equals("https")) {
             HttpsURLConnectionImpl result = new HttpsURLConnectionImpl(
-                    url, 443, proxy, proxySelector, cookieHandler, responseCache);
+                    url, 443, proxy, proxySelector, cookieHandler, responseCache, connectionPool);
             result.setSSLSocketFactory(this.sslSocketFactory != null
                     ? this.sslSocketFactory
                     : HttpsURLConnection.getDefaultSSLSocketFactory());
@@ -135,7 +150,7 @@ public final class OkHttpClient {
                     : HttpsURLConnection.getDefaultHostnameVerifier());
             return result;
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Unexpected protocol: " + protocol);
         }
     }
 }

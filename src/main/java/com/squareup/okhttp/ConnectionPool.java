@@ -14,8 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package com.squareup.okhttp.internal.net.http;
+package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.util.Libcore;
@@ -25,45 +24,62 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * A pool of HTTP and SPDY connections. This class exposes its tuning parameters
- * as system properties:
+ * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
+ * requests that share the same {@link Address} may share a {@link Connection}.
+ * This class implements the policy of which connections to keep open for future
+ * use.
+ *
+ * <p>The {@link #getDefault() system-wide default} uses system properties for
+ * tuning parameters:
  * <ul>
  *   <li>{@code http.keepAlive} true if HTTP and SPDY connections should be
  *       pooled at all. Default is true.
- *   <li>{@code http.maxConnections} maximum number of connections to each host.
- *       Default is 5.
+ *   <li>{@code http.maxConnections} maximum number of connections to each
+ *       address. Default is 5.
  * </ul>
  *
- * <p>This class <i>doesn't</i> adjust its configuration as system properties
- * are changed. This assumes that the applications that set these parameters do
- * so before making HTTP connections, and that this class is initialized lazily.
+ * <p>The default instance <i>doesn't</i> adjust its configuration as system
+ * properties are changed. This assumes that the applications that set these
+ * parameters do so before making HTTP connections, and that this class is
+ * initialized lazily.
  */
-final class HttpConnectionPool {
-    public static final HttpConnectionPool INSTANCE = new HttpConnectionPool();
-
-    private final int maxConnections;
-    private final HashMap<HttpConnection.Address, List<HttpConnection>> connectionPool
-            = new HashMap<HttpConnection.Address, List<HttpConnection>>();
-
-    private HttpConnectionPool() {
+public final class ConnectionPool {
+    private static final ConnectionPool systemDefault;
+    static {
         String keepAlive = System.getProperty("http.keepAlive");
+        String maxConnections = System.getProperty("http.maxConnections");
         if (keepAlive != null && !Boolean.parseBoolean(keepAlive)) {
-            maxConnections = 0;
-            return;
+            systemDefault = new ConnectionPool(0);
+        } else if (maxConnections != null) {
+            systemDefault = new ConnectionPool(Integer.parseInt(maxConnections));
+        } else {
+            systemDefault = new ConnectionPool(5);
         }
-
-        String maxConnectionsString = System.getProperty("http.maxConnections");
-        this.maxConnections = maxConnectionsString != null
-                ? Integer.parseInt(maxConnectionsString)
-                : 5;
     }
 
-    public HttpConnection get(HttpConnection.Address address) {
+    /** The maximum number of idle connections for each address. */
+    private final int maxConnections;
+    private final HashMap<Address, List<Connection>> connectionPool
+            = new HashMap<Address, List<Connection>>();
+
+    public ConnectionPool(int maxConnections) {
+        this.maxConnections = maxConnections;
+    }
+
+    public static ConnectionPool getDefault() {
+        return systemDefault;
+    }
+
+    /**
+     * Returns a recycled connection to {@code address}, or null if no such
+     * connection exists.
+     */
+    public Connection get(Address address) {
         // First try to reuse an existing HTTP connection.
         synchronized (connectionPool) {
-            List<HttpConnection> connections = connectionPool.get(address);
+            List<Connection> connections = connectionPool.get(address);
             while (connections != null) {
-                HttpConnection connection = connections.get(connections.size() - 1);
+                Connection connection = connections.get(connections.size() - 1);
                 if (!connection.isSpdy()) {
                     connections.remove(connections.size() - 1);
                 }
@@ -85,10 +101,12 @@ final class HttpConnectionPool {
     }
 
     /**
-     * Gives the HTTP/HTTPS connection to the pool. It is an error to use {@code
-     * connection} after calling this method.
+     * Gives {@code connection} to the pool. The pool may store the connection,
+     * or close it, as its policy describes.
+     *
+     * <p>It is an error to use {@code connection} after calling this method.
      */
-    public void recycle(HttpConnection connection) {
+    public void recycle(Connection connection) {
         if (connection.isSpdy()) {
             throw new IllegalArgumentException(); // TODO: just 'return' here?
         }
@@ -103,11 +121,11 @@ final class HttpConnectionPool {
         }
 
         if (maxConnections > 0 && connection.isEligibleForRecycling()) {
-            HttpConnection.Address address = connection.getAddress();
+            Address address = connection.getAddress();
             synchronized (connectionPool) {
-                List<HttpConnection> connections = connectionPool.get(address);
+                List<Connection> connections = connectionPool.get(address);
                 if (connections == null) {
-                    connections = new ArrayList<HttpConnection>();
+                    connections = new ArrayList<Connection>();
                     connectionPool.put(address, connections);
                 }
                 if (connections.size() < maxConnections) {
@@ -126,18 +144,18 @@ final class HttpConnectionPool {
      * Shares the SPDY connection with the pool. Callers to this method may
      * continue to use {@code connection}.
      */
-    public void share(HttpConnection connection) {
+    public void share(Connection connection) {
         if (!connection.isSpdy()) {
             throw new IllegalArgumentException();
         }
         if (maxConnections <= 0 || !connection.isEligibleForRecycling()) {
             return;
         }
-        HttpConnection.Address address = connection.getAddress();
+        Address address = connection.getAddress();
         synchronized (connectionPool) {
-            List<HttpConnection> connections = connectionPool.get(address);
+            List<Connection> connections = connectionPool.get(address);
             if (connections == null) {
-                connections = new ArrayList<HttpConnection>(1);
+                connections = new ArrayList<Connection>(1);
                 connections.add(connection);
                 connectionPool.put(address, connections);
             }

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.squareup.okhttp;
 
 import java.io.IOException;
@@ -22,10 +21,10 @@ import java.net.HttpURLConnection;
 
 /**
  * A response cache that supports statistics tracking and updating stored
- * responses. Implementations of {@link java.net.ResponseCache} should implement this
- * interface to receive additional support from the HTTP engine.
+ * responses. Implementations of {@link java.net.ResponseCache} should implement
+ * this interface to receive additional support from the HTTP engine.
  */
-public interface ExtendedResponseCache {
+public interface OkResponseCache {
 
     /**
      * Track an HTTP response being satisfied by {@code source}.
