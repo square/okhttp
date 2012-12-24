@@ -17,8 +17,11 @@
 
 package com.squareup.okhttp.internal.net.http;
 
-import com.squareup.okhttp.ExtendedResponseCache;
+import com.squareup.okhttp.Address;
+import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.net.Dns;
 import com.squareup.okhttp.internal.util.EmptyArray;
@@ -35,6 +38,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -96,7 +100,7 @@ public class HttpEngine {
 
     private ResponseSource responseSource;
 
-    protected HttpConnection connection;
+    protected Connection connection;
     protected RouteSelector routeSelector;
     private OutputStream requestBodyOut;
 
@@ -151,7 +155,7 @@ public class HttpEngine {
      *     release it when it is unneeded.
      */
     public HttpEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
-            HttpConnection connection, RetryableOutputStream requestBodyOut) throws IOException {
+            Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
         this.policy = policy;
         this.method = method;
         this.connection = connection;
@@ -182,8 +186,8 @@ public class HttpEngine {
 
         prepareRawRequestHeaders();
         initResponseSource();
-        if (policy.responseCache instanceof ExtendedResponseCache) {
-            ((ExtendedResponseCache) policy.responseCache).trackResponse(responseSource);
+        if (policy.responseCache instanceof OkResponseCache) {
+            ((OkResponseCache) policy.responseCache).trackResponse(responseSource);
         }
 
         /*
@@ -206,7 +210,7 @@ public class HttpEngine {
         if (responseSource.requiresConnection()) {
             sendSocketRequest();
         } else if (connection != null) {
-            HttpConnectionPool.INSTANCE.recycle(connection);
+            policy.connectionPool.recycle(connection);
             connection = null;
         }
     }
@@ -278,14 +282,22 @@ public class HttpEngine {
             return;
         }
         if (routeSelector == null) {
-            HttpConnection.Address address = new HttpConnection.Address(uri, getSslSocketFactory(),
-                    getHostnameVerifier(), policy.getProxy());
-            routeSelector = new RouteSelector(address, uri, policy.proxySelector, Dns.DEFAULT);
+            String uriHost = uri.getHost();
+            if (uriHost == null) {
+                throw new UnknownHostException(uri.toString());
+            }
+            Address address = new Address(uriHost, Libcore.getEffectivePort(uri),
+                    getSslSocketFactory(), getHostnameVerifier(), policy.getProxy());
+            routeSelector = new RouteSelector(
+                    address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
         }
         connection = routeSelector.next();
         if (!connection.isRecycled()) {
             connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(),
                     getTunnelConfig());
+            if (connection.isSpdy()) {
+                policy.connectionPool.share(connection);
+            }
         }
         connected(connection);
         Proxy proxy = connection.getProxy();
@@ -300,7 +312,7 @@ public class HttpEngine {
      * Called after a socket connection has been created or retrieved from the
      * pool. Subclasses use this hook to get a reference to the TLS data.
      */
-    protected void connected(HttpConnection connection) {
+    protected void connected(Connection connection) {
     }
 
     /**
@@ -364,7 +376,7 @@ public class HttpEngine {
         return cacheResponse;
     }
 
-    public final HttpConnection getConnection() {
+    public final Connection getConnection() {
         return connection;
     }
 
@@ -409,7 +421,7 @@ public class HttpEngine {
     public final void automaticallyReleaseConnectionToPool() {
         automaticallyReleaseConnectionToPool = true;
         if (connection != null && connectionReleased) {
-            HttpConnectionPool.INSTANCE.recycle(connection);
+            policy.connectionPool.recycle(connection);
             connection = null;
         }
     }
@@ -432,7 +444,7 @@ public class HttpEngine {
                 IoUtils.closeQuietly(connection);
                 connection = null;
             } else if (automaticallyReleaseConnectionToPool) {
-                HttpConnectionPool.INSTANCE.recycle(connection);
+                policy.connectionPool.recycle(connection);
                 connection = null;
             }
         }
@@ -648,9 +660,9 @@ public class HttpEngine {
                 release(true);
                 ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
                 setResponse(combinedHeaders, cachedResponseBody);
-                if (policy.responseCache instanceof ExtendedResponseCache) {
-                    ExtendedResponseCache httpResponseCache
-                            = (ExtendedResponseCache) policy.responseCache;
+                if (policy.responseCache instanceof OkResponseCache) {
+                    OkResponseCache httpResponseCache
+                            = (OkResponseCache) policy.responseCache;
                     httpResponseCache.trackConditionalCacheHit();
                     httpResponseCache.update(cacheResponse, getHttpConnectionToCache());
                 }
@@ -667,7 +679,7 @@ public class HttpEngine {
         initContentStream(transport.getTransferStream(cacheRequest));
     }
 
-    protected HttpConnection.TunnelConfig getTunnelConfig() {
+    protected TunnelRequest getTunnelConfig() {
         return null;
     }
 }

@@ -14,13 +14,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
-package com.squareup.okhttp.internal.net.http;
+package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.net.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.net.http.HttpEngine;
+import com.squareup.okhttp.internal.net.http.HttpTransport;
+import com.squareup.okhttp.internal.net.http.RawHeaders;
+import com.squareup.okhttp.internal.net.http.SpdyTransport;
 import com.squareup.okhttp.internal.net.spdy.SpdyConnection;
-import com.squareup.okhttp.internal.util.Libcore;
-import com.squareup.okhttp.internal.util.Objects;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,19 +33,18 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.Socket;
-import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.Arrays;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Holds the sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection,
  * which may be used for multiple HTTP request/response exchanges. Connections
- * may be direct to the origin server or via a proxy. Create an instance using
- * the {@link Address} inner class.
+ * may be direct to the origin server or via a proxy.
+ *
+ * <p>Typically instances of this class are created, connected and exercised
+ * automatically by the HTTP client. Applications may use this class to monitor
+ * HTTP connections as members of a {@link ConnectionPool connection pool}.
  *
  * <p>Do not confuse this class with the misnamed {@code HttpURLConnection},
  * which isn't so much a connection as a single request/response exchange.
@@ -62,7 +63,7 @@ import javax.net.ssl.SSLSocketFactory;
  * connection to be attempted with modern options and then retried without them
  * should the attempt fail.
  */
-public final class HttpConnection implements Closeable {
+public final class Connection implements Closeable {
     private static final byte[] NPN_PROTOCOLS = new byte[] {
             6, 's', 'p', 'd', 'y', '/', '2',
             8, 'h', 't', 't', 'p', '/', '1', '.', '1',
@@ -86,18 +87,18 @@ public final class HttpConnection implements Closeable {
     private SpdyConnection spdyConnection;
     private int httpMinorVersion = 1; // Assume HTTP/1.1
 
-    public HttpConnection(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
+    public Connection(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
             boolean modernTls) {
-        if (address == null || proxy == null || inetSocketAddress == null) {
-            throw new IllegalArgumentException();
-        }
+        if (address == null) throw new NullPointerException("address == null");
+        if (proxy == null) throw new NullPointerException("proxy == null");
+        if (inetSocketAddress == null) throw new NullPointerException("inetSocketAddress == null");
         this.address = address;
         this.proxy = proxy;
         this.inetSocketAddress = inetSocketAddress;
         this.modernTls = modernTls;
     }
 
-    public void connect(int connectTimeout, int readTimeout, TunnelConfig tunnelConfig)
+    public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
             throws IOException {
         socket = (proxy.type() != Proxy.Type.HTTP)
                 ? new Socket(proxy)
@@ -108,30 +109,26 @@ public final class HttpConnection implements Closeable {
         out = socket.getOutputStream();
 
         if (address.sslSocketFactory != null) {
-            upgradeToTls(tunnelConfig);
+            upgradeToTls(tunnelRequest);
         }
 
-        /*
-         * Buffer the socket stream to permit efficient parsing of HTTP headers
-         * and chunk sizes. This also masks SSL InputStream's degenerate
-         * available() implementation. That way we can read the end of a chunked
-         * response without blocking and will recycle connections more reliably.
-         * http://code.google.com/p/android/issues/detail?id=38817
-         */
-        int bufferSize = 128;
-        in = new BufferedInputStream(in, bufferSize);
+        // Buffer the socket stream to permit efficient parsing of HTTP headers and chunk sizes.
+        if (!isSpdy()) {
+            int bufferSize = 128;
+            in = new BufferedInputStream(in, bufferSize);
+        }
     }
 
     /**
      * Create an {@code SSLSocket} and perform the TLS handshake and certificate
      * validation.
      */
-    private void upgradeToTls(TunnelConfig tunnelConfig) throws IOException {
+    private void upgradeToTls(TunnelRequest tunnelRequest) throws IOException {
         Platform platform = Platform.get();
 
         // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
         if (requiresTunnel()) {
-            makeTunnel(tunnelConfig);
+            makeTunnel(tunnelRequest);
         }
 
         // Create the wrapper over connected socket.
@@ -160,7 +157,6 @@ public final class HttpConnection implements Closeable {
                 && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
             if (Arrays.equals(selectedProtocol, SPDY2)) {
                 spdyConnection = new SpdyConnection.Builder(true, in, out).build();
-                HttpConnectionPool.INSTANCE.share(this);
             } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
                 throw new IOException("Unexpected NPN transport "
                         + new String(selectedProtocol, "ISO-8859-1"));
@@ -208,6 +204,12 @@ public final class HttpConnection implements Closeable {
     /**
      * Returns true if this connection has been used to satisfy an earlier
      * HTTP request/response pair.
+     *
+     * <p>The HTTP client treats recycled and non-recycled connections
+     * differently. I/O failures on recycled connections are often temporary:
+     * the remote peer may have closed the socket because it was idle for an
+     * extended period of time. When fresh connections suffer similar failures
+     * the problem is fatal and the request is not retried.
      */
     public boolean isRecycled() {
         return recycled;
@@ -222,20 +224,16 @@ public final class HttpConnection implements Closeable {
      * request/response pair.
      */
     protected boolean isEligibleForRecycling() {
-        return !socket.isClosed()
-                && !socket.isInputShutdown()
-                && !socket.isOutputShutdown();
+        return !socket.isClosed() && !socket.isInputShutdown() && !socket.isOutputShutdown();
     }
 
     /**
      * Returns the transport appropriate for this connection.
      */
     public Object newTransport(HttpEngine httpEngine) throws IOException {
-        if (spdyConnection != null) {
-            return new SpdyTransport(httpEngine, spdyConnection);
-        } else {
-            return new HttpTransport(httpEngine, out, in);
-        }
+        return (spdyConnection != null)
+                ? new SpdyTransport(httpEngine, spdyConnection)
+                : new HttpTransport(httpEngine, out, in);
     }
 
     /**
@@ -259,46 +257,6 @@ public final class HttpConnection implements Closeable {
         this.httpMinorVersion = httpMinorVersion;
     }
 
-    public static final class TunnelConfig {
-        private final URL url;
-        private final String host;
-        private final String userAgent;
-        private final String proxyAuthorization;
-
-        public TunnelConfig(URL url, String host, String userAgent, String proxyAuthorization) {
-            if (url == null || host == null || userAgent == null) throw new NullPointerException();
-            this.url = url;
-            this.host = host;
-            this.userAgent = userAgent;
-            this.proxyAuthorization = proxyAuthorization;
-        }
-
-        /**
-         * If we're establishing an HTTPS tunnel with CONNECT (RFC 2817 5.2), send
-         * only the minimum set of headers. This avoids sending potentially
-         * sensitive data like HTTP cookies to the proxy unencrypted.
-         */
-        RawHeaders getRequestHeaders() {
-            RawHeaders result = new RawHeaders();
-            result.setRequestLine("CONNECT " + url.getHost() + ":"
-                    + Libcore.getEffectivePort(url) + " HTTP/1.1");
-
-            // Always set Host and User-Agent.
-            result.set("Host", host);
-            result.set("User-Agent", userAgent);
-
-            // Copy over the Proxy-Authorization header if it exists.
-            if (proxyAuthorization != null) {
-                result.set("Proxy-Authorization", proxyAuthorization);
-            }
-
-            // Always set the Proxy-Connection to Keep-Alive for the benefit of
-            // HTTP/1.0 proxies like Squid.
-            result.set("Proxy-Connection", "Keep-Alive");
-            return result;
-        }
-    }
-
     /**
      * Returns true if the HTTP connection needs to tunnel one protocol over
      * another, such as when using HTTPS through an HTTP proxy. When doing so,
@@ -313,8 +271,8 @@ public final class HttpConnection implements Closeable {
      * CONNECT request to create the proxy connection. This may need to be
      * retried if the proxy requires authorization.
      */
-    private void makeTunnel(TunnelConfig tunnelConfig) throws IOException {
-        RawHeaders requestHeaders = tunnelConfig.getRequestHeaders();
+    private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
+        RawHeaders requestHeaders = tunnelRequest.getRequestHeaders();
         while (true) {
             out.write(requestHeaders.toBytes());
             RawHeaders responseHeaders = RawHeaders.fromBytes(in);
@@ -324,8 +282,9 @@ public final class HttpConnection implements Closeable {
                 return;
             case HTTP_PROXY_AUTH:
                 requestHeaders = new RawHeaders(requestHeaders);
+                URL url = new URL("https", tunnelRequest.host, tunnelRequest.port, "/");
                 boolean credentialsFound = HttpAuthenticator.processAuthHeader(HTTP_PROXY_AUTH,
-                        responseHeaders, requestHeaders, proxy, tunnelConfig.url);
+                        responseHeaders, requestHeaders, proxy, url);
                 if (credentialsFound) {
                     continue;
                 } else {
@@ -335,54 +294,6 @@ public final class HttpConnection implements Closeable {
                 throw new IOException("Unexpected response code for CONNECT: "
                         + responseHeaders.getResponseCode());
             }
-        }
-    }
-
-    /**
-     * This address defines how the user has requested to connect ot the origin
-     * server. It includes the destination host, the user's specified proxy (if
-     * any), and the TLS configuration (if any). Used as a map key for pooling.
-     */
-    public static final class Address {
-        final Proxy proxy;
-        final String uriHost;
-        final int uriPort;
-        final SSLSocketFactory sslSocketFactory;
-        final HostnameVerifier hostnameVerifier;
-
-        public Address(URI uri, SSLSocketFactory sslSocketFactory,
-                HostnameVerifier hostnameVerifier, Proxy proxy) throws UnknownHostException {
-            this.proxy = proxy;
-            this.uriHost = uri.getHost();
-            this.uriPort = Libcore.getEffectivePort(uri);
-            this.sslSocketFactory = sslSocketFactory;
-            this.hostnameVerifier = hostnameVerifier;
-
-            if (uriHost == null) {
-                throw new UnknownHostException(uri.toString());
-            }
-        }
-
-        @Override public boolean equals(Object other) {
-            if (other instanceof Address) {
-                Address that = (Address) other;
-                return Objects.equal(this.proxy, that.proxy)
-                        && this.uriHost.equals(that.uriHost)
-                        && this.uriPort == that.uriPort
-                        && Objects.equal(this.sslSocketFactory, that.sslSocketFactory)
-                        && Objects.equal(this.hostnameVerifier, that.hostnameVerifier);
-            }
-            return false;
-        }
-
-        @Override public int hashCode() {
-            int result = 17;
-            result = 31 * result + uriHost.hashCode();
-            result = 31 * result + uriPort;
-            result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
-            result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
-            result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
-            return result;
         }
     }
 }

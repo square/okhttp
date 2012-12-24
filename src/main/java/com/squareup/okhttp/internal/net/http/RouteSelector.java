@@ -15,6 +15,9 @@
  */
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.Address;
+import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.internal.net.Dns;
 import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
@@ -52,9 +55,10 @@ public final class RouteSelector {
      */
     private static final int TLS_MODE_NULL = -1;
 
-    private final HttpConnection.Address address;
+    private final Address address;
     private final URI uri;
     private final ProxySelector proxySelector;
+    private final ConnectionPool pool;
     private final Dns dns;
 
     /* The most recently attempted route. */
@@ -75,13 +79,15 @@ public final class RouteSelector {
     /* State for negotiating the next TLS configuration */
     private int nextTlsMode = TLS_MODE_NULL;
 
-    public RouteSelector(HttpConnection.Address address, URI uri, ProxySelector proxySelector, Dns dns) {
+    public RouteSelector(Address address, URI uri, ProxySelector proxySelector,
+            ConnectionPool pool, Dns dns) {
         this.address = address;
         this.uri = uri;
         this.proxySelector = proxySelector;
+        this.pool = pool;
         this.dns = dns;
 
-        resetNextProxy(uri, address.proxy);
+        resetNextProxy(uri, address.getProxy());
     }
 
     /**
@@ -97,9 +103,9 @@ public final class RouteSelector {
      *
      * @throws NoSuchElementException if there are no more routes to attempt.
      */
-    public HttpConnection next() throws IOException {
+    public Connection next() throws IOException {
         // Always prefer pooled connections over new connections.
-        HttpConnection pooled = HttpConnectionPool.INSTANCE.get(address);
+        Connection pooled = pool.get(address);
         if (pooled != null) {
             return pooled;
         }
@@ -118,14 +124,14 @@ public final class RouteSelector {
         }
         boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
 
-        return new HttpConnection(address, lastProxy, lastInetSocketAddress, modernTls);
+        return new Connection(address, lastProxy, lastInetSocketAddress, modernTls);
     }
 
     /**
      * Clients should invoke this method when they encounter a connectivity
      * failure on a connection returned by this route selector.
      */
-    public void connectFailed(HttpConnection connection, IOException failure) {
+    public void connectFailed(Connection connection, IOException failure) {
         if (connection.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
             // Tell the proxy selector when we fail to connect on a fresh connection.
             proxySelector.connectFailed(uri, connection.getProxy().address(), failure);
@@ -216,7 +222,7 @@ public final class RouteSelector {
 
     /** Resets {@link #nextTlsMode} to the first option. */
     private void resetNextTlsMode() {
-        nextTlsMode = (address.sslSocketFactory != null)
+        nextTlsMode = (address.getSslSocketFactory() != null)
                 ? TLS_MODE_MODERN
                 : TLS_MODE_COMPATIBLE;
     }

@@ -17,6 +17,8 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.util.Libcore;
 import java.io.FileNotFoundException;
@@ -66,6 +68,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     final ProxySelector proxySelector;
     final CookieHandler cookieHandler;
     final ResponseCache responseCache;
+    final ConnectionPool connectionPool;
 
     private final RawHeaders rawRequestHeaders = new RawHeaders();
 
@@ -75,13 +78,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     protected HttpEngine httpEngine;
 
     public HttpURLConnectionImpl(URL url, int defaultPort, Proxy proxy, ProxySelector proxySelector,
-            CookieHandler cookieHandler, ResponseCache responseCache) {
+            CookieHandler cookieHandler, ResponseCache responseCache,
+            ConnectionPool connectionPool) {
         super(url);
         this.defaultPort = defaultPort;
         this.proxy = proxy;
         this.proxySelector = proxySelector;
         this.cookieHandler = cookieHandler;
         this.responseCache = responseCache;
+        this.connectionPool = connectionPool;
     }
 
     @Override public final void connect() throws IOException {
@@ -269,7 +274,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
      * overridden by HttpsURLConnectionImpl.
      */
     protected HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
-            HttpConnection connection, RetryableOutputStream requestBody) throws IOException {
+            Connection connection, RetryableOutputStream requestBody) throws IOException {
         return new HttpEngine(this, method, requestHeaders, connection, requestBody);
     }
 
