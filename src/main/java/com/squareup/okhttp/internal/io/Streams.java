@@ -16,7 +16,7 @@
 
 package com.squareup.okhttp.internal.io;
 
-import com.squareup.okhttp.internal.util.Libcore;
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,7 +76,7 @@ public final class Streams {
         if (dst == null) {
             throw new NullPointerException("dst == null");
         }
-        Libcore.checkOffsetAndCount(dst.length, offset, byteCount);
+        checkOffsetAndCount(dst.length, offset, byteCount);
         while (byteCount > 0) {
             int bytesRead = in.read(dst, offset, byteCount);
             if (bytesRead < 0) {

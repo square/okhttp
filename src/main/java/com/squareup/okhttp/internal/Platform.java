@@ -24,6 +24,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -48,6 +53,20 @@ public class Platform {
 
     public static Platform get() {
         return PLATFORM;
+    }
+
+    public void logW(String warning) {
+        System.out.println(warning);
+    }
+
+    public void tagSocket(Socket socket) throws SocketException {
+    }
+
+    public void untagSocket(Socket socket) throws SocketException {
+    }
+
+    public URI toUriLenient(URL url) throws URISyntaxException {
+        return url.toURI(); // this isn't as good as the built-in toUriLenient
     }
 
     public void makeTlsTolerant(SSLSocket socket, String uriHost, boolean tlsTolerant) {

@@ -17,13 +17,13 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.OkResponseCache;
+import com.squareup.okhttp.ResponseSource;
+import static com.squareup.okhttp.internal.Util.US_ASCII;
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import com.squareup.okhttp.internal.io.Base64;
 import com.squareup.okhttp.internal.io.DiskLruCache;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.io.StrictLineReader;
-import com.squareup.okhttp.internal.util.Charsets;
-import com.squareup.okhttp.internal.util.IntegralToString;
-import com.squareup.okhttp.ResponseSource;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -62,6 +62,10 @@ import javax.net.ssl.SSLPeerUnverifiedException;
  * this.
  */
 public final class HttpResponseCache extends ResponseCache implements OkResponseCache {
+    private static final char[] DIGITS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+
     // TODO: add APIs to iterate the cache?
     private static final int VERSION = 201105;
     private static final int ENTRY_METADATA = 0;
@@ -85,12 +89,23 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         try {
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");
             byte[] md5bytes = messageDigest.digest(uri.toString().getBytes("UTF-8"));
-            return IntegralToString.bytesToHexString(md5bytes, false);
+            return bytesToHexString(md5bytes);
         } catch (NoSuchAlgorithmException e) {
             throw new AssertionError(e);
         } catch (UnsupportedEncodingException e) {
             throw new AssertionError(e);
         }
+    }
+
+    private static String bytesToHexString(byte[] bytes) {
+        char[] digits = DIGITS;
+        char[] buf = new char[bytes.length * 2];
+        int c = 0;
+        for (byte b : bytes) {
+            buf[c++] = digits[(b >> 4) & 0xf];
+            buf[c++] = digits[b & 0xf];
+        }
+        return new String(buf);
     }
 
     @Override public CacheResponse get(URI uri, String requestMethod,
@@ -128,16 +143,16 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         String requestMethod = httpConnection.getRequestMethod();
         String key = uriToKey(uri);
 
-        if (requestMethod.equals(HttpEngine.POST)
-                || requestMethod.equals(HttpEngine.PUT)
-                || requestMethod.equals(HttpEngine.DELETE)) {
+        if (requestMethod.equals("POST")
+                || requestMethod.equals("PUT")
+                || requestMethod.equals("DELETE")) {
             try {
                 cache.remove(key);
             } catch (IOException ignored) {
                 // The cache cannot be written.
             }
             return null;
-        } else if (!requestMethod.equals(HttpEngine.GET)) {
+        } else if (!requestMethod.equals("GET")) {
             /*
              * Don't cache non-GET responses. We're technically allowed to cache
              * HEAD requests and some POST requests, but the complexity of doing
@@ -373,7 +388,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
          */
         public Entry(InputStream in) throws IOException {
             try {
-                StrictLineReader reader = new StrictLineReader(in, Charsets.US_ASCII);
+                StrictLineReader reader = new StrictLineReader(in, US_ASCII);
                 uri = reader.readLine();
                 requestMethod = reader.readLine();
                 varyHeaders = new RawHeaders();
@@ -433,7 +448,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
         public void writeTo(DiskLruCache.Editor editor) throws IOException {
             OutputStream out = editor.newOutputStream(ENTRY_METADATA);
-            Writer writer = new BufferedWriter(new OutputStreamWriter(out, Charsets.UTF_8));
+            Writer writer = new BufferedWriter(new OutputStreamWriter(out, UTF_8));
 
             writer.write(uri + '\n');
             writer.write(requestMethod + '\n');

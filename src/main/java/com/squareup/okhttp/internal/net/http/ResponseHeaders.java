@@ -16,8 +16,8 @@
 
 package com.squareup.okhttp.internal.net.http;
 
-import com.squareup.okhttp.internal.util.Objects;
 import com.squareup.okhttp.ResponseSource;
+import static com.squareup.okhttp.internal.Util.equal;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -368,7 +368,7 @@ public final class ResponseHeaders {
     public boolean varyMatches(Map<String, List<String>> cachedRequest,
             Map<String, List<String>> newRequest) {
         for (String field : varyFields) {
-            if (!Objects.equal(cachedRequest.get(field), newRequest.get(field))) {
+            if (!equal(cachedRequest.get(field), newRequest.get(field))) {
                 return false;
             }
         }

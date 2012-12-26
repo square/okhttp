@@ -16,10 +16,10 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.Address;
-import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import com.squareup.okhttp.internal.net.Dns;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -186,7 +186,7 @@ public final class RouteSelector {
 
         if (proxy.type() == Proxy.Type.DIRECT) {
             socketHost = uri.getHost();
-            socketPort = Libcore.getEffectivePort(uri);
+            socketPort = getEffectivePort(uri);
         } else {
             SocketAddress proxyAddress = proxy.address();
             if (!(proxyAddress instanceof InetSocketAddress)) {

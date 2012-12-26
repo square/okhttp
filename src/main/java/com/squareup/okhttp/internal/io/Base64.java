@@ -21,7 +21,7 @@
 
 package com.squareup.okhttp.internal.io;
 
-import com.squareup.okhttp.internal.util.EmptyArray;
+import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
 import java.io.UnsupportedEncodingException;
 
 /**
@@ -41,7 +41,7 @@ public final class Base64 {
         int length = len / 4 * 3;
         // return an empty array on empty or short input without padding
         if (length == 0) {
-            return EmptyArray.BYTE;
+            return EMPTY_BYTE_ARRAY;
         }
         // temporary array
         byte[] out = new byte[length];

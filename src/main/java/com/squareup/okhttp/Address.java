@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.util.Objects;
+import static com.squareup.okhttp.internal.Util.equal;
 import java.net.Proxy;
 import java.net.UnknownHostException;
 import javax.net.ssl.HostnameVerifier;
@@ -91,11 +91,11 @@ public final class Address {
     @Override public boolean equals(Object other) {
         if (other instanceof Address) {
             Address that = (Address) other;
-            return Objects.equal(this.proxy, that.proxy)
+            return equal(this.proxy, that.proxy)
                     && this.uriHost.equals(that.uriHost)
                     && this.uriPort == that.uriPort
-                    && Objects.equal(this.sslSocketFactory, that.sslSocketFactory)
-                    && Objects.equal(this.hostnameVerifier, that.hostnameVerifier);
+                    && equal(this.sslSocketFactory, that.sslSocketFactory)
+                    && equal(this.hostnameVerifier, that.hostnameVerifier);
         }
         return false;
     }

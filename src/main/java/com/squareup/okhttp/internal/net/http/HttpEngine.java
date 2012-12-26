@@ -22,10 +22,12 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.TunnelRequest;
+import com.squareup.okhttp.internal.Platform;
+import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
+import static com.squareup.okhttp.internal.Util.getDefaultPort;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.net.Dns;
-import com.squareup.okhttp.internal.util.EmptyArray;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -79,19 +81,9 @@ public class HttpEngine {
             return result;
         }
         @Override public InputStream getBody() throws IOException {
-            return new ByteArrayInputStream(EmptyArray.BYTE);
+            return new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
         }
     };
-    public static final int DEFAULT_CHUNK_LENGTH = 1024;
-
-    public static final String OPTIONS = "OPTIONS";
-    public static final String GET = "GET";
-    public static final String HEAD = "HEAD";
-    public static final String POST = "POST";
-    public static final String PUT = "PUT";
-    public static final String DELETE = "DELETE";
-    public static final String TRACE = "TRACE";
-
     public static final int HTTP_CONTINUE = 100;
 
     protected final HttpURLConnectionImpl policy;
@@ -162,7 +154,7 @@ public class HttpEngine {
         this.requestBodyOut = requestBodyOut;
 
         try {
-            uri = Libcore.toUriLenient(policy.getURL());
+            uri = Platform.get().toUriLenient(policy.getURL());
         } catch (URISyntaxException e) {
             throw new IOException(e);
         }
@@ -286,7 +278,7 @@ public class HttpEngine {
             if (uriHost == null) {
                 throw new UnknownHostException(uri.toString());
             }
-            Address address = new Address(uriHost, Libcore.getEffectivePort(uri),
+            Address address = new Address(uriHost, getEffectivePort(uri),
                     getSslSocketFactory(), getHostnameVerifier(), policy.getProxy());
             routeSelector = new RouteSelector(
                     address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
@@ -330,7 +322,7 @@ public class HttpEngine {
     }
 
     boolean hasRequestBody() {
-        return method == POST || method == PUT;
+        return method.equals("POST") || method.equals("PUT");
     }
 
     /**
@@ -472,7 +464,7 @@ public class HttpEngine {
         int responseCode = responseHeaders.getHeaders().getResponseCode();
 
         // HEAD requests never yield a body regardless of the response headers.
-        if (method == HEAD) {
+        if (method.equals("HEAD")) {
             return false;
         }
 
@@ -612,7 +604,7 @@ public class HttpEngine {
     public static String getOriginAddress(URL url) {
         int port = url.getPort();
         String result = url.getHost();
-        if (port > 0 && port != Libcore.getDefaultPort(url.getProtocol())) {
+        if (port > 0 && port != getDefaultPort(url.getProtocol())) {
             result = result + ":" + port;
         }
         return result;

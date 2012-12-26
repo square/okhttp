@@ -16,7 +16,7 @@
 
 package com.squareup.okhttp.internal.io;
 
-import com.squareup.okhttp.internal.util.Charsets;
+import static com.squareup.okhttp.internal.Util.US_ASCII;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class StrictLineReaderTest extends TestCase {
         try {
             // Testing with LineReader buffer capacity 32 to check some corner cases.
             StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32,
-                    Charsets.US_ASCII);
+                    US_ASCII);
             InputStream refStream = createTestInputStream();
             while (true) {
                 try {

@@ -16,8 +16,9 @@
 
 package com.squareup.okhttp.internal.io;
 
-import com.squareup.okhttp.internal.util.Charsets;
-import com.squareup.okhttp.internal.util.Libcore;
+import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.Util;
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -213,7 +214,7 @@ public final class DiskLruCache implements Closeable {
                 cache.journalWriter = new BufferedWriter(new FileWriter(cache.journalFile, true));
                 return cache;
             } catch (IOException journalIsCorrupt) {
-                Libcore.logW("DiskLruCache " + directory + " is corrupt: "
+                Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
                         + journalIsCorrupt.getMessage() + ", removing");
                 cache.delete();
             }
@@ -228,7 +229,7 @@ public final class DiskLruCache implements Closeable {
 
     private void readJournal() throws IOException {
         StrictLineReader reader = new StrictLineReader(new FileInputStream(journalFile),
-                Charsets.US_ASCII);
+                Util.US_ASCII);
         try {
             String magic = reader.readLine();
             String version = reader.readLine();
@@ -344,7 +345,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     private static void deleteIfExists(File file) throws IOException {
-        Libcore.deleteIfExists(file);
+        file.delete();
     }
 
     /**
@@ -460,7 +461,7 @@ public final class DiskLruCache implements Closeable {
                 }
                 if (!entry.getDirtyFile(i).exists()) {
                     editor.abort();
-                    Libcore.logW(
+                    Platform.get().logW(
                             "DiskLruCache: Newly created entry doesn't have file for index " + i);
                     return;
                 }
@@ -609,7 +610,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     private static String inputStreamToString(InputStream in) throws IOException {
-        return Streams.readFully(new InputStreamReader(in, Charsets.UTF_8));
+        return Streams.readFully(new InputStreamReader(in, UTF_8));
     }
 
     /**
@@ -719,7 +720,7 @@ public final class DiskLruCache implements Closeable {
         public void set(int index, String value) throws IOException {
             Writer writer = null;
             try {
-                writer = new OutputStreamWriter(newOutputStream(index), Charsets.UTF_8);
+                writer = new OutputStreamWriter(newOutputStream(index), UTF_8);
                 writer.write(value);
             } finally {
                 IoUtils.closeQuietly(writer);

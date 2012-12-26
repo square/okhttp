@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.net.spdy;
 
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.net.spdy.Settings.PERSIST_VALUE;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.FLAG_FIN;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_DATA;
@@ -25,7 +26,6 @@ import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_RST_STRE
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_SYN_REPLY;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_SYN_STREAM;
 import static com.squareup.okhttp.internal.net.spdy.SpdyStream.RST_INVALID_STREAM;
-import static com.squareup.okhttp.internal.util.Charsets.UTF_8;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
