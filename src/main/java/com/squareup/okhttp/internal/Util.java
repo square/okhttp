@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.util;
+package com.squareup.okhttp.internal;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.ByteOrder;
+import java.nio.charset.Charset;
 
 /**
- * APIs for interacting with Android's core library. This mostly emulates the
- * Android core library for interoperability with other runtimes.
+ * Junk drawer of utility methods.
  */
-public final class Libcore {
+public final class Util {
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
-    private Libcore() {
-    }
+    /** A cheap and type-safe constant for the ISO-8859-1 Charset. */
+    public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
 
-    public static void deleteIfExists(File file) throws IOException {
-        // okhttp-changed: was Libcore.os.remove() in a try/catch block
-        file.delete();
-    }
+    /** A cheap and type-safe constant for the US-ASCII Charset. */
+    public static final Charset US_ASCII = Charset.forName("US-ASCII");
 
-    public static void logW(String warning) {
-        // okhttp-changed: was System.logw()
-        System.out.println(warning);
+    /** A cheap and type-safe constant for the UTF-8 Charset. */
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
+
+    private Util() {
     }
 
     public static int getEffectivePort(URI uri) {
@@ -74,16 +69,6 @@ public final class Libcore {
         }
     }
 
-    public static void tagSocket(Socket socket) {
-    }
-
-    public static void untagSocket(Socket socket) throws SocketException {
-    }
-
-    public static URI toUriLenient(URL url) throws URISyntaxException {
-        return url.toURI(); // this isn't as good as the built-in toUriLenient
-    }
-
     public static void pokeInt(byte[] dst, int offset, int value, ByteOrder order) {
         if (order == ByteOrder.BIG_ENDIAN) {
             dst[offset++] = (byte) ((value >> 24) & 0xff);
@@ -96,5 +81,12 @@ public final class Libcore {
             dst[offset++] = (byte) ((value >> 16) & 0xff);
             dst[offset  ] = (byte) ((value >> 24) & 0xff);
         }
+    }
+
+    /**
+     * Returns true if two possibly-null objects are equal.
+     */
+    public static boolean equal(Object a, Object b) {
+        return a == b || (a != null && a.equals(b));
     }
 }

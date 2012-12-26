@@ -16,7 +16,7 @@
 
 package com.squareup.okhttp.internal.net.http;
 
-import com.squareup.okhttp.internal.util.Libcore;
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -55,7 +55,7 @@ final class RetryableOutputStream extends AbstractHttpOutputStream {
     @Override public synchronized void write(byte[] buffer, int offset, int count)
             throws IOException {
         checkNotClosed();
-        Libcore.checkOffsetAndCount(buffer.length, offset, count);
+        checkOffsetAndCount(buffer.length, offset, count);
         if (limit != -1 && content.size() > limit - count) {
             throw new ProtocolException("exceeded content-length limit of " + limit + " bytes");
         }

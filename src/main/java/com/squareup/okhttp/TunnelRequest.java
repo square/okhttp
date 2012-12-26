@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp;
 
+import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import com.squareup.okhttp.internal.net.http.RawHeaders;
-import com.squareup.okhttp.internal.util.Libcore;
 
 /**
  * Routing and authentication information sent to an HTTP proxy to create a
@@ -58,7 +58,7 @@ public final class TunnelRequest {
         result.setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
 
         // Always set Host and User-Agent.
-        result.set("Host", port == Libcore.getDefaultPort("https") ? host : (host + ":" + port));
+        result.set("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
         result.set("User-Agent", userAgent);
 
         // Copy over the Proxy-Authorization header if it exists.
