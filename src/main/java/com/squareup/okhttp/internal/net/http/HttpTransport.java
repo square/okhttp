@@ -17,8 +17,8 @@
 package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.Connection;
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import com.squareup.okhttp.internal.io.Streams;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,6 +44,8 @@ public final class HttpTransport implements Transport {
      * the time it takes to establish a new connection.
      */
     private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 30;
+
+    public static final int DEFAULT_CHUNK_LENGTH = 1024;
 
     private final HttpEngine httpEngine;
     private final InputStream socketIn;
@@ -78,7 +80,7 @@ public final class HttpTransport implements Transport {
         if (chunked) {
             int chunkLength = httpEngine.policy.getChunkLength();
             if (chunkLength == -1) {
-                chunkLength = HttpEngine.DEFAULT_CHUNK_LENGTH;
+                chunkLength = DEFAULT_CHUNK_LENGTH;
             }
             writeRequestHeaders();
             return new ChunkedOutputStream(requestOut, chunkLength);
@@ -244,7 +246,7 @@ public final class HttpTransport implements Transport {
 
         @Override public void write(byte[] buffer, int offset, int count) throws IOException {
             checkNotClosed();
-            Libcore.checkOffsetAndCount(buffer.length, offset, count);
+            checkOffsetAndCount(buffer.length, offset, count);
             if (count > bytesRemaining) {
                 throw new ProtocolException("expected " + bytesRemaining
                         + " bytes but received " + count);
@@ -312,7 +314,7 @@ public final class HttpTransport implements Transport {
         @Override public synchronized void write(byte[] buffer, int offset, int count)
                 throws IOException {
             checkNotClosed();
-            Libcore.checkOffsetAndCount(buffer.length, offset, count);
+            checkOffsetAndCount(buffer.length, offset, count);
 
             while (count > 0) {
                 int numBytesWritten;
@@ -397,7 +399,7 @@ public final class HttpTransport implements Transport {
         }
 
         @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-            Libcore.checkOffsetAndCount(buffer.length, offset, count);
+            checkOffsetAndCount(buffer.length, offset, count);
             checkNotClosed();
             if (bytesRemaining == 0) {
                 return -1;
@@ -447,7 +449,7 @@ public final class HttpTransport implements Transport {
         }
 
         @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-            Libcore.checkOffsetAndCount(buffer.length, offset, count);
+            checkOffsetAndCount(buffer.length, offset, count);
             checkNotClosed();
 
             if (!hasMoreChunks) {
@@ -524,7 +526,7 @@ public final class HttpTransport implements Transport {
         }
 
         @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-            Libcore.checkOffsetAndCount(buffer.length, offset, count);
+            checkOffsetAndCount(buffer.length, offset, count);
             checkNotClosed();
             if (in == null || inputExhausted) {
                 return -1;

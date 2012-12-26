@@ -17,8 +17,8 @@
 
 package com.squareup.okhttp.internal.net.http;
 
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.io.Streams;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -203,7 +203,8 @@ public final class RawHeaders {
              * "Accept\r\n". For platform compatibility and HTTP compliance, we
              * print a warning and ignore null values.
              */
-            Libcore.logW("Ignoring HTTP header field '" + fieldName + "' because its value is null");
+            Platform.get().logW("Ignoring HTTP header field '"
+                    + fieldName + "' because its value is null");
             return;
         }
         namesAndValues.add(fieldName);

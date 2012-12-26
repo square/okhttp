@@ -16,8 +16,9 @@
 
 package com.squareup.okhttp.internal.net.spdy;
 
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static com.squareup.okhttp.internal.Util.pokeInt;
 import com.squareup.okhttp.internal.io.Streams;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -272,7 +273,7 @@ public final class SpdyStream {
         @Override public int read(byte[] b, int offset, int count) throws IOException {
             synchronized (SpdyStream.this) {
                 checkNotClosed();
-                Libcore.checkOffsetAndCount(b.length, offset, count);
+                checkOffsetAndCount(b.length, offset, count);
 
                 while (pos == -1 && !finished) {
                     try {
@@ -399,7 +400,7 @@ public final class SpdyStream {
         }
 
         @Override public void write(byte[] bytes, int offset, int count) throws IOException {
-            Libcore.checkOffsetAndCount(bytes.length, offset, count);
+            checkOffsetAndCount(bytes.length, offset, count);
             checkNotClosed();
 
             while (count > 0) {
@@ -440,8 +441,8 @@ public final class SpdyStream {
                 flags |= SpdyConnection.FLAG_FIN;
             }
             int length = pos - DATA_FRAME_HEADER_LENGTH;
-            Libcore.pokeInt(buffer, 0, id & 0x7fffffff, BIG_ENDIAN);
-            Libcore.pokeInt(buffer, 4, (flags & 0xff) << 24 | length & 0xffffff, BIG_ENDIAN);
+            pokeInt(buffer, 0, id & 0x7fffffff, BIG_ENDIAN);
+            pokeInt(buffer, 4, (flags & 0xff) << 24 | length & 0xffffff, BIG_ENDIAN);
             connection.writeFrame(buffer, 0, pos);
             pos = DATA_FRAME_HEADER_LENGTH;
         }

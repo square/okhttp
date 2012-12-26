@@ -19,8 +19,8 @@ package com.squareup.okhttp.internal.net.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import com.squareup.okhttp.internal.io.IoUtils;
-import com.squareup.okhttp.internal.util.Libcore;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -254,10 +254,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         connected = true;
         try {
             if (doOutput) {
-                if (method == HttpEngine.GET) {
+                if (method.equals("GET")) {
                     // they are requesting a stream to write to. This implies a POST method
-                    method = HttpEngine.POST;
-                } else if (method != HttpEngine.POST && method != HttpEngine.PUT) {
+                    method = "POST";
+                } else if (!method.equals("POST") && !method.equals("PUT")) {
                     // If the request method is neither POST nor PUT, then you're not writing
                     throw new ProtocolException(method + " does not support writing");
                 }
@@ -315,7 +315,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
             int responseCode = getResponseCode();
             if (responseCode == HTTP_MULT_CHOICE || responseCode == HTTP_MOVED_PERM
                     || responseCode == HTTP_MOVED_TEMP || responseCode == HTTP_SEE_OTHER) {
-                retryMethod = HttpEngine.GET;
+                retryMethod = "GET";
                 requestBody = null;
             }
 
@@ -427,7 +427,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
                 return Retry.NONE; // the scheme changed; don't retry.
             }
             if (previousUrl.getHost().equals(url.getHost())
-                    && Libcore.getEffectivePort(previousUrl) == Libcore.getEffectivePort(url)) {
+                    && getEffectivePort(previousUrl) == getEffectivePort(url)) {
                 return Retry.SAME_CONNECTION;
             } else {
                 return Retry.DIFFERENT_CONNECTION;

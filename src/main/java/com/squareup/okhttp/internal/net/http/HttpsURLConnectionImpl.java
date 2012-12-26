@@ -19,7 +19,7 @@ package com.squareup.okhttp.internal.net.http;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.TunnelRequest;
-import com.squareup.okhttp.internal.util.Libcore;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -453,7 +453,7 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
             }
 
             URL url = policy.getURL();
-            return new TunnelRequest(url.getHost(), Libcore.getEffectivePort(url), userAgent,
+            return new TunnelRequest(url.getHost(), getEffectivePort(url), userAgent,
                     requestHeaders.getProxyAuthorization());
         }
     }

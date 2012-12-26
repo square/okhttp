@@ -16,7 +16,9 @@
 
 package com.squareup.okhttp.internal.io;
 
-import com.squareup.okhttp.internal.util.Charsets;
+import static com.squareup.okhttp.internal.Util.ISO_8859_1;
+import static com.squareup.okhttp.internal.Util.US_ASCII;
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -78,7 +80,7 @@ public class StrictLineReader implements Closeable {
      * @throws IllegalArgumentException for negative or zero {@code capacity}.
      */
     public StrictLineReader(InputStream in, int capacity) {
-        this(in, capacity, Charsets.US_ASCII);
+        this(in, capacity, US_ASCII);
     }
 
     /**
@@ -112,8 +114,7 @@ public class StrictLineReader implements Closeable {
         if (capacity < 0) {
             throw new IllegalArgumentException("capacity <= 0");
         }
-        if (!(charset.equals(Charsets.US_ASCII) || charset.equals(Charsets.UTF_8)
-                || charset.equals(Charsets.ISO_8859_1))) {
+        if (!(charset.equals(US_ASCII) || charset.equals(UTF_8) || charset.equals(ISO_8859_1))) {
             throw new IllegalArgumentException("Unsupported encoding");
         }
 
