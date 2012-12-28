@@ -46,7 +46,6 @@ import java.net.ResponseCache;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
@@ -63,12 +62,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
@@ -119,9 +118,6 @@ public final class URLConnectionTest extends TestCase {
         }
         super.tearDown();
     }
-
-    // TODO: test that request bodies are retransmitted on IP address failures
-    // TODO: pooled proxy failures are not reported to the proxy selector
 
     public void testRequestHeaders() throws IOException, InterruptedException {
         server.enqueue(new MockResponse());
@@ -397,7 +393,7 @@ public final class URLConnectionTest extends TestCase {
         testServerClosesOutput(SHUTDOWN_INPUT_AT_END);
     }
 
-    public void SUPPRESSED_testServerShutdownOutput() throws Exception {
+    public void testServerShutdownOutput() throws Exception {
         testServerClosesOutput(SHUTDOWN_OUTPUT_AT_END);
     }
 
@@ -405,15 +401,27 @@ public final class URLConnectionTest extends TestCase {
         server.enqueue(new MockResponse()
                 .setBody("This connection won't pool properly")
                 .setSocketPolicy(socketPolicy));
-        server.enqueue(new MockResponse()
-                .setBody("This comes after a busted connection"));
+        MockResponse responseAfter = new MockResponse()
+                .setBody("This comes after a busted connection");
+        server.enqueue(responseAfter);
+        server.enqueue(responseAfter); // Enqueue 2x because the broken connection may be reused.
         server.play();
 
-        assertContent("This connection won't pool properly", client.open(server.getUrl("/a")));
+        HttpURLConnection connection1 = client.open(server.getUrl("/a"));
+        connection1.setReadTimeout(100);
+        assertContent("This connection won't pool properly", connection1);
         assertEquals(0, server.takeRequest().getSequenceNumber());
-        assertContent("This comes after a busted connection", client.open(server.getUrl("/b")));
+        HttpURLConnection connection2 = client.open(server.getUrl("/b"));
+        connection2.setReadTimeout(100);
+        assertContent("This comes after a busted connection", connection2);
+
+        // Check that a fresh connection was created, either immediately or after attempting reuse.
+        RecordedRequest requestAfter = server.takeRequest();
+        if (server.getRequestCount() == 3) {
+            requestAfter = server.takeRequest(); // The failure consumed a response.
+        }
         // sequence number 0 means the HTTP socket connection was not reused
-        assertEquals(0, server.takeRequest().getSequenceNumber());
+        assertEquals(0, requestAfter.getSequenceNumber());
     }
 
     enum WriteKind { BYTE_BY_BYTE, SMALL_BUFFERS, LARGE_BUFFERS }
@@ -430,7 +438,7 @@ public final class URLConnectionTest extends TestCase {
         doUpload(TransferKind.CHUNKED, WriteKind.LARGE_BUFFERS);
     }
 
-    public void SUPPRESSED_test_fixedLengthUpload_byteByByte() throws Exception {
+    public void test_fixedLengthUpload_byteByByte() throws Exception {
         doUpload(TransferKind.FIXED_LENGTH, WriteKind.BYTE_BY_BYTE);
     }
 
@@ -576,24 +584,20 @@ public final class URLConnectionTest extends TestCase {
      *
      * http://code.google.com/p/android/issues/detail?id=13178
      */
-//    public void testConnectViaHttpsToUntrustedServer() throws IOException, InterruptedException {
-//        TestSSLContext testSSLContext = TestSSLContext.create(TestKeyStore.getClientCA2(),
-//                                                              TestKeyStore.getServer());
-//
-//        server.useHttps(testSSLContext.serverContext.getSocketFactory(), false);
-//        server.enqueue(new MockResponse()); // unused
-//        server.play();
-//
-//        HttpsURLConnection connection = (HttpsURLConnection) server.getUrl("/foo").openConnection();
-//        connection.setSSLSocketFactory(testSSLContext.clientContext.getSocketFactory());
-//        try {
-//            connection.getInputStream();
-//            fail();
-//        } catch (SSLHandshakeException expected) {
-//            assertTrue(expected.getCause() instanceof CertificateException);
-//        }
-//        assertEquals(0, server.getRequestCount());
-//    }
+    public void testConnectViaHttpsToUntrustedServer() throws IOException, InterruptedException {
+        server.useHttps(sslContext.getSocketFactory(), false);
+        server.enqueue(new MockResponse()); // unused
+        server.play();
+
+        HttpURLConnection connection = client.open(server.getUrl("/foo"));
+        try {
+            connection.getInputStream();
+            fail();
+        } catch (SSLHandshakeException expected) {
+            assertTrue(expected.getCause() instanceof CertificateException);
+        }
+        assertEquals(0, server.getRequestCount());
+    }
 
     public void testConnectViaProxyUsingProxyArg() throws Exception {
         testConnectViaProxy(ProxyConfig.CREATE_ARG);
@@ -961,7 +965,7 @@ public final class URLConnectionTest extends TestCase {
      * code 401. This causes a new HTTP request to be issued for every call into
      * the URLConnection.
      */
-    public void SUPPRESSED_testUnauthorizedResponseHandling() throws IOException {
+    public void testUnauthorizedResponseHandling() throws IOException {
         MockResponse response = new MockResponse()
                 .addHeader("WWW-Authenticate: challenge")
                 .setResponseCode(401) // UNAUTHORIZED
@@ -1578,7 +1582,7 @@ public final class URLConnectionTest extends TestCase {
                 readAscii(connection.getInputStream(), Integer.MAX_VALUE));
     }
 
-    public void SUPPRESSED_testRedirectToAnotherOriginServer() throws Exception {
+    public void testRedirectToAnotherOriginServer() throws Exception {
         MockWebServer server2 = new MockWebServer();
         server2.enqueue(new MockResponse().setBody("This is the 2nd server!"));
         server2.play();
@@ -1597,7 +1601,7 @@ public final class URLConnectionTest extends TestCase {
 
         // make sure the first server was careful to recycle the connection
         assertEquals("This is the first server again!",
-                readAscii(server.getUrl("/").openStream(), Integer.MAX_VALUE));
+                readAscii(client.open(server.getUrl("/")).getInputStream(), Integer.MAX_VALUE));
 
         RecordedRequest first = server.takeRequest();
         assertContains(first.getHeaders(), "Host: " + hostName + ":" + server.getPort());
@@ -1891,135 +1895,25 @@ public final class URLConnectionTest extends TestCase {
         }
     }
 
-    public void SUPPRESSED_testGetKeepAlive() throws Exception {
+    public void testGetKeepAlive() throws Exception {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setBody("ABC"));
         server.play();
 
         // The request should work once and then fail
-        URLConnection connection = client.open(server.getUrl(""));
-        InputStream input = connection.getInputStream();
+        URLConnection connection1 = client.open(server.getUrl(""));
+        connection1.setReadTimeout(100);
+        InputStream input = connection1.getInputStream();
         assertEquals("ABC", readAscii(input, Integer.MAX_VALUE));
         input.close();
+        server.shutdown();
         try {
-            client.open(server.getUrl("")).getInputStream();
+            HttpURLConnection connection2 = client.open(server.getUrl(""));
+            connection2.setReadTimeout(100);
+            connection2.getInputStream();
             fail();
         } catch (ConnectException expected) {
         }
-    }
-
-    /**
-     * This test goes through the exhaustive set of interesting ASCII characters
-     * because most of those characters are interesting in some way according to
-     * RFC 2396 and RFC 2732. http://b/1158780
-     */
-    public void SUPPRESSED_testLenientUrlToUri() throws Exception {
-        // alphanum
-        testUrlToUriMapping("abzABZ09", "abzABZ09", "abzABZ09", "abzABZ09", "abzABZ09");
-
-        // control characters
-        testUrlToUriMapping("\u0001", "%01", "%01", "%01", "%01");
-        testUrlToUriMapping("\u001f", "%1F", "%1F", "%1F", "%1F");
-
-        // ascii characters
-        testUrlToUriMapping("%20", "%20", "%20", "%20", "%20");
-        testUrlToUriMapping("%20", "%20", "%20", "%20", "%20");
-        testUrlToUriMapping(" ", "%20", "%20", "%20", "%20");
-        testUrlToUriMapping("!", "!", "!", "!", "!");
-        testUrlToUriMapping("\"", "%22", "%22", "%22", "%22");
-        testUrlToUriMapping("#", null, null, null, "%23");
-        testUrlToUriMapping("$", "$", "$", "$", "$");
-        testUrlToUriMapping("&", "&", "&", "&", "&");
-        testUrlToUriMapping("'", "'", "'", "'", "'");
-        testUrlToUriMapping("(", "(", "(", "(", "(");
-        testUrlToUriMapping(")", ")", ")", ")", ")");
-        testUrlToUriMapping("*", "*", "*", "*", "*");
-        testUrlToUriMapping("+", "+", "+", "+", "+");
-        testUrlToUriMapping(",", ",", ",", ",", ",");
-        testUrlToUriMapping("-", "-", "-", "-", "-");
-        testUrlToUriMapping(".", ".", ".", ".", ".");
-        testUrlToUriMapping("/", null, "/", "/", "/");
-        testUrlToUriMapping(":", null, ":", ":", ":");
-        testUrlToUriMapping(";", ";", ";", ";", ";");
-        testUrlToUriMapping("<", "%3C", "%3C", "%3C", "%3C");
-        testUrlToUriMapping("=", "=", "=", "=", "=");
-        testUrlToUriMapping(">", "%3E", "%3E", "%3E", "%3E");
-        testUrlToUriMapping("?", null, null, "?", "?");
-        testUrlToUriMapping("@", "@", "@", "@", "@");
-        testUrlToUriMapping("[", null, "%5B", null, "%5B");
-        testUrlToUriMapping("\\", "%5C", "%5C", "%5C", "%5C");
-        testUrlToUriMapping("]", null, "%5D", null, "%5D");
-        testUrlToUriMapping("^", "%5E", "%5E", "%5E", "%5E");
-        testUrlToUriMapping("_", "_", "_", "_", "_");
-        testUrlToUriMapping("`", "%60", "%60", "%60", "%60");
-        testUrlToUriMapping("{", "%7B", "%7B", "%7B", "%7B");
-        testUrlToUriMapping("|", "%7C", "%7C", "%7C", "%7C");
-        testUrlToUriMapping("}", "%7D", "%7D", "%7D", "%7D");
-        testUrlToUriMapping("~", "~", "~", "~", "~");
-        testUrlToUriMapping("~", "~", "~", "~", "~");
-        testUrlToUriMapping("\u007f", "%7F", "%7F", "%7F", "%7F");
-
-        // beyond ascii
-        testUrlToUriMapping("\u0080", "%C2%80", "%C2%80", "%C2%80", "%C2%80");
-        testUrlToUriMapping("\u20ac", "\u20ac", "\u20ac", "\u20ac", "\u20ac");
-        testUrlToUriMapping("\ud842\udf9f",
-                "\ud842\udf9f", "\ud842\udf9f", "\ud842\udf9f", "\ud842\udf9f");
-    }
-
-    public void SUPPRESSED_testLenientUrlToUriNul() throws Exception {
-        testUrlToUriMapping("\u0000", "%00", "%00", "%00", "%00"); // RI fails this
-    }
-
-    private void testUrlToUriMapping(String string, String asAuthority, String asFile,
-            String asQuery, String asFragment) throws Exception {
-        if (asAuthority != null) {
-            assertEquals("http://host" + asAuthority + ".tld/",
-                    backdoorUrlToUri(new URL("http://host" + string + ".tld/")).toString());
-        }
-        if (asFile != null) {
-            assertEquals("http://host.tld/file" + asFile + "/",
-                    backdoorUrlToUri(new URL("http://host.tld/file" + string + "/")).toString());
-        }
-        if (asQuery != null) {
-            assertEquals("http://host.tld/file?q" + asQuery + "=x",
-                    backdoorUrlToUri(new URL("http://host.tld/file?q" + string + "=x")).toString());
-        }
-        assertEquals("http://host.tld/file#" + asFragment + "-x",
-                backdoorUrlToUri(new URL("http://host.tld/file#" + asFragment + "-x")).toString());
-    }
-
-    /**
-     * Exercises HttpURLConnection to convert URL to a URI. Unlike URL#toURI,
-     * HttpURLConnection recovers from URLs with unescaped but unsupported URI
-     * characters like '{' and '|' by escaping these characters.
-     */
-    private URI backdoorUrlToUri(URL url) throws Exception {
-        final AtomicReference<URI> uriReference = new AtomicReference<URI>();
-
-        client.setResponseCache(new ResponseCache() {
-            @Override
-            public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-                return null;
-            }
-
-            @Override
-            public CacheResponse get(URI uri, String requestMethod,
-                    Map<String, List<String>> requestHeaders) throws IOException {
-                uriReference.set(uri);
-                throw new UnsupportedOperationException();
-            }
-        });
-
-        try {
-            HttpURLConnection connection = client.open(url);
-            connection.getResponseCode();
-        } catch (Exception expected) {
-            if (expected.getCause() instanceof URISyntaxException) {
-                expected.printStackTrace();
-            }
-        }
-
-        return uriReference.get();
     }
 
     /**
