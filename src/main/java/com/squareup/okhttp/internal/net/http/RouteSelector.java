@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
  * choice of proxy server, IP address, and TLS mode. Connections may also be
  * recycled.
  */
-public final class RouteSelector {
+final class RouteSelector {
     /**
      * A TLS connection with useful extensions enabled. This mode supports more
      * features, but is less likely to be compatible with older HTTP servers.

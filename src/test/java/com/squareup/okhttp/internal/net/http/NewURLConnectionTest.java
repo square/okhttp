@@ -37,4 +37,8 @@ public final class NewURLConnectionTest extends TestCase {
 
     // TODO: read the outgoing status line and incoming status line?
 
+    // TODO: test that request bodies are retransmitted on IP address failures
+
+    // TODO: pooled proxy failures are not reported to the proxy selector
+
 }
