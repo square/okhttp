@@ -156,9 +156,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     void writeSynReply(int streamId, int flags, List<String> alternating) throws IOException {
-        synchronized (spdyWriter) {
-            spdyWriter.synReply(flags, streamId, alternating);
-        }
+        spdyWriter.synReply(flags, streamId, alternating);
     }
 
     /** Writes a complete data frame. */
@@ -180,9 +178,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     void writeSynReset(int streamId, int statusCode) throws IOException {
-        synchronized (spdyWriter) {
-            spdyWriter.synReset(streamId, statusCode);
-        }
+        spdyWriter.synReset(streamId, statusCode);
     }
 
     /**
@@ -229,9 +225,7 @@ public final class SpdyConnection implements Closeable {
      * Sends a noop frame to the peer.
      */
     public void noop() throws IOException {
-        synchronized (spdyWriter) {
-            spdyWriter.noop();
-        }
+        spdyWriter.noop();
     }
 
     public void flush() throws IOException {
