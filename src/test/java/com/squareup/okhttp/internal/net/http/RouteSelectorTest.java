@@ -36,9 +36,13 @@ import java.util.NoSuchElementException;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import org.junit.Test;
 
-public final class RouteSelectorTest extends TestCase {
+public final class RouteSelectorTest {
     private static final int proxyAPort = 1001;
     private static final String proxyAHost = "proxyA";
     private static final Proxy proxyA
@@ -70,7 +74,7 @@ public final class RouteSelectorTest extends TestCase {
     private final FakeDns dns = new FakeDns();
     private final FakeProxySelector proxySelector = new FakeProxySelector();
 
-    public void testSingleRoute() throws Exception {
+    @Test public void singleRoute() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
         RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
@@ -88,7 +92,7 @@ public final class RouteSelectorTest extends TestCase {
         }
     }
 
-    public void testExplicitProxyTriesThatProxiesAddressesOnly() throws Exception {
+    @Test public void explicitProxyTriesThatProxiesAddressesOnly() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, proxyA);
         RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
@@ -104,7 +108,7 @@ public final class RouteSelectorTest extends TestCase {
         proxySelector.assertRequests(); // No proxy selector requests!
     }
 
-    public void testExplicitDirectProxy() throws Exception {
+    @Test public void explicitDirectProxy() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, NO_PROXY);
         RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
@@ -120,7 +124,7 @@ public final class RouteSelectorTest extends TestCase {
         proxySelector.assertRequests(); // No proxy selector requests!
     }
 
-    public void testProxySelectorReturnsNull() throws Exception {
+    @Test public void proxySelectorReturnsNull() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies = null;
@@ -136,7 +140,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    public void testProxySelectorReturnsNoProxies() throws Exception {
+    @Test public void proxySelectorReturnsNoProxies() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
         RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
 
@@ -152,7 +156,7 @@ public final class RouteSelectorTest extends TestCase {
         proxySelector.assertRequests(uri);
     }
 
-    public void testProxySelectorReturnsMultipleProxies() throws Exception {
+    @Test public void proxySelectorReturnsMultipleProxies() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(proxyA);
@@ -186,7 +190,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    public void testProxySelectorDirectConnectionsAreSkipped() throws Exception {
+    @Test public void proxySelectorDirectConnectionsAreSkipped() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(NO_PROXY);
@@ -203,7 +207,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    public void testProxyDnsFailureContinuesToNextProxy() throws Exception {
+    @Test public void proxyDnsFailureContinuesToNextProxy() throws Exception {
         Address address = new Address(uriHost, uriPort, null, null, null);
 
         proxySelector.proxies.add(proxyA);
@@ -242,7 +246,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    public void testMultipleTlsModes() throws Exception {
+    @Test public void multipleTlsModes() throws Exception {
         Address address = new Address(
                 uriHost, uriPort, socketFactory, hostnameVerifier, Proxy.NO_PROXY);
         RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns);
@@ -261,7 +265,7 @@ public final class RouteSelectorTest extends TestCase {
         assertFalse(routeSelector.hasNext());
     }
 
-    public void testMultipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
+    @Test public void multipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
         Address address = new Address(
                 uriHost, uriPort, socketFactory, hostnameVerifier, null);
         proxySelector.proxies.add(proxyA);

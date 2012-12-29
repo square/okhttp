@@ -21,15 +21,18 @@ import static com.squareup.okhttp.internal.net.spdy.Settings.MAX_CONCURRENT_STRE
 import static com.squareup.okhttp.internal.net.spdy.Settings.PERSISTED;
 import static com.squareup.okhttp.internal.net.spdy.Settings.PERSIST_VALUE;
 import static com.squareup.okhttp.internal.net.spdy.Settings.UPLOAD_BANDWIDTH;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import org.junit.Test;
 
-public final class SettingsTest extends TestCase {
-    public void testUnsetField() {
+public final class SettingsTest {
+    @Test public void unsetField() {
         Settings settings = new Settings();
         assertEquals(-3, settings.getUploadBandwidth(-3));
     }
 
-    public void testSetFields() {
+    @Test public void setFields() {
         Settings settings = new Settings();
 
         assertEquals(-3, settings.getUploadBandwidth(-3));
@@ -61,7 +64,7 @@ public final class SettingsTest extends TestCase {
         assertEquals(108, settings.getInitialWindowSize(-3));
     }
 
-    public void testIsPersisted() {
+    @Test public void isPersisted() {
         Settings settings = new Settings();
 
         // Initially false.
@@ -92,7 +95,7 @@ public final class SettingsTest extends TestCase {
         assertFalse(settings.isPersisted(Settings.ROUND_TRIP_TIME));
     }
 
-    public void testPersistValue() {
+    @Test public void persistValue() {
         Settings settings = new Settings();
 
         // Initially false.
@@ -123,7 +126,7 @@ public final class SettingsTest extends TestCase {
         assertFalse(settings.persistValue(Settings.ROUND_TRIP_TIME));
     }
 
-    public void testMerge() {
+    @Test public void merge() {
         Settings a = new Settings();
         a.set(UPLOAD_BANDWIDTH, PERSIST_VALUE, 100);
         a.set(DOWNLOAD_BANDWIDTH, PERSIST_VALUE, 200);

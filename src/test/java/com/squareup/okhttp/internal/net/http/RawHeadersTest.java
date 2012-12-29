@@ -17,10 +17,11 @@ package com.squareup.okhttp.internal.net.http;
 
 import java.util.Arrays;
 import java.util.List;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
-public final class RawHeadersTest extends TestCase {
-    public void testParseNameValueBlock() {
+public final class RawHeadersTest {
+    @Test public void parseNameValueBlock() {
         List<String> nameValueBlock = Arrays.asList(
                 "cache-control",
                 "no-cache, no-store",
@@ -42,7 +43,7 @@ public final class RawHeadersTest extends TestCase {
         assertEquals("200 OK", rawHeaders.getValue(3));
     }
 
-    public void testToNameValueBlock() {
+    @Test public void toNameValueBlock() {
         RawHeaders rawHeaders = new RawHeaders();
         rawHeaders.add("cache-control", "no-cache, no-store");
         rawHeaders.add("set-cookie", "Cookie1");
