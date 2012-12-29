@@ -42,7 +42,7 @@ public final class HttpAuthenticator {
      * @return true if credentials have been added to successorRequestHeaders
      *     and another request should be attempted.
      */
-    public static boolean processAuthHeader(int responseCode, RawHeaders responeHeaders,
+    public static boolean processAuthHeader(int responseCode, RawHeaders responseHeaders,
             RawHeaders successorRequestHeaders, Proxy proxy, URL url) throws IOException {
         if (responseCode != HTTP_PROXY_AUTH && responseCode != HTTP_UNAUTHORIZED) {
             throw new IllegalArgumentException();
@@ -52,7 +52,7 @@ public final class HttpAuthenticator {
         String challengeHeader = responseCode == HTTP_PROXY_AUTH
                 ? "Proxy-Authenticate"
                 : "WWW-Authenticate";
-        String credentials = getCredentials(responeHeaders, challengeHeader, proxy, url);
+        String credentials = getCredentials(responseHeaders, challengeHeader, proxy, url);
         if (credentials == null) {
             return false; // Could not find credentials so end the request cycle.
         }

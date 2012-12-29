@@ -19,44 +19,38 @@ package com.squareup.okhttp.internal.io;
 import static com.squareup.okhttp.internal.Util.US_ASCII;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
-import java.io.IOException;
 import java.io.InputStream;
-import junit.framework.TestCase;
+import static org.junit.Assert.fail;
+import org.junit.Test;
 
-public class StrictLineReaderTest extends TestCase {
-
-    public void testLineReaderConsistencyWithReadAsciiLine () {
-        try {
-            // Testing with LineReader buffer capacity 32 to check some corner cases.
-            StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32,
-                    US_ASCII);
-            InputStream refStream = createTestInputStream();
-            while (true) {
+public final class StrictLineReaderTest {
+    @Test public void lineReaderConsistencyWithReadAsciiLine() throws Exception {
+        // Testing with LineReader buffer capacity 32 to check some corner cases.
+        StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32, US_ASCII);
+        InputStream refStream = createTestInputStream();
+        while (true) {
+            try {
+                String refLine = Streams.readAsciiLine(refStream);
                 try {
-                    String refLine = Streams.readAsciiLine(refStream);
-                    try {
-                        String line = lineReader.readLine();
-                        if (!refLine.equals(line)) {
-                            fail("line (\""+line+"\") differs from expected (\""+refLine+"\").");
-                        }
-                    } catch (EOFException eof) {
-                        fail("line reader threw EOFException too early.");
+                    String line = lineReader.readLine();
+                    if (!refLine.equals(line)) {
+                        fail("line (\""+line+"\") differs from expected (\""+refLine+"\").");
                     }
-                } catch (EOFException refEof) {
-                    try {
-                        lineReader.readLine();
-                        fail("line reader didn't throw the expected EOFException.");
-                    } catch (EOFException eof) {
-                        // OK
-                        break;
-                    }
+                } catch (EOFException eof) {
+                    fail("line reader threw EOFException too early.");
+                }
+            } catch (EOFException refEof) {
+                try {
+                    lineReader.readLine();
+                    fail("line reader didn't throw the expected EOFException.");
+                } catch (EOFException eof) {
+                    // OK
+                    break;
                 }
             }
-            refStream.close();
-            lineReader.close();
-        } catch (IOException ioe) {
-            fail("Unexpected IOException " + ioe.toString());
         }
+        refStream.close();
+        lineReader.close();
     }
 
     private InputStream createTestInputStream() {
@@ -79,4 +73,3 @@ public class StrictLineReaderTest extends TestCase {
         ).getBytes());
     }
 }
-

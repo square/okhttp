@@ -596,7 +596,7 @@ public class HttpEngine {
         return null;
     }
 
-    public static final String getDefaultUserAgent() {
+    public static String getDefaultUserAgent() {
         String agent = System.getProperty("http.agent");
         return agent != null ? agent : ("Java" + System.getProperty("java.version"));
     }

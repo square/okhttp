@@ -67,12 +67,20 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-import junit.framework.TestCase;
+import org.junit.After;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Android's HttpResponseCacheTest.
  */
-public final class HttpResponseCacheTest extends TestCase {
+public final class HttpResponseCacheTest {
     private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession sslSession) {
             return true;
@@ -94,8 +102,7 @@ public final class HttpResponseCacheTest extends TestCase {
         }
     }
 
-    @Override protected void setUp() throws Exception {
-        super.setUp();
+    @Before public void setUp() throws Exception {
         String tmp = System.getProperty("java.io.tmpdir");
         File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
         cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
@@ -103,12 +110,11 @@ public final class HttpResponseCacheTest extends TestCase {
         CookieHandler.setDefault(cookieManager);
     }
 
-    @Override protected void tearDown() throws Exception {
+    @After public void tearDown() throws Exception {
         server.shutdown();
         ResponseCache.setDefault(null);
         cache.getCache().delete();
         CookieHandler.setDefault(null);
-        super.tearDown();
     }
 
     private HttpURLConnection openConnection(URL url) {
@@ -119,7 +125,7 @@ public final class HttpResponseCacheTest extends TestCase {
      * Test that response caching is consistent with the RI and the spec.
      * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html#sec13.4
      */
-    public void testResponseCachingByResponseCode() throws Exception {
+    @Test public void responseCachingByResponseCode() throws Exception {
         // Test each documented HTTP/1.1 code, plus the first unused value in each range.
         // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
@@ -159,7 +165,7 @@ public final class HttpResponseCacheTest extends TestCase {
      * Response code 407 should only come from proxy servers. Android's client
      * throws if it is sent by an origin server.
      */
-    public void testOriginServerSends407() throws Exception {
+    @Test public void originServerSends407() throws Exception {
         server.enqueue(new MockResponse().setResponseCode(407));
         server.play();
 
@@ -172,7 +178,7 @@ public final class HttpResponseCacheTest extends TestCase {
         }
     }
 
-    public void test_responseCaching_410() throws Exception {
+    @Test public void responseCaching_410() throws Exception {
         // the HTTP spec permits caching 410s, but the RI doesn't.
         assertCached(true, 410);
     }
@@ -215,7 +221,7 @@ public final class HttpResponseCacheTest extends TestCase {
      * Test that we can interrogate the response when the cache is being
      * populated. http://code.google.com/p/android/issues/detail?id=7787
      */
-    public void testResponseCacheCallbackApis() throws Exception {
+    @Test public void responseCacheCallbackApis() throws Exception {
         final String body = "ABCDE";
         final AtomicInteger cacheCount = new AtomicInteger();
 
@@ -266,15 +272,15 @@ public final class HttpResponseCacheTest extends TestCase {
     }
 
 
-    public void testResponseCachingAndInputStreamSkipWithFixedLength() throws IOException {
+    @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
         testResponseCaching(TransferKind.FIXED_LENGTH);
     }
 
-    public void testResponseCachingAndInputStreamSkipWithChunkedEncoding() throws IOException {
+    @Test public void responseCachingAndInputStreamSkipWithChunkedEncoding() throws IOException {
         testResponseCaching(TransferKind.CHUNKED);
     }
 
-    public void testResponseCachingAndInputStreamSkipWithNoLengthHeaders() throws IOException {
+    @Test public void responseCachingAndInputStreamSkipWithNoLengthHeaders() throws IOException {
         testResponseCaching(TransferKind.END_OF_STREAM);
     }
 
@@ -317,7 +323,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(1, cache.getHitCount());
     }
 
-    public void testSecureResponseCaching() throws IOException {
+    @Test public void secureResponseCaching() throws IOException {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -353,7 +359,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(localPrincipal, connection.getLocalPrincipal());
     }
 
-    public void testCacheReturnsInsecureResponseForSecureRequest() throws IOException {
+    @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.enqueue(new MockResponse().setBody("ABC"));
         server.enqueue(new MockResponse().setBody("DEF"));
@@ -373,7 +379,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("DEF", readAscii(connection2));
     }
 
-    public void testResponseCachingAndRedirects() throws Exception {
+    @Test public void responseCachingAndRedirects() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -397,7 +403,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, cache.getHitCount());
     }
 
-    public void testRedirectToCachedResult() throws Exception {
+    @Test public void redirectToCachedResult() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .setBody("ABC"));
@@ -424,7 +430,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, request3.getSequenceNumber());
     }
 
-    public void testSecureResponseCachingAndRedirects() throws IOException {
+    @Test public void secureResponseCachingAndRedirects() throws IOException {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -453,7 +459,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, cache.getHitCount());
     }
 
-    public void testResponseCacheRequestHeaders() throws IOException, URISyntaxException {
+    @Test public void responseCacheRequestHeaders() throws IOException, URISyntaxException {
         server.enqueue(new MockResponse().setBody("ABC"));
         server.play();
 
@@ -478,15 +484,15 @@ public final class HttpResponseCacheTest extends TestCase {
     }
 
 
-    public void testServerDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
+    @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
         testServerPrematureDisconnect(TransferKind.FIXED_LENGTH);
     }
 
-    public void testServerDisconnectsPrematurelyWithChunkedEncoding() throws IOException {
+    @Test public void serverDisconnectsPrematurelyWithChunkedEncoding() throws IOException {
         testServerPrematureDisconnect(TransferKind.CHUNKED);
     }
 
-    public void testServerDisconnectsPrematurelyWithNoLengthHeaders() throws IOException {
+    @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() throws IOException {
         /*
          * Intentionally empty. This case doesn't make sense because there's no
          * such thing as a premature disconnect when the disconnect itself
@@ -520,15 +526,15 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(1, cache.getWriteSuccessCount());
     }
 
-    public void testClientPrematureDisconnectWithContentLengthHeader() throws IOException {
+    @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException {
         testClientPrematureDisconnect(TransferKind.FIXED_LENGTH);
     }
 
-    public void testClientPrematureDisconnectWithChunkedEncoding() throws IOException {
+    @Test public void clientPrematureDisconnectWithChunkedEncoding() throws IOException {
         testClientPrematureDisconnect(TransferKind.CHUNKED);
     }
 
-    public void testClientPrematureDisconnectWithNoLengthHeaders() throws IOException {
+    @Test public void clientPrematureDisconnectWithNoLengthHeaders() throws IOException {
         testClientPrematureDisconnect(TransferKind.END_OF_STREAM);
     }
 
@@ -558,7 +564,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(1, cache.getWriteSuccessCount());
     }
 
-    public void testDefaultExpirationDateFullyCachedForLessThan24Hours() throws Exception {
+    @Test public void defaultExpirationDateFullyCachedForLessThan24Hours() throws Exception {
         //      last modified: 105 seconds ago
         //             served:   5 seconds ago
         //   default lifetime: (105 - 5) / 10 = 10 seconds
@@ -576,7 +582,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertNull(connection.getHeaderField("Warning"));
     }
 
-    public void testDefaultExpirationDateConditionallyCached() throws Exception {
+    @Test public void defaultExpirationDateConditionallyCached() throws Exception {
         //      last modified: 115 seconds ago
         //             served:  15 seconds ago
         //   default lifetime: (115 - 15) / 10 = 10 seconds
@@ -589,7 +595,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testDefaultExpirationDateFullyCachedForMoreThan24Hours() throws Exception {
+    @Test public void defaultExpirationDateFullyCachedForMoreThan24Hours() throws Exception {
         //      last modified: 105 days ago
         //             served:   5 days ago
         //   default lifetime: (105 - 5) / 10 = 10 days
@@ -607,7 +613,7 @@ public final class HttpResponseCacheTest extends TestCase {
                 connection.getHeaderField("Warning"));
     }
 
-    public void testNoDefaultExpirationForUrlsWithQueryString() throws Exception {
+    @Test public void noDefaultExpirationForUrlsWithQueryString() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-105, TimeUnit.SECONDS))
                 .addHeader("Date: " + formatDate(-5, TimeUnit.SECONDS))
@@ -620,7 +626,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(url)));
     }
 
-    public void testExpirationDateInThePastWithLastModifiedHeader() throws Exception {
+    @Test public void expirationDateInThePastWithLastModifiedHeader() throws Exception {
         String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("Last-Modified: " + lastModifiedDate)
@@ -629,24 +635,24 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testExpirationDateInThePastWithNoLastModifiedHeader() throws Exception {
+    @Test public void expirationDateInThePastWithNoLastModifiedHeader() throws Exception {
         assertNotCached(new MockResponse()
                 .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     }
 
-    public void testExpirationDateInTheFuture() throws Exception {
+    @Test public void expirationDateInTheFuture() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
     }
 
-    public void testMaxAgePreferredWithMaxAgeAndExpires() throws Exception {
+    @Test public void maxAgePreferredWithMaxAgeAndExpires() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgeInThePastWithDateAndLastModifiedHeaders() throws Exception {
+    @Test public void maxAgeInThePastWithDateAndLastModifiedHeaders() throws Exception {
         String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("Date: " + formatDate(-120, TimeUnit.SECONDS))
@@ -656,7 +662,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testMaxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
+    @Test public void maxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
         /*
          * Chrome interprets max-age relative to the local clock. Both our cache
          * and Firefox both use the earlier of the local and server's clock.
@@ -666,71 +672,71 @@ public final class HttpResponseCacheTest extends TestCase {
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgeInTheFutureWithDateHeader() throws Exception {
+    @Test public void maxAgeInTheFutureWithDateHeader() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgeInTheFutureWithNoDateHeader() throws Exception {
+    @Test public void maxAgeInTheFutureWithNoDateHeader() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgeWithLastModifiedButNoServedDate() throws Exception {
+    @Test public void maxAgeWithLastModifiedButNoServedDate() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgeInTheFutureWithDateAndLastModifiedHeaders() throws Exception {
+    @Test public void maxAgeInTheFutureWithDateAndLastModifiedHeaders() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
                 .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testMaxAgePreferredOverLowerSharedMaxAge() throws Exception {
+    @Test public void maxAgePreferredOverLowerSharedMaxAge() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
                 .addHeader("Cache-Control: s-maxage=60")
                 .addHeader("Cache-Control: max-age=180"));
     }
 
-    public void testMaxAgePreferredOverHigherMaxAge() throws Exception {
+    @Test public void maxAgePreferredOverHigherMaxAge() throws Exception {
         assertNotCached(new MockResponse()
                 .addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
                 .addHeader("Cache-Control: s-maxage=180")
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testRequestMethodOptionsIsNotCached() throws Exception {
+    @Test public void requestMethodOptionsIsNotCached() throws Exception {
         testRequestMethod("OPTIONS", false);
     }
 
-    public void testRequestMethodGetIsCached() throws Exception {
+    @Test public void requestMethodGetIsCached() throws Exception {
         testRequestMethod("GET", true);
     }
 
-    public void testRequestMethodHeadIsNotCached() throws Exception {
+    @Test public void requestMethodHeadIsNotCached() throws Exception {
         // We could support this but choose not to for implementation simplicity
         testRequestMethod("HEAD", false);
     }
 
-    public void testRequestMethodPostIsNotCached() throws Exception {
+    @Test public void requestMethodPostIsNotCached() throws Exception {
         // We could support this but choose not to for implementation simplicity
         testRequestMethod("POST", false);
     }
 
-    public void testRequestMethodPutIsNotCached() throws Exception {
+    @Test public void requestMethodPutIsNotCached() throws Exception {
         testRequestMethod("PUT", false);
     }
 
-    public void testRequestMethodDeleteIsNotCached() throws Exception {
+    @Test public void requestMethodDeleteIsNotCached() throws Exception {
         testRequestMethod("DELETE", false);
     }
 
-    public void testRequestMethodTraceIsNotCached() throws Exception {
+    @Test public void requestMethodTraceIsNotCached() throws Exception {
         testRequestMethod("TRACE", false);
     }
 
@@ -748,7 +754,7 @@ public final class HttpResponseCacheTest extends TestCase {
 
         URL url = server.getUrl("/");
 
-        HttpURLConnection request1 = (HttpURLConnection) openConnection(url);
+        HttpURLConnection request1 = openConnection(url);
         request1.setRequestMethod(requestMethod);
         addRequestBodyIfNecessary(requestMethod, request1);
         assertEquals("1", request1.getHeaderField("X-Response-ID"));
@@ -761,15 +767,15 @@ public final class HttpResponseCacheTest extends TestCase {
         }
     }
 
-    public void testPostInvalidatesCache() throws Exception {
+    @Test public void postInvalidatesCache() throws Exception {
         testMethodInvalidates("POST");
     }
 
-    public void testPutInvalidatesCache() throws Exception {
+    @Test public void putInvalidatesCache() throws Exception {
         testMethodInvalidates("PUT");
     }
 
-    public void testDeleteMethodInvalidatesCache() throws Exception {
+    @Test public void deleteMethodInvalidatesCache() throws Exception {
         testMethodInvalidates("DELETE");
     }
 
@@ -797,13 +803,13 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("C", readAscii(openConnection(url)));
     }
 
-    public void testEtag() throws Exception {
+    @Test public void etag() throws Exception {
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("ETag: v1"));
         assertTrue(conditionalRequest.getHeaders().contains("If-None-Match: v1"));
     }
 
-    public void testEtagAndExpirationDateInThePast() throws Exception {
+    @Test public void etagAndExpirationDateInThePast() throws Exception {
         String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("ETag: v1")
@@ -814,18 +820,18 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testEtagAndExpirationDateInTheFuture() throws Exception {
+    @Test public void etagAndExpirationDateInTheFuture() throws Exception {
         assertFullyCached(new MockResponse()
                 .addHeader("ETag: v1")
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
     }
 
-    public void testCacheControlNoCache() throws Exception {
+    @Test public void cacheControlNoCache() throws Exception {
         assertNotCached(new MockResponse().addHeader("Cache-Control: no-cache"));
     }
 
-    public void testCacheControlNoCacheAndExpirationDateInTheFuture() throws Exception {
+    @Test public void cacheControlNoCacheAndExpirationDateInTheFuture() throws Exception {
         String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("Last-Modified: " + lastModifiedDate)
@@ -835,11 +841,11 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testPragmaNoCache() throws Exception {
+    @Test public void pragmaNoCache() throws Exception {
         assertNotCached(new MockResponse().addHeader("Pragma: no-cache"));
     }
 
-    public void testPragmaNoCacheAndExpirationDateInTheFuture() throws Exception {
+    @Test public void pragmaNoCacheAndExpirationDateInTheFuture() throws Exception {
         String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
         RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
                 .addHeader("Last-Modified: " + lastModifiedDate)
@@ -849,18 +855,18 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(headers.contains("If-Modified-Since: " + lastModifiedDate));
     }
 
-    public void testCacheControlNoStore() throws Exception {
+    @Test public void cacheControlNoStore() throws Exception {
         assertNotCached(new MockResponse().addHeader("Cache-Control: no-store"));
     }
 
-    public void testCacheControlNoStoreAndExpirationDateInTheFuture() throws Exception {
+    @Test public void cacheControlNoStoreAndExpirationDateInTheFuture() throws Exception {
         assertNotCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
                 .addHeader("Cache-Control: no-store"));
     }
 
-    public void testPartialRangeResponsesDoNotCorruptCache() throws Exception {
+    @Test public void partialRangeResponsesDoNotCorruptCache() throws Exception {
         /*
          * 1. request a range
          * 2. request a full document, expecting a cache miss
@@ -881,7 +887,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("BB", readAscii(openConnection(url)));
     }
 
-    public void testServerReturnsDocumentOlderThanCache() throws Exception {
+    @Test public void serverReturnsDocumentOlderThanCache() throws Exception {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
@@ -895,13 +901,13 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(openConnection(url)));
     }
 
-    public void testNonIdentityEncodingAndConditionalCache() throws Exception {
+    @Test public void nonIdentityEncodingAndConditionalCache() throws Exception {
         assertNonIdentityEncodingCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     }
 
-    public void testNonIdentityEncodingAndFullCache() throws Exception {
+    @Test public void nonIdentityEncodingAndFullCache() throws Exception {
         assertNonIdentityEncodingCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
@@ -918,13 +924,13 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testExpiresDateBeforeModifiedDate() throws Exception {
+    @Test public void expiresDateBeforeModifiedDate() throws Exception {
         assertConditionallyCached(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Expires: " + formatDate(-2, TimeUnit.HOURS)));
     }
 
-    public void testRequestMaxAge() throws IOException {
+    @Test public void requestMaxAge() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
                 .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES))
@@ -939,7 +945,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testRequestMinFresh() throws IOException {
+    @Test public void requestMinFresh() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
@@ -953,7 +959,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testRequestMaxStale() throws IOException {
+    @Test public void requestMaxStale() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Cache-Control: max-age=120")
                 .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES)));
@@ -969,7 +975,7 @@ public final class HttpResponseCacheTest extends TestCase {
                 connection.getHeaderField("Warning"));
     }
 
-    public void testRequestMaxStaleNotHonoredWithMustRevalidate() throws IOException {
+    @Test public void requestMaxStaleNotHonoredWithMustRevalidate() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Cache-Control: max-age=120, must-revalidate")
                 .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES)));
@@ -983,7 +989,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testRequestOnlyIfCachedWithNoResponseCached() throws IOException {
+    @Test public void requestOnlyIfCachedWithNoResponseCached() throws IOException {
         // (no responses enqueued)
         server.play();
 
@@ -992,7 +998,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertGatewayTimeout(connection);
     }
 
-    public void testRequestOnlyIfCachedWithFullResponseCached() throws IOException {
+    @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Cache-Control: max-age=30")
                 .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
@@ -1004,7 +1010,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testRequestOnlyIfCachedWithConditionalResponseCached() throws IOException {
+    @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
         server.enqueue(new MockResponse().setBody("A")
                 .addHeader("Cache-Control: max-age=30")
                 .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES)));
@@ -1016,7 +1022,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertGatewayTimeout(connection);
     }
 
-    public void testRequestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
+    @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
         server.enqueue(new MockResponse().setBody("A"));
         server.play();
 
@@ -1026,7 +1032,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertGatewayTimeout(connection);
     }
 
-    public void testRequestCacheControlNoCache() throws Exception {
+    @Test public void requestCacheControlNoCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
                 .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
@@ -1042,7 +1048,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testRequestPragmaNoCache() throws Exception {
+    @Test public void requestPragmaNoCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
                 .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
@@ -1058,7 +1064,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testClientSuppliedIfModifiedSinceWithCachedResult() throws Exception {
+    @Test public void clientSuppliedIfModifiedSinceWithCachedResult() throws Exception {
         MockResponse response = new MockResponse()
                 .addHeader("ETag: v3")
                 .addHeader("Cache-Control: max-age=0");
@@ -1070,7 +1076,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertFalse(headers.contains("If-None-Match: v3"));
     }
 
-    public void testClientSuppliedIfNoneMatchSinceWithCachedResult() throws Exception {
+    @Test public void clientSuppliedIfNoneMatchSinceWithCachedResult() throws Exception {
         String lastModifiedDate = formatDate(-3, TimeUnit.MINUTES);
         MockResponse response = new MockResponse()
                 .addHeader("Last-Modified: " + lastModifiedDate)
@@ -1101,7 +1107,7 @@ public final class HttpResponseCacheTest extends TestCase {
         return server.takeRequest();
     }
 
-    public void testSetIfModifiedSince() throws Exception {
+    @Test public void setIfModifiedSince() throws Exception {
         Date since = new Date();
         server.enqueue(new MockResponse().setBody("A"));
         server.play();
@@ -1114,7 +1120,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertTrue(request.getHeaders().contains("If-Modified-Since: " + formatDate(since)));
     }
 
-    public void testClientSuppliedConditionWithoutCachedResult() throws Exception {
+    @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
         server.enqueue(new MockResponse()
                 .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
         server.play();
@@ -1126,7 +1132,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("", readAscii(connection));
     }
 
-    public void testAuthorizationRequestHeaderPreventsCaching() throws Exception {
+    @Test public void authorizationRequestHeaderPreventsCaching() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.MINUTES))
                 .addHeader("Cache-Control: max-age=60")
@@ -1141,17 +1147,17 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(url)));
     }
 
-    public void testAuthorizationResponseCachedWithSMaxAge() throws Exception {
+    @Test public void authorizationResponseCachedWithSMaxAge() throws Exception {
         assertAuthorizationRequestFullyCached(new MockResponse()
                 .addHeader("Cache-Control: s-maxage=60"));
     }
 
-    public void testAuthorizationResponseCachedWithPublic() throws Exception {
+    @Test public void authorizationResponseCachedWithPublic() throws Exception {
         assertAuthorizationRequestFullyCached(new MockResponse()
                 .addHeader("Cache-Control: public"));
     }
 
-    public void testAuthorizationResponseCachedWithMustRevalidate() throws Exception {
+    @Test public void authorizationResponseCachedWithMustRevalidate() throws Exception {
         assertAuthorizationRequestFullyCached(new MockResponse()
                 .addHeader("Cache-Control: must-revalidate"));
     }
@@ -1170,7 +1176,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(openConnection(url)));
     }
 
-    public void testContentLocationDoesNotPopulateCache() throws Exception {
+    @Test public void contentLocationDoesNotPopulateCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Content-Location: /bar")
@@ -1182,7 +1188,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(server.getUrl("/bar"))));
     }
 
-    public void testUseCachesFalseDoesNotWriteToCache() throws Exception {
+    @Test public void useCachesFalseDoesNotWriteToCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .setBody("A").setBody("A"));
@@ -1195,7 +1201,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testUseCachesFalseDoesNotReadFromCache() throws Exception {
+    @Test public void useCachesFalseDoesNotReadFromCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .setBody("A").setBody("A"));
@@ -1208,7 +1214,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection));
     }
 
-    public void testDefaultUseCachesSetsInitialValueOnly() throws Exception {
+    @Test public void defaultUseCachesSetsInitialValueOnly() throws Exception {
         URL url = new URL("http://localhost/");
         URLConnection c1 = openConnection(url);
         URLConnection c2 = openConnection(url);
@@ -1224,7 +1230,7 @@ public final class HttpResponseCacheTest extends TestCase {
         }
     }
 
-    public void testConnectionIsReturnedToPoolAfterConditionalSuccess() throws Exception {
+    @Test public void connectionIsReturnedToPoolAfterConditionalSuccess() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Cache-Control: max-age=0")
@@ -1242,7 +1248,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, server.takeRequest().getSequenceNumber());
     }
 
-    public void testStatisticsConditionalCacheMiss() throws Exception {
+    @Test public void statisticsConditionalCacheMiss() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Cache-Control: max-age=0")
@@ -1262,7 +1268,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(0, cache.getHitCount());
     }
 
-    public void testStatisticsConditionalCacheHit() throws Exception {
+    @Test public void statisticsConditionalCacheHit() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
                 .addHeader("Cache-Control: max-age=0")
@@ -1282,7 +1288,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, cache.getHitCount());
     }
 
-    public void testStatisticsFullCacheHit() throws Exception {
+    @Test public void statisticsFullCacheHit() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .setBody("A"));
@@ -1299,7 +1305,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(2, cache.getHitCount());
     }
 
-    public void testVaryMatchesChangedRequestHeaderField() throws Exception {
+    @Test public void varyMatchesChangedRequestHeaderField() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language")
@@ -1317,7 +1323,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(enConnection));
     }
 
-    public void testVaryMatchesUnchangedRequestHeaderField() throws Exception {
+    @Test public void varyMatchesUnchangedRequestHeaderField() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language")
@@ -1334,7 +1340,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(connection2));
     }
 
-    public void testVaryMatchesAbsentRequestHeaderField() throws Exception {
+    @Test public void varyMatchesAbsentRequestHeaderField() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Foo")
@@ -1346,7 +1352,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testVaryMatchesAddedRequestHeaderField() throws Exception {
+    @Test public void varyMatchesAddedRequestHeaderField() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Foo")
@@ -1360,7 +1366,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(fooConnection));
     }
 
-    public void testVaryMatchesRemovedRequestHeaderField() throws Exception {
+    @Test public void varyMatchesRemovedRequestHeaderField() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Foo")
@@ -1374,7 +1380,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testVaryFieldsAreCaseInsensitive() throws Exception {
+    @Test public void varyFieldsAreCaseInsensitive() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: ACCEPT-LANGUAGE")
@@ -1391,7 +1397,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(connection2));
     }
 
-    public void testVaryMultipleFieldsWithMatch() throws Exception {
+    @Test public void varyMultipleFieldsWithMatch() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language, Accept-Charset")
@@ -1413,7 +1419,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(connection2));
     }
 
-    public void testVaryMultipleFieldsWithNoMatch() throws Exception {
+    @Test public void varyMultipleFieldsWithNoMatch() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language, Accept-Charset")
@@ -1435,7 +1441,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(enConnection));
     }
 
-    public void testVaryMultipleFieldValuesWithMatch() throws Exception {
+    @Test public void varyMultipleFieldValuesWithMatch() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language")
@@ -1455,7 +1461,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(connection2));
     }
 
-    public void testVaryMultipleFieldValuesWithNoMatch() throws Exception {
+    @Test public void varyMultipleFieldValuesWithNoMatch() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: Accept-Language")
@@ -1475,7 +1481,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(connection2));
     }
 
-    public void testVaryAsterisk() throws Exception {
+    @Test public void varyAsterisk() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
                 .addHeader("Vary: *")
@@ -1487,7 +1493,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("B", readAscii(openConnection(server.getUrl("/"))));
     }
 
-    public void testVaryAndHttps() throws Exception {
+    @Test public void varyAndHttps() throws Exception {
         server.useHttps(sslContext.getSocketFactory(), false);
         server.enqueue(new MockResponse()
                 .addHeader("Cache-Control: max-age=60")
@@ -1510,35 +1516,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("A", readAscii(connection2));
     }
 
-//    public void testDiskWriteFailureCacheDegradation() throws Exception {
-//        Deque<InvocationHandler> writeHandlers = mockOs.getHandlers("write");
-//        int i = 0;
-//        boolean hasMoreScenarios = true;
-//        while (hasMoreScenarios) {
-//            mockOs.enqueueNormal("write", i++);
-//            mockOs.enqueueFault("write");
-//            exercisePossiblyFaultyCache(false);
-//            hasMoreScenarios = writeHandlers.isEmpty();
-//            writeHandlers.clear();
-//        }
-//        System.out.println("Exercising the cache performs " + (i - 1) + " writes.");
-//    }
-//
-//    public void testDiskReadFailureCacheDegradation() throws Exception {
-//        Deque<InvocationHandler> readHandlers = mockOs.getHandlers("read");
-//        int i = 0;
-//        boolean hasMoreScenarios = true;
-//        while (hasMoreScenarios) {
-//            mockOs.enqueueNormal("read", i++);
-//            mockOs.enqueueFault("read");
-//            exercisePossiblyFaultyCache(true);
-//            hasMoreScenarios = readHandlers.isEmpty();
-//            readHandlers.clear();
-//        }
-//        System.out.println("Exercising the cache performs " + (i - 1) + " reads.");
-//    }
-
-    public void testCachePlusCookies() throws Exception {
+    @Test public void cachePlusCookies() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Set-Cookie: a=FIRST; domain=" + server.getCookieDomain() + ";")
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1556,7 +1534,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertCookies(url, "a=SECOND");
     }
 
-    public void testGetHeadersReturnsNetworkEndToEndHeaders() throws Exception {
+    @Test public void getHeadersReturnsNetworkEndToEndHeaders() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Allow: GET, HEAD")
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1576,7 +1554,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("GET, HEAD, PUT", connection2.getHeaderField("Allow"));
     }
 
-    public void testGetHeadersReturnsCachedHopByHopHeaders() throws Exception {
+    @Test public void getHeadersReturnsCachedHopByHopHeaders() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Transfer-Encoding: identity")
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1596,7 +1574,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals("identity", connection2.getHeaderField("Transfer-Encoding"));
     }
 
-    public void testGetHeadersDeletesCached100LevelWarnings() throws Exception {
+    @Test public void getHeadersDeletesCached100LevelWarnings() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Warning: 199 test danger")
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1615,7 +1593,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(null, connection2.getHeaderField("Warning"));
     }
 
-    public void testGetHeadersRetainsCached200LevelWarnings() throws Exception {
+    @Test public void getHeadersRetainsCached200LevelWarnings() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Warning: 299 test danger")
                 .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -1642,7 +1620,7 @@ public final class HttpResponseCacheTest extends TestCase {
         assertEquals(Arrays.asList(expectedCookies), actualCookies);
     }
 
-    public void testCachePlusRange() throws Exception {
+    @Test public void cachePlusRange() throws Exception {
         assertNotCached(new MockResponse()
                 .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
                 .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
@@ -1650,7 +1628,7 @@ public final class HttpResponseCacheTest extends TestCase {
                 .addHeader("Cache-Control: max-age=60"));
     }
 
-    public void testConditionalHitUpdatesCache() throws Exception {
+    @Test public void conditionalHitUpdatesCache() throws Exception {
         server.enqueue(new MockResponse()
                 .addHeader("Last-Modified: " + formatDate(0, TimeUnit.SECONDS))
                 .addHeader("Cache-Control: max-age=0")
@@ -1714,31 +1692,6 @@ public final class HttpResponseCacheTest extends TestCase {
         URL url = server.getUrl("/");
         assertEquals("A", readAscii(openConnection(url)));
         assertEquals("B", readAscii(openConnection(url)));
-    }
-
-    private void exercisePossiblyFaultyCache(boolean permitReadBodyFailures) throws Exception {
-        server.shutdown();
-        server = new MockWebServer();
-        server.enqueue(new MockResponse()
-                .addHeader("Cache-Control: max-age=60")
-                .setBody("A"));
-        server.enqueue(new MockResponse().setBody("B"));
-        server.play();
-
-        URL url = server.getUrl("/" + UUID.randomUUID());
-        assertEquals("A", readAscii(openConnection(url)));
-
-        URLConnection connection = openConnection(url);
-        InputStream in = connection.getInputStream();
-        try {
-            int bodyChar = in.read();
-            assertTrue(bodyChar == 'A' || bodyChar == 'B');
-            assertEquals(-1, in.read());
-        } catch (IOException e) {
-            if (!permitReadBodyFailures) {
-                throw e;
-            }
-        }
     }
 
     /**
