@@ -42,8 +42,8 @@ final class SpdyWriter {
                 Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
     }
 
-    public void synStream(int flags, int streamId, int associatedStreamId, int priority,
-            List<String> nameValueBlock) throws IOException {
+    public synchronized void synStream(int flags, int streamId, int associatedStreamId,
+            int priority, List<String> nameValueBlock) throws IOException {
         writeNameValueBlockToBuffer(nameValueBlock);
         int length = 10 + nameValueBlockBuffer.size();
         int type = SpdyConnection.TYPE_SYN_STREAM;
@@ -58,7 +58,8 @@ final class SpdyWriter {
         out.flush();
     }
 
-    public void synReply(int flags, int streamId, List<String> nameValueBlock) throws IOException {
+    public synchronized void synReply(
+            int flags, int streamId, List<String> nameValueBlock) throws IOException {
         writeNameValueBlockToBuffer(nameValueBlock);
         int type = SpdyConnection.TYPE_SYN_REPLY;
         int length = nameValueBlockBuffer.size() + 6;
@@ -72,7 +73,7 @@ final class SpdyWriter {
         out.flush();
     }
 
-    public void synReset(int streamId, int statusCode) throws IOException {
+    public synchronized void synReset(int streamId, int statusCode) throws IOException {
         int flags = 0;
         int type = SpdyConnection.TYPE_RST_STREAM;
         int length = 8;
@@ -83,7 +84,7 @@ final class SpdyWriter {
         out.flush();
     }
 
-    public void data(int flags, int streamId, byte[] data) throws IOException {
+    public synchronized void data(int flags, int streamId, byte[] data) throws IOException {
         int length = data.length;
         out.writeInt(streamId & 0x7fffffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
@@ -102,7 +103,7 @@ final class SpdyWriter {
         nameValueBlockOut.flush();
     }
 
-    public void settings(int flags, Settings settings) throws IOException {
+    public synchronized void settings(int flags, Settings settings) throws IOException {
         int type = SpdyConnection.TYPE_SETTINGS;
         int size = settings.size();
         int length = 4 + size * 8;
@@ -122,7 +123,7 @@ final class SpdyWriter {
         out.flush();
     }
 
-    public void noop() throws IOException {
+    public synchronized void noop() throws IOException {
         int type = SpdyConnection.TYPE_NOOP;
         int length = 0;
         int flags = 0;
@@ -131,7 +132,7 @@ final class SpdyWriter {
         out.flush();
     }
 
-    public void ping(int flags, int id) throws IOException {
+    public synchronized void ping(int flags, int id) throws IOException {
         int type = SpdyConnection.TYPE_PING;
         int length = 4;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
