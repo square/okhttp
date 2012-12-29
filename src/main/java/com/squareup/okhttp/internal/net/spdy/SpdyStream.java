@@ -129,6 +129,7 @@ public final class SpdyStream {
      *     to the remote peer. Corresponds to {@code FLAG_FIN}.
      */
     public void reply(List<String> responseHeaders, boolean out) throws IOException {
+        assert (!Thread.holdsLock(SpdyStream.this));
         int flags = 0;
         synchronized (this) {
             if (responseHeaders == null) {
@@ -175,6 +176,7 @@ public final class SpdyStream {
      * Abnormally terminate this stream.
      */
     public void close(int rstStatusCode) throws IOException {
+        assert (!Thread.holdsLock(this));
         synchronized (this) {
             // TODO: no-op if inFinished == true and outFinished == true ?
             if (this.rstStatusCode != -1) {
@@ -197,12 +199,16 @@ public final class SpdyStream {
         notifyAll();
     }
 
-    // TODO: locking here broken. Writing threads are blocked by potentially slow reads.
-    synchronized void receiveData(InputStream in, int flags, int length) throws IOException {
+    void receiveData(InputStream in, int flags, int length) throws IOException {
+        assert (!Thread.holdsLock(SpdyStream.this));
         this.in.receive(in, length);
-        if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+        if ((flags & SpdyConnection.FLAG_FIN) == 0) {
+            return;
+        }
+
+        // This is the last incoming data in the stream.
+        synchronized (this) {
             this.in.finished = true;
-            streamStateChanged();
             notifyAll();
         }
     }
@@ -320,18 +326,28 @@ public final class SpdyStream {
         }
 
         void receive(InputStream in, int byteCount) throws IOException {
-            if (finished) {
-                return; // ignore this; probably a benign race
-            }
-            if (byteCount == 0) {
-                return;
+            assert (!Thread.holdsLock(SpdyStream.this));
+
+            int pos;
+            int limit;
+            int firstNewByte;
+            synchronized (SpdyStream.this) {
+                if (finished) {
+                    return; // ignore this; probably a benign race
+                }
+                if (byteCount == 0) {
+                    return;
+                }
+                if (byteCount > buffer.length - available()) {
+                    throw new IOException(); // TODO: RST the stream
+                }
+                pos = this.pos;
+                firstNewByte = limit = this.limit;
             }
 
-            if (byteCount > buffer.length - available()) {
-                throw new IOException(); // TODO: RST the stream
-            }
-
-            // fill [limit..buffer.length)
+            // Fill the buffer without holding any locks. First fill [limit..buffer.length) if that
+            // won't overwrite unread data. Then fill [limit..pos). We can't hold a lock, otherwise
+            // writes will be blocked until reads complete.
             if (pos < limit) {
                 int firstCopyCount = Math.min(byteCount, buffer.length - limit);
                 Streams.readFully(in, buffer, limit, firstCopyCount);
@@ -341,24 +357,26 @@ public final class SpdyStream {
                     limit = 0;
                 }
             }
-
-            // fill [limit..pos)
             if (byteCount > 0) {
                 Streams.readFully(in, buffer, limit, byteCount);
                 limit += byteCount;
             }
 
-            if (pos == -1) {
-                pos = 0;
-                SpdyStream.this.notifyAll();
+            synchronized (SpdyStream.this) {
+                // Update the new limit, and mark the position as readable if necessary.
+                this.limit = limit;
+                if (this.pos == -1) {
+                    this.pos = firstNewByte;
+                    SpdyStream.this.notifyAll();
+                }
             }
         }
 
         @Override public void close() throws IOException {
             synchronized (SpdyStream.this) {
                 closed = true;
-                streamStateChanged();
             }
+            cancelStreamIfNecessary();
         }
 
         private void checkNotClosed() throws IOException {
@@ -368,14 +386,20 @@ public final class SpdyStream {
         }
     }
 
-    private synchronized void streamStateChanged() throws IOException {
-        // If we closed the input stream before bytes ran out, we want to cancel
-        // it. But we can only cancel it once the output stream's bytes have all
-        // been sent, otherwise we'll terminate that innocent bystander.
-        if (in.closed && !in.finished && (out.finished || out.closed)) {
-            in.finished = true;
-            SpdyStream.this.close(RST_CANCEL);
+    private void cancelStreamIfNecessary() throws IOException {
+        assert (!Thread.holdsLock(SpdyStream.this));
+        synchronized (this) {
+            if (in.closed && !in.finished && (out.finished || out.closed)) {
+                // RST this stream to prevent additional data from being sent. This is safe because
+                // the input stream is closed (we won't use any further bytes) and the output stream
+                // is either finished or closed (so RSTing both streams won't cause harm).
+                in.finished = true;
+            } else {
+                // We shouldn't cancel this stream.
+                return;
+            }
         }
+        SpdyStream.this.close(RST_CANCEL);
     }
 
     /**
@@ -400,6 +424,7 @@ public final class SpdyStream {
         }
 
         @Override public void write(byte[] bytes, int offset, int count) throws IOException {
+            assert (!Thread.holdsLock(SpdyStream.this));
             checkOffsetAndCount(bytes.length, offset, count);
             checkNotClosed();
 
@@ -416,6 +441,7 @@ public final class SpdyStream {
         }
 
         @Override public void flush() throws IOException {
+            assert (!Thread.holdsLock(SpdyStream.this));
             checkNotClosed();
             if (pos > DATA_FRAME_HEADER_LENGTH) {
                 writeFrame(false);
@@ -424,6 +450,7 @@ public final class SpdyStream {
         }
 
         @Override public void close() throws IOException {
+            assert (!Thread.holdsLock(SpdyStream.this));
             synchronized (SpdyStream.this) {
                 if (closed) {
                     return;
@@ -432,10 +459,11 @@ public final class SpdyStream {
             }
             writeFrame(true);
             connection.flush();
-            streamStateChanged();
+            cancelStreamIfNecessary();
         }
 
         private void writeFrame(boolean last) throws IOException {
+            assert (!Thread.holdsLock(SpdyStream.this));
             int flags = 0;
             if (last) {
                 flags |= SpdyConnection.FLAG_FIN;

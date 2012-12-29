@@ -30,9 +30,9 @@ public interface IncomingStreamHandler {
 
     /**
      * Handle a new stream from this connection's peer. Implementations should
-     * respond by either {@link SpdyStream#reply(java.util.List) replying to the
-     * stream} or {@link SpdyStream#close(int) closing it}. This response does
-     * not need to be synchronous.
+     * respond by either {@link SpdyStream#reply replying to the stream} or
+     * {@link SpdyStream#close closing it}. This response does not need to be
+     * synchronous.
      */
     void receive(SpdyStream stream) throws IOException;
 }
