@@ -42,7 +42,7 @@
         <bouncycastle.version>1.47</bouncycastle.version>
 
         <!-- Test Dependencies -->
-        <junit.version>3.8.2</junit.version>
+        <junit.version>4.10</junit.version>
     </properties>
 
     <scm>

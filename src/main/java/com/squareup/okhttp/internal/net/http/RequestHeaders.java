@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Parsed HTTP request headers.
  */
-public final class RequestHeaders {
+final class RequestHeaders {
     private final URI uri;
     private final RawHeaders headers;
 

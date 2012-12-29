@@ -261,8 +261,8 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     }
 
     @Override
-    public String getHeaderFieldKey(int posn) {
-        return delegate.getHeaderFieldKey(posn);
+    public String getHeaderFieldKey(int position) {
+        return delegate.getHeaderFieldKey(position);
     }
 
     @Override

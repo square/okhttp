@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Parsed HTTP response headers.
  */
-public final class ResponseHeaders {
+final class ResponseHeaders {
 
     /** HTTP header name for the local time when the request was sent. */
     private static final String SENT_MILLIS = "X-Android-Sent-Millis";

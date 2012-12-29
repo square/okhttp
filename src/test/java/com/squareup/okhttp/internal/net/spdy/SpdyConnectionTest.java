@@ -33,9 +33,12 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import org.junit.Test;
 
-public final class SpdyConnectionTest extends TestCase {
+public final class SpdyConnectionTest {
     private static final IncomingStreamHandler REJECT_INCOMING_STREAMS
             = new IncomingStreamHandler() {
         @Override public void receive(SpdyStream stream) throws IOException {
@@ -44,7 +47,7 @@ public final class SpdyConnectionTest extends TestCase {
     };
     private final MockSpdyPeer peer = new MockSpdyPeer();
 
-    public void testClientCreatesStreamAndServerReplies() throws Exception {
+    @Test public void clientCreatesStreamAndServerReplies() throws Exception {
         // write the mocking script
         peer.acceptFrame();
         peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
@@ -70,7 +73,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
     }
 
-    public void testServerCreatesStreamAndClientReplies() throws Exception {
+    @Test public void serverCreatesStreamAndClientReplies() throws Exception {
         // write the mocking script
         peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
         peer.acceptFrame();
@@ -100,7 +103,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(1, receiveCount.get());
     }
 
-    public void testReplyWithNoData() throws Exception {
+    @Test public void replyWithNoData() throws Exception {
         // write the mocking script
         peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
         peer.acceptFrame();
@@ -126,7 +129,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(1, receiveCount.get());
     }
 
-    public void testNoop() throws Exception {
+    @Test public void noop() throws Exception {
         // write the mocking script
         peer.acceptFrame();
         peer.play();
@@ -143,7 +146,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(0, ping.flags);
     }
 
-    public void testServerPingsClient() throws Exception {
+    @Test public void serverPingsClient() throws Exception {
         // write the mocking script
         peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
@@ -161,7 +164,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(2, ping.streamId);
     }
 
-    public void testClientPingsServer() throws Exception {
+    @Test public void clientPingsServer() throws Exception {
         // write the mocking script
         peer.acceptFrame();
         peer.sendFrame().ping(0, 1);
@@ -182,7 +185,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(1, pingFrame.streamId);
     }
 
-    public void testUnexpectedPingIsNotReturned() throws Exception {
+    @Test public void unexpectedPingIsNotReturned() throws Exception {
         // write the mocking script
         peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
@@ -203,7 +206,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(4, ping4.streamId);
     }
 
-    public void testServerSendsSettingsToClient() throws Exception {
+    @Test public void serverSendsSettingsToClient() throws Exception {
         // write the mocking script
         Settings settings = new Settings();
         settings.set(Settings.MAX_CONCURRENT_STREAMS, PERSIST_VALUE, 10);
@@ -223,7 +226,7 @@ public final class SpdyConnectionTest extends TestCase {
         }
     }
 
-    public void testMultipleSettingsFramesAreMerged() throws Exception {
+    @Test public void multipleSettingsFramesAreMerged() throws Exception {
         // write the mocking script
         Settings settings1 = new Settings();
         settings1.set(Settings.UPLOAD_BANDWIDTH, PERSIST_VALUE, 100);
@@ -257,7 +260,7 @@ public final class SpdyConnectionTest extends TestCase {
         }
     }
 
-    public void testBogusDataFrameDoesNotDisruptConnection() throws Exception {
+    @Test public void bogusDataFrameDoesNotDisruptConnection() throws Exception {
         // write the mocking script
         peer.sendFrame().data(SpdyConnection.FLAG_FIN, 42, "bogus".getBytes("UTF-8"));
         peer.acceptFrame(); // RST_STREAM
@@ -280,7 +283,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(2, ping.streamId);
     }
 
-    public void testBogusReplyFrameDoesNotDisruptConnection() throws Exception {
+    @Test public void bogusReplyFrameDoesNotDisruptConnection() throws Exception {
         // write the mocking script
         peer.sendFrame().synReply(0, 42, Arrays.asList("a", "android"));
         peer.acceptFrame(); // RST_STREAM
@@ -303,7 +306,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(2, ping.streamId);
     }
 
-    public void testClientClosesClientOutputStream() throws Exception {
+    @Test public void clientClosesClientOutputStream() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
         peer.acceptFrame(); // TYPE_DATA
@@ -343,7 +346,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(2, ping.streamId);
     }
 
-    public void testServerClosesClientOutputStream() throws Exception {
+    @Test public void serverClosesClientOutputStream() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
         peer.sendFrame().synReset(1, SpdyStream.RST_CANCEL);
@@ -378,7 +381,7 @@ public final class SpdyConnectionTest extends TestCase {
      * Test that the client sends a RST_STREAM if doing so won't disrupt the
      * output stream.
      */
-    public void testClientClosesClientInputStream() throws Exception {
+    @Test public void clientClosesClientInputStream() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
         peer.acceptFrame(); // RST_STREAM
@@ -417,7 +420,7 @@ public final class SpdyConnectionTest extends TestCase {
      * Test that the client doesn't send a RST_STREAM if doing so will disrupt
      * the output stream.
      */
-    public void testClientClosesClientInputStreamIfOutputStreamIsClosed() throws Exception {
+    @Test public void clientClosesClientInputStreamIfOutputStreamIsClosed() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
         peer.acceptFrame(); // DATA
@@ -460,7 +463,7 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(SpdyStream.RST_CANCEL, rstStream.statusCode);
     }
 
-    public void testServerClosesClientInputStream() throws Exception {
+    @Test public void serverClosesClientInputStream() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
         peer.sendFrame().data(FLAG_FIN, 1, "square".getBytes(UTF_8));
@@ -480,22 +483,22 @@ public final class SpdyConnectionTest extends TestCase {
         assertEquals(SpdyConnection.FLAG_FIN, synStream.flags);
     }
 
-    public void testRemoteDoubleReply() {
+    @Test public void remoteDoubleReply() {
         // We should get a PROTOCOL ERROR
         // TODO
     }
 
-    public void testRemoteSendsDataAfterInFinished() {
+    @Test public void remoteSendsDataAfterInFinished() {
         // We have a bug where we don't fastfoward the stream
         // TODO
     }
 
-    public void testRemoteSendsTooMuchData() {
+    @Test public void remoteSendsTooMuchData() {
         // We should send RST_FLOW_CONTROL_ERROR (and fastforward the stream)
         // TODO
     }
 
-    public void testRemoteSendsRefusedStreamBeforeReplyHeaders() {
+    @Test public void remoteSendsRefusedStreamBeforeReplyHeaders() {
         // Calling getResponseHeaders() should throw an IOException if the stream is refused.
         // TODO
     }
