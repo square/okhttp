@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.net.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.net.spdy.SpdyStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.util.List;
@@ -68,16 +67,10 @@ public final class SpdyTransport implements Transport {
 
     @Override public ResponseHeaders readResponseHeaders() throws IOException {
         // TODO: fix the SPDY implementation so this throws a (buffered) IOException
-        try {
-            List<String> nameValueBlock = stream.getResponseHeaders();
-            RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
-            rawHeaders.computeResponseStatusLineFromSpdyHeaders();
-            return new ResponseHeaders(httpEngine.uri, rawHeaders);
-        } catch (InterruptedException e) {
-            InterruptedIOException rethrow = new InterruptedIOException();
-            rethrow.initCause(e);
-            throw rethrow;
-        }
+        List<String> nameValueBlock = stream.getResponseHeaders();
+        RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
+        rawHeaders.computeResponseStatusLineFromSpdyHeaders();
+        return new ResponseHeaders(httpEngine.uri, rawHeaders);
     }
 
     @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {

@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.ProtocolException;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
@@ -301,7 +302,12 @@ public final class SpdyConnection implements Closeable {
                 throws IOException {
             SpdyStream dataStream = getStream(streamId);
             if (dataStream != null) {
-                dataStream.receiveData(in, flags, length);
+                try {
+                    dataStream.receiveData(in, flags, length);
+                } catch (ProtocolException e) {
+                    Streams.skipByReading(in, length);
+                    dataStream.closeLater(SpdyStream.RST_FLOW_CONTROL_ERROR);
+                }
             } else {
                 writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
                 Streams.skipByReading(in, length);
@@ -317,14 +323,8 @@ public final class SpdyConnection implements Closeable {
                 previous = streams.put(streamId, synStream);
             }
             if (previous != null) {
-                writeExecutor.execute(new Runnable() {
-                    @Override public void run() {
-                        try {
-                            previous.close(SpdyStream.RST_PROTOCOL_ERROR);
-                        } catch (IOException ignored) {
-                        }
-                    }
-                });
+                previous.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
+                removeStream(streamId);
                 return;
             }
             callbackExecutor.execute(new Runnable() {
@@ -343,7 +343,11 @@ public final class SpdyConnection implements Closeable {
             SpdyStream replyStream = getStream(streamId);
             if (replyStream != null) {
                 // TODO: honor incoming FLAG_FIN.
-                replyStream.receiveReply(nameValueBlock);
+                try {
+                    replyStream.receiveReply(nameValueBlock);
+                } catch (ProtocolException e) {
+                    replyStream.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
+                }
             } else {
                 writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
             }

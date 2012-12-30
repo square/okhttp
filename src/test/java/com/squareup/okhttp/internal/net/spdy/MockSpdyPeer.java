@@ -36,6 +36,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public final class MockSpdyPeer {
     private int frameCount = 0;
+    private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+    private final SpdyWriter spdyWriter = new SpdyWriter(bytesOut);
     private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
     private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
     private int port;
@@ -47,9 +49,9 @@ public final class MockSpdyPeer {
     }
 
     public SpdyWriter sendFrame() {
-        OutFrame frame = new OutFrame(frameCount++);
+        OutFrame frame = new OutFrame(frameCount++, bytesOut.size());
         outFrames.add(frame);
-        return new SpdyWriter(frame.out);
+        return spdyWriter;
     }
 
     public int getPort() {
@@ -81,6 +83,7 @@ public final class MockSpdyPeer {
         InputStream in = socket.getInputStream();
 
         Iterator<OutFrame> outFramesIterator = outFrames.iterator();
+        byte[] outBytes = bytesOut.toByteArray();
         OutFrame nextOutFrame = null;
 
         for (int i = 0; i < frameCount; i++) {
@@ -89,9 +92,17 @@ public final class MockSpdyPeer {
             }
 
             if (nextOutFrame != null && nextOutFrame.sequence == i) {
+                int start = nextOutFrame.start;
+                int end;
+                if (outFramesIterator.hasNext()) {
+                    nextOutFrame = outFramesIterator.next();
+                    end = nextOutFrame.start;
+                } else {
+                    end = outBytes.length;
+                }
+
                 // write a frame
-                nextOutFrame.out.writeTo(out);
-                nextOutFrame = null;
+                out.write(outBytes, start, end - start);
 
             } else {
                 // read a frame
@@ -109,10 +120,11 @@ public final class MockSpdyPeer {
 
     private static class OutFrame {
         private final int sequence;
-        private final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        private final int start;
 
-        private OutFrame(int sequence) {
+        private OutFrame(int sequence, int start) {
             this.sequence = sequence;
+            this.start = start;
         }
     }
 
