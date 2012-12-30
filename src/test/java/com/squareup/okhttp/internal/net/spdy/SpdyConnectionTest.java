@@ -25,7 +25,10 @@ import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_PING;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_RST_STREAM;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_SYN_REPLY;
 import static com.squareup.okhttp.internal.net.spdy.SpdyConnection.TYPE_SYN_STREAM;
+import static com.squareup.okhttp.internal.net.spdy.SpdyStream.RST_FLOW_CONTROL_ERROR;
 import static com.squareup.okhttp.internal.net.spdy.SpdyStream.RST_INVALID_STREAM;
+import static com.squareup.okhttp.internal.net.spdy.SpdyStream.RST_PROTOCOL_ERROR;
+import static com.squareup.okhttp.internal.net.spdy.SpdyStream.RST_REFUSED_STREAM;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -483,24 +486,140 @@ public final class SpdyConnectionTest {
         assertEquals(SpdyConnection.FLAG_FIN, synStream.flags);
     }
 
-    @Test public void remoteDoubleReply() {
-        // We should get a PROTOCOL ERROR
-        // TODO
+    @Test public void remoteDoubleSynReply() throws Exception {
+        // write the mocking script
+        peer.acceptFrame();
+        peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+        peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("c", "cola"), true, true);
+        assertEquals(Arrays.asList("a", "android"), stream.getResponseHeaders());
+        assertStreamData("", stream.getInputStream());
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        MockSpdyPeer.InFrame rstStream = peer.takeFrame();
+        assertEquals(TYPE_RST_STREAM, rstStream.type);
+        assertEquals(1, rstStream.streamId);
+        assertEquals(0, rstStream.flags);
+        assertEquals(RST_PROTOCOL_ERROR, rstStream.statusCode);
     }
 
-    @Test public void remoteSendsDataAfterInFinished() {
-        // We have a bug where we don't fastfoward the stream
-        // TODO
+    @Test public void remoteDoubleSynStream() throws Exception {
+        // write the mocking script
+        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
+        peer.acceptFrame();
+        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("b", "banana"));
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        final AtomicInteger receiveCount = new AtomicInteger();
+        IncomingStreamHandler handler = new IncomingStreamHandler() {
+            @Override public void receive(SpdyStream stream) throws IOException {
+                receiveCount.incrementAndGet();
+                assertEquals(Arrays.asList("a", "android"), stream.getRequestHeaders());
+                assertEquals(-1, stream.getRstStatusCode());
+                stream.reply(Arrays.asList("c", "cola"), true);
+            }
+        };
+        new SpdyConnection.Builder(true, peer.openSocket())
+                .handler(handler)
+                .build();
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame reply = peer.takeFrame();
+        assertEquals(TYPE_SYN_REPLY, reply.type);
+        MockSpdyPeer.InFrame rstStream = peer.takeFrame();
+        assertEquals(TYPE_RST_STREAM, rstStream.type);
+        assertEquals(2, rstStream.streamId);
+        assertEquals(0, rstStream.flags);
+        assertEquals(RST_PROTOCOL_ERROR, rstStream.statusCode);
+        assertEquals(1, receiveCount.intValue());
     }
 
-    @Test public void remoteSendsTooMuchData() {
-        // We should send RST_FLOW_CONTROL_ERROR (and fastforward the stream)
-        // TODO
+    @Test public void remoteSendsDataAfterInFinished() throws Exception {
+        // write the mocking script
+        peer.acceptFrame();
+        peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+        peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "robot".getBytes("UTF-8"));
+        peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "c3po".getBytes("UTF-8")); // Ignored.
+        peer.sendFrame().ping(0, 2); // Ping just to make sure the stream was fastforwarded.
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("b", "banana"), true, true);
+        assertEquals(Arrays.asList("a", "android"), stream.getResponseHeaders());
+        assertStreamData("robot", stream.getInputStream());
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        MockSpdyPeer.InFrame ping = peer.takeFrame();
+        assertEquals(TYPE_PING, ping.type);
+        assertEquals(2, ping.streamId);
+        assertEquals(0, ping.flags);
     }
 
-    @Test public void remoteSendsRefusedStreamBeforeReplyHeaders() {
-        // Calling getResponseHeaders() should throw an IOException if the stream is refused.
-        // TODO
+    @Test public void remoteSendsTooMuchData() throws Exception {
+        // write the mocking script
+        peer.acceptFrame();
+        peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
+        peer.sendFrame().data(0, 1, new byte[64 * 1024 + 1]);
+        peer.acceptFrame();
+        peer.sendFrame().ping(0, 2); // Ping just to make sure the stream was fastforwarded.
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), true, true);
+        assertEquals(Arrays.asList("b", "banana"), stream.getResponseHeaders());
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        MockSpdyPeer.InFrame rstStream = peer.takeFrame();
+        assertEquals(TYPE_RST_STREAM, rstStream.type);
+        assertEquals(1, rstStream.streamId);
+        assertEquals(0, rstStream.flags);
+        assertEquals(RST_FLOW_CONTROL_ERROR, rstStream.statusCode);
+        MockSpdyPeer.InFrame ping = peer.takeFrame();
+        assertEquals(TYPE_PING, ping.type);
+        assertEquals(2, ping.streamId);
+    }
+
+    @Test public void remoteSendsRefusedStreamBeforeReplyHeaders() throws Exception {
+        // write the mocking script
+        peer.acceptFrame();
+        peer.sendFrame().synReset(1, RST_REFUSED_STREAM);
+        peer.sendFrame().ping(0, 2);
+        peer.acceptFrame();
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), true, true);
+        try {
+            stream.getResponseHeaders();
+            fail();
+        } catch (IOException expected) {
+        }
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        MockSpdyPeer.InFrame ping = peer.takeFrame();
+        assertEquals(TYPE_PING, ping.type);
+        assertEquals(2, ping.streamId);
+        assertEquals(0, ping.flags);
     }
 
     private void writeAndClose(SpdyStream stream, String data) throws IOException {
