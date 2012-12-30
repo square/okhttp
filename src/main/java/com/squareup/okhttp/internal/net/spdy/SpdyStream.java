@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
+import java.net.ProtocolException;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import java.util.List;
 
@@ -101,13 +102,20 @@ public final class SpdyStream {
      * Returns the stream's response headers, blocking if necessary if they
      * have not been received yet.
      */
-    public synchronized List<String> getResponseHeaders() throws InterruptedException {
-        while (responseHeaders == null && rstStatusCode == -1) {
-            wait();
+    public synchronized List<String> getResponseHeaders() throws IOException {
+        try {
+            while (responseHeaders == null && rstStatusCode == -1) {
+                wait();
+            }
+            if (responseHeaders != null) {
+                return responseHeaders;
+            }
+            throw new IOException("stream was reset: " + rstStatusCode);
+        } catch (InterruptedException e) {
+            InterruptedIOException rethrow = new InterruptedIOException();
+            rethrow.initCause(e);
+            throw rethrow;
         }
-        // TODO: throw InterruptedIOException?
-        // TODO: throw if responseHeaders == null
-        return responseHeaders;
     }
 
     /**
@@ -176,24 +184,41 @@ public final class SpdyStream {
      * Abnormally terminate this stream.
      */
     public void close(int rstStatusCode) throws IOException {
+        if (!closeInternal(rstStatusCode)) {
+            return; // Already closed.
+        }
+        connection.writeSynReset(id, rstStatusCode);
+    }
+
+    void closeLater(int rstStatusCode) {
+        if (!closeInternal(rstStatusCode)) {
+            return; // Already closed.
+        }
+        connection.writeSynResetLater(id, rstStatusCode);
+    }
+
+    /**
+     * Returns true if this stream was closed.
+     */
+    private boolean closeInternal(int rstStatusCode) {
         assert (!Thread.holdsLock(this));
         synchronized (this) {
             // TODO: no-op if inFinished == true and outFinished == true ?
             if (this.rstStatusCode != -1) {
-                return; // Already closed.
+                return false;
             }
             this.rstStatusCode = rstStatusCode;
             in.finished = true;
             out.finished = true;
             notifyAll();
         }
-        connection.writeSynReset(id, rstStatusCode);
         connection.removeStream(id);
+        return true;
     }
 
     synchronized void receiveReply(List<String> strings) throws IOException {
         if (!isLocallyInitiated() || responseHeaders != null) {
-            throw new IOException(); // TODO: send RST
+            throw new ProtocolException();
         }
         responseHeaders = strings;
         notifyAll();
@@ -328,21 +353,28 @@ public final class SpdyStream {
         void receive(InputStream in, int byteCount) throws IOException {
             assert (!Thread.holdsLock(SpdyStream.this));
 
+            if (byteCount == 0) {
+                return;
+            }
+
             int pos;
             int limit;
             int firstNewByte;
+            boolean finished;
             synchronized (SpdyStream.this) {
-                if (finished) {
-                    return; // ignore this; probably a benign race
-                }
-                if (byteCount == 0) {
-                    return;
-                }
-                if (byteCount > buffer.length - available()) {
-                    throw new IOException(); // TODO: RST the stream
-                }
+                finished = this.finished;
                 pos = this.pos;
-                firstNewByte = limit = this.limit;
+                firstNewByte = this.limit;
+                limit = this.limit;
+                if (byteCount > buffer.length - available()) {
+                    throw new ProtocolException();
+                }
+            }
+
+            // Discard data received after the stream is finished. It's probably a benign race.
+            if (finished) {
+                Streams.skipByReading(in, byteCount);
+                return;
             }
 
             // Fill the buffer without holding any locks. First fill [limit..buffer.length) if that
