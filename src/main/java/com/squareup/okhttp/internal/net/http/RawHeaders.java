@@ -393,6 +393,11 @@ public final class RawHeaders {
                 throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
             }
 
+            // Drop headers that are ignored when layering HTTP over SPDY.
+            if (name.equals("connection") || name.equals("accept-encoding")) {
+                continue;
+            }
+
             // If we haven't seen this name before, add the pair to the end of the list...
             if (names.add(name)) {
                 result.add(name);
