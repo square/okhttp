@@ -81,6 +81,7 @@ public final class MockSpdyPeer {
         Socket socket = serverSocket.accept();
         OutputStream out = socket.getOutputStream();
         InputStream in = socket.getInputStream();
+        SpdyReader reader = new SpdyReader(in);
 
         Iterator<OutFrame> outFramesIterator = outFrames.iterator();
         byte[] outBytes = bytesOut.toByteArray();
@@ -106,7 +107,6 @@ public final class MockSpdyPeer {
 
             } else {
                 // read a frame
-                SpdyReader reader = new SpdyReader(in);
                 InFrame inFrame = new InFrame(i, reader);
                 reader.nextFrame(inFrame);
                 inFrames.add(inFrame);
@@ -200,6 +200,13 @@ public final class MockSpdyPeer {
         @Override public void noop() {
             if (this.type != -1) throw new IllegalStateException();
             this.type = SpdyConnection.TYPE_NOOP;
+        }
+
+        @Override public void goAway(int flags, int lastGoodStreamId) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_GOAWAY;
+            this.flags = flags;
+            this.streamId = lastGoodStreamId;
         }
     }
 }

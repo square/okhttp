@@ -39,6 +39,17 @@ public final class SpdyStream {
 
     private static final int DATA_FRAME_HEADER_LENGTH = 8;
 
+    private static final String[] STATUS_CODE_NAMES = {
+            null,
+            "PROTOCOL_ERROR",
+            "INVALID_STREAM",
+            "REFUSED_STREAM",
+            "UNSUPPORTED_VERSION",
+            "CANCEL",
+            "INTERNAL_ERROR",
+            "FLOW_CONTROL_ERROR",
+    };
+
     public static final int RST_PROTOCOL_ERROR = 1;
     public static final int RST_INVALID_STREAM = 2;
     public static final int RST_REFUSED_STREAM = 3;
@@ -110,7 +121,7 @@ public final class SpdyStream {
             if (responseHeaders != null) {
                 return responseHeaders;
             }
-            throw new IOException("stream was reset: " + rstStatusCode);
+            throw new IOException("stream was reset: " + rstStatusString());
         } catch (InterruptedException e) {
             InterruptedIOException rethrow = new InterruptedIOException();
             rethrow.initCause(e);
@@ -203,13 +214,13 @@ public final class SpdyStream {
     private boolean closeInternal(int rstStatusCode) {
         assert (!Thread.holdsLock(this));
         synchronized (this) {
-            // TODO: no-op if inFinished == true and outFinished == true ?
             if (this.rstStatusCode != -1) {
                 return false;
             }
+            if (in.finished && out.finished) {
+                return false;
+            }
             this.rstStatusCode = rstStatusCode;
-            in.finished = true;
-            out.finished = true;
             notifyAll();
         }
         connection.removeStream(id);
@@ -241,10 +252,14 @@ public final class SpdyStream {
     synchronized void receiveRstStream(int statusCode) {
         if (rstStatusCode == -1) {
             rstStatusCode = statusCode;
-            in.finished = true;
-            out.finished = true;
             notifyAll();
         }
+    }
+
+    private String rstStatusString() {
+        return rstStatusCode > 0 && rstStatusCode < STATUS_CODE_NAMES.length
+                ? STATUS_CODE_NAMES[rstStatusCode]
+                : Integer.toString(rstStatusCode);
     }
 
     /**
@@ -279,8 +294,8 @@ public final class SpdyStream {
         private boolean closed;
 
         /**
-         * True if either side has shut down this stream. We will receive no
-         * more bytes beyond those already in the buffer.
+         * True if either side has cleanly shut down this stream. We will
+         * receive no more bytes beyond those already in the buffer.
          */
         private boolean finished;
 
@@ -303,16 +318,15 @@ public final class SpdyStream {
 
         @Override public int read(byte[] b, int offset, int count) throws IOException {
             synchronized (SpdyStream.this) {
-                checkNotClosed();
                 checkOffsetAndCount(b.length, offset, count);
-
-                while (pos == -1 && !finished) {
+                while (pos == -1 && !finished && !closed && rstStatusCode == -1) {
                     try {
                         SpdyStream.this.wait();
                     } catch (InterruptedException e) {
                         throw new InterruptedIOException();
                     }
                 }
+                checkNotClosed();
 
                 if (pos == -1) {
                     return -1;
@@ -407,6 +421,7 @@ public final class SpdyStream {
         @Override public void close() throws IOException {
             synchronized (SpdyStream.this) {
                 closed = true;
+                SpdyStream.this.notifyAll();
             }
             cancelStreamIfNecessary();
         }
@@ -415,22 +430,22 @@ public final class SpdyStream {
             if (closed) {
                 throw new IOException("stream closed");
             }
+            if (rstStatusCode != -1) {
+                throw new IOException("stream was reset: " + rstStatusString());
+            }
         }
     }
 
     private void cancelStreamIfNecessary() throws IOException {
         assert (!Thread.holdsLock(SpdyStream.this));
         synchronized (this) {
-            if (in.closed && !in.finished && (out.finished || out.closed)) {
-                // RST this stream to prevent additional data from being sent. This is safe because
-                // the input stream is closed (we won't use any further bytes) and the output stream
-                // is either finished or closed (so RSTing both streams won't cause harm).
-                in.finished = true;
-            } else {
-                // We shouldn't cancel this stream.
-                return;
+            if (!in.closed || in.finished || (!out.finished && !out.closed)) {
+                return; // We shouldn't cancel this stream (or don't need to).
             }
         }
+        // RST this stream to prevent additional data from being sent. This is safe because
+        // the input stream is closed (we won't use any further bytes) and the output stream
+        // is either finished or closed (so RSTing both streams doesn't cause harm).
         SpdyStream.this.close(RST_CANCEL);
     }
 
@@ -446,8 +461,8 @@ public final class SpdyStream {
         private boolean closed;
 
         /**
-         * True if either side has shut down this stream. We shall send no more
-         * bytes.
+         * True if either side has cleanly shut down this stream. We shall send
+         * no more bytes.
          */
         private boolean finished;
 
@@ -511,10 +526,10 @@ public final class SpdyStream {
             synchronized (SpdyStream.this) {
                 if (closed) {
                     throw new IOException("stream closed");
-                }
-                if (finished) {
-                    throw new IOException("output stream finished "
-                            + "(RST status code=" + rstStatusCode + ")");
+                } else if (finished) {
+                    throw new IOException("stream finished");
+                } else if (rstStatusCode != -1) {
+                    throw new IOException("stream was reset: " + rstStatusString());
                 }
             }
         }

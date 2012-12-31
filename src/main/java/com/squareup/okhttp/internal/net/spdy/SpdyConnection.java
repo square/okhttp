@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.net.ProtocolException;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -90,7 +91,9 @@ public final class SpdyConnection implements Closeable {
     private final ExecutorService callbackExecutor;
 
     private final Map<Integer, SpdyStream> streams = new HashMap<Integer, SpdyStream>();
+    private int lastGoodStreamId;
     private int nextStreamId;
+    private boolean shutdown;
 
     /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
     private Map<Integer, Ping> pings;
@@ -144,6 +147,9 @@ public final class SpdyConnection implements Closeable {
 
         synchronized (spdyWriter) {
             synchronized (this) {
+                if (shutdown) {
+                    throw new IOException("shutdown");
+                }
                 streamId = nextStreamId;
                 nextStreamId += 2;
                 stream = new SpdyStream(streamId, this, requestHeaders, flags);
@@ -235,6 +241,23 @@ public final class SpdyConnection implements Closeable {
         }
     }
 
+    /**
+     * Degrades this connection such that new streams can neither be created
+     * locally, nor accepted from the remote peer. Existing streams are not
+     * impacted. This is intended to permit an endpoint to gracefully stop
+     * accepting new requests without harming previously established streams.
+     */
+    public void shutdown() throws IOException {
+        synchronized (spdyWriter) {
+            int lastGoodStreamId;
+            synchronized (this) {
+                shutdown = true;
+                lastGoodStreamId = this.lastGoodStreamId;
+            }
+            spdyWriter.goAway(0, lastGoodStreamId);
+        }
+    }
+
     @Override public void close() throws IOException {
         close(null);
     }
@@ -320,6 +343,10 @@ public final class SpdyConnection implements Closeable {
                     nameValueBlock, flags);
             final SpdyStream previous;
             synchronized (SpdyConnection.this) {
+                if (shutdown) {
+                    return;
+                }
+                lastGoodStreamId = streamId;
                 previous = streams.put(streamId, synStream);
             }
             if (previous != null) {
@@ -382,6 +409,23 @@ public final class SpdyConnection implements Closeable {
                 Ping ping = removePing(streamId);
                 if (ping != null) {
                     ping.receive();
+                }
+            }
+        }
+
+        @Override public void goAway(int flags, int lastGoodStreamId) {
+            synchronized (SpdyConnection.this) {
+                shutdown = true;
+
+                // Fail all streams created after the last good stream ID.
+                for (Iterator<Map.Entry<Integer, SpdyStream>> i = streams.entrySet().iterator();
+                        i.hasNext();) {
+                    Map.Entry<Integer, SpdyStream> entry = i.next();
+                    int streamId = entry.getKey();
+                    if (streamId > lastGoodStreamId && entry.getValue().isLocallyInitiated()) {
+                        entry.getValue().receiveRstStream(SpdyStream.RST_REFUSED_STREAM);
+                        i.remove();
+                    }
                 }
             }
         }
