@@ -503,7 +503,6 @@ public class HttpEngine {
             requestHeaders.setHost(getOriginAddress(policy.getURL()));
         }
 
-        // TODO: this shouldn't be set for SPDY (it's ignored)
         if ((connection == null || connection.getHttpMinorVersion() != 0)
                 && requestHeaders.getConnection() == null) {
             requestHeaders.setConnection("Keep-Alive");
@@ -511,7 +510,6 @@ public class HttpEngine {
 
         if (requestHeaders.getAcceptEncoding() == null) {
             transparentGzip = true;
-            // TODO: this shouldn't be set for SPDY (it isn't necessary)
             requestHeaders.setAcceptEncoding("gzip");
         }
 

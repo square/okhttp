@@ -140,4 +140,13 @@ final class SpdyWriter {
         out.writeInt(id);
         out.flush();
     }
+
+    public synchronized void goAway(int flags, int lastGoodStreamId) throws IOException {
+        int type = SpdyConnection.TYPE_GOAWAY;
+        int length = 4;
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.writeInt(lastGoodStreamId);
+        out.flush();
+    }
 }

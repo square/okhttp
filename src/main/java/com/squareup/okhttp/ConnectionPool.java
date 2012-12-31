@@ -113,7 +113,7 @@ public final class ConnectionPool {
      */
     public void recycle(Connection connection) {
         if (connection.isSpdy()) {
-            throw new IllegalArgumentException(); // TODO: just 'return' here?
+            return;
         }
 
         try {

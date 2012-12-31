@@ -113,6 +113,9 @@ final class SpdyReader {
                 return true;
 
             case SpdyConnection.TYPE_GOAWAY:
+                readGoAway(handler, flags, length);
+                return true;
+
             case SpdyConnection.TYPE_HEADERS:
                 Streams.skipByReading(in, length);
                 throw new UnsupportedOperationException("TODO");
@@ -227,6 +230,12 @@ final class SpdyReader {
         handler.ping(flags, id);
     }
 
+    private void readGoAway(Handler handler, int flags, int length) throws IOException {
+        if (length != 4) throw ioException("TYPE_GOAWAY length: %d != 4", length);
+        int lastGoodStreamId = in.readInt() & 0x7fffffff;
+        handler.goAway(flags, lastGoodStreamId);
+    }
+
     private void readSettings(Handler handler, int flags, int length) throws IOException {
         int numberOfEntries = in.readInt();
         if (length != 4 + 8 * numberOfEntries) {
@@ -259,7 +268,7 @@ final class SpdyReader {
         void settings(int flags, Settings settings);
         void noop();
         void ping(int flags, int streamId);
-        // TODO: goaway
+        void goAway(int flags, int lastGoodStreamId);
         // TODO: headers
     }
 }
