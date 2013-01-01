@@ -40,6 +40,29 @@ public final class IoUtils {
     }
 
     /**
+     * Closes {@code a} and {@code b}. If either close fails, this completes
+     * the other close and rethrows the first encountered exception.
+     */
+    public static void closeAll(Closeable a, Closeable b) throws IOException {
+        Throwable thrown = null;
+        try {
+            a.close();
+        } catch (Throwable e) {
+            thrown = e;
+        }
+        try {
+            b.close();
+        } catch (Throwable e) {
+            if (thrown == null) thrown = e;
+        }
+        if (thrown == null) return;
+        if (thrown instanceof IOException) throw (IOException) thrown;
+        if (thrown instanceof RuntimeException) throw (RuntimeException) thrown;
+        if (thrown instanceof Error) throw (Error) thrown;
+        throw new AssertionError(thrown);
+    }
+
+    /**
      * Closes 'socket', ignoring any exceptions. Does nothing if 'socket' is null.
      */
     public static void closeQuietly(Socket socket) {

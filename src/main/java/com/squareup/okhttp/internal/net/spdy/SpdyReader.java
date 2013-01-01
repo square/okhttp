@@ -16,9 +16,10 @@
 
 package com.squareup.okhttp.internal.net.spdy;
 
+import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.io.Streams;
+import java.io.Closeable;
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -32,7 +33,7 @@ import java.util.zip.InflaterInputStream;
 /**
  * Read version 2 SPDY frames.
  */
-final class SpdyReader {
+final class SpdyReader implements Closeable {
     private static final String DICTIONARY_STRING = ""
             + "optionsgetheadpostputdeletetraceacceptaccept-charsetaccept-encodingaccept-"
             + "languageauthorizationexpectfromhostif-modified-sinceif-matchif-none-matchi"
@@ -73,8 +74,8 @@ final class SpdyReader {
         int w1;
         try {
             w1 = in.readInt();
-        } catch (EOFException e) {
-            return false;
+        } catch (IOException e) {
+            return false; // This might be a normal socket close.
         }
         int w2 = in.readInt();
 
@@ -257,6 +258,10 @@ final class SpdyReader {
 
     private static IOException ioException(String message, Object... args) throws IOException {
         throw new IOException(String.format(message, args));
+    }
+
+    @Override public void close() throws IOException {
+        IoUtils.closeAll(in, nameValueBlockIn);
     }
 
     public interface Handler {

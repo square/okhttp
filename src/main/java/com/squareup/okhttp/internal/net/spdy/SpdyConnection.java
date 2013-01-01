@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.net.spdy;
 
+import com.squareup.okhttp.internal.io.IoUtils;
 import com.squareup.okhttp.internal.io.Streams;
 import static com.squareup.okhttp.internal.net.spdy.Threads.newThreadFactory;
 import java.io.Closeable;
@@ -206,6 +207,9 @@ public final class SpdyConnection implements Closeable {
         Ping ping = new Ping();
         int pingId;
         synchronized (this) {
+            if (shutdown) {
+                throw new IOException("shutdown");
+            }
             pingId = nextPingId;
             nextPingId += 2;
             if (pings == null) pings = new HashMap<Integer, Ping>();
@@ -261,6 +265,9 @@ public final class SpdyConnection implements Closeable {
         synchronized (spdyWriter) {
             int lastGoodStreamId;
             synchronized (this) {
+                if (shutdown) {
+                    return;
+                }
                 shutdown = true;
                 lastGoodStreamId = this.lastGoodStreamId;
             }
@@ -268,20 +275,46 @@ public final class SpdyConnection implements Closeable {
         }
     }
 
+    /**
+     * Closes this connection. This cancels all open streams and unanswered
+     * pings. It closes the underlying input and output streams and shuts down
+     * internal executor services.
+     */
     @Override public void close() throws IOException {
-        close(null);
-    }
+        shutdown();
 
-    private synchronized void close(Throwable reason) throws IOException {
-        if (reason != null) {
-            reason.printStackTrace();
+        SpdyStream[] streamsToClose = null;
+        Ping[] pingsToCancel = null;
+        synchronized (this) {
+            if (!streams.isEmpty()) {
+                streamsToClose = streams.values().toArray(new SpdyStream[streams.size()]);
+                streams.clear();
+            }
+            if (pings != null) {
+                pingsToCancel = pings.values().toArray(new Ping[pings.size()]);
+                pings = null;
+            }
         }
-        // TODO: forward 'reason' to forced closed streams?
-        // TODO: graceful close; send RST frames
-        // TODO: close all streams to release waiting readers
+
+        if (streamsToClose != null) {
+            for (SpdyStream stream : streamsToClose) {
+                try {
+                    stream.close(SpdyStream.RST_CANCEL);
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        if (pingsToCancel != null) {
+            for (Ping ping : pingsToCancel) {
+                ping.cancel();
+            }
+        }
+
         writeExecutor.shutdown();
-        readExecutor.shutdown();
         callbackExecutor.shutdown();
+        readExecutor.shutdown();
+        IoUtils.closeAll(spdyReader, spdyWriter);
     }
 
     public static class Builder {
@@ -320,17 +353,13 @@ public final class SpdyConnection implements Closeable {
 
     private class Reader implements Runnable, SpdyReader.Handler {
         @Override public void run() {
-            Throwable failure = null;
             try {
                 while (spdyReader.nextFrame(this)) {
                 }
-            } catch (Throwable e) {
-                failure = e;
-            }
-
-            try {
-                close(failure);
-            } catch (IOException ignored) {
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                IoUtils.closeQuietly(SpdyConnection.this);
             }
         }
 
