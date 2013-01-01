@@ -94,6 +94,25 @@ public final class SpdyStream {
     }
 
     /**
+     * Returns true if this stream is open. A stream is open until either:
+     * <ul>
+     *   <li>A {@code SYN_RESET} frame abnormally terminates the stream.
+     *   <li>Both input and output streams have transmitted all data.
+     * </ul>
+     * Note that the input stream may continue to yield data even after a stream
+     * reports itself as not open. This is because input data is buffered.
+     */
+    public synchronized boolean isOpen() {
+        if (rstStatusCode != -1) {
+            return false;
+        }
+        if ((in.finished || in.closed) && (out.finished || out.closed)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Returns true if this stream was created by this peer.
      */
     public boolean isLocallyInitiated() {
@@ -227,25 +246,32 @@ public final class SpdyStream {
         return true;
     }
 
-    synchronized void receiveReply(List<String> strings) throws IOException {
-        if (!isLocallyInitiated() || responseHeaders != null) {
-            throw new ProtocolException();
+    void receiveReply(List<String> strings) throws IOException {
+        assert (!Thread.holdsLock(SpdyStream.this));
+        synchronized (this) {
+            if (!isLocallyInitiated() || responseHeaders != null) {
+                throw new ProtocolException();
+            }
+            responseHeaders = strings;
+            notifyAll();
         }
-        responseHeaders = strings;
-        notifyAll();
     }
 
-    void receiveData(InputStream in, int flags, int length) throws IOException {
+    void receiveData(InputStream in, int length) throws IOException {
         assert (!Thread.holdsLock(SpdyStream.this));
         this.in.receive(in, length);
-        if ((flags & SpdyConnection.FLAG_FIN) == 0) {
-            return;
-        }
+    }
 
-        // This is the last incoming data in the stream.
+    void receiveFin() {
+        assert (!Thread.holdsLock(SpdyStream.this));
+        boolean open;
         synchronized (this) {
             this.in.finished = true;
+            open = isOpen();
             notifyAll();
+        }
+        if (!open) {
+            connection.removeStream(id);
         }
     }
 
@@ -438,15 +464,21 @@ public final class SpdyStream {
 
     private void cancelStreamIfNecessary() throws IOException {
         assert (!Thread.holdsLock(SpdyStream.this));
+        boolean open;
+        boolean cancel;
         synchronized (this) {
-            if (!in.closed || in.finished || (!out.finished && !out.closed)) {
-                return; // We shouldn't cancel this stream (or don't need to).
-            }
+            cancel = !in.finished && in.closed && (out.finished || out.closed);
+            open = isOpen();
         }
-        // RST this stream to prevent additional data from being sent. This is safe because
-        // the input stream is closed (we won't use any further bytes) and the output stream
-        // is either finished or closed (so RSTing both streams doesn't cause harm).
-        SpdyStream.this.close(RST_CANCEL);
+        if (cancel) {
+            // RST this stream to prevent additional data from being sent. This
+            // is safe because the input stream is closed (we won't use any
+            // further bytes) and the output stream is either finished or closed
+            // (so RSTing both streams doesn't cause harm).
+            SpdyStream.this.close(RST_CANCEL);
+        } else if (!open) {
+            connection.removeStream(id);
+        }
     }
 
     /**
