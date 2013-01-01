@@ -71,7 +71,7 @@ public final class MockSpdyPeer {
                 try {
                     readAndWriteFrames(serverSocket);
                 } catch (IOException e) {
-                    e.printStackTrace(); // TODO
+                    throw new RuntimeException(e);
                 }
             }
         });
