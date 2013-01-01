@@ -17,7 +17,9 @@
 package com.squareup.okhttp.internal.net.spdy;
 
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.io.IoUtils;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,7 +29,7 @@ import java.util.zip.Deflater;
 /**
  * Write version 2 SPDY frames.
  */
-final class SpdyWriter {
+final class SpdyWriter implements Closeable {
     final DataOutputStream out;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
@@ -148,5 +150,9 @@ final class SpdyWriter {
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(lastGoodStreamId);
         out.flush();
+    }
+
+    @Override public void close() throws IOException {
+        IoUtils.closeAll(out, nameValueBlockOut);
     }
 }
