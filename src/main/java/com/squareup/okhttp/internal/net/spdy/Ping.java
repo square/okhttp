@@ -40,9 +40,16 @@ public final class Ping {
         latch.countDown();
     }
 
+    void cancel() {
+        if (received != -1 || sent == -1) throw new IllegalStateException();
+        received = sent - 1;
+        latch.countDown();
+    }
+
     /**
      * Returns the round trip time for this ping in nanoseconds, waiting for the
-     * response to arrive if necessary.
+     * response to arrive if necessary. Returns -1 if the response was
+     * cancelled.
      */
     public long roundTripTime() throws InterruptedException {
         latch.await();
@@ -51,13 +58,14 @@ public final class Ping {
 
     /**
      * Returns the round trip time for this ping in nanoseconds, or -1 if the
-     * timeout elapsed before the round trip completed.
+     * response was cancelled, or -2 if the timeout elapsed before the round
+     * trip completed.
      */
     public long roundTripTime(long timeout, TimeUnit unit) throws InterruptedException {
         if (latch.await(timeout, unit)) {
             return received - sent;
         } else {
-            return -1;
+            return -2;
         }
     }
 }
