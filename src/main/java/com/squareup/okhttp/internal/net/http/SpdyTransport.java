@@ -55,6 +55,7 @@ public final class SpdyTransport implements Transport {
         boolean hasResponseBody = true;
         stream = spdyConnection.newStream(requestHeaders.toNameValueBlock(),
                 hasRequestBody, hasResponseBody);
+        stream.setReadTimeout(httpEngine.policy.getReadTimeout());
     }
 
     @Override public void writeRequestBody(RetryableOutputStream requestBody) throws IOException {

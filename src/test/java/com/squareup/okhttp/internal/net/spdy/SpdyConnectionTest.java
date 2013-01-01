@@ -823,6 +823,32 @@ public final class SpdyConnectionTest {
         assertEquals(-1, ping.roundTripTime());
     }
 
+    @Test public void readTimeoutExpires() throws Exception {
+        // write the mocking script
+        peer.acceptFrame(); // SYN STREAM
+        peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+        peer.play();
+
+        // play it back
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("b", "banana"), true, true);
+        stream.setReadTimeout(1000);
+        InputStream in = stream.getInputStream();
+        long startNanos = System.nanoTime();
+        try {
+            in.read();
+            fail();
+        } catch (IOException expected) {
+        }
+        long elapsedNanos = System.nanoTime() - startNanos;
+        assertEquals(1000d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+        assertEquals(1, connection.openStreamCount());
+
+        // verify the peer received what was expected
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+    }
+
     private void writeAndClose(SpdyStream stream, String data) throws IOException {
         OutputStream out = stream.getOutputStream();
         out.write(data.getBytes("UTF-8"));

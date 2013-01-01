@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.ProtocolException;
+import java.net.SocketTimeoutException;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import java.util.List;
 
@@ -60,6 +61,7 @@ public final class SpdyStream {
 
     private final int id;
     private final SpdyConnection connection;
+    private long readTimeoutMillis = 0;
 
     /** Headers sent by the stream initiator. Immutable and non null. */
     private final List<String> requestHeaders;
@@ -186,6 +188,18 @@ public final class SpdyStream {
             }
         }
         connection.writeSynReply(id, flags, responseHeaders);
+    }
+
+    /**
+     * Sets the maximum time to wait on input stream reads before failing with a
+     * {@code SocketTimeoutException}, or {@code 0} to wait indefinitely.
+     */
+    public void setReadTimeout(long readTimeoutMillis) {
+        this.readTimeoutMillis = readTimeoutMillis;
+    }
+
+    public long getReadTimeoutMillis() {
+        return readTimeoutMillis;
     }
 
     /**
@@ -345,13 +359,7 @@ public final class SpdyStream {
         @Override public int read(byte[] b, int offset, int count) throws IOException {
             synchronized (SpdyStream.this) {
                 checkOffsetAndCount(b.length, offset, count);
-                while (pos == -1 && !finished && !closed && rstStatusCode == -1) {
-                    try {
-                        SpdyStream.this.wait();
-                    } catch (InterruptedException e) {
-                        throw new InterruptedIOException();
-                    }
-                }
+                waitUntilReadable();
                 checkNotClosed();
 
                 if (pos == -1) {
@@ -387,6 +395,34 @@ public final class SpdyStream {
                 }
 
                 return copied;
+            }
+        }
+
+        /**
+         * Returns once the input stream is either readable or finished. Throws
+         * a {@link SocketTimeoutException} if the read timeout elapses before
+         * that happens.
+         */
+        private void waitUntilReadable() throws IOException {
+            long start = 0;
+            long remaining = 0;
+            if (readTimeoutMillis != 0) {
+                start = (System.nanoTime() / 1000000);
+                remaining = readTimeoutMillis;
+            }
+            try {
+                while (pos == -1 && !finished && !closed && rstStatusCode == -1) {
+                    if (readTimeoutMillis == 0) {
+                        SpdyStream.this.wait();
+                    } else if (remaining > 0) {
+                        SpdyStream.this.wait(remaining);
+                        remaining = start + readTimeoutMillis - (System.nanoTime() / 1000000);
+                    } else {
+                        throw new SocketTimeoutException();
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
             }
         }
 
