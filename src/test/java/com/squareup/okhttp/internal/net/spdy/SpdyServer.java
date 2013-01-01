@@ -16,39 +16,68 @@
 
 package com.squareup.okhttp.internal.net.spdy;
 
+import com.squareup.okhttp.internal.net.ssl.SslContextBuilder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import org.eclipse.jetty.npn.NextProtoNego;
 
 /**
- * A basic SPDY server that serves the contents of a local directory. This
- * server will service a single SPDY connection.
+ * A basic SPDY server that serves the contents of a local directory.
  */
 public final class SpdyServer implements IncomingStreamHandler {
     private final File baseDirectory;
+    private SSLSocketFactory sslSocketFactory;
 
     public SpdyServer(File baseDirectory) {
         this.baseDirectory = baseDirectory;
+    }
+
+    public void useHttps(SSLSocketFactory sslSocketFactory) {
+        this.sslSocketFactory = sslSocketFactory;
     }
 
     private void run() throws Exception {
         ServerSocket serverSocket = new ServerSocket(8888);
         serverSocket.setReuseAddress(true);
 
-        Socket socket = serverSocket.accept();
-        SpdyConnection connection = new SpdyConnection.Builder(false, socket)
-                .handler(this)
-                .build();
+        while (true) {
+            Socket socket = serverSocket.accept();
+            if (sslSocketFactory != null) {
+                socket = doSsl(socket);
+            }
+            new SpdyConnection.Builder(false, socket).handler(this).build();
+        }
+    }
 
-        // Chrome doesn't seem to like pings coming from the server:
-        // https://groups.google.com/forum/?fromgroups=#!topic/spdy-dev/NgTHYUQKWBY
-        // System.out.println("PING RTT TIME " + connection.ping().roundTripTime());
+    private Socket doSsl(Socket socket) throws IOException {
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket,
+                socket.getInetAddress().getHostAddress(), socket.getPort(), true);
+        sslSocket.setUseClientMode(false);
+        NextProtoNego.put(sslSocket, new NextProtoNego.ServerProvider() {
+            @Override public void unsupported() {
+                System.out.println("UNSUPPORTED");
+            }
+            @Override public List<String> protocols() {
+                return Arrays.asList("spdy/2");
+            }
+            @Override public void protocolSelected(String protocol) {
+                System.out.println("PROTOCOL SELECTED: " + protocol);
+            }
+        });
+        return sslSocket;
     }
 
     @Override public void receive(final SpdyStream stream) throws IOException {
@@ -69,7 +98,9 @@ public final class SpdyServer implements IncomingStreamHandler {
 
         File file = new File(baseDirectory + path);
 
-        if (file.exists() && !file.isDirectory()) {
+        if (file.isDirectory()) {
+            serveDirectory(stream, file.list());
+        } else if (file.exists()) {
             serveFile(stream, file);
         } else {
             send404(stream, path);
@@ -87,6 +118,21 @@ public final class SpdyServer implements IncomingStreamHandler {
         String text = "Not found: " + path;
         out.write(text.getBytes("UTF-8"));
         out.close();
+    }
+
+    private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
+        List<String> responseHeaders = Arrays.asList(
+                "status", "200",
+                "version", "HTTP/1.1",
+                "content-type", "text/html; charset=UTF-8"
+        );
+        stream.reply(responseHeaders, true);
+        OutputStream out = stream.getOutputStream();
+        Writer writer = new OutputStreamWriter(out, "UTF-8");
+        for (String file : files) {
+            writer.write("<a href='" + file + "'>" + file + "</a><br>");
+        }
+        writer.close();
     }
 
     private void serveFile(SpdyStream stream, File file) throws IOException {
@@ -115,6 +161,10 @@ public final class SpdyServer implements IncomingStreamHandler {
             return;
         }
 
-        new SpdyServer(new File(args[0])).run();
+        SpdyServer server = new SpdyServer(new File(args[0]));
+        SSLContext sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName())
+                .build();
+        server.useHttps(sslContext.getSocketFactory());
+        server.run();
     }
 }
