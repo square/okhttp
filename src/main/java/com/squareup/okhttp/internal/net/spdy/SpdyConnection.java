@@ -121,6 +121,14 @@ public final class SpdyConnection implements Closeable {
         readExecutor.execute(new Reader());
     }
 
+    /**
+     * Returns the number of {@link SpdyStream#isOpen() open streams} on this
+     * connection.
+     */
+    public synchronized int openStreamCount() {
+        return streams.size();
+    }
+
     private synchronized SpdyStream getStream(int id) {
         return streams.get(id);
     }
@@ -153,7 +161,9 @@ public final class SpdyConnection implements Closeable {
                 streamId = nextStreamId;
                 nextStreamId += 2;
                 stream = new SpdyStream(streamId, this, requestHeaders, flags);
-                streams.put(streamId, stream);
+                if (stream.isOpen()) {
+                    streams.put(streamId, stream);
+                }
             }
 
             spdyWriter.synStream(flags, streamId, associatedStreamId, priority, requestHeaders);
@@ -263,6 +273,9 @@ public final class SpdyConnection implements Closeable {
     }
 
     private synchronized void close(Throwable reason) throws IOException {
+        if (reason != null) {
+            reason.printStackTrace();
+        }
         // TODO: forward 'reason' to forced closed streams?
         // TODO: graceful close; send RST frames
         // TODO: close all streams to release waiting readers
@@ -324,16 +337,19 @@ public final class SpdyConnection implements Closeable {
         @Override public void data(int flags, int streamId, InputStream in, int length)
                 throws IOException {
             SpdyStream dataStream = getStream(streamId);
-            if (dataStream != null) {
-                try {
-                    dataStream.receiveData(in, flags, length);
-                } catch (ProtocolException e) {
-                    Streams.skipByReading(in, length);
-                    dataStream.closeLater(SpdyStream.RST_FLOW_CONTROL_ERROR);
-                }
-            } else {
+            if (dataStream == null) {
                 writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
                 Streams.skipByReading(in, length);
+                return;
+            }
+            try {
+                dataStream.receiveData(in, length);
+                if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+                    dataStream.receiveFin();
+                }
+            } catch (ProtocolException e) {
+                Streams.skipByReading(in, length);
+                dataStream.closeLater(SpdyStream.RST_FLOW_CONTROL_ERROR);
             }
         }
 
@@ -368,15 +384,17 @@ public final class SpdyConnection implements Closeable {
         @Override public void synReply(int flags, int streamId, List<String> nameValueBlock)
                 throws IOException {
             SpdyStream replyStream = getStream(streamId);
-            if (replyStream != null) {
-                // TODO: honor incoming FLAG_FIN.
-                try {
-                    replyStream.receiveReply(nameValueBlock);
-                } catch (ProtocolException e) {
-                    replyStream.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
-                }
-            } else {
+            if (replyStream == null) {
                 writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
+                return;
+            }
+            try {
+                replyStream.receiveReply(nameValueBlock);
+                if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+                    replyStream.receiveFin();
+                }
+            } catch (ProtocolException e) {
+                replyStream.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
             }
         }
 
