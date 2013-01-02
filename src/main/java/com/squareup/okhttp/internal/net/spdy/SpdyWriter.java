@@ -75,6 +75,21 @@ final class SpdyWriter implements Closeable {
         out.flush();
     }
 
+    public synchronized void headers(
+            int flags, int streamId, List<String> nameValueBlock) throws IOException {
+        writeNameValueBlockToBuffer(nameValueBlock);
+        int type = SpdyConnection.TYPE_HEADERS;
+        int length = nameValueBlockBuffer.size() + 6;
+        int unused = 0;
+
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.writeInt(streamId & 0x7fffffff);
+        out.writeShort(unused);
+        nameValueBlockBuffer.writeTo(out);
+        out.flush();
+    }
+
     public synchronized void synReset(int streamId, int statusCode) throws IOException {
         int flags = 0;
         int type = SpdyConnection.TYPE_RST_STREAM;

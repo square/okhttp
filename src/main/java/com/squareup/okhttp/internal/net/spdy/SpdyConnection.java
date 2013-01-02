@@ -427,6 +427,18 @@ public final class SpdyConnection implements Closeable {
             }
         }
 
+        @Override public void headers(int flags, int streamId, List<String> nameValueBlock)
+                throws IOException {
+            SpdyStream replyStream = getStream(streamId);
+            if (replyStream != null) {
+                try {
+                    replyStream.receiveHeaders(nameValueBlock);
+                } catch (ProtocolException e) {
+                    replyStream.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
+                }
+            }
+        }
+
         @Override public void rstStream(int flags, int streamId, int statusCode) {
             SpdyStream rstStream = removeStream(streamId);
             if (rstStream != null) {
