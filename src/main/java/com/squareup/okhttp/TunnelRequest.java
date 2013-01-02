@@ -16,7 +16,7 @@
 package com.squareup.okhttp;
 
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
-import com.squareup.okhttp.internal.net.http.RawHeaders;
+import com.squareup.okhttp.internal.http.RawHeaders;
 
 /**
  * Routing and authentication information sent to an HTTP proxy to create a

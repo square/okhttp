@@ -16,10 +16,19 @@
 
 package com.squareup.okhttp.internal;
 
+import java.io.Closeable;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Junk drawer of utility methods.
@@ -35,6 +44,7 @@ public final class Util {
 
     /** A cheap and type-safe constant for the UTF-8 Charset. */
     public static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static AtomicReference<byte[]> skipBuffer = new AtomicReference<byte[]>();
 
     private Util() {
     }
@@ -88,5 +98,219 @@ public final class Util {
      */
     public static boolean equal(Object a, Object b) {
         return a == b || (a != null && a.equals(b));
+    }
+
+    /**
+     * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
+     */
+    public static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
+     * Closes {@code a} and {@code b}. If either close fails, this completes
+     * the other close and rethrows the first encountered exception.
+     */
+    public static void closeAll(Closeable a, Closeable b) throws IOException {
+        Throwable thrown = null;
+        try {
+            a.close();
+        } catch (Throwable e) {
+            thrown = e;
+        }
+        try {
+            b.close();
+        } catch (Throwable e) {
+            if (thrown == null) thrown = e;
+        }
+        if (thrown == null) return;
+        if (thrown instanceof IOException) throw (IOException) thrown;
+        if (thrown instanceof RuntimeException) throw (RuntimeException) thrown;
+        if (thrown instanceof Error) throw (Error) thrown;
+        throw new AssertionError(thrown);
+    }
+
+    /**
+     * Recursively delete everything in {@code dir}.
+     */
+    // TODO: this should specify paths as Strings rather than as Files
+    public static void deleteContents(File dir) throws IOException {
+        File[] files = dir.listFiles();
+        if (files == null) {
+            throw new IllegalArgumentException("not a directory: " + dir);
+        }
+        for (File file : files) {
+            if (file.isDirectory()) {
+                deleteContents(file);
+            }
+            if (!file.delete()) {
+                throw new IOException("failed to delete file: " + file);
+            }
+        }
+    }
+
+    /**
+     * Implements InputStream.read(int) in terms of InputStream.read(byte[], int, int).
+     * InputStream assumes that you implement InputStream.read(int) and provides default
+     * implementations of the others, but often the opposite is more efficient.
+     */
+    public static int readSingleByte(InputStream in) throws IOException {
+        byte[] buffer = new byte[1];
+        int result = in.read(buffer, 0, 1);
+        return (result != -1) ? buffer[0] & 0xff : -1;
+    }
+
+    /**
+     * Implements OutputStream.write(int) in terms of OutputStream.write(byte[], int, int).
+     * OutputStream assumes that you implement OutputStream.write(int) and provides default
+     * implementations of the others, but often the opposite is more efficient.
+     */
+    public static void writeSingleByte(OutputStream out, int b) throws IOException {
+        byte[] buffer = new byte[1];
+        buffer[0] = (byte) (b & 0xff);
+        out.write(buffer);
+    }
+
+    /**
+     * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
+     */
+    public static void readFully(InputStream in, byte[] dst) throws IOException {
+        readFully(in, dst, 0, dst.length);
+    }
+
+    /**
+     * Reads exactly 'byteCount' bytes from 'in' (into 'dst' at offset 'offset'), and throws
+     * EOFException if insufficient bytes are available.
+     *
+     * Used to implement {@link java.io.DataInputStream#readFully(byte[], int, int)}.
+     */
+    public static void readFully(InputStream in, byte[] dst, int offset, int byteCount) throws IOException {
+        if (byteCount == 0) {
+            return;
+        }
+        if (in == null) {
+            throw new NullPointerException("in == null");
+        }
+        if (dst == null) {
+            throw new NullPointerException("dst == null");
+        }
+        checkOffsetAndCount(dst.length, offset, byteCount);
+        while (byteCount > 0) {
+            int bytesRead = in.read(dst, offset, byteCount);
+            if (bytesRead < 0) {
+                throw new EOFException();
+            }
+            offset += bytesRead;
+            byteCount -= bytesRead;
+        }
+    }
+
+    /**
+     * Returns the remainder of 'reader' as a string, closing it when done.
+     */
+    public static String readFully(Reader reader) throws IOException {
+        try {
+            StringWriter writer = new StringWriter();
+            char[] buffer = new char[1024];
+            int count;
+            while ((count = reader.read(buffer)) != -1) {
+                writer.write(buffer, 0, count);
+            }
+            return writer.toString();
+        } finally {
+            reader.close();
+        }
+    }
+
+    public static void skipAll(InputStream in) throws IOException {
+        do {
+            in.skip(Long.MAX_VALUE);
+        } while (in.read() != -1);
+    }
+
+    /**
+     * Call {@code in.read()} repeatedly until either the stream is exhausted or
+     * {@code byteCount} bytes have been read.
+     *
+     * <p>This method reuses the skip buffer but is careful to never use it at
+     * the same time that another stream is using it. Otherwise streams that use
+     * the caller's buffer for consistency checks like CRC could be clobbered by
+     * other threads. A thread-local buffer is also insufficient because some
+     * streams may call other streams in their skip() method, also clobbering the
+     * buffer.
+     */
+    public static long skipByReading(InputStream in, long byteCount) throws IOException {
+        // acquire the shared skip buffer.
+        byte[] buffer = skipBuffer.getAndSet(null);
+        if (buffer == null) {
+            buffer = new byte[4096];
+        }
+
+        long skipped = 0;
+        while (skipped < byteCount) {
+            int toRead = (int) Math.min(byteCount - skipped, buffer.length);
+            int read = in.read(buffer, 0, toRead);
+            if (read == -1) {
+                break;
+            }
+            skipped += read;
+            if (read < toRead) {
+                break;
+            }
+        }
+
+        // release the shared skip buffer.
+        skipBuffer.set(buffer);
+
+        return skipped;
+    }
+
+    /**
+     * Copies all of the bytes from {@code in} to {@code out}. Neither stream is closed.
+     * Returns the total number of bytes transferred.
+     */
+    public static int copy(InputStream in, OutputStream out) throws IOException {
+        int total = 0;
+        byte[] buffer = new byte[8192];
+        int c;
+        while ((c = in.read(buffer)) != -1) {
+            total += c;
+            out.write(buffer, 0, c);
+        }
+        return total;
+    }
+
+    /**
+     * Returns the ASCII characters up to but not including the next "\r\n", or
+     * "\n".
+     *
+     * @throws java.io.EOFException if the stream is exhausted before the next newline
+     *     character.
+     */
+    public static String readAsciiLine(InputStream in) throws IOException {
+        // TODO: support UTF-8 here instead
+        StringBuilder result = new StringBuilder(80);
+        while (true) {
+            int c = in.read();
+            if (c == -1) {
+                throw new EOFException();
+            } else if (c == '\n') {
+                break;
+            }
+
+            result.append((char) c);
+        }
+        int length = result.length();
+        if (length > 0 && result.charAt(length - 1) == '\r') {
+            result.setLength(length - 1);
+        }
+        return result.toString();
     }
 }

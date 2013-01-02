@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.net.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.net.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
