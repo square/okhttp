@@ -17,7 +17,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.io.IoUtils;
+import com.squareup.okhttp.internal.Util;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,7 +88,7 @@ public final class ConnectionPool {
                     connections = null;
                 }
                 if (!connection.isEligibleForRecycling()) {
-                    IoUtils.closeQuietly(connection);
+                    Util.closeQuietly(connection);
                     continue;
                 }
                 try {
@@ -96,7 +96,7 @@ public final class ConnectionPool {
                 } catch (SocketException e) {
                     // When unable to tag, skip recycling and close
                     Platform.get().logW("Unable to tagSocket(): " + e);
-                    IoUtils.closeQuietly(connection);
+                    Util.closeQuietly(connection);
                     continue;
                 }
                 return connection;
@@ -121,7 +121,7 @@ public final class ConnectionPool {
         } catch (SocketException e) {
             // When unable to remove tagging, skip recycling and close
             Platform.get().logW("Unable to untagSocket(): " + e);
-            IoUtils.closeQuietly(connection);
+            Util.closeQuietly(connection);
             return;
         }
 
@@ -142,7 +142,7 @@ public final class ConnectionPool {
         }
 
         // don't close streams while holding a lock!
-        IoUtils.closeQuietly(connection);
+        Util.closeQuietly(connection);
     }
 
     /**
