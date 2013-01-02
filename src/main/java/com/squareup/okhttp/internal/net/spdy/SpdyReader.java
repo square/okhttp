@@ -118,8 +118,8 @@ final class SpdyReader implements Closeable {
                 return true;
 
             case SpdyConnection.TYPE_HEADERS:
-                Streams.skipByReading(in, length);
-                throw new UnsupportedOperationException("TODO");
+                readHeaders(handler, flags, length);
+                return true;
 
             default:
                 throw new IOException("Unexpected frame");
@@ -156,6 +156,14 @@ final class SpdyReader implements Closeable {
         int streamId = in.readInt() & 0x7fffffff;
         int statusCode = in.readInt();
         handler.rstStream(flags, streamId, statusCode);
+    }
+
+    private void readHeaders(Handler handler, int flags, int length) throws IOException {
+        int w1 = in.readInt();
+        in.readShort(); // unused
+        int streamId = w1 & 0x7fffffff;
+        List<String> nameValueBlock = readNameValueBlock(length - 6);
+        handler.headers(flags, streamId, nameValueBlock);
     }
 
     private DataInputStream newNameValueBlockStream() {
@@ -269,11 +277,11 @@ final class SpdyReader implements Closeable {
         void synStream(int flags, int streamId, int associatedStreamId, int priority,
                 List<String> nameValueBlock);
         void synReply(int flags, int streamId, List<String> nameValueBlock) throws IOException;
+        void headers(int flags, int streamId, List<String> nameValueBlock) throws IOException;
         void rstStream(int flags, int streamId, int statusCode);
         void settings(int flags, Settings settings);
         void noop();
         void ping(int flags, int streamId);
         void goAway(int flags, int lastGoodStreamId);
-        // TODO: headers
     }
 }
