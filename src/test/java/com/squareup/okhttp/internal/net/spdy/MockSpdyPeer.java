@@ -172,6 +172,14 @@ public final class MockSpdyPeer {
             this.nameValueBlock = nameValueBlock;
         }
 
+        @Override public void headers(int flags, int streamId, List<String> nameValueBlock) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_HEADERS;
+            this.streamId = streamId;
+            this.flags = flags;
+            this.nameValueBlock = nameValueBlock;
+        }
+
         @Override public void data(int flags, int streamId, InputStream in, int length)
                 throws IOException {
             if (this.type != -1) throw new IllegalStateException();

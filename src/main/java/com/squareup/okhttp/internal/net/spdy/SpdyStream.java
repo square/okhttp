@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import static java.nio.ByteOrder.BIG_ENDIAN;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -268,6 +269,19 @@ public final class SpdyStream {
             }
             responseHeaders = strings;
             notifyAll();
+        }
+    }
+
+    void receiveHeaders(List<String> headers) throws IOException {
+        assert (!Thread.holdsLock(SpdyStream.this));
+        synchronized (this) {
+            if (responseHeaders == null) {
+                throw new ProtocolException();
+            }
+            List<String> newHeaders = new ArrayList<String>();
+            newHeaders.addAll(responseHeaders);
+            newHeaders.addAll(headers);
+            this.responseHeaders = newHeaders;
         }
     }
 
