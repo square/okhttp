@@ -17,12 +17,12 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.net.http.HttpAuthenticator;
-import com.squareup.okhttp.internal.net.http.HttpEngine;
-import com.squareup.okhttp.internal.net.http.HttpTransport;
-import com.squareup.okhttp.internal.net.http.RawHeaders;
-import com.squareup.okhttp.internal.net.http.SpdyTransport;
-import com.squareup.okhttp.internal.net.spdy.SpdyConnection;
+import com.squareup.okhttp.internal.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpTransport;
+import com.squareup.okhttp.internal.http.RawHeaders;
+import com.squareup.okhttp.internal.http.SpdyTransport;
+import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.BufferedInputStream;
 import java.io.Closeable;
 import java.io.IOException;
