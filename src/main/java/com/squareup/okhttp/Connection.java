@@ -135,7 +135,11 @@ public final class Connection implements Closeable {
         socket = address.sslSocketFactory.createSocket(
                 socket, address.uriHost, address.uriPort, true /* autoClose */);
         SSLSocket sslSocket = (SSLSocket) socket;
-        platform.makeTlsTolerant(sslSocket, address.uriHost, modernTls);
+        if (modernTls) {
+            platform.enableTlsExtensions(sslSocket, address.uriHost);
+        } else {
+            platform.supportTlsIntolerantServer(sslSocket);
+        }
 
         if (modernTls) {
             platform.setNpnProtocols(sslSocket, NPN_PROTOCOLS);

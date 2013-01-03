@@ -69,10 +69,20 @@ public class Platform {
         return url.toURI(); // this isn't as good as the built-in toUriLenient
     }
 
-    public void makeTlsTolerant(SSLSocket socket, String uriHost, boolean tlsTolerant) {
-        if (!tlsTolerant) {
-            socket.setEnabledProtocols(new String[]{"SSLv3"});
-        }
+    /**
+     * Attempt a TLS connection with useful extensions enabled. This mode
+     * supports more features, but is less likely to be compatible with older
+     * HTTPS servers.
+     */
+    public void enableTlsExtensions(SSLSocket socket, String uriHost) {
+    }
+
+    /**
+     * Attempt a secure connection with basic functionality to maximize
+     * compatibility. Currently this uses SSL 3.0.
+     */
+    public void supportTlsIntolerantServer(SSLSocket socket) {
+        socket.setEnabledProtocols(new String[]{"SSLv3"});
     }
 
     /**
@@ -180,10 +190,9 @@ public class Platform {
             this.setHostname = setHostname;
         }
 
-        @Override public void makeTlsTolerant(
-                SSLSocket socket, String uriHost, boolean tlsTolerant) {
-            super.makeTlsTolerant(socket, uriHost, tlsTolerant);
-            if (tlsTolerant && openSslSocketClass.isInstance(socket)) {
+        @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
+            super.enableTlsExtensions(socket, uriHost);
+            if (openSslSocketClass.isInstance(socket)) {
                 // This is Android: use reflection on OpenSslSocketImpl.
                 try {
                     setUseSessionTickets.invoke(socket, true);
