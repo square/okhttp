@@ -18,8 +18,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import com.squareup.okhttp.internal.Dns;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -38,21 +38,11 @@ import java.util.NoSuchElementException;
  * recycled.
  */
 final class RouteSelector {
-    /**
-     * A TLS connection with useful extensions enabled. This mode supports more
-     * features, but is less likely to be compatible with older HTTP servers.
-     */
+    /** Uses {@link com.squareup.okhttp.internal.Platform#enableTlsExtensions}. */
     private static final int TLS_MODE_MODERN = 1;
-
-    /**
-     * A fallback connection with only basic functionality. Currently this uses
-     * SSL 3.0.
-     */
+    /** Uses {@link com.squareup.okhttp.internal.Platform#supportTlsIntolerantServer}. */
     private static final int TLS_MODE_COMPATIBLE = 0;
-
-    /**
-     * Unknown TLS mode.
-     */
+    /** No TLS mode. */
     private static final int TLS_MODE_NULL = -1;
 
     private final Address address;
