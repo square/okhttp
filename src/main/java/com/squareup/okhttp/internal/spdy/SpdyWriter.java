@@ -45,7 +45,7 @@ final class SpdyWriter implements Closeable {
     }
 
     public synchronized void synStream(int flags, int streamId, int associatedStreamId,
-            int priority, List<String> nameValueBlock) throws IOException {
+            int priority, int slot, List<String> nameValueBlock) throws IOException {
         writeNameValueBlockToBuffer(nameValueBlock);
         int length = 10 + nameValueBlockBuffer.size();
         int type = SpdyConnection.TYPE_SYN_STREAM;
@@ -55,7 +55,7 @@ final class SpdyWriter implements Closeable {
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(streamId & 0x7fffffff);
         out.writeInt(associatedStreamId & 0x7fffffff);
-        out.writeShort((priority & 0x3) << 30 | (unused & 0x3FFF) << 16);
+        out.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
         nameValueBlockBuffer.writeTo(out);
         out.flush();
     }
@@ -64,13 +64,11 @@ final class SpdyWriter implements Closeable {
             int flags, int streamId, List<String> nameValueBlock) throws IOException {
         writeNameValueBlockToBuffer(nameValueBlock);
         int type = SpdyConnection.TYPE_SYN_REPLY;
-        int length = nameValueBlockBuffer.size() + 6;
-        int unused = 0;
+        int length = nameValueBlockBuffer.size() + 4;
 
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(streamId & 0x7fffffff);
-        out.writeShort(unused);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
     }
@@ -79,18 +77,16 @@ final class SpdyWriter implements Closeable {
             int flags, int streamId, List<String> nameValueBlock) throws IOException {
         writeNameValueBlockToBuffer(nameValueBlock);
         int type = SpdyConnection.TYPE_HEADERS;
-        int length = nameValueBlockBuffer.size() + 6;
-        int unused = 0;
+        int length = nameValueBlockBuffer.size() + 4;
 
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(streamId & 0x7fffffff);
-        out.writeShort(unused);
         nameValueBlockBuffer.writeTo(out);
         out.flush();
     }
 
-    public synchronized void synReset(int streamId, int statusCode) throws IOException {
+    public synchronized void rstStream(int streamId, int statusCode) throws IOException {
         int flags = 0;
         int type = SpdyConnection.TYPE_RST_STREAM;
         int length = 8;
@@ -112,9 +108,9 @@ final class SpdyWriter implements Closeable {
     private void writeNameValueBlockToBuffer(List<String> nameValueBlock) throws IOException {
         nameValueBlockBuffer.reset();
         int numberOfPairs = nameValueBlock.size() / 2;
-        nameValueBlockOut.writeShort(numberOfPairs);
+        nameValueBlockOut.writeInt(numberOfPairs);
         for (String s : nameValueBlock) {
-            nameValueBlockOut.writeShort(s.length());
+            nameValueBlockOut.writeInt(s.length());
             nameValueBlockOut.write(s.getBytes("UTF-8"));
         }
         nameValueBlockOut.flush();
@@ -158,13 +154,20 @@ final class SpdyWriter implements Closeable {
         out.flush();
     }
 
-    public synchronized void goAway(int flags, int lastGoodStreamId) throws IOException {
+    public synchronized void goAway(int flags, int lastGoodStreamId, int statusCode)
+            throws IOException {
         int type = SpdyConnection.TYPE_GOAWAY;
-        int length = 4;
+        int length = 8;
         out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
         out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
         out.writeInt(lastGoodStreamId);
+        out.writeInt(statusCode);
         out.flush();
+    }
+
+    public synchronized void windowUpdate(int flags, int streamId, int deltaWindowSize)
+            throws IOException {
+        throw new UnsupportedOperationException("TODO"); // TODO
     }
 
     @Override public void close() throws IOException {

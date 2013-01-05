@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,7 +35,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Replays prerecorded outgoing frames and records incoming frames.
  */
-public final class MockSpdyPeer {
+public final class MockSpdyPeer implements Closeable {
     private int frameCount = 0;
     private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
     private final SpdyWriter spdyWriter = new SpdyWriter(bytesOut);
@@ -43,6 +44,8 @@ public final class MockSpdyPeer {
     private int port;
     private final Executor executor = Executors.newCachedThreadPool(
             Threads.newThreadFactory("MockSpdyPeer", true));
+    private ServerSocket serverSocket;
+    private Socket socket;
 
     public void acceptFrame() {
         frameCount++;
@@ -63,13 +66,14 @@ public final class MockSpdyPeer {
     }
 
     public void play() throws IOException {
-        final ServerSocket serverSocket = new ServerSocket(0);
+        if (serverSocket != null) throw new IllegalStateException();
+        serverSocket = new ServerSocket(0);
         serverSocket.setReuseAddress(true);
         this.port = serverSocket.getLocalPort();
         executor.execute(new Runnable() {
             @Override public void run() {
                 try {
-                    readAndWriteFrames(serverSocket);
+                    readAndWriteFrames();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
@@ -77,8 +81,9 @@ public final class MockSpdyPeer {
         });
     }
 
-    private void readAndWriteFrames(ServerSocket serverSocket) throws IOException {
-        Socket socket = serverSocket.accept();
+    private void readAndWriteFrames() throws IOException {
+        if (socket != null) throw new IllegalStateException();
+        socket = serverSocket.accept();
         OutputStream out = socket.getOutputStream();
         InputStream in = socket.getInputStream();
         SpdyReader reader = new SpdyReader(in);
@@ -118,6 +123,19 @@ public final class MockSpdyPeer {
         return new Socket("localhost", port);
     }
 
+    @Override public void close() throws IOException {
+        Socket socket = this.socket;
+        if (socket != null) {
+            socket.close();
+            this.socket = null;
+        }
+        ServerSocket serverSocket = this.serverSocket;
+        if (serverSocket != null) {
+            serverSocket.close();
+            this.serverSocket = null;
+        }
+    }
+
     private static class OutFrame {
         private final int sequence;
         private final int start;
@@ -136,7 +154,9 @@ public final class MockSpdyPeer {
         public int streamId;
         public int associatedStreamId;
         public int priority;
+        public int slot;
         public int statusCode;
+        public int deltaWindowSize;
         public List<String> nameValueBlock;
         public byte[] data;
         public Settings settings;
@@ -154,13 +174,14 @@ public final class MockSpdyPeer {
         }
 
         @Override public void synStream(int flags, int streamId, int associatedStreamId,
-                int priority, List<String> nameValueBlock) {
+                int priority, int slot, List<String> nameValueBlock) {
             if (this.type != -1) throw new IllegalStateException();
             this.type = SpdyConnection.TYPE_SYN_STREAM;
             this.flags = flags;
             this.streamId = streamId;
             this.associatedStreamId = associatedStreamId;
             this.priority = priority;
+            this.slot = slot;
             this.nameValueBlock = nameValueBlock;
         }
 
@@ -210,11 +231,20 @@ public final class MockSpdyPeer {
             this.type = SpdyConnection.TYPE_NOOP;
         }
 
-        @Override public void goAway(int flags, int lastGoodStreamId) {
+        @Override public void goAway(int flags, int lastGoodStreamId, int statusCode) {
             if (this.type != -1) throw new IllegalStateException();
             this.type = SpdyConnection.TYPE_GOAWAY;
             this.flags = flags;
             this.streamId = lastGoodStreamId;
+            this.statusCode = statusCode;
+        }
+
+        @Override public void windowUpdate(int flags, int streamId, int deltaWindowSize) {
+            if (this.type != -1) throw new IllegalStateException();
+            this.type = SpdyConnection.TYPE_WINDOW_UPDATE;
+            this.flags = flags;
+            this.streamId = streamId;
+            this.deltaWindowSize = deltaWindowSize;
         }
     }
 }

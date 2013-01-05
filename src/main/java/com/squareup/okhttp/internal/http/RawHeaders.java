@@ -125,30 +125,33 @@ public final class RawHeaders {
         String version = null;
         for (int i = 0; i < namesAndValues.size(); i += 2) {
             String name = namesAndValues.get(i);
-            if ("status".equals(name)) {
+            if (":status".equals(name)) {
                 status = namesAndValues.get(i + 1);
-            } else if ("version".equals(name)) {
+            } else if (":version".equals(name)) {
                 version = namesAndValues.get(i + 1);
             }
         }
         if (status == null || version == null) {
-            throw new ProtocolException("Expected 'status' and 'version' headers not present");
+            throw new ProtocolException("Expected ':status' and ':version' headers not present");
         }
         setStatusLine(version + " " + status);
     }
 
     /**
      * @param method like "GET", "POST", "HEAD", etc.
-     * @param scheme like "https"
-     * @param url like "/foo/bar.html"
+     * @param path like "/foo/bar.html"
      * @param version like "HTTP/1.1"
+     * @param host like "www.android.com:1234"
+     * @param scheme like "https"
      */
-    public void addSpdyRequestHeaders(String method, String scheme, String url, String version) {
+    public void addSpdyRequestHeaders(
+            String method, String path, String version, String host, String scheme) {
         // TODO: populate the statusLine for the client's benefit?
-        add("method", method);
-        add("scheme", scheme);
-        add("url", url);
-        add("version", version);
+        add(":method", method);
+        add(":scheme", scheme);
+        add(":path", path);
+        add(":version", version);
+        add(":host", host);
     }
 
     public String getStatusLine() {
@@ -393,8 +396,9 @@ public final class RawHeaders {
                 throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
             }
 
-            // Drop headers that are ignored when layering HTTP over SPDY.
-            if (name.equals("connection") || name.equals("accept-encoding")) {
+            // Drop headers that are forbidden when layering HTTP over SPDY.
+            if (name.equals("connection") || name.equals("host") || name.equals("keep-alive")
+                    || name.equals("proxy-connection") || name.equals("transfer-encoding")) {
                 continue;
             }
 

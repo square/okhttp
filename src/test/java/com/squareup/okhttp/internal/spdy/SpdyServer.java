@@ -71,7 +71,7 @@ public final class SpdyServer implements IncomingStreamHandler {
                 System.out.println("UNSUPPORTED");
             }
             @Override public List<String> protocols() {
-                return Arrays.asList("spdy/2");
+                return Arrays.asList("spdy/3");
             }
             @Override public void protocolSelected(String protocol) {
                 System.out.println("PROTOCOL SELECTED: " + protocol);
@@ -85,7 +85,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         String path = null;
         for (int i = 0; i < requestHeaders.size(); i += 2) {
             String s = requestHeaders.get(i);
-            if ("url".equals(s)) {
+            if (":path".equals(s)) {
                 path = requestHeaders.get(i + 1);
                 break;
             }
@@ -109,8 +109,8 @@ public final class SpdyServer implements IncomingStreamHandler {
 
     private void send404(SpdyStream stream, String path) throws IOException {
         List<String> responseHeaders = Arrays.asList(
-                "status", "404",
-                "version", "HTTP/1.1",
+                ":status", "404",
+                ":version", "HTTP/1.1",
                 "content-type", "text/plain"
         );
         stream.reply(responseHeaders, true);
@@ -122,8 +122,8 @@ public final class SpdyServer implements IncomingStreamHandler {
 
     private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
         List<String> responseHeaders = Arrays.asList(
-                "status", "200",
-                "version", "HTTP/1.1",
+                ":status", "200",
+                ":version", "HTTP/1.1",
                 "content-type", "text/html; charset=UTF-8"
         );
         stream.reply(responseHeaders, true);
@@ -139,8 +139,8 @@ public final class SpdyServer implements IncomingStreamHandler {
         InputStream in = new FileInputStream(file);
         byte[] buffer = new byte[8192];
         stream.reply(Arrays.asList(
-                "status", "200",
-                "version", "HTTP/1.1",
+                ":status", "200",
+                ":version", "HTTP/1.1",
                 "content-type", contentType(file)
         ), true);
         OutputStream out = stream.getOutputStream();

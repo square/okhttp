@@ -80,26 +80,30 @@ public final class ConnectionPool {
             List<Connection> connections = connectionPool.get(address);
             while (connections != null) {
                 Connection connection = connections.get(connections.size() - 1);
-                if (!connection.isSpdy()) {
+                boolean usable = connection.isEligibleForRecycling();
+                if (usable && !connection.isSpdy()) {
+                    try {
+                        Platform.get().tagSocket(connection.getSocket());
+                    } catch (SocketException e) {
+                        // When unable to tag, skip recycling and close
+                        Platform.get().logW("Unable to tagSocket(): " + e);
+                        usable = false;
+                    }
+                }
+
+                if (!connection.isSpdy() || !usable) {
                     connections.remove(connections.size() - 1);
+                    if (connections.isEmpty()) {
+                        connectionPool.remove(address);
+                        connections = null;
+                    }
                 }
-                if (connections.isEmpty()) {
-                    connectionPool.remove(address);
-                    connections = null;
-                }
-                if (!connection.isEligibleForRecycling()) {
+
+                if (usable) {
+                    return connection;
+                } else {
                     Util.closeQuietly(connection);
-                    continue;
                 }
-                try {
-                    Platform.get().tagSocket(connection.getSocket());
-                } catch (SocketException e) {
-                    // When unable to tag, skip recycling and close
-                    Platform.get().logW("Unable to tagSocket(): " + e);
-                    Util.closeQuietly(connection);
-                    continue;
-                }
-                return connection;
             }
         }
         return null;

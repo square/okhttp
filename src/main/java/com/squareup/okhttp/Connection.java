@@ -65,11 +65,11 @@ import javax.net.ssl.SSLSocket;
  */
 public final class Connection implements Closeable {
     private static final byte[] NPN_PROTOCOLS = new byte[] {
-            6, 's', 'p', 'd', 'y', '/', '2',
+            6, 's', 'p', 'd', 'y', '/', '3',
             8, 'h', 't', 't', 'p', '/', '1', '.', '1',
     };
-    private static final byte[] SPDY2 = new byte[] {
-            's', 'p', 'd', 'y', '/', '2',
+    private static final byte[] SPDY3 = new byte[] {
+            's', 'p', 'd', 'y', '/', '3',
     };
     private static final byte[] HTTP_11 = new byte[] {
             'h', 't', 't', 'p', '/', '1', '.', '1',
@@ -159,7 +159,7 @@ public final class Connection implements Closeable {
         byte[] selectedProtocol;
         if (modernTls
                 && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-            if (Arrays.equals(selectedProtocol, SPDY2)) {
+            if (Arrays.equals(selectedProtocol, SPDY3)) {
                 sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
                 spdyConnection = new SpdyConnection.Builder(true, in, out).build();
             } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {

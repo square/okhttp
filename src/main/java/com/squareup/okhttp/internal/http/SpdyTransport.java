@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
+import java.net.URL;
 import java.util.List;
 
 public final class SpdyTransport implements Transport {
@@ -49,8 +50,9 @@ public final class SpdyTransport implements Transport {
         }
         RawHeaders requestHeaders = httpEngine.requestHeaders.getHeaders();
         String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
-        requestHeaders.addSpdyRequestHeaders(httpEngine.method, httpEngine.uri.getScheme(),
-                HttpEngine.requestPath(httpEngine.policy.getURL()), version);
+        URL url = httpEngine.policy.getURL();
+        requestHeaders.addSpdyRequestHeaders(httpEngine.method, HttpEngine.requestPath(url),
+                version, HttpEngine.getOriginAddress(url), httpEngine.uri.getScheme());
         boolean hasRequestBody = httpEngine.hasRequestBody();
         boolean hasResponseBody = true;
         stream = spdyConnection.newStream(requestHeaders.toNameValueBlock(),
@@ -67,7 +69,6 @@ public final class SpdyTransport implements Transport {
     }
 
     @Override public ResponseHeaders readResponseHeaders() throws IOException {
-        // TODO: fix the SPDY implementation so this throws a (buffered) IOException
         List<String> nameValueBlock = stream.getResponseHeaders();
         RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
         rawHeaders.computeResponseStatusLineFromSpdyHeaders();
