@@ -20,6 +20,8 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.FLAG_FIN;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.FLAG_UNIDIRECTIONAL;
+import static com.squareup.okhttp.internal.spdy.SpdyConnection.GOAWAY_INTERNAL_ERROR;
+import static com.squareup.okhttp.internal.spdy.SpdyConnection.GOAWAY_PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_GOAWAY;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_NOOP;
@@ -31,6 +33,7 @@ import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_FLOW_CONTROL_ERRO
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_INVALID_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_REFUSED_STREAM;
+import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_STREAM_IN_USE;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +41,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,6 +55,10 @@ public final class SpdyConnectionTest {
         }
     };
     private final MockSpdyPeer peer = new MockSpdyPeer();
+
+    @After public void tearDown() throws Exception {
+        peer.close();
+    }
 
     @Test public void clientCreatesStreamAndServerReplies() throws Exception {
         // write the mocking script
@@ -113,7 +121,7 @@ public final class SpdyConnectionTest {
 
     @Test public void serverCreatesStreamAndClientReplies() throws Exception {
         // write the mocking script
-        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
+        peer.sendFrame().synStream(0, 2, 0, 5, 129, Arrays.asList("a", "android"));
         peer.acceptFrame();
         peer.play();
 
@@ -124,6 +132,8 @@ public final class SpdyConnectionTest {
                 receiveCount.incrementAndGet();
                 assertEquals(Arrays.asList("a", "android"), stream.getRequestHeaders());
                 assertEquals(-1, stream.getRstStatusCode());
+                assertEquals(5, stream.getPriority());
+                assertEquals(129, stream.getSlot());
                 stream.reply(Arrays.asList("b", "banana"), true);
 
             }
@@ -143,7 +153,7 @@ public final class SpdyConnectionTest {
 
     @Test public void replyWithNoData() throws Exception {
         // write the mocking script
-        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
+        peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("a", "android"));
         peer.acceptFrame();
         peer.play();
 
@@ -390,7 +400,7 @@ public final class SpdyConnectionTest {
     @Test public void serverClosesClientOutputStream() throws Exception {
         // write the mocking script
         peer.acceptFrame(); // SYN_STREAM
-        peer.sendFrame().synReset(1, SpdyStream.RST_CANCEL);
+        peer.sendFrame().rstStream(1, SpdyStream.RST_CANCEL);
         peer.acceptFrame(); // PING
         peer.sendFrame().ping(0, 1);
         peer.play();
@@ -547,7 +557,7 @@ public final class SpdyConnectionTest {
             stream.getInputStream().read();
             fail();
         } catch (IOException e) {
-            assertEquals("stream was reset: PROTOCOL_ERROR", e.getMessage());
+            assertEquals("stream was reset: STREAM_IN_USE", e.getMessage());
         }
 
         // verify the peer received what was expected
@@ -559,14 +569,14 @@ public final class SpdyConnectionTest {
         assertEquals(TYPE_RST_STREAM, rstStream.type);
         assertEquals(1, rstStream.streamId);
         assertEquals(0, rstStream.flags);
-        assertEquals(RST_PROTOCOL_ERROR, rstStream.statusCode);
+        assertEquals(RST_STREAM_IN_USE, rstStream.statusCode);
     }
 
     @Test public void remoteDoubleSynStream() throws Exception {
         // write the mocking script
-        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("a", "android"));
+        peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("a", "android"));
         peer.acceptFrame();
-        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("b", "banana"));
+        peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("b", "banana"));
         peer.acceptFrame();
         peer.play();
 
@@ -651,7 +661,7 @@ public final class SpdyConnectionTest {
     @Test public void remoteSendsRefusedStreamBeforeReplyHeaders() throws Exception {
         // write the mocking script
         peer.acceptFrame();
-        peer.sendFrame().synReset(1, RST_REFUSED_STREAM);
+        peer.sendFrame().rstStream(1, RST_REFUSED_STREAM);
         peer.sendFrame().ping(0, 2);
         peer.acceptFrame();
         peer.play();
@@ -680,7 +690,7 @@ public final class SpdyConnectionTest {
         // write the mocking script
         peer.acceptFrame(); // SYN STREAM 1
         peer.acceptFrame(); // SYN STREAM 3
-        peer.sendFrame().goAway(0, 1);
+        peer.sendFrame().goAway(0, 1, GOAWAY_PROTOCOL_ERROR);
         peer.acceptFrame(); // PING
         peer.sendFrame().ping(0, 1);
         peer.acceptFrame(); // DATA STREAM 1
@@ -726,7 +736,7 @@ public final class SpdyConnectionTest {
         peer.acceptFrame(); // SYN STREAM 1
         peer.acceptFrame(); // GOAWAY
         peer.acceptFrame(); // PING
-        peer.sendFrame().synStream(0, 2, 0, 0, Arrays.asList("b", "banana")); // Should be ignored!
+        peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("b", "b")); // Should be ignored!
         peer.sendFrame().ping(0, 1);
         peer.play();
 
@@ -734,7 +744,7 @@ public final class SpdyConnectionTest {
         SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
         connection.newStream(Arrays.asList("a", "android"), true, true);
         Ping ping = connection.ping();
-        connection.shutdown();
+        connection.shutdown(GOAWAY_PROTOCOL_ERROR);
         ping.roundTripTime(); // Ensure that the SYN STREAM has been received.
         assertEquals(1, connection.openStreamCount());
 
@@ -746,6 +756,7 @@ public final class SpdyConnectionTest {
         MockSpdyPeer.InFrame goaway = peer.takeFrame();
         assertEquals(TYPE_GOAWAY, goaway.type);
         assertEquals(0, goaway.streamId);
+        assertEquals(GOAWAY_PROTOCOL_ERROR, goaway.statusCode);
     }
 
     @Test public void noPingsAfterShutdown() throws Exception {
@@ -755,7 +766,7 @@ public final class SpdyConnectionTest {
 
         // play it back
         SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
-        connection.shutdown();
+        connection.shutdown(GOAWAY_INTERNAL_ERROR);
         try {
             connection.ping();
             fail();
@@ -766,6 +777,7 @@ public final class SpdyConnectionTest {
         // verify the peer received what was expected
         MockSpdyPeer.InFrame goaway = peer.takeFrame();
         assertEquals(TYPE_GOAWAY, goaway.type);
+        assertEquals(GOAWAY_INTERNAL_ERROR, goaway.statusCode);
     }
 
     @Test public void close() throws Exception {

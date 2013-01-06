@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.spdy.Settings;
 import static com.squareup.okhttp.internal.spdy.Settings.DOWNLOAD_BANDWIDTH;
 import static com.squareup.okhttp.internal.spdy.Settings.DOWNLOAD_RETRANS_RATE;
 import static com.squareup.okhttp.internal.spdy.Settings.MAX_CONCURRENT_STREAMS;
@@ -63,6 +62,10 @@ public final class SettingsTest {
         assertEquals(-3, settings.getInitialWindowSize(-3));
         settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 108);
         assertEquals(108, settings.getInitialWindowSize(-3));
+
+        assertEquals(-3, settings.getClientCertificateVectorSize(-3));
+        settings.set(Settings.CLIENT_CERTIFICATE_VECTOR_SIZE, 0, 117);
+        assertEquals(117, settings.getClientCertificateVectorSize(-3));
     }
 
     @Test public void isPersisted() {
