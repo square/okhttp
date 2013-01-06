@@ -50,6 +50,10 @@ public final class SpdyStream {
             "CANCEL",
             "INTERNAL_ERROR",
             "FLOW_CONTROL_ERROR",
+            "STREAM_IN_USE",
+            "STREAM_ALREADY_CLOSED",
+            "INVALID_CREDENTIALS",
+            "FRAME_TOO_LARGE",
     };
 
     public static final int RST_PROTOCOL_ERROR = 1;
@@ -59,9 +63,15 @@ public final class SpdyStream {
     public static final int RST_CANCEL = 5;
     public static final int RST_INTERNAL_ERROR = 6;
     public static final int RST_FLOW_CONTROL_ERROR = 7;
+    public static final int RST_STREAM_IN_USE = 8;
+    public static final int RST_STREAM_ALREADY_CLOSED = 9;
+    public static final int RST_INVALID_CREDENTIALS = 10;
+    public static final int RST_FRAME_TOO_LARGE = 11;
 
     private final int id;
     private final SpdyConnection connection;
+    private final int priority;
+    private final int slot;
     private long readTimeoutMillis = 0;
 
     /** Headers sent by the stream initiator. Immutable and non null. */
@@ -80,9 +90,12 @@ public final class SpdyStream {
      */
     private int rstStatusCode = -1;
 
-    SpdyStream(int id, SpdyConnection connection, List<String> requestHeaders, int flags) {
+    SpdyStream(int id, SpdyConnection connection, int flags, int priority, int slot,
+            List<String> requestHeaders) {
         this.id = id;
         this.connection = connection;
+        this.priority = priority;
+        this.slot = slot;
         this.requestHeaders = requestHeaders;
 
         if (isLocallyInitiated()) {
@@ -314,6 +327,14 @@ public final class SpdyStream {
         return rstStatusCode > 0 && rstStatusCode < STATUS_CODE_NAMES.length
                 ? STATUS_CODE_NAMES[rstStatusCode]
                 : Integer.toString(rstStatusCode);
+    }
+
+    int getPriority() {
+        return priority;
+    }
+
+    int getSlot() {
+        return slot;
     }
 
     /**
