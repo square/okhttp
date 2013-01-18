@@ -166,7 +166,8 @@ public final class SpdyConnection implements Closeable {
                 }
                 streamId = nextStreamId;
                 nextStreamId += 2;
-                stream = new SpdyStream(streamId, this, flags, priority, slot, requestHeaders);
+                stream = new SpdyStream(streamId, this, flags, priority, slot, requestHeaders,
+                        settings);
                 if (stream.isOpen()) {
                     streams.put(streamId, stream);
                 }
@@ -421,10 +422,11 @@ public final class SpdyConnection implements Closeable {
 
         @Override public void synStream(int flags, int streamId, int associatedStreamId,
                 int priority, int slot, List<String> nameValueBlock) {
-            final SpdyStream synStream = new SpdyStream(streamId, SpdyConnection.this,
-                    flags, priority, slot, nameValueBlock);
+            final SpdyStream synStream;
             final SpdyStream previous;
             synchronized (SpdyConnection.this) {
+                synStream = new SpdyStream(streamId, SpdyConnection.this, flags, priority, slot,
+                        nameValueBlock, settings);
                 if (shutdown) {
                     return;
                 }
@@ -484,12 +486,28 @@ public final class SpdyConnection implements Closeable {
         }
 
         @Override public void settings(int flags, Settings newSettings) {
+            SpdyStream[] streamsToNotify = null;
             synchronized (SpdyConnection.this) {
                 if (settings == null
                         || (flags & Settings.FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0) {
                     settings = newSettings;
                 } else {
                     settings.merge(newSettings);
+                }
+                if (!streams.isEmpty()) {
+                    streamsToNotify = streams.values().toArray(new SpdyStream[streams.size()]);
+                }
+            }
+            if (streamsToNotify != null) {
+                for (SpdyStream stream : streamsToNotify) {
+                    // The synchronization here is ugly. We need to synchronize on 'this' to guard
+                    // reads to 'settings'. We synchronize on 'stream' to guard the state change.
+                    // And we need to acquire the 'stream' lock first, since that may block.
+                    synchronized (stream) {
+                        synchronized (this) {
+                            stream.receiveSettings(settings);
+                        }
+                    }
                 }
             }
         }
@@ -527,7 +545,10 @@ public final class SpdyConnection implements Closeable {
         }
 
         @Override public void windowUpdate(int flags, int streamId, int deltaWindowSize) {
-            // TODO
+            SpdyStream stream = getStream(streamId);
+            if (stream != null) {
+                stream.receiveWindowUpdate(deltaWindowSize);
+            }
         }
     }
 }

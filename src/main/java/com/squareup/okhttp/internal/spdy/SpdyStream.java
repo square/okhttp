@@ -72,7 +72,7 @@ public final class SpdyStream {
      * The number of unacknowledged bytes at which the input stream will send
      * the peer a {@code WINDOW_UPDATE} frame. Must be less than this client's
      * window size, otherwise the remote peer will stop sending data on this
-     * stream.
+     * stream. (Chrome 25 uses 5 MiB.)
      */
     public static final int WINDOW_UPDATE_THRESHOLD = Settings.DEFAULT_INITIAL_WINDOW_SIZE / 2;
 
@@ -81,6 +81,7 @@ public final class SpdyStream {
     private final int priority;
     private final int slot;
     private long readTimeoutMillis = 0;
+    private int writeWindowSize;
 
     /** Headers sent by the stream initiator. Immutable and non null. */
     private final List<String> requestHeaders;
@@ -99,7 +100,7 @@ public final class SpdyStream {
     private int rstStatusCode = -1;
 
     SpdyStream(int id, SpdyConnection connection, int flags, int priority, int slot,
-            List<String> requestHeaders) {
+            List<String> requestHeaders, Settings settings) {
         this.id = id;
         this.connection = connection;
         this.priority = priority;
@@ -115,6 +116,8 @@ public final class SpdyStream {
             in.finished = (flags & SpdyConnection.FLAG_FIN) != 0;
             out.finished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
         }
+
+        setSettings(settings);
     }
 
     /**
@@ -329,6 +332,24 @@ public final class SpdyStream {
             rstStatusCode = statusCode;
             notifyAll();
         }
+    }
+
+    private void setSettings(Settings settings) {
+        assert (Thread.holdsLock(connection)); // Because 'settings' is guarded by 'connection'.
+        this.writeWindowSize = settings != null
+                ? settings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
+                : Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+    }
+
+    void receiveSettings(Settings settings) {
+        assert (Thread.holdsLock(this));
+        setSettings(settings);
+        notifyAll();
+    }
+
+    synchronized void receiveWindowUpdate(int deltaWindowSize) {
+        out.unacknowledgedBytes -= deltaWindowSize;
+        notifyAll();
     }
 
     private String rstStatusString() {
@@ -589,6 +610,13 @@ public final class SpdyStream {
          */
         private boolean finished;
 
+        /**
+         * The total number of bytes written out to the peer, but not yet
+         * acknowledged with an incoming {@code WINDOW_UPDATE} frame. Writes
+         * block if they cause this to exceed the {@code WINDOW_SIZE}.
+         */
+        private int unacknowledgedBytes = 0;
+
         @Override public void write(int b) throws IOException {
             Util.writeSingleByte(this, b);
         }
@@ -635,17 +663,44 @@ public final class SpdyStream {
         private void writeFrame(boolean last) throws IOException {
             assert (!Thread.holdsLock(SpdyStream.this));
 
-            // TODO: Await flow control (WINDOW_UPDATE) if necessary.
-
+            int length = pos - DATA_FRAME_HEADER_LENGTH;
+            synchronized (SpdyStream.this) {
+                waitUntilWritable(length, last);
+                unacknowledgedBytes += length;
+            }
             int flags = 0;
             if (last) {
                 flags |= SpdyConnection.FLAG_FIN;
             }
-            int length = pos - DATA_FRAME_HEADER_LENGTH;
             pokeInt(buffer, 0, id & 0x7fffffff, BIG_ENDIAN);
             pokeInt(buffer, 4, (flags & 0xff) << 24 | length & 0xffffff, BIG_ENDIAN);
             connection.writeFrame(buffer, 0, pos);
             pos = DATA_FRAME_HEADER_LENGTH;
+        }
+
+        /**
+         * Returns once the peer is ready to receive {@code count} bytes.
+         *
+         * @throws IOException if the stream was finished or closed, or the
+         *     thread was interrupted.
+         */
+        private void waitUntilWritable(int count, boolean last) throws IOException {
+            try {
+                while (unacknowledgedBytes + count >= writeWindowSize) {
+                    SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+
+                    // The stream may have been closed or reset while we were waiting!
+                    if (!last && closed) {
+                        throw new IOException("stream closed");
+                    } else if (finished) {
+                        throw new IOException("stream finished");
+                    } else if (rstStatusCode != -1) {
+                        throw new IOException("stream was reset: " + rstStatusString());
+                    }
+                }
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException();
+            }
         }
 
         private void checkNotClosed() throws IOException {
