@@ -284,11 +284,8 @@ final class SpdyReader implements Closeable {
         for (int i = 0; i < numberOfEntries; i++) {
             int w1 = in.readInt();
             int value = in.readInt();
-            // The ID is a 24 bit little-endian value, so 0xabcdefxx becomes 0x00efcdab.
-            int id = ((w1 & 0xff000000) >>> 24)
-                    | ((w1 & 0xff0000) >>> 8)
-                    | ((w1 & 0xff00) << 8);
-            int idFlags = (w1 & 0xff);
+            int idFlags = (w1 & 0xff000000) >>> 24;
+            int id = w1 & 0xffffff;
             settings.set(id, idFlags, value);
         }
         handler.settings(flags, settings);

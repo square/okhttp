@@ -126,11 +126,7 @@ final class SpdyWriter implements Closeable {
         for (int i = 0; i <= Settings.COUNT; i++) {
             if (!settings.isSet(i)) continue;
             int settingsFlags = settings.flags(i);
-            // settingId 0x00efcdab and settingFlags 0x12 combine to 0xabcdef12.
-            out.writeInt(((i & 0xff0000) >>> 8)
-                    | ((i & 0xff00) << 8)
-                    | ((i & 0xff) << 24)
-                    | (settingsFlags & 0xff));
+            out.writeInt((settingsFlags & 0xff) << 24 | (i & 0xffffff));
             out.writeInt(settings.get(i));
         }
         out.flush();

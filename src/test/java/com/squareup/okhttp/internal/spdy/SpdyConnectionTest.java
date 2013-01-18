@@ -39,6 +39,7 @@ import static com.squareup.okhttp.internal.spdy.SpdyStream.WINDOW_UPDATE_THRESHO
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -951,6 +952,34 @@ public final class SpdyConnectionTest {
         }
     }
 
+    @Test public void writeAwaitsWindowUpdate() throws Exception {
+        // Write the mocking script. This accepts more data frames than necessary!
+        peer.acceptFrame(); // SYN STREAM
+        for (int i = 0; i < Settings.DEFAULT_INITIAL_WINDOW_SIZE / 1024; i++) {
+            peer.acceptFrame(); // DATA
+        }
+        peer.play();
+
+        // Play it back.
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("b", "banana"), true, true);
+        OutputStream out = stream.getOutputStream();
+        out.write(new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE]);
+        interruptAfterDelay(500);
+        try {
+            out.write('a');
+            out.flush();
+            fail();
+        } catch (InterruptedIOException expected) {
+        }
+
+        // Verify the peer received what was expected.
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        MockSpdyPeer.InFrame data = peer.takeFrame();
+        assertEquals(TYPE_DATA, data.type);
+    }
+
     private void writeAndClose(SpdyStream stream, String data) throws IOException {
         OutputStream out = stream.getOutputStream();
         out.write(data.getBytes("UTF-8"));
@@ -965,5 +994,22 @@ public final class SpdyConnectionTest {
         }
         String actual = bytesOut.toString("UTF-8");
         assertEquals(expected, actual);
+    }
+
+    /**
+     * Interrupts the current thread after {@code delayMillis}.
+     */
+    private void interruptAfterDelay(final long delayMillis) {
+        final Thread toInterrupt = Thread.currentThread();
+        new Thread("interrupting cow") {
+            @Override public void run() {
+                try {
+                    Thread.sleep(delayMillis);
+                    toInterrupt.interrupt();
+                } catch (InterruptedException e) {
+                    throw new AssertionError();
+                }
+            }
+        }.start();
     }
 }
