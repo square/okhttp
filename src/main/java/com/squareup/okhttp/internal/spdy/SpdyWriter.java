@@ -165,9 +165,15 @@ final class SpdyWriter implements Closeable {
         out.flush();
     }
 
-    public synchronized void windowUpdate(int flags, int streamId, int deltaWindowSize)
-            throws IOException {
-        throw new UnsupportedOperationException("TODO"); // TODO
+    public synchronized void windowUpdate(int streamId, int deltaWindowSize) throws IOException {
+        int type = SpdyConnection.TYPE_WINDOW_UPDATE;
+        int flags = 0;
+        int length = 8;
+        out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+        out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+        out.writeInt(streamId);
+        out.writeInt(deltaWindowSize);
+        out.flush();
     }
 
     @Override public void close() throws IOException {

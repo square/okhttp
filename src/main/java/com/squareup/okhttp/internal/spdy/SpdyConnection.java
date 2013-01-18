@@ -205,6 +205,21 @@ public final class SpdyConnection implements Closeable {
         spdyWriter.rstStream(streamId, statusCode);
     }
 
+    void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
+        writeExecutor.execute(new Runnable() {
+            @Override public void run() {
+                try {
+                    writeWindowUpdate(streamId, deltaWindowSize);
+                } catch (IOException ignored) {
+                }
+            }
+        });
+    }
+
+    void writeWindowUpdate(int streamId, int deltaWindowSize) throws IOException {
+        spdyWriter.windowUpdate(streamId, deltaWindowSize);
+    }
+
     /**
      * Sends a ping frame to the peer. Use the returned object to await the
      * ping's response and observe its round trip time.
