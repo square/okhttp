@@ -16,6 +16,9 @@
 package com.squareup.okhttp.internal.spdy;
 
 final class Settings {
+    /** From the spdy/3 spec, the default initial window size for all streams is 64 KiB. */
+    static final int DEFAULT_INITIAL_WINDOW_SIZE = 64 * 1024;
+
     /** Peer request to clear durable settings. */
     static final int FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x1;
 

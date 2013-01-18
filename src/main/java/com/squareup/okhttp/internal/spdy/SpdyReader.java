@@ -187,6 +187,7 @@ final class SpdyReader implements Closeable {
     }
 
     private void readWindowUpdate(Handler handler, int flags, int length) throws IOException {
+        if (length != 8) throw ioException("TYPE_WINDOW_UPDATE length: %d != 8", length);
         int w1 = in.readInt();
         int w2 = in.readInt();
         int streamId = w1 & 0x7fffffff;
