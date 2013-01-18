@@ -29,11 +29,13 @@ import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_PING;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_RST_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_SYN_REPLY;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_SYN_STREAM;
+import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_WINDOW_UPDATE;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_FLOW_CONTROL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_INVALID_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_REFUSED_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_STREAM_IN_USE;
+import static com.squareup.okhttp.internal.spdy.SpdyStream.WINDOW_UPDATE_THRESHOLD;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -911,6 +913,42 @@ public final class SpdyConnectionTest {
         MockSpdyPeer.InFrame rstStream = peer.takeFrame();
         assertEquals(TYPE_RST_STREAM, rstStream.type);
         assertEquals(RST_PROTOCOL_ERROR, rstStream.statusCode);
+    }
+
+    @Test public void readSendsWindowUpdate() throws Exception {
+        // Write the mocking script.
+        peer.acceptFrame(); // SYN STREAM
+        peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+        for (int i = 0; i < 3; i++) {
+            peer.sendFrame().data(0, 1, new byte[WINDOW_UPDATE_THRESHOLD]);
+            peer.acceptFrame(); // WINDOW UPDATE
+        }
+        peer.sendFrame().data(FLAG_FIN, 1, new byte[0]);
+        peer.play();
+
+        // Play it back.
+        SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+        SpdyStream stream = connection.newStream(Arrays.asList("b", "banana"), true, true);
+        assertEquals(Arrays.asList("a", "android"), stream.getResponseHeaders());
+        InputStream in = stream.getInputStream();
+        int total = 0;
+        byte[] buffer = new byte[1024];
+        int count;
+        while ((count = in.read(buffer)) != -1) {
+            total += count;
+            if (total == 3 * WINDOW_UPDATE_THRESHOLD) break;
+        }
+        assertEquals(-1, in.read());
+
+        // Verify the peer received what was expected.
+        MockSpdyPeer.InFrame synStream = peer.takeFrame();
+        assertEquals(TYPE_SYN_STREAM, synStream.type);
+        for (int i = 0; i < 3; i++) {
+            MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
+            assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
+            assertEquals(1, windowUpdate.streamId);
+            assertEquals(WINDOW_UPDATE_THRESHOLD, windowUpdate.deltaWindowSize);
+        }
     }
 
     private void writeAndClose(SpdyStream stream, String data) throws IOException {

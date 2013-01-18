@@ -68,6 +68,14 @@ public final class SpdyStream {
     public static final int RST_INVALID_CREDENTIALS = 10;
     public static final int RST_FRAME_TOO_LARGE = 11;
 
+    /**
+     * The number of unacknowledged bytes at which the input stream will send
+     * the peer a {@code WINDOW_UPDATE} frame. Must be less than this client's
+     * window size, otherwise the remote peer will stop sending data on this
+     * stream.
+     */
+    public static final int WINDOW_UPDATE_THRESHOLD = Settings.DEFAULT_INITIAL_WINDOW_SIZE / 2;
+
     private final int id;
     private final SpdyConnection connection;
     private final int priority;
@@ -357,7 +365,7 @@ public final class SpdyStream {
          *       limit    pos
          */
 
-        private final byte[] buffer = new byte[64 * 1024]; // 64KiB specified by TODO
+        private final byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
 
         /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
         private int pos = -1;
@@ -373,6 +381,13 @@ public final class SpdyStream {
          * receive no more bytes beyond those already in the buffer.
          */
         private boolean finished;
+
+        /**
+         * The total number of bytes consumed by the application (with {@link
+         * #read}), but not yet acknowledged by sending a {@code WINDOW_UPDATE}
+         * frame.
+         */
+        private int unacknowledgedBytes = 0;
 
         @Override public int available() throws IOException {
             synchronized (SpdyStream.this) {
@@ -422,7 +437,12 @@ public final class SpdyStream {
                     copied += bytesToCopy;
                 }
 
-                // TODO: notify peer of flow-control
+                // Flow control: notify the peer that we're ready for more data!
+                unacknowledgedBytes += copied;
+                if (unacknowledgedBytes >= WINDOW_UPDATE_THRESHOLD) {
+                    connection.writeWindowUpdateLater(id, unacknowledgedBytes);
+                    unacknowledgedBytes = 0;
+                }
 
                 if (pos == limit) {
                     pos = -1;
@@ -614,6 +634,9 @@ public final class SpdyStream {
 
         private void writeFrame(boolean last) throws IOException {
             assert (!Thread.holdsLock(SpdyStream.this));
+
+            // TODO: Await flow control (WINDOW_UPDATE) if necessary.
+
             int flags = 0;
             if (last) {
                 flags |= SpdyConnection.FLAG_FIN;
