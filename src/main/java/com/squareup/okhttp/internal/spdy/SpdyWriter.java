@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.zip.Deflater;
 
 /**
- * Write version 2 SPDY frames.
+ * Write spdy/3 frames.
  */
 final class SpdyWriter implements Closeable {
     final DataOutputStream out;
