@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -312,5 +313,15 @@ public final class Util {
             result.setLength(length - 1);
         }
         return result.toString();
+    }
+
+    public static ThreadFactory newThreadFactory(final String name, final boolean daemon) {
+        return new ThreadFactory() {
+            @Override public Thread newThread(Runnable r) {
+                Thread result = new Thread(r, name);
+                result.setDaemon(daemon);
+                return result;
+            }
+        };
     }
 }

@@ -30,7 +30,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 /**
- * Read version 2 SPDY frames.
+ * Read spdy/3 frames.
  */
 final class SpdyReader implements Closeable {
     static final byte[] DICTIONARY = ("\u0000\u0000\u0000\u0007options\u0000\u0000\u0000\u0004hea"

@@ -43,7 +43,7 @@ public final class MockSpdyPeer implements Closeable {
     private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
     private int port;
     private final Executor executor = Executors.newCachedThreadPool(
-            Threads.newThreadFactory("MockSpdyPeer", true));
+            Util.newThreadFactory("MockSpdyPeer", true));
     private ServerSocket serverSocket;
     private Socket socket;
 
@@ -52,8 +52,17 @@ public final class MockSpdyPeer implements Closeable {
     }
 
     public SpdyWriter sendFrame() {
-        OutFrame frame = new OutFrame(frameCount++, bytesOut.size());
-        outFrames.add(frame);
+        outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+        return spdyWriter;
+    }
+
+    /**
+     * Sends a frame, truncated to {@code truncateToLength} bytes. This is only
+     * useful for testing error handling as the truncated frame will be
+     * malformed.
+     */
+    public SpdyWriter sendTruncatedFrame(int truncateToLength) {
+        outFrames.add(new OutFrame(frameCount++, bytesOut.size(), truncateToLength));
         return spdyWriter;
     }
 
@@ -99,6 +108,7 @@ public final class MockSpdyPeer implements Closeable {
 
             if (nextOutFrame != null && nextOutFrame.sequence == i) {
                 int start = nextOutFrame.start;
+                int truncateToLength = nextOutFrame.truncateToLength;
                 int end;
                 if (outFramesIterator.hasNext()) {
                     nextOutFrame = outFramesIterator.next();
@@ -108,7 +118,8 @@ public final class MockSpdyPeer implements Closeable {
                 }
 
                 // write a frame
-                out.write(outBytes, start, end - start);
+                int length = Math.min(end - start, truncateToLength);
+                out.write(outBytes, start, length);
 
             } else {
                 // read a frame
@@ -117,6 +128,7 @@ public final class MockSpdyPeer implements Closeable {
                 inFrames.add(inFrame);
             }
         }
+        Util.closeQuietly(socket);
     }
 
     public Socket openSocket() throws IOException {
@@ -139,10 +151,12 @@ public final class MockSpdyPeer implements Closeable {
     private static class OutFrame {
         private final int sequence;
         private final int start;
+        private final int truncateToLength;
 
-        private OutFrame(int sequence, int start) {
+        private OutFrame(int sequence, int start, int truncateToLength) {
             this.sequence = sequence;
             this.start = start;
+            this.truncateToLength = truncateToLength;
         }
     }
 
