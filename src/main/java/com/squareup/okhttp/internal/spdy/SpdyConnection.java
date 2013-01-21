@@ -117,11 +117,11 @@ public final class SpdyConnection implements Closeable {
 
         String prefix = builder.client ? "Spdy Client " : "Spdy Server ";
         readExecutor = new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(), Threads.newThreadFactory(prefix + "Reader", false));
+                new SynchronousQueue<Runnable>(), Util.newThreadFactory(prefix + "Reader", false));
         writeExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(), Threads.newThreadFactory(prefix + "Writer", false));
+                new LinkedBlockingQueue<Runnable>(), Util.newThreadFactory(prefix + "Writer", false));
         callbackExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(), Threads.newThreadFactory(prefix + "Callbacks", false));
+                new SynchronousQueue<Runnable>(), Util.newThreadFactory(prefix + "Callbacks", false));
 
         readExecutor.execute(new Reader());
     }
@@ -317,7 +317,17 @@ public final class SpdyConnection implements Closeable {
      * internal executor services.
      */
     @Override public void close() throws IOException {
-        shutdown(GOAWAY_OK);
+        close(GOAWAY_OK, SpdyStream.RST_CANCEL);
+    }
+
+    private void close(int shutdownStatusCode, int rstStatusCode) throws IOException {
+        assert (!Thread.holdsLock(this));
+        IOException thrown = null;
+        try {
+            shutdown(shutdownStatusCode);
+        } catch (IOException e) {
+            thrown = e;
+        }
 
         SpdyStream[] streamsToClose = null;
         Ping[] pingsToCancel = null;
@@ -335,8 +345,9 @@ public final class SpdyConnection implements Closeable {
         if (streamsToClose != null) {
             for (SpdyStream stream : streamsToClose) {
                 try {
-                    stream.close(SpdyStream.RST_CANCEL);
-                } catch (Throwable ignored) {
+                    stream.close(rstStatusCode);
+                } catch (IOException e) {
+                    if (thrown != null) thrown = e;
                 }
             }
         }
@@ -350,7 +361,17 @@ public final class SpdyConnection implements Closeable {
         writeExecutor.shutdown();
         callbackExecutor.shutdown();
         readExecutor.shutdown();
-        Util.closeAll(spdyReader, spdyWriter);
+        try {
+            spdyReader.close();
+        } catch (IOException e) {
+            thrown = e;
+        }
+        try {
+            spdyWriter.close();
+        } catch (IOException e) {
+            if (thrown == null) thrown = e;
+        }
+        if (thrown != null) throw thrown;
     }
 
     public static class Builder {
@@ -389,15 +410,21 @@ public final class SpdyConnection implements Closeable {
 
     private class Reader implements Runnable, SpdyReader.Handler {
         @Override public void run() {
+            int shutdownStatusCode = GOAWAY_INTERNAL_ERROR;
+            int rstStatusCode = SpdyStream.RST_INTERNAL_ERROR;
             try {
                 while (spdyReader.nextFrame(this)) {
                 }
-            } catch (ProtocolException e) {
-                shutdownLater(GOAWAY_PROTOCOL_ERROR);
+                shutdownStatusCode = GOAWAY_OK;
+                rstStatusCode = SpdyStream.RST_CANCEL;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                shutdownStatusCode = GOAWAY_PROTOCOL_ERROR;
+                rstStatusCode = SpdyStream.RST_PROTOCOL_ERROR;
             } finally {
-                Util.closeQuietly(SpdyConnection.this);
+                try {
+                    close(shutdownStatusCode, rstStatusCode);
+                } catch (IOException ignored) {
+                }
             }
         }
 
@@ -409,14 +436,9 @@ public final class SpdyConnection implements Closeable {
                 Util.skipByReading(in, length);
                 return;
             }
-            try {
-                dataStream.receiveData(in, length);
-                if ((flags & SpdyConnection.FLAG_FIN) != 0) {
-                    dataStream.receiveFin();
-                }
-            } catch (ProtocolException e) {
-                Util.skipByReading(in, length);
-                dataStream.closeLater(SpdyStream.RST_FLOW_CONTROL_ERROR);
+            dataStream.receiveData(in, length);
+            if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+                dataStream.receiveFin();
             }
         }
 
@@ -456,13 +478,9 @@ public final class SpdyConnection implements Closeable {
                 writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
                 return;
             }
-            try {
-                replyStream.receiveReply(nameValueBlock);
-                if ((flags & SpdyConnection.FLAG_FIN) != 0) {
-                    replyStream.receiveFin();
-                }
-            } catch (ProtocolException e) {
-                replyStream.closeLater(SpdyStream.RST_STREAM_IN_USE);
+            replyStream.receiveReply(nameValueBlock);
+            if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+                replyStream.receiveFin();
             }
         }
 
@@ -470,11 +488,7 @@ public final class SpdyConnection implements Closeable {
                 throws IOException {
             SpdyStream replyStream = getStream(streamId);
             if (replyStream != null) {
-                try {
-                    replyStream.receiveHeaders(nameValueBlock);
-                } catch (ProtocolException e) {
-                    replyStream.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
-                }
+                replyStream.receiveHeaders(nameValueBlock);
             }
         }
 

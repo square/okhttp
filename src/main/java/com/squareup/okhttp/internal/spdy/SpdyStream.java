@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import static java.nio.ByteOrder.BIG_ENDIAN;
 import java.util.ArrayList;
@@ -101,6 +100,8 @@ public final class SpdyStream {
 
     SpdyStream(int id, SpdyConnection connection, int flags, int priority, int slot,
             List<String> requestHeaders, Settings settings) {
+        if (connection == null) throw new NullPointerException("connection == null");
+        if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
         this.id = id;
         this.connection = connection;
         this.priority = priority;
@@ -124,7 +125,8 @@ public final class SpdyStream {
      * Returns true if this stream is open. A stream is open until either:
      * <ul>
      *   <li>A {@code SYN_RESET} frame abnormally terminates the stream.
-     *   <li>Both input and output streams have transmitted all data.
+     *   <li>Both input and output streams have transmitted all data and
+     *       headers.
      * </ul>
      * Note that the input stream may continue to yield data even after a stream
      * reports itself as not open. This is because input data is buffered.
@@ -133,7 +135,7 @@ public final class SpdyStream {
         if (rstStatusCode != -1) {
             return false;
         }
-        if ((in.finished || in.closed) && (out.finished || out.closed)) {
+        if ((in.finished || in.closed) && (out.finished || out.closed) && responseHeaders != null) {
             return false;
         }
         return true;
@@ -287,25 +289,39 @@ public final class SpdyStream {
 
     void receiveReply(List<String> strings) throws IOException {
         assert (!Thread.holdsLock(SpdyStream.this));
+        boolean streamInUseError = false;
+        boolean open = true;
         synchronized (this) {
-            if (!isLocallyInitiated() || responseHeaders != null) {
-                throw new ProtocolException();
+            if (isLocallyInitiated() && responseHeaders == null) {
+                responseHeaders = strings;
+                open = isOpen();
+                notifyAll();
+            } else {
+                streamInUseError = true;
             }
-            responseHeaders = strings;
-            notifyAll();
+        }
+        if (streamInUseError) {
+            closeLater(SpdyStream.RST_STREAM_IN_USE);
+        } else if (!open) {
+            connection.removeStream(id);
         }
     }
 
     void receiveHeaders(List<String> headers) throws IOException {
         assert (!Thread.holdsLock(SpdyStream.this));
+        boolean protocolError = false;
         synchronized (this) {
-            if (responseHeaders == null) {
-                throw new ProtocolException();
+            if (responseHeaders != null) {
+                List<String> newHeaders = new ArrayList<String>();
+                newHeaders.addAll(responseHeaders);
+                newHeaders.addAll(headers);
+                this.responseHeaders = newHeaders;
+            } else {
+                protocolError = true;
             }
-            List<String> newHeaders = new ArrayList<String>();
-            newHeaders.addAll(responseHeaders);
-            newHeaders.addAll(headers);
-            this.responseHeaders = newHeaders;
+        }
+        if (protocolError) {
+            closeLater(SpdyStream.RST_PROTOCOL_ERROR);
         }
     }
 
@@ -513,14 +529,20 @@ public final class SpdyStream {
             int limit;
             int firstNewByte;
             boolean finished;
+            boolean flowControlError;
             synchronized (SpdyStream.this) {
                 finished = this.finished;
                 pos = this.pos;
                 firstNewByte = this.limit;
                 limit = this.limit;
-                if (byteCount > buffer.length - available()) {
-                    throw new ProtocolException();
-                }
+                flowControlError = byteCount > buffer.length - available();
+            }
+
+            // If the peer sends more data than we can handle, discard it and close the connection.
+            if (flowControlError) {
+                Util.skipByReading(in, byteCount);
+                closeLater(SpdyStream.RST_FLOW_CONTROL_ERROR);
+                return;
             }
 
             // Discard data received after the stream is finished. It's probably a benign race.
