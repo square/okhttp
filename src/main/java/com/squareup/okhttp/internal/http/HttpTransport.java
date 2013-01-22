@@ -129,11 +129,7 @@ public final class HttpTransport implements Transport {
      * proper value.
      */
     public void writeRequestHeaders() throws IOException {
-        if (httpEngine.sentRequestMillis != -1) {
-            throw new IllegalStateException();
-        }
-        httpEngine.sentRequestMillis = System.currentTimeMillis();
-
+        httpEngine.writingRequestHeaders();
         int contentLength = httpEngine.requestHeaders.getContentLength();
         RawHeaders headersToSend = httpEngine.requestHeaders.getHeaders();
         byte[] bytes = headersToSend.toBytes();
@@ -159,7 +155,12 @@ public final class HttpTransport implements Transport {
         }
     }
 
-    public boolean makeReusable(OutputStream requestBodyOut, InputStream responseBodyIn) {
+    public boolean makeReusable(boolean streamCancelled,
+            OutputStream requestBodyOut, InputStream responseBodyIn) {
+        if (streamCancelled) {
+            return false;
+        }
+
         // We cannot reuse sockets that have incomplete output.
         if (requestBodyOut != null && !((AbstractHttpOutputStream) requestBodyOut).closed) {
             return false;
@@ -394,7 +395,7 @@ public final class HttpTransport implements Transport {
             super(is, httpEngine, cacheRequest);
             bytesRemaining = length;
             if (bytesRemaining == 0) {
-                endOfInput(true);
+                endOfInput(false);
             }
         }
 
@@ -412,7 +413,7 @@ public final class HttpTransport implements Transport {
             bytesRemaining -= read;
             cacheWrite(buffer, offset, read);
             if (bytesRemaining == 0) {
-                endOfInput(true);
+                endOfInput(false);
             }
             return read;
         }
@@ -491,7 +492,7 @@ public final class HttpTransport implements Transport {
                 RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
                 RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
                 transport.receiveHeaders(rawResponseHeaders);
-                endOfInput(true);
+                endOfInput(false);
             }
         }
 
@@ -514,46 +515,4 @@ public final class HttpTransport implements Transport {
         }
     }
 
-    /**
-     * An HTTP payload terminated by the end of the socket stream.
-     */
-    private static final class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
-        private boolean inputExhausted;
-
-        private UnknownLengthHttpInputStream(InputStream is, CacheRequest cacheRequest,
-                HttpEngine httpEngine) throws IOException {
-            super(is, httpEngine, cacheRequest);
-        }
-
-        @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-            checkOffsetAndCount(buffer.length, offset, count);
-            checkNotClosed();
-            if (in == null || inputExhausted) {
-                return -1;
-            }
-            int read = in.read(buffer, offset, count);
-            if (read == -1) {
-                inputExhausted = true;
-                endOfInput(false);
-                return -1;
-            }
-            cacheWrite(buffer, offset, read);
-            return read;
-        }
-
-        @Override public int available() throws IOException {
-            checkNotClosed();
-            return in == null ? 0 : in.available();
-        }
-
-        @Override public void close() throws IOException {
-            if (closed) {
-                return;
-            }
-            closed = true;
-            if (!inputExhausted) {
-                unexpectedEndOfInput();
-            }
-        }
-    }
 }

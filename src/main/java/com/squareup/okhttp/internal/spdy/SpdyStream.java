@@ -252,7 +252,8 @@ public final class SpdyStream {
     }
 
     /**
-     * Abnormally terminate this stream.
+     * Abnormally terminate this stream. This blocks until the {@code RST_STREAM}
+     * frame has been transmitted.
      */
     public void close(int rstStatusCode) throws IOException {
         if (!closeInternal(rstStatusCode)) {
@@ -261,7 +262,11 @@ public final class SpdyStream {
         connection.writeSynReset(id, rstStatusCode);
     }
 
-    void closeLater(int rstStatusCode) {
+    /**
+     * Abnormally terminate this stream. This enqueues a {@code RST_STREAM}
+     * frame and returns immediately.
+     */
+    public void closeLater(int rstStatusCode) {
         if (!closeInternal(rstStatusCode)) {
             return; // Already closed.
         }

@@ -25,7 +25,8 @@ import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static com.google.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.internal.http.HttpResponseCache;
+import com.squareup.okhttp.internal.RecordingAuthenticator;
+import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -39,7 +40,6 @@ import java.net.ConnectException;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
-import java.net.PasswordAuthentication;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -65,11 +65,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -87,9 +85,6 @@ import org.junit.Test;
  * Android's URLConnectionTest.
  */
 public final class URLConnectionTest {
-    /** base64("username:password") */
-    private static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
-
     private MockWebServer server = new MockWebServer();
     private MockWebServer server2 = new MockWebServer();
 
@@ -840,7 +835,8 @@ public final class URLConnectionTest {
 
         RecordedRequest connect2 = server.takeRequest();
         assertEquals("CONNECT android.com:443 HTTP/1.1", connect2.getRequestLine());
-        assertContains(connect2.getHeaders(), "Proxy-Authorization: Basic " + BASE_64_CREDENTIALS);
+        assertContains(connect2.getHeaders(), "Proxy-Authorization: Basic "
+                + RecordingAuthenticator.BASE_64_CREDENTIALS);
 
         RecordedRequest get = server.takeRequest();
         assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
@@ -1472,7 +1468,8 @@ public final class URLConnectionTest {
         for (int i = 0; i < 3; i++) {
             request = server.takeRequest();
             assertEquals("POST / HTTP/1.1", request.getRequestLine());
-            assertContains(request.getHeaders(), "Authorization: Basic " + BASE_64_CREDENTIALS);
+            assertContains(request.getHeaders(), "Authorization: Basic "
+                    + RecordingAuthenticator.BASE_64_CREDENTIALS);
             assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
         }
     }
@@ -1502,7 +1499,8 @@ public final class URLConnectionTest {
         for (int i = 0; i < 3; i++) {
             request = server.takeRequest();
             assertEquals("GET / HTTP/1.1", request.getRequestLine());
-            assertContains(request.getHeaders(), "Authorization: Basic " + BASE_64_CREDENTIALS);
+            assertContains(request.getHeaders(), "Authorization: Basic "
+                    + RecordingAuthenticator.BASE_64_CREDENTIALS);
         }
     }
 
@@ -2332,40 +2330,6 @@ public final class URLConnectionTest {
                 result.add(certificate.getSubjectDN() + " " + certificate.getSerialNumber());
             }
             return result.toString();
-        }
-    }
-
-    private static class RecordingHostnameVerifier implements HostnameVerifier {
-        private final List<String> calls = new ArrayList<String>();
-
-        public boolean verify(String hostname, SSLSession session) {
-            calls.add("verify " + hostname);
-            return true;
-        }
-    }
-
-    private static class RecordingAuthenticator extends Authenticator {
-        private final List<String> calls = new ArrayList<String>();
-        private final PasswordAuthentication authentication;
-
-        public RecordingAuthenticator(PasswordAuthentication authentication) {
-            this.authentication = authentication;
-        }
-
-        public RecordingAuthenticator() {
-            this(new PasswordAuthentication("username", "password".toCharArray()));
-        }
-
-        @Override protected PasswordAuthentication getPasswordAuthentication() {
-            this.calls.add("host=" + getRequestingHost()
-                    + " port=" + getRequestingPort()
-                    + " site=" + getRequestingSite()
-                    + " url=" + getRequestingURL()
-                    + " type=" + getRequestorType()
-                    + " prompt=" + getRequestingPrompt()
-                    + " protocol=" + getRequestingProtocol()
-                    + " scheme=" + getRequestingScheme());
-            return authentication;
         }
     }
 

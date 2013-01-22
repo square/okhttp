@@ -20,6 +20,7 @@ package com.squareup.okhttp.internal.mockspdyserver;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.QueueDispatcher;
 import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -34,7 +35,6 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -47,12 +47,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import org.eclipse.jetty.npn.NextProtoNego;
 
 /**
  * A scriptable spdy/3 + HTTP server.
  */
 public final class MockSpdyServer {
+    private static final byte[] NPN_PROTOCOLS = new byte[] {
+            6, 's', 'p', 'd', 'y', '/', '3',
+    };
     private static final Logger logger = Logger.getLogger(MockSpdyServer.class.getName());
     private SSLSocketFactory sslSocketFactory;
     private QueueDispatcher dispatcher = new QueueDispatcher();
@@ -99,7 +101,7 @@ public final class MockSpdyServer {
     }
 
     public void play() throws IOException {
-        serverSocket = new ServerSocket(8888);
+        serverSocket = new ServerSocket(0);
         serverSocket.setReuseAddress(true);
         port = serverSocket.getLocalPort();
 
@@ -177,17 +179,7 @@ public final class MockSpdyServer {
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket,
                     socket.getInetAddress().getHostAddress(), socket.getPort(), true);
             sslSocket.setUseClientMode(false);
-            NextProtoNego.put(sslSocket, new NextProtoNego.ServerProvider() {
-                @Override public void unsupported() {
-                    System.out.println("UNSUPPORTED");
-                }
-                @Override public List<String> protocols() {
-                    return Arrays.asList("spdy/3");
-                }
-                @Override public void protocolSelected(String protocol) {
-                    System.out.println("PROTOCOL SELECTED: " + protocol);
-                }
-            });
+            Platform.get().setNpnProtocols(sslSocket, NPN_PROTOCOLS);
             return sslSocket;
         }
 
@@ -253,8 +245,8 @@ public final class MockSpdyServer {
                 if (headerParts.length != 2) {
                     throw new AssertionError("Unexpected header: " + header);
                 }
-                spdyHeaders.add(headerParts[0].toLowerCase(Locale.US));
-                spdyHeaders.add(headerParts[1]);
+                spdyHeaders.add(headerParts[0].toLowerCase(Locale.US).trim());
+                spdyHeaders.add(headerParts[1].trim());
             }
             byte[] body = response.getBody();
             stream.reply(spdyHeaders, body.length > 0);
