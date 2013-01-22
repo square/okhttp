@@ -36,7 +36,7 @@ public final class RecordedRequest {
     private final int sequenceNumber;
     private final String sslProtocol;
 
-    RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
+    public RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
             int bodySize, byte[] body, int sequenceNumber, Socket socket) {
         this.requestLine = requestLine;
         this.headers = headers;
