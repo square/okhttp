@@ -164,9 +164,11 @@ public class Platform {
             Class<?> nextProtoNegoClass = Class.forName(npnClassName);
             Class<?> providerClass = Class.forName(npnClassName + "$Provider");
             Class<?> clientProviderClass = Class.forName(npnClassName + "$ClientProvider");
+            Class<?> serverProviderClass = Class.forName(npnClassName + "$ServerProvider");
             Method putMethod = nextProtoNegoClass.getMethod("put", SSLSocket.class, providerClass);
             Method getMethod = nextProtoNegoClass.getMethod("get", SSLSocket.class);
-            return new JdkWithJettyNpnPlatform(putMethod, getMethod, clientProviderClass);
+            return new JdkWithJettyNpnPlatform(putMethod, getMethod,
+                    clientProviderClass, serverProviderClass);
         } catch (ClassNotFoundException ignored) {
             return new Platform(); // NPN isn't on the classpath.
         } catch (NoSuchMethodException ignored) {
@@ -255,12 +257,14 @@ public class Platform {
         private final Method getMethod;
         private final Method putMethod;
         private final Class<?> clientProviderClass;
+        private final Class<?> serverProviderClass;
 
-        public JdkWithJettyNpnPlatform(
-                Method putMethod, Method getMethod, Class<?> clientProviderClass) {
+        public JdkWithJettyNpnPlatform(Method putMethod, Method getMethod,
+                Class<?> clientProviderClass, Class<?> serverProviderClass) {
             this.putMethod = putMethod;
             this.getMethod = getMethod;
             this.clientProviderClass = clientProviderClass;
+            this.serverProviderClass = serverProviderClass;
         }
 
         @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
@@ -272,7 +276,8 @@ public class Platform {
                     i += length;
                 }
                 Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-                        new Class[] {clientProviderClass}, new JettyNpnProvider(strings));
+                        new Class[] {clientProviderClass, serverProviderClass},
+                        new JettyNpnProvider(strings));
                 putMethod.invoke(null, socket, provider);
             } catch (UnsupportedEncodingException e) {
                 throw new AssertionError(e);
@@ -311,30 +316,37 @@ public class Platform {
      * without a compile-time dependency on those interfaces.
      */
     private static class JettyNpnProvider implements InvocationHandler {
-        private final List<String> clientProtocols;
+        private final List<String> protocols;
         private boolean unsupported;
         private String selected;
 
-        public JettyNpnProvider(List<String> clientProtocols) {
-            this.clientProtocols = clientProtocols;
+        public JettyNpnProvider(List<String> protocols) {
+            this.protocols = protocols;
         }
 
         @Override public Object invoke(Object proxy, Method method, Object[] args)
                 throws Throwable {
             String methodName = method.getName();
             Class<?> returnType = method.getReturnType();
+            if (args == null) {
+                args = Util.EMPTY_STRING_ARRAY;
+            }
             if (methodName.equals("supports") && boolean.class == returnType) {
                 return true;
             } else if (methodName.equals("unsupported") && void.class == returnType) {
                 this.unsupported = true;
                 return null;
+            } else if (methodName.equals("protocols") && args.length == 0) {
+                return protocols;
             } else if (methodName.equals("selectProtocol") && String.class == returnType
                     && args.length == 1 && (args[0] == null || args[0] instanceof List)) {
                 // TODO: use OpenSSL's algorithm which uses both lists
                 List<?> serverProtocols = (List) args[0];
-                System.out.println("CLIENT PROTOCOLS: " + clientProtocols + " SERVER PROTOCOLS: " + serverProtocols);
-                this.selected = clientProtocols.get(0);
+                this.selected = protocols.get(0);
                 return selected;
+            } else if (methodName.equals("protocolSelected") && args.length == 1) {
+                this.selected = (String) args[0];
+                return null;
             } else {
                 return method.invoke(this, args);
             }

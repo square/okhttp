@@ -22,12 +22,12 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.TunnelRequest;
+import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
-import com.squareup.okhttp.internal.Dns;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -284,7 +284,7 @@ public class HttpEngine {
                     address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
         }
         connection = routeSelector.next();
-        if (!connection.isRecycled()) {
+        if (!connection.isConnected()) {
             connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(),
                     getTunnelConfig());
             if (connection.isSpdy()) {
@@ -305,6 +305,17 @@ public class HttpEngine {
      * pool. Subclasses use this hook to get a reference to the TLS data.
      */
     protected void connected(Connection connection) {
+    }
+
+    /**
+     * Called immediately before the transport transmits HTTP request headers.
+     * This is used to observe the sent time should the request be cached.
+     */
+    public void writingRequestHeaders() {
+        if (sentRequestMillis != -1) {
+            throw new IllegalStateException();
+        }
+        sentRequestMillis = System.currentTimeMillis();
     }
 
     /**
@@ -423,7 +434,7 @@ public class HttpEngine {
      * closed. Also call {@link #automaticallyReleaseConnectionToPool} unless
      * the connection will be used to follow a redirect.
      */
-    public final void release(boolean reusable) {
+    public final void release(boolean streamCancelled) {
         // If the response body comes from the cache, close it.
         if (responseBodyIn == cachedResponseBody) {
             Util.closeQuietly(responseBodyIn);
@@ -432,7 +443,8 @@ public class HttpEngine {
         if (!connectionReleased && connection != null) {
             connectionReleased = true;
 
-            if (!reusable || !transport.makeReusable(requestBodyOut, responseTransferIn)) {
+            if (transport == null || !transport.makeReusable(
+                    streamCancelled, requestBodyOut, responseTransferIn)) {
                 Util.closeQuietly(connection);
                 connection = null;
             } else if (automaticallyReleaseConnectionToPool) {
@@ -647,7 +659,7 @@ public class HttpEngine {
 
         if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
             if (cachedResponseHeaders.validate(responseHeaders)) {
-                release(true);
+                release(false);
                 ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
                 setResponse(combinedHeaders, cachedResponseBody);
                 if (policy.responseCache instanceof OkResponseCache) {

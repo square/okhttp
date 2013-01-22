@@ -18,22 +18,33 @@ package com.squareup.okhttp.internal.spdy;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpResponseCache;
 import com.squareup.okhttp.internal.mockspdyserver.MockSpdyServer;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,10 +71,14 @@ public final class HttpOverSpdyTest {
     private final MockSpdyServer server = new MockSpdyServer(sslContext.getSocketFactory());
     private final String hostName = server.getHostName();
     private final OkHttpClient client = new OkHttpClient();
+    private HttpResponseCache cache;
 
     @Before public void setUp() throws Exception {
         client.setSSLSocketFactory(sslContext.getSocketFactory());
         client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+        String systemTmpDir = System.getProperty("java.io.tmpdir");
+        File cacheDir = new File(systemTmpDir, "HttpCache-" + UUID.randomUUID());
+        cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
     }
 
     @After public void tearDown() throws Exception {
@@ -84,6 +99,96 @@ public final class HttpOverSpdyTest {
         assertContains(request.getHeaders(), ":host: " + hostName + ":" + server.getPort());
     }
 
+    @Test public void spdyConnectionReuse() throws Exception {
+        server.enqueue(new MockResponse().setBody("ABCDEF"));
+        server.enqueue(new MockResponse().setBody("GHIJKL"));
+        server.play();
+
+        HttpURLConnection connection1 = client.open(server.getUrl("/r1"));
+        HttpURLConnection connection2 = client.open(server.getUrl("/r2"));
+        assertEquals("ABC", readAscii(connection1.getInputStream(), 3));
+        assertEquals("GHI", readAscii(connection2.getInputStream(), 3));
+        assertEquals("DEF", readAscii(connection1.getInputStream(), 3));
+        assertEquals("JKL", readAscii(connection2.getInputStream(), 3));
+        assertEquals(0, server.takeRequest().getSequenceNumber());
+        assertEquals(0, server.takeRequest().getSequenceNumber());
+    }
+
+    @Test public void gzippedResponseBody() throws Exception {
+        server.enqueue(new MockResponse()
+                .addHeader("Content-Encoding: gzip")
+                .setBody(gzip("ABCABCABC".getBytes(Util.UTF_8))));
+        server.play();
+        assertContent("ABCABCABC", client.open(server.getUrl("/r1")), Integer.MAX_VALUE);
+    }
+
+    @Test public void authenticate() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(HttpURLConnection.HTTP_UNAUTHORIZED)
+                .addHeader("www-authenticate: Basic realm=\"protected area\"")
+                .setBody("Please authenticate."));
+        server.enqueue(new MockResponse().setBody("Successful auth!"));
+        server.play();
+
+        Authenticator.setDefault(new RecordingAuthenticator());
+        HttpURLConnection connection = client.open(server.getUrl("/"));
+        assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+
+        RecordedRequest denied = server.takeRequest();
+        assertContainsNoneMatching(denied.getHeaders(), "authorization: Basic .*");
+        RecordedRequest accepted = server.takeRequest();
+        assertEquals("GET / HTTP/1.1", accepted.getRequestLine());
+        assertContains(accepted.getHeaders(), "authorization: Basic "
+                + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    }
+
+    @Test public void redirect() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+                .addHeader("Location: /foo")
+                .setBody("This page has moved!"));
+        server.enqueue(new MockResponse().setBody("This is the new location!"));
+        server.play();
+
+        HttpURLConnection connection = client.open(server.getUrl("/"));
+        assertContent("This is the new location!", connection, Integer.MAX_VALUE);
+
+        RecordedRequest request1 = server.takeRequest();
+        assertEquals("/", request1.getPath());
+        RecordedRequest request2 = server.takeRequest();
+        assertEquals("/foo", request2.getPath());
+    }
+
+    @Test public void readAfterLastByte() throws Exception {
+        server.enqueue(new MockResponse().setBody("ABC"));
+        server.play();
+
+        HttpURLConnection connection = client.open(server.getUrl("/"));
+        InputStream in = connection.getInputStream();
+        assertEquals("ABC", readAscii(in, 3));
+        assertEquals(-1, in.read());
+        assertEquals(-1, in.read());
+    }
+
+    @Test public void responsesAreCached() throws IOException {
+        client.setResponseCache(cache);
+
+        server.enqueue(new MockResponse()
+                .addHeader("cache-control: max-age=60")
+                .setBody("A"));
+        server.play();
+
+        assertContent("A", client.open(server.getUrl("/")), Integer.MAX_VALUE);
+        assertEquals(1, cache.getRequestCount());
+        assertEquals(1, cache.getNetworkCount());
+        assertEquals(0, cache.getHitCount());
+        assertContent("A", client.open(server.getUrl("/")), Integer.MAX_VALUE);
+        assertContent("A", client.open(server.getUrl("/")), Integer.MAX_VALUE);
+        assertEquals(3, cache.getRequestCount());
+        assertEquals(1, cache.getNetworkCount());
+        assertEquals(2, cache.getHitCount());
+    }
+
     private <T> void assertContains(Collection<T> collection, T value) {
         assertTrue(collection.toString(), collection.contains(value));
     }
@@ -93,6 +198,14 @@ public final class HttpOverSpdyTest {
         connection.connect();
         assertEquals(expected, readAscii(connection.getInputStream(), limit));
         ((HttpURLConnection) connection).disconnect();
+    }
+
+    private void assertContainsNoneMatching(List<String> headers, String pattern) {
+        for (String header : headers) {
+            if (header.matches(pattern)) {
+                fail("Header " + header + " matches " + pattern);
+            }
+        }
     }
 
     private String readAscii(InputStream in, int count) throws IOException {
@@ -106,5 +219,13 @@ public final class HttpOverSpdyTest {
             result.append((char) value);
         }
         return result.toString();
+    }
+
+    public byte[] gzip(byte[] bytes) throws IOException {
+        ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+        OutputStream gzippedOut = new GZIPOutputStream(bytesOut);
+        gzippedOut.write(bytes);
+        gzippedOut.close();
+        return bytesOut.toByteArray();
     }
 }

@@ -44,7 +44,7 @@ mvn clean
 mvn package -DskipTests
 vogar \
     --classpath ~/.m2/repository/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar \
-    --classpath ~/.m2/repository/com/google/mockwebserver/mockwebserver/20120905/mockwebserver-20120905.jar \
+    --classpath ~/.m2/repository/com/google/mockwebserver/mockwebserver/20130122/mockwebserver-20130122.jar \
     --classpath target/okhttp-0.9-SNAPSHOT.jar \
     ./src/test/java
 ```

@@ -108,7 +108,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
             if (httpEngine.hasResponse()) {
                 Util.closeQuietly(httpEngine.getResponseBody());
             }
-            httpEngine.release(false);
+            httpEngine.release(true);
         }
     }
 
@@ -328,7 +328,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
                 httpEngine.automaticallyReleaseConnectionToPool();
             }
 
-            httpEngine.release(true);
+            httpEngine.release(false);
 
             httpEngine = newHttpEngine(retryMethod, rawRequestHeaders,
                     httpEngine.getConnection(), (RetryableOutputStream) requestBody);
@@ -359,7 +359,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
             OutputStream requestBody = httpEngine.getRequestBody();
             if (routeSelector.hasNext() && isRecoverable(e)
                     && (requestBody == null || requestBody instanceof RetryableOutputStream)) {
-                httpEngine.release(false);
+                httpEngine.release(true);
                 httpEngine = newHttpEngine(method, rawRequestHeaders, null,
                         (RetryableOutputStream) requestBody);
                 httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
