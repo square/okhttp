@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class Util {
     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+    public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
     /** A cheap and type-safe constant for the ISO-8859-1 Charset. */
     public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
@@ -102,12 +104,28 @@ public final class Util {
     }
 
     /**
-     * Closes 'closeable', ignoring any checked exceptions. Does nothing if 'closeable' is null.
+     * Closes {@code closeable}, ignoring any checked exceptions. Does nothing
+     * if {@code closeable} is null.
      */
     public static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
+            } catch (RuntimeException rethrown) {
+                throw rethrown;
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
+    /**
+     * Closes {@code socket}, ignoring any checked exceptions. Does nothing if
+     * {@code socket} is null.
+     */
+    public static void closeQuietly(Socket socket) {
+        if (socket != null) {
+            try {
+                socket.close();
             } catch (RuntimeException rethrown) {
                 throw rethrown;
             } catch (Exception ignored) {

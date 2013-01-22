@@ -67,5 +67,6 @@ interface Transport {
     /**
      * Returns true if the underlying connection can be recycled.
      */
-    boolean makeReusable(OutputStream requestBodyOut, InputStream responseBodyIn);
+    boolean makeReusable(boolean streamReusable,
+            OutputStream requestBodyOut, InputStream responseBodyIn);
 }

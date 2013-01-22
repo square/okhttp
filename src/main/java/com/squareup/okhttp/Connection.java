@@ -84,6 +84,7 @@ public final class Connection implements Closeable {
     private InputStream in;
     private OutputStream out;
     private boolean recycled = false;
+    private boolean connected = false;
     private SpdyConnection spdyConnection;
     private int httpMinorVersion = 1; // Assume HTTP/1.1
 
@@ -100,6 +101,10 @@ public final class Connection implements Closeable {
 
     public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
             throws IOException {
+        if (connected) {
+            throw new IllegalStateException("already connected");
+        }
+        connected = true;
         socket = (proxy.type() != Proxy.Type.HTTP)
                 ? new Socket(proxy)
                 : new Socket();
@@ -167,6 +172,13 @@ public final class Connection implements Closeable {
                         + new String(selectedProtocol, "ISO-8859-1"));
             }
         }
+    }
+
+    /**
+     * Returns true if {@link #connect} has been attempted on this connection.
+     */
+    public boolean isConnected() {
+        return connected;
     }
 
     @Override public void close() throws IOException {

@@ -30,7 +30,6 @@ public final class SpdyTransport implements Transport {
     private final SpdyConnection spdyConnection;
     private SpdyStream stream;
 
-    // TODO: set sentMillis
     // TODO: set cookie stuff
 
     public SpdyTransport(HttpEngine httpEngine, SpdyConnection spdyConnection) {
@@ -48,6 +47,7 @@ public final class SpdyTransport implements Transport {
         if (stream != null) {
             return;
         }
+        httpEngine.writingRequestHeaders();
         RawHeaders requestHeaders = httpEngine.requestHeaders.getHeaders();
         String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
         URL url = httpEngine.policy.getURL();
@@ -76,11 +76,15 @@ public final class SpdyTransport implements Transport {
     }
 
     @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
-        // TODO: handle HTTP responses that don't have a response body
-        return stream.getInputStream();
+        return new UnknownLengthHttpInputStream(
+                stream.getInputStream(), cacheRequest, httpEngine);
     }
 
-    @Override public boolean makeReusable(OutputStream requestBodyOut, InputStream responseBodyIn) {
+    @Override public boolean makeReusable(
+            boolean streamCancelled, OutputStream requestBodyOut, InputStream responseBodyIn) {
+        if (streamCancelled) {
+            stream.closeLater(SpdyStream.RST_CANCEL);
+        }
         return true;
     }
 }
