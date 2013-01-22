@@ -23,11 +23,6 @@ You can also depend on the .jar through Maven:
 Known Issues
 ------------
 
-The SPDY implementation is incomplete:
-
-* Settings frames are not honored. Flow control is not implemented.
-* It assumes a well-behaved peer. If the peer sends an invalid frame, OkHttp's SPDY client will not respond with the required `RST` frame.
-
 OkHttp uses the platform's [ProxySelector][2]. Prior to Android 4.0, `ProxySelector` didn't honor the `proxyHost` and `proxyPort` system properties for HTTPS connections. Work around this by specifying the `https.proxyHost` and `https.proxyPort` system properties when using a proxy with HTTPS.
 
 OkHttp's test suite creates an in-process HTTPS server. Prior to Android 2.3, SSL server sockets were broken, and so HTTPS tests will time out when run on such devices.
@@ -37,16 +32,9 @@ Building
 --------
 
 ### On the Desktop
-Run OkHttp tests on the desktop with Maven.
+Run OkHttp tests on the desktop with Maven. Running SPDY tests on the desktop uses [Jetty-NPN](http://wiki.eclipse.org/Jetty/Feature/NPN) which requires OpenJDK 7+.
 ```
 mvn clean test
-```
-SPDY support uses a Deflater API that wasn't available in Java 6. For this reason SPDY tests will fail with this error: `Cannot SPDY; no SYNC_FLUSH available`. All other tests should run fine.
-
-### On the Desktop with NPN
-Using NPN on the desktop uses [Jetty-NPN](http://wiki.eclipse.org/Jetty/Feature/NPN) which requires OpenJDK 7+.
-```
-mvn clean test -Pspdy-tls
 ```
 
 ### On a Device
