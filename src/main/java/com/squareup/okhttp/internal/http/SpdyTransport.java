@@ -30,8 +30,6 @@ public final class SpdyTransport implements Transport {
     private final SpdyConnection spdyConnection;
     private SpdyStream stream;
 
-    // TODO: set cookie stuff
-
     public SpdyTransport(HttpEngine httpEngine, SpdyConnection spdyConnection) {
         this.httpEngine = httpEngine;
         this.spdyConnection = spdyConnection;
@@ -72,6 +70,7 @@ public final class SpdyTransport implements Transport {
         List<String> nameValueBlock = stream.getResponseHeaders();
         RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
         rawHeaders.computeResponseStatusLineFromSpdyHeaders();
+        httpEngine.receiveHeaders(rawHeaders);
         return new ResponseHeaders(httpEngine.uri, rawHeaders);
     }
 

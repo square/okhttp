@@ -93,6 +93,16 @@ public final class MockSpdyServer {
     }
 
     /**
+     * Returns a cookie domain for this server. This returns the server's
+     * non-loopback host name if it is known. Otherwise this returns ".local"
+     * for this server's loopback name.
+     */
+    public String getCookieDomain() {
+        String hostName = getHostName();
+        return hostName.contains(".") ? hostName : ".local";
+    }
+
+    /**
      * Awaits the next HTTP request, removes it, and returns it. Callers should
      * use this to verify the request sent was as intended.
      */
