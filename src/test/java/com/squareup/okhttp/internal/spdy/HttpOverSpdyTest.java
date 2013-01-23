@@ -29,13 +29,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
+import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
@@ -97,6 +102,29 @@ public final class HttpOverSpdyTest {
         assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
         assertContains(request.getHeaders(), ":scheme: https");
         assertContains(request.getHeaders(), ":host: " + hostName + ":" + server.getPort());
+    }
+
+    @Test public void emptyResponse() throws IOException {
+        server.enqueue(new MockResponse());
+        server.play();
+
+        HttpURLConnection connection = client.open(server.getUrl("/foo"));
+        assertEquals(-1, connection.getInputStream().read());
+    }
+
+    @Test public void post() throws Exception {
+        MockResponse response = new MockResponse().setBody("ABCDE");
+        server.enqueue(response);
+        server.play();
+
+        HttpURLConnection connection = client.open(server.getUrl("/foo"));
+        connection.setDoOutput(true);
+        connection.getOutputStream().write("FGHIJ".getBytes(Util.UTF_8));
+        assertContent("ABCDE", connection, Integer.MAX_VALUE);
+
+        RecordedRequest request = server.takeRequest();
+        assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+        assertEquals("FGHIJ", request.getUtf8Body());
     }
 
     @Test public void spdyConnectionReuse() throws Exception {
@@ -187,6 +215,28 @@ public final class HttpOverSpdyTest {
         assertEquals(3, cache.getRequestCount());
         assertEquals(1, cache.getNetworkCount());
         assertEquals(2, cache.getHitCount());
+    }
+
+    @Test public void acceptAndTransmitCookies() throws Exception {
+        CookieManager cookieManager = new CookieManager();
+        client.setCookieHandler(cookieManager);
+        server.enqueue(new MockResponse()
+                .addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
+                .setBody("A"));
+        server.enqueue(new MockResponse().setBody("B"));
+        server.play();
+
+        URL url = server.getUrl("/");
+        assertContent("A", client.open(url), Integer.MAX_VALUE);
+        Map<String, List<String>> requestHeaders = Collections.emptyMap();
+        assertEquals(Collections.singletonMap("Cookie", Arrays.asList("c=oreo")),
+                cookieManager.get(url.toURI(), requestHeaders));
+
+        assertContent("B", client.open(url), Integer.MAX_VALUE);
+        RecordedRequest requestA = server.takeRequest();
+        assertContainsNoneMatching(requestA.getHeaders(), "Cookie.*");
+        RecordedRequest requestB = server.takeRequest();
+        assertContains(requestB.getHeaders(), "cookie: c=oreo");
     }
 
     private <T> void assertContains(Collection<T> collection, T value) {

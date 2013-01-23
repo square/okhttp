@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
-import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Socket;
 
@@ -144,15 +143,8 @@ public final class HttpTransport implements Transport {
     @Override public ResponseHeaders readResponseHeaders() throws IOException {
         RawHeaders headers = RawHeaders.fromBytes(socketIn);
         httpEngine.connection.setHttpMinorVersion(headers.getHttpMinorVersion());
-        receiveHeaders(headers);
+        httpEngine.receiveHeaders(headers);
         return new ResponseHeaders(httpEngine.uri, headers);
-    }
-
-    private void receiveHeaders(RawHeaders headers) throws IOException {
-        CookieHandler cookieHandler = httpEngine.policy.cookieHandler;
-        if (cookieHandler != null) {
-            cookieHandler.put(httpEngine.uri, headers.toMultimap(true));
-        }
     }
 
     public boolean makeReusable(boolean streamCancelled,
@@ -491,7 +483,7 @@ public final class HttpTransport implements Transport {
                 hasMoreChunks = false;
                 RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
                 RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
-                transport.receiveHeaders(rawResponseHeaders);
+                httpEngine.receiveHeaders(rawResponseHeaders);
                 endOfInput(false);
             }
         }
