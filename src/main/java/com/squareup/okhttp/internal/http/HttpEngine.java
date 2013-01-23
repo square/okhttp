@@ -684,4 +684,11 @@ public class HttpEngine {
     protected TunnelRequest getTunnelConfig() {
         return null;
     }
+
+    public void receiveHeaders(RawHeaders headers) throws IOException {
+        CookieHandler cookieHandler = policy.cookieHandler;
+        if (cookieHandler != null) {
+            cookieHandler.put(uri, headers.toMultimap(true));
+        }
+    }
 }
