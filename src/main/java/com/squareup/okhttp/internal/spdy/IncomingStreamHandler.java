@@ -18,21 +18,19 @@ package com.squareup.okhttp.internal.spdy;
 
 import java.io.IOException;
 
-/**
- * Listener to be notified when a connected peer creates a new stream.
- */
+/** Listener to be notified when a connected peer creates a new stream. */
 public interface IncomingStreamHandler {
-    IncomingStreamHandler REFUSE_INCOMING_STREAMS = new IncomingStreamHandler() {
-        @Override public void receive(SpdyStream stream) throws IOException {
-            stream.close(SpdyStream.RST_REFUSED_STREAM);
-        }
-    };
+  IncomingStreamHandler REFUSE_INCOMING_STREAMS = new IncomingStreamHandler() {
+    @Override public void receive(SpdyStream stream) throws IOException {
+      stream.close(SpdyStream.RST_REFUSED_STREAM);
+    }
+  };
 
-    /**
-     * Handle a new stream from this connection's peer. Implementations should
-     * respond by either {@link SpdyStream#reply replying to the stream} or
-     * {@link SpdyStream#close closing it}. This response does not need to be
-     * synchronous.
-     */
-    void receive(SpdyStream stream) throws IOException;
+  /**
+   * Handle a new stream from this connection's peer. Implementations should
+   * respond by either {@link SpdyStream#reply replying to the stream} or
+   * {@link SpdyStream#close closing it}. This response does not need to be
+   * synchronous.
+   */
+  void receive(SpdyStream stream) throws IOException;
 }

@@ -15,8 +15,9 @@
  */
 package com.squareup.okhttp;
 
-import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import com.squareup.okhttp.internal.http.RawHeaders;
+
+import static com.squareup.okhttp.internal.Util.getDefaultPort;
 
 /**
  * Routing and authentication information sent to an HTTP proxy to create a
@@ -27,48 +28,48 @@ import com.squareup.okhttp.internal.http.RawHeaders;
  * 5.2</a>.
  */
 public final class TunnelRequest {
-    final String host;
-    final int port;
-    final String userAgent;
-    final String proxyAuthorization;
+  final String host;
+  final int port;
+  final String userAgent;
+  final String proxyAuthorization;
 
-    /**
-     * @param host the origin server's hostname. Not null.
-     * @param port the origin server's port, like 80 or 443.
-     * @param userAgent the client's user-agent. Not null.
-     * @param proxyAuthorization proxy authorization, or null if the proxy is
-     *     used without an authorization header.
-     */
-    public TunnelRequest(String host, int port, String userAgent, String proxyAuthorization) {
-        if (host == null) throw new NullPointerException("host == null");
-        if (userAgent == null) throw new NullPointerException("userAgent == null");
-        this.host = host;
-        this.port = port;
-        this.userAgent = userAgent;
-        this.proxyAuthorization = proxyAuthorization;
+  /**
+   * @param host the origin server's hostname. Not null.
+   * @param port the origin server's port, like 80 or 443.
+   * @param userAgent the client's user-agent. Not null.
+   * @param proxyAuthorization proxy authorization, or null if the proxy is
+   * used without an authorization header.
+   */
+  public TunnelRequest(String host, int port, String userAgent, String proxyAuthorization) {
+    if (host == null) throw new NullPointerException("host == null");
+    if (userAgent == null) throw new NullPointerException("userAgent == null");
+    this.host = host;
+    this.port = port;
+    this.userAgent = userAgent;
+    this.proxyAuthorization = proxyAuthorization;
+  }
+
+  /**
+   * If we're creating a TLS tunnel, send only the minimum set of headers.
+   * This avoids sending potentially sensitive data like HTTP cookies to
+   * the proxy unencrypted.
+   */
+  RawHeaders getRequestHeaders() {
+    RawHeaders result = new RawHeaders();
+    result.setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
+
+    // Always set Host and User-Agent.
+    result.set("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
+    result.set("User-Agent", userAgent);
+
+    // Copy over the Proxy-Authorization header if it exists.
+    if (proxyAuthorization != null) {
+      result.set("Proxy-Authorization", proxyAuthorization);
     }
 
-    /**
-     * If we're creating a TLS tunnel, send only the minimum set of headers.
-     * This avoids sending potentially sensitive data like HTTP cookies to
-     * the proxy unencrypted.
-     */
-    RawHeaders getRequestHeaders() {
-        RawHeaders result = new RawHeaders();
-        result.setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
-
-        // Always set Host and User-Agent.
-        result.set("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
-        result.set("User-Agent", userAgent);
-
-        // Copy over the Proxy-Authorization header if it exists.
-        if (proxyAuthorization != null) {
-            result.set("Proxy-Authorization", proxyAuthorization);
-        }
-
-        // Always set the Proxy-Connection to Keep-Alive for the benefit of
-        // HTTP/1.0 proxies like Squid.
-        result.set("Proxy-Connection", "Keep-Alive");
-        return result;
-    }
+    // Always set the Proxy-Connection to Keep-Alive for the benefit of
+    // HTTP/1.0 proxies like Squid.
+    result.set("Proxy-Connection", "Keep-Alive");
+    return result;
+  }
 }

@@ -51,393 +51,374 @@ import java.util.TreeMap;
  * leading or trailing whitespace.
  */
 public final class RawHeaders {
-    private static final Comparator<String> FIELD_NAME_COMPARATOR = new Comparator<String>() {
-        // @FindBugsSuppressWarnings("ES_COMPARING_PARAMETER_STRING_WITH_EQ")
-        @Override public int compare(String a, String b) {
-            if (a == b) {
-                return 0;
-            } else if (a == null) {
-                return -1;
-            } else if (b == null) {
-                return 1;
-            } else {
-                return String.CASE_INSENSITIVE_ORDER.compare(a, b);
-            }
-        }
-    };
-
-    private final List<String> namesAndValues = new ArrayList<String>(20);
-    private String requestLine;
-    private String statusLine;
-    private int httpMinorVersion = 1;
-    private int responseCode = -1;
-    private String responseMessage;
-
-    public RawHeaders() {
+  private static final Comparator<String> FIELD_NAME_COMPARATOR = new Comparator<String>() {
+    // @FindBugsSuppressWarnings("ES_COMPARING_PARAMETER_STRING_WITH_EQ")
+    @Override public int compare(String a, String b) {
+      if (a == b) {
+        return 0;
+      } else if (a == null) {
+        return -1;
+      } else if (b == null) {
+        return 1;
+      } else {
+        return String.CASE_INSENSITIVE_ORDER.compare(a, b);
+      }
     }
+  };
 
-    public RawHeaders(RawHeaders copyFrom) {
-        namesAndValues.addAll(copyFrom.namesAndValues);
-        requestLine = copyFrom.requestLine;
-        statusLine = copyFrom.statusLine;
-        httpMinorVersion = copyFrom.httpMinorVersion;
-        responseCode = copyFrom.responseCode;
-        responseMessage = copyFrom.responseMessage;
+  private final List<String> namesAndValues = new ArrayList<String>(20);
+  private String requestLine;
+  private String statusLine;
+  private int httpMinorVersion = 1;
+  private int responseCode = -1;
+  private String responseMessage;
+
+  public RawHeaders() {
+  }
+
+  public RawHeaders(RawHeaders copyFrom) {
+    namesAndValues.addAll(copyFrom.namesAndValues);
+    requestLine = copyFrom.requestLine;
+    statusLine = copyFrom.statusLine;
+    httpMinorVersion = copyFrom.httpMinorVersion;
+    responseCode = copyFrom.responseCode;
+    responseMessage = copyFrom.responseMessage;
+  }
+
+  /** Sets the request line (like "GET / HTTP/1.1"). */
+  public void setRequestLine(String requestLine) {
+    requestLine = requestLine.trim();
+    this.requestLine = requestLine;
+  }
+
+  /** Sets the response status line (like "HTTP/1.0 200 OK"). */
+  public void setStatusLine(String statusLine) throws IOException {
+    // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
+    // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+    if (!statusLine.startsWith("HTTP/1.")
+        || statusLine.charAt(8) != ' '
+        || statusLine.charAt(12) != ' ') {
+      throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-
-    /**
-     * Sets the request line (like "GET / HTTP/1.1").
-     */
-    public void setRequestLine(String requestLine) {
-        requestLine = requestLine.trim();
-        this.requestLine = requestLine;
+    int httpMinorVersion = statusLine.charAt(7) - '0';
+    if (httpMinorVersion < 0 || httpMinorVersion > 9) {
+      throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-
-    /**
-     * Sets the response status line (like "HTTP/1.0 200 OK").
-     */
-    public void setStatusLine(String statusLine) throws IOException {
-        // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
-        // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
-        if (!statusLine.startsWith("HTTP/1.")
-                || statusLine.charAt(8) != ' '
-                || statusLine.charAt(12) != ' ') {
-            throw new ProtocolException("Unexpected status line: " + statusLine);
-        }
-        int httpMinorVersion = statusLine.charAt(7) - '0';
-        if (httpMinorVersion < 0 || httpMinorVersion > 9) {
-            throw new ProtocolException("Unexpected status line: " + statusLine);
-        }
-        int responseCode;
-        try {
-            responseCode = Integer.parseInt(statusLine.substring(9, 12));
-        } catch (NumberFormatException e) {
-            throw new ProtocolException("Unexpected status line: " + statusLine);
-        }
-        this.responseMessage = statusLine.substring(13);
-        this.responseCode = responseCode;
-        this.statusLine = statusLine;
-        this.httpMinorVersion = httpMinorVersion;
+    int responseCode;
+    try {
+      responseCode = Integer.parseInt(statusLine.substring(9, 12));
+    } catch (NumberFormatException e) {
+      throw new ProtocolException("Unexpected status line: " + statusLine);
     }
+    this.responseMessage = statusLine.substring(13);
+    this.responseCode = responseCode;
+    this.statusLine = statusLine;
+    this.httpMinorVersion = httpMinorVersion;
+  }
 
-    public void computeResponseStatusLineFromSpdyHeaders() throws IOException {
-        String status = null;
-        String version = null;
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            String name = namesAndValues.get(i);
-            if (":status".equals(name)) {
-                status = namesAndValues.get(i + 1);
-            } else if (":version".equals(name)) {
-                version = namesAndValues.get(i + 1);
-            }
-        }
-        if (status == null || version == null) {
-            throw new ProtocolException("Expected ':status' and ':version' headers not present");
-        }
-        setStatusLine(version + " " + status);
+  public void computeResponseStatusLineFromSpdyHeaders() throws IOException {
+    String status = null;
+    String version = null;
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      String name = namesAndValues.get(i);
+      if (":status".equals(name)) {
+        status = namesAndValues.get(i + 1);
+      } else if (":version".equals(name)) {
+        version = namesAndValues.get(i + 1);
+      }
     }
-
-    /**
-     * @param method like "GET", "POST", "HEAD", etc.
-     * @param path like "/foo/bar.html"
-     * @param version like "HTTP/1.1"
-     * @param host like "www.android.com:1234"
-     * @param scheme like "https"
-     */
-    public void addSpdyRequestHeaders(
-            String method, String path, String version, String host, String scheme) {
-        // TODO: populate the statusLine for the client's benefit?
-        add(":method", method);
-        add(":scheme", scheme);
-        add(":path", path);
-        add(":version", version);
-        add(":host", host);
+    if (status == null || version == null) {
+      throw new ProtocolException("Expected ':status' and ':version' headers not present");
     }
+    setStatusLine(version + " " + status);
+  }
 
-    public String getStatusLine() {
-        return statusLine;
+  /**
+   * @param method like "GET", "POST", "HEAD", etc.
+   * @param path like "/foo/bar.html"
+   * @param version like "HTTP/1.1"
+   * @param host like "www.android.com:1234"
+   * @param scheme like "https"
+   */
+  public void addSpdyRequestHeaders(String method, String path, String version, String host,
+      String scheme) {
+    // TODO: populate the statusLine for the client's benefit?
+    add(":method", method);
+    add(":scheme", scheme);
+    add(":path", path);
+    add(":version", version);
+    add(":host", host);
+  }
+
+  public String getStatusLine() {
+    return statusLine;
+  }
+
+  /**
+   * Returns the status line's HTTP minor version. This returns 0 for HTTP/1.0
+   * and 1 for HTTP/1.1. This returns 1 if the HTTP version is unknown.
+   */
+  public int getHttpMinorVersion() {
+    return httpMinorVersion != -1 ? httpMinorVersion : 1;
+  }
+
+  /** Returns the HTTP status code or -1 if it is unknown. */
+  public int getResponseCode() {
+    return responseCode;
+  }
+
+  /** Returns the HTTP status message or null if it is unknown. */
+  public String getResponseMessage() {
+    return responseMessage;
+  }
+
+  /**
+   * Add an HTTP header line containing a field name, a literal colon, and a
+   * value.
+   */
+  public void addLine(String line) {
+    int index = line.indexOf(":");
+    if (index == -1) {
+      add("", line);
+    } else {
+      add(line.substring(0, index), line.substring(index + 1));
     }
+  }
 
-    /**
-     * Returns the status line's HTTP minor version. This returns 0 for HTTP/1.0
-     * and 1 for HTTP/1.1. This returns 1 if the HTTP version is unknown.
-     */
-    public int getHttpMinorVersion() {
-        return httpMinorVersion != -1 ? httpMinorVersion : 1;
+  /** Add a field with the specified value. */
+  public void add(String fieldName, String value) {
+    if (fieldName == null) {
+      throw new IllegalArgumentException("fieldName == null");
     }
-
-    /**
-     * Returns the HTTP status code or -1 if it is unknown.
-     */
-    public int getResponseCode() {
-        return responseCode;
-    }
-
-    /**
-     * Returns the HTTP status message or null if it is unknown.
-     */
-    public String getResponseMessage() {
-        return responseMessage;
-    }
-
-    /**
-     * Add an HTTP header line containing a field name, a literal colon, and a
-     * value.
-     */
-    public void addLine(String line) {
-        int index = line.indexOf(":");
-        if (index == -1) {
-            add("", line);
-        } else {
-            add(line.substring(0, index), line.substring(index + 1));
-        }
-    }
-
-    /**
-     * Add a field with the specified value.
-     */
-    public void add(String fieldName, String value) {
-        if (fieldName == null) {
-            throw new IllegalArgumentException("fieldName == null");
-        }
-        if (value == null) {
+    if (value == null) {
             /*
              * Given null values, the RI sends a malformed field line like
              * "Accept\r\n". For platform compatibility and HTTP compliance, we
              * print a warning and ignore null values.
              */
-            Platform.get().logW("Ignoring HTTP header field '"
-                    + fieldName + "' because its value is null");
-            return;
+      Platform.get()
+          .logW("Ignoring HTTP header field '" + fieldName + "' because its value is null");
+      return;
+    }
+    namesAndValues.add(fieldName);
+    namesAndValues.add(value.trim());
+  }
+
+  public void removeAll(String fieldName) {
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+        namesAndValues.remove(i); // field name
+        namesAndValues.remove(i); // value
+      }
+    }
+  }
+
+  public void addAll(String fieldName, List<String> headerFields) {
+    for (String value : headerFields) {
+      add(fieldName, value);
+    }
+  }
+
+  /**
+   * Set a field with the specified value. If the field is not found, it is
+   * added. If the field is found, the existing values are replaced.
+   */
+  public void set(String fieldName, String value) {
+    removeAll(fieldName);
+    add(fieldName, value);
+  }
+
+  /** Returns the number of field values. */
+  public int length() {
+    return namesAndValues.size() / 2;
+  }
+
+  /** Returns the field at {@code position} or null if that is out of range. */
+  public String getFieldName(int index) {
+    int fieldNameIndex = index * 2;
+    if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.size()) {
+      return null;
+    }
+    return namesAndValues.get(fieldNameIndex);
+  }
+
+  /** Returns the value at {@code index} or null if that is out of range. */
+  public String getValue(int index) {
+    int valueIndex = index * 2 + 1;
+    if (valueIndex < 0 || valueIndex >= namesAndValues.size()) {
+      return null;
+    }
+    return namesAndValues.get(valueIndex);
+  }
+
+  /** Returns the last value corresponding to the specified field, or null. */
+  public String get(String fieldName) {
+    for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
+      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+        return namesAndValues.get(i + 1);
+      }
+    }
+    return null;
+  }
+
+  /** @param fieldNames a case-insensitive set of HTTP header field names. */
+  public RawHeaders getAll(Set<String> fieldNames) {
+    RawHeaders result = new RawHeaders();
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      String fieldName = namesAndValues.get(i);
+      if (fieldNames.contains(fieldName)) {
+        result.add(fieldName, namesAndValues.get(i + 1));
+      }
+    }
+    return result;
+  }
+
+  /** Returns bytes of a request header for sending on an HTTP transport. */
+  public byte[] toBytes() throws UnsupportedEncodingException {
+    StringBuilder result = new StringBuilder(256);
+    result.append(requestLine).append("\r\n");
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      result.append(namesAndValues.get(i))
+          .append(": ")
+          .append(namesAndValues.get(i + 1))
+          .append("\r\n");
+    }
+    result.append("\r\n");
+    return result.toString().getBytes("ISO-8859-1");
+  }
+
+  /** Parses bytes of a response header from an HTTP transport. */
+  public static RawHeaders fromBytes(InputStream in) throws IOException {
+    RawHeaders headers;
+    do {
+      headers = new RawHeaders();
+      headers.setStatusLine(Util.readAsciiLine(in));
+      readHeaders(in, headers);
+    } while (headers.getResponseCode() == HttpEngine.HTTP_CONTINUE);
+    return headers;
+  }
+
+  /** Reads headers or trailers into {@code out}. */
+  public static void readHeaders(InputStream in, RawHeaders out) throws IOException {
+    // parse the result headers until the first blank line
+    String line;
+    while ((line = Util.readAsciiLine(in)).length() != 0) {
+      out.addLine(line);
+    }
+  }
+
+  /**
+   * Returns an immutable map containing each field to its list of values. The
+   * status line is mapped to null.
+   */
+  public Map<String, List<String>> toMultimap(boolean response) {
+    Map<String, List<String>> result = new TreeMap<String, List<String>>(FIELD_NAME_COMPARATOR);
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      String fieldName = namesAndValues.get(i);
+      String value = namesAndValues.get(i + 1);
+
+      List<String> allValues = new ArrayList<String>();
+      List<String> otherValues = result.get(fieldName);
+      if (otherValues != null) {
+        allValues.addAll(otherValues);
+      }
+      allValues.add(value);
+      result.put(fieldName, Collections.unmodifiableList(allValues));
+    }
+    if (response && statusLine != null) {
+      result.put(null, Collections.unmodifiableList(Collections.singletonList(statusLine)));
+    } else if (requestLine != null) {
+      result.put(null, Collections.unmodifiableList(Collections.singletonList(requestLine)));
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  /**
+   * Creates a new instance from the given map of fields to values. If
+   * present, the null field's last element will be used to set the status
+   * line.
+   */
+  public static RawHeaders fromMultimap(Map<String, List<String>> map, boolean response)
+      throws IOException {
+    if (!response) throw new UnsupportedOperationException();
+    RawHeaders result = new RawHeaders();
+    for (Entry<String, List<String>> entry : map.entrySet()) {
+      String fieldName = entry.getKey();
+      List<String> values = entry.getValue();
+      if (fieldName != null) {
+        result.addAll(fieldName, values);
+      } else if (!values.isEmpty()) {
+        result.setStatusLine(values.get(values.size() - 1));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns a list of alternating names and values. Names are all lower case.
+   * No names are repeated. If any name has multiple values, they are
+   * concatenated using "\0" as a delimiter.
+   */
+  public List<String> toNameValueBlock() {
+    Set<String> names = new HashSet<String>();
+    List<String> result = new ArrayList<String>();
+    for (int i = 0; i < namesAndValues.size(); i += 2) {
+      String name = namesAndValues.get(i).toLowerCase(Locale.US);
+      String value = namesAndValues.get(i + 1);
+
+      // TODO: promote this check to where names and values are created
+      if (name.length() == 0
+          || value.length() == 0
+          || name.indexOf('\0') != -1
+          || value.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
+      }
+
+      // Drop headers that are forbidden when layering HTTP over SPDY.
+      if (name.equals("connection")
+          || name.equals("host")
+          || name.equals("keep-alive")
+          || name.equals("proxy-connection")
+          || name.equals("transfer-encoding")) {
+        continue;
+      }
+
+      // If we haven't seen this name before, add the pair to the end of the list...
+      if (names.add(name)) {
+        result.add(name);
+        result.add(value);
+        continue;
+      }
+
+      // ...otherwise concatenate the existing values and this value.
+      for (int j = 0; j < result.size(); j += 2) {
+        if (name.equals(result.get(j))) {
+          result.set(j + 1, result.get(j + 1) + "\0" + value);
+          break;
         }
-        namesAndValues.add(fieldName);
-        namesAndValues.add(value.trim());
+      }
     }
+    return result;
+  }
 
-    public void removeAll(String fieldName) {
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-                namesAndValues.remove(i); // field name
-                namesAndValues.remove(i); // value
-            }
+  public static RawHeaders fromNameValueBlock(List<String> nameValueBlock) {
+    if (nameValueBlock.size() % 2 != 0) {
+      throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
+    }
+    RawHeaders result = new RawHeaders();
+    for (int i = 0; i < nameValueBlock.size(); i += 2) {
+      String name = nameValueBlock.get(i);
+      String values = nameValueBlock.get(i + 1);
+      for (int start = 0; start < values.length(); ) {
+        int end = values.indexOf('\0', start);
+        if (end == -1) {
+          end = values.length();
         }
+        result.namesAndValues.add(name);
+        result.namesAndValues.add(values.substring(start, end));
+        start = end + 1;
+      }
     }
-
-    public void addAll(String fieldName, List<String> headerFields) {
-        for (String value : headerFields) {
-            add(fieldName, value);
-        }
-    }
-
-    /**
-     * Set a field with the specified value. If the field is not found, it is
-     * added. If the field is found, the existing values are replaced.
-     */
-    public void set(String fieldName, String value) {
-        removeAll(fieldName);
-        add(fieldName, value);
-    }
-
-    /**
-     * Returns the number of field values.
-     */
-    public int length() {
-        return namesAndValues.size() / 2;
-    }
-
-    /**
-     * Returns the field at {@code position} or null if that is out of range.
-     */
-    public String getFieldName(int index) {
-        int fieldNameIndex = index * 2;
-        if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.size()) {
-            return null;
-        }
-        return namesAndValues.get(fieldNameIndex);
-    }
-
-    /**
-     * Returns the value at {@code index} or null if that is out of range.
-     */
-    public String getValue(int index) {
-        int valueIndex = index * 2 + 1;
-        if (valueIndex < 0 || valueIndex >= namesAndValues.size()) {
-            return null;
-        }
-        return namesAndValues.get(valueIndex);
-    }
-
-    /**
-     * Returns the last value corresponding to the specified field, or null.
-     */
-    public String get(String fieldName) {
-        for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
-            if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-                return namesAndValues.get(i + 1);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * @param fieldNames a case-insensitive set of HTTP header field names.
-     */
-    public RawHeaders getAll(Set<String> fieldNames) {
-        RawHeaders result = new RawHeaders();
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            String fieldName = namesAndValues.get(i);
-            if (fieldNames.contains(fieldName)) {
-                result.add(fieldName, namesAndValues.get(i + 1));
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Returns bytes of a request header for sending on an HTTP transport.
-     */
-    public byte[] toBytes() throws UnsupportedEncodingException {
-        StringBuilder result = new StringBuilder(256);
-        result.append(requestLine).append("\r\n");
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            result.append(namesAndValues.get(i)).append(": ")
-                    .append(namesAndValues.get(i + 1)).append("\r\n");
-        }
-        result.append("\r\n");
-        return result.toString().getBytes("ISO-8859-1");
-    }
-
-    /**
-     * Parses bytes of a response header from an HTTP transport.
-     */
-    public static RawHeaders fromBytes(InputStream in) throws IOException {
-        RawHeaders headers;
-        do {
-            headers = new RawHeaders();
-            headers.setStatusLine(Util.readAsciiLine(in));
-            readHeaders(in, headers);
-        } while (headers.getResponseCode() == HttpEngine.HTTP_CONTINUE);
-        return headers;
-    }
-
-    /**
-     * Reads headers or trailers into {@code out}.
-     */
-    public static void readHeaders(InputStream in, RawHeaders out) throws IOException {
-        // parse the result headers until the first blank line
-        String line;
-        while ((line = Util.readAsciiLine(in)).length() != 0) {
-            out.addLine(line);
-        }
-    }
-
-    /**
-     * Returns an immutable map containing each field to its list of values. The
-     * status line is mapped to null.
-     */
-    public Map<String, List<String>> toMultimap(boolean response) {
-        Map<String, List<String>> result = new TreeMap<String, List<String>>(FIELD_NAME_COMPARATOR);
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            String fieldName = namesAndValues.get(i);
-            String value = namesAndValues.get(i + 1);
-
-            List<String> allValues = new ArrayList<String>();
-            List<String> otherValues = result.get(fieldName);
-            if (otherValues != null) {
-                allValues.addAll(otherValues);
-            }
-            allValues.add(value);
-            result.put(fieldName, Collections.unmodifiableList(allValues));
-        }
-        if (response && statusLine != null) {
-            result.put(null, Collections.unmodifiableList(Collections.singletonList(statusLine)));
-        } else if (requestLine != null) {
-            result.put(null, Collections.unmodifiableList(Collections.singletonList(requestLine)));
-        }
-        return Collections.unmodifiableMap(result);
-    }
-
-    /**
-     * Creates a new instance from the given map of fields to values. If
-     * present, the null field's last element will be used to set the status
-     * line.
-     */
-    public static RawHeaders fromMultimap(Map<String, List<String>> map, boolean response)
-            throws IOException {
-        if (!response) throw new UnsupportedOperationException();
-        RawHeaders result = new RawHeaders();
-        for (Entry<String, List<String>> entry : map.entrySet()) {
-            String fieldName = entry.getKey();
-            List<String> values = entry.getValue();
-            if (fieldName != null) {
-                result.addAll(fieldName, values);
-            } else if (!values.isEmpty()) {
-                result.setStatusLine(values.get(values.size() - 1));
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Returns a list of alternating names and values. Names are all lower case.
-     * No names are repeated. If any name has multiple values, they are
-     * concatenated using "\0" as a delimiter.
-     */
-    public List<String> toNameValueBlock() {
-        Set<String> names = new HashSet<String>();
-        List<String> result = new ArrayList<String>();
-        for (int i = 0; i < namesAndValues.size(); i += 2) {
-            String name = namesAndValues.get(i).toLowerCase(Locale.US);
-            String value = namesAndValues.get(i + 1);
-
-            // TODO: promote this check to where names and values are created
-            if (name.length() == 0 || value.length() == 0
-                    || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-                throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-            }
-
-            // Drop headers that are forbidden when layering HTTP over SPDY.
-            if (name.equals("connection") || name.equals("host") || name.equals("keep-alive")
-                    || name.equals("proxy-connection") || name.equals("transfer-encoding")) {
-                continue;
-            }
-
-            // If we haven't seen this name before, add the pair to the end of the list...
-            if (names.add(name)) {
-                result.add(name);
-                result.add(value);
-                continue;
-            }
-
-            // ...otherwise concatenate the existing values and this value.
-            for (int j = 0; j < result.size(); j += 2) {
-                if (name.equals(result.get(j))) {
-                    result.set(j + 1, result.get(j + 1) + "\0" + value);
-                    break;
-                }
-            }
-        }
-        return result;
-    }
-
-    public static RawHeaders fromNameValueBlock(List<String> nameValueBlock) {
-        if (nameValueBlock.size() % 2 != 0) {
-            throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
-        }
-        RawHeaders result = new RawHeaders();
-        for (int i = 0; i < nameValueBlock.size(); i += 2) {
-            String name = nameValueBlock.get(i);
-            String values = nameValueBlock.get(i + 1);
-            for (int start = 0; start < values.length();) {
-                int end = values.indexOf('\0', start);
-                if (end == -1) {
-                    end = values.length();
-                }
-                result.namesAndValues.add(name);
-                result.namesAndValues.add(values.substring(start, end));
-                start = end + 1;
-            }
-        }
-        return result;
-    }
+    return result;
+  }
 }

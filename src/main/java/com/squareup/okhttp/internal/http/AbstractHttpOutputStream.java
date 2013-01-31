@@ -26,15 +26,15 @@ import java.io.OutputStream;
  * requests to the same server, subclasses should not close the socket stream.
  */
 abstract class AbstractHttpOutputStream extends OutputStream {
-    protected boolean closed;
+  protected boolean closed;
 
-    @Override public final void write(int data) throws IOException {
-        write(new byte[] {(byte) data});
-    }
+  @Override public final void write(int data) throws IOException {
+    write(new byte[] { (byte) data });
+  }
 
-    protected final void checkNotClosed() throws IOException {
-        if (closed) {
-            throw new IOException("stream closed");
-        }
+  protected final void checkNotClosed() throws IOException {
+    if (closed) {
+      throw new IOException("stream closed");
     }
+  }
 }
