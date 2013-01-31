@@ -326,6 +326,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
             if (retry == Retry.DIFFERENT_CONNECTION) {
                 httpEngine.automaticallyReleaseConnectionToPool();
+            } else if (retry == Retry.SAME_CONNECTION && httpEngine.getConnection() != null) {
+                httpEngine.getConnection().setRecycled();
             }
 
             httpEngine.release(false);
@@ -349,15 +351,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
             return true;
         } catch (IOException e) {
             RouteSelector routeSelector = httpEngine.routeSelector;
-            if (routeSelector == null) {
-                throw e; // Without a route selector, we can't retry.
-            } else if (httpEngine.connection != null) {
+            if (routeSelector != null && httpEngine.connection != null) {
                 routeSelector.connectFailed(httpEngine.connection, e);
+            }
+            if (routeSelector == null && httpEngine.connection == null) {
+                throw e; // If we failed before finding a route or a connection, give up.
             }
 
             // The connection failure isn't fatal if there's another route to attempt.
             OutputStream requestBody = httpEngine.getRequestBody();
-            if (routeSelector.hasNext() && isRecoverable(e)
+            if ((routeSelector == null || routeSelector.hasNext()) && isRecoverable(e)
                     && (requestBody == null || requestBody instanceof RetryableOutputStream)) {
                 httpEngine.release(true);
                 httpEngine = newHttpEngine(method, rawRequestHeaders, null,
