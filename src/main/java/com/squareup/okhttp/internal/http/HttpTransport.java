@@ -270,8 +270,9 @@ public final class HttpTransport implements Transport {
    */
   private static final class ChunkedOutputStream extends AbstractHttpOutputStream {
     private static final byte[] CRLF = { '\r', '\n' };
-    private static final byte[] HEX_DIGITS =
-        { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    private static final byte[] HEX_DIGITS = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
     private static final byte[] FINAL_CHUNK = new byte[] { '0', '\r', '\n', '\r', '\n' };
 
     /** Scratch space for up to 8 hex digits, and then a constant CRLF. */
