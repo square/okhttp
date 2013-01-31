@@ -22,51 +22,43 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 
 interface Transport {
-    /**
-     * Returns an output stream where the request body can be written. The
-     * returned stream will of one of two types:
-     * <ul>
-     *     <li><strong>Direct.</strong> Bytes are written to the socket and
-     *     forgotten. This is most efficient, particularly for large request
-     *     bodies. The returned stream may be buffered; the caller must call
-     *     {@link #flushRequest} before reading the response.</li>
-     *     <li><strong>Buffered.</strong> Bytes are written to an in memory
-     *     buffer, and must be explicitly flushed with a call to {@link
-     *     #writeRequestBody}. This allows HTTP authorization (401, 407)
-     *     responses to be retransmitted transparently.</li>
-     * </ul>
-     */
-    // TODO: don't bother retransmitting the request body? It's quite a corner
-    // case and there's uncertainty whether Firefox or Chrome do this
-    OutputStream createRequestBody() throws IOException;
+  /**
+   * Returns an output stream where the request body can be written. The
+   * returned stream will of one of two types:
+   * <ul>
+   * <li><strong>Direct.</strong> Bytes are written to the socket and
+   * forgotten. This is most efficient, particularly for large request
+   * bodies. The returned stream may be buffered; the caller must call
+   * {@link #flushRequest} before reading the response.</li>
+   * <li><strong>Buffered.</strong> Bytes are written to an in memory
+   * buffer, and must be explicitly flushed with a call to {@link
+   * #writeRequestBody}. This allows HTTP authorization (401, 407)
+   * responses to be retransmitted transparently.</li>
+   * </ul>
+   */
+  // TODO: don't bother retransmitting the request body? It's quite a corner
+  // case and there's uncertainty whether Firefox or Chrome do this
+  OutputStream createRequestBody() throws IOException;
 
-    /**
-     * This should update the HTTP engine's sentRequestMillis field.
-     */
-    void writeRequestHeaders() throws IOException;
+  /** This should update the HTTP engine's sentRequestMillis field. */
+  void writeRequestHeaders() throws IOException;
 
-    /**
-     * Sends the request body returned by {@link #createRequestBody} to the
-     * remote peer.
-     */
-    void writeRequestBody(RetryableOutputStream requestBody) throws IOException;
+  /**
+   * Sends the request body returned by {@link #createRequestBody} to the
+   * remote peer.
+   */
+  void writeRequestBody(RetryableOutputStream requestBody) throws IOException;
 
-    /**
-     * Flush the request body to the underlying socket.
-     */
-    void flushRequest() throws IOException;
+  /** Flush the request body to the underlying socket. */
+  void flushRequest() throws IOException;
 
-    /**
-     * Read response headers and update the cookie manager.
-     */
-    ResponseHeaders readResponseHeaders() throws IOException;
+  /** Read response headers and update the cookie manager. */
+  ResponseHeaders readResponseHeaders() throws IOException;
 
-    // TODO: make this the content stream?
-    InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
+  // TODO: make this the content stream?
+  InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
 
-    /**
-     * Returns true if the underlying connection can be recycled.
-     */
-    boolean makeReusable(boolean streamReusable,
-            OutputStream requestBodyOut, InputStream responseBodyIn);
+  /** Returns true if the underlying connection can be recycled. */
+  boolean makeReusable(boolean streamReusable, OutputStream requestBodyOut,
+      InputStream responseBodyIn);
 }

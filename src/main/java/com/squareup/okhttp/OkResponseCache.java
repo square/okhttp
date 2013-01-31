@@ -26,19 +26,13 @@ import java.net.HttpURLConnection;
  */
 public interface OkResponseCache {
 
-    /**
-     * Track an HTTP response being satisfied by {@code source}.
-     */
-    void trackResponse(ResponseSource source);
+  /** Track an HTTP response being satisfied by {@code source}. */
+  void trackResponse(ResponseSource source);
 
-    /**
-     * Track an conditional GET that was satisfied by this cache.
-     */
-    void trackConditionalCacheHit();
+  /** Track an conditional GET that was satisfied by this cache. */
+  void trackConditionalCacheHit();
 
-    /**
-     * Updates stored HTTP headers using a hit on a conditional GET.
-     */
-    void update(CacheResponse conditionalCacheHit, HttpURLConnection httpConnection)
-            throws IOException;
+  /** Updates stored HTTP headers using a hit on a conditional GET. */
+  void update(CacheResponse conditionalCacheHit, HttpURLConnection httpConnection)
+      throws IOException;
 }

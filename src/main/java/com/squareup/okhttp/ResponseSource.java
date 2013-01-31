@@ -15,29 +15,23 @@
  */
 package com.squareup.okhttp;
 
-/**
- * The source of an HTTP response.
- */
+/** The source of an HTTP response. */
 public enum ResponseSource {
 
-    /**
-     * The response was returned from the local cache.
-     */
-    CACHE,
+  /** The response was returned from the local cache. */
+  CACHE,
 
-    /**
-     * The response is available in the cache but must be validated with the
-     * network. The cache result will be used if it is still valid; otherwise
-     * the network's response will be used.
-     */
-    CONDITIONAL_CACHE,
+  /**
+   * The response is available in the cache but must be validated with the
+   * network. The cache result will be used if it is still valid; otherwise
+   * the network's response will be used.
+   */
+  CONDITIONAL_CACHE,
 
-    /**
-     * The response was returned from the network.
-     */
-    NETWORK;
+  /** The response was returned from the network. */
+  NETWORK;
 
-    public boolean requiresConnection() {
-        return this == CONDITIONAL_CACHE || this == NETWORK;
-    }
+  public boolean requiresConnection() {
+    return this == CONDITIONAL_CACHE || this == NETWORK;
+  }
 }

@@ -21,10 +21,10 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
 public final class RecordingHostnameVerifier implements HostnameVerifier {
-    public final List<String> calls = new ArrayList<String>();
+  public final List<String> calls = new ArrayList<String>();
 
-    public boolean verify(String hostname, SSLSession session) {
-        calls.add("verify " + hostname);
-        return true;
-    }
+  public boolean verify(String hostname, SSLSession session) {
+    calls.add("verify " + hostname);
+    return true;
+  }
 }

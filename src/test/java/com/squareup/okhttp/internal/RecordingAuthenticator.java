@@ -21,29 +21,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RecordingAuthenticator extends Authenticator {
-    /** base64("username:password") */
-    public static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
+  /** base64("username:password") */
+  public static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
-    public final List<String> calls = new ArrayList<String>();
-    public final PasswordAuthentication authentication;
+  public final List<String> calls = new ArrayList<String>();
+  public final PasswordAuthentication authentication;
 
-    public RecordingAuthenticator(PasswordAuthentication authentication) {
-        this.authentication = authentication;
-    }
+  public RecordingAuthenticator(PasswordAuthentication authentication) {
+    this.authentication = authentication;
+  }
 
-    public RecordingAuthenticator() {
-        this(new PasswordAuthentication("username", "password".toCharArray()));
-    }
+  public RecordingAuthenticator() {
+    this(new PasswordAuthentication("username", "password".toCharArray()));
+  }
 
-    @Override protected PasswordAuthentication getPasswordAuthentication() {
-        this.calls.add("host=" + getRequestingHost()
-                + " port=" + getRequestingPort()
-                + " site=" + getRequestingSite()
-                + " url=" + getRequestingURL()
-                + " type=" + getRequestorType()
-                + " prompt=" + getRequestingPrompt()
-                + " protocol=" + getRequestingProtocol()
-                + " scheme=" + getRequestingScheme());
-        return authentication;
-    }
+  @Override protected PasswordAuthentication getPasswordAuthentication() {
+    this.calls
+        .add("host="
+            + getRequestingHost()
+            + " port="
+            + getRequestingPort()
+            + " site="
+            + getRequestingSite()
+            + " url="
+            + getRequestingURL()
+            + " type="
+            + getRequestorType()
+            + " prompt="
+            + getRequestingPrompt()
+            + " protocol="
+            + getRequestingProtocol()
+            + " scheme="
+            + getRequestingScheme());
+    return authentication;
+  }
 }
