@@ -326,8 +326,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
             if (retry == Retry.DIFFERENT_CONNECTION) {
                 httpEngine.automaticallyReleaseConnectionToPool();
-            } else if (retry == Retry.SAME_CONNECTION && httpEngine.getConnection() != null) {
-                httpEngine.getConnection().setRecycled();
             }
 
             httpEngine.release(false);

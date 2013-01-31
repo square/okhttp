@@ -83,10 +83,10 @@ public final class Connection implements Closeable {
     private Socket socket;
     private InputStream in;
     private OutputStream out;
-    private boolean recycled = false;
     private boolean connected = false;
     private SpdyConnection spdyConnection;
     private int httpMinorVersion = 1; // Assume HTTP/1.1
+    private long idleStartTimeNs;
 
     public Connection(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
             boolean modernTls) {
@@ -219,29 +219,40 @@ public final class Connection implements Closeable {
     }
 
     /**
-     * Returns true if this connection has been used to satisfy an earlier
-     * HTTP request/response pair.
-     *
-     * <p>The HTTP client treats recycled and non-recycled connections
-     * differently. I/O failures on recycled connections are often temporary:
-     * the remote peer may have closed the socket because it was idle for an
-     * extended period of time. When fresh connections suffer similar failures
-     * the problem is fatal and the request is not retried.
+     * Returns true if this connection is alive.
      */
-    public boolean isRecycled() {
-        return recycled;
+    public boolean isAlive() {
+        return !socket.isClosed() && !socket.isInputShutdown() && !socket.isOutputShutdown();
     }
 
-    public void setRecycled() {
-        this.recycled = true;
+    public void resetIdleStartTime() {
+        if (spdyConnection != null) {
+            throw new IllegalStateException("spdyConnection != null");
+        }
+        this.idleStartTimeNs = System.nanoTime();
     }
 
     /**
-     * Returns true if this connection is eligible to be reused for another
-     * request/response pair.
+     * Returns true if this connection is idle.
      */
-    protected boolean isEligibleForRecycling() {
-        return !socket.isClosed() && !socket.isInputShutdown() && !socket.isOutputShutdown();
+    public boolean isIdle() {
+        return spdyConnection == null || spdyConnection.isIdle();
+    }
+
+    /**
+     * Returns true if this connection has been idle for longer than
+     * {@code keepAliveDurationNs}.
+     */
+    public boolean isExpired(long keepAliveDurationNs) {
+        return isIdle() && System.nanoTime() - getIdleStartTimeNs() > keepAliveDurationNs;
+    }
+
+    /**
+     * Returns the time in ns when this connection became idle. Undefined if
+     * this connection is not idle.
+     */
+    public long getIdleStartTimeNs() {
+        return spdyConnection == null ? idleStartTimeNs : spdyConnection.getIdleStartTimeNs();
     }
 
     /**
@@ -261,7 +272,11 @@ public final class Connection implements Closeable {
         return spdyConnection != null;
     }
 
-    /**
+    public SpdyConnection getSpdyConnection() {
+       return spdyConnection;
+    }
+
+  /**
      * Returns the minor HTTP version that should be used for future requests on
      * this connection. Either 0 for HTTP/1.0, or 1 for HTTP/1.1. The default
      * value is 1 for new connections.
