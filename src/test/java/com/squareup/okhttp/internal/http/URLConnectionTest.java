@@ -395,7 +395,11 @@ public final class URLConnectionTest {
         testServerClosesOutput(SHUTDOWN_INPUT_AT_END);
     }
 
-    @Test public void serverShutdownOutput() throws Exception {
+    /**
+     * Ignored because this test is racy.
+     * https://github.com/square/okhttp/issues/90
+     */
+    @Test @Ignore public void serverShutdownOutput() throws Exception {
         testServerClosesOutput(SHUTDOWN_OUTPUT_AT_END);
     }
 
