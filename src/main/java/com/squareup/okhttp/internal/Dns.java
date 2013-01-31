@@ -23,11 +23,11 @@ import java.net.UnknownHostException;
  * make code more testable.
  */
 public interface Dns {
-    Dns DEFAULT = new Dns() {
-        @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
-            return InetAddress.getAllByName(host);
-        }
-    };
+  Dns DEFAULT = new Dns() {
+    @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
+      return InetAddress.getAllByName(host);
+    }
+  };
 
-    InetAddress[] getAllByName(String host) throws UnknownHostException;
+  InetAddress[] getAllByName(String host) throws UnknownHostException;
 }

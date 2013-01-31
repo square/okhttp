@@ -16,60 +16,60 @@
 
 package com.squareup.okhttp.internal;
 
-import static com.squareup.okhttp.internal.Util.US_ASCII;
 import java.io.ByteArrayInputStream;
 import java.io.EOFException;
 import java.io.InputStream;
-import static org.junit.Assert.fail;
 import org.junit.Test;
 
-public final class StrictLineReaderTest {
-    @Test public void lineReaderConsistencyWithReadAsciiLine() throws Exception {
-        // Testing with LineReader buffer capacity 32 to check some corner cases.
-        StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32, US_ASCII);
-        InputStream refStream = createTestInputStream();
-        while (true) {
-            try {
-                String refLine = Util.readAsciiLine(refStream);
-                try {
-                    String line = lineReader.readLine();
-                    if (!refLine.equals(line)) {
-                        fail("line (\""+line+"\") differs from expected (\""+refLine+"\").");
-                    }
-                } catch (EOFException eof) {
-                    fail("line reader threw EOFException too early.");
-                }
-            } catch (EOFException refEof) {
-                try {
-                    lineReader.readLine();
-                    fail("line reader didn't throw the expected EOFException.");
-                } catch (EOFException eof) {
-                    // OK
-                    break;
-                }
-            }
-        }
-        refStream.close();
-        lineReader.close();
-    }
+import static com.squareup.okhttp.internal.Util.US_ASCII;
+import static org.junit.Assert.fail;
 
-    private InputStream createTestInputStream() {
-        return new ByteArrayInputStream((
-                /* each source lines below should represent 32 bytes, until the next comment */
-                "12 byte line\n18 byte line......\n" +
-                        "pad\nline spanning two 32-byte bu" +
-                        "ffers\npad......................\n" +
-                        "pad\nline spanning three 32-byte " +
-                        "buffers and ending with LF at th" +
-                        "e end of a 32 byte buffer......\n" +
-                        "pad\nLine ending with CRLF split" +
-                        " at the end of a 32-byte buffer\r" +
-                        "\npad...........................\n" +
-                        /* end of 32-byte lines */
-                        "line ending with CRLF\r\n" +
-                        "this is a long line with embedded CR \r ending with CRLF and having more than " +
-                        "32 characters\r\n" +
-                        "unterminated line - should be dropped"
-        ).getBytes());
+public final class StrictLineReaderTest {
+  @Test public void lineReaderConsistencyWithReadAsciiLine() throws Exception {
+    // Testing with LineReader buffer capacity 32 to check some corner cases.
+    StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32, US_ASCII);
+    InputStream refStream = createTestInputStream();
+    while (true) {
+      try {
+        String refLine = Util.readAsciiLine(refStream);
+        try {
+          String line = lineReader.readLine();
+          if (!refLine.equals(line)) {
+            fail("line (\"" + line + "\") differs from expected (\"" + refLine + "\").");
+          }
+        } catch (EOFException eof) {
+          fail("line reader threw EOFException too early.");
+        }
+      } catch (EOFException refEof) {
+        try {
+          lineReader.readLine();
+          fail("line reader didn't throw the expected EOFException.");
+        } catch (EOFException eof) {
+          // OK
+          break;
+        }
+      }
     }
+    refStream.close();
+    lineReader.close();
+  }
+
+  private InputStream createTestInputStream() {
+    return new ByteArrayInputStream((
+                /* each source lines below should represent 32 bytes, until the next comment */
+        "12 byte line\n18 byte line......\n" +
+            "pad\nline spanning two 32-byte bu" +
+            "ffers\npad......................\n" +
+            "pad\nline spanning three 32-byte " +
+            "buffers and ending with LF at th" +
+            "e end of a 32 byte buffer......\n" +
+            "pad\nLine ending with CRLF split" +
+            " at the end of a 32-byte buffer\r" +
+            "\npad...........................\n" +
+                        /* end of 32-byte lines */
+            "line ending with CRLF\r\n" +
+            "this is a long line with embedded CR \r ending with CRLF and having more than " +
+            "32 characters\r\n" +
+            "unterminated line - should be dropped").getBytes());
+  }
 }

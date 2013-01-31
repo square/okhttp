@@ -14,23 +14,27 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP requests that share
- * the same {@link com.squareup.okhttp.Address} may share a {@link com.squareup.okhttp.Connection}.
- * This class implements the policy of which connections to keep open for future use.
+ * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
+ * requests that share the same {@link com.squareup.okhttp.Address} may share a
+ * {@link com.squareup.okhttp.Connection}. This class implements the policy of
+ * which connections to keep open for future use.
  *
- * <p>The {@link #getDefault() system-wide default} uses system properties for tuning parameters:
+ * <p>The {@link #getDefault() system-wide default} uses system properties for
+ * tuning parameters:
  * <ul>
- * <li>{@code http.keepAlive} true if HTTP and SPDY connections should be pooled at all.
- * Default is true.
- * <li>{@code http.keepAliveDuration} Time in milliseconds to keep the connection alive in the pool
- * before closing it. Default is 20000.
- * <li>{@code http.maxConnections} maximum number of idle connections to each to keep in the pool.
- * Default is 5.
+ *     <li>{@code http.keepAlive} true if HTTP and SPDY connections should be
+ *         pooled at all. Default is true.
+ *     <li>{@code http.maxConnections} maximum number of idle connections to
+ *         each to keep in the pool. Default is 5.
+ *     <li>{@code http.keepAliveDuration} Time in milliseconds to keep the
+ *         connection alive in the pool before closing it. Default is 5 minutes.
+ *         This property isn't used by {@code HttpURLConnection}.
  * </ul>
  *
- * <p>The default instance <i>doesn't</i> adjust its configuration as system properties are changed.
- * This assumes that the applications that set these parameters do so before making HTTP
- * connections, and that this class is initialized lazily.
+ * <p>The default instance <i>doesn't</i> adjust its configuration as system
+ * properties are changed. This assumes that the applications that set these
+ * parameters do so before making HTTP connections, and that this class is
+ * initialized lazily.
  */
 public class ConnectionPool {
   private static final int MAX_CONNECTIONS_TO_CLEANUP = 2;
@@ -78,8 +82,8 @@ public class ConnectionPool {
           }
         }
 
-        for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext()
-            && idleConnectionCount > maxIdleConnections; ) {
+        for (Iterator<Connection> i = connections.descendingIterator();
+            i.hasNext() && idleConnectionCount > maxIdleConnections; ) {
           Connection connection = i.next();
           if (connection.isIdle()) {
             expiredConnections.add(connection);
@@ -130,16 +134,12 @@ public class ConnectionPool {
     return systemDefault;
   }
 
-  /**
-   * Returns total number of connections in the pool.
-   */
+  /** Returns total number of connections in the pool. */
   public synchronized int getConnectionCount() {
     return connections.size();
   }
 
-  /**
-   * Returns total number of spdy connections in the pool.
-   */
+  /** Returns total number of spdy connections in the pool. */
   public synchronized int getSpdyConnectionCount() {
     int total = 0;
     for (Connection connection : connections) {
@@ -148,9 +148,7 @@ public class ConnectionPool {
     return total;
   }
 
-  /**
-   * Returns total number of http connections in the pool.
-   */
+  /** Returns total number of http connections in the pool. */
   public synchronized int getHttpConnectionCount() {
     int total = 0;
     for (Connection connection : connections) {

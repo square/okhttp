@@ -41,6 +41,7 @@ import static org.junit.Assert.assertTrue;
 public final class ConnectionPoolTest {
   private static final int KEEP_ALIVE_DURATION_MS = 500;
   private static final SSLContext sslContext;
+
   static {
     try {
       sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
@@ -50,6 +51,7 @@ public final class ConnectionPoolTest {
       throw new RuntimeException(e);
     }
   }
+
   private final MockSpdyServer spdyServer = new MockSpdyServer(sslContext.getSocketFactory());
   private InetSocketAddress spdySocketAddress;
   private Address spdyAddress;
@@ -73,8 +75,9 @@ public final class ConnectionPoolTest {
         httpServer.getPort());
 
     spdyServer.play();
-    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(),
-        sslContext.getSocketFactory(), new RecordingHostnameVerifier(), null);
+    spdyAddress =
+        new Address(spdyServer.getHostName(), spdyServer.getPort(), sslContext.getSocketFactory(),
+            new RecordingHostnameVerifier(), null);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
@@ -229,10 +232,10 @@ public final class ConnectionPoolTest {
   @Test public void validateIdleSpdyConnectionTimeout() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
     pool.maybeShare(spdyA);
-    Thread.sleep((int)(KEEP_ALIVE_DURATION_MS * 0.7));
+    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
     assertNull(pool.get(httpAddress));
     assertPooled(pool, spdyA); // Connection should still be in the pool.
-    Thread.sleep((int)(KEEP_ALIVE_DURATION_MS * 0.4));
+    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.4));
     assertNull(pool.get(httpAddress));
     assertPooled(pool);
   }
@@ -240,10 +243,10 @@ public final class ConnectionPoolTest {
   @Test public void validateIdleHttpConnectionTimeout() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
     pool.recycle(httpA);
-    Thread.sleep((int)(KEEP_ALIVE_DURATION_MS * 0.7));
+    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
     assertNull(pool.get(spdyAddress));
     assertPooled(pool, httpA); // Connection should still be in the pool.
-    Thread.sleep((int)(KEEP_ALIVE_DURATION_MS * 0.4));
+    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.4));
     assertNull(pool.get(spdyAddress));
     assertPooled(pool);
   }
@@ -385,5 +388,4 @@ public final class ConnectionPoolTest {
   private void assertPooled(ConnectionPool pool, Connection... connections) throws Exception {
     assertEquals(Arrays.asList(connections), pool.getConnections());
   }
-
 }

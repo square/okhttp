@@ -15,50 +15,49 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
 
-/**
- * An HTTP message body terminated by the end of the underlying stream.
- */
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+
+/** An HTTP message body terminated by the end of the underlying stream. */
 final class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
-    private boolean inputExhausted;
+  private boolean inputExhausted;
 
-    UnknownLengthHttpInputStream(InputStream is, CacheRequest cacheRequest,
-            HttpEngine httpEngine) throws IOException {
-        super(is, httpEngine, cacheRequest);
-    }
+  UnknownLengthHttpInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine)
+      throws IOException {
+    super(is, httpEngine, cacheRequest);
+  }
 
-    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-        checkOffsetAndCount(buffer.length, offset, count);
-        checkNotClosed();
-        if (in == null || inputExhausted) {
-            return -1;
-        }
-        int read = in.read(buffer, offset, count);
-        if (read == -1) {
-            inputExhausted = true;
-            endOfInput(false);
-            return -1;
-        }
-        cacheWrite(buffer, offset, read);
-        return read;
+  @Override public int read(byte[] buffer, int offset, int count) throws IOException {
+    checkOffsetAndCount(buffer.length, offset, count);
+    checkNotClosed();
+    if (in == null || inputExhausted) {
+      return -1;
     }
+    int read = in.read(buffer, offset, count);
+    if (read == -1) {
+      inputExhausted = true;
+      endOfInput(false);
+      return -1;
+    }
+    cacheWrite(buffer, offset, read);
+    return read;
+  }
 
-    @Override public int available() throws IOException {
-        checkNotClosed();
-        return in == null ? 0 : in.available();
-    }
+  @Override public int available() throws IOException {
+    checkNotClosed();
+    return in == null ? 0 : in.available();
+  }
 
-    @Override public void close() throws IOException {
-        if (closed) {
-            return;
-        }
-        closed = true;
-        if (!inputExhausted) {
-            unexpectedEndOfInput();
-        }
+  @Override public void close() throws IOException {
+    if (closed) {
+      return;
     }
+    closed = true;
+    if (!inputExhausted) {
+      unexpectedEndOfInput();
+    }
+  }
 }
