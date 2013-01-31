@@ -82,7 +82,7 @@ public class Platform {
    * compatibility. Currently this uses SSL 3.0.
    */
   public void supportTlsIntolerantServer(SSLSocket socket) {
-    socket.setEnabledProtocols(new String[] { "SSLv3" });
+    socket.setEnabledProtocols(new String[] {"SSLv3"});
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
@@ -107,9 +107,8 @@ public class Platform {
     try {
       Constructor<DeflaterOutputStream> constructor = deflaterConstructor;
       if (constructor == null) {
-        constructor = deflaterConstructor =
-            DeflaterOutputStream.class.getConstructor(OutputStream.class, Deflater.class,
-                boolean.class);
+        constructor = deflaterConstructor = DeflaterOutputStream.class.getConstructor(
+            OutputStream.class, Deflater.class, boolean.class);
       }
       return constructor.newInstance(out, deflater, syncFlush);
     } catch (NoSuchMethodException e) {
@@ -217,7 +216,7 @@ public class Platform {
         return;
       }
       try {
-        setNpnProtocols.invoke(socket, new Object[] { npnProtocols });
+        setNpnProtocols.invoke(socket, new Object[] {npnProtocols});
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
       } catch (InvocationTargetException e) {
@@ -266,7 +265,7 @@ public class Platform {
           i += length;
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] { clientProviderClass, serverProviderClass },
+            new Class[] {clientProviderClass, serverProviderClass},
             new JettyNpnProvider(strings));
         putMethod.invoke(null, socket, provider);
       } catch (UnsupportedEncodingException e) {

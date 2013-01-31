@@ -189,7 +189,9 @@ public final class Util {
     out.write(buffer);
   }
 
-  /** Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available. */
+  /**
+   * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
+   */
   public static void readFully(InputStream in, byte[] dst) throws IOException {
     readFully(in, dst, 0, dst.length);
   }
