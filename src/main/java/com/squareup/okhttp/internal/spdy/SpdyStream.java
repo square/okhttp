@@ -39,10 +39,20 @@ public final class SpdyStream {
 
   private static final int DATA_FRAME_HEADER_LENGTH = 8;
 
-  private static final String[] STATUS_CODE_NAMES =
-      { null, "PROTOCOL_ERROR", "INVALID_STREAM", "REFUSED_STREAM", "UNSUPPORTED_VERSION", "CANCEL",
-          "INTERNAL_ERROR", "FLOW_CONTROL_ERROR", "STREAM_IN_USE", "STREAM_ALREADY_CLOSED",
-          "INVALID_CREDENTIALS", "FRAME_TOO_LARGE", };
+  private static final String[] STATUS_CODE_NAMES = {
+      null,
+      "PROTOCOL_ERROR",
+      "INVALID_STREAM",
+      "REFUSED_STREAM",
+      "UNSUPPORTED_VERSION",
+      "CANCEL",
+      "INTERNAL_ERROR",
+      "FLOW_CONTROL_ERROR",
+      "STREAM_IN_USE",
+      "STREAM_ALREADY_CLOSED",
+      "INVALID_CREDENTIALS",
+      "FRAME_TOO_LARGE"
+  };
 
   public static final int RST_PROTOCOL_ERROR = 1;
   public static final int RST_INVALID_STREAM = 2;

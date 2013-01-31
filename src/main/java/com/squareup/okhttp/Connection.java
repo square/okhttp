@@ -65,10 +65,16 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * should the attempt fail.
  */
 public final class Connection implements Closeable {
-  private static final byte[] NPN_PROTOCOLS =
-      new byte[] { 6, 's', 'p', 'd', 'y', '/', '3', 8, 'h', 't', 't', 'p', '/', '1', '.', '1', };
-  private static final byte[] SPDY3 = new byte[] { 's', 'p', 'd', 'y', '/', '3', };
-  private static final byte[] HTTP_11 = new byte[] { 'h', 't', 't', 'p', '/', '1', '.', '1', };
+  private static final byte[] NPN_PROTOCOLS = new byte[] {
+      6, 's', 'p', 'd', 'y', '/', '3',
+      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
+  private static final byte[] SPDY3 = new byte[] {
+      's', 'p', 'd', 'y', '/', '3'
+  };
+  private static final byte[] HTTP_11 = new byte[] {
+      'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
 
   private final Address address;
   private final Proxy proxy;
