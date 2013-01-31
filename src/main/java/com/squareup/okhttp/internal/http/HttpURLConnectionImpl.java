@@ -57,10 +57,10 @@ import javax.net.ssl.SSLHandshakeException;
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
     /**
-     * HTTP 1.1 doesn't specify how many redirects to follow, but HTTP/1.0
-     * recommended 5. http://www.w3.org/Protocols/HTTP/1.0/spec.html#Code3xx
+     * How many redirects should we follow? Chrome follows 21; Firefox, curl,
+     * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
      */
-    private static final int MAX_REDIRECTS = 5;
+    private static final int MAX_REDIRECTS = 20;
 
     private final int defaultPort;
 
@@ -415,7 +415,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
                 return Retry.NONE;
             }
             if (++redirectionCount > MAX_REDIRECTS) {
-                throw new ProtocolException("Too many redirects");
+                throw new ProtocolException("Too many redirects: " + redirectionCount);
             }
             String location = getHeaderField("Location");
             if (location == null) {
