@@ -287,9 +287,7 @@ public class HttpEngine {
         if (!connection.isConnected()) {
             connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(),
                     getTunnelConfig());
-            if (connection.isSpdy()) {
-                policy.connectionPool.share(connection);
-            }
+            policy.connectionPool.maybeShare(connection);
         }
         connected(connection);
         Proxy proxy = connection.getProxy();
@@ -381,10 +379,6 @@ public class HttpEngine {
 
     public final Connection getConnection() {
         return connection;
-    }
-
-    public final boolean hasRecycledConnection() {
-        return connection != null && connection.isRecycled();
     }
 
     /**

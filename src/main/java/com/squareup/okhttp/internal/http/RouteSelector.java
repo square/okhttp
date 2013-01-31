@@ -37,7 +37,7 @@ import java.util.NoSuchElementException;
  * choice of proxy server, IP address, and TLS mode. Connections may also be
  * recycled.
  */
-final class RouteSelector {
+public final class RouteSelector {
     /** Uses {@link com.squareup.okhttp.internal.Platform#enableTlsExtensions}. */
     private static final int TLS_MODE_MODERN = 1;
     /** Uses {@link com.squareup.okhttp.internal.Platform#supportTlsIntolerantServer}. */
