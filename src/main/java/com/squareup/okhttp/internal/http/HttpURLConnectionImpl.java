@@ -185,12 +185,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
     HttpEngine response = getResponse();
 
-        /*
-         * if the requested file does not exist, throw an exception formerly the
-         * Error page from the server was returned if the requested file was
-         * text/html this has changed to return FileNotFoundException for all
-         * file types
-         */
+    // if the requested file does not exist, throw an exception formerly the
+    // Error page from the server was returned if the requested file was
+    // text/html this has changed to return FileNotFoundException for all
+    // file types
     if (getResponseCode() >= HTTP_BAD_REQUEST) {
       throw new FileNotFoundException(url.toString());
     }
@@ -294,17 +292,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         return httpEngine;
       }
 
-            /*
-             * The first request was insufficient. Prepare for another...
-             */
+      // The first request was insufficient. Prepare for another...
       String retryMethod = method;
       OutputStream requestBody = httpEngine.getRequestBody();
 
-            /*
-             * Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
-             * redirect should keep the same method, Chrome, Firefox and the
-             * RI all issue GETs when following any redirect.
-             */
+      // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
+      // redirect should keep the same method, Chrome, Firefox and the
+      // RI all issue GETs when following any redirect.
       int responseCode = getResponseCode();
       if (responseCode == HTTP_MULT_CHOICE
           || responseCode == HTTP_MOVED_PERM

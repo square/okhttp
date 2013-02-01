@@ -191,11 +191,9 @@ public final class RawHeaders {
       throw new IllegalArgumentException("fieldName == null");
     }
     if (value == null) {
-            /*
-             * Given null values, the RI sends a malformed field line like
-             * "Accept\r\n". For platform compatibility and HTTP compliance, we
-             * print a warning and ignore null values.
-             */
+      // Given null values, the RI sends a malformed field line like
+      // "Accept\r\n". For platform compatibility and HTTP compliance, we
+      // print a warning and ignore null values.
       Platform.get()
           .logW("Ignoring HTTP header field '" + fieldName + "' because its value is null");
       return;

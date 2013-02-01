@@ -217,11 +217,9 @@ public final class HttpTransport implements Transport {
           httpEngine.responseHeaders.getContentLength());
     }
 
-        /*
-         * Wrap the input stream from the connection (rather than just returning
-         * "socketIn" directly here), so that we can control its use after the
-         * reference escapes.
-         */
+    // Wrap the input stream from the connection (rather than just returning
+    // "socketIn" directly here), so that we can control its use after the
+    // reference escapes.
     return new UnknownLengthHttpInputStream(socketIn, cacheRequest, httpEngine);
   }
 

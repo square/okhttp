@@ -43,19 +43,17 @@ import java.util.concurrent.TimeUnit;
  */
 public final class SpdyConnection implements Closeable {
 
-    /*
-     * Internal state of this connection is guarded by 'this'. No blocking
-     * operations may be performed while holding this lock!
-     *
-     * Socket writes are guarded by spdyWriter.
-     *
-     * Socket reads are unguarded but are only made by the reader thread.
-     *
-     * Certain operations (like SYN_STREAM) need to synchronize on both the
-     * spdyWriter (to do blocking I/O) and this (to create streams). Such
-     * operations must synchronize on 'this' last. This ensures that we never
-     * wait for a blocking operation while holding 'this'.
-     */
+  // Internal state of this connection is guarded by 'this'. No blocking
+  // operations may be performed while holding this lock!
+  //
+  // Socket writes are guarded by spdyWriter.
+  //
+  // Socket reads are unguarded but are only made by the reader thread.
+  //
+  // Certain operations (like SYN_STREAM) need to synchronize on both the
+  // spdyWriter (to do blocking I/O) and this (to create streams). Such
+  // operations must synchronize on 'this' last. This ensures that we never
+  // wait for a blocking operation while holding 'this'.
 
   static final int FLAG_FIN = 0x1;
   static final int FLAG_UNIDIRECTIONAL = 0x2;
