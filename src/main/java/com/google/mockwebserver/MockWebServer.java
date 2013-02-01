@@ -270,6 +270,7 @@ public final class MockWebServer {
                     }
                     final SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
                     if (socketPolicy == FAIL_HANDSHAKE) {
+                        dispatchBookkeepingRequest(sequenceNumber, raw);
                         processHandshakeFailure(raw, sequenceNumber++);
                         return;
                     }
@@ -367,7 +368,6 @@ public final class MockWebServer {
         } catch (IOException expected) {
         }
         socket.close();
-        dispatchBookkeepingRequest(sequenceNumber, socket);
     }
 
     private void dispatchBookkeepingRequest(int sequenceNumber, Socket socket) throws InterruptedException {
