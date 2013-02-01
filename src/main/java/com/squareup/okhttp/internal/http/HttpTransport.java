@@ -43,7 +43,7 @@ public final class HttpTransport implements Transport {
    * used for connection reuse, this timeout should be significantly less than
    * the time it takes to establish a new connection.
    */
-  private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 30;
+  private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
 
   public static final int DEFAULT_CHUNK_LENGTH = 1024;
 
