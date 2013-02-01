@@ -187,6 +187,11 @@ final class ResponseHeaders {
     headers.removeAll("Content-Encoding");
   }
 
+  public void stripContentLength() {
+    contentLength = -1;
+    headers.removeAll("Content-Length");
+  }
+
   public boolean isChunked() {
     return "chunked".equalsIgnoreCase(transferEncoding);
   }
