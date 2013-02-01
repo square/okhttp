@@ -151,11 +151,9 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       }
       return null;
     } else if (!requestMethod.equals("GET")) {
-            /*
-             * Don't cache non-GET responses. We're technically allowed to cache
-             * HEAD requests and some POST requests, but the complexity of doing
-             * so is high and the benefit is low.
-             */
+      // Don't cache non-GET responses. We're technically allowed to cache
+      // HEAD requests and some POST requests, but the complexity of doing
+      // so is high and the benefit is low.
       return null;
     }
 
@@ -338,8 +336,9 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     private final Certificate[] peerCertificates;
     private final Certificate[] localCertificates;
 
-    /*
+    /**
      * Reads an entry from an input stream. A typical entry looks like this:
+     * <pre>{@code
      *   http://google.com/foo
      *   GET
      *   2
@@ -350,8 +349,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
      *   Content-Type: image/png
      *   Content-Length: 100
      *   Cache-Control: max-age=600
+     * }</pre>
      *
-     * A typical HTTPS file looks like this:
+     * <p>A typical HTTPS file looks like this:
+     * <pre>{@code
      *   https://google.com/foo
      *   GET
      *   2
@@ -368,15 +369,15 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
      *   base64-encoded peerCertificate[0]
      *   base64-encoded peerCertificate[1]
      *   -1
-     *
+     * }</pre>
      * The file is newline separated. The first two lines are the URL and
      * the request method. Next is the number of HTTP Vary request header
      * lines, followed by those lines.
      *
-     * Next is the response status line, followed by the number of HTTP
+     * <p>Next is the response status line, followed by the number of HTTP
      * response header lines, followed by those lines.
      *
-     * HTTPS responses also contain SSL session information. This begins
+     * <p>HTTPS responses also contain SSL session information. This begins
      * with a blank line, and then a line containing the cipher suite. Next
      * is the length of the peer certificate chain. These certificates are
      * base64-encoded and appear each on their own line. The next line

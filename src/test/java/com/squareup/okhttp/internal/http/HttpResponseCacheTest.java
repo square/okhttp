@@ -480,11 +480,9 @@ public final class HttpResponseCacheTest {
   }
 
   @Test public void serverDisconnectsPrematurelyWithNoLengthHeaders() throws IOException {
-        /*
-         * Intentionally empty. This case doesn't make sense because there's no
-         * such thing as a premature disconnect when the disconnect itself
-         * indicates the end of the data stream.
-         */
+    // Intentionally empty. This case doesn't make sense because there's no
+    // such thing as a premature disconnect when the disconnect itself
+    // indicates the end of the data stream.
   }
 
   private void testServerPrematureDisconnect(TransferKind transferKind) throws IOException {
@@ -646,10 +644,8 @@ public final class HttpResponseCacheTest {
   }
 
   @Test public void maxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
-        /*
-         * Chrome interprets max-age relative to the local clock. Both our cache
-         * and Firefox both use the earlier of the local and server's clock.
-         */
+    // Chrome interprets max-age relative to the local clock. Both our cache
+    // and Firefox both use the earlier of the local and server's clock.
     assertNotCached(new MockResponse().addHeader("Date: " + formatDate(-120, TimeUnit.SECONDS))
         .addHeader("Cache-Control: max-age=60"));
   }
@@ -719,10 +715,8 @@ public final class HttpResponseCacheTest {
   }
 
   private void testRequestMethod(String requestMethod, boolean expectCached) throws Exception {
-        /*
-         * 1. seed the cache (potentially)
-         * 2. expect a cache hit or miss
-         */
+    // 1. seed the cache (potentially)
+    // 2. expect a cache hit or miss
     server.enqueue(new MockResponse().addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("X-Response-ID: 1"));
     server.enqueue(new MockResponse().addHeader("X-Response-ID: 2"));
@@ -756,11 +750,9 @@ public final class HttpResponseCacheTest {
   }
 
   private void testMethodInvalidates(String requestMethod) throws Exception {
-        /*
-         * 1. seed the cache
-         * 2. invalidate it
-         * 3. expect a cache miss
-         */
+    // 1. seed the cache
+    // 2. invalidate it
+    // 3. expect a cache miss
     server.enqueue(
         new MockResponse().setBody("A").addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
     server.enqueue(new MockResponse().setBody("B"));
@@ -841,10 +833,8 @@ public final class HttpResponseCacheTest {
   }
 
   @Test public void partialRangeResponsesDoNotCorruptCache() throws Exception {
-        /*
-         * 1. request a range
-         * 2. request a full document, expecting a cache miss
-         */
+    // 1. request a range
+    // 2. request a full document, expecting a cache miss
     server.enqueue(new MockResponse().setBody("AA")
         .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))

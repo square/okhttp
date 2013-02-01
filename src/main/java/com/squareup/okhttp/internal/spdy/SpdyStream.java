@@ -32,10 +32,8 @@ import static java.nio.ByteOrder.BIG_ENDIAN;
 /** A logical bidirectional stream. */
 public final class SpdyStream {
 
-    /*
-     * Internal state is guarded by this. No long-running or potentially
-     * blocking operations are performed while the lock is held.
-     */
+  // Internal state is guarded by this. No long-running or potentially
+  // blocking operations are performed while the lock is held.
 
   private static final int DATA_FRAME_HEADER_LENGTH = 8;
 
@@ -385,19 +383,17 @@ public final class SpdyStream {
    * it is not intended for use by multiple readers.
    */
   private final class SpdyDataInputStream extends InputStream {
-        /*
-         * Store incoming data bytes in a circular buffer. When the buffer is
-         * empty, pos == -1. Otherwise pos is the first byte to read and limit
-         * is the first byte to write.
-         *
-         * { - - - X X X X - - - }
-         *         ^       ^
-         *        pos    limit
-         *
-         * { X X X - - - - X X X }
-         *         ^       ^
-         *       limit    pos
-         */
+    // Store incoming data bytes in a circular buffer. When the buffer is
+    // empty, pos == -1. Otherwise pos is the first byte to read and limit
+    // is the first byte to write.
+    //
+    // { - - - X X X X - - - }
+    //         ^       ^
+    //        pos    limit
+    //
+    // { X X X - - - - X X X }
+    //         ^       ^
+    //       limit    pos
 
     private final byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
 

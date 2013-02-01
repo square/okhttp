@@ -52,12 +52,10 @@ public class StrictLineReader implements Closeable {
   private final InputStream in;
   private final Charset charset;
 
-  /*
-   * Buffered data is stored in {@code buf}. As long as no exception occurs, 0 <= pos <= end
-   * and the data in the range [pos, end) is buffered for reading. At end of input, if there is
-   * an unterminated line, we set end == -1, otherwise end == pos. If the underlying
-   * {@code InputStream} throws an {@code IOException}, end may remain as either pos or -1.
-   */
+  // Buffered data is stored in {@code buf}. As long as no exception occurs, 0 <= pos <= end
+  // and the data in the range [pos, end) is buffered for reading. At end of input, if there is
+  // an unterminated line, we set end == -1, otherwise end == pos. If the underlying
+  // {@code InputStream} throws an {@code IOException}, end may remain as either pos or -1.
   private byte[] buf;
   private int pos;
   private int end;

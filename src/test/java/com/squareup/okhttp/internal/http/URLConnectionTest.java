@@ -1701,11 +1701,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void readTimeouts() throws IOException {
-        /*
-         * This relies on the fact that MockWebServer doesn't close the
-         * connection after a response has been sent. This causes the client to
-         * try to read more bytes than are sent, which results in a timeout.
-         */
+    // This relies on the fact that MockWebServer doesn't close the
+    // connection after a response has been sent. This causes the client to
+    // try to read more bytes than are sent, which results in a timeout.
     MockResponse timeout =
         new MockResponse().setBody("ABC").clearHeaders().addHeader("Content-Length: 4");
     server.enqueue(timeout);
