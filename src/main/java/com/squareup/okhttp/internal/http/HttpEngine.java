@@ -121,12 +121,10 @@ public class HttpEngine {
   /** Null until a response is received from the network or the cache. */
   ResponseHeaders responseHeaders;
 
-  /*
-   * The cache response currently being validated on a conditional get. Null
-   * if the cached response doesn't exist or doesn't need validation. If the
-   * conditional get succeeds, these will be used for the response headers and
-   * body. If it fails, these be closed and set to null.
-   */
+  // The cache response currently being validated on a conditional get. Null
+  // if the cached response doesn't exist or doesn't need validation. If the
+  // conditional get succeeds, these will be used for the response headers and
+  // body. If it fails, these be closed and set to null.
   private ResponseHeaders cachedResponseHeaders;
   private InputStream cachedResponseBody;
 
@@ -183,12 +181,10 @@ public class HttpEngine {
       ((OkResponseCache) policy.responseCache).trackResponse(responseSource);
     }
 
-        /*
-         * The raw response source may require the network, but the request
-         * headers may forbid network use. In that case, dispose of the network
-         * response and use a GATEWAY_TIMEOUT response instead, as specified
-         * by http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
-         */
+    // The raw response source may require the network, but the request
+    // headers may forbid network use. In that case, dispose of the network
+    // response and use a GATEWAY_TIMEOUT response instead, as specified
+    // by http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
     if (requestHeaders.isOnlyIfCached() && responseSource.requiresConnection()) {
       if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
         Util.closeQuietly(cachedResponseBody);
@@ -447,15 +443,13 @@ public class HttpEngine {
   private void initContentStream(InputStream transferStream) throws IOException {
     responseTransferIn = transferStream;
     if (transparentGzip && responseHeaders.isContentEncodingGzip()) {
-      /*
-       * If the response was transparently gzipped, remove the gzip header field
-       * so clients don't double decompress. http://b/3009828
-       *
-       * Also remove the Content-Length in this case because it contains the
-       * length	528 of the gzipped response. This isn't terribly useful and is
-       * dangerous because	529 clients can query the content length, but not
-       * the content encoding.
-       */
+      // If the response was transparently gzipped, remove the gzip header field
+      // so clients don't double decompress. http://b/3009828
+      //
+      // Also remove the Content-Length in this case because it contains the
+      // length 528 of the gzipped response. This isn't terribly useful and is
+      // dangerous because 529 clients can query the content length, but not
+      // the content encoding.
       responseHeaders.stripContentEncoding();
       responseHeaders.stripContentLength();
       responseBodyIn = new GZIPInputStream(transferStream);
@@ -482,11 +476,9 @@ public class HttpEngine {
       return true;
     }
 
-        /*
-         * If the Content-Length or Transfer-Encoding headers disagree with the
-         * response code, the response is malformed. For best compatibility, we
-         * honor the headers.
-         */
+    // If the Content-Length or Transfer-Encoding headers disagree with the
+    // response code, the response is malformed. For best compatibility, we
+    // honor the headers.
     if (responseHeaders.getContentLength() != -1 || responseHeaders.isChunked()) {
       return true;
     }

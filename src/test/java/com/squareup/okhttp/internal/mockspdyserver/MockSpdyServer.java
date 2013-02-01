@@ -120,10 +120,8 @@ public final class MockSpdyServer {
           logger.log(Level.WARNING, "MockWebServer connection failed", e);
         }
 
-                /*
-                 * This gnarly block of code will release all sockets and
-                 * all thread, even if any close fails.
-                 */
+        // This gnarly block of code will release all sockets and
+        // all thread, even if any close fails.
         try {
           serverSocket.close();
         } catch (Throwable e) {

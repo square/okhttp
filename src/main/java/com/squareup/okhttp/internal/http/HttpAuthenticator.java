@@ -111,13 +111,11 @@ public final class HttpAuthenticator {
    */
   private static List<Challenge> parseChallenges(RawHeaders responseHeaders,
       String challengeHeader) {
-        /*
-         * auth-scheme = token
-         * auth-param  = token "=" ( token | quoted-string )
-         * challenge   = auth-scheme 1*SP 1#auth-param
-         * realm       = "realm" "=" realm-value
-         * realm-value = quoted-string
-         */
+    // auth-scheme = token
+    // auth-param  = token "=" ( token | quoted-string )
+    // challenge   = auth-scheme 1*SP 1#auth-param
+    // realm       = "realm" "=" realm-value
+    // realm-value = quoted-string
     List<Challenge> result = new ArrayList<Challenge>();
     for (int h = 0; h < responseHeaders.length(); h++) {
       if (!challengeHeader.equalsIgnoreCase(responseHeaders.getFieldName(h))) {

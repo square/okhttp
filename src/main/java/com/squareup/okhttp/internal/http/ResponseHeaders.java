@@ -298,12 +298,10 @@ final class ResponseHeaders {
       long delta = expires.getTime() - servedMillis;
       return delta > 0 ? delta : 0;
     } else if (lastModified != null && uri.getRawQuery() == null) {
-            /*
-             * As recommended by the HTTP RFC and implemented in Firefox, the
-             * max age of a document should be defaulted to 10% of the
-             * document's age at the time it was served. Default expiration
-             * dates aren't used for URIs containing a query.
-             */
+      // As recommended by the HTTP RFC and implemented in Firefox, the
+      // max age of a document should be defaulted to 10% of the
+      // document's age at the time it was served. Default expiration
+      // dates aren't used for URIs containing a query.
       long servedMillis = servedDate != null ? servedDate.getTime() : sentRequestMillis;
       long delta = servedMillis - lastModified.getTime();
       return delta > 0 ? (delta / 10) : 0;
@@ -325,10 +323,8 @@ final class ResponseHeaders {
    * request.
    */
   public boolean isCacheable(RequestHeaders request) {
-        /*
-         * Always go to network for uncacheable response codes (RFC 2616, 13.4),
-         * This implementation doesn't support caching partial content.
-         */
+    // Always go to network for uncacheable response codes (RFC 2616, 13.4),
+    // This implementation doesn't support caching partial content.
     int responseCode = headers.getResponseCode();
     if (responseCode != HttpURLConnection.HTTP_OK
         && responseCode != HttpURLConnection.HTTP_NOT_AUTHORITATIVE
@@ -338,10 +334,8 @@ final class ResponseHeaders {
       return false;
     }
 
-        /*
-         * Responses to authorized requests aren't cacheable unless they include
-         * a 'public', 'must-revalidate' or 's-maxage' directive.
-         */
+    // Responses to authorized requests aren't cacheable unless they include
+    // a 'public', 'must-revalidate' or 's-maxage' directive.
     if (request.hasAuthorization() && !isPublic && !mustRevalidate && sMaxAgeSeconds == -1) {
       return false;
     }
@@ -377,11 +371,9 @@ final class ResponseHeaders {
 
   /** Returns the source to satisfy {@code request} given this cached response. */
   public ResponseSource chooseResponseSource(long nowMillis, RequestHeaders request) {
-        /*
-         * If this response shouldn't have been stored, it should never be used
-         * as a response source. This check should be redundant as long as the
-         * persistence store is well-behaved and the rules are constant.
-         */
+    // If this response shouldn't have been stored, it should never be used
+    // as a response source. This check should be redundant as long as the
+    // persistence store is well-behaved and the rules are constant.
     if (!isCacheable(request)) {
       return ResponseSource.NETWORK;
     }
@@ -439,11 +431,9 @@ final class ResponseHeaders {
       return true;
     }
 
-        /*
-         * The HTTP spec says that if the network's response is older than our
-         * cached response, we may return the cache's response. Like Chrome (but
-         * unlike Firefox), this client prefers to return the newer response.
-         */
+    // The HTTP spec says that if the network's response is older than our
+    // cached response, we may return the cache's response. Like Chrome (but
+    // unlike Firefox), this client prefers to return the newer response.
     if (lastModified != null
         && networkResponse.lastModified != null
         && networkResponse.lastModified.getTime() < lastModified.getTime()) {
