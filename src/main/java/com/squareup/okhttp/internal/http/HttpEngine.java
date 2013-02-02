@@ -272,9 +272,8 @@ public class HttpEngine {
       if (uriHost == null) {
         throw new UnknownHostException(uri.toString());
       }
-      Address address =
-          new Address(uriHost, getEffectivePort(uri), getSslSocketFactory(), getHostnameVerifier(),
-              policy.getProxy());
+      Address address = new Address(uriHost, getEffectivePort(uri), getSslSocketFactory(),
+          getHostnameVerifier(), policy.requestedProxy);
       routeSelector =
           new RouteSelector(address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
     }
@@ -284,10 +283,8 @@ public class HttpEngine {
       policy.connectionPool.maybeShare(connection);
     }
     connected(connection);
-    Proxy proxy = connection.getProxy();
-    if (proxy != null) {
-      policy.setProxy(proxy);
-      // Add the authority to the request line when we're using a proxy.
+    if (connection.getProxy() != policy.requestedProxy) {
+      // Update the request line if the proxy changed; it may need a host name.
       requestHeaders.getHeaders().setRequestLine(getRequestLine());
     }
   }
@@ -574,7 +571,9 @@ public class HttpEngine {
    * full URL, even if a proxy is in use.
    */
   protected boolean includeAuthorityInRequestLine() {
-    return policy.usingProxy();
+    return connection == null
+        ? policy.usingProxy() // A proxy was requested.
+        : connection.getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
   }
 
   /**
