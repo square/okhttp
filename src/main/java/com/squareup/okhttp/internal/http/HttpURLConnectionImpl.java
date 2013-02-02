@@ -65,7 +65,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   private final int defaultPort;
 
-  private Proxy proxy;
+  /** The proxy requested by the client, or null for a proxy to be selected automatically. */
+  final Proxy requestedProxy;
+
   final ProxySelector proxySelector;
   final CookieHandler cookieHandler;
   final ResponseCache responseCache;
@@ -82,7 +84,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       CookieHandler cookieHandler, ResponseCache responseCache, ConnectionPool connectionPool) {
     super(url);
     this.defaultPort = defaultPort;
-    this.proxy = proxy;
+    this.requestedProxy = proxy;
     this.proxySelector = proxySelector;
     this.cookieHandler = cookieHandler;
     this.responseCache = responseCache;
@@ -214,18 +216,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public final Permission getPermission() throws IOException {
-    String connectToAddress = getConnectToHost() + ":" + getConnectToPort();
-    return new SocketPermission(connectToAddress, "connect, resolve");
-  }
-
-  private String getConnectToHost() {
-    return usingProxy() ? ((InetSocketAddress) proxy.address()).getHostName() : getURL().getHost();
-  }
-
-  private int getConnectToPort() {
-    int hostPort =
-        usingProxy() ? ((InetSocketAddress) proxy.address()).getPort() : getURL().getPort();
-    return hostPort < 0 ? getDefaultPort() : hostPort;
+    String hostName = getURL().getHost();
+    int hostPort = Util.getEffectivePort(getURL());
+    if (usingProxy()) {
+      InetSocketAddress proxyAddress = (InetSocketAddress) requestedProxy.address();
+      hostName = proxyAddress.getHostName();
+      hostPort = proxyAddress.getPort();
+    }
+    return new SocketPermission(hostName + ":" + hostPort, "connect, resolve");
   }
 
   @Override public final String getRequestProperty(String field) {
@@ -385,15 +383,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * prepare for a follow up request.
    */
   private Retry processResponseHeaders() throws IOException {
+    Proxy selectedProxy = httpEngine.connection != null
+        ? httpEngine.connection.getProxy()
+        : requestedProxy;
     switch (getResponseCode()) {
       case HTTP_PROXY_AUTH:
-        if (!usingProxy()) {
+        if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
         boolean credentialsFound = HttpAuthenticator.processAuthHeader(getResponseCode(),
-            httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders, proxy, url);
+            httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders, selectedProxy, url);
         return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
 
       case HTTP_MULT_CHOICE:
@@ -441,16 +442,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     return chunkLength;
   }
 
-  final Proxy getProxy() {
-    return proxy;
-  }
-
-  final void setProxy(Proxy proxy) {
-    this.proxy = proxy;
-  }
-
   @Override public final boolean usingProxy() {
-    return (proxy != null && proxy.type() != Proxy.Type.DIRECT);
+    return (requestedProxy != null && requestedProxy.type() != Proxy.Type.DIRECT);
   }
 
   @Override public String getResponseMessage() throws IOException {
