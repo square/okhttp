@@ -95,9 +95,16 @@ public final class RawHeaders {
   public void setStatusLine(String statusLine) throws IOException {
     // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
     // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+    if (this.responseMessage != null) {
+      throw new IllegalStateException("statusLine is already set");
+    }
+    // We allow empty message without leading white space since some servers
+    // do not send the white space when the message is empty.
+    boolean hasMessage = statusLine.length() > 13;
     if (!statusLine.startsWith("HTTP/1.")
+        || statusLine.length() < 12
         || statusLine.charAt(8) != ' '
-        || statusLine.charAt(12) != ' ') {
+        || (hasMessage && statusLine.charAt(12) != ' ')) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
     int httpMinorVersion = statusLine.charAt(7) - '0';
@@ -110,7 +117,7 @@ public final class RawHeaders {
     } catch (NumberFormatException e) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-    this.responseMessage = statusLine.substring(13);
+    this.responseMessage = hasMessage ? statusLine.substring(13) : "";
     this.responseCode = responseCode;
     this.statusLine = statusLine;
     this.httpMinorVersion = httpMinorVersion;
