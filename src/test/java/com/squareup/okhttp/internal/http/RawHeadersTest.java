@@ -15,11 +15,13 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public final class RawHeadersTest {
   @Test public void parseNameValueBlock() {
@@ -60,5 +62,41 @@ public final class RawHeadersTest {
     rawHeaders.add("Connection", "close");
     rawHeaders.add("Transfer-Encoding", "chunked");
     assertEquals(Arrays.<String>asList(), rawHeaders.toNameValueBlock());
+  }
+
+  @Test public void statusMessage() throws IOException {
+    RawHeaders rawHeaders = new RawHeaders();
+    final String message = "Temporary Redirect";
+    final int version = 1;
+    final int code = 200;
+    rawHeaders.setStatusLine("HTTP/1." + version + " " + code + " " + message);
+    assertEquals(message, rawHeaders.getResponseMessage());
+    assertEquals(version, rawHeaders.getHttpMinorVersion());
+    assertEquals(code, rawHeaders.getResponseCode());
+  }
+
+  @Test public void statusMessageWithEmptyMessage() throws IOException {
+    RawHeaders rawHeaders = new RawHeaders();
+    final int version = 1;
+    final int code = 503;
+    rawHeaders.setStatusLine("HTTP/1." + version + " " + code + " ");
+    assertTrue(rawHeaders.getResponseMessage().isEmpty());
+    assertEquals(version, rawHeaders.getHttpMinorVersion());
+    assertEquals(code, rawHeaders.getResponseCode());
+  }
+
+  /**
+   * This is not defined in the protocol but some servers won't add the leading
+   * empty space when the message is empty.
+   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
+   */
+  @Test public void statusMessageWithEmptyMessageAndNoLeadingSpace() throws IOException {
+    RawHeaders rawHeaders = new RawHeaders();
+    final int version = 1;
+    final int code = 503;
+    rawHeaders.setStatusLine("HTTP/1." + version + " " + code);
+    assertTrue(rawHeaders.getResponseMessage().isEmpty());
+    assertEquals(version, rawHeaders.getHttpMinorVersion());
+    assertEquals(code, rawHeaders.getResponseCode());
   }
 }
