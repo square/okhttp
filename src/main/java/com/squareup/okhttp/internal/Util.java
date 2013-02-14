@@ -189,9 +189,7 @@ public final class Util {
     out.write(buffer);
   }
 
-  /**
-   * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
-   */
+  /** Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available. */
   public static void readFully(InputStream in, byte[] dst) throws IOException {
     readFully(in, dst, 0, dst.length);
   }
@@ -322,15 +320,5 @@ public final class Util {
       result.setLength(length - 1);
     }
     return result.toString();
-  }
-
-  public static ThreadFactory newThreadFactory(final String name, final boolean daemon) {
-    return new ThreadFactory() {
-      @Override public Thread newThread(Runnable r) {
-        Thread result = new Thread(r, name);
-        result.setDaemon(daemon);
-        return result;
-      }
-    };
   }
 }

@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
@@ -27,10 +28,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.Executors.defaultThreadFactory;
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can
@@ -75,6 +77,10 @@ public final class SpdyConnection implements Closeable {
   static final int GOAWAY_PROTOCOL_ERROR = 1;
   static final int GOAWAY_INTERNAL_ERROR = 2;
 
+  private static final ExecutorService executor =
+      new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+          new SynchronousQueue<Runnable>(), defaultThreadFactory());
+
   /** True if this peer initiated the connection. */
   final boolean client;
 
@@ -83,14 +89,11 @@ public final class SpdyConnection implements Closeable {
    * run on the callback executor.
    */
   private final IncomingStreamHandler handler;
-
   private final SpdyReader spdyReader;
   private final SpdyWriter spdyWriter;
-  private final ExecutorService readExecutor;
-  private final ExecutorService writeExecutor;
-  private final ExecutorService callbackExecutor;
 
   private final Map<Integer, SpdyStream> streams = new HashMap<Integer, SpdyStream>();
+  private final String hostName;
   private int lastGoodStreamId;
   private int nextStreamId;
   private boolean shutdown;
@@ -111,17 +114,9 @@ public final class SpdyConnection implements Closeable {
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
 
-    String prefix = builder.client ? "Spdy Client " : "Spdy Server ";
-    readExecutor =
-        new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-            Util.newThreadFactory(prefix + "Reader", false));
-    writeExecutor =
-        new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-            Util.newThreadFactory(prefix + "Writer", false));
-    callbackExecutor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
-        new SynchronousQueue<Runnable>(), Util.newThreadFactory(prefix + "Callbacks", false));
+    hostName = builder.hostName;
 
-    readExecutor.execute(new Reader());
+    new Thread(new Reader(), "Spdy Reader " + hostName).start();
   }
 
   /**
@@ -207,14 +202,15 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeSynResetLater(final int streamId, final int statusCode) {
-    writeExecutor.execute(new Runnable() {
-      @Override public void run() {
-        try {
-          writeSynReset(streamId, statusCode);
-        } catch (IOException ignored) {
-        }
-      }
-    });
+    executor.submit(
+        new NamedRunnable(String.format("Spdy Writer %s stream %d", hostName, streamId)) {
+          @Override public void execute() {
+            try {
+              writeSynReset(streamId, statusCode);
+            } catch (IOException ignored) {
+            }
+          }
+        });
   }
 
   void writeSynReset(int streamId, int statusCode) throws IOException {
@@ -222,14 +218,15 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
-    writeExecutor.execute(new Runnable() {
-      @Override public void run() {
-        try {
-          writeWindowUpdate(streamId, deltaWindowSize);
-        } catch (IOException ignored) {
-        }
-      }
-    });
+    executor.submit(
+        new NamedRunnable(String.format("Spdy Writer %s stream %d", hostName, streamId)) {
+          @Override public void execute() {
+            try {
+              writeWindowUpdate(streamId, deltaWindowSize);
+            } catch (IOException ignored) {
+            }
+          }
+        });
   }
 
   void writeWindowUpdate(int streamId, int deltaWindowSize) throws IOException {
@@ -256,11 +253,11 @@ public final class SpdyConnection implements Closeable {
     return ping;
   }
 
-  private void writePingLater(final int id, final Ping ping) {
-    writeExecutor.execute(new Runnable() {
-      @Override public void run() {
+  private void writePingLater(final int streamId, final Ping ping) {
+    executor.submit(new NamedRunnable(String.format("Spdy Writer %s ping %d", hostName, streamId)) {
+      @Override public void execute() {
         try {
-          writePing(id, ping);
+          writePing(streamId, ping);
         } catch (IOException ignored) {
         }
       }
@@ -288,17 +285,6 @@ public final class SpdyConnection implements Closeable {
     synchronized (spdyWriter) {
       spdyWriter.out.flush();
     }
-  }
-
-  private void shutdownLater(final int statusCode) {
-    writeExecutor.execute(new Runnable() {
-      @Override public void run() {
-        try {
-          shutdown(statusCode);
-        } catch (IOException ignored) {
-        }
-      }
-    });
   }
 
   /**
@@ -372,9 +358,6 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    writeExecutor.shutdown();
-    callbackExecutor.shutdown();
-    readExecutor.shutdown();
     try {
       spdyReader.close();
     } catch (IOException e) {
@@ -385,28 +368,39 @@ public final class SpdyConnection implements Closeable {
     } catch (IOException e) {
       if (thrown == null) thrown = e;
     }
+
     if (thrown != null) throw thrown;
   }
 
   public static class Builder {
+    private String hostName;
     private InputStream in;
     private OutputStream out;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
     public boolean client;
 
+    public Builder(boolean client, Socket socket) throws IOException {
+      this("", client, socket.getInputStream(), socket.getOutputStream());
+    }
+
+    public Builder(boolean client, InputStream in, OutputStream out) {
+      this("", client, in, out);
+    }
+
     /**
      * @param client true if this peer initiated the connection; false if
      * this peer accepted the connection.
      */
-    public Builder(boolean client, Socket socket) throws IOException {
-      this(client, socket.getInputStream(), socket.getOutputStream());
+    public Builder(String hostName, boolean client, Socket socket) throws IOException {
+      this(hostName, client, socket.getInputStream(), socket.getOutputStream());
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
      * peer accepted the connection.
      */
-    public Builder(boolean client, InputStream in, OutputStream out) {
+    public Builder(String hostName, boolean client, InputStream in, OutputStream out) {
+      this.hostName = hostName;
       this.client = client;
       this.in = in;
       this.out = out;
@@ -476,8 +470,10 @@ public final class SpdyConnection implements Closeable {
         removeStream(streamId);
         return;
       }
-      callbackExecutor.execute(new Runnable() {
-        @Override public void run() {
+
+      executor.submit(
+          new NamedRunnable(String.format("Callback %s stream %d", hostName, streamId)) {
+        @Override public void execute() {
           try {
             handler.receive(synStream);
           } catch (IOException e) {
