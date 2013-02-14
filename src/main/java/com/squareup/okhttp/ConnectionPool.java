@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -71,8 +72,9 @@ public class ConnectionPool {
       List<Connection> expiredConnections = new ArrayList<Connection>(MAX_CONNECTIONS_TO_CLEANUP);
       int idleConnectionCount = 0;
       synchronized (ConnectionPool.this) {
-        for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
-          Connection connection = i.next();
+        for (ListIterator<Connection> i = connections.listIterator(connections.size());
+            i.hasPrevious(); ) {
+          Connection connection = i.previous();
           if (!connection.isAlive() || connection.isExpired(keepAliveDurationNs)) {
             i.remove();
             expiredConnections.add(connection);
@@ -82,9 +84,9 @@ public class ConnectionPool {
           }
         }
 
-        for (Iterator<Connection> i = connections.descendingIterator();
-            i.hasNext() && idleConnectionCount > maxIdleConnections; ) {
-          Connection connection = i.next();
+        for (ListIterator<Connection> i = connections.listIterator(connections.size());
+            i.hasPrevious() && idleConnectionCount > maxIdleConnections; ) {
+          Connection connection = i.previous();
           if (connection.isIdle()) {
             expiredConnections.add(connection);
             i.remove();
