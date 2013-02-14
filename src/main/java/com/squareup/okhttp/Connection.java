@@ -164,7 +164,7 @@ public final class Connection implements Closeable {
     if (modernTls && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
       if (Arrays.equals(selectedProtocol, SPDY3)) {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = new SpdyConnection.Builder(true, in, out).build();
+        spdyConnection = new SpdyConnection.Builder(address.getUriHost(), true, in, out).build();
       } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
         throw new IOException(
             "Unexpected NPN transport " + new String(selectedProtocol, "ISO-8859-1"));
