@@ -29,7 +29,6 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Junk drawer of utility methods. */
@@ -189,7 +188,9 @@ public final class Util {
     out.write(buffer);
   }
 
-  /** Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available. */
+  /**
+   * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
+   */
   public static void readFully(InputStream in, byte[] dst) throws IOException {
     readFully(in, dst, 0, dst.length);
   }
