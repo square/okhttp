@@ -61,6 +61,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLHandshakeException;
@@ -1540,6 +1541,7 @@ public final class URLConnectionTest {
         .setBody("This page has moved!"));
     server.play();
 
+    client.setFollowProtocolRedirects(false);
     client.setSSLSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     HttpURLConnection connection = client.open(server.getUrl("/"));
@@ -1552,8 +1554,51 @@ public final class URLConnectionTest {
         .setBody("This page has moved!"));
     server.play();
 
+    client.setFollowProtocolRedirects(false);
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertEquals("This page has moved!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+  }
+
+  @Test public void redirectedFromHttpsToHttpFollowingProtocolRedirects() throws Exception {
+    server2 = new MockWebServer();
+    server2.enqueue(new MockResponse().setBody("This is insecure HTTP!"));
+    server2.play();
+
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: " + server2.getUrl("/"))
+        .setBody("This page has moved!"));
+    server.play();
+
+    client.setSSLSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client.setFollowProtocolRedirects(true);
+    HttpsURLConnection connection = (HttpsURLConnection) client.open(server.getUrl("/"));
+    assertContent("This is insecure HTTP!", connection);
+    assertNull(connection.getCipherSuite());
+    assertNull(connection.getLocalCertificates());
+    assertNull(connection.getServerCertificates());
+    assertNull(connection.getPeerPrincipal());
+    assertNull(connection.getLocalPrincipal());
+  }
+
+  @Test public void redirectedFromHttpToHttpsFollowingProtocolRedirects() throws Exception {
+    server2 = new MockWebServer();
+    server2.useHttps(sslContext.getSocketFactory(), false);
+    server2.enqueue(new MockResponse().setBody("This is secure HTTPS!"));
+    server2.play();
+
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: " + server2.getUrl("/"))
+        .setBody("This page has moved!"));
+    server.play();
+
+    client.setSSLSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client.setFollowProtocolRedirects(true);
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertContent("This is secure HTTPS!", connection);
+    assertFalse(connection instanceof HttpsURLConnection);
   }
 
   @Test public void redirectToAnotherOriginServer() throws Exception {
