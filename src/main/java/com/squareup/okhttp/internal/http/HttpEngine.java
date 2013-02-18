@@ -32,7 +32,6 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieHandler;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -272,8 +271,14 @@ public class HttpEngine {
       if (uriHost == null) {
         throw new UnknownHostException(uri.toString());
       }
-      Address address = new Address(uriHost, getEffectivePort(uri), getSslSocketFactory(),
-          getHostnameVerifier(), policy.requestedProxy);
+      SSLSocketFactory sslSocketFactory = null;
+      HostnameVerifier hostnameVerifier = null;
+      if (uri.getScheme().equalsIgnoreCase("https")) {
+        sslSocketFactory = policy.sslSocketFactory;
+        hostnameVerifier = policy.hostnameVerifier;
+      }
+      Address address = new Address(uriHost, getEffectivePort(uri), sslSocketFactory,
+          hostnameVerifier, policy.requestedProxy);
       routeSelector =
           new RouteSelector(address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
     }
@@ -391,11 +396,7 @@ public class HttpEngine {
     }
 
     // Offer this request to the cache.
-    cacheRequest = policy.responseCache.put(uri, getHttpConnectionToCache());
-  }
-
-  protected HttpURLConnection getHttpConnectionToCache() {
-    return policy;
+    cacheRequest = policy.responseCache.put(uri, policy.getHttpConnectionToCache());
   }
 
   /**
@@ -576,22 +577,6 @@ public class HttpEngine {
         : connection.getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
   }
 
-  /**
-   * Returns the SSL configuration for connections created by this engine.
-   * We cannot reuse HTTPS connections if the socket factory has changed.
-   */
-  protected SSLSocketFactory getSslSocketFactory() {
-    return null;
-  }
-
-  /**
-   * Returns the hostname verifier for connections created by this engine. We
-   * cannot reuse HTTPS connections if the hostname verifier has changed.
-   */
-  protected HostnameVerifier getHostnameVerifier() {
-    return null;
-  }
-
   public static String getDefaultUserAgent() {
     String agent = System.getProperty("http.agent");
     return agent != null ? agent : ("Java" + System.getProperty("java.version"));
@@ -651,7 +636,7 @@ public class HttpEngine {
         if (policy.responseCache instanceof OkResponseCache) {
           OkResponseCache httpResponseCache = (OkResponseCache) policy.responseCache;
           httpResponseCache.trackConditionalCacheHit();
-          httpResponseCache.update(cacheResponse, getHttpConnectionToCache());
+          httpResponseCache.update(cacheResponse, policy.getHttpConnectionToCache());
         }
         return;
       } else {
