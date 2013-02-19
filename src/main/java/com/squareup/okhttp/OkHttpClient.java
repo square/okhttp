@@ -36,6 +36,7 @@ public final class OkHttpClient {
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
   private ConnectionPool connectionPool;
+  private boolean followProtocolRedirects = true;
 
   /**
    * Sets the HTTP proxy that will be used by connections created by this
@@ -46,6 +47,10 @@ public final class OkHttpClient {
   public OkHttpClient setProxy(Proxy proxy) {
     this.proxy = proxy;
     return this;
+  }
+
+  public Proxy getProxy() {
+    return proxy;
   }
 
   /**
@@ -62,6 +67,10 @@ public final class OkHttpClient {
     return this;
   }
 
+  public ProxySelector getProxySelector() {
+    return proxySelector;
+  }
+
   /**
    * Sets the cookie handler to be used to read outgoing cookies and write
    * incoming cookies.
@@ -72,6 +81,10 @@ public final class OkHttpClient {
   public OkHttpClient setCookieHandler(CookieHandler cookieHandler) {
     this.cookieHandler = cookieHandler;
     return this;
+  }
+
+  public CookieHandler getCookieHandler() {
+    return cookieHandler;
   }
 
   /**
@@ -85,6 +98,10 @@ public final class OkHttpClient {
     return this;
   }
 
+  public ResponseCache getResponseCache() {
+    return responseCache;
+  }
+
   /**
    * Sets the socket factory used to secure HTTPS connections.
    *
@@ -94,6 +111,10 @@ public final class OkHttpClient {
   public OkHttpClient setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
     this.sslSocketFactory = sslSocketFactory;
     return this;
+  }
+
+  public SSLSocketFactory getSslSocketFactory() {
+    return sslSocketFactory;
   }
 
   /**
@@ -108,6 +129,10 @@ public final class OkHttpClient {
     return this;
   }
 
+  public HostnameVerifier getHostnameVerifier() {
+    return hostnameVerifier;
+  }
+
   /**
    * Sets the connection pool used to recycle HTTP and HTTPS connections.
    *
@@ -119,31 +144,55 @@ public final class OkHttpClient {
     return this;
   }
 
-  public HttpURLConnection open(URL url) {
-    ProxySelector proxySelector =
-        this.proxySelector != null ? this.proxySelector : ProxySelector.getDefault();
-    CookieHandler cookieHandler =
-        this.cookieHandler != null ? this.cookieHandler : CookieHandler.getDefault();
-    ResponseCache responseCache =
-        this.responseCache != null ? this.responseCache : ResponseCache.getDefault();
-    ConnectionPool connectionPool =
-        this.connectionPool != null ? this.connectionPool : ConnectionPool.getDefault();
+  public ConnectionPool getConnectionPool() {
+    return connectionPool;
+  }
 
+  /**
+   * Configure this client to follow redirects from HTTPS to HTTP and from HTTP
+   * to HTTPS.
+   *
+   * <p>If unset, protocol redirects will be followed. This is different than
+   * the built-in {@code HttpURLConnection}'s default.
+   */
+  public OkHttpClient setFollowProtocolRedirects(boolean followProtocolRedirects) {
+    this.followProtocolRedirects = followProtocolRedirects;
+    return this;
+  }
+
+  public boolean getFollowProtocolRedirects() {
+    return followProtocolRedirects;
+  }
+
+  public HttpURLConnection open(URL url) {
     String protocol = url.getProtocol();
     if (protocol.equals("http")) {
-      return new HttpURLConnectionImpl(url, 80, proxy, proxySelector, cookieHandler, responseCache,
-          connectionPool);
+      return new HttpURLConnectionImpl(url, copyWithDefaults());
     } else if (protocol.equals("https")) {
-      HttpsURLConnectionImpl result =
-          new HttpsURLConnectionImpl(url, 443, proxy, proxySelector, cookieHandler, responseCache,
-              connectionPool);
-      result.setSSLSocketFactory(this.sslSocketFactory != null ? this.sslSocketFactory
-          : HttpsURLConnection.getDefaultSSLSocketFactory());
-      result.setHostnameVerifier(this.hostnameVerifier != null ? this.hostnameVerifier
-          : HttpsURLConnection.getDefaultHostnameVerifier());
-      return result;
+      return new HttpsURLConnectionImpl(url, copyWithDefaults());
     } else {
       throw new IllegalArgumentException("Unexpected protocol: " + protocol);
     }
+  }
+
+  /**
+   * Returns a copy of this OkHttpClient that uses the system-wide default for
+   * each field that hasn't been explicitly configured.
+   */
+  private OkHttpClient copyWithDefaults() {
+    OkHttpClient result = new OkHttpClient();
+    result.proxy = proxy;
+    result.proxySelector = proxySelector != null ? proxySelector : ProxySelector.getDefault();
+    result.cookieHandler = cookieHandler != null ? cookieHandler : CookieHandler.getDefault();
+    result.responseCache = responseCache != null ? responseCache : ResponseCache.getDefault();
+    result.sslSocketFactory = sslSocketFactory != null
+        ? sslSocketFactory
+        : HttpsURLConnection.getDefaultSSLSocketFactory();
+    result.hostnameVerifier = hostnameVerifier != null
+        ? hostnameVerifier
+        : HttpsURLConnection.getDefaultHostnameVerifier();
+    result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
+    result.followProtocolRedirects = followProtocolRedirects;
+    return result;
   }
 }

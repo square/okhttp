@@ -17,18 +17,14 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.TunnelRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheResponse;
-import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URL;
 import java.security.Permission;
@@ -49,73 +45,84 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
   private final HttpUrlConnectionDelegate delegate;
 
-  public HttpsURLConnectionImpl(URL url, int defaultPort, Proxy proxy, ProxySelector proxySelector,
-      CookieHandler cookieHandler, ResponseCache responseCache, ConnectionPool connectionPool) {
+  public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
-    delegate = new HttpUrlConnectionDelegate(url, defaultPort, proxy, proxySelector, cookieHandler,
-        responseCache, connectionPool);
+    delegate = new HttpUrlConnectionDelegate(url, client);
   }
 
-  private void checkConnected() {
-    if (delegate.getSSLSocket() == null) {
-      throw new IllegalStateException("Connection has not yet been established");
+  @Override public String getCipherSuite() {
+    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
+    if (cacheResponse != null) {
+      return cacheResponse.getCipherSuite();
     }
+    SSLSocket sslSocket = getSslSocket();
+    if (sslSocket != null) {
+      return sslSocket.getSession().getCipherSuite();
+    }
+    return null;
+  }
+
+  @Override public Certificate[] getLocalCertificates() {
+    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
+    if (cacheResponse != null) {
+      List<Certificate> result = cacheResponse.getLocalCertificateChain();
+      return result != null ? result.toArray(new Certificate[result.size()]) : null;
+    }
+    SSLSocket sslSocket = getSslSocket();
+    if (sslSocket != null) {
+      return sslSocket.getSession().getLocalCertificates();
+    }
+    return null;
+  }
+
+  @Override public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
+    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
+    if (cacheResponse != null) {
+      List<Certificate> result = cacheResponse.getServerCertificateChain();
+      return result != null ? result.toArray(new Certificate[result.size()]) : null;
+    }
+    SSLSocket sslSocket = getSslSocket();
+    if (sslSocket != null) {
+      return sslSocket.getSession().getPeerCertificates();
+    }
+    return null;
+  }
+
+  @Override public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
+    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
+    if (cacheResponse != null) {
+      return cacheResponse.getPeerPrincipal();
+    }
+    SSLSocket sslSocket = getSslSocket();
+    if (sslSocket != null) {
+      return sslSocket.getSession().getPeerPrincipal();
+    }
+    return null;
+  }
+
+  @Override public Principal getLocalPrincipal() {
+    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
+    if (cacheResponse != null) {
+      return cacheResponse.getLocalPrincipal();
+    }
+    SSLSocket sslSocket = getSslSocket();
+    if (sslSocket != null) {
+      return sslSocket.getSession().getLocalPrincipal();
+    }
+    return null;
   }
 
   HttpEngine getHttpEngine() {
     return delegate.getHttpEngine();
   }
 
-  @Override
-  public String getCipherSuite() {
-    SecureCacheResponse cacheResponse = delegate.getCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getCipherSuite();
+  private SSLSocket getSslSocket() {
+    if (delegate.httpEngine == null || delegate.httpEngine.sentRequestMillis == -1) {
+      throw new IllegalStateException("Connection has not yet been established");
     }
-    checkConnected();
-    return delegate.getSSLSocket().getSession().getCipherSuite();
-  }
-
-  @Override
-  public Certificate[] getLocalCertificates() {
-    SecureCacheResponse cacheResponse = delegate.getCacheResponse();
-    if (cacheResponse != null) {
-      List<Certificate> result = cacheResponse.getLocalCertificateChain();
-      return result != null ? result.toArray(new Certificate[result.size()]) : null;
-    }
-    checkConnected();
-    return delegate.getSSLSocket().getSession().getLocalCertificates();
-  }
-
-  @Override
-  public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
-    SecureCacheResponse cacheResponse = delegate.getCacheResponse();
-    if (cacheResponse != null) {
-      List<Certificate> result = cacheResponse.getServerCertificateChain();
-      return result != null ? result.toArray(new Certificate[result.size()]) : null;
-    }
-    checkConnected();
-    return delegate.getSSLSocket().getSession().getPeerCertificates();
-  }
-
-  @Override
-  public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-    SecureCacheResponse cacheResponse = delegate.getCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getPeerPrincipal();
-    }
-    checkConnected();
-    return delegate.getSSLSocket().getSession().getPeerPrincipal();
-  }
-
-  @Override
-  public Principal getLocalPrincipal() {
-    SecureCacheResponse cacheResponse = delegate.getCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getLocalPrincipal();
-    }
-    checkConnected();
-    return delegate.getSSLSocket().getSession().getLocalPrincipal();
+    return delegate.httpEngine instanceof HttpsEngine
+        ? ((HttpsEngine) delegate.httpEngine).sslSocket
+        : null; // Not HTTPS! Probably an https:// to http:// redirect.
   }
 
   @Override
@@ -375,49 +382,53 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     delegate.setChunkedStreamingMode(chunkLength);
   }
 
+  @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+    delegate.hostnameVerifier = hostnameVerifier;
+  }
+
+  @Override public HostnameVerifier getHostnameVerifier() {
+    return delegate.hostnameVerifier;
+  }
+
+  @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+    delegate.sslSocketFactory = sslSocketFactory;
+  }
+
+  @Override public SSLSocketFactory getSSLSocketFactory() {
+    return delegate.sslSocketFactory;
+  }
+
   private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-    private HttpUrlConnectionDelegate(URL url, int defaultPort, Proxy proxy,
-        ProxySelector proxySelector, CookieHandler cookieHandler, ResponseCache responseCache,
-        ConnectionPool connectionPool) {
-      super(url, defaultPort, proxy, proxySelector, cookieHandler, responseCache, connectionPool);
+    private HttpUrlConnectionDelegate(URL url, OkHttpClient client) {
+      super(url, client);
     }
 
-    @Override protected HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
-        Connection connection, RetryableOutputStream requestBody) throws IOException {
-      return new HttpsEngine(this, method, requestHeaders, connection, requestBody,
-          HttpsURLConnectionImpl.this);
+    @Override protected HttpURLConnection getHttpConnectionToCache() {
+      return HttpsURLConnectionImpl.this;
     }
 
-    public SecureCacheResponse getCacheResponse() {
-      HttpsEngine engine = (HttpsEngine) httpEngine;
-      return engine != null ? (SecureCacheResponse) engine.getCacheResponse() : null;
-    }
-
-    public SSLSocket getSSLSocket() {
-      HttpsEngine engine = (HttpsEngine) httpEngine;
-      return engine != null ? engine.sslSocket : null;
+    public SecureCacheResponse getSecureCacheResponse() {
+      return httpEngine instanceof HttpsEngine
+          ? (SecureCacheResponse) httpEngine.getCacheResponse()
+          : null;
     }
   }
 
-  private static final class HttpsEngine extends HttpEngine {
+  public static final class HttpsEngine extends HttpEngine {
     /**
      * Stash of HttpsEngine.connection.socket to implement requests like
      * {@link #getCipherSuite} even after the connection has been recycled.
      */
     private SSLSocket sslSocket;
 
-    private final HttpsURLConnectionImpl enclosing;
-
     /**
      * @param policy the HttpURLConnectionImpl with connection configuration
-     * @param enclosing the HttpsURLConnection with HTTPS features
      */
-    private HttpsEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
-        Connection connection, RetryableOutputStream requestBody, HttpsURLConnectionImpl enclosing)
+    public HttpsEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
+        Connection connection, RetryableOutputStream requestBody)
         throws IOException {
       super(policy, method, requestHeaders, connection, requestBody);
       this.sslSocket = connection != null ? (SSLSocket) connection.getSocket() : null;
-      this.enclosing = enclosing;
     }
 
     @Override protected void connected(Connection connection) {
@@ -431,18 +442,6 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     @Override protected boolean includeAuthorityInRequestLine() {
       // Even if there is a proxy, it isn't involved. Always request just the file.
       return false;
-    }
-
-    @Override protected SSLSocketFactory getSslSocketFactory() {
-      return enclosing.getSSLSocketFactory();
-    }
-
-    @Override protected HostnameVerifier getHostnameVerifier() {
-      return enclosing.getHostnameVerifier();
-    }
-
-    @Override protected HttpURLConnection getHttpConnectionToCache() {
-      return enclosing;
     }
 
     @Override protected TunnelRequest getTunnelConfig() {

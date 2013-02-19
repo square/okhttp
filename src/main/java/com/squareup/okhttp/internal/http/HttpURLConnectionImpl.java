@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,7 +39,9 @@ import java.security.Permission;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -63,7 +66,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private static final int MAX_REDIRECTS = 20;
 
-  private final int defaultPort;
+  private final boolean followProtocolRedirects;
 
   /** The proxy requested by the client, or null for a proxy to be selected automatically. */
   final Proxy requestedProxy;
@@ -72,6 +75,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   final CookieHandler cookieHandler;
   final ResponseCache responseCache;
   final ConnectionPool connectionPool;
+  /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
+  SSLSocketFactory sslSocketFactory;
+  HostnameVerifier hostnameVerifier;
 
   private final RawHeaders rawRequestHeaders = new RawHeaders();
 
@@ -80,15 +86,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
 
-  public HttpURLConnectionImpl(URL url, int defaultPort, Proxy proxy, ProxySelector proxySelector,
-      CookieHandler cookieHandler, ResponseCache responseCache, ConnectionPool connectionPool) {
+  public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
-    this.defaultPort = defaultPort;
-    this.requestedProxy = proxy;
-    this.proxySelector = proxySelector;
-    this.cookieHandler = cookieHandler;
-    this.responseCache = responseCache;
-    this.connectionPool = connectionPool;
+    this.followProtocolRedirects = client.getFollowProtocolRedirects();
+    this.requestedProxy = client.getProxy();
+    this.proxySelector = client.getProxySelector();
+    this.cookieHandler = client.getCookieHandler();
+    this.responseCache = client.getResponseCache();
+    this.connectionPool = client.getConnectionPool();
+    this.sslSocketFactory = client.getSslSocketFactory();
+    this.hostnameVerifier = client.getHostnameVerifier();
   }
 
   @Override public final void connect() throws IOException {
@@ -258,13 +265,20 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
-  /**
-   * Create a new HTTP engine. This hook method is non-final so it can be
-   * overridden by HttpsURLConnectionImpl.
-   */
-  protected HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
+  protected HttpURLConnection getHttpConnectionToCache() {
+    return this;
+  }
+
+  private HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
       Connection connection, RetryableOutputStream requestBody) throws IOException {
-    return new HttpEngine(this, method, requestHeaders, connection, requestBody);
+    if (url.getProtocol().equals("http")) {
+      return new HttpEngine(this, method, requestHeaders, connection, requestBody);
+    } else if (url.getProtocol().equals("https")) {
+      return new HttpsURLConnectionImpl.HttpsEngine(
+          this, method, requestHeaders, connection, requestBody);
+    } else {
+      throw new AssertionError();
+    }
   }
 
   /**
@@ -413,11 +427,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         }
         URL previousUrl = url;
         url = new URL(previousUrl, location);
-        if (!previousUrl.getProtocol().equals(url.getProtocol())) {
-          return Retry.NONE; // the scheme changed; don't retry.
+        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) {
+          return Retry.NONE; // Don't follow redirects to unsupported protocols.
         }
-        if (previousUrl.getHost().equals(url.getHost())
-            && getEffectivePort(previousUrl) == getEffectivePort(url)) {
+        boolean sameProtocol = previousUrl.getProtocol().equals(url.getProtocol());
+        if (!sameProtocol && !followProtocolRedirects) {
+          return Retry.NONE; // This client doesn't follow redirects across protocols.
+        }
+        boolean sameHost = previousUrl.getHost().equals(url.getHost());
+        boolean samePort = getEffectivePort(previousUrl) == getEffectivePort(url);
+        if (sameHost && samePort && sameProtocol) {
           return Retry.SAME_CONNECTION;
         } else {
           return Retry.DIFFERENT_CONNECTION;
@@ -426,10 +445,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       default:
         return Retry.NONE;
     }
-  }
-
-  final int getDefaultPort() {
-    return defaultPort;
   }
 
   /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
