@@ -81,7 +81,15 @@ public final class SpdyTransport implements Transport {
   @Override public boolean makeReusable(boolean streamCancelled, OutputStream requestBodyOut,
       InputStream responseBodyIn) {
     if (streamCancelled) {
-      stream.closeLater(SpdyStream.RST_CANCEL);
+      if (stream != null) {
+        stream.closeLater(SpdyStream.RST_CANCEL);
+        return true;
+      } else {
+        // If stream is null, it either means that writeRequestHeaders wasn't called
+        // or that SpdyConnection#newStream threw an IOEXception. In both cases there's
+        // nothing to do here and this stream can't be reused.
+        return false;
+      }
     }
     return true;
   }
