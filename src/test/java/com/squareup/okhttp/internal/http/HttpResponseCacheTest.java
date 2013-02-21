@@ -971,7 +971,7 @@ public final class HttpResponseCacheTest {
     assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
     URLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
-    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    assertEquals("A", readAscii(connection));
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
