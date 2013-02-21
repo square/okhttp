@@ -597,6 +597,7 @@ public class HttpEngine {
    */
   public final void readResponse() throws IOException {
     if (hasResponse()) {
+      responseHeaders.setResponseSource(responseSource);
       return;
     }
 
@@ -627,6 +628,7 @@ public class HttpEngine {
 
     responseHeaders = transport.readResponseHeaders();
     responseHeaders.setLocalTimestamps(sentRequestMillis, System.currentTimeMillis());
+    responseHeaders.setResponseSource(responseSource);
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (cachedResponseHeaders.validate(responseHeaders)) {
