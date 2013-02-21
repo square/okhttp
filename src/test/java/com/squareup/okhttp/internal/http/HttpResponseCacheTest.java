@@ -20,6 +20,7 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -1582,6 +1583,64 @@ public final class HttpResponseCacheTest {
     assertEquals("GET, HEAD", connection3.getHeaderField("Allow"));
 
     assertEquals(2, server.getRequestCount());
+  }
+
+  @Test public void responseSourceHeaderCached() throws IOException {
+    server.enqueue(new MockResponse().setBody("A")
+        .addHeader("Cache-Control: max-age=30")
+        .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
+    server.play();
+
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    URLConnection connection = openConnection(server.getUrl("/"));
+    connection.addRequestProperty("Cache-Control", "only-if-cached");
+    assertEquals("A", readAscii(connection));
+
+    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CACHE.toString() + " 200", source);
+  }
+
+  @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
+    server.enqueue(new MockResponse().setBody("A")
+        .addHeader("Cache-Control: max-age=30")
+        .addHeader("Date: " + formatDate(-31, TimeUnit.MINUTES)));
+    server.enqueue(new MockResponse().setBody("B")
+        .addHeader("Cache-Control: max-age=30")
+        .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
+    server.play();
+
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    HttpURLConnection connection = openConnection(server.getUrl("/"));
+    assertEquals("B", readAscii(connection));
+
+    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 200", source);
+  }
+
+  @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
+    server.enqueue(new MockResponse().setBody("A")
+        .addHeader("Cache-Control: max-age=0")
+        .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
+    server.enqueue(new MockResponse().setResponseCode(304));
+    server.play();
+
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    HttpURLConnection connection = openConnection(server.getUrl("/"));
+    assertEquals("A", readAscii(connection));
+
+    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 304", source);
+  }
+
+  @Test public void responseSourceHeaderFetched() throws IOException {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    URLConnection connection = openConnection(server.getUrl("/"));
+    assertEquals("A", readAscii(connection));
+
+    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.NETWORK.toString() + " 200", source);
   }
 
   /**
