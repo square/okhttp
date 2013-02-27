@@ -241,4 +241,17 @@ public class ConnectionPool {
       }
     }
   }
+
+  /** Close and remove all connections in the pool. */
+  public void evictAll() {
+    List<Connection> connections;
+    synchronized (this) {
+      connections = new ArrayList<Connection>(this.connections);
+      this.connections.clear();
+    }
+
+    for (Connection connection : connections) {
+      Util.closeQuietly(connection);
+    }
+  }
 }

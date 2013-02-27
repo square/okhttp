@@ -385,6 +385,18 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getSpdyConnectionCount());
   }
 
+  @Test public void evictAllConnections() {
+    ConnectionPool pool = new ConnectionPool(10, KEEP_ALIVE_DURATION_MS);
+    pool.recycle(httpA);
+    Util.closeQuietly(httpA); // Include a closed connection in the pool.
+    pool.recycle(httpB);
+    pool.maybeShare(spdyA);
+    assertEquals(3, pool.getConnectionCount());
+
+    pool.evictAll();
+    assertEquals(0, pool.getConnectionCount());
+  }
+
   private void assertPooled(ConnectionPool pool, Connection... connections) throws Exception {
     assertEquals(Arrays.asList(connections), pool.getConnections());
   }
