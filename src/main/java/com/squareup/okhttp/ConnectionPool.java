@@ -4,7 +4,6 @@ import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -162,8 +161,9 @@ public class ConnectionPool {
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
   public synchronized Connection get(Address address) {
     Connection foundConnection = null;
-    for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
-      Connection connection = i.next();
+    for (ListIterator<Connection> i = connections.listIterator(connections.size());
+        i.hasPrevious(); ) {
+      Connection connection = i.previous();
       if (!connection.getAddress().equals(address)
           || !connection.isAlive()
           || System.nanoTime() - connection.getIdleStartTimeNs() >= keepAliveDurationNs) {
