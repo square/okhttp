@@ -60,6 +60,10 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * is currently connected to a server.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
+
+  /** Numeric status code, 307: Temporary Redirect. */
+  static final int HTTP_TEMP_REDIRECT = 307;
+
   /**
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
@@ -400,7 +404,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     Proxy selectedProxy = httpEngine.connection != null
         ? httpEngine.connection.getProxy()
         : requestedProxy;
-    switch (getResponseCode()) {
+    final int responseCode = getResponseCode();
+    switch (responseCode) {
       case HTTP_PROXY_AUTH:
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
@@ -415,11 +420,17 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       case HTTP_MOVED_PERM:
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
+      case HTTP_TEMP_REDIRECT:
         if (!getInstanceFollowRedirects()) {
           return Retry.NONE;
         }
         if (++redirectionCount > MAX_REDIRECTS) {
           throw new ProtocolException("Too many redirects: " + redirectionCount);
+        }
+        if (responseCode == HTTP_TEMP_REDIRECT && !method.equals("GET") && !method.equals("HEAD")) {
+          // "If the 307 status code is received in response to a request other than GET or HEAD,
+          // the user agent MUST NOT automatically redirect the request"
+          return Retry.NONE;
         }
         String location = getHeaderField("Location");
         if (location == null) {

@@ -1731,6 +1731,70 @@ public final class URLConnectionTest {
     assertEquals(1, server.getRequestCount());
   }
 
+  @Test public void response307WithGet() throws Exception {
+    test307Redirect("GET");
+  }
+
+  @Test public void response307WithHead() throws Exception {
+    test307Redirect("HEAD");
+  }
+
+  @Test public void response307WithOptions() throws Exception {
+    test307Redirect("OPTIONS");
+  }
+
+  @Test public void response307WithPost() throws Exception {
+    test307Redirect("POST");
+  }
+
+  private void test307Redirect(String method) throws Exception {
+    MockResponse response1 = new MockResponse()
+        .setResponseCode(HttpURLConnectionImpl.HTTP_TEMP_REDIRECT)
+        .addHeader("Location: /page2");
+    if (!method.equals("HEAD")) {
+      response1.setBody("This page has moved!");
+    }
+    server.enqueue(response1);
+    server.enqueue(new MockResponse().setBody("Page 2"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/page1"));
+    connection.setRequestMethod(method);
+    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    if (method.equals("POST")) {
+      connection.setDoOutput(true);
+      OutputStream outputStream = connection.getOutputStream();
+      outputStream.write(requestBody);
+      outputStream.close();
+    }
+
+    String response = readAscii(connection.getInputStream(), Integer.MAX_VALUE);
+
+    RecordedRequest page1 = server.takeRequest();
+    assertEquals(method + " /page1 HTTP/1.1", page1.getRequestLine());
+
+    if (method.equals("GET")) {
+        assertEquals("Page 2", response);
+    } else if (method.equals("HEAD"))  {
+        assertTrue(response.isEmpty());
+    } else {
+      // Methods other than GET/HEAD shouldn't follow the redirect
+      if (method.equals("POST")) {
+        assertTrue(connection.getDoOutput());
+        assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody()));
+      }
+      assertEquals(1, server.getRequestCount());
+      assertEquals("This page has moved!", response);
+      return;
+    }
+
+    // GET/HEAD requests should have followed the redirect with the same method
+    assertFalse(connection.getDoOutput());
+    assertEquals(2, server.getRequestCount());
+    RecordedRequest page2 = server.takeRequest();
+    assertEquals(method + " /page2 HTTP/1.1", page2.getRequestLine());
+  }
+
   @Test public void follow20Redirects() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
