@@ -16,8 +16,6 @@
 
 package com.google.mockwebserver;
 
-import junit.framework.TestCase;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +27,7 @@ import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import junit.framework.TestCase;
 
 public final class MockWebServerTest extends TestCase {
 
@@ -66,10 +65,14 @@ public final class MockWebServerTest extends TestCase {
         assertEquals("HTTP/1.1 200 OK", response.getStatus());
     }
 
-    public void testSetBodyAdjustsHeaders() {
+    public void testSetBodyAdjustsHeaders() throws IOException {
         MockResponse response = new MockResponse().setBody("ABC");
         assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
-        assertTrue(Arrays.equals(response.getBody(), new byte[] { 'A', 'B', 'C' }));
+        InputStream in = response.getBodyStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+        assertEquals(-1, in.read());
         assertEquals("HTTP/1.1 200 OK", response.getStatus());
     }
 
