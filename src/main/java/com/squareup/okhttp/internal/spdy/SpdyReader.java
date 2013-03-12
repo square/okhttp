@@ -232,6 +232,10 @@ final class SpdyReader implements Closeable {
     this.compressedLimit += length;
     try {
       int numberOfPairs = nameValueBlockIn.readInt();
+      if (numberOfPairs < 0) {
+        Logger.getLogger(getClass().getName()).warning("numberOfPairs < 0: " + numberOfPairs);
+        throw ioException("numberOfPairs < 0");
+      }
       List<String> entries = new ArrayList<String>(numberOfPairs * 2);
       for (int i = 0; i < numberOfPairs; i++) {
         String name = readString();
