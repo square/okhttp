@@ -39,6 +39,9 @@ final class ResponseHeaders {
   /** HTTP header name for the local time when the response was received. */
   private static final String RECEIVED_MILLIS = "X-Android-Received-Millis";
 
+  /** HTTP synthetic header with the response source. */
+  static final String RESPONSE_SOURCE = "X-Android-Response-Source";
+
   private final URI uri;
   private final RawHeaders headers;
 
@@ -269,6 +272,10 @@ final class ResponseHeaders {
     headers.add(SENT_MILLIS, Long.toString(sentRequestMillis));
     this.receivedResponseMillis = receivedResponseMillis;
     headers.add(RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
+  }
+
+  public void setResponseSource(ResponseSource responseSource) {
+    headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + headers.getResponseCode());
   }
 
   /**
