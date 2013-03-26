@@ -20,6 +20,7 @@
 
   <modules>
     <module>okhttp</module>
+    <module>okhttp-apache</module>
     <module>samples</module>
   </modules>
 
@@ -34,6 +35,7 @@
     <android.version>4.1.1.4</android.version>
     <dagger.version>0.9.1</dagger.version>
     <gson.version>2.2.2</gson.version>
+    <apache.http.version>4.2.2</apache.http.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.10</junit.version>
@@ -93,6 +95,11 @@
         <groupId>com.squareup</groupId>
         <artifactId>dagger</artifactId>
         <version>${dagger.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${apache.http.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
