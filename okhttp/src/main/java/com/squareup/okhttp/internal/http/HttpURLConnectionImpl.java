@@ -385,7 +385,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     return !sslFailure && !protocolFailure;
   }
 
-  HttpEngine getHttpEngine() {
+  public HttpEngine getHttpEngine() {
     return httpEngine;
   }
 

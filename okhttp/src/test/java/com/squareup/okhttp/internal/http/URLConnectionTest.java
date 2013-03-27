@@ -20,6 +20,7 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import com.google.mockwebserver.SocketPolicy;
+import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
