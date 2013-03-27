@@ -17,11 +17,11 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpResponseCache;
 import com.squareup.okhttp.internal.mockspdyserver.MockSpdyServer;
 import java.io.ByteArrayOutputStream;
 import java.io.File;

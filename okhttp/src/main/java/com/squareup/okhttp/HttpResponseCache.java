@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp;
 
-import com.squareup.okhttp.OkResponseCache;
-import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.RawHeaders;
+import com.squareup.okhttp.internal.http.ResponseHeaders;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -62,7 +65,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  * {@code android.net.HttpResponseCache}, the stable, documented front end for
  * this.
  */
-public final class HttpResponseCache extends ResponseCache implements OkResponseCache {
+public final class HttpResponseCache extends ResponseCache {
   private static final char[] DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
@@ -191,7 +194,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
    * not updated. If the stored response has changed since {@code
    * conditionalCacheHit} was returned, this does nothing.
    */
-  @Override public void update(CacheResponse conditionalCacheHit, HttpURLConnection httpConnection)
+  public void update(CacheResponse conditionalCacheHit, HttpURLConnection httpConnection)
       throws IOException {
     HttpEngine httpEngine = getHttpEngine(httpConnection);
     URI uri = httpEngine.getUri();
@@ -246,6 +249,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     return writeSuccessCount;
   }
 
+  /** Track an HTTP response being satisfied by {@code source}. */
   public synchronized void trackResponse(ResponseSource source) {
     requestCount++;
 
@@ -260,6 +264,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     }
   }
 
+  /** Track an conditional GET that was satisfied by this cache. */
   public synchronized void trackConditionalCacheHit() {
     hitCount++;
   }
