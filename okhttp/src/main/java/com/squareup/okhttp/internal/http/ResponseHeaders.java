@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static com.squareup.okhttp.internal.Util.equal;
 
 /** Parsed HTTP response headers. */
-final class ResponseHeaders {
+public final class ResponseHeaders {
 
   /** HTTP header name for the local time when the request was sent. */
   private static final String SENT_MILLIS = "X-Android-Sent-Millis";

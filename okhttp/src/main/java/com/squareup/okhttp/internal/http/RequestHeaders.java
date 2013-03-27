@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /** Parsed HTTP request headers. */
-final class RequestHeaders {
+public final class RequestHeaders {
   private final URI uri;
   private final RawHeaders headers;
 

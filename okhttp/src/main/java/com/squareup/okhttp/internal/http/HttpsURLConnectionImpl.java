@@ -112,7 +112,7 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     return null;
   }
 
-  HttpEngine getHttpEngine() {
+  public HttpEngine getHttpEngine() {
     return delegate.getHttpEngine();
   }
 
