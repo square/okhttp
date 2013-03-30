@@ -118,7 +118,7 @@ public final class URLConnectionTest {
     server.shutdown();
     server2.shutdown();
     if (cache != null) {
-      cache.getCache().delete();
+      cache.delete();
     }
   }
 

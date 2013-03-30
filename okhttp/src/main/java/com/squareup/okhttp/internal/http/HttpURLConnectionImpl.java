@@ -32,7 +32,6 @@ import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.ResponseCache;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
@@ -77,7 +76,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   final ProxySelector proxySelector;
   final CookieHandler cookieHandler;
-  final ResponseCache responseCache;
+  final OkResponseCache responseCache;
   final ConnectionPool connectionPool;
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
@@ -90,16 +89,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client) {
+  public HttpURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache) {
     super(url);
     this.followProtocolRedirects = client.getFollowProtocolRedirects();
     this.requestedProxy = client.getProxy();
     this.proxySelector = client.getProxySelector();
     this.cookieHandler = client.getCookieHandler();
-    this.responseCache = client.getResponseCache();
     this.connectionPool = client.getConnectionPool();
     this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
+    this.responseCache = responseCache;
   }
 
   @Override public final void connect() throws IOException {

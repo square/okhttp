@@ -45,9 +45,9 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
   private final HttpUrlConnectionDelegate delegate;
 
-  public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
+  public HttpsURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache) {
     super(url);
-    delegate = new HttpUrlConnectionDelegate(url, client);
+    delegate = new HttpUrlConnectionDelegate(url, client, responseCache);
   }
 
   @Override public String getCipherSuite() {
@@ -399,8 +399,8 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-    private HttpUrlConnectionDelegate(URL url, OkHttpClient client) {
-      super(url, client);
+    private HttpUrlConnectionDelegate(URL url, OkHttpClient client, OkResponseCache responseCache) {
+      super(url, client, responseCache);
     }
 
     @Override protected HttpURLConnection getHttpConnectionToCache() {
