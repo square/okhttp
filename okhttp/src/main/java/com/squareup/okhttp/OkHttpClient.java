@@ -17,6 +17,8 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.OkResponseCache;
+import com.squareup.okhttp.internal.http.OkResponseCacheAdapter;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -102,6 +104,16 @@ public final class OkHttpClient {
     return responseCache;
   }
 
+  private OkResponseCache okResponseCache() {
+    if (responseCache instanceof HttpResponseCache) {
+      return ((HttpResponseCache) responseCache).okResponseCache;
+    } else if (responseCache != null) {
+      return new OkResponseCacheAdapter(responseCache);
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Sets the socket factory used to secure HTTPS connections.
    *
@@ -166,10 +178,11 @@ public final class OkHttpClient {
 
   public HttpURLConnection open(URL url) {
     String protocol = url.getProtocol();
+    OkHttpClient copy = copyWithDefaults();
     if (protocol.equals("http")) {
-      return new HttpURLConnectionImpl(url, copyWithDefaults());
+      return new HttpURLConnectionImpl(url, copy, copy.okResponseCache());
     } else if (protocol.equals("https")) {
-      return new HttpsURLConnectionImpl(url, copyWithDefaults());
+      return new HttpsURLConnectionImpl(url, copy, copy.okResponseCache());
     } else {
       throw new IllegalArgumentException("Unexpected protocol: " + protocol);
     }

@@ -19,7 +19,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
@@ -176,8 +175,8 @@ public class HttpEngine {
 
     prepareRawRequestHeaders();
     initResponseSource();
-    if (policy.responseCache instanceof HttpResponseCache) {
-      ((HttpResponseCache) policy.responseCache).trackResponse(responseSource);
+    if (policy.responseCache != null) {
+      policy.responseCache.trackResponse(responseSource);
     }
 
     // The raw response source may require the network, but the request
@@ -635,11 +634,8 @@ public class HttpEngine {
         release(false);
         ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
         setResponse(combinedHeaders, cachedResponseBody);
-        if (policy.responseCache instanceof HttpResponseCache) {
-          HttpResponseCache httpResponseCache = (HttpResponseCache) policy.responseCache;
-          httpResponseCache.trackConditionalCacheHit();
-          httpResponseCache.update(cacheResponse, policy.getHttpConnectionToCache());
-        }
+        policy.responseCache.trackConditionalCacheHit();
+        policy.responseCache.update(cacheResponse, policy.getHttpConnectionToCache());
         return;
       } else {
         Util.closeQuietly(cachedResponseBody);

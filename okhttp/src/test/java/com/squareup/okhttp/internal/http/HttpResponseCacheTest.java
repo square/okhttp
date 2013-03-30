@@ -114,7 +114,7 @@ public final class HttpResponseCacheTest {
   @After public void tearDown() throws Exception {
     server.shutdown();
     ResponseCache.setDefault(null);
-    cache.getCache().delete();
+    cache.delete();
     CookieHandler.setDefault(null);
   }
 
