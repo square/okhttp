@@ -21,7 +21,6 @@ import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public final class RawHeadersTest {
   @Test public void parseNameValueBlock() {
@@ -80,7 +79,7 @@ public final class RawHeadersTest {
     final int version = 1;
     final int code = 503;
     rawHeaders.setStatusLine("HTTP/1." + version + " " + code + " ");
-    assertTrue(rawHeaders.getResponseMessage().isEmpty());
+    assertEquals("", rawHeaders.getResponseMessage());
     assertEquals(version, rawHeaders.getHttpMinorVersion());
     assertEquals(code, rawHeaders.getResponseCode());
   }
@@ -95,7 +94,7 @@ public final class RawHeadersTest {
     final int version = 1;
     final int code = 503;
     rawHeaders.setStatusLine("HTTP/1." + version + " " + code);
-    assertTrue(rawHeaders.getResponseMessage().isEmpty());
+    assertEquals("", rawHeaders.getResponseMessage());
     assertEquals(version, rawHeaders.getHttpMinorVersion());
     assertEquals(code, rawHeaders.getResponseCode());
   }

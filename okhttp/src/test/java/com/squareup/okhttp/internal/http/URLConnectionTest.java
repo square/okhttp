@@ -1777,7 +1777,7 @@ public final class URLConnectionTest {
     if (method.equals("GET")) {
         assertEquals("Page 2", response);
     } else if (method.equals("HEAD"))  {
-        assertTrue(response.isEmpty());
+        assertEquals("", response);
     } else {
       // Methods other than GET/HEAD shouldn't follow the redirect
       if (method.equals("POST")) {
