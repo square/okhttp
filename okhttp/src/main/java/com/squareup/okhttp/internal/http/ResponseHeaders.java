@@ -410,7 +410,8 @@ public final class ResponseHeaders {
       if (ageMillis + minFreshMillis >= freshMillis) {
         headers.add("Warning", "110 HttpURLConnection \"Response is stale\"");
       }
-      if (ageMillis > TimeUnit.HOURS.toMillis(24) && isFreshnessLifetimeHeuristic()) {
+      long oneDayMillis = 24 * 60 * 60 * 1000L;
+      if (ageMillis > oneDayMillis && isFreshnessLifetimeHeuristic()) {
         headers.add("Warning", "113 HttpURLConnection \"Heuristic expiration\"");
       }
       return ResponseSource.CACHE;

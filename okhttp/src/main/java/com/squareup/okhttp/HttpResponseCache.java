@@ -490,7 +490,7 @@ public final class HttpResponseCache extends ResponseCache {
 
         if (isHttps()) {
           String blank = reader.readLine();
-          if (!blank.isEmpty()) {
+          if (blank.length() > 0) {
             throw new IOException("expected \"\" but was \"" + blank + "\"");
           }
           cipherSuite = reader.readLine();
@@ -575,7 +575,7 @@ public final class HttpResponseCache extends ResponseCache {
         }
         return result;
       } catch (CertificateException e) {
-        throw new IOException(e);
+        throw new IOException(e.getMessage());
       }
     }
 
@@ -592,7 +592,7 @@ public final class HttpResponseCache extends ResponseCache {
           writer.write(line + '\n');
         }
       } catch (CertificateEncodingException e) {
-        throw new IOException(e);
+        throw new IOException(e.getMessage());
       }
     }
 
