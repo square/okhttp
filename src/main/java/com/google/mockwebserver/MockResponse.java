@@ -124,7 +124,7 @@ public final class MockResponse implements Cloneable {
      */
     public MockResponse removeHeader(String name) {
         name += ":";
-        for (Iterator<String> i = headers.iterator(); i.hasNext();) {
+        for (Iterator<String> i = headers.iterator(); i.hasNext(); ) {
             String header = i.next();
             if (name.regionMatches(true, 0, header, 0, name.length())) {
                 i.remove();

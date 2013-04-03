@@ -427,7 +427,7 @@ public final class MockWebServer {
 
         if (request.startsWith("OPTIONS ") || request.startsWith("GET ")
                 || request.startsWith("HEAD ") || request.startsWith("DELETE ")
-                || request .startsWith("TRACE ") || request.startsWith("CONNECT ")) {
+                || request.startsWith("TRACE ") || request.startsWith("CONNECT ")) {
             if (hasBody) {
                 throw new IllegalArgumentException("Request must not have a body: " + request);
             }

@@ -28,7 +28,7 @@ public class QueueDispatcher extends Dispatcher {
             = new LinkedBlockingQueue<MockResponse>();
     private MockResponse failFastResponse;
 
-  @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+    @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
         // to permit interactive/browser testing, ignore requests for favicons
         final String requestLine = request.getRequestLine();
         if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
@@ -48,9 +48,9 @@ public class QueueDispatcher extends Dispatcher {
     @Override public SocketPolicy peekSocketPolicy() {
         MockResponse peek = responseQueue.peek();
         if (peek == null) {
-          return failFastResponse != null
-              ? failFastResponse.getSocketPolicy()
-              : SocketPolicy.KEEP_OPEN;
+            return failFastResponse != null
+                    ? failFastResponse.getSocketPolicy()
+                    : SocketPolicy.KEEP_OPEN;
         }
         return peek.getSocketPolicy();
     }
@@ -60,10 +60,10 @@ public class QueueDispatcher extends Dispatcher {
     }
 
     public void setFailFast(boolean failFast) {
-      MockResponse failFastResponse = failFast
-          ? new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
-          : null;
-      setFailFast(failFastResponse);
+        MockResponse failFastResponse = failFast
+                ? new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+                : null;
+        setFailFast(failFastResponse);
     }
 
     public void setFailFast(MockResponse failFastResponse) {

@@ -85,17 +85,16 @@ public class CustomDispatcherTest extends TestCase {
 
     private Thread buildRequestThread(final String path, final AtomicInteger responseCode) {
         return new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    final URL url = mockWebServer.getUrl(path);
-                    final HttpURLConnection conn;
-                    try {
-                        conn = (HttpURLConnection) url.openConnection();
-                        responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
-                    } catch (IOException e) {
-                    }
+            @Override public void run() {
+                final URL url = mockWebServer.getUrl(path);
+                final HttpURLConnection conn;
+                try {
+                    conn = (HttpURLConnection) url.openConnection();
+                    responseCode.set(conn.getResponseCode()); // Force the connection to hit the "server".
+                } catch (IOException e) {
                 }
-            });
+            }
+        });
     }
 
 }

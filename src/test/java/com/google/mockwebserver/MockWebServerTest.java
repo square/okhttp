@@ -49,7 +49,7 @@ public final class MockWebServerTest extends TestCase {
                 "X-Whitespace:  both  "
         );
         List<Integer> chunkSizes = Collections.emptyList();
-        byte[] body = { 'A', 'B', 'C' };
+        byte[] body = {'A', 'B', 'C'};
         String requestLine = "GET / HTTP/1.1";
         RecordedRequest request = new RecordedRequest(
                 requestLine, headers, chunkSizes, body.length, body, 0, null);
