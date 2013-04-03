@@ -134,6 +134,13 @@ public final class MockResponse implements Cloneable {
     }
 
     /**
+     * Returns the raw HTTP payload, or null if this response is streamed.
+     */
+    public byte[] getBody() {
+        return body;
+    }
+
+    /**
      * Returns an input stream containing the raw HTTP payload.
      */
     InputStream getBodyStream() {
