@@ -30,13 +30,16 @@ import java.util.List;
  * A scripted response to be replayed by the mock web server.
  */
 public final class MockResponse implements Cloneable {
-    private static final String EMPTY_BODY_HEADER = "Content-Length: 0";
     private static final String CHUNKED_BODY_HEADER = "Transfer-encoding: chunked";
 
     private String status = "HTTP/1.1 200 OK";
     private List<String> headers = new ArrayList<String>();
-    private InputStream body;
-    private long bodyLength;
+
+    /** The response body content, or null if {@code bodyStream} is set. */
+    private byte[] body;
+    /** The response body content, or null if {@code body} is set. */
+    private InputStream bodyStream;
+
     private int bytesPerSecond = Integer.MAX_VALUE;
     private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
@@ -44,7 +47,7 @@ public final class MockResponse implements Cloneable {
      * Creates a new mock response with an empty body.
      */
     public MockResponse() {
-        headers.add(EMPTY_BODY_HEADER);
+        setBody(new byte[0]);
     }
 
     @Override public MockResponse clone() {
@@ -134,27 +137,20 @@ public final class MockResponse implements Cloneable {
      * Returns an input stream containing the raw HTTP payload.
      */
     InputStream getBodyStream() {
-        return body;
-    }
-
-    /**
-     * Returns length of raw HTTP payload.
-     */
-    public long getBodyLength() {
-        return bodyLength;
+        return bodyStream != null ? bodyStream : new ByteArrayInputStream(body);
     }
 
     public MockResponse setBody(byte[] body) {
-        return setBody(new ByteArrayInputStream(body), body.length);
+        setHeader("Content-Length", body.length);
+        this.body = body;
+        this.bodyStream = null;
+        return this;
     }
 
-    public MockResponse setBody(InputStream body, long bodyLength) {
-        if (this.body == null) {
-            headers.remove(EMPTY_BODY_HEADER);
-        }
-        this.headers.add("Content-Length: " + bodyLength);
-        this.body = body;
-        this.bodyLength = bodyLength;
+    public MockResponse setBody(InputStream bodyStream, long bodyLength) {
+        setHeader("Content-Length", bodyLength);
+        this.body = null;
+        this.bodyStream = bodyStream;
         return this;
     }
 
@@ -174,7 +170,7 @@ public final class MockResponse implements Cloneable {
      * maxChunkSize} bytes.
      */
     public MockResponse setChunkedBody(byte[] body, int maxChunkSize) {
-        headers.remove(EMPTY_BODY_HEADER);
+        removeHeader("Content-Length");
         headers.add(CHUNKED_BODY_HEADER);
 
         try {
@@ -190,9 +186,7 @@ public final class MockResponse implements Cloneable {
             }
             bytesOut.write("0\r\n\r\n".getBytes(ASCII)); // last chunk + empty trailer + crlf
 
-            body = bytesOut.toByteArray();
-            this.body = new ByteArrayInputStream(body);
-            this.bodyLength = body.length;
+            this.body = bytesOut.toByteArray();
             return this;
         } catch (IOException e) {
             throw new AssertionError(); // In-memory I/O doesn't throw IOExceptions.
