@@ -17,6 +17,7 @@
 package com.google.mockwebserver;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -214,5 +215,18 @@ public final class MockWebServerTest extends TestCase {
             // Expected.
         }
         server.getUrl("/b").openConnection().getInputStream(); // Should succeed.
+    }
+
+    public void testStreamingResponseBody() throws Exception {
+        InputStream responseBody = new ByteArrayInputStream("ABC".getBytes("UTF-8"));
+        server.enqueue(new MockResponse().setBody(responseBody, 3));
+        server.play();
+
+        InputStream in = server.getUrl("/").openConnection().getInputStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+
+        assertEquals(-1, responseBody.read()); // The body is exhausted.
     }
 }
