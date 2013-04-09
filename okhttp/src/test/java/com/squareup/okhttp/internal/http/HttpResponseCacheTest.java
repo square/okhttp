@@ -1644,6 +1644,16 @@ public final class HttpResponseCacheTest {
     assertEquals(ResponseSource.NETWORK.toString() + " 200", source);
   }
 
+  @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=120")
+        .addHeader(": A")
+        .setBody("body"));
+    server.play();
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertEquals("A", connection.getHeaderField(""));
+  }
+
   /**
    * @param delta the offset from the current date to use. Negative
    * values yield dates in the past; positive values yield dates in the
