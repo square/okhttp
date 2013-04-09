@@ -17,7 +17,6 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
@@ -186,25 +185,27 @@ public final class RawHeaders {
   public void addLine(String line) {
     int index = line.indexOf(":");
     if (index == -1) {
-      add("", line);
+      addLenient("", line);
     } else {
-      add(line.substring(0, index), line.substring(index + 1));
+      addLenient(line.substring(0, index), line.substring(index + 1));
     }
   }
 
   /** Add a field with the specified value. */
   public void add(String fieldName, String value) {
-    if (fieldName == null) {
-      throw new IllegalArgumentException("fieldName == null");
+    if (fieldName == null) throw new IllegalArgumentException("fieldname == null");
+    if (value == null) throw new IllegalArgumentException("value == null");
+    if (fieldName.length() == 0 || fieldName.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
+      throw new IllegalArgumentException("Unexpected header: " + fieldName + ": " + value);
     }
-    if (value == null) {
-      // Given null values, the RI sends a malformed field line like
-      // "Accept\r\n". For platform compatibility and HTTP compliance, we
-      // print a warning and ignore null values.
-      Platform.get()
-          .logW("Ignoring HTTP header field '" + fieldName + "' because its value is null");
-      return;
-    }
+    addLenient(fieldName, value);
+  }
+
+  /**
+   * Add a field with the specified value without any validation. Only
+   * appropriate for headers from the remote peer.
+   */
+  private void addLenient(String fieldName, String value) {
     namesAndValues.add(fieldName);
     namesAndValues.add(value.trim());
   }
@@ -351,7 +352,9 @@ public final class RawHeaders {
       String fieldName = entry.getKey();
       List<String> values = entry.getValue();
       if (fieldName != null) {
-        result.addAll(fieldName, values);
+        for (String value : values) {
+          result.addLenient(fieldName, value);
+        }
       } else if (!values.isEmpty()) {
         result.setStatusLine(values.get(values.size() - 1));
       }
@@ -370,13 +373,6 @@ public final class RawHeaders {
     for (int i = 0; i < namesAndValues.size(); i += 2) {
       String name = namesAndValues.get(i).toLowerCase(Locale.US);
       String value = namesAndValues.get(i + 1);
-
-      // TODO: promote this check to where names and values are created
-      if (name.length() == 0
-          || name.indexOf('\0') != -1
-          || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
 
       // Drop headers that are forbidden when layering HTTP over SPDY.
       if (name.equals("connection")

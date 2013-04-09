@@ -154,9 +154,17 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    urlConnection.setRequestProperty("NullValue", null); // should fail silently!
+    try {
+      urlConnection.setRequestProperty("NullValue", null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
     assertNull(urlConnection.getRequestProperty("NullValue"));
-    urlConnection.addRequestProperty("AnotherNullValue", null);  // should fail silently!
+    try {
+      urlConnection.addRequestProperty("AnotherNullValue", null);
+      fail();
+    } catch (Exception expected) {
+    }
     assertNull(urlConnection.getRequestProperty("AnotherNullValue"));
 
     urlConnection.getResponseCode();
@@ -2302,14 +2310,40 @@ public final class URLConnectionTest {
     fail("TODO");
   }
 
-  @Test @Ignore public void emptyHeaderName() {
-    // This is relevant for SPDY
-    fail("TODO");
+  @Test public void emptyRequestHeaderValueIsAllowed() throws Exception {
+    server.enqueue(new MockResponse().setBody("body"));
+    server.play();
+    HttpURLConnection urlConnection = client.open(server.getUrl("/"));
+    urlConnection.addRequestProperty("B", "");
+    assertContent("body", urlConnection);
+    assertEquals("", urlConnection.getRequestProperty("B"));
   }
 
-  @Test @Ignore public void emptyHeaderValue() {
-    // This is relevant for SPDY
-    fail("TODO");
+  @Test public void emptyResponseHeaderValueIsAllowed() throws Exception {
+    server.enqueue(new MockResponse().addHeader("A:").setBody("body"));
+    server.play();
+    HttpURLConnection urlConnection = client.open(server.getUrl("/"));
+    assertContent("body", urlConnection);
+    assertEquals("", urlConnection.getHeaderField("A"));
+  }
+
+  @Test public void emptyRequestHeaderNameIsStrict() throws Exception {
+    server.enqueue(new MockResponse().setBody("body"));
+    server.play();
+    HttpURLConnection urlConnection = client.open(server.getUrl("/"));
+    try {
+      urlConnection.setRequestProperty("", "A");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void emptyResponseHeaderNameIsLenient() throws Exception {
+    server.enqueue(new MockResponse().addHeader(":A").setBody("body"));
+    server.play();
+    HttpURLConnection urlConnection = client.open(server.getUrl("/"));
+    urlConnection.getResponseCode();
+    assertEquals("A", urlConnection.getHeaderField(""));
   }
 
   @Test @Ignore public void deflateCompression() {
