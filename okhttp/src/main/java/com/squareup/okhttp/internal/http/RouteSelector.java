@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,8 +29,11 @@ import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import javax.net.ssl.SSLHandshakeException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -51,6 +55,7 @@ public final class RouteSelector {
   private final ProxySelector proxySelector;
   private final ConnectionPool pool;
   private final Dns dns;
+  private final Set<Route> failedRoutes;
 
   /* The most recently attempted route. */
   private Proxy lastProxy;
@@ -64,19 +69,23 @@ public final class RouteSelector {
   /* State for negotiating the next InetSocketAddress to use. */
   private InetAddress[] socketAddresses;
   private int nextSocketAddressIndex;
-  private String socketHost;
   private int socketPort;
 
   /* State for negotiating the next TLS configuration */
   private int nextTlsMode = TLS_MODE_NULL;
 
+  /* State for negotiating failed routes */
+  private final List<Route> postponedRoutes;
+
   public RouteSelector(Address address, URI uri, ProxySelector proxySelector, ConnectionPool pool,
-      Dns dns) {
+      Dns dns, Set<Route> failedRoutes) {
     this.address = address;
     this.uri = uri;
     this.proxySelector = proxySelector;
     this.pool = pool;
     this.dns = dns;
+    this.failedRoutes = failedRoutes;
+    this.postponedRoutes = new LinkedList<Route>();
 
     resetNextProxy(uri, address.getProxy());
   }
@@ -86,7 +95,7 @@ public final class RouteSelector {
    * least one route.
    */
   public boolean hasNext() {
-    return hasNextTlsMode() || hasNextInetSocketAddress() || hasNextProxy();
+    return hasNextTlsMode() || hasNextInetSocketAddress() || hasNextProxy() || hasNextPostponed();
   }
 
   /**
@@ -105,7 +114,10 @@ public final class RouteSelector {
     if (!hasNextTlsMode()) {
       if (!hasNextInetSocketAddress()) {
         if (!hasNextProxy()) {
-          throw new NoSuchElementException();
+          if (!hasNextPostponed()) {
+            throw new NoSuchElementException();
+          }
+          return new Connection(nextPostponed());
         }
         lastProxy = nextProxy();
         resetNextInetSocketAddress(lastProxy);
@@ -113,9 +125,17 @@ public final class RouteSelector {
       lastInetSocketAddress = nextInetSocketAddress();
       resetNextTlsMode();
     }
-    boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
 
-    return new Connection(address, lastProxy, lastInetSocketAddress, modernTls);
+    boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
+    Route route = new Route(address, lastProxy, lastInetSocketAddress, modernTls);
+    if (failedRoutes.contains(route)) {
+      postponedRoutes.add(route);
+      // We will only recurse in order to skip previously failed routes. They will be
+      // tried last.
+      return next();
+    }
+
+    return new Connection(route);
   }
 
   /**
@@ -123,9 +143,17 @@ public final class RouteSelector {
    * failure on a connection returned by this route selector.
    */
   public void connectFailed(Connection connection, IOException failure) {
-    if (connection.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
+    Route failedRoute = connection.getRoute();
+    if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
-      proxySelector.connectFailed(uri, connection.getProxy().address(), failure);
+      proxySelector.connectFailed(uri, failedRoute.getProxy().address(), failure);
+    }
+
+    failedRoutes.add(failedRoute);
+    if (!(failure instanceof SSLHandshakeException)) {
+      // If the problem was not related to SSL then it will also fail with
+      // a different Tls mode therefore we can be proactive about it.
+      failedRoutes.add(failedRoute.flipTlsMode());
     }
   }
 
@@ -175,6 +203,7 @@ public final class RouteSelector {
   private void resetNextInetSocketAddress(Proxy proxy) throws UnknownHostException {
     socketAddresses = null; // Clear the addresses. Necessary if getAllByName() below throws!
 
+    String socketHost;
     if (proxy.type() == Proxy.Type.DIRECT) {
       socketHost = uri.getHost();
       socketPort = getEffectivePort(uri);
@@ -232,5 +261,15 @@ public final class RouteSelector {
     } else {
       throw new AssertionError();
     }
+  }
+
+  /** Returns true if there is another postponed route to try. */
+  private boolean hasNextPostponed() {
+    return !postponedRoutes.isEmpty();
+  }
+
+  /** Returns the next postponed route to try. */
+  private Route nextPostponed() {
+    return postponedRoutes.remove(0);
   }
 }
