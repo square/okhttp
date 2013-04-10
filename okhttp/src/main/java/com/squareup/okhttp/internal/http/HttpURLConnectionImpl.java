@@ -20,6 +20,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.security.Permission;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
@@ -81,6 +83,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
   HostnameVerifier hostnameVerifier;
+  final Set<Route> failedRoutes;
+
 
   private final RawHeaders rawRequestHeaders = new RawHeaders();
 
@@ -89,9 +93,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache) {
+  public HttpURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache,
+      Set<Route> failedRoutes) {
     super(url);
     this.followProtocolRedirects = client.getFollowProtocolRedirects();
+    this.failedRoutes = failedRoutes;
     this.requestedProxy = client.getProxy();
     this.proxySelector = client.getProxySelector();
     this.cookieHandler = client.getCookieHandler();
@@ -99,6 +105,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
     this.responseCache = responseCache;
+  }
+
+  Set<Route> getFailedRoutes() {
+    return failedRoutes;
   }
 
   @Override public final void connect() throws IOException {
@@ -401,7 +411,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private Retry processResponseHeaders() throws IOException {
     Proxy selectedProxy = httpEngine.connection != null
-        ? httpEngine.connection.getProxy()
+        ? httpEngine.connection.getRoute().getProxy()
         : requestedProxy;
     final int responseCode = getResponseCode();
     switch (responseCode) {

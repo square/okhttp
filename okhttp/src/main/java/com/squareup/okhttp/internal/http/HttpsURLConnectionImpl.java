@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -45,9 +47,10 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
   private final HttpUrlConnectionDelegate delegate;
 
-  public HttpsURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache) {
+  public HttpsURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache,
+      Set<Route> failedRoutes) {
     super(url);
-    delegate = new HttpUrlConnectionDelegate(url, client, responseCache);
+    delegate = new HttpUrlConnectionDelegate(url, client, responseCache, failedRoutes);
   }
 
   @Override public String getCipherSuite() {
@@ -399,8 +402,9 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-    private HttpUrlConnectionDelegate(URL url, OkHttpClient client, OkResponseCache responseCache) {
-      super(url, client, responseCache);
+    private HttpUrlConnectionDelegate(URL url, OkHttpClient client, OkResponseCache responseCache,
+        Set<Route> failedRoutes) {
+      super(url, client, responseCache, failedRoutes);
     }
 
     @Override protected HttpURLConnection getHttpConnectionToCache() {
@@ -425,8 +429,7 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
      * @param policy the HttpURLConnectionImpl with connection configuration
      */
     public HttpsEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
-        Connection connection, RetryableOutputStream requestBody)
-        throws IOException {
+        Connection connection, RetryableOutputStream requestBody) throws IOException {
       super(policy, method, requestHeaders, connection, requestBody);
       this.sslSocket = connection != null ? (SSLSocket) connection.getSocket() : null;
     }

@@ -25,6 +25,9 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URL;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -32,6 +35,7 @@ import javax.net.ssl.SSLSocketFactory;
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient {
   private Proxy proxy;
+  private Set<Route> failedRoutes = Collections.synchronizedSet(new LinkedHashSet<Route>());
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
   private ResponseCache responseCache;
@@ -180,21 +184,22 @@ public final class OkHttpClient {
     String protocol = url.getProtocol();
     OkHttpClient copy = copyWithDefaults();
     if (protocol.equals("http")) {
-      return new HttpURLConnectionImpl(url, copy, copy.okResponseCache());
+      return new HttpURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
     } else if (protocol.equals("https")) {
-      return new HttpsURLConnectionImpl(url, copy, copy.okResponseCache());
+      return new HttpsURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
     } else {
       throw new IllegalArgumentException("Unexpected protocol: " + protocol);
     }
   }
 
   /**
-   * Returns a copy of this OkHttpClient that uses the system-wide default for
+   * Returns a shallow copy of this OkHttpClient that uses the system-wide default for
    * each field that hasn't been explicitly configured.
    */
   private OkHttpClient copyWithDefaults() {
     OkHttpClient result = new OkHttpClient();
     result.proxy = proxy;
+    result.failedRoutes = failedRoutes;
     result.proxySelector = proxySelector != null ? proxySelector : ProxySelector.getDefault();
     result.cookieHandler = cookieHandler != null ? cookieHandler : CookieHandler.getDefault();
     result.responseCache = responseCache != null ? responseCache : ResponseCache.getDefault();
