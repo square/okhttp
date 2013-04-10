@@ -164,7 +164,7 @@ public class ConnectionPool {
     for (ListIterator<Connection> i = connections.listIterator(connections.size());
         i.hasPrevious(); ) {
       Connection connection = i.previous();
-      if (!connection.getAddress().equals(address)
+      if (!connection.getRoute().getAddress().equals(address)
           || !connection.isAlive()
           || System.nanoTime() - connection.getIdleStartTimeNs() >= keepAliveDurationNs) {
         continue;

@@ -197,6 +197,7 @@ public class HttpEngine {
       sendSocketRequest();
     } else if (connection != null) {
       policy.connectionPool.recycle(connection);
+      policy.getFailedRoutes().remove(connection.getRoute());
       connection = null;
     }
   }
@@ -278,16 +279,17 @@ public class HttpEngine {
       }
       Address address = new Address(uriHost, getEffectivePort(uri), sslSocketFactory,
           hostnameVerifier, policy.requestedProxy);
-      routeSelector =
-          new RouteSelector(address, uri, policy.proxySelector, policy.connectionPool, Dns.DEFAULT);
+      routeSelector = new RouteSelector(address, uri, policy.proxySelector, policy.connectionPool,
+          Dns.DEFAULT, policy.getFailedRoutes());
     }
     connection = routeSelector.next();
     if (!connection.isConnected()) {
       connection.connect(policy.getConnectTimeout(), policy.getReadTimeout(), getTunnelConfig());
       policy.connectionPool.maybeShare(connection);
+      policy.getFailedRoutes().remove(connection.getRoute());
     }
     connected(connection);
-    if (connection.getProxy() != policy.requestedProxy) {
+    if (connection.getRoute().getProxy() != policy.requestedProxy) {
       // Update the request line if the proxy changed; it may need a host name.
       requestHeaders.getHeaders().setRequestLine(getRequestLine());
     }
@@ -573,7 +575,7 @@ public class HttpEngine {
   protected boolean includeAuthorityInRequestLine() {
     return connection == null
         ? policy.usingProxy() // A proxy was requested.
-        : connection.getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
+        : connection.getRoute().getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
   }
 
   public static String getDefaultUserAgent() {
