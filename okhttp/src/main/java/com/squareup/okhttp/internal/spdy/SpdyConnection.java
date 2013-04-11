@@ -139,17 +139,17 @@ public final class SpdyConnection implements Closeable {
     return stream;
   }
 
-  private void setIdle(boolean value) {
+  private synchronized void setIdle(boolean value) {
     idleStartTimeNs = value ? System.nanoTime() : 0L;
   }
 
   /** Returns true if this connection is idle. */
-  public boolean isIdle() {
+  public synchronized boolean isIdle() {
     return idleStartTimeNs != 0L;
   }
 
   /** Returns the time in ns when this connection became idle or 0L if connection is not idle. */
-  public long getIdleStartTimeNs() {
+  public synchronized long getIdleStartTimeNs() {
     return idleStartTimeNs;
   }
 
