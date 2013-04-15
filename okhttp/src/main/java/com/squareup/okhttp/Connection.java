@@ -150,7 +150,8 @@ public final class Connection implements Closeable {
     in = sslSocket.getInputStream();
 
     byte[] selectedProtocol;
-    if (route.modernTls && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
+    if (route.modernTls
+        && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
       if (Arrays.equals(selectedProtocol, SPDY3)) {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
         spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
