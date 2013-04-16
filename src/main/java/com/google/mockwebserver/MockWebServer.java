@@ -87,7 +87,7 @@ public final class MockWebServer {
         try {
             return InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            throw new AssertionError();
+            throw new AssertionError(e);
         }
     }
 
@@ -320,7 +320,7 @@ public final class MockWebServer {
              */
             private boolean processOneRequest(Socket socket, InputStream in, OutputStream out)
                     throws IOException, InterruptedException {
-                RecordedRequest request = readRequest(socket, in, sequenceNumber);
+                RecordedRequest request = readRequest(socket, in, out, sequenceNumber);
                 if (request == null) {
                     return false;
                 }
@@ -377,7 +377,7 @@ public final class MockWebServer {
     /**
      * @param sequenceNumber the index of this request on this connection.
      */
-    private RecordedRequest readRequest(Socket socket, InputStream in, int sequenceNumber)
+    private RecordedRequest readRequest(Socket socket, InputStream in, OutputStream out, int sequenceNumber)
             throws IOException {
         String request;
         try {
@@ -392,6 +392,7 @@ public final class MockWebServer {
         List<String> headers = new ArrayList<String>();
         int contentLength = -1;
         boolean chunked = false;
+        boolean expectContinue = false;
         String header;
         while ((header = readAsciiUntilCrlf(in)).length() != 0) {
             headers.add(header);
@@ -403,6 +404,17 @@ public final class MockWebServer {
                     lowercaseHeader.substring(18).trim().equals("chunked")) {
                 chunked = true;
             }
+            if (lowercaseHeader.startsWith("expect:") &&
+                    lowercaseHeader.substring(7).trim().equals("100-continue")) {
+                expectContinue = true;
+            }
+        }
+
+        if (expectContinue) {
+            out.write(("HTTP/1.1 100 Continue\r\n").getBytes(ASCII));
+            out.write(("Content-Length: 0\r\n").getBytes(ASCII));
+            out.write(("\r\n").getBytes(ASCII));
+            out.flush();
         }
 
         boolean hasBody = false;
