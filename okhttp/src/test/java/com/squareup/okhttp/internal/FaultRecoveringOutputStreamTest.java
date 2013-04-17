@@ -47,7 +47,7 @@ public final class FaultRecoveringOutputStreamTest {
     }
   }
 
-  @Test public void successfulRecovery() throws Exception {
+  @Test public void successfulRecoveryOnWriteFault() throws Exception {
     FaultingOutputStream faulting1 = new FaultingOutputStream();
     FaultingOutputStream faulting2 = new FaultingOutputStream();
     TestFaultRecoveringOutputStream recovering = new TestFaultRecoveringOutputStream(10, faulting1);
@@ -68,6 +68,45 @@ public final class FaultRecoveringOutputStreamTest {
     recovering.write('c');
     assertEquals("ab", faulting1.receivedUtf8);
     assertEquals("abc", faulting2.receivedUtf8);
+  }
+
+  @Test public void successfulRecoveryOnFlushFault() throws Exception {
+    FaultingOutputStream faulting1 = new FaultingOutputStream();
+    FaultingOutputStream faulting2 = new FaultingOutputStream();
+    TestFaultRecoveringOutputStream recovering = new TestFaultRecoveringOutputStream(10, faulting1);
+    recovering.replacements.addLast(faulting2);
+
+    recovering.write('a');
+    faulting1.nextFault = "bad weather";
+    recovering.flush();
+    assertEquals(Arrays.asList("bad weather"), recovering.exceptionMessages);
+    assertEquals("a", faulting1.receivedUtf8);
+    assertEquals("a", faulting2.receivedUtf8);
+    assertTrue(faulting1.closed);
+    assertFalse(faulting2.closed);
+    assertEquals("a", faulting2.flushedUtf8);
+
+    // Confirm that new data goes to the new stream.
+    recovering.write('b');
+    assertEquals("a", faulting1.receivedUtf8);
+    assertEquals("ab", faulting2.receivedUtf8);
+    assertEquals("a", faulting2.flushedUtf8);
+  }
+
+  @Test public void successfulRecoveryOnCloseFault() throws Exception {
+    FaultingOutputStream faulting1 = new FaultingOutputStream();
+    FaultingOutputStream faulting2 = new FaultingOutputStream();
+    TestFaultRecoveringOutputStream recovering = new TestFaultRecoveringOutputStream(10, faulting1);
+    recovering.replacements.addLast(faulting2);
+
+    recovering.write('a');
+    faulting1.nextFault = "termites";
+    recovering.close();
+    assertEquals(Arrays.asList("termites"), recovering.exceptionMessages);
+    assertEquals("a", faulting1.receivedUtf8);
+    assertEquals("a", faulting2.receivedUtf8);
+    assertTrue(faulting1.closed);
+    assertTrue(faulting2.closed);
   }
 
   @Test public void replacementStreamFaultsImmediately() throws Exception {
@@ -145,6 +184,7 @@ public final class FaultRecoveringOutputStreamTest {
 
   static class FaultingOutputStream extends OutputStream {
     String receivedUtf8 = "";
+    String flushedUtf8 = null;
     String nextFault;
     boolean closed;
 
@@ -157,8 +197,14 @@ public final class FaultRecoveringOutputStreamTest {
       if (nextFault != null) throw new IOException(nextFault);
     }
 
+    @Override public void flush() throws IOException {
+      flushedUtf8 = receivedUtf8;
+      if (nextFault != null) throw new IOException(nextFault);
+    }
+
     @Override public void close() throws IOException {
       closed = true;
+      if (nextFault != null) throw new IOException(nextFault);
     }
   }
 
