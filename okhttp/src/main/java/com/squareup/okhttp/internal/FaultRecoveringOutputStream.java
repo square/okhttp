@@ -84,15 +84,29 @@ public abstract class FaultRecoveringOutputStream extends OutputStream {
     if (closed) {
       return; // don't throw; this stream might have been closed on the caller's behalf
     }
-    out.flush();
+    while (true) {
+      try {
+        out.flush();
+        return;
+      } catch (IOException e) {
+        if (!recover(e)) throw e;
+      }
+    }
   }
 
   @Override public final void close() throws IOException {
     if (closed) {
       return;
     }
-    out.close();
-    closed = true;
+    while (true) {
+      try {
+        out.close();
+        closed = true;
+        return;
+      } catch (IOException e) {
+        if (!recover(e)) throw e;
+      }
+    }
   }
 
   /**
