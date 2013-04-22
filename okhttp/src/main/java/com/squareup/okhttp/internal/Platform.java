@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.OkHttpClient;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
@@ -24,6 +25,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
@@ -123,8 +125,27 @@ public class Platform {
     }
   }
 
+  /**
+   * Returns the maximum transmission unit of the network interface used by
+   * {@code socket}, or a reasonable default if this platform doesn't expose the
+   * MTU to the application layer.
+   *
+   * <p>The returned value should only be used as an optimization; such as to
+   * size buffers efficiently.
+   */
+  public int getMtu(Socket socket) throws IOException {
+    return 1400; // Smaller than 1500 to leave room for headers on interfaces like PPPoE.
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
+    Method getMtu;
+    try {
+      getMtu = NetworkInterface.class.getMethod("getMTU");
+    } catch (NoSuchMethodException e) {
+      return new Platform(); // No Java 1.6 APIs. It's either Java 1.5, Android 2.2 or earlier.
+    }
+
     // Attempt to find Android 2.3+ APIs.
     Class<?> openSslSocketClass;
     Method setUseSessionTickets;
@@ -138,10 +159,10 @@ public class Platform {
       try {
         Method setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
         Method getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
-        return new Android41(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
-            getNpnSelectedProtocol);
+        return new Android41(getMtu, openSslSocketClass, setUseSessionTickets, setHostname,
+            setNpnProtocols, getNpnSelectedProtocol);
       } catch (NoSuchMethodException ignored) {
-        return new Android23(openSslSocketClass, setUseSessionTickets, setHostname);
+        return new Android23(getMtu, openSslSocketClass, setUseSessionTickets, setHostname);
       }
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
@@ -158,12 +179,35 @@ public class Platform {
       Class<?> serverProviderClass = Class.forName(npnClassName + "$ServerProvider");
       Method putMethod = nextProtoNegoClass.getMethod("put", SSLSocket.class, providerClass);
       Method getMethod = nextProtoNegoClass.getMethod("get", SSLSocket.class);
-      return new JdkWithJettyNpnPlatform(putMethod, getMethod, clientProviderClass,
+      return new JdkWithJettyNpnPlatform(getMtu, putMethod, getMethod, clientProviderClass,
           serverProviderClass);
     } catch (ClassNotFoundException ignored) {
-      return new Platform(); // NPN isn't on the classpath.
+      // NPN isn't on the classpath.
     } catch (NoSuchMethodException ignored) {
-      return new Platform(); // The NPN version isn't what we expect.
+      // The NPN version isn't what we expect.
+    }
+
+    return getMtu != null ? new Java5(getMtu) : new Platform();
+  }
+
+  private static class Java5 extends Platform {
+    private final Method getMtu;
+
+    private Java5(Method getMtu) {
+      this.getMtu = getMtu;
+    }
+
+    @Override public int getMtu(Socket socket) throws IOException {
+      try {
+        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(
+            socket.getLocalAddress());
+        return (Integer) getMtu.invoke(networkInterface);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      } catch (InvocationTargetException e) {
+        if (e.getCause() instanceof IOException) throw (IOException) e.getCause();
+        throw new RuntimeException(e.getCause());
+      }
     }
   }
 
@@ -171,13 +215,14 @@ public class Platform {
    * Android version 2.3 and newer support TLS session tickets and server name
    * indication (SNI).
    */
-  private static class Android23 extends Platform {
+  private static class Android23 extends Java5 {
     protected final Class<?> openSslSocketClass;
     private final Method setUseSessionTickets;
     private final Method setHostname;
 
-    private Android23(Class<?> openSslSocketClass, Method setUseSessionTickets,
+    private Android23(Method getMtu, Class<?> openSslSocketClass, Method setUseSessionTickets,
         Method setHostname) {
+      super(getMtu);
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
@@ -204,9 +249,9 @@ public class Platform {
     private final Method setNpnProtocols;
     private final Method getNpnSelectedProtocol;
 
-    private Android41(Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method setNpnProtocols, Method getNpnSelectedProtocol) {
-      super(openSslSocketClass, setUseSessionTickets, setHostname);
+    private Android41(Method getMtu, Class<?> openSslSocketClass, Method setUseSessionTickets,
+        Method setHostname, Method setNpnProtocols, Method getNpnSelectedProtocol) {
+      super(getMtu, openSslSocketClass, setUseSessionTickets, setHostname);
       this.setNpnProtocols = setNpnProtocols;
       this.getNpnSelectedProtocol = getNpnSelectedProtocol;
     }
@@ -242,14 +287,15 @@ public class Platform {
    * OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class
    * path.
    */
-  private static class JdkWithJettyNpnPlatform extends Platform {
+  private static class JdkWithJettyNpnPlatform extends Java5 {
     private final Method getMethod;
     private final Method putMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyNpnPlatform(Method putMethod, Method getMethod, Class<?> clientProviderClass,
-        Class<?> serverProviderClass) {
+    public JdkWithJettyNpnPlatform(Method getMtu, Method putMethod, Method getMethod,
+        Class<?> clientProviderClass, Class<?> serverProviderClass) {
+      super(getMtu);
       this.putMethod = putMethod;
       this.getMethod = getMethod;
       this.clientProviderClass = clientProviderClass;
