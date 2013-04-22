@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.internal.Util;
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,14 +29,6 @@ import java.net.Socket;
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 public final class HttpTransport implements Transport {
-  /**
-   * The maximum number of bytes to buffer when sending headers and a request
-   * body. When the headers and body can be sent in a single write, the
-   * request completes sooner. In one WiFi benchmark, using a large enough
-   * buffer sped up some uploads by half.
-   */
-  private static final int MAX_REQUEST_BUFFER_LENGTH = 32768;
-
   /**
    * The timeout to use while discarding a stream of input data. Since this is
    * used for connection reuse, this timeout should be significantly less than
@@ -129,14 +120,8 @@ public final class HttpTransport implements Transport {
    */
   public void writeRequestHeaders() throws IOException {
     httpEngine.writingRequestHeaders();
-    int contentLength = httpEngine.requestHeaders.getContentLength();
     RawHeaders headersToSend = httpEngine.requestHeaders.getHeaders();
     byte[] bytes = headersToSend.toBytes();
-
-    if (contentLength != -1 && bytes.length + contentLength <= MAX_REQUEST_BUFFER_LENGTH) {
-      requestOut = new BufferedOutputStream(socketOut, bytes.length + contentLength);
-    }
-
     requestOut.write(bytes);
   }
 

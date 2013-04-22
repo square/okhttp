@@ -24,6 +24,7 @@ import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -105,11 +106,10 @@ public final class Connection implements Closeable {
       upgradeToTls(tunnelRequest);
     }
 
-    // Buffer the socket stream to permit efficient parsing of HTTP headers and chunk sizes.
-    if (!isSpdy()) {
-      int bufferSize = 128;
-      in = new BufferedInputStream(in, bufferSize);
-    }
+    // Use MTU-sized buffers to send fewer packets.
+    int mtu = Platform.get().getMtu(socket);
+    in = new BufferedInputStream(in, mtu);
+    out = new BufferedOutputStream(out, mtu);
   }
 
   /**
