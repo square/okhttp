@@ -32,13 +32,12 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
  * replacement stream each time an {@link IOException} is encountered on the
  * current stream.
  */
-public abstract class FaultRecoveringOutputStream extends OutputStream {
+public abstract class FaultRecoveringOutputStream extends AbstractOutputStream {
   private final int maxReplayBufferLength;
 
   /** Bytes to transmit on the replacement stream, or null if no recovery is possible. */
   private ByteArrayOutputStream replayBuffer;
   private OutputStream out;
-  private boolean closed;
 
   /**
    * @param maxReplayBufferLength the maximum number of successfully written
@@ -50,10 +49,6 @@ public abstract class FaultRecoveringOutputStream extends OutputStream {
     this.maxReplayBufferLength = maxReplayBufferLength;
     this.replayBuffer = new ByteArrayOutputStream(maxReplayBufferLength);
     this.out = out;
-  }
-
-  @Override public final void write(int data) throws IOException {
-    write(new byte[] { (byte) data });
   }
 
   @Override public final void write(byte[] buffer, int offset, int count) throws IOException {
@@ -119,15 +114,13 @@ public abstract class FaultRecoveringOutputStream extends OutputStream {
     }
 
     while (true) {
-      OutputStream replacementStream = replacementStream(e);
-      if (replacementStream == null) {
-        return false;
-      }
+      OutputStream replacementStream = null;
       try {
-        replayBuffer.writeTo(replacementStream);
-        // We've found a replacement that works!
-        Util.closeQuietly(out);
-        out = replacementStream;
+        replacementStream = replacementStream(e);
+        if (replacementStream == null) {
+          return false;
+        }
+        replaceStream(replacementStream);
         return true;
       } catch (IOException replacementStreamFailure) {
         // The replacement was also broken. Loop to ask for another replacement.
@@ -138,10 +131,33 @@ public abstract class FaultRecoveringOutputStream extends OutputStream {
   }
 
   /**
+   * Returns true if errors in the underlying stream can currently be recovered.
+   */
+  public boolean isRecoverable() {
+    return replayBuffer != null;
+  }
+
+  /**
+   * Replaces the current output stream with {@code replacementStream}, writing
+   * any replay bytes to it if they exist. The current output stream is closed.
+   */
+  public final void replaceStream(OutputStream replacementStream) throws IOException {
+    if (!isRecoverable()) {
+      throw new IllegalStateException();
+    }
+    if (this.out == replacementStream) {
+      return; // Don't replace a stream with itself.
+    }
+    replayBuffer.writeTo(replacementStream);
+    Util.closeQuietly(out);
+    out = replacementStream;
+  }
+
+  /**
    * Returns a replacement output stream to recover from {@code e} thrown by the
    * previous stream. Returns a new OutputStream if recovery was successful, in
    * which case all previously-written data will be replayed. Returns null if
    * the failure cannot be recovered.
    */
-  protected abstract OutputStream replacementStream(IOException e);
+  protected abstract OutputStream replacementStream(IOException e) throws IOException;
 }

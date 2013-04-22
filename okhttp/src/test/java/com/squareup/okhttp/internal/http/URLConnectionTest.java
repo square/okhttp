@@ -57,6 +57,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -2286,6 +2287,97 @@ public final class URLConnectionTest {
     assertEquals(-1, in.read());
   }
 
+  @Test public void postFailsWithBufferedRequestForSmallRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.END_OF_STREAM, 1024);
+  }
+
+  // This test is ignored because we don't (yet) reliably recover for large request bodies.
+  @Test @Ignore public void postFailsWithBufferedRequestForLargeRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.END_OF_STREAM, 16384);
+  }
+
+  @Test public void postFailsWithChunkedRequestForSmallRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.CHUNKED, 1024);
+  }
+
+  // This test is ignored because we don't (yet) reliably recover for large request bodies.
+  @Test @Ignore public void postFailsWithChunkedRequestForLargeRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.CHUNKED, 16384);
+  }
+
+  @Test public void postFailsWithFixedLengthRequestForSmallRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 1024);
+  }
+
+  // This test is ignored because we don't (yet) reliably recover for large request bodies.
+  @Test @Ignore public void postFailsWithFixedLengthRequestForLargeRequest() throws Exception {
+    reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 16384);
+  }
+
+  private void reusedConnectionFailsWithPost(TransferKind transferKind, int requestSize)
+      throws Exception {
+    server.enqueue(new MockResponse().setBody("A").setSocketPolicy(SHUTDOWN_INPUT_AT_END));
+    server.enqueue(new MockResponse().setBody("B"));
+    server.play();
+
+    assertContent("A", client.open(server.getUrl("/a")));
+
+    // If the request body is larger than OkHttp's replay buffer, the failure may still occur.
+    byte[] requestBody = new byte[requestSize];
+    new Random(0).nextBytes(requestBody);
+
+    HttpURLConnection connection = client.open(server.getUrl("/b"));
+    connection.setRequestMethod("POST");
+    transferKind.setForRequest(connection, requestBody.length);
+    for (int i = 0; i < requestBody.length; i += 1024) {
+      connection.getOutputStream().write(requestBody, i, 1024);
+    }
+    connection.getOutputStream().close();
+    assertContent("B", connection);
+
+    RecordedRequest requestA = server.takeRequest();
+    assertEquals("/a", requestA.getPath());
+    RecordedRequest requestB = server.takeRequest();
+    assertEquals("/b", requestB.getPath());
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody()));
+  }
+
+  @Test public void fullyBufferedPostIsTooShort() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/b"));
+    connection.setRequestProperty("Content-Length", "4");
+    connection.setRequestMethod("POST");
+    OutputStream out = connection.getOutputStream();
+    out.write('a');
+    out.write('b');
+    out.write('c');
+    try {
+      out.close();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test public void fullyBufferedPostIsTooLong() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/b"));
+    connection.setRequestProperty("Content-Length", "3");
+    connection.setRequestMethod("POST");
+    OutputStream out = connection.getOutputStream();
+    out.write('a');
+    out.write('b');
+    out.write('c');
+    try {
+      out.write('d');
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   @Test @Ignore public void testPooledConnectionsDetectHttp10() {
     // TODO: write a test that shows pooled connections detect HTTP/1.0 (vs. HTTP/1.1)
     fail("TODO");
@@ -2413,7 +2505,7 @@ public final class URLConnectionTest {
         response.setBody(content);
       }
       @Override void setForRequest(HttpURLConnection connection, int contentLength) {
-        connection.setChunkedStreamingMode(contentLength);
+        connection.setFixedLengthStreamingMode(contentLength);
       }
     },
     END_OF_STREAM() {

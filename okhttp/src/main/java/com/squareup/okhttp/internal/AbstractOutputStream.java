@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * An output stream for the body of an HTTP request.
+ * An output stream for an HTTP request body.
  *
  * <p>Since a single socket's output stream may be used to write multiple HTTP
  * requests to the same server, subclasses should not close the socket stream.
  */
-abstract class AbstractHttpOutputStream extends OutputStream {
+public abstract class AbstractOutputStream extends OutputStream {
   protected boolean closed;
 
   @Override public final void write(int data) throws IOException {
@@ -36,5 +36,10 @@ abstract class AbstractHttpOutputStream extends OutputStream {
     if (closed) {
       throw new IOException("stream closed");
     }
+  }
+
+  /** Returns true if this stream was closed locally. */
+  public boolean isClosed() {
+    return closed;
   }
 }
