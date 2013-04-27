@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -139,7 +140,7 @@ public final class HttpTransport implements Transport {
     }
 
     // We cannot reuse sockets that have incomplete output.
-    if (requestBodyOut != null && !((AbstractHttpOutputStream) requestBodyOut).closed) {
+    if (requestBodyOut != null && !((AbstractOutputStream) requestBodyOut).isClosed()) {
       return false;
     }
 
@@ -209,7 +210,7 @@ public final class HttpTransport implements Transport {
   }
 
   /** An HTTP body with a fixed length known in advance. */
-  private static final class FixedLengthOutputStream extends AbstractHttpOutputStream {
+  private static final class FixedLengthOutputStream extends AbstractOutputStream {
     private final OutputStream socketOut;
     private int bytesRemaining;
 
@@ -251,7 +252,7 @@ public final class HttpTransport implements Transport {
    * buffered until {@code maxChunkLength} bytes are ready, at which point the
    * chunk is written and the buffer is cleared.
    */
-  private static final class ChunkedOutputStream extends AbstractHttpOutputStream {
+  private static final class ChunkedOutputStream extends AbstractOutputStream {
     private static final byte[] CRLF = { '\r', '\n' };
     private static final byte[] HEX_DIGITS = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
