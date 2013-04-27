@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Util;
@@ -83,6 +84,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
   HostnameVerifier hostnameVerifier;
+  OkAuthenticator authenticator;
   final Set<Route> failedRoutes;
 
 
@@ -104,6 +106,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     this.connectionPool = client.getConnectionPool();
     this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
+    this.authenticator = client.getAuthenticator();
     this.responseCache = responseCache;
   }
 
@@ -421,8 +424,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        boolean credentialsFound = HttpAuthenticator.processAuthHeader(getResponseCode(),
-            httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders, selectedProxy, url);
+        boolean credentialsFound = HttpAuthenticator.processAuthHeader(authenticator,
+            getResponseCode(), httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders,
+            selectedProxy, url);
         return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
 
       case HTTP_MULT_CHOICE:

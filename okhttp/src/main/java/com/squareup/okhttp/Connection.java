@@ -275,8 +275,9 @@ public final class Connection implements Closeable {
         case HTTP_PROXY_AUTH:
           requestHeaders = new RawHeaders(requestHeaders);
           URL url = new URL("https", tunnelRequest.host, tunnelRequest.port, "/");
-          boolean credentialsFound = HttpAuthenticator.processAuthHeader(HTTP_PROXY_AUTH,
-              responseHeaders, requestHeaders, route.proxy, url);
+          boolean credentialsFound = HttpAuthenticator.processAuthHeader(
+              route.address.authenticator, HTTP_PROXY_AUTH, responseHeaders, requestHeaders,
+              route.proxy, url);
           if (credentialsFound) {
             continue;
           } else {
