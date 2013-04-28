@@ -21,6 +21,8 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.internal.AbstractOutputStream;
+import com.squareup.okhttp.internal.FaultRecoveringOutputStream;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -71,6 +73,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private static final int MAX_REDIRECTS = 20;
 
+  /**
+   * The minimum number of request body bytes to transmit before we're willing
+   * to let a routine {@link IOException} bubble up to the user. This is used to
+   * size a buffer for data that will be replayed upon error.
+   */
+  private static final int MAX_REPLAY_BUFFER_LENGTH = 8192;
+
   private final boolean followProtocolRedirects;
 
   /** The proxy requested by the client, or null for a proxy to be selected automatically. */
@@ -85,10 +94,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   HostnameVerifier hostnameVerifier;
   final Set<Route> failedRoutes;
 
-
   private final RawHeaders rawRequestHeaders = new RawHeaders();
 
   private int redirectionCount;
+  private FaultRecoveringOutputStream faultRecoveringRequestBody;
 
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
@@ -225,14 +234,29 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final OutputStream getOutputStream() throws IOException {
     connect();
 
-    OutputStream result = httpEngine.getRequestBody();
-    if (result == null) {
+    OutputStream out = httpEngine.getRequestBody();
+    if (out == null) {
       throw new ProtocolException("method does not support a request body: " + method);
     } else if (httpEngine.hasResponse()) {
       throw new ProtocolException("cannot write request body after response has been read");
     }
 
-    return result;
+    if (faultRecoveringRequestBody == null) {
+      faultRecoveringRequestBody = new FaultRecoveringOutputStream(MAX_REPLAY_BUFFER_LENGTH, out) {
+        @Override protected OutputStream replacementStream(IOException e) throws IOException {
+          if (httpEngine.getRequestBody() instanceof AbstractOutputStream
+              && ((AbstractOutputStream) httpEngine.getRequestBody()).isClosed()) {
+            return null; // Don't recover once the underlying stream has been closed.
+          }
+          if (handleFailure(e)) {
+            return httpEngine.getRequestBody();
+          }
+          return null; // This is a permanent failure.
+        }
+      };
+    }
+
+    return faultRecoveringRequestBody;
   }
 
   @Override public final Permission getPermission() throws IOException {
@@ -362,27 +386,48 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
       return true;
     } catch (IOException e) {
-      RouteSelector routeSelector = httpEngine.routeSelector;
-      if (routeSelector != null && httpEngine.connection != null) {
-        routeSelector.connectFailed(httpEngine.connection, e);
-      }
-      if (routeSelector == null && httpEngine.connection == null) {
-        throw e; // If we failed before finding a route or a connection, give up.
-      }
-
-      // The connection failure isn't fatal if there's another route to attempt.
-      OutputStream requestBody = httpEngine.getRequestBody();
-      if ((routeSelector == null || routeSelector.hasNext()) && isRecoverable(e) && (requestBody
-          == null || requestBody instanceof RetryableOutputStream)) {
-        httpEngine.release(true);
-        httpEngine =
-            newHttpEngine(method, rawRequestHeaders, null, (RetryableOutputStream) requestBody);
-        httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
+      if (handleFailure(e)) {
         return false;
+      } else {
+        throw e;
       }
-      httpEngineFailure = e;
-      throw e;
     }
+  }
+
+  /**
+   * Report and attempt to recover from {@code e}. Returns true if the HTTP
+   * engine was replaced and the request should be retried. Otherwise the
+   * failure is permanent.
+   */
+  private boolean handleFailure(IOException e) throws IOException {
+    RouteSelector routeSelector = httpEngine.routeSelector;
+    if (routeSelector != null && httpEngine.connection != null) {
+      routeSelector.connectFailed(httpEngine.connection, e);
+    }
+
+    OutputStream requestBody = httpEngine.getRequestBody();
+    boolean canRetryRequestBody = requestBody == null
+        || requestBody instanceof RetryableOutputStream
+        || (faultRecoveringRequestBody != null && faultRecoveringRequestBody.isRecoverable());
+    if (routeSelector == null && httpEngine.connection == null // No connection.
+        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
+        || !isRecoverable(e)
+        || !canRetryRequestBody) {
+      httpEngineFailure = e;
+      return false;
+    }
+
+    httpEngine.release(true);
+    RetryableOutputStream retryableOutputStream = requestBody instanceof RetryableOutputStream
+        ? (RetryableOutputStream) requestBody
+        : null;
+    httpEngine = newHttpEngine(method, rawRequestHeaders, null, retryableOutputStream);
+    httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
+    if (faultRecoveringRequestBody != null && faultRecoveringRequestBody.isRecoverable()) {
+      httpEngine.sendRequest();
+      faultRecoveringRequestBody.replaceStream(httpEngine.getRequestBody());
+    }
+    return true;
   }
 
   private boolean isRecoverable(IOException e) {

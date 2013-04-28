@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.internal.AbstractOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,7 +29,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
  * the post body to be transparently re-sent if the HTTP request must be
  * sent multiple times.
  */
-final class RetryableOutputStream extends AbstractHttpOutputStream {
+final class RetryableOutputStream extends AbstractOutputStream {
   private final int limit;
   private final ByteArrayOutputStream content;
 
