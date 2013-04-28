@@ -72,14 +72,14 @@ public final class ConnectionPoolTest {
   @Before public void setUp() throws Exception {
     httpServer.play();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), null, null,
-        HttpAuthenticator.SYSTEM_DEFAULT, null);
+        HttpAuthenticator.SYSTEM_DEFAULT, null, Arrays.asList("spdy/3", "http/1.1"));
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.play();
-    spdyAddress =
-        new Address(spdyServer.getHostName(), spdyServer.getPort(), sslContext.getSocketFactory(),
-            new RecordingHostnameVerifier(), HttpAuthenticator.SYSTEM_DEFAULT, null);
+    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(),
+        sslContext.getSocketFactory(), new RecordingHostnameVerifier(),
+        HttpAuthenticator.SYSTEM_DEFAULT, null, Arrays.asList("spdy/3", "http/1.1"));
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
