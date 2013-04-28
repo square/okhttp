@@ -16,7 +16,8 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.internal.Base64;
+import com.squareup.okhttp.OkAuthenticator;
+import com.squareup.okhttp.OkAuthenticator.Challenge;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetAddress;
@@ -27,11 +28,49 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.squareup.okhttp.OkAuthenticator.Credential;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 /** Handles HTTP authentication headers from origin and proxy servers. */
 public final class HttpAuthenticator {
+  /** Uses the global authenticator to get the password. */
+  public static final OkAuthenticator SYSTEM_DEFAULT = new OkAuthenticator() {
+    @Override public Credential authenticate(
+        Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
+      for (Challenge challenge : challenges) {
+        PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(url.getHost(),
+            getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(),
+            challenge.getRealm(), challenge.getScheme(), url, Authenticator.RequestorType.SERVER);
+        if (auth != null) {
+          return Credential.basic(auth.getUserName(), new String(auth.getPassword()));
+        }
+      }
+      return null;
+    }
+
+    @Override public Credential authenticateProxy(
+        Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
+      for (Challenge challenge : challenges) {
+        InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
+        PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(
+            proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
+            url.getProtocol(), challenge.getRealm(), challenge.getScheme(), url,
+            Authenticator.RequestorType.PROXY);
+        if (auth != null) {
+          return Credential.basic(auth.getUserName(), new String(auth.getPassword()));
+        }
+      }
+      return null;
+    }
+
+    private InetAddress getConnectToInetAddress(Proxy proxy, URL url) throws IOException {
+      return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
+          ? ((InetSocketAddress) proxy.address()).getAddress()
+          : InetAddress.getByName(url.getHost());
+    }
+  };
+
   private HttpAuthenticator() {
   }
 
@@ -41,68 +80,33 @@ public final class HttpAuthenticator {
    * @return true if credentials have been added to successorRequestHeaders
    *         and another request should be attempted.
    */
-  public static boolean processAuthHeader(int responseCode, RawHeaders responseHeaders,
-      RawHeaders successorRequestHeaders, Proxy proxy, URL url) throws IOException {
-    if (responseCode != HTTP_PROXY_AUTH && responseCode != HTTP_UNAUTHORIZED) {
-      throw new IllegalArgumentException();
+  public static boolean processAuthHeader(OkAuthenticator authenticator, int responseCode,
+      RawHeaders responseHeaders, RawHeaders successorRequestHeaders, Proxy proxy, URL url)
+      throws IOException {
+    String responseField;
+    String requestField;
+    if (responseCode == HTTP_UNAUTHORIZED) {
+      responseField = "WWW-Authenticate";
+      requestField = "Authorization";
+    } else if (responseCode == HTTP_PROXY_AUTH) {
+      responseField = "Proxy-Authenticate";
+      requestField = "Proxy-Authorization";
+    } else {
+      throw new IllegalArgumentException(); // TODO: ProtocolException?
     }
-
-    // Keep asking for username/password until authorized.
-    String challengeHeader =
-        responseCode == HTTP_PROXY_AUTH ? "Proxy-Authenticate" : "WWW-Authenticate";
-    String credentials = getCredentials(responseHeaders, challengeHeader, proxy, url);
-    if (credentials == null) {
-      return false; // Could not find credentials so end the request cycle.
-    }
-
-    // Add authorization credentials, bypassing the already-connected check.
-    String fieldName = responseCode == HTTP_PROXY_AUTH ? "Proxy-Authorization" : "Authorization";
-    successorRequestHeaders.set(fieldName, credentials);
-    return true;
-  }
-
-  /**
-   * Returns the authorization credentials that may satisfy the challenge.
-   * Returns null if a challenge header was not provided or if credentials
-   * were not available.
-   */
-  private static String getCredentials(RawHeaders responseHeaders, String challengeHeader,
-      Proxy proxy, URL url) throws IOException {
-    List<Challenge> challenges = parseChallenges(responseHeaders, challengeHeader);
+    List<Challenge> challenges = parseChallenges(responseHeaders, responseField);
     if (challenges.isEmpty()) {
-      return null;
+      return false; // Could not find a challenge so end the request cycle.
     }
-
-    for (Challenge challenge : challenges) {
-      // Use the global authenticator to get the password.
-      PasswordAuthentication auth;
-      if (responseHeaders.getResponseCode() == HTTP_PROXY_AUTH) {
-        InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-        auth = Authenticator.requestPasswordAuthentication(proxyAddress.getHostName(),
-            getConnectToInetAddress(proxy, url), proxyAddress.getPort(), url.getProtocol(),
-            challenge.realm, challenge.scheme, url, Authenticator.RequestorType.PROXY);
-      } else {
-        auth = Authenticator.requestPasswordAuthentication(url.getHost(),
-            getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(), challenge.realm,
-            challenge.scheme, url, Authenticator.RequestorType.SERVER);
-      }
-      if (auth == null) {
-        continue;
-      }
-
-      // Use base64 to encode the username and password.
-      String usernameAndPassword = auth.getUserName() + ":" + new String(auth.getPassword());
-      byte[] bytes = usernameAndPassword.getBytes("ISO-8859-1");
-      String encoded = Base64.encode(bytes);
-      return challenge.scheme + " " + encoded;
+    Credential credential = responseHeaders.getResponseCode() == HTTP_PROXY_AUTH
+        ? authenticator.authenticateProxy(proxy, url, challenges)
+        : authenticator.authenticate(proxy, url, challenges);
+    if (credential == null) {
+      return false; // Could not satisfy the challenge so end the request cycle.
     }
-
-    return null;
-  }
-
-  private static InetAddress getConnectToInetAddress(Proxy proxy, URL url) throws IOException {
-    return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
-        ? ((InetSocketAddress) proxy.address()).getAddress() : InetAddress.getByName(url.getHost());
+    // Add authorization credentials, bypassing the already-connected check.
+    successorRequestHeaders.set(requestField, credential.getHeaderValue());
+    return true;
   }
 
   /**
@@ -150,26 +154,5 @@ public final class HttpAuthenticator {
       }
     }
     return result;
-  }
-
-  /** An RFC 2617 challenge. */
-  private static final class Challenge {
-    final String scheme;
-    final String realm;
-
-    Challenge(String scheme, String realm) {
-      this.scheme = scheme;
-      this.realm = realm;
-    }
-
-    @Override public boolean equals(Object o) {
-      return o instanceof Challenge
-          && ((Challenge) o).scheme.equals(scheme)
-          && ((Challenge) o).realm.equals(realm);
-    }
-
-    @Override public int hashCode() {
-      return scheme.hashCode() + 31 * realm.hashCode();
-    }
   }
 }
