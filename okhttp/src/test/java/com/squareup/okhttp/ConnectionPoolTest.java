@@ -19,6 +19,7 @@ import com.google.mockwebserver.MockWebServer;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.mockspdyserver.MockSpdyServer;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -70,14 +71,15 @@ public final class ConnectionPoolTest {
 
   @Before public void setUp() throws Exception {
     httpServer.play();
-    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), null, null, null);
+    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), null, null,
+        HttpAuthenticator.SYSTEM_DEFAULT, null);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.play();
     spdyAddress =
         new Address(spdyServer.getHostName(), spdyServer.getPort(), sslContext.getSocketFactory(),
-            new RecordingHostnameVerifier(), null);
+            new RecordingHostnameVerifier(), HttpAuthenticator.SYSTEM_DEFAULT, null);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 

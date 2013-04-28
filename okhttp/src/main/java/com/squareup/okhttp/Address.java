@@ -38,16 +38,20 @@ public final class Address {
   final int uriPort;
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
+  final OkAuthenticator authenticator;
 
   public Address(String uriHost, int uriPort, SSLSocketFactory sslSocketFactory,
-      HostnameVerifier hostnameVerifier, Proxy proxy) throws UnknownHostException {
+      HostnameVerifier hostnameVerifier, OkAuthenticator authenticator, Proxy proxy)
+      throws UnknownHostException {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
+    if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
     this.proxy = proxy;
     this.uriHost = uriHost;
     this.uriPort = uriPort;
     this.sslSocketFactory = sslSocketFactory;
     this.hostnameVerifier = hostnameVerifier;
+    this.authenticator = authenticator;
   }
 
   /** Returns the hostname of the origin server. */
@@ -79,6 +83,14 @@ public final class Address {
     return hostnameVerifier;
   }
 
+
+  /**
+   * Returns the client's authenticator. This method never returns null.
+   */
+  public OkAuthenticator getAuthenticator() {
+    return authenticator;
+  }
+
   /**
    * Returns this address's explicitly-specified HTTP proxy, or null to
    * delegate to the HTTP client's proxy selector.
@@ -94,7 +106,8 @@ public final class Address {
           && this.uriHost.equals(that.uriHost)
           && this.uriPort == that.uriPort
           && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier);
+          && equal(this.hostnameVerifier, that.hostnameVerifier)
+          && equal(this.authenticator, that.authenticator);
     }
     return false;
   }
@@ -105,6 +118,7 @@ public final class Address {
     result = 31 * result + uriPort;
     result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
+    result = 31 * result + (authenticator != null ? authenticator.hashCode() : 0);
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     return result;
   }

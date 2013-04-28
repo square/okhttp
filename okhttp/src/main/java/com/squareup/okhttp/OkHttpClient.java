@@ -15,10 +15,12 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkResponseCache;
 import com.squareup.okhttp.internal.http.OkResponseCacheAdapter;
+import java.net.Authenticator;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -41,6 +43,7 @@ public final class OkHttpClient {
   private ResponseCache responseCache;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
+  private OkAuthenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followProtocolRedirects = true;
 
@@ -150,6 +153,22 @@ public final class OkHttpClient {
   }
 
   /**
+   * Sets the authenticator used to respond to challenges from the remote web
+   * server or proxy server.
+   *
+   * <p>If unset, the {@link Authenticator#setDefault system-wide default}
+   * authenticator will be used.
+   */
+  public OkHttpClient setAuthenticator(OkAuthenticator authenticator) {
+    this.authenticator = authenticator;
+    return this;
+  }
+
+  public OkAuthenticator getAuthenticator() {
+    return authenticator;
+  }
+
+  /**
    * Sets the connection pool used to recycle HTTP and HTTPS connections.
    *
    * <p>If unset, the {@link ConnectionPool#getDefault() system-wide
@@ -209,6 +228,9 @@ public final class OkHttpClient {
     result.hostnameVerifier = hostnameVerifier != null
         ? hostnameVerifier
         : HttpsURLConnection.getDefaultHostnameVerifier();
+    result.authenticator = authenticator != null
+        ? authenticator
+        : HttpAuthenticator.SYSTEM_DEFAULT;
     result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
     result.followProtocolRedirects = followProtocolRedirects;
     return result;
