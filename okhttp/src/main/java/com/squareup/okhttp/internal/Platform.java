@@ -201,6 +201,9 @@ public class Platform {
       try {
         NetworkInterface networkInterface = NetworkInterface.getByInetAddress(
             socket.getLocalAddress());
+        if (networkInterface == null) {
+          return super.getMtu(socket); // There's no longer an interface with this local address.
+        }
         return (Integer) getMtu.invoke(networkInterface);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
