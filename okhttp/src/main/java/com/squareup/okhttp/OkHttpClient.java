@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkResponseCache;
 import com.squareup.okhttp.internal.http.OkResponseCacheAdapter;
-import java.net.Authenticator;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
