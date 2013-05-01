@@ -1,5 +1,3 @@
-/* http://www.colorhexa.com/48b7b9 */
-
 html, body {
   font-family: 'Roboto', sans-serif;
   font-size: 15px;
@@ -7,17 +5,17 @@ html, body {
 body {
   background-color: #f6f6f6;
   padding-bottom: 50px;
+  padding-top: 80px;
 }
 
 header {
-  background-color: #48b7b9;
   min-height: 80px;
   color: #f6f6f6;
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  border-bottom: 3px solid #ddd;
+  z-index: 99;
 }
 header h1 {
   margin: 10px 0;
@@ -53,7 +51,6 @@ header menu li a {
 header menu li a:hover {
   color: #f6f6f6;
   text-decoration: none;
-  background-color: #40a6a7;
 }
 header menu li a img {
   margin: 0;
@@ -63,53 +60,56 @@ header menu li a img {
   height: 30px;
 }
 
+#subtitle {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+}
+h2 {
+  font-weight: 200;
+  font-size: 26px;
+  line-height: 30px;
+  padding: 15px 0;
+  margin: 0;
+  color: #eee;
+}
+h2 strong {
+  font-weight: 300;
+}
+
 a.dl {
   font-weight: 300;
   font-size: 30px;
   line-height: 40px;
   padding: 3px 10px;
   display: inline-block;
-  background-color: #48b7b9;
   border-radius: 6px;
   color: #f0f0f0;
   margin: 5px 0;
 }
 a.dl:hover {
   color: #f0f0f0;
-  background-color: #40a6a7;
   text-decoration: none;
 }
 
 .content-nav {
   margin-top: 130px;
+  width: 220px;
 }
 .content-nav.affix {
   top: 0;
 }
-.content-nav .active a, .content-nav .active a:hover {
-  /*background-color: #48b7b9;
-  color: #fff;
-  border-right: 2px solid #48b7b9 !important;*/
-  border-left: 2px solid #48b7b9 !important;
+.content-nav li.active a, .content-nav li.active a:hover {
   background-color: transparent;
   color: #555;
+  border-left-width: 2px;
 }
 .content-nav .secondary a {
   color: #aaa;
 }
 .content-nav .secondary a:hover {
   color: #888;
-}
-
-a {
-  color: #40a6a7;
-}
-a:hover {
-  color: #328183;
-}
-
-.content-nav {
-  width: 220px;
 }
 
 h3 {
@@ -144,6 +144,10 @@ p.license {
 pre, code {
   color: #666;
 }
+code {
+  border: 0;
+  background-color: transparent;
+}
 
 /* Widescreen desktop. */
 @media (min-width: 1200px) {
@@ -170,6 +174,13 @@ pre, code {
   }
   header menu {
     display: none;
+  }
+  #subtitle {
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    padding-left: 20px;
   }
   .content-nav {
     display: none;
