@@ -4,18 +4,19 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp</groupId>
-    <artifactId>parent</artifactId>
+    <groupId>com.squareup.okhttp.sample</groupId>
+    <artifactId>sample-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.squareup.okhttp.sample</groupId>
-  <artifactId>sample-parent</artifactId>
-  <packaging>pom</packaging>
-  <name>Samples (Parent)</name>
+  <artifactId>guide</artifactId>
+  <name>Sample: Guide</name>
 
-  <modules>
-    <module>guide</module>
-    <module>simple-client</module>
-  </modules>
+  <dependencies>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
 </project>
