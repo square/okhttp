@@ -42,11 +42,89 @@
       <div class="container">
         <div class="row">
           <div class="span9">
-            <h3 id="introduction">Introduction</h3>
-            <p>Write me!</p>
+            <h3 id="overview">Overview</h3>
+            <p>HTTP is the way modern applications network. It’s how we exchange data & media.
+                Doing HTTP efficiently makes your stuff load faster and saves bandwidth.
+
+            <p>OkHttp is an HTTP client that’s efficient by default:
+            <ul>
+                <li>SPDY support allows all requests to the same host to share a socket.
+                <li>Connection pooling reduces request latency (if SPDY isn’t available).
+                <li>Transparent GZIP shrinks download sizes.
+                <li>Response caching avoids the network completely for repeat requests.
+            </ul>
+
+            <p>OkHttp perseveres when the network is troublesome: it will silently recover from
+                common connection problems. If your service has multiple IP addresses OkHttp will
+                attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
+                and for services hosted in redundant data centers. OkHttp also recovers from problematic
+                proxy servers and failed SSL handshakes.
+
+            <p>You can try OkHttp without rewriting your network code. The core module implements
+                the familiar <code>java.net.HttpURLConnection</code> API. And the optional
+                okhttp-apache module implements the Apache <code>HttpClient</code> API.
+
+            <p>OkHttp supports Android 2.2 and above. For Java, the minimum requirement is 1.5.
 
             <h3 id="examples">Examples</h3>
-            <p>Write me!</p>
+            <h4>Get a URL</h4>
+            <p>This program downloads a URL and print its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/GetExample.java">Full source</a>.
+<pre class="prettyprint">
+    OkHttpClient client = new OkHttpClient();
+
+    String get(URL url) throws IOException {
+      HttpURLConnection connection = client.open(url);
+      InputStream in = null;
+      try {
+        // Read the response.
+        in = connection.getInputStream();
+        byte[] response = readFully(in);
+        return new String(response, "UTF-8");
+      } finally {
+        if (in != null) in.close();
+      }
+    }
+</pre>
+            <h4>Post to a Server</h4>
+            <p>This program posts data to a service. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/PostExample.java">Full source</a>.
+
+<pre class="prettyprint">
+    OkHttpClient client = new OkHttpClient();
+
+    String post(URL url, byte[] body) throws IOException {
+      HttpURLConnection connection = client.open(url);
+      OutputStream out = null;
+      InputStream in = null;
+      try {
+        // Write the request.
+        connection.setRequestMethod("POST");
+        out = connection.getOutputStream();
+        out.write(body);
+        out.close();
+
+        // Read the response.
+        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          throw new IOException("Unexpected HTTP response: "
+              + connection.getResponseCode() + " " + connection.getResponseMessage());
+        }
+        in = connection.getInputStream();
+        return readFirstLine(in);
+      } finally {
+        // Clean up.
+        if (out != null) out.close();
+        if (in != null) in.close();
+      }
+    }
+</pre>
+
+                <!--
+                TODO
+                Error Handling
+                Authentication
+                Cookies
+                Response Caching
+                Captive Gateways
+                -->
 
             <h3 id="download">Download</h3>
             <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
@@ -82,7 +160,7 @@ limitations under the License.</pre>
           <div class="span3">
             <div class="content-nav" data-spy="affix" data-offset-top="80">
               <ul class="nav nav-tabs nav-stacked primary">
-                <li><a href="#introduction">Introduction</a></li>
+                <li><a href="#overview">Overview</a></li>
                 <li><a href="#examples">Examples</a></li>
                 <li><a href="#download">Download</a></li>
                 <li><a href="#contributing">Contributing</a></li>
