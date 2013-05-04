@@ -2476,6 +2476,29 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
   }
 
+  @Test public void setTransports() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+    client.setTransports(Arrays.asList("http/1.1"));
+    assertContent("A", client.open(server.getUrl("/")));
+  }
+
+  @Test public void setTransportsWithoutHttp11() throws Exception {
+    try {
+      client.setTransports(Arrays.asList("spdy/3"));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setTransportsWithNull() throws Exception {
+    try {
+      client.setTransports(Arrays.asList("http/1.1", null));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
   /** Returns a gzipped copy of {@code bytes}. */
   public byte[] gzip(byte[] bytes) throws IOException {
     ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();

@@ -93,6 +93,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
   HostnameVerifier hostnameVerifier;
+  List<String> transports;
   OkAuthenticator authenticator;
   final Set<Route> failedRoutes;
 
@@ -115,6 +116,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     this.connectionPool = client.getConnectionPool();
     this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
+    this.transports = client.getTransports();
     this.authenticator = client.getAuthenticator();
     this.responseCache = responseCache;
   }
