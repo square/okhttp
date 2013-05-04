@@ -170,7 +170,7 @@ public final class OkHttpClient {
    * Sets the authenticator used to respond to challenges from the remote web
    * server or proxy server.
    *
-   * <p>If unset, the {@link Authenticator#setDefault system-wide default}
+   * <p>If unset, the {@link java.net.Authenticator#setDefault system-wide default}
    * authenticator will be used.
    */
   public OkHttpClient setAuthenticator(OkAuthenticator authenticator) {
