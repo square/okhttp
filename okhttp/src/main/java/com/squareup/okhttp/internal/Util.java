@@ -29,6 +29,9 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Junk drawer of utility methods. */
@@ -323,5 +326,10 @@ public final class Util {
       result.setLength(length - 1);
     }
     return result.toString();
+  }
+
+  /** Returns an immutable copy of {@code list}. */
+  public static <T> List<T> immutableList(List<T> list) {
+    return Collections.unmodifiableList(new ArrayList<T>(list));
   }
 }

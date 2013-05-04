@@ -278,7 +278,7 @@ public class HttpEngine {
         hostnameVerifier = policy.hostnameVerifier;
       }
       Address address = new Address(uriHost, getEffectivePort(uri), sslSocketFactory,
-          hostnameVerifier, policy.authenticator, policy.requestedProxy);
+          hostnameVerifier, policy.authenticator, policy.requestedProxy, policy.transports);
       routeSelector = new RouteSelector(address, uri, policy.proxySelector, policy.connectionPool,
           Dns.DEFAULT, policy.getFailedRoutes());
     }

@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
@@ -26,8 +27,10 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -35,8 +38,12 @@ import javax.net.ssl.SSLSocketFactory;
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient {
+  private static final List<String> DEFAULT_TRANSPORTS
+      = Util.immutableList(Arrays.asList("spdy/3", "http/1.1"));
+
   private Proxy proxy;
-  private Set<Route> failedRoutes = Collections.synchronizedSet(new LinkedHashSet<Route>());
+  private List<String> transports;
+  private final Set<Route> failedRoutes;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
   private ResponseCache responseCache;
@@ -45,6 +52,14 @@ public final class OkHttpClient {
   private OkAuthenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followProtocolRedirects = true;
+
+  public OkHttpClient() {
+    this.failedRoutes = Collections.synchronizedSet(new LinkedHashSet<Route>());
+  }
+
+  private OkHttpClient(OkHttpClient copyFrom) {
+    this.failedRoutes = copyFrom.failedRoutes; // Avoid allocating an unnecessary LinkedHashSet.
+  }
 
   /**
    * Sets the HTTP proxy that will be used by connections created by this
@@ -198,6 +213,49 @@ public final class OkHttpClient {
     return followProtocolRedirects;
   }
 
+  /**
+   * Configure the transports used by this client to communicate with remote
+   * servers. By default this client will prefer the most efficient transport
+   * available, falling back to more ubiquitous transports. Applications should
+   * only call this method to avoid specific compatibility problems, such as web
+   * servers that behave incorrectly when SPDY is enabled.
+   *
+   * <p>The following transports are currently supported:
+   * <ul>
+   *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
+   *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3">spdy/3</a>
+   * </ul>
+   *
+   * <p><strong>This is an evolving set.</strong> Future releases may drop
+   * support for transitional transports (like spdy/3), in favor of their
+   * successors (spdy/4 or http/2.0). The http/1.1 transport will never be
+   * dropped.
+   *
+   * <p>If multiple protocols are specified, <a
+   * href="https://technotes.googlecode.com/git/nextprotoneg.html">NPN</a> will
+   * be used to negotiate a transport. Future releases may use another mechanism
+   * (such as <a href="http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02">ALPN</a>)
+   * to negotiate a transport.
+   *
+   * @param transports the transports to use, in order of preference. The list
+   *     must contain "http/1.1". It must not contain null.
+   */
+  public OkHttpClient setTransports(List<String> transports) {
+    transports = Util.immutableList(transports);
+    if (!transports.contains("http/1.1")) {
+      throw new IllegalArgumentException("transports doesn't contain http/1.1: " + transports);
+    }
+    if (transports.contains(null)) {
+      throw new IllegalArgumentException("transports must not contain null");
+    }
+    this.transports = transports;
+    return this;
+  }
+
+  public List<String> getTransports() {
+    return transports;
+  }
+
   public HttpURLConnection open(URL url) {
     String protocol = url.getProtocol();
     OkHttpClient copy = copyWithDefaults();
@@ -215,9 +273,8 @@ public final class OkHttpClient {
    * each field that hasn't been explicitly configured.
    */
   private OkHttpClient copyWithDefaults() {
-    OkHttpClient result = new OkHttpClient();
+    OkHttpClient result = new OkHttpClient(this);
     result.proxy = proxy;
-    result.failedRoutes = failedRoutes;
     result.proxySelector = proxySelector != null ? proxySelector : ProxySelector.getDefault();
     result.cookieHandler = cookieHandler != null ? cookieHandler : CookieHandler.getDefault();
     result.responseCache = responseCache != null ? responseCache : ResponseCache.getDefault();
@@ -232,6 +289,7 @@ public final class OkHttpClient {
         : HttpAuthenticator.SYSTEM_DEFAULT;
     result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
     result.followProtocolRedirects = followProtocolRedirects;
+    result.transports = transports != null ? transports : DEFAULT_TRANSPORTS;
     return result;
   }
 }
