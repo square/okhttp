@@ -32,8 +32,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.Executors.defaultThreadFactory;
-
 /**
  * A socket connection to a remote peer. A connection hosts streams which can
  * send and receive data.
@@ -77,9 +75,9 @@ public final class SpdyConnection implements Closeable {
   static final int GOAWAY_PROTOCOL_ERROR = 1;
   static final int GOAWAY_INTERNAL_ERROR = 2;
 
-  private static final ExecutorService executor =
-      new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
-          new SynchronousQueue<Runnable>(), defaultThreadFactory());
+  private static final ExecutorService executor = new ThreadPoolExecutor(0,
+      Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+      Util.daemonThreadFactory("OkHttp SpdyConnection"));
 
   /** True if this peer initiated the connection. */
   final boolean client;
@@ -202,15 +200,14 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeSynResetLater(final int streamId, final int statusCode) {
-    executor.submit(
-        new NamedRunnable(String.format("Spdy Writer %s stream %d", hostName, streamId)) {
-          @Override public void execute() {
-            try {
-              writeSynReset(streamId, statusCode);
-            } catch (IOException ignored) {
-            }
-          }
-        });
+    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s stream %d", hostName, streamId) {
+      @Override public void execute() {
+        try {
+          writeSynReset(streamId, statusCode);
+        } catch (IOException ignored) {
+        }
+      }
+    });
   }
 
   void writeSynReset(int streamId, int statusCode) throws IOException {
@@ -218,15 +215,14 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
-    executor.submit(
-        new NamedRunnable(String.format("Spdy Writer %s stream %d", hostName, streamId)) {
-          @Override public void execute() {
-            try {
-              writeWindowUpdate(streamId, deltaWindowSize);
-            } catch (IOException ignored) {
-            }
-          }
-        });
+    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s stream %d", hostName, streamId) {
+      @Override public void execute() {
+        try {
+          writeWindowUpdate(streamId, deltaWindowSize);
+        } catch (IOException ignored) {
+        }
+      }
+    });
   }
 
   void writeWindowUpdate(int streamId, int deltaWindowSize) throws IOException {
@@ -254,7 +250,7 @@ public final class SpdyConnection implements Closeable {
   }
 
   private void writePingLater(final int streamId, final Ping ping) {
-    executor.submit(new NamedRunnable(String.format("Spdy Writer %s ping %d", hostName, streamId)) {
+    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s ping %d", hostName, streamId) {
       @Override public void execute() {
         try {
           writePing(streamId, ping);
@@ -471,8 +467,7 @@ public final class SpdyConnection implements Closeable {
         return;
       }
 
-      executor.submit(
-          new NamedRunnable(String.format("Callback %s stream %d", hostName, streamId)) {
+      executor.submit(new NamedRunnable("OkHttp SPDY Callback %s stream %d", hostName, streamId) {
         @Override public void execute() {
           try {
             handler.receive(synStream);
