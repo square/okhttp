@@ -465,8 +465,10 @@ public final class MockWebServer {
         }
         final int bytesPerSecond = response.getBytesPerSecond();
 
-        // Stream data in MTU-sized increments
-        final byte[] buffer = new byte[1452];
+        // Stream data in MTU-sized increments, with a minimum of one packet per second.
+        final byte[] buffer = bytesPerSecond >= 1452
+                ? new byte[1452]
+                : new byte[bytesPerSecond];
         final long delayMs;
         if (bytesPerSecond == Integer.MAX_VALUE) {
             delayMs = 0;

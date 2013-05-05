@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.google.mockwebserver</groupId>
     <artifactId>mockwebserver</artifactId>
-    <version>20130403</version>
+    <version>20130505</version>
     <name>mockwebserver</name>
     <url>http://code.google.com/p/mockwebserver</url>
     <issueManagement>
