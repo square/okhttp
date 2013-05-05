@@ -31,10 +31,8 @@
     <java.version>1.6</java.version>
     <npn.version>8.1.2.v20120308</npn.version>
     <mockwebserver.version>20130122</mockwebserver.version>
-    <bouncycastle.version>1.47</bouncycastle.version>
-    <android.version>4.1.1.4</android.version>
-    <dagger.version>0.9.1</dagger.version>
-    <gson.version>2.2.2</gson.version>
+    <bouncycastle.version>1.48</bouncycastle.version>
+    <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
 
     <!-- Test Dependencies -->
@@ -82,19 +80,9 @@
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.android</groupId>
-        <artifactId>android</artifactId>
-        <version>${android.version}</version>
-      </dependency>
-      <dependency>
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>${gson.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.squareup</groupId>
-        <artifactId>dagger</artifactId>
-        <version>${dagger.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
