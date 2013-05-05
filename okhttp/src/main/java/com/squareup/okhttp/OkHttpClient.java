@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkResponseCache;
 import com.squareup.okhttp.internal.http.OkResponseCacheAdapter;
+import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -170,7 +171,7 @@ public final class OkHttpClient {
    * Sets the authenticator used to respond to challenges from the remote web
    * server or proxy server.
    *
-   * <p>If unset, the {@link Authenticator#setDefault system-wide default}
+   * <p>If unset, the {@link java.net.Authenticator#setDefault system-wide default}
    * authenticator will be used.
    */
   public OkHttpClient setAuthenticator(OkAuthenticator authenticator) {
@@ -283,7 +284,7 @@ public final class OkHttpClient {
         : HttpsURLConnection.getDefaultSSLSocketFactory();
     result.hostnameVerifier = hostnameVerifier != null
         ? hostnameVerifier
-        : HttpsURLConnection.getDefaultHostnameVerifier();
+        : new OkHostnameVerifier();
     result.authenticator = authenticator != null
         ? authenticator
         : HttpAuthenticator.SYSTEM_DEFAULT;

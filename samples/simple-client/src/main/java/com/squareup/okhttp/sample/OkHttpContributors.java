@@ -10,8 +10,6 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSession;
 
 public class OkHttpContributors {
   private static final String ENDPOINT = "https://api.github.com/repos/square/okhttp/contributors";
@@ -27,13 +25,6 @@ public class OkHttpContributors {
 
   public static void main(String... args) throws Exception {
     OkHttpClient client = new OkHttpClient();
-
-    // Ignore invalid SSL endpoints.
-    client.setHostnameVerifier(new HostnameVerifier() {
-      @Override public boolean verify(String s, SSLSession sslSession) {
-        return true;
-      }
-    });
 
     // Create request for remote resource.
     HttpURLConnection connection = client.open(new URL(ENDPOINT));
