@@ -44,27 +44,27 @@
           <div class="span9">
             <h3 id="overview">Overview</h3>
             <p>HTTP is the way modern applications network. It’s how we exchange data & media.
-                Doing HTTP efficiently makes your stuff load faster and saves bandwidth.
+                Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
 
-            <p>OkHttp is an HTTP client that’s efficient by default:
+            <p>OkHttp is an HTTP client that’s efficient by default:</p>
             <ul>
-                <li>SPDY support allows all requests to the same host to share a socket.
-                <li>Connection pooling reduces request latency (if SPDY isn’t available).
-                <li>Transparent GZIP shrinks download sizes.
-                <li>Response caching avoids the network completely for repeat requests.
+                <li>SPDY support allows all requests to the same host to share a socket.</li>
+                <li>Connection pooling reduces request latency (if SPDY isn’t available).</li>
+                <li>Transparent GZIP shrinks download sizes.</li>
+                <li>Response caching avoids the network completely for repeat requests.</li>
             </ul>
 
             <p>OkHttp perseveres when the network is troublesome: it will silently recover from
                 common connection problems. If your service has multiple IP addresses OkHttp will
                 attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
                 and for services hosted in redundant data centers. OkHttp also recovers from problematic
-                proxy servers and failed SSL handshakes.
+                proxy servers and failed SSL handshakes.</p>
 
             <p>You can try OkHttp without rewriting your network code. The core module implements
                 the familiar <code>java.net.HttpURLConnection</code> API. And the optional
-                okhttp-apache module implements the Apache <code>HttpClient</code> API.
+                okhttp-apache module implements the Apache <code>HttpClient</code> API.</p>
 
-            <p>OkHttp supports Android 2.2 and above. For Java, the minimum requirement is 1.5.
+            <p>OkHttp supports Android 2.2 and above. For Java, the minimum requirement is 1.5.</p>
 
             <h3 id="examples">Examples</h3>
             <h4>Get a URL</h4>
