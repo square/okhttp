@@ -78,7 +78,7 @@ public final class HttpOverSpdyTest {
   private HttpResponseCache cache;
 
   @Before public void setUp() throws Exception {
-    client.setSSLSocketFactory(sslContext.getSocketFactory());
+    client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(systemTmpDir, "HttpCache-" + UUID.randomUUID());
