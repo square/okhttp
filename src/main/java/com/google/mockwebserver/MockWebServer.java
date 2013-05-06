@@ -184,6 +184,9 @@ public final class MockWebServer {
      *     specific port is unavailable.
      */
     public void play(int port) throws IOException {
+        if (executor != null) {
+            throw new IllegalStateException("play() already called");
+        }
         executor = Executors.newCachedThreadPool();
         serverSocket = new ServerSocket(port);
         serverSocket.setReuseAddress(true);
