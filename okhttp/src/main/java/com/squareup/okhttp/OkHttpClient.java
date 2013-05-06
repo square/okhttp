@@ -147,7 +147,7 @@ public final class OkHttpClient {
     return this;
   }
 
-  public SSLSocketFactory getSSLSocketFactory() {
+  public SSLSocketFactory getSslSocketFactory() {
     return sslSocketFactory;
   }
 
