@@ -142,12 +142,12 @@ public final class OkHttpClient {
    * <p>If unset, the {@link HttpsURLConnection#getDefaultSSLSocketFactory()
    * system-wide default} SSL socket factory will be used.
    */
-  public OkHttpClient setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+  public OkHttpClient setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
     this.sslSocketFactory = sslSocketFactory;
     return this;
   }
 
-  public SSLSocketFactory getSSLSocketFactory() {
+  public SSLSocketFactory getSslSocketFactory() {
     return sslSocketFactory;
   }
 

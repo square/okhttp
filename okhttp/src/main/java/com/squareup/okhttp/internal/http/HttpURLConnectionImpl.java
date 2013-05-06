@@ -114,7 +114,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     this.proxySelector = client.getProxySelector();
     this.cookieHandler = client.getCookieHandler();
     this.connectionPool = client.getConnectionPool();
-    this.sslSocketFactory = client.getSSLSocketFactory();
+    this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
     this.transports = client.getTransports();
     this.authenticator = client.getAuthenticator();
