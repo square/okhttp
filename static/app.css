@@ -1,0 +1,188 @@
+html, body {
+  font-family: 'Roboto', sans-serif;
+  font-size: 15px;
+}
+body {
+  background-color: #f6f6f6;
+  padding-bottom: 50px;
+  padding-top: 80px;
+}
+
+header {
+  min-height: 80px;
+  color: #f6f6f6;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 99;
+}
+header h1 {
+  margin: 10px 0;
+  font-size: 50px;
+  line-height: 60px;
+  font-weight: 100;
+  text-rendering: auto;
+}
+header menu {
+  margin: 20px 0 0;
+  padding: 0;
+  height: 40px;
+}
+header menu ul {
+  margin: 0;
+  padding: 0;
+  float: right;
+}
+header menu li {
+  list-style: none;
+  float: left;
+  margin: 0;
+  padding: 0;
+}
+header menu li a {
+  display: inline-block;
+  height: 40px;
+  font-size: 17px;
+  line-height: 40px;
+  padding: 0 20px;
+  color: #f6f6f6;
+}
+header menu li a:hover {
+  color: #f6f6f6;
+  text-decoration: none;
+}
+header menu li a img {
+  margin: 0;
+  padding: 5px 0;
+  vertical-align: bottom;
+  width: 30px;
+  height: 30px;
+}
+
+#subtitle {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  width: 100%;
+}
+h2 {
+  font-weight: 200;
+  font-size: 26px;
+  line-height: 30px;
+  padding: 15px 0;
+  margin: 0;
+  color: #eee;
+}
+h2 strong {
+  font-weight: 300;
+}
+
+a.dl {
+  font-weight: 300;
+  font-size: 30px;
+  line-height: 40px;
+  padding: 3px 10px;
+  display: inline-block;
+  border-radius: 6px;
+  color: #f0f0f0;
+  margin: 5px 0;
+}
+a.dl:hover {
+  color: #f0f0f0;
+  text-decoration: none;
+}
+
+.content-nav {
+  margin-top: 130px;
+  width: 220px;
+}
+.content-nav.affix {
+  top: 0;
+}
+.content-nav li.active a, .content-nav li.active a:hover {
+  background-color: transparent;
+  color: #555;
+  border-left-width: 2px;
+}
+.content-nav .secondary a {
+  color: #aaa;
+}
+.content-nav .secondary a:hover {
+  color: #888;
+}
+
+h3 {
+  font-weight: 300;
+  font-style: italic;
+  color: #888;
+  font-size: 20px;
+  padding-top: 115px;
+  margin-top: 0;
+}
+
+h4 {
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #888;
+  font-size: 15px;
+  padding-top: 20px;
+}
+
+p.license {
+  font-family: fixed-width;
+}
+
+.row .logo {
+  text-align: center;
+  margin-top: 150px;
+}
+.row .logo img {
+  height: 30px;
+}
+
+pre, code {
+  color: #666;
+}
+code {
+  border: 0;
+  background-color: transparent;
+}
+
+/* Widescreen desktop. */
+@media (min-width: 1200px) {
+  .content-nav {
+    width: 270px;
+  }
+}
+
+/* Smaller width browser, tablets. */
+@media (max-width: 979px) {
+  .content-nav {
+    width: 166px;
+  }
+}
+
+/* One-column mobile display. */
+@media (max-width: 767px) {
+  header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding-left: 20px;
+  }
+  header menu {
+    display: none;
+  }
+  #subtitle {
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    padding-left: 20px;
+  }
+  .content-nav {
+    display: none;
+  }
+}

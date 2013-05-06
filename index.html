@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>OkHttp</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="An HTTP &amp; SPDY client for Android and Java applications">
+    <link href="static/bootstrap-combined.min.css" rel="stylesheet">
+    <link href="static/app.css" rel="stylesheet">
+    <link href="static/app-theme.css" rel="stylesheet">
+    <link href="http://fonts.googleapis.com/css?family=Roboto:400,300italic,100,100italic,300" rel="stylesheet" type="text/css">
+    <!--[if lt IE 9]><script src="static/html5shiv.min.js"></script><![endif]-->
+  </head>
+  <body data-target=".content-nav">
+    <header>
+      <div class="container">
+        <div class="row">
+          <div class="span5">
+            <h1>OkHttp</h1>
+          </div>
+          <div class="span7">
+            <menu>
+              <ul>
+                <li><a href="#download" class="menu download">Download <span class="version-tag">Latest</span></a></li>
+                <li><a href="http://github.com/square/okhttp" data-title="View GitHub Project" class="menu github"><img src="static/icon-github.png" alt="GitHub"/></a></li>
+                <li><a href="http://square.github.io/" data-title="Square Open Source Portal" class="menu square"><img src="static/icon-square.png" alt="Square"/></a></li>
+              </ul>
+            </menu>
+          </div>
+      </div>
+    </header>
+    <section id="subtitle">
+      <div class="container">
+        <div class="row">
+          <div class="span12">
+            <h2>An <strong>HTTP &amp; SPDY</strong> client for Android and Java applications</h2>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="body">
+      <div class="container">
+        <div class="row">
+          <div class="span9">
+            <h3 id="overview">Overview</h3>
+            <p>HTTP is the way modern applications network. It’s how we exchange data & media.
+                Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
+
+            <p>OkHttp is an HTTP client that’s efficient by default:</p>
+            <ul>
+                <li>SPDY support allows all requests to the same host to share a socket.</li>
+                <li>Connection pooling reduces request latency (if SPDY isn’t available).</li>
+                <li>Transparent GZIP shrinks download sizes.</li>
+                <li>Response caching avoids the network completely for repeat requests.</li>
+            </ul>
+
+            <p>OkHttp perseveres when the network is troublesome: it will silently recover from
+                common connection problems. If your service has multiple IP addresses OkHttp will
+                attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
+                and for services hosted in redundant data centers. OkHttp also recovers from problematic
+                proxy servers and failed SSL handshakes.</p>
+
+            <p>You can try OkHttp without rewriting your network code. The core module implements
+                the familiar <code>java.net.HttpURLConnection</code> API. And the optional
+                okhttp-apache module implements the Apache <code>HttpClient</code> API.</p>
+
+            <p>OkHttp supports Android 2.2 and above. For Java, the minimum requirement is 1.5.</p>
+
+            <h3 id="examples">Examples</h3>
+            <h4>Get a URL</h4>
+            <p>This program downloads a URL and print its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/GetExample.java">Full source</a>.
+<pre class="prettyprint">
+    OkHttpClient client = new OkHttpClient();
+
+    String get(URL url) throws IOException {
+      HttpURLConnection connection = client.open(url);
+      InputStream in = null;
+      try {
+        // Read the response.
+        in = connection.getInputStream();
+        byte[] response = readFully(in);
+        return new String(response, "UTF-8");
+      } finally {
+        if (in != null) in.close();
+      }
+    }
+</pre>
+            <h4>Post to a Server</h4>
+            <p>This program posts data to a service. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/PostExample.java">Full source</a>.
+
+<pre class="prettyprint">
+    OkHttpClient client = new OkHttpClient();
+
+    String post(URL url, byte[] body) throws IOException {
+      HttpURLConnection connection = client.open(url);
+      OutputStream out = null;
+      InputStream in = null;
+      try {
+        // Write the request.
+        connection.setRequestMethod("POST");
+        out = connection.getOutputStream();
+        out.write(body);
+        out.close();
+
+        // Read the response.
+        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+          throw new IOException("Unexpected HTTP response: "
+              + connection.getResponseCode() + " " + connection.getResponseMessage());
+        }
+        in = connection.getInputStream();
+        return readFirstLine(in);
+      } finally {
+        // Clean up.
+        if (out != null) out.close();
+        if (in != null) in.close();
+      }
+    }
+</pre>
+
+                <!--
+                TODO
+                Error Handling
+                Authentication
+                Cookies
+                Response Caching
+                Captive Gateways
+                -->
+
+            <h3 id="download">Download</h3>
+            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p>The source code to the OkHttp, its samples, and this website is <a href="http://github.com/square/okhttp">available on GitHub</a>.</p>
+
+            <h4>Maven</h4>
+            <pre class="prettyprint">&lt;dependency>
+  &lt;groupId>com.squareup.okhttp&lt;/groupId>
+  &lt;artifactId>okhttp&lt;/artifactId>
+  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
+&lt;/dependency></pre>
+
+            <h3 id="contributing">Contributing</h3>
+            <p>If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.</p>
+            <p>When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible. Please also make sure your code compiles by running <code>mvn clean verify</code>.</p>
+            <p>Before your code can be accepted into the project you must also sign the <a href="http://squ.re/sign-the-cla">Individual Contributor License Agreement (CLA)</a>.</p>
+
+            <h3 id="license">License</h3>
+            <pre>Copyright 2013 Square, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</pre>
+          </div>
+          <div class="span3">
+            <div class="content-nav" data-spy="affix" data-offset-top="80">
+              <ul class="nav nav-tabs nav-stacked primary">
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#download">Download</a></li>
+                <li><a href="#contributing">Contributing</a></li>
+                <li><a href="#license">License</a></li>
+              </ul>
+              <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="javadoc/index.html">Javadoc</a></li>
+                <li><a href="https://plus.google.com/communities/109244258569782858265/stream/b6d99838-775f-45a6-a259-af04d42d8639">Google+ Community</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="span12 logo">
+            <a href="https://squareup.com"><img src="static/logo-square.png" alt="Square, Inc."/></a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+    <script src="static/jquery.smooth-scroll.min.js"></script>
+    <script src="static/jquery-maven-artifact.min.js"></script>
+    <script src="static/prettify.js"></script>
+    <script type="text/javascript">
+      $(function() {
+        // Syntax highlight code blocks.
+        prettyPrint();
+
+        // Spy on scroll position for real-time updating of current section.
+        $('body').scrollspy();
+        
+        // Use smooth-scroll for internal links.
+        $('a').smoothScroll();
+
+        // Enable tooltips on the header nav image items.
+        $('.menu').tooltip({
+          placement: 'bottom',
+          trigger: 'hover',
+          container: 'body',
+          delay: {
+            show: 500,
+            hide: 0
+          }
+        });
+
+        // Look up the latest version of the library.
+        $.fn.artifactVersion('com.squareup.okhttp', 'okhttp', function(version, url) {
+          $('.version').text(version);
+          $('.version-tag').text('v' + version);
+          $('.version-href').attr('href', url);
+        });
+      });
+    </script>
+  </body>
+</html>
