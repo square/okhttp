@@ -53,7 +53,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   private static final int ALT_DNS_NAME = 2;
   private static final int ALT_IPA_NAME = 7;
 
-  public final boolean verify(String host, SSLSession session) {
+  public boolean verify(String host, SSLSession session) {
     try {
       Certificate[] certificates = session.getPeerCertificates();
       return verify(host, (X509Certificate) certificates[0]);

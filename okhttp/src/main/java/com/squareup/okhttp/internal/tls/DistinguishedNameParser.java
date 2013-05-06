@@ -30,10 +30,10 @@ final class DistinguishedNameParser {
   private int beg;
   private int end;
 
-  /** tmp vars to store positions of the currently parsed item */
+  /** Temporary variable to store positions of the currently parsed item. */
   private int cur;
 
-  /** distinguished name chars */
+  /** Distinguished name characters. */
   private char[] chars;
 
   public DistinguishedNameParser(X500Principal principal) {
