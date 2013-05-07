@@ -1,13 +1,16 @@
 OkHttp
 ======
 
-An HTTP+SPDY client for Android and Java applications.
+An HTTP & SPDY client for Android and Java applications.
+
+For more information please see [the website][1].
+
 
 
 Download
 --------
 
-Download [the latest JAR][1] or grab via Maven:
+Download [the latest JAR][2] or grab via Maven:
 
 ```xml
 <dependency>
@@ -16,18 +19,6 @@ Download [the latest JAR][1] or grab via Maven:
     <version>(insert latest version)</version>
 </dependency>
 ```
-
-
-Known Issues
-------------
-
-OkHttp uses the platform's [ProxySelector][2]. Prior to Android 4.0, `ProxySelector` didn't honor
-the `proxyHost` and `proxyPort` system properties for HTTPS connections. Work around this by
-specifying the `https.proxyHost` and `https.proxyPort` system properties when using a proxy with
-HTTPS.
-
-OkHttp's test suite creates an in-process HTTPS server. Prior to Android 2.3, SSL server sockets
-were broken, and so HTTPS tests will time out when run on such devices.
 
 
 Building
@@ -43,6 +34,9 @@ mvn clean test
 ```
 
 ### On a Device
+
+OkHttp's test suite creates an in-process HTTPS server. Prior to Android 2.3, SSL server sockets
+were broken, and so HTTPS tests will time out when run on such devices.
 
 Test on a USB-attached Android using [Vogar][4]. Unfortunately `dx` requires that you build with
 Java 6, otherwise the test class will be silently omitted from the `.dex` file.
@@ -76,7 +70,7 @@ License
 
 
 
- [1]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
- [2]: http://developer.android.com/reference/java/net/ProxySelector.html
+ [1]: http://square.github.io/okhttp
+ [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
  [3]: http://wiki.eclipse.org/Jetty/Feature/NPN
  [4]: https://code.google.com/p/vogar/
