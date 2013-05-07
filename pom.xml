@@ -146,6 +146,14 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>2.9</version>
+        <configuration>
+          <excludePackageNames>com.squareup.okhttp.internal:com.squareup.okhttp.internal.*</excludePackageNames>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
