@@ -30,6 +30,7 @@ cp -R ../website/* .
 curl -L "http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=$GROUP_ID&a=$ARTIFACT_ID&v=LATEST&c=javadoc" > javadoc.zip
 mkdir javadoc
 unzip javadoc.zip -d javadoc
+rm javadoc.zip
 
 # Stage all files in git and create a commit
 git add .
