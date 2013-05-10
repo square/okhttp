@@ -146,7 +146,8 @@ public final class OkHostnameVerifier implements HostnameVerifier {
    *     {@code *.android.com}.
    */
   public boolean verifyHostName(String hostName, String cn) {
-    if (hostName == null || hostName.isEmpty() || cn == null || cn.isEmpty()) {
+    // Check length == 0 instead of .isEmpty() to support Java 5.
+    if (hostName == null || hostName.length() == 0 || cn == null || cn.length() == 0) {
       return false;
     }
 
