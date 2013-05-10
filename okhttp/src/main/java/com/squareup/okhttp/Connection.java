@@ -108,7 +108,7 @@ public final class Connection implements Closeable {
 
     // Use MTU-sized buffers to send fewer packets.
     int mtu = Platform.get().getMtu(socket);
-    if (mtu < 256) mtu = 256;
+    if (mtu < 1024) mtu = 1024;
     if (mtu > 8192) mtu = 8192;
     in = new BufferedInputStream(in, mtu);
     out = new BufferedOutputStream(out, mtu);
