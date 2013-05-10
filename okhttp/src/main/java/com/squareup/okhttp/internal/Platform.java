@@ -205,6 +205,9 @@ public class Platform {
           return super.getMtu(socket); // There's no longer an interface with this local address.
         }
         return (Integer) getMtu.invoke(networkInterface);
+      } catch (SocketException e) {
+        // Certain Motorola devices always throw on getByInetAddress. Return the default for those.
+        return super.getMtu(socket);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
       } catch (InvocationTargetException e) {
