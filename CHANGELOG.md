@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+Version 1.0.2 *(2013-05-11)*
+----------------------------
+
+ * Fix: Remove use of Java 6-only APIs.
+ * Fix: Properly handle exceptions from `NetworkInterface` when querying MTU.
+ * Fix: Ensure MTU has a reasonable default and upper-bound.
+
+
 Version 1.0.1 *(2013-05-06)*
 ----------------------------
 
