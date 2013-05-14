@@ -37,7 +37,7 @@ a:hover {
 .pln { color: #000; }
 .str { color: #399395; }
 .kwd { color: #666; }
-.com { color: #800; }
+.com { color: #399395; }
 .typ { color: #222; }
 .lit { color: #666; }
 .pun { color: #888; }
