@@ -50,6 +50,8 @@ import javax.net.ssl.SSLSocket;
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
+  private static final int KEEP_ALIVE_MS_ANDROID = 60 * 1000; // 60 seconds.
+  private static final int KEEP_ALIVE_MS_JVM = 5 * 50 * 1000; // 5 minutes.
 
   private Constructor<DeflaterOutputStream> deflaterConstructor;
 
@@ -59,6 +61,11 @@ public class Platform {
 
   public void logW(String warning) {
     System.out.println(warning);
+  }
+
+  /** Default connection keep-alive duration (in milliseconds). */
+  public long keepAliveDuration() {
+    return KEEP_ALIVE_MS_JVM;
   }
 
   public void tagSocket(Socket socket) throws SocketException {
@@ -109,8 +116,9 @@ public class Platform {
     try {
       Constructor<DeflaterOutputStream> constructor = deflaterConstructor;
       if (constructor == null) {
-        constructor = deflaterConstructor = DeflaterOutputStream.class.getConstructor(
-            OutputStream.class, Deflater.class, boolean.class);
+        constructor = deflaterConstructor =
+            DeflaterOutputStream.class.getConstructor(OutputStream.class, Deflater.class,
+                boolean.class);
       }
       return constructor.newInstance(out, deflater, syncFlush);
     } catch (NoSuchMethodException e) {
@@ -139,11 +147,19 @@ public class Platform {
 
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
+    boolean isAndroid = false;
+    try {
+      Class.forName("android.os.Build");
+      isAndroid = true;
+    } catch (ClassNotFoundException ignored) {
+    }
+
     Method getMtu;
     try {
       getMtu = NetworkInterface.class.getMethod("getMTU");
     } catch (NoSuchMethodException e) {
-      return new Platform(); // No Java 1.6 APIs. It's either Java 1.5, Android 2.2 or earlier.
+      // No Java 1.6 APIs. It's either Java 1.5, Android 2.2 or earlier.
+      return isAndroid ? new Android() : new Platform();
     }
 
     // Attempt to find Android 2.3+ APIs.
@@ -187,7 +203,11 @@ public class Platform {
       // The NPN version isn't what we expect.
     }
 
-    return getMtu != null ? new Java5(getMtu) : new Platform();
+    if (getMtu != null) {
+      return isAndroid ? new AndroidJava5(getMtu) : new Java5(getMtu);
+    }
+
+    return isAndroid ? new Android() : new Platform();
   }
 
   private static class Java5 extends Platform {
@@ -199,8 +219,8 @@ public class Platform {
 
     @Override public int getMtu(Socket socket) throws IOException {
       try {
-        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(
-            socket.getLocalAddress());
+        NetworkInterface networkInterface =
+            NetworkInterface.getByInetAddress(socket.getLocalAddress());
         if (networkInterface == null) {
           return super.getMtu(socket); // There's no longer an interface with this local address.
         }
@@ -217,11 +237,24 @@ public class Platform {
     }
   }
 
-  /**
-   * Android version 2.3 and newer support TLS session tickets and server name
-   * indication (SNI).
-   */
-  private static class Android23 extends Java5 {
+  private static class Android extends Platform {
+    @Override public long keepAliveDuration() {
+      return KEEP_ALIVE_MS_ANDROID;
+    }
+  }
+
+  private static class AndroidJava5 extends Java5 {
+    private AndroidJava5(Method getMtu) {
+      super(getMtu);
+    }
+
+    @Override public long keepAliveDuration() {
+      return KEEP_ALIVE_MS_ANDROID;
+    }
+  }
+
+  /** Android version 2.3 and newer support TLS session tickets and server name indication (SNI). */
+  private static class Android23 extends AndroidJava5 {
     protected final Class<?> openSslSocketClass;
     private final Method setUseSessionTickets;
     private final Method setHostname;
@@ -289,10 +322,7 @@ public class Platform {
     }
   }
 
-  /**
-   * OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class
-   * path.
-   */
+  /** OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class path. */
   private static class JdkWithJettyNpnPlatform extends Java5 {
     private final Method getMethod;
     private final Method putMethod;
@@ -351,8 +381,8 @@ public class Platform {
   }
 
   /**
-   * Handle the methods of NextProtoNego's ClientProvider and ServerProvider
-   * without a compile-time dependency on those interfaces.
+   * Handle the methods of NextProtoNego's ClientProvider and ServerProvider without a compile-time
+   * dependency on those interfaces.
    */
   private static class JettyNpnProvider implements InvocationHandler {
     private final List<String> protocols;
