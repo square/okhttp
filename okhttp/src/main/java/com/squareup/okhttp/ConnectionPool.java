@@ -54,7 +54,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConnectionPool {
   private static final int MAX_CONNECTIONS_TO_CLEANUP = 2;
-  private static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
 
   private static final ConnectionPool systemDefault;
 
@@ -63,7 +62,7 @@ public class ConnectionPool {
     String keepAliveDuration = System.getProperty("http.keepAliveDuration");
     String maxIdleConnections = System.getProperty("http.maxConnections");
     long keepAliveDurationMs = keepAliveDuration != null ? Long.parseLong(keepAliveDuration)
-        : DEFAULT_KEEP_ALIVE_DURATION_MS;
+        : Platform.get().keepAliveDuration();
     if (keepAlive != null && !Boolean.parseBoolean(keepAlive)) {
       systemDefault = new ConnectionPool(0, keepAliveDurationMs);
     } else if (maxIdleConnections != null) {
