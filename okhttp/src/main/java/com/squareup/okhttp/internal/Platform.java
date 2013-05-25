@@ -187,13 +187,13 @@ public class Platform {
       // The NPN version isn't what we expect.
     }
 
-    return getMtu != null ? new Java5(getMtu) : new Platform();
+    return new Java6(getMtu);
   }
 
-  private static class Java5 extends Platform {
+  private static class Java6 extends Platform {
     private final Method getMtu;
 
-    private Java5(Method getMtu) {
+    private Java6(Method getMtu) {
       this.getMtu = getMtu;
     }
 
@@ -217,11 +217,8 @@ public class Platform {
     }
   }
 
-  /**
-   * Android version 2.3 and newer support TLS session tickets and server name
-   * indication (SNI).
-   */
-  private static class Android23 extends Java5 {
+  /** Android version 2.3 and newer support TLS session tickets and server name indication (SNI). */
+  private static class Android23 extends Java6 {
     protected final Class<?> openSslSocketClass;
     private final Method setUseSessionTickets;
     private final Method setHostname;
@@ -289,11 +286,8 @@ public class Platform {
     }
   }
 
-  /**
-   * OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class
-   * path.
-   */
-  private static class JdkWithJettyNpnPlatform extends Java5 {
+  /** OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class path. */
+  private static class JdkWithJettyNpnPlatform extends Java6 {
     private final Method getMethod;
     private final Method putMethod;
     private final Class<?> clientProviderClass;
