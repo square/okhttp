@@ -6,6 +6,7 @@ import java.io.IOException;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Test;
@@ -67,5 +68,13 @@ public class OkApacheClientTest {
     assertEquals(2, headers2.length);
     assertEquals("Bar", headers2[0].getValue());
     assertEquals("Baz", headers2[1].getValue());
+  }
+
+  @Test public void noEntity() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    client.execute(post);
   }
 }
