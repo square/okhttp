@@ -125,25 +125,27 @@ public class OkApacheClient implements HttpClient {
     // Stream the request body.
     if (request instanceof HttpEntityEnclosingRequest) {
       HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-      connection.setDoOutput(true);
-      Header type = entity.getContentType();
-      if (type != null) {
-        connection.addRequestProperty(type.getName(), type.getValue());
+      if (entity != null) {
+        connection.setDoOutput(true);
+        Header type = entity.getContentType();
+        if (type != null) {
+          connection.addRequestProperty(type.getName(), type.getValue());
+        }
+        Header encoding = entity.getContentEncoding();
+        if (encoding != null) {
+          connection.addRequestProperty(encoding.getName(), encoding.getValue());
+        }
+        if (entity.isChunked() || entity.getContentLength() < 0) {
+          connection.setChunkedStreamingMode(0);
+        } else if (entity.getContentLength() <= 8192) {
+          // Buffer short, fixed-length request bodies. This costs memory, but permits the request
+          // to be transparently retried if there is a connection failure.
+          connection.addRequestProperty("Content-Length", Long.toString(entity.getContentLength()));
+        } else {
+          connection.setFixedLengthStreamingMode((int) entity.getContentLength());
+        }
+        entity.writeTo(connection.getOutputStream());
       }
-      Header encoding = entity.getContentEncoding();
-      if (encoding != null) {
-        connection.addRequestProperty(encoding.getName(), encoding.getValue());
-      }
-      if (entity.isChunked() || entity.getContentLength() < 0) {
-        connection.setChunkedStreamingMode(0);
-      } else if (entity.getContentLength() <= 8192) {
-        // Buffer short, fixed-length request bodies. This costs memory, but permits the request to
-        // be transparently retried if there is a connection failure.
-        connection.addRequestProperty("Content-Length", Long.toString(entity.getContentLength()));
-      } else {
-        connection.setFixedLengthStreamingMode((int) entity.getContentLength());
-      }
-      entity.writeTo(connection.getOutputStream());
     }
 
     // Read the response headers.
