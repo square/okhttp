@@ -151,7 +151,14 @@ public class Platform {
     Method setUseSessionTickets;
     Method setHostname;
     try {
-      openSslSocketClass = Class.forName("org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
+      try {
+        openSslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl");
+      } catch (ClassNotFoundException ignored) {
+        // Older platform before being unbundled.
+        openSslSocketClass = Class.forName(
+            "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
+      }
+
       setUseSessionTickets = openSslSocketClass.getMethod("setUseSessionTickets", boolean.class);
       setHostname = openSslSocketClass.getMethod("setHostname", String.class);
 
