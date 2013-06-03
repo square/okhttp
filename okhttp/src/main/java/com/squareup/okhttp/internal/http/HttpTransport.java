@@ -130,6 +130,7 @@ public final class HttpTransport implements Transport {
     RawHeaders headers = RawHeaders.fromBytes(socketIn);
     httpEngine.connection.setHttpMinorVersion(headers.getHttpMinorVersion());
     httpEngine.receiveHeaders(headers);
+    headers.add("X-Android-Selected-Transport", "http/1.1");
     return new ResponseHeaders(httpEngine.uri, headers);
   }
 

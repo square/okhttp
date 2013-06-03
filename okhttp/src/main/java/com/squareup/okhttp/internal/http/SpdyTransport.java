@@ -71,6 +71,7 @@ public final class SpdyTransport implements Transport {
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
     rawHeaders.computeResponseStatusLineFromSpdyHeaders();
     httpEngine.receiveHeaders(rawHeaders);
+    rawHeaders.add("X-Android-Selected-Transport", "spdy/3");
     return new ResponseHeaders(httpEngine.uri, rawHeaders);
   }
 

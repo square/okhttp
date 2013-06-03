@@ -40,6 +40,7 @@ import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,7 +94,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
   HostnameVerifier hostnameVerifier;
-  List<String> transports;
+  private List<String> transports;
   OkAuthenticator authenticator;
   final Set<Route> failedRoutes;
 
@@ -116,13 +117,21 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     this.connectionPool = client.getConnectionPool();
     this.sslSocketFactory = client.getSslSocketFactory();
     this.hostnameVerifier = client.getHostnameVerifier();
-    this.transports = client.getTransports();
+    this.transports = new ArrayList<String>(client.getTransports());
     this.authenticator = client.getAuthenticator();
     this.responseCache = responseCache;
   }
 
   Set<Route> getFailedRoutes() {
     return failedRoutes;
+  }
+
+  List<String> getTransports() {
+    if (!transports.contains("http/1.1")) {
+      transports.add("http/1.1");
+    }
+
+    return Util.immutableList(transports);
   }
 
   @Override public final void connect() throws IOException {
@@ -547,6 +556,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
+    if ("X-Android-Transports".equals(field)) {
+      setTransports(newValue, false /* append */);
+    }
     rawRequestHeaders.set(field, newValue);
   }
 
@@ -557,6 +569,33 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
+
+    if ("X-Android-Transports".equals(field)) {
+      setTransports(value, true /* append */);
+    }
+
     rawRequestHeaders.add(field, value);
+  }
+
+  /*
+   * Splits and validates a comma separated string of transports into an
+   * immutable list of transports. "http/1.1" is added to the list if it isn't already
+   * specified. Null and empty transports are omitted.
+   */
+  private void setTransports(String transportsStr, boolean append) {
+    if (!append) {
+      transports.clear();
+    }
+
+    if (transportsStr != null && transportsStr.length() > 0) {
+      String[] transports = transportsStr.split(",");
+      for (int i = 0; i < transports.length; ++i) {
+        if (transports[i] != null && transports[i].length() > 0) {
+          if (!this.transports.contains(transports[i])) {
+            this.transports.add(transports[i]);
+          }
+        }
+      }
+    }
   }
 }
