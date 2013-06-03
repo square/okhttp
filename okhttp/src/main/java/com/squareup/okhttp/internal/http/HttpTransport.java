@@ -127,11 +127,13 @@ public final class HttpTransport implements Transport {
   }
 
   @Override public ResponseHeaders readResponseHeaders() throws IOException {
-    RawHeaders headers = RawHeaders.fromBytes(socketIn);
-    httpEngine.connection.setHttpMinorVersion(headers.getHttpMinorVersion());
-    httpEngine.receiveHeaders(headers);
-    headers.add("X-Android-Selected-Transport", "http/1.1");
-    return new ResponseHeaders(httpEngine.uri, headers);
+    RawHeaders rawHeaders = RawHeaders.fromBytes(socketIn);
+    httpEngine.connection.setHttpMinorVersion(rawHeaders.getHttpMinorVersion());
+    httpEngine.receiveHeaders(rawHeaders);
+
+    ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
+    headers.setTransport("http/1.1");
+    return headers;
   }
 
   public boolean makeReusable(boolean streamCancelled, OutputStream requestBodyOut,

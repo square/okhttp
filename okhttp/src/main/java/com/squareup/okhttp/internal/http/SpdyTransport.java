@@ -71,8 +71,10 @@ public final class SpdyTransport implements Transport {
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
     rawHeaders.computeResponseStatusLineFromSpdyHeaders();
     httpEngine.receiveHeaders(rawHeaders);
-    rawHeaders.add("X-Android-Selected-Transport", "spdy/3");
-    return new ResponseHeaders(httpEngine.uri, rawHeaders);
+
+    ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
+    headers.setTransport("spdy/3");
+    return headers;
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
