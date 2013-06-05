@@ -40,6 +40,7 @@ import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,7 +94,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
   SSLSocketFactory sslSocketFactory;
   HostnameVerifier hostnameVerifier;
-  List<String> transports;
+  private List<String> transports;
   OkAuthenticator authenticator;
   final Set<Route> failedRoutes;
 
@@ -123,6 +124,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   Set<Route> getFailedRoutes() {
     return failedRoutes;
+  }
+
+  List<String> getTransports() {
+    return transports;
   }
 
   @Override public final void connect() throws IOException {
@@ -547,7 +552,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
-    rawRequestHeaders.set(field, newValue);
+    if ("X-Android-Transports".equals(field)) {
+      setTransports(newValue, false /* append */);
+    } else {
+      rawRequestHeaders.set(field, newValue);
+    }
   }
 
   @Override public final void addRequestProperty(String field, String value) {
@@ -557,6 +566,54 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
-    rawRequestHeaders.add(field, value);
+
+    if ("X-Android-Transports".equals(field)) {
+      setTransports(value, true /* append */);
+    } else {
+      rawRequestHeaders.add(field, value);
+    }
+  }
+
+  /*
+   * Splits and validates a comma-separated string of transports.
+   * When append == false, we require that the transport list contains "http/1.1".
+   */
+  private void setTransports(String transportsString, boolean append) {
+    if (transportsString == null) {
+      throw new NullPointerException("transportsString == null");
+    }
+
+    String[] transports = transportsString.split(",", -1);
+    ArrayList<String> transportsList = new ArrayList<String>();
+    if (!append) {
+      // If we're not appending to the list, we need to make sure
+      // the list contains "http/1.1". We do this in a separate loop
+      // to avoid modifying any state before we validate the input.
+      boolean containsHttp = false;
+      for (int i = 0; i < transports.length; ++i) {
+        if ("http/1.1".equals(transports[i])) {
+          containsHttp = true;
+          break;
+        }
+      }
+
+      if (!containsHttp) {
+        throw new IllegalArgumentException("Transport list doesn't contain http/1.1");
+      }
+    } else {
+      transportsList.addAll(this.transports);
+    }
+
+    for (int i = 0; i < transports.length; ++i) {
+      if (transports[i].length() == 0) {
+        throw new IllegalArgumentException("Transport list contains an empty transport");
+      }
+
+      if (!transportsList.contains(transports[i])) {
+        transportsList.add(transports[i]);
+      }
+    }
+
+    this.transports = Util.immutableList(transportsList);
   }
 }

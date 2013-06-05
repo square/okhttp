@@ -42,6 +42,9 @@ public final class ResponseHeaders {
   /** HTTP synthetic header with the response source. */
   static final String RESPONSE_SOURCE = "X-Android-Response-Source";
 
+  /** HTTP synthetic header with the selected transport (spdy/3, http/1.1, etc.) */
+  static final String SELECTED_TRANSPORT = "X-Android-Selected-Transport";
+
   private final URI uri;
   private final RawHeaders headers;
 
@@ -276,6 +279,10 @@ public final class ResponseHeaders {
 
   public void setResponseSource(ResponseSource responseSource) {
     headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + headers.getResponseCode());
+  }
+
+  public void setTransport(String transport) {
+    headers.set(SELECTED_TRANSPORT, transport);
   }
 
   /**
