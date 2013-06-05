@@ -15,6 +15,8 @@ release.properties
 
 .idea
 *.iml
+*.ipr
+*.iws
 classes
 
 obj
