@@ -331,6 +331,30 @@ public final class HttpResponseCache extends ResponseCache {
     return writeSuccessCount;
   }
 
+  public long getSize() {
+    return cache.size();
+  }
+
+  public long getMaxSize() {
+    return cache.getMaxSize();
+  }
+
+  public void flush() throws IOException {
+    cache.flush();
+  }
+
+  public void close() throws IOException {
+    cache.close();
+  }
+
+  public File getDirectory() {
+    return cache.getDirectory();
+  }
+
+  public boolean isClosed() {
+    return cache.isClosed();
+  }
+
   private synchronized void trackResponse(ResponseSource source) {
     requestCount++;
 
