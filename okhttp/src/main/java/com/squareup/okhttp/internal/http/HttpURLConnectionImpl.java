@@ -24,6 +24,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.FaultRecoveringOutputStream;
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -552,6 +553,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
+    if (newValue == null) {
+      // Silently ignore null header values for backwards compatibility with older
+      // android versions as well as with other URLConnection implementations.
+      //
+      // Some implementations send a malformed HTTP header when faced with
+      // such requests, we respect the spec and ignore the header.
+      Platform.get().logW("Ignoring header " + field + " because its value was null.");
+      return;
+    }
+
     if ("X-Android-Transports".equals(field)) {
       setTransports(newValue, false /* append */);
     } else {
@@ -566,6 +577,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (field == null) {
       throw new NullPointerException("field == null");
     }
+    if (value == null) {
+      // Silently ignore null header values for backwards compatibility with older
+      // android versions as well as with other URLConnection implementations.
+      //
+      // Some implementations send a malformed HTTP header when faced with
+      // such requests, we respect the spec and ignore the header.
+      Platform.get().logW("Ignoring header " + field + " because its value was null.");
+      return;
+    }
 
     if ("X-Android-Transports".equals(field)) {
       setTransports(value, true /* append */);
@@ -579,10 +599,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * When append == false, we require that the transport list contains "http/1.1".
    */
   private void setTransports(String transportsString, boolean append) {
-    if (transportsString == null) {
-      throw new NullPointerException("transportsString == null");
-    }
-
     String[] transports = transportsString.split(",", -1);
     ArrayList<String> transportsList = new ArrayList<String>();
     if (!append) {
