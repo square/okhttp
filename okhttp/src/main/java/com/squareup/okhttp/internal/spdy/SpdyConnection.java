@@ -524,7 +524,7 @@ public final class SpdyConnection implements Closeable {
           // reads to 'settings'. We synchronize on 'stream' to guard the state change.
           // And we need to acquire the 'stream' lock first, since that may block.
           synchronized (stream) {
-            synchronized (this) {
+            synchronized (SpdyConnection.this) {
               stream.receiveSettings(settings);
             }
           }
