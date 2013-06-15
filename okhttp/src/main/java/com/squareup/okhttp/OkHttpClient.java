@@ -22,12 +22,16 @@ import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkResponseCache;
 import com.squareup.okhttp.internal.http.OkResponseCacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
+import java.net.URLStreamHandlerFactory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -38,7 +42,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 /** Configures and creates HTTP connections. */
-public final class OkHttpClient {
+public final class OkHttpClient implements URLStreamHandlerFactory {
   private static final List<String> DEFAULT_TRANSPORTS
       = Util.immutableList(Arrays.asList("spdy/3", "http/1.1"));
 
@@ -305,5 +309,35 @@ public final class OkHttpClient {
     result.followProtocolRedirects = followProtocolRedirects;
     result.transports = transports != null ? transports : DEFAULT_TRANSPORTS;
     return result;
+  }
+
+  /**
+   * Creates a URLStreamHandler as a {@link URL#setURLStreamHandlerFactory}.
+   *
+   * <p>This code configures OkHttp to handle all HTTP and HTTPS connections
+   * created with {@link URL#openConnection()}: <pre>   {@code
+   *
+   *   OkHttpClient okHttpClient = new OkHttpClient();
+   *   URL.setURLStreamHandlerFactory(okHttpClient);
+   * }</pre>
+   */
+  public URLStreamHandler createURLStreamHandler(final String protocol) {
+    if (!protocol.equals("http") && !protocol.equals("https")) return null;
+
+    return new URLStreamHandler() {
+      @Override protected URLConnection openConnection(URL url) {
+        return open(url);
+      }
+
+      @Override protected URLConnection openConnection(URL url, Proxy proxy) {
+        return open(url, proxy);
+      }
+
+      @Override protected int getDefaultPort() {
+        if (protocol.equals("http")) return 80;
+        if (protocol.equals("https")) return 443;
+        throw new AssertionError();
+      }
+    };
   }
 }
