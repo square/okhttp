@@ -197,7 +197,6 @@ public class HttpEngine {
       sendSocketRequest();
     } else if (connection != null) {
       policy.connectionPool.recycle(connection);
-      policy.getFailedRoutes().remove(connection.getRoute());
       connection = null;
     }
   }
