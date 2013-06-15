@@ -269,6 +269,19 @@ public final class OkHttpClient {
     }
   }
 
+  HttpURLConnection open(URL url, Proxy proxy) {
+    String protocol = url.getProtocol();
+    OkHttpClient copy = copyWithDefaults();
+    copy.proxy = proxy;
+    if (protocol.equals("http")) {
+      return new HttpURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
+    } else if (protocol.equals("https")) {
+      return new HttpsURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
+    } else {
+      throw new IllegalArgumentException("Unexpected protocol: " + protocol);
+    }
+  }
+
   /**
    * Returns a shallow copy of this OkHttpClient that uses the system-wide default for
    * each field that hasn't been explicitly configured.
