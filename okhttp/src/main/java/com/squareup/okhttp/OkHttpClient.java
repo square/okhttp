@@ -284,7 +284,7 @@ public final class OkHttpClient {
         : HttpsURLConnection.getDefaultSSLSocketFactory();
     result.hostnameVerifier = hostnameVerifier != null
         ? hostnameVerifier
-        : new OkHostnameVerifier();
+        : OkHostnameVerifier.INSTANCE;
     result.authenticator = authenticator != null
         ? authenticator
         : HttpAuthenticator.SYSTEM_DEFAULT;

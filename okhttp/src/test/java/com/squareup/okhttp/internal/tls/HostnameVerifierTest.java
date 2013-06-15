@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
  * itself includes tests from the Apache HTTP Client test suite.
  */
 public final class HostnameVerifierTest {
-  private HostnameVerifier verifier = new OkHostnameVerifier();
+  private HostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
 
   @Test public void verify() throws Exception {
     FakeSSLSession session = new FakeSSLSession();
