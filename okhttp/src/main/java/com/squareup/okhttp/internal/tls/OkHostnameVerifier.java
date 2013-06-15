@@ -36,6 +36,8 @@ import javax.security.auth.x500.X500Principal;
  * href="http://www.ietf.org/rfc/rfc2818.txt">RFC 2818</a>.
  */
 public final class OkHostnameVerifier implements HostnameVerifier {
+  public static final OkHostnameVerifier INSTANCE = new OkHostnameVerifier();
+
   /**
    * Quick and dirty pattern to differentiate IP addresses from hostnames. This
    * is an approximation of Android's private InetAddress#isNumeric API.
@@ -52,6 +54,9 @@ public final class OkHostnameVerifier implements HostnameVerifier {
 
   private static final int ALT_DNS_NAME = 2;
   private static final int ALT_IPA_NAME = 7;
+
+  private OkHostnameVerifier() {
+  }
 
   public boolean verify(String host, SSLSession session) {
     try {
