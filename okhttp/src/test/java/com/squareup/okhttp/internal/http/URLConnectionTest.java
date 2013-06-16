@@ -157,17 +157,9 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    try {
-      urlConnection.setRequestProperty("NullValue", null);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
+    urlConnection.setRequestProperty("NullValue", null);
     assertNull(urlConnection.getRequestProperty("NullValue"));
-    try {
-      urlConnection.addRequestProperty("AnotherNullValue", null);
-      fail();
-    } catch (Exception expected) {
-    }
+    urlConnection.addRequestProperty("AnotherNullValue", null);
     assertNull(urlConnection.getRequestProperty("AnotherNullValue"));
 
     urlConnection.getResponseCode();

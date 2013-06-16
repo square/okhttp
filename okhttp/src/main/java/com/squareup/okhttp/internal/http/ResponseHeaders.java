@@ -42,7 +42,7 @@ public final class ResponseHeaders {
   /** HTTP synthetic header with the response source. */
   static final String RESPONSE_SOURCE = "X-Android-Response-Source";
 
-  /** HTTP synthetic header with the selected transport (spdy/3, http/1.1, etc.) */
+  /** HTTP synthetic header with the selected transport (spdy/3, http/1.1, etc). */
   static final String SELECTED_TRANSPORT = "X-Android-Selected-Transport";
 
   private final URI uri;
