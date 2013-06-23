@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+Version 1.1.1 *(2013-06-23)*
+----------------------------
+
+ * Fix: ClassCastException when caching responses that were redirected from
+   HTTP to HTTPS.
+
+
 Version 1.1.0 *(2013-06-15)*
 ----------------------------
 
