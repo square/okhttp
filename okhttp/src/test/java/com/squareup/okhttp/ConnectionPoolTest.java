@@ -40,7 +40,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public final class ConnectionPoolTest {
-  private static final int KEEP_ALIVE_DURATION_MS = 500;
+  private static final int KEEP_ALIVE_DURATION_MS = 5000;
   private static final SSLContext sslContext;
 
   static {
