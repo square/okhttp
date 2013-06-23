@@ -447,6 +447,10 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
       return false;
     }
 
+    public SSLSocket getSslSocket() {
+      return sslSocket;
+    }
+
     @Override protected TunnelRequest getTunnelConfig() {
       String userAgent = requestHeaders.getUserAgent();
       if (userAgent == null) {

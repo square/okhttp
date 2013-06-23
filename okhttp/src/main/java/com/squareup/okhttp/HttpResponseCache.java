@@ -55,8 +55,8 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
 
 import static com.squareup.okhttp.internal.Util.US_ASCII;
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -537,21 +537,37 @@ public final class HttpResponseCache extends ResponseCache {
       this.requestMethod = httpConnection.getRequestMethod();
       this.responseHeaders = RawHeaders.fromMultimap(httpConnection.getHeaderFields(), true);
 
-      if (isHttps()) {
-        HttpsURLConnection httpsConnection = (HttpsURLConnection) httpConnection;
-        cipherSuite = httpsConnection.getCipherSuite();
+      SSLSocket sslSocket = getSslSocket(httpConnection);
+      if (sslSocket != null) {
+        cipherSuite = sslSocket.getSession().getCipherSuite();
         Certificate[] peerCertificatesNonFinal = null;
         try {
-          peerCertificatesNonFinal = httpsConnection.getServerCertificates();
+          peerCertificatesNonFinal = sslSocket.getSession().getPeerCertificates();
         } catch (SSLPeerUnverifiedException ignored) {
         }
         peerCertificates = peerCertificatesNonFinal;
-        localCertificates = httpsConnection.getLocalCertificates();
+        localCertificates = sslSocket.getSession().getLocalCertificates();
       } else {
         cipherSuite = null;
         peerCertificates = null;
         localCertificates = null;
       }
+    }
+
+    /**
+     * Returns the SSL socket used by {@code httpConnection} for HTTPS, nor null
+     * if the connection isn't using HTTPS. Since we permit redirects across
+     * protocols (HTTP to HTTPS or vice versa), the implementation type of the
+     * connection doesn't necessarily match the implementation type of its HTTP
+     * engine.
+     */
+    private SSLSocket getSslSocket(HttpURLConnection httpConnection) {
+      HttpEngine engine = httpConnection instanceof HttpsURLConnectionImpl
+          ? ((HttpsURLConnectionImpl) httpConnection).getHttpEngine()
+          : ((HttpURLConnectionImpl) httpConnection).getHttpEngine();
+      return engine instanceof HttpsURLConnectionImpl.HttpsEngine
+          ? ((HttpsURLConnectionImpl.HttpsEngine) engine).getSslSocket()
+          : null;
     }
 
     public void writeTo(DiskLruCache.Editor editor) throws IOException {
