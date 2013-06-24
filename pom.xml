@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>parent</artifactId>
-  <version>1.1.1</version>
+  <version>1.1.2-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -43,7 +43,7 @@
     <url>https://github.com/square/okhttp/</url>
     <connection>scm:git:https://github.com/square/okhttp.git</connection>
     <developerConnection>scm:git:git@github.com:square/okhttp.git</developerConnection>
-    <tag>parent-1.1.1</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
