@@ -260,6 +260,14 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     return transports;
   }
 
+  public void enqueue(Request request, Response.Receiver responseReceiver) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
+  public void cancel(Object tag) {
+    throw new UnsupportedOperationException("TODO");
+  }
+
   public HttpURLConnection open(URL url) {
     String protocol = url.getProtocol();
     OkHttpClient copy = copyWithDefaults();
