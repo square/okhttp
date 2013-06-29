@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Arrays;
 import javax.net.ssl.SSLSocket;
@@ -189,7 +190,34 @@ public final class Connection implements Closeable {
 
   /** Returns true if this connection is alive. */
   public boolean isAlive() {
-    return !socket.isClosed() && !socket.isInputShutdown() && !socket.isOutputShutdown();
+    if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) {
+      return false;
+    }
+    if (!(in instanceof BufferedInputStream)) {
+      return true; // Optimistic.
+    }
+    if (isSpdy()) {
+      return true; // Optimistic. We can't test SPDY because its streams are in use.
+    }
+    BufferedInputStream bufferedInputStream = (BufferedInputStream) in;
+    try {
+      int readTimeout = socket.getSoTimeout();
+      try {
+        socket.setSoTimeout(1);
+        bufferedInputStream.mark(1);
+        if (bufferedInputStream.read() == -1) {
+          return false; // Stream is exhausted; socket is closed.
+        }
+        bufferedInputStream.reset();
+        return true;
+      } finally {
+        socket.setSoTimeout(readTimeout);
+      }
+    } catch (SocketTimeoutException ignored) {
+      return true; // Read timed out; socket is good.
+    } catch (IOException e) {
+      return false; // Couldn't read; socket is closed.
+    }
   }
 
   public void resetIdleStartTime() {
