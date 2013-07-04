@@ -606,8 +606,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       // the list contains "http/1.1". We do this in a separate loop
       // to avoid modifying any state before we validate the input.
       boolean containsHttp = false;
-      for (int i = 0; i < transports.length; ++i) {
-        if ("http/1.1".equals(transports[i])) {
+      for (String transport : transports) {
+        if ("http/1.1".equals(transport)) {
           containsHttp = true;
           break;
         }
@@ -620,13 +620,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       transportsList.addAll(this.transports);
     }
 
-    for (int i = 0; i < transports.length; ++i) {
-      if (transports[i].length() == 0) {
+    for (String transport : transports) {
+      if (transport.length() == 0) {
         throw new IllegalArgumentException("Transport list contains an empty transport");
       }
 
-      if (!transportsList.contains(transports[i])) {
-        transportsList.add(transports[i]);
+      if (!transportsList.contains(transport)) {
+        transportsList.add(transport);
       }
     }
 

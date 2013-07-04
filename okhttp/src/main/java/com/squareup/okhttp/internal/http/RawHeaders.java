@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * The HTTP status and unparsed header fields of a single HTTP message. Values
@@ -248,6 +249,15 @@ public final class RawHeaders {
     return namesAndValues.get(fieldNameIndex);
   }
 
+  /** Returns an immutable case-insensitive set of header names. */
+  public Set<String> names() {
+    TreeSet<String> result = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    for (int i = 0; i < length(); i++) {
+      result.add(getFieldName(i));
+    }
+    return Collections.unmodifiableSet(result);
+  }
+
   /** Returns the value at {@code index} or null if that is out of range. */
   public String getValue(int index) {
     int valueIndex = index * 2 + 1;
@@ -265,6 +275,20 @@ public final class RawHeaders {
       }
     }
     return null;
+  }
+
+  /** Returns an immutable list of the header values for {@code name}. */
+  public List<String> values(String name) {
+    List<String> result = null;
+    for (int i = 0; i < length(); i++) {
+      if (name.equalsIgnoreCase(getFieldName(i))) {
+        if (result == null) result = new ArrayList<String>(2);
+        result.add(getValue(i));
+      }
+    }
+    return result != null
+        ? Collections.unmodifiableList(result)
+        : Collections.<String>emptyList();
   }
 
   /** @param fieldNames a case-insensitive set of HTTP header field names. */
