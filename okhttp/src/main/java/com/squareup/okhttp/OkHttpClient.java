@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
@@ -56,6 +57,8 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   private OkAuthenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followProtocolRedirects = true;
+  private int connectTimeout;
+  private int readTimeout;
 
   public OkHttpClient() {
     this.failedRoutes = Collections.synchronizedSet(new LinkedHashSet<Route>());
@@ -63,6 +66,54 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
 
   private OkHttpClient(OkHttpClient copyFrom) {
     this.failedRoutes = copyFrom.failedRoutes; // Avoid allocating an unnecessary LinkedHashSet.
+  }
+
+  /**
+   * Sets the default connect timeout for new connections. A value of 0 means no timeout.
+   *
+   * @see URLConnection#setConnectTimeout(int)
+   */
+  public void setConnectTimeout(long timeout, TimeUnit unit) {
+    if (timeout < 0) {
+      throw new IllegalArgumentException("timeout < 0");
+    }
+    if (unit == null) {
+      throw new IllegalArgumentException("unit == null");
+    }
+    long millis = unit.toMillis(timeout);
+    if (millis > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Timeout too large.");
+    }
+    connectTimeout = (int) millis;
+  }
+
+  /** Default connect timeout (in milliseconds). */
+  public int getConnectTimeout() {
+    return connectTimeout;
+  }
+
+  /**
+   * Sets the default read timeout for new connections. A value of 0 means no timeout.
+   *
+   * @see URLConnection#setReadTimeout(int)
+   */
+  public void setReadTimeout(long timeout, TimeUnit unit) {
+    if (timeout < 0) {
+      throw new IllegalArgumentException("timeout < 0");
+    }
+    if (unit == null) {
+      throw new IllegalArgumentException("unit == null");
+    }
+    long millis = unit.toMillis(timeout);
+    if (millis > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Timeout too large.");
+    }
+    connectTimeout = (int) millis;
+  }
+
+  /** Default read timeout (in milliseconds). */
+  public int getReadTimeout() {
+    return readTimeout;
   }
 
   /**
@@ -276,13 +327,19 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     String protocol = url.getProtocol();
     OkHttpClient copy = copyWithDefaults();
     copy.proxy = proxy;
+
+    HttpURLConnection connection;
     if (protocol.equals("http")) {
-      return new HttpURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
+      connection = new HttpURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
     } else if (protocol.equals("https")) {
-      return new HttpsURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
+      connection = new HttpsURLConnectionImpl(url, copy, copy.okResponseCache(), copy.failedRoutes);
     } else {
       throw new IllegalArgumentException("Unexpected protocol: " + protocol);
     }
+
+    connection.setReadTimeout(readTimeout);
+    connection.setConnectTimeout(connectTimeout);
+    return connection;
   }
 
   /**
@@ -307,6 +364,8 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
     result.followProtocolRedirects = followProtocolRedirects;
     result.transports = transports != null ? transports : DEFAULT_TRANSPORTS;
+    result.connectTimeout = connectTimeout;
+    result.readTimeout = readTimeout;
     return result;
   }
 
