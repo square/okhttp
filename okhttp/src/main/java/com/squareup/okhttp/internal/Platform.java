@@ -57,6 +57,11 @@ public class Platform {
     return PLATFORM;
   }
 
+  /** Prefix used on custom headers. */
+  public String getPrefix() {
+    return "OkHttp";
+  }
+
   public void logW(String warning) {
     System.out.println(warning);
   }
