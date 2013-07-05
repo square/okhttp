@@ -78,18 +78,23 @@ public final class HttpTransport implements Transport {
     }
 
     // Stream a request body of a known length.
-    int fixedContentLength = httpEngine.policy.getFixedContentLength();
+    long fixedContentLength = httpEngine.policy.getFixedContentLength();
     if (fixedContentLength != -1) {
       httpEngine.requestHeaders.setContentLength(fixedContentLength);
       writeRequestHeaders();
       return new FixedLengthOutputStream(requestOut, fixedContentLength);
     }
 
+    long contentLength = httpEngine.requestHeaders.getContentLength();
+    if (contentLength > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("Use setFixedLengthStreamingMode() or "
+          + "setChunkedStreamingMode() for requests larger than 2 GiB.");
+    }
+
     // Buffer a request body of a known length.
-    int contentLength = httpEngine.requestHeaders.getContentLength();
     if (contentLength != -1) {
       writeRequestHeaders();
-      return new RetryableOutputStream(contentLength);
+      return new RetryableOutputStream((int) contentLength);
     }
 
     // Buffer a request body of an unknown length. Don't write request
@@ -215,9 +220,9 @@ public final class HttpTransport implements Transport {
   /** An HTTP body with a fixed length known in advance. */
   private static final class FixedLengthOutputStream extends AbstractOutputStream {
     private final OutputStream socketOut;
-    private int bytesRemaining;
+    private long bytesRemaining;
 
-    private FixedLengthOutputStream(OutputStream socketOut, int bytesRemaining) {
+    private FixedLengthOutputStream(OutputStream socketOut, long bytesRemaining) {
       this.socketOut = socketOut;
       this.bytesRemaining = bytesRemaining;
     }
