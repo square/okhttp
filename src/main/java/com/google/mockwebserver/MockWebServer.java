@@ -393,7 +393,7 @@ public final class MockWebServer {
         }
 
         List<String> headers = new ArrayList<String>();
-        int contentLength = -1;
+        long contentLength = -1;
         boolean chunked = false;
         boolean expectContinue = false;
         String header;
@@ -401,7 +401,7 @@ public final class MockWebServer {
             headers.add(header);
             String lowercaseHeader = header.toLowerCase();
             if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
-                contentLength = Integer.parseInt(header.substring(15).trim());
+                contentLength = Long.parseLong(header.substring(15).trim());
             }
             if (lowercaseHeader.startsWith("transfer-encoding:") &&
                     lowercaseHeader.substring(18).trim().equals("chunked")) {
@@ -501,10 +501,10 @@ public final class MockWebServer {
      * Transfer bytes from {@code in} to {@code out} until either {@code length}
      * bytes have been transferred or {@code in} is exhausted.
      */
-    private void transfer(int length, InputStream in, OutputStream out) throws IOException {
+    private void transfer(long length, InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[1024];
         while (length > 0) {
-            int count = in.read(buffer, 0, Math.min(buffer.length, length));
+            int count = in.read(buffer, 0, (int) Math.min(buffer.length, length));
             if (count == -1) {
                 return;
             }
