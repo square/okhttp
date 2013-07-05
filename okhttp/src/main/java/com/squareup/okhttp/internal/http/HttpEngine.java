@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieHandler;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -390,13 +391,16 @@ public class HttpEngine {
       return;
     }
 
+    HttpURLConnection connectionToCache = policy.getHttpConnectionToCache();
+
     // Should we cache this response for this request?
     if (!responseHeaders.isCacheable(requestHeaders)) {
+      policy.responseCache.maybeRemove(connectionToCache.getRequestMethod(), uri);
       return;
     }
 
     // Offer this request to the cache.
-    cacheRequest = policy.responseCache.put(uri, policy.getHttpConnectionToCache());
+    cacheRequest = policy.responseCache.put(uri, connectionToCache);
   }
 
   /**

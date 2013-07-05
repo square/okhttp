@@ -39,6 +39,9 @@ public interface OkResponseCache {
 
   CacheRequest put(URI uri, URLConnection urlConnection) throws IOException;
 
+  /** Remove any cache entries for the supplied {@code uri} if the request method invalidates. */
+  void maybeRemove(String requestMethod, URI uri) throws IOException;
+
   /**
    * Handles a conditional request hit by updating the stored cache response
    * with the headers from {@code httpConnection}. The cached response body is

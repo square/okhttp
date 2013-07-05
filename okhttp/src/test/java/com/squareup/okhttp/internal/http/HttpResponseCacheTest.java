@@ -812,6 +812,28 @@ public final class HttpResponseCacheTest {
     assertEquals("C", readAscii(openConnection(url)));
   }
 
+  @Test public void postInvalidatesCacheWithUncacheableResponse() throws Exception {
+    // 1. seed the cache
+    // 2. invalidate it with uncacheable response
+    // 3. expect a cache miss
+    server.enqueue(
+        new MockResponse().setBody("A").addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse().setBody("B").setResponseCode(500));
+    server.enqueue(new MockResponse().setBody("C"));
+    server.play();
+
+    URL url = server.getUrl("/");
+
+    assertEquals("A", readAscii(openConnection(url)));
+
+    HttpURLConnection invalidate = openConnection(url);
+    invalidate.setRequestMethod("POST");
+    addRequestBodyIfNecessary("POST", invalidate);
+    assertEquals("B", readAscii(invalidate));
+
+    assertEquals("C", readAscii(openConnection(url)));
+  }
+
   @Test public void etag() throws Exception {
     RecordedRequest conditionalRequest =
         assertConditionallyCached(new MockResponse().addHeader("ETag: v1"));

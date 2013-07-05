@@ -41,6 +41,9 @@ public final class OkResponseCacheAdapter implements OkResponseCache {
     return responseCache.put(uri, urlConnection);
   }
 
+  @Override public void maybeRemove(String requestMethod, URI uri) throws IOException {
+  }
+
   @Override public void update(CacheResponse conditionalCacheHit, HttpURLConnection connection)
       throws IOException {
   }
