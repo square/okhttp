@@ -42,8 +42,7 @@ final class HttpDate {
       };
 
   /** If we fail to parse a date in a non-standard format, try each of these formats in sequence. */
-  private static final String[] BROWSER_COMPATIBLE_DATE_FORMATS = new String[] {
-            /* This list comes from  {@code org.apache.http.impl.cookie.BrowserCompatSpec}. */
+  private static final String[] BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS = new String[] {
       "EEEE, dd-MMM-yy HH:mm:ss zzz", // RFC 1036
       "EEE MMM d HH:mm:ss yyyy", // ANSI C asctime()
       "EEE, dd-MMM-yyyy HH:mm:ss z", "EEE, dd-MMM-yyyy HH-mm-ss z", "EEE, dd MMM yy HH:mm:ss z",
@@ -54,19 +53,26 @@ final class HttpDate {
             /* RI bug 6641315 claims a cookie of this format was once served by www.yahoo.com */
       "EEE MMM d yyyy HH:mm:ss z", };
 
-  /**
-   * Returns the date for {@code value}. Returns null if the value couldn't be
-   * parsed.
-   */
+  private static final DateFormat[] BROWSER_COMPATIBLE_DATE_FORMATS =
+      new DateFormat[BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.length];
+
+  /** Returns the date for {@code value}. Returns null if the value couldn't be parsed. */
   public static Date parse(String value) {
     try {
       return STANDARD_DATE_FORMAT.get().parse(value);
-    } catch (ParseException ignore) {
+    } catch (ParseException ignored) {
     }
-    for (String formatString : BROWSER_COMPATIBLE_DATE_FORMATS) {
-      try {
-        return new SimpleDateFormat(formatString, Locale.US).parse(value);
-      } catch (ParseException ignore) {
+    synchronized (BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS) {
+      for (int i = 0, count = BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS.length; i < count; i++) {
+        DateFormat format = BROWSER_COMPATIBLE_DATE_FORMATS[i];
+        if (format == null) {
+          format = new SimpleDateFormat(BROWSER_COMPATIBLE_DATE_FORMAT_STRINGS[i], Locale.US);
+          BROWSER_COMPATIBLE_DATE_FORMATS[i] = format;
+        }
+        try {
+          return format.parse(value);
+        } catch (ParseException ignored) {
+        }
       }
     }
     return null;
