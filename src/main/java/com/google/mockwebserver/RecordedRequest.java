@@ -31,13 +31,13 @@ public final class RecordedRequest {
     private final String path;
     private final List<String> headers;
     private final List<Integer> chunkSizes;
-    private final int bodySize;
+    private final long bodySize;
     private final byte[] body;
     private final int sequenceNumber;
     private final String sslProtocol;
 
     public RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
-            int bodySize, byte[] body, int sequenceNumber, Socket socket) {
+            long bodySize, byte[] body, int sequenceNumber, Socket socket) {
         this.requestLine = requestLine;
         this.headers = headers;
         this.chunkSizes = chunkSizes;
@@ -122,7 +122,7 @@ public final class RecordedRequest {
      * Returns the total size of the body of this POST request (before
      * truncation).
      */
-    public int getBodySize() {
+    public long getBodySize() {
         return bodySize;
     }
 

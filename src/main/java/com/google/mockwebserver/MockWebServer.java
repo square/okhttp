@@ -556,7 +556,7 @@ public final class MockWebServer {
      * An output stream that drops data after bodyLimit bytes.
      */
     private class TruncatingOutputStream extends ByteArrayOutputStream {
-        private int numBytesReceived = 0;
+        private long numBytesReceived = 0;
         @Override public void write(byte[] buffer, int offset, int len) {
             numBytesReceived += len;
             super.write(buffer, offset, Math.min(len, bodyLimit - count));
