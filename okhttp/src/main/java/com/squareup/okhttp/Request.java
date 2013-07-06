@@ -15,9 +15,14 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.RawHeaders;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
@@ -89,9 +94,12 @@ public final class Request {
     return tag;
   }
 
-  public abstract class Body {
-    /** Returns the Content-Type header for this body, or null if the content type is unknown. */
-    public String contentType() {
+  public abstract static class Body {
+    /**
+     * Returns the Content-Type header for this body, or null if the content
+     * type is unknown.
+     */
+    public MediaType contentType() {
       return null;
     }
 
@@ -100,7 +108,76 @@ public final class Request {
       return -1;
     }
 
+    /** Writes the content of this request to {@code out}. */
     public abstract void writeTo(OutputStream out) throws IOException;
+
+    /**
+     * Returns a new request body that transmits {@code content}. If {@code
+     * contentType} lacks a charset, this will use UTF-8.
+     */
+    public static Body create(MediaType contentType, String content) {
+      contentType = contentType.charset() != null
+          ? contentType
+          : MediaType.parse(contentType + "; charset=utf-8");
+      try {
+        byte[] bytes = content.getBytes(contentType.charset().name());
+        return create(contentType, bytes);
+      } catch (UnsupportedEncodingException e) {
+        throw new AssertionError();
+      }
+    }
+
+    /** Returns a new request body that transmits {@code content}. */
+    public static Body create(final MediaType contentType, final byte[] content) {
+      if (contentType == null) throw new NullPointerException("contentType == null");
+      if (content == null) throw new NullPointerException("content == null");
+
+      return new Body() {
+        @Override public MediaType contentType() {
+          return contentType;
+        }
+
+        @Override public long contentLength() {
+          return content.length;
+        }
+
+        @Override public void writeTo(OutputStream out) throws IOException {
+          out.write(content);
+        }
+      };
+    }
+
+    /** Returns a new request body that transmits the content of {@code file}. */
+    public static Body create(final MediaType contentType, final File file) {
+      if (contentType == null) throw new NullPointerException("contentType == null");
+      if (file == null) throw new NullPointerException("content == null");
+
+      return new Body() {
+        @Override public MediaType contentType() {
+          return contentType;
+        }
+
+        @Override public long contentLength() {
+          return file.length();
+        }
+
+        @Override public void writeTo(OutputStream out) throws IOException {
+          long length = contentLength();
+          if (length == 0) return;
+
+          InputStream in = null;
+          try {
+            in = new FileInputStream(file);
+            byte[] buffer = new byte[(int) Math.min(8192, length)];
+            for (int c; (c = in.read(buffer)) != -1; ) {
+              out.write(buffer, 0, c);
+            }
+          } finally {
+            Util.closeQuietly(in);
+          }
+        }
+      };
+    }
   }
 
   public static class Builder {

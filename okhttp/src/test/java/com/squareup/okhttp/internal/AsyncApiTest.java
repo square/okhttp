@@ -17,11 +17,14 @@ package com.squareup.okhttp.internal;
 
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
+import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import org.junit.After;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public final class AsyncApiTest {
@@ -50,5 +53,23 @@ public final class AsyncApiTest {
         .assertBody("abc");
 
     assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
+  }
+
+  @Test public void post() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+
+    Request request = new Request.Builder(server.getUrl("/"))
+        .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
+        .build();
+    client.enqueue(request, receiver);
+
+    receiver.await(request)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("3", recordedRequest.getHeader("Content-Length"));
   }
 }
