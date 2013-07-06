@@ -92,6 +92,13 @@ class Dispatcher {
       Request.Body body = request.body();
       if (body != null) {
         connection.setDoOutput(true);
+        long contentLength = body.contentLength();
+        if (contentLength == -1 || contentLength > Integer.MAX_VALUE) {
+          connection.setChunkedStreamingMode(0);
+        } else {
+          // Don't call setFixedLengthStreamingMode(long); that's only available on Java 1.7+.
+          connection.setFixedLengthStreamingMode((int) contentLength);
+        }
         body.writeTo(connection.getOutputStream());
       }
       return connection;
