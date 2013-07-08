@@ -23,7 +23,6 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
-import com.squareup.okhttp.internal.http.OkResponseCache;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.ResponseHeaders;
 import java.io.BufferedWriter;

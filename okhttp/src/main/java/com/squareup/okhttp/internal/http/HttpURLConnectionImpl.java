@@ -18,10 +18,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.FaultRecoveringOutputStream;
 import com.squareup.okhttp.internal.Platform;
@@ -30,13 +27,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.CookieHandler;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
@@ -44,10 +39,8 @@ import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import javax.net.ssl.HostnameVerifier;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -83,52 +76,17 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private static final int MAX_REPLAY_BUFFER_LENGTH = 8192;
 
-  private final boolean followProtocolRedirects;
-
-  /** The proxy requested by the client, or null for a proxy to be selected automatically. */
-  final Proxy requestedProxy;
-
-  final ProxySelector proxySelector;
-  final CookieHandler cookieHandler;
-  final OkResponseCache responseCache;
-  final ConnectionPool connectionPool;
-  /* SSL configuration; necessary for HTTP requests that get redirected to HTTPS. */
-  SSLSocketFactory sslSocketFactory;
-  HostnameVerifier hostnameVerifier;
-  private List<String> transports;
-  OkAuthenticator authenticator;
-  final Set<Route> failedRoutes;
+  final OkHttpClient client;
 
   private final RawHeaders rawRequestHeaders = new RawHeaders();
-
   private int redirectionCount;
   private FaultRecoveringOutputStream faultRecoveringRequestBody;
-
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
 
-  public HttpURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache,
-      Set<Route> failedRoutes) {
+  public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
-    this.followProtocolRedirects = client.getFollowProtocolRedirects();
-    this.failedRoutes = failedRoutes;
-    this.requestedProxy = client.getProxy();
-    this.proxySelector = client.getProxySelector();
-    this.cookieHandler = client.getCookieHandler();
-    this.connectionPool = client.getConnectionPool();
-    this.sslSocketFactory = client.getSslSocketFactory();
-    this.hostnameVerifier = client.getHostnameVerifier();
-    this.transports = client.getTransports();
-    this.authenticator = client.getAuthenticator();
-    this.responseCache = responseCache;
-  }
-
-  Set<Route> getFailedRoutes() {
-    return failedRoutes;
-  }
-
-  List<String> getTransports() {
-    return transports;
+    this.client = client;
   }
 
   @Override public final void connect() throws IOException {
@@ -274,7 +232,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     String hostName = getURL().getHost();
     int hostPort = Util.getEffectivePort(getURL());
     if (usingProxy()) {
-      InetSocketAddress proxyAddress = (InetSocketAddress) requestedProxy.address();
+      InetSocketAddress proxyAddress = (InetSocketAddress) client.getProxy().address();
       hostName = proxyAddress.getHostName();
       hostPort = proxyAddress.getPort();
     }
@@ -286,6 +244,22 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       return null;
     }
     return rawRequestHeaders.get(field);
+  }
+
+  @Override public void setConnectTimeout(int timeoutMillis) {
+    client.setConnectTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
+  }
+
+  @Override public int getConnectTimeout() {
+    return client.getConnectTimeout();
+  }
+
+  @Override public void setReadTimeout(int timeoutMillis) {
+    client.setReadTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
+  }
+
+  @Override public int getReadTimeout() {
+    return client.getReadTimeout();
   }
 
   private void initHttpEngine() throws IOException {
@@ -468,7 +442,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   private Retry processResponseHeaders() throws IOException {
     Proxy selectedProxy = httpEngine.connection != null
         ? httpEngine.connection.getRoute().getProxy()
-        : requestedProxy;
+        : client.getProxy();
     final int responseCode = getResponseCode();
     switch (responseCode) {
       case HTTP_PROXY_AUTH:
@@ -477,7 +451,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        boolean credentialsFound = HttpAuthenticator.processAuthHeader(authenticator,
+        boolean credentialsFound = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
             getResponseCode(), httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders,
             selectedProxy, url);
         return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
@@ -508,7 +482,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           return Retry.NONE; // Don't follow redirects to unsupported protocols.
         }
         boolean sameProtocol = previousUrl.getProtocol().equals(url.getProtocol());
-        if (!sameProtocol && !followProtocolRedirects) {
+        if (!sameProtocol && !client.getFollowProtocolRedirects()) {
           return Retry.NONE; // This client doesn't follow redirects across protocols.
         }
         boolean sameHost = previousUrl.getHost().equals(url.getHost());
@@ -535,7 +509,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public final boolean usingProxy() {
-    return (requestedProxy != null && requestedProxy.type() != Proxy.Type.DIRECT);
+    Proxy proxy = client.getProxy();
+    return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }
 
   @Override public String getResponseMessage() throws IOException {
@@ -599,37 +574,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * When append == false, we require that the transport list contains "http/1.1".
    */
   private void setTransports(String transportsString, boolean append) {
-    String[] transports = transportsString.split(",", -1);
-    ArrayList<String> transportsList = new ArrayList<String>();
-    if (!append) {
-      // If we're not appending to the list, we need to make sure
-      // the list contains "http/1.1". We do this in a separate loop
-      // to avoid modifying any state before we validate the input.
-      boolean containsHttp = false;
-      for (String transport : transports) {
-        if ("http/1.1".equals(transport)) {
-          containsHttp = true;
-          break;
-        }
-      }
-
-      if (!containsHttp) {
-        throw new IllegalArgumentException("Transport list doesn't contain http/1.1");
-      }
-    } else {
-      transportsList.addAll(this.transports);
+    List<String> transportsList = new ArrayList<String>();
+    if (append) {
+      transportsList.addAll(client.getTransports());
     }
-
-    for (String transport : transports) {
-      if (transport.length() == 0) {
-        throw new IllegalArgumentException("Transport list contains an empty transport");
-      }
-
-      if (!transportsList.contains(transport)) {
-        transportsList.add(transport);
-      }
+    for (String transport : transportsString.split(",", -1)) {
+      transportsList.add(transport);
     }
-
-    this.transports = Util.immutableList(transportsList);
+    client.setTransports(transportsList);
   }
 }
