@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -26,7 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class Dispatcher {
+public final class Dispatcher {
   // TODO: thread pool size should be configurable; possibly configurable per host.
   private final ThreadPoolExecutor executorService = new ThreadPoolExecutor(
       8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
@@ -34,7 +36,7 @@ class Dispatcher {
 
   public synchronized void enqueue(
       HttpURLConnection connection, Request request, Response.Receiver responseReceiver) {
-    Job job = new Job(connection, request, responseReceiver);
+    Job job = new Job(this, connection, request, responseReceiver);
     List<Job> jobsForTag = enqueuedJobs.get(request.tag());
     if (jobsForTag == null) {
       jobsForTag = new ArrayList<Job>(2);
@@ -52,73 +54,9 @@ class Dispatcher {
     }
   }
 
-  private synchronized void finished(Job job) {
+  synchronized void finished(Job job) {
     List<Job> jobs = enqueuedJobs.get(job.request.tag());
     if (jobs != null) jobs.remove(job);
-  }
-
-  public class Job implements Runnable {
-    private final HttpURLConnection connection;
-    private final Request request;
-    private final Response.Receiver responseReceiver;
-
-    public Job(HttpURLConnection connection, Request request, Response.Receiver responseReceiver) {
-      this.connection = connection;
-      this.request = request;
-      this.responseReceiver = responseReceiver;
-    }
-
-    @Override public void run() {
-      try {
-        sendRequest();
-        Response response = readResponse();
-        responseReceiver.onResponse(response);
-      } catch (IOException e) {
-        responseReceiver.onFailure(new Failure.Builder()
-            .request(request)
-            .exception(e)
-            .build());
-      } finally {
-        connection.disconnect();
-        finished(this);
-      }
-    }
-
-    private HttpURLConnection sendRequest()
-        throws IOException {
-      for (int i = 0; i < request.headerCount(); i++) {
-        connection.addRequestProperty(request.headerName(i), request.headerValue(i));
-      }
-      Request.Body body = request.body();
-      if (body != null) {
-        connection.setDoOutput(true);
-        long contentLength = body.contentLength();
-        if (contentLength == -1 || contentLength > Integer.MAX_VALUE) {
-          connection.setChunkedStreamingMode(0);
-        } else {
-          // Don't call setFixedLengthStreamingMode(long); that's only available on Java 1.7+.
-          connection.setFixedLengthStreamingMode((int) contentLength);
-        }
-        body.writeTo(connection.getOutputStream());
-      }
-      return connection;
-    }
-
-    private Response readResponse() throws IOException {
-      int responseCode = connection.getResponseCode();
-      Response.Builder responseBuilder = new Response.Builder(request, responseCode);
-
-      for (int i = 0; true; i++) {
-        String name = connection.getHeaderFieldKey(i);
-        if (name == null) break;
-        String value = connection.getHeaderField(i);
-        responseBuilder.addHeader(name, value);
-      }
-
-      responseBuilder.body(new RealResponseBody(connection, connection.getInputStream()));
-      // TODO: set redirectedBy
-      return responseBuilder.build();
-    }
   }
 
   static class RealResponseBody extends Response.Body {

@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.ResponseSource;
 import java.io.IOException;
 import java.net.CacheRequest;
