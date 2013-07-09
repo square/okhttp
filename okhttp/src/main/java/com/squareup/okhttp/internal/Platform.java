@@ -217,6 +217,9 @@ public class Platform {
           return super.getMtu(socket); // There's no longer an interface with this local address.
         }
         return (Integer) getMtu.invoke(networkInterface);
+      } catch (NullPointerException e) { 
+        // Certain Alcatel devices throw on getByInetAddress. Return default.
+        return super.getMtu(socket);
       } catch (SocketException e) {
         // Certain Motorola devices always throw on getByInetAddress. Return the default for those.
         return super.getMtu(socket);
