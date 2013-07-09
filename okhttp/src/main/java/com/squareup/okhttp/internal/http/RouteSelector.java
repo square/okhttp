@@ -19,6 +19,7 @@ import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.RouteDatabase;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -32,8 +33,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
-import javax.net.ssl.SSLHandshakeException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -55,7 +54,7 @@ public final class RouteSelector {
   private final ProxySelector proxySelector;
   private final ConnectionPool pool;
   private final Dns dns;
-  private final Set<Route> failedRoutes;
+  private final RouteDatabase routeDatabase;
 
   /* The most recently attempted route. */
   private Proxy lastProxy;
@@ -78,13 +77,13 @@ public final class RouteSelector {
   private final List<Route> postponedRoutes;
 
   public RouteSelector(Address address, URI uri, ProxySelector proxySelector, ConnectionPool pool,
-      Dns dns, Set<Route> failedRoutes) {
+      Dns dns, RouteDatabase routeDatabase) {
     this.address = address;
     this.uri = uri;
     this.proxySelector = proxySelector;
     this.pool = pool;
     this.dns = dns;
-    this.failedRoutes = failedRoutes;
+    this.routeDatabase = routeDatabase;
     this.postponedRoutes = new LinkedList<Route>();
 
     resetNextProxy(uri, address.getProxy());
@@ -128,7 +127,7 @@ public final class RouteSelector {
 
     boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
     Route route = new Route(address, lastProxy, lastInetSocketAddress, modernTls);
-    if (failedRoutes.contains(route)) {
+    if (routeDatabase.shouldPostpone(route)) {
       postponedRoutes.add(route);
       // We will only recurse in order to skip previously failed routes. They will be
       // tried last.
@@ -149,12 +148,7 @@ public final class RouteSelector {
       proxySelector.connectFailed(uri, failedRoute.getProxy().address(), failure);
     }
 
-    failedRoutes.add(failedRoute);
-    if (!(failure instanceof SSLHandshakeException)) {
-      // If the problem was not related to SSL then it will also fail with
-      // a different Tls mode therefore we can be proactive about it.
-      failedRoutes.add(failedRoute.flipTlsMode());
-    }
+    routeDatabase.failed(failedRoute, failure);
   }
 
   /** Resets {@link #nextProxy} to the first option. */

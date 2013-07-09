@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +32,6 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -47,10 +45,9 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
   private final HttpUrlConnectionDelegate delegate;
 
-  public HttpsURLConnectionImpl(URL url, OkHttpClient client, OkResponseCache responseCache,
-      Set<Route> failedRoutes) {
+  public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
-    delegate = new HttpUrlConnectionDelegate(url, client, responseCache, failedRoutes);
+    delegate = new HttpUrlConnectionDelegate(url, client);
   }
 
   @Override public String getCipherSuite() {
@@ -386,25 +383,24 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
-    delegate.hostnameVerifier = hostnameVerifier;
+    delegate.client.setHostnameVerifier(hostnameVerifier);
   }
 
   @Override public HostnameVerifier getHostnameVerifier() {
-    return delegate.hostnameVerifier;
+    return delegate.client.getHostnameVerifier();
   }
 
   @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
-    delegate.sslSocketFactory = sslSocketFactory;
+    delegate.client.setSslSocketFactory(sslSocketFactory);
   }
 
   @Override public SSLSocketFactory getSSLSocketFactory() {
-    return delegate.sslSocketFactory;
+    return delegate.client.getSslSocketFactory();
   }
 
   private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-    private HttpUrlConnectionDelegate(URL url, OkHttpClient client, OkResponseCache responseCache,
-        Set<Route> failedRoutes) {
-      super(url, client, responseCache, failedRoutes);
+    private HttpUrlConnectionDelegate(URL url, OkHttpClient client) {
+      super(url, client);
     }
 
     @Override protected HttpURLConnection getHttpConnectionToCache() {
