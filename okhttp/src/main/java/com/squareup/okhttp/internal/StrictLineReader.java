@@ -146,8 +146,7 @@ public class StrictLineReader implements Closeable {
 
       // Let's anticipate up to 80 characters on top of those already read.
       ByteArrayOutputStream out = new ByteArrayOutputStream(end - pos + 80) {
-        @Override
-        public String toString() {
+        @Override public String toString() {
           int length = (count > 0 && buf[count - 1] == CR) ? count - 1 : count;
           try {
             return new String(buf, 0, length, charset.name());

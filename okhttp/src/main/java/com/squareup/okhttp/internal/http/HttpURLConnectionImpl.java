@@ -58,7 +58,7 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * connection} field on this class for null/non-null to determine of an instance
  * is currently connected to a server.
  */
-public class HttpURLConnectionImpl extends HttpURLConnection {
+public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   /** Numeric status code, 307: Temporary Redirect. */
   static final int HTTP_TEMP_REDIRECT = 307;
@@ -289,17 +289,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
-  protected HttpURLConnection getHttpConnectionToCache() {
+  @Override public HttpURLConnection getHttpConnectionToCache() {
     return this;
   }
 
   private HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
       Connection connection, RetryableOutputStream requestBody) throws IOException {
     if (url.getProtocol().equals("http")) {
-      return new HttpEngine(this, method, requestHeaders, connection, requestBody);
+      return new HttpEngine(client, this, method, requestHeaders, connection, requestBody);
     } else if (url.getProtocol().equals("https")) {
-      return new HttpsURLConnectionImpl.HttpsEngine(
-          this, method, requestHeaders, connection, requestBody);
+      return new HttpsEngine(client, this, method, requestHeaders, connection, requestBody);
     } else {
       throw new AssertionError();
     }
@@ -501,12 +500,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
-  final long getFixedContentLength() {
+  @Override public final long getFixedContentLength() {
     return fixedContentLength;
   }
 
-  /** @see java.net.HttpURLConnection#setChunkedStreamingMode(int) */
-  final int getChunkLength() {
+  @Override public final int getChunkLength() {
     return chunkLength;
   }
 
