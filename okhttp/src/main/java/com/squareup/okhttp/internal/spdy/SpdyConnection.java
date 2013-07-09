@@ -446,9 +446,8 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override
-    public void synStream(int flags, int streamId, int associatedStreamId, int priority, int slot,
-        List<String> nameValueBlock) {
+    @Override public void synStream(int flags, int streamId, int associatedStreamId, int priority,
+        int slot, List<String> nameValueBlock) {
       final SpdyStream synStream;
       final SpdyStream previous;
       synchronized (SpdyConnection.this) {

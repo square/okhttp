@@ -88,7 +88,7 @@ public class HttpEngine {
   };
   public static final int HTTP_CONTINUE = 100;
 
-  protected final HttpURLConnectionImpl policy;
+  protected final Policy policy;
   protected final OkHttpClient client;
 
   protected final String method;
@@ -141,16 +141,16 @@ public class HttpEngine {
 
   /**
    * @param requestHeaders the client's supplied request headers. This class
-   * creates a private copy that it can mutate.
+   *     creates a private copy that it can mutate.
    * @param connection the connection used for an intermediate response
-   * immediately prior to this request/response pair, such as a same-host
-   * redirect. This engine assumes ownership of the connection and must
-   * release it when it is unneeded.
+   *     immediately prior to this request/response pair, such as a same-host
+   *     redirect. This engine assumes ownership of the connection and must
+   *     release it when it is unneeded.
    */
-  public HttpEngine(HttpURLConnectionImpl policy, String method, RawHeaders requestHeaders,
+  public HttpEngine(OkHttpClient client, Policy policy, String method, RawHeaders requestHeaders,
       Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
+    this.client = client;
     this.policy = policy;
-    this.client = policy.client;
     this.method = method;
     this.connection = connection;
     this.requestBodyOut = requestBodyOut;

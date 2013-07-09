@@ -222,8 +222,8 @@ final class SpdyReader implements Closeable {
 
     // Subclass inflater to install a dictionary when it's needed.
     Inflater inflater = new Inflater() {
-      @Override
-      public int inflate(byte[] buffer, int offset, int count) throws DataFormatException {
+      @Override public int inflate(byte[] buffer, int offset, int count)
+          throws DataFormatException {
         int result = super.inflate(buffer, offset, count);
         if (result == 0 && needsDictionary()) {
           setDictionary(DICTIONARY);
