@@ -48,7 +48,7 @@ public final class RequestHeaders {
    */
   private boolean hasAuthorization;
 
-  private int contentLength = -1;
+  private long contentLength = -1;
   private String transferEncoding;
   private String userAgent;
   private String host;
@@ -157,7 +157,7 @@ public final class RequestHeaders {
     return hasAuthorization;
   }
 
-  public int getContentLength() {
+  public long getContentLength() {
     return contentLength;
   }
 
@@ -205,11 +205,11 @@ public final class RequestHeaders {
     this.transferEncoding = "chunked";
   }
 
-  public void setContentLength(int contentLength) {
+  public void setContentLength(long contentLength) {
     if (this.contentLength != -1) {
       headers.removeAll("Content-Length");
     }
-    headers.add("Content-Length", Integer.toString(contentLength));
+    headers.add("Content-Length", Long.toString(contentLength));
     this.contentLength = contentLength;
   }
 

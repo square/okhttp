@@ -79,6 +79,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   final OkHttpClient client;
 
   private final RawHeaders rawRequestHeaders = new RawHeaders();
+  /** Like the superclass field of the same name, but a long and available on all platforms. */
+  private long fixedContentLength = -1;
   private int redirectionCount;
   private FaultRecoveringOutputStream faultRecoveringRequestBody;
   protected IOException httpEngineFailure;
@@ -499,7 +501,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
-  final int getFixedContentLength() {
+  final long getFixedContentLength() {
     return fixedContentLength;
   }
 
@@ -582,5 +584,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       transportsList.add(transport);
     }
     client.setTransports(transportsList);
+  }
+
+  @Override public void setFixedLengthStreamingMode(int contentLength) {
+    setFixedLengthStreamingMode((long) contentLength);
+  }
+
+  // @Override Don't override: this overload method doesn't exist prior to Java 1.7.
+  public void setFixedLengthStreamingMode(long contentLength) {
+    if (super.connected) throw new IllegalStateException("Already connected");
+    if (chunkLength > 0) throw new IllegalStateException("Already in chunked mode");
+    if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
+    this.fixedContentLength = contentLength;
+    super.fixedContentLength = (int) Math.min(contentLength, Integer.MAX_VALUE);
   }
 }
