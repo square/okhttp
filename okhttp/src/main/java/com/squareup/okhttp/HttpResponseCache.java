@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.http.HttpsEngine;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.ResponseHeaders;
@@ -421,8 +422,7 @@ public final class HttpResponseCache extends ResponseCache {
           editor.commit();
         }
 
-        @Override
-        public void write(byte[] buffer, int offset, int length) throws IOException {
+        @Override public void write(byte[] buffer, int offset, int length) throws IOException {
           // Since we don't override "write(int oneByte)", we can write directly to "out"
           // and avoid the inefficient implementation from the FilterOutputStream.
           out.write(buffer, offset, length);
@@ -579,8 +579,8 @@ public final class HttpResponseCache extends ResponseCache {
       HttpEngine engine = httpConnection instanceof HttpsURLConnectionImpl
           ? ((HttpsURLConnectionImpl) httpConnection).getHttpEngine()
           : ((HttpURLConnectionImpl) httpConnection).getHttpEngine();
-      return engine instanceof HttpsURLConnectionImpl.HttpsEngine
-          ? ((HttpsURLConnectionImpl.HttpsEngine) engine).getSslSocket()
+      return engine instanceof HttpsEngine
+          ? ((HttpsEngine) engine).getSslSocket()
           : null;
     }
 

@@ -179,15 +179,13 @@ public class OkApacheClient implements HttpClient {
     return execute(null, request, handler, context);
   }
 
-  @Override
-  public <T> T execute(HttpHost host, HttpRequest request, ResponseHandler<? extends T> handler)
-      throws IOException {
+  @Override public <T> T execute(HttpHost host, HttpRequest request,
+      ResponseHandler<? extends T> handler) throws IOException {
     return execute(host, request, handler, null);
   }
 
-  @Override
-  public <T> T execute(HttpHost host, HttpRequest request, ResponseHandler<? extends T> handler,
-      HttpContext context) throws IOException {
+  @Override public <T> T execute(HttpHost host, HttpRequest request,
+      ResponseHandler<? extends T> handler, HttpContext context) throws IOException {
     HttpResponse response = execute(host, request, context);
     try {
       return handler.handleResponse(response);

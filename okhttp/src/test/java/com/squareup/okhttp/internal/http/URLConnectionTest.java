@@ -2090,22 +2090,18 @@ public final class URLConnectionTest {
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
     client.setResponseCache(new ResponseCache() {
-      @Override
-      public CacheResponse get(URI uri, String requestMethod,
+      @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         return null;
       }
 
-      @Override
-      public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         return new CacheRequest() {
-          @Override
-          public void abort() {
+          @Override public void abort() {
             aborted.set(true);
           }
 
-          @Override
-          public OutputStream getBody() throws IOException {
+          @Override public OutputStream getBody() throws IOException {
             return null;
           }
         };

@@ -185,9 +185,8 @@ public final class MockSpdyPeer implements Closeable {
       this.settings = settings;
     }
 
-    @Override
-    public void synStream(int flags, int streamId, int associatedStreamId, int priority, int slot,
-        List<String> nameValueBlock) {
+    @Override public void synStream(int flags, int streamId, int associatedStreamId, int priority,
+        int slot, List<String> nameValueBlock) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = SpdyConnection.TYPE_SYN_STREAM;
       this.flags = flags;
