@@ -97,7 +97,7 @@ public final class Connection implements Closeable {
     }
     connected = true;
     socket = (route.proxy.type() != Proxy.Type.HTTP) ? new Socket(route.proxy) : new Socket();
-    socket.connect(route.inetSocketAddress, connectTimeout);
+    Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
     socket.setSoTimeout(readTimeout);
     in = socket.getInputStream();
     out = socket.getOutputStream();
