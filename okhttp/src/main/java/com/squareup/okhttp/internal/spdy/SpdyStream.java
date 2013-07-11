@@ -670,7 +670,9 @@ public final class SpdyStream {
         }
         closed = true;
       }
-      writeFrame(true);
+      if (!out.finished) {
+        writeFrame(true);
+      }
       connection.flush();
       cancelStreamIfNecessary();
     }
