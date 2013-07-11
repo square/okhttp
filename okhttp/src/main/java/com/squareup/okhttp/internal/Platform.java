@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
@@ -102,6 +103,11 @@ public class Platform {
    * protocols are only sent if the socket implementation supports NPN.
    */
   public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+  }
+
+  public void connectSocket(Socket socket, InetSocketAddress address,
+      int connectTimeout) throws IOException {
+    socket.connect(address, connectTimeout);
   }
 
   /**
@@ -245,6 +251,18 @@ public class Platform {
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
     }
+
+    @Override public void connectSocket(Socket socket, InetSocketAddress address,
+        int connectTimeout) throws IOException {
+      try {
+        socket.connect(address, connectTimeout);
+      } catch (SecurityException se) {
+        // Before android 4.3, socket.connect could throw a SecurityException
+        // if opening a socket resulted in an EACCES error.
+        throw new IOException("Exception in connect", se);
+      }
+    }
+
 
     @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
       super.enableTlsExtensions(socket, uriHost);
