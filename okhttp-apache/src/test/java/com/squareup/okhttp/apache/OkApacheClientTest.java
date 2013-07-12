@@ -236,8 +236,7 @@ public class OkApacheClientTest {
     // content length should also be absent
     Header[] headers1b = response1.getHeaders("Content-Length");
     assertEquals(0, headers1b.length);
-    // The following currently fails because ContentLength(-1) is returned from the entity
-    // assertNull(response1.getEntity().getContentLength());
+    assertTrue(response1.getEntity().getContentLength() < 0);
     Header[] headers1c = response1.getHeaders("Content-Type");
     assertEquals(1, headers1c.length);
     assertEquals("application/json", headers1c[0].getValue());
