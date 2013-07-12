@@ -259,10 +259,11 @@ public class Platform {
       } catch (SecurityException se) {
         // Before android 4.3, socket.connect could throw a SecurityException
         // if opening a socket resulted in an EACCES error.
-        throw new IOException("Exception in connect", se);
+        IOException ioException = new IOException("Exception in connect");
+        ioException.initCause(se);
+        throw ioException;
       }
     }
-
 
     @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
       super.enableTlsExtensions(socket, uriHost);
