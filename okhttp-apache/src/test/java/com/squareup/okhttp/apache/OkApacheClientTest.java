@@ -4,8 +4,14 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -18,6 +24,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class OkApacheClientTest {
@@ -110,5 +118,137 @@ public class OkApacheClientTest {
     RecordedRequest request = server.takeRequest();
     assertTrue(Arrays.equals(body, request.getBody()));
     assertEquals(request.getHeader("Content-Length"), "13");
+  }
+
+  @Test public void contentType() throws Exception {
+    server.enqueue(new MockResponse().setBody("<html><body><h1>Hello, World!</h1></body></html>")
+        .setHeader("Content-Type", "text/html"));
+    server.enqueue(new MockResponse().setBody("{\"Message\": { \"text\": \"Hello, World!\" } }")
+        .setHeader("Content-Type", "application/json"));
+    server.enqueue(new MockResponse().setBody("Hello, World!"));
+
+    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    HttpResponse response1 = client.execute(request1);
+    Header[] headers1 = response1.getHeaders("Content-Type");
+    assertEquals(1, headers1.length);
+    assertEquals("text/html", headers1[0].getValue());
+    assertNotNull(response1.getEntity().getContentType());
+    assertEquals("text/html", response1.getEntity().getContentType().getValue());
+
+    HttpGet request2 = new HttpGet(server.getUrl("/").toURI());
+    HttpResponse response2 = client.execute(request2);
+    Header[] headers2 = response2.getHeaders("Content-Type");
+    assertEquals(1, headers2.length);
+    assertEquals("application/json", headers2[0].getValue());
+    assertNotNull(response2.getEntity().getContentType());
+    assertEquals("application/json", response2.getEntity().getContentType().getValue());
+
+    HttpGet request3 = new HttpGet(server.getUrl("/").toURI());
+    HttpResponse response3 = client.execute(request3);
+    Header[] headers3 = response3.getHeaders("Content-Type");
+    assertEquals(0, headers3.length);
+    assertNull(response3.getEntity().getContentType());
+  }
+
+  @Test public void contentEncoding() throws Exception {
+    String text = "{\"Message\": { \"text\": \"Hello, World!\" } }";
+    ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+    OutputStreamWriter body = new OutputStreamWriter(new GZIPOutputStream(bodyBytes),
+        Charset.forName("UTF-8"));
+    body.write(text);
+    body.close();
+    server.enqueue(new MockResponse().setBody(bodyBytes.toByteArray())
+        .setHeader("Content-Encoding", "gzip"));
+
+    byte[] tmp = new byte[32];
+
+    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    request1.setHeader("Accept-encoding", "gzip"); // not transparent gzip
+    HttpResponse response1 = client.execute(request1);
+    Header[] headers1 = response1.getHeaders("Content-Encoding");
+    assertEquals(1, headers1.length);
+    assertEquals("gzip", headers1[0].getValue());
+    assertNotNull(response1.getEntity().getContentEncoding());
+    assertEquals("gzip", response1.getEntity().getContentEncoding().getValue());
+    InputStream content = new GZIPInputStream(response1.getEntity().getContent());
+    ByteArrayOutputStream rspBodyBytes = new ByteArrayOutputStream();
+    for (int len = content.read(tmp); len >= 0; len = content.read(tmp)) {
+      rspBodyBytes.write(tmp, 0, len);
+    }
+    String decodedContent = rspBodyBytes.toString("UTF-8");
+    assertEquals(text, decodedContent);
+  }
+
+  @Test public void jsonGzipResponse() throws Exception {
+    String text = "{\"Message\": { \"text\": \"Hello, World!\" } }";
+    ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+    OutputStreamWriter body = new OutputStreamWriter(new GZIPOutputStream(bodyBytes),
+        Charset.forName("UTF-8"));
+    body.write(text);
+    body.close();
+    server.enqueue(new MockResponse().setBody(bodyBytes.toByteArray())
+        .setHeader("Content-Encoding", "gzip")
+        .setHeader("Content-Type", "application/json"));
+
+    byte[] tmp = new byte[32];
+
+    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    request1.setHeader("Accept-encoding", "gzip"); // not transparent gzip
+    HttpResponse response1 = client.execute(request1);
+    Header[] headers1a = response1.getHeaders("Content-Encoding");
+    assertEquals(1, headers1a.length);
+    assertEquals("gzip", headers1a[0].getValue());
+    assertNotNull(response1.getEntity().getContentEncoding());
+    assertEquals("gzip", response1.getEntity().getContentEncoding().getValue());
+    Header[] headers1b = response1.getHeaders("Content-Type");
+    assertEquals(1, headers1b.length);
+    assertEquals("application/json", headers1b[0].getValue());
+    assertNotNull(response1.getEntity().getContentType());
+    assertEquals("application/json", response1.getEntity().getContentType().getValue());
+    InputStream content = new GZIPInputStream(response1.getEntity().getContent());
+    ByteArrayOutputStream rspBodyBytes = new ByteArrayOutputStream();
+    for (int len = content.read(tmp); len >= 0; len = content.read(tmp)) {
+      rspBodyBytes.write(tmp, 0, len);
+    }
+    String decodedContent = rspBodyBytes.toString("UTF-8");
+    assertEquals(text, decodedContent);
+  }
+
+  @Test public void jsonTransparentGzipResponse() throws Exception {
+    String text = "{\"Message\": { \"text\": \"Hello, World!\" } }";
+    ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+    OutputStreamWriter body = new OutputStreamWriter(new GZIPOutputStream(bodyBytes),
+        Charset.forName("UTF-8"));
+    body.write(text);
+    body.close();
+    server.enqueue(new MockResponse().setBody(bodyBytes.toByteArray())
+        .setHeader("Content-Encoding", "gzip")
+        .setHeader("Content-Type", "application/json"));
+
+    byte[] tmp = new byte[32];
+
+    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    // expecting transparent gzip response by not adding header "Accept-encoding: gzip"
+    HttpResponse response1 = client.execute(request1);
+    Header[] headers1a = response1.getHeaders("Content-Encoding");
+    assertEquals(0, headers1a.length);
+    assertNull(response1.getEntity().getContentEncoding());
+    // content length should also be absent
+    Header[] headers1b = response1.getHeaders("Content-Length");
+    assertEquals(0, headers1b.length);
+    // The following currently fails because ContentLength(-1) is returned from the entity
+    // assertNull(response1.getEntity().getContentLength());
+    Header[] headers1c = response1.getHeaders("Content-Type");
+    assertEquals(1, headers1c.length);
+    assertEquals("application/json", headers1c[0].getValue());
+    assertNotNull(response1.getEntity().getContentType());
+    assertEquals("application/json", response1.getEntity().getContentType().getValue());
+    InputStream content = response1.getEntity().getContent();
+    ByteArrayOutputStream rspBodyBytes = new ByteArrayOutputStream();
+    for (int len = content.read(tmp); len >= 0; len = content.read(tmp)) {
+      rspBodyBytes.write(tmp, 0, len);
+    }
+    String decodedContent = rspBodyBytes.toString("UTF-8");
+    assertEquals(text, decodedContent);
   }
 }

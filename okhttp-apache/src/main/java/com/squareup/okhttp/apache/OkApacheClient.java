@@ -21,6 +21,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnRouteParams;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.params.AbstractHttpParams;
 import org.apache.http.params.HttpParams;
@@ -152,19 +153,25 @@ public class OkApacheClient implements HttpClient {
     int responseCode = connection.getResponseCode();
     String message = connection.getResponseMessage();
     BasicHttpResponse response = new BasicHttpResponse(HTTP_1_1, responseCode, message);
+    // Get the response body ready to stream.
+    InputStream responseBody =
+        responseCode < HttpURLConnection.HTTP_BAD_REQUEST ? connection.getInputStream()
+            : connection.getErrorStream();
+    InputStreamEntity entity = new InputStreamEntity(responseBody, connection.getContentLength());
     for (int i = 0; true; i++) {
       String name = connection.getHeaderFieldKey(i);
       if (name == null) {
         break;
       }
-      response.addHeader(name, connection.getHeaderField(i));
+      BasicHeader header = new BasicHeader(name, connection.getHeaderField(i));
+      response.addHeader(header);
+      if (name.equalsIgnoreCase("Content-Type")) {
+          entity.setContentType(header);
+      } else if (name.equalsIgnoreCase("Content-Encoding")) {
+          entity.setContentEncoding(header);
+      }
     }
-
-    // Get the response body ready to stream.
-    InputStream responseBody =
-        responseCode < HttpURLConnection.HTTP_BAD_REQUEST ? connection.getInputStream()
-            : connection.getErrorStream();
-    response.setEntity(new InputStreamEntity(responseBody, connection.getContentLength()));
+    response.setEntity(entity);
 
     return response;
   }
