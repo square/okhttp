@@ -123,23 +123,6 @@ public final class RawHeaders {
     this.httpMinorVersion = httpMinorVersion;
   }
 
-  public void computeResponseStatusLineFromSpdyHeaders() throws IOException {
-    String status = null;
-    String version = null;
-    for (int i = 0; i < namesAndValues.size(); i += 2) {
-      String name = namesAndValues.get(i);
-      if (":status".equals(name)) {
-        status = namesAndValues.get(i + 1);
-      } else if (":version".equals(name)) {
-        version = namesAndValues.get(i + 1);
-      }
-    }
-    if (status == null || version == null) {
-      throw new ProtocolException("Expected ':status' and ':version' headers not present");
-    }
-    setStatusLine(version + " " + status);
-  }
-
   /**
    * @param method like "GET", "POST", "HEAD", etc.
    * @param path like "/foo/bar.html"
@@ -425,10 +408,13 @@ public final class RawHeaders {
     return result;
   }
 
-  public static RawHeaders fromNameValueBlock(List<String> nameValueBlock) {
+  /** Returns headers for a name value block containing a SPDY response. */
+  public static RawHeaders fromNameValueBlock(List<String> nameValueBlock) throws IOException {
     if (nameValueBlock.size() % 2 != 0) {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
     }
+    String status = null;
+    String version = null;
     RawHeaders result = new RawHeaders();
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
@@ -438,11 +424,21 @@ public final class RawHeaders {
         if (end == -1) {
           end = values.length();
         }
-        result.namesAndValues.add(name);
-        result.namesAndValues.add(values.substring(start, end));
+        String value = values.substring(start, end);
+        if (":status".equals(name)) {
+          status = value;
+        } else if (":version".equals(name)) {
+          version = value;
+        } else {
+          result.namesAndValues.add(name);
+          result.namesAndValues.add(value);
+        }
         start = end + 1;
       }
     }
+    if (status == null) throw new ProtocolException("Expected ':status' header not present");
+    if (version == null) throw new ProtocolException("Expected ':version' header not present");
+    result.setStatusLine(version + " " + status);
     return result;
   }
 }
