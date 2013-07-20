@@ -2282,7 +2282,7 @@ public final class URLConnectionTest {
   }
 
   // This test is ignored because we don't (yet) reliably recover for large request bodies.
-  @Test @Ignore public void postFailsWithBufferedRequestForLargeRequest() throws Exception {
+  @Test public void postFailsWithBufferedRequestForLargeRequest() throws Exception {
     reusedConnectionFailsWithPost(TransferKind.END_OF_STREAM, 16384);
   }
 
@@ -2290,8 +2290,7 @@ public final class URLConnectionTest {
     reusedConnectionFailsWithPost(TransferKind.CHUNKED, 1024);
   }
 
-  // This test is ignored because we don't (yet) reliably recover for large request bodies.
-  @Test @Ignore public void postFailsWithChunkedRequestForLargeRequest() throws Exception {
+  @Test public void postFailsWithChunkedRequestForLargeRequest() throws Exception {
     reusedConnectionFailsWithPost(TransferKind.CHUNKED, 16384);
   }
 
@@ -2299,8 +2298,7 @@ public final class URLConnectionTest {
     reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 1024);
   }
 
-  // This test is ignored because we don't (yet) reliably recover for large request bodies.
-  @Test @Ignore public void postFailsWithFixedLengthRequestForLargeRequest() throws Exception {
+  @Test public void postFailsWithFixedLengthRequestForLargeRequest() throws Exception {
     reusedConnectionFailsWithPost(TransferKind.FIXED_LENGTH, 16384);
   }
 
