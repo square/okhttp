@@ -60,8 +60,9 @@ public abstract class FaultRecoveringOutputStream extends AbstractOutputStream {
         out.write(buffer, offset, count);
 
         if (replayBuffer != null) {
-          if (count + replayBuffer.size() > maxReplayBufferLength) {
-            // Failure recovery is no longer possible once we overflow the replay buffer.
+          final int dataWritten = count + replayBuffer.size();
+          if (dataWritten > maxReplayBufferLength || dataWritten == buffer.length) {
+            // Failure recovery is no longer possible once we overflow the replay buffer OR written the entire buffer successfully.
             replayBuffer = null;
           } else {
             // Remember the written bytes to the replay buffer.
