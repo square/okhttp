@@ -69,7 +69,6 @@ public final class SpdyTransport implements Transport {
   @Override public ResponseHeaders readResponseHeaders() throws IOException {
     List<String> nameValueBlock = stream.getResponseHeaders();
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
-    rawHeaders.computeResponseStatusLineFromSpdyHeaders();
     httpEngine.receiveHeaders(rawHeaders);
 
     ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);

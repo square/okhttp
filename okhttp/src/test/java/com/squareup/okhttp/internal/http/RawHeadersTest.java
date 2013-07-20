@@ -23,7 +23,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
 public final class RawHeadersTest {
-  @Test public void parseNameValueBlock() {
+  @Test public void parseNameValueBlock() throws IOException {
     List<String> nameValueBlock =
         Arrays.asList("cache-control", "no-cache, no-store", "set-cookie", "Cookie1\u0000Cookie2",
             ":status", "200 OK");
