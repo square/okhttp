@@ -19,8 +19,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.internal.AbstractOutputStream;
-import com.squareup.okhttp.internal.FaultRecoveringOutputStream;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
@@ -69,20 +67,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   private static final int MAX_REDIRECTS = 20;
 
-  /**
-   * The minimum number of request body bytes to transmit before we're willing
-   * to let a routine {@link IOException} bubble up to the user. This is used to
-   * size a buffer for data that will be replayed upon error.
-   */
-  private static final int MAX_REPLAY_BUFFER_LENGTH = 8192;
-
   final OkHttpClient client;
 
   private final RawHeaders rawRequestHeaders = new RawHeaders();
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
   private int redirectionCount;
-  private FaultRecoveringOutputStream faultRecoveringRequestBody;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
 
@@ -212,22 +202,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       throw new ProtocolException("cannot write request body after response has been read");
     }
 
-    if (faultRecoveringRequestBody == null) {
-      faultRecoveringRequestBody = new FaultRecoveringOutputStream(MAX_REPLAY_BUFFER_LENGTH, out) {
-        @Override protected OutputStream replacementStream(IOException e) throws IOException {
-          if (httpEngine.getRequestBody() instanceof AbstractOutputStream
-              && ((AbstractOutputStream) httpEngine.getRequestBody()).isClosed()) {
-            return null; // Don't recover once the underlying stream has been closed.
-          }
-          if (handleFailure(e)) {
-            return httpEngine.getRequestBody();
-          }
-          return null; // This is a permanent failure.
-        }
-      };
-    }
-
-    return faultRecoveringRequestBody;
+    return out;
   }
 
   @Override public final Permission getPermission() throws IOException {
@@ -393,8 +368,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
     OutputStream requestBody = httpEngine.getRequestBody();
     boolean canRetryRequestBody = requestBody == null
-        || requestBody instanceof RetryableOutputStream
-        || (faultRecoveringRequestBody != null && faultRecoveringRequestBody.isRecoverable());
+        || requestBody instanceof RetryableOutputStream;
     if (routeSelector == null && httpEngine.connection == null // No connection.
         || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
         || !isRecoverable(e)
@@ -404,15 +378,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     }
 
     httpEngine.release(true);
-    RetryableOutputStream retryableOutputStream = requestBody instanceof RetryableOutputStream
-        ? (RetryableOutputStream) requestBody
-        : null;
+    RetryableOutputStream retryableOutputStream = (RetryableOutputStream) requestBody;
     httpEngine = newHttpEngine(method, rawRequestHeaders, null, retryableOutputStream);
     httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
-    if (faultRecoveringRequestBody != null && faultRecoveringRequestBody.isRecoverable()) {
-      httpEngine.sendRequest();
-      faultRecoveringRequestBody.replaceStream(httpEngine.getRequestBody());
-    }
     return true;
   }
 

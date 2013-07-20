@@ -102,11 +102,11 @@ public final class RouteSelector {
    *
    * @throws NoSuchElementException if there are no more routes to attempt.
    */
-  public Connection next() throws IOException {
+  public Connection next(String method) throws IOException {
     // Always prefer pooled connections over new connections.
-    Connection pooled = pool.get(address);
-    if (pooled != null) {
-      return pooled;
+    for (Connection pooled; (pooled = pool.get(address)) != null; ) {
+      if (method.equals("GET") || pooled.isReadable()) return pooled;
+      pooled.close();
     }
 
     // Compute the next route to attempt.
@@ -131,7 +131,7 @@ public final class RouteSelector {
       postponedRoutes.add(route);
       // We will only recurse in order to skip previously failed routes. They will be
       // tried last.
-      return next();
+      return next(method);
     }
 
     return new Connection(route);

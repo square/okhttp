@@ -216,8 +216,6 @@ public class ConnectionPool {
    * <p>It is an error to use {@code connection} after calling this method.
    */
   public void recycle(Connection connection) {
-    executorService.submit(connectionsCleanupCallable);
-
     if (connection.isSpdy()) {
       return;
     }
@@ -240,6 +238,8 @@ public class ConnectionPool {
       connections.addFirst(connection);
       connection.resetIdleStartTime();
     }
+
+    executorService.submit(connectionsCleanupCallable);
   }
 
   /**

@@ -286,7 +286,7 @@ public class HttpEngine {
       routeSelector = new RouteSelector(address, uri, client.getProxySelector(),
           client.getConnectionPool(), Dns.DEFAULT, client.getRoutesDatabase());
     }
-    connection = routeSelector.next();
+    connection = routeSelector.next(method);
     if (!connection.isConnected()) {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
       client.getConnectionPool().maybeShare(connection);
