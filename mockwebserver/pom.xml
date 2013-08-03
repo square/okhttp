@@ -9,8 +9,8 @@
     <version>1.1.2-SNAPSHOT</version>
   </parent>
 
-  <artifactId>okhttp</artifactId>
-  <name>OkHttp</name>
+  <artifactId>mockwebserver</artifactId>
+  <name>MockWebServer</name>
 
   <dependencies>
     <dependency>
@@ -19,11 +19,14 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcprov-jdk15on</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.mortbay.jetty.npn</groupId>
       <artifactId>npn-boot</artifactId>
       <optional>true</optional>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -32,13 +35,23 @@
     <dependency>
       <groupId>com.google.mockwebserver</groupId>
       <artifactId>mockwebserver</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>mockwebserver</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <!-- Don't restrict test code to Java 1.5 APIs. -->
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>animal-sniffer-maven-plugin</artifactId>
+        <configuration>
+          <signature>
+            <groupId>org.codehaus.mojo.signature</groupId>
+            <artifactId>java16</artifactId>
+            <version>1.0</version>
+          </signature>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
