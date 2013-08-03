@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.spdy;
+package com.squareup.okhttp.internal.http;
 
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.RecordedRequest;
@@ -86,6 +86,7 @@ public final class HttpOverSpdyTest {
   }
 
   @After public void tearDown() throws Exception {
+    Authenticator.setDefault(null);
     server.shutdown();
   }
 
