@@ -21,6 +21,8 @@
   <modules>
     <module>okhttp</module>
     <module>okhttp-apache</module>
+    <module>okhttp-protocols</module>
+    <module>mockwebserver</module>
     <module>samples</module>
   </modules>
 

@@ -112,6 +112,7 @@ public final class URLConnectionTest {
   }
 
   @After public void tearDown() throws Exception {
+    Authenticator.setDefault(null);
     System.clearProperty("proxyHost");
     System.clearProperty("proxyPort");
     System.clearProperty("http.proxyHost");

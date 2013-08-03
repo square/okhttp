@@ -18,9 +18,18 @@ package com.squareup.okhttp.internal;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.After;
 import org.junit.Test;
 

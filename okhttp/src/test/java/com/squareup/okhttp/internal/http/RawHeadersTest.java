@@ -20,26 +20,29 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
+import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 
 public final class RawHeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
-    List<String> nameValueBlock =
-        Arrays.asList("cache-control", "no-cache, no-store", "set-cookie", "Cookie1\u0000Cookie2",
-            ":status", "200 OK");
-    // TODO: fromNameValueBlock should synthesize a request status line
+    List<String> nameValueBlock = Arrays.asList(
+        "cache-control", "no-cache, no-store",
+        "set-cookie", "Cookie1\u0000Cookie2",
+        ":status", "200 OK",
+        ":version", "HTTP/1.1");
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
+    assertEquals(3, rawHeaders.length());
+    assertEquals("HTTP/1.1 200 OK", rawHeaders.getStatusLine());
     assertEquals("no-cache, no-store", rawHeaders.get("cache-control"));
     assertEquals("Cookie2", rawHeaders.get("set-cookie"));
-    assertEquals("200 OK", rawHeaders.get(":status"));
     assertEquals("cache-control", rawHeaders.getFieldName(0));
     assertEquals("no-cache, no-store", rawHeaders.getValue(0));
     assertEquals("set-cookie", rawHeaders.getFieldName(1));
     assertEquals("Cookie1", rawHeaders.getValue(1));
     assertEquals("set-cookie", rawHeaders.getFieldName(2));
     assertEquals("Cookie2", rawHeaders.getValue(2));
-    assertEquals(":status", rawHeaders.getFieldName(3));
-    assertEquals("200 OK", rawHeaders.getValue(3));
+    assertNull(rawHeaders.get(":status"));
+    assertNull(rawHeaders.get(":version"));
   }
 
   @Test public void toNameValueBlock() {
