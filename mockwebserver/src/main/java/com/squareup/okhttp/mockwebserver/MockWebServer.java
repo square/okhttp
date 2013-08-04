@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.mockwebserver;
+package com.squareup.okhttp.mockwebserver;
 
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.google.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,11 +33,13 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
@@ -360,7 +362,7 @@ public final class MockWebServer {
             }
         };
         SSLContext context = SSLContext.getInstance("TLS");
-        context.init(null, new TrustManager[] { untrusted }, new java.security.SecureRandom());
+        context.init(null, new TrustManager[] { untrusted }, new SecureRandom());
         SSLSocketFactory sslSocketFactory = context.getSocketFactory();
         SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket(
                 raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
@@ -372,16 +374,18 @@ public final class MockWebServer {
         socket.close();
     }
 
-    private void dispatchBookkeepingRequest(int sequenceNumber, Socket socket) throws InterruptedException {
+    private void dispatchBookkeepingRequest(int sequenceNumber, Socket socket)
+            throws InterruptedException {
         requestCount.incrementAndGet();
-        dispatcher.dispatch(new RecordedRequest(null, null, null, -1, null, sequenceNumber, socket));
+        dispatcher.dispatch(
+            new RecordedRequest(null, null, null, -1, null, sequenceNumber, socket));
     }
 
     /**
      * @param sequenceNumber the index of this request on this connection.
      */
-    private RecordedRequest readRequest(Socket socket, InputStream in, OutputStream out, int sequenceNumber)
-            throws IOException {
+    private RecordedRequest readRequest(Socket socket, InputStream in, OutputStream out,
+            int sequenceNumber) throws IOException {
         String request;
         try {
             request = readAsciiUntilCrlf(in);
@@ -399,16 +403,16 @@ public final class MockWebServer {
         String header;
         while ((header = readAsciiUntilCrlf(in)).length() != 0) {
             headers.add(header);
-            String lowercaseHeader = header.toLowerCase();
+            String lowercaseHeader = header.toLowerCase(Locale.US);
             if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
                 contentLength = Long.parseLong(header.substring(15).trim());
             }
-            if (lowercaseHeader.startsWith("transfer-encoding:") &&
-                    lowercaseHeader.substring(18).trim().equals("chunked")) {
+            if (lowercaseHeader.startsWith("transfer-encoding:")
+                    && lowercaseHeader.substring(18).trim().equals("chunked")) {
                 chunked = true;
             }
-            if (lowercaseHeader.startsWith("expect:") &&
-                    lowercaseHeader.substring(7).trim().equals("100-continue")) {
+            if (lowercaseHeader.startsWith("expect:")
+                    && lowercaseHeader.substring(7).trim().equals("100-continue")) {
                 expectContinue = true;
             }
         }

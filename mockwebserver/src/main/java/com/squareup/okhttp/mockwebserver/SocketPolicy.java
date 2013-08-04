@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.mockwebserver;
+package com.squareup.okhttp.mockwebserver;
 
 /**
  * What should be done with the incoming socket.

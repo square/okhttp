@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.google.mockwebserver;
+package com.squareup.okhttp.mockwebserver;
 
-import static com.google.mockwebserver.MockWebServer.ASCII;
+import static com.squareup.okhttp.mockwebserver.MockWebServer.ASCII;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

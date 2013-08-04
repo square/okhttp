@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.mockwebserver;
+package com.squareup.okhttp.mockwebserver;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

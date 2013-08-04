@@ -19,6 +19,12 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <scope>provided</scope>
@@ -27,11 +33,6 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.google.mockwebserver</groupId>
-      <artifactId>mockwebserver</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -17,9 +17,9 @@
 
 package com.squareup.okhttp.internal.mockspdyserver;
 
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.QueueDispatcher;
-import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.QueueDispatcher;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
