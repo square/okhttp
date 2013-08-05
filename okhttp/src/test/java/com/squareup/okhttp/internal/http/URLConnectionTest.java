@@ -109,6 +109,7 @@ public final class URLConnectionTest {
 
   @Before public void setUp() throws Exception {
     hostName = server.getHostName();
+    server.setNpnEnabled(false);
   }
 
   @After public void tearDown() throws Exception {
@@ -1619,6 +1620,7 @@ public final class URLConnectionTest {
     if (https) {
       server.useHttps(sslContext.getSocketFactory(), false);
       server2.useHttps(sslContext.getSocketFactory(), false);
+      server2.setNpnEnabled(false);
       client.setSslSocketFactory(sslContext.getSocketFactory());
       client.setHostnameVerifier(new RecordingHostnameVerifier());
     }

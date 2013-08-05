@@ -15,14 +15,14 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.mockspdyserver.MockSpdyServer;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -72,12 +72,13 @@ public final class HttpOverSpdyTest {
       throw new RuntimeException(e);
     }
   }
-  private final MockSpdyServer server = new MockSpdyServer(sslContext.getSocketFactory());
+  private final MockWebServer server = new MockWebServer();
   private final String hostName = server.getHostName();
   private final OkHttpClient client = new OkHttpClient();
   private HttpResponseCache cache;
 
   @Before public void setUp() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");

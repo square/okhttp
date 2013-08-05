@@ -59,6 +59,6 @@ interface Transport {
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
 
   /** Returns true if the underlying connection can be recycled. */
-  boolean makeReusable(boolean streamReusable, OutputStream requestBodyOut,
+  boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
       InputStream responseBodyIn);
 }

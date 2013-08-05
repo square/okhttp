@@ -16,13 +16,13 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -110,6 +110,7 @@ public final class HttpResponseCacheTest {
     cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
     ResponseCache.setDefault(cache);
     CookieHandler.setDefault(cookieManager);
+    server.setNpnEnabled(false);
   }
 
   @After public void tearDown() throws Exception {
@@ -437,15 +438,14 @@ public final class HttpResponseCacheTest {
     server.enqueue(new MockResponse().setBody("DEF"));
     server.play();
 
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+
     HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
-    connection1.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     assertEquals("ABC", readAscii(connection1));
 
     // Cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
-    connection1.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     assertEquals("ABC", readAscii(connection2));
 
     assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
