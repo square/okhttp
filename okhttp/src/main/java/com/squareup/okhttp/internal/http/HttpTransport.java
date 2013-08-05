@@ -141,9 +141,9 @@ public final class HttpTransport implements Transport {
     return headers;
   }
 
-  public boolean makeReusable(boolean streamCancelled, OutputStream requestBodyOut,
+  public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
       InputStream responseBodyIn) {
-    if (streamCancelled) {
+    if (streamCanceled) {
       return false;
     }
 
@@ -177,6 +177,10 @@ public final class HttpTransport implements Transport {
    * Discards the response body so that the connection can be reused. This
    * needs to be done judiciously, since it delays the current request in
    * order to speed up a potential future request that may never occur.
+   *
+   * <p>A stream may be discarded to encourage response caching (a response
+   * cannot be cached unless it is consumed completely) or to enable connection
+   * reuse.
    */
   private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
     Connection connection = httpEngine.connection;
@@ -373,7 +377,7 @@ public final class HttpTransport implements Transport {
       super(is, httpEngine, cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
-        endOfInput(false);
+        endOfInput();
       }
     }
 
@@ -391,7 +395,7 @@ public final class HttpTransport implements Transport {
       bytesRemaining -= read;
       cacheWrite(buffer, offset, read);
       if (bytesRemaining == 0) {
-        endOfInput(false);
+        endOfInput();
       }
       return read;
     }
@@ -468,7 +472,7 @@ public final class HttpTransport implements Transport {
         RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
         RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
         httpEngine.receiveHeaders(rawResponseHeaders);
-        endOfInput(false);
+        endOfInput();
       }
     }
 
