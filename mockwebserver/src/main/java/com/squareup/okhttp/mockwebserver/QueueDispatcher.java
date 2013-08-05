@@ -20,53 +20,52 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Default dispatcher that processes a script of responses.  Populate the script by calling
- * {@link #enqueueResponse(MockResponse)}.
+ * Default dispatcher that processes a script of responses. Populate the script
+ * by calling {@link #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
-    protected final BlockingQueue<MockResponse> responseQueue
-            = new LinkedBlockingQueue<MockResponse>();
-    private MockResponse failFastResponse;
+  protected final BlockingQueue<MockResponse> responseQueue
+      = new LinkedBlockingQueue<MockResponse>();
+  private MockResponse failFastResponse;
 
-    @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-        // to permit interactive/browser testing, ignore requests for favicons
-        final String requestLine = request.getRequestLine();
-        if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
-            System.out.println("served " + requestLine);
-            return new MockResponse()
-                    .setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
-        }
-
-        if (failFastResponse != null && responseQueue.peek() == null) {
-            // Fail fast if there's no response queued up.
-            return failFastResponse;
-        }
-
-        return responseQueue.take();
+  @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+    // To permit interactive/browser testing, ignore requests for favicons.
+    final String requestLine = request.getRequestLine();
+    if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
+      System.out.println("served " + requestLine);
+      return new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
     }
 
-    @Override public SocketPolicy peekSocketPolicy() {
-        MockResponse peek = responseQueue.peek();
-        if (peek == null) {
-            return failFastResponse != null
-                    ? failFastResponse.getSocketPolicy()
-                    : SocketPolicy.KEEP_OPEN;
-        }
-        return peek.getSocketPolicy();
+    if (failFastResponse != null && responseQueue.peek() == null) {
+      // Fail fast if there's no response queued up.
+      return failFastResponse;
     }
 
-    public void enqueueResponse(MockResponse response) {
-        responseQueue.add(response);
-    }
+    return responseQueue.take();
+  }
 
-    public void setFailFast(boolean failFast) {
-        MockResponse failFastResponse = failFast
-                ? new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
-                : null;
-        setFailFast(failFastResponse);
+  @Override public SocketPolicy peekSocketPolicy() {
+    MockResponse peek = responseQueue.peek();
+    if (peek == null) {
+      return failFastResponse != null
+          ? failFastResponse.getSocketPolicy()
+          : SocketPolicy.KEEP_OPEN;
     }
+    return peek.getSocketPolicy();
+  }
 
-    public void setFailFast(MockResponse failFastResponse) {
-        this.failFastResponse = failFastResponse;
-    }
+  public void enqueueResponse(MockResponse response) {
+    responseQueue.add(response);
+  }
+
+  public void setFailFast(boolean failFast) {
+    MockResponse failFastResponse = failFast
+        ? new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND)
+        : null;
+    setFailFast(failFastResponse);
+  }
+
+  public void setFailFast(MockResponse failFastResponse) {
+    this.failFastResponse = failFastResponse;
+  }
 }
