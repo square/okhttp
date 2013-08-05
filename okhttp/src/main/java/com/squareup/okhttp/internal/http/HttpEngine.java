@@ -426,7 +426,7 @@ public class HttpEngine {
    * closed. Also call {@link #automaticallyReleaseConnectionToPool} unless
    * the connection will be used to follow a redirect.
    */
-  public final void release(boolean streamCancelled) {
+  public final void release(boolean streamCanceled) {
     // If the response body comes from the cache, close it.
     if (responseBodyIn == cachedResponseBody) {
       Util.closeQuietly(responseBodyIn);
@@ -435,8 +435,8 @@ public class HttpEngine {
     if (!connectionReleased && connection != null) {
       connectionReleased = true;
 
-      if (transport == null || !transport.makeReusable(streamCancelled, requestBodyOut,
-          responseTransferIn)) {
+      if (transport == null
+          || !transport.makeReusable(streamCanceled, requestBodyOut, responseTransferIn)) {
         Util.closeQuietly(connection);
         connection = null;
       } else if (automaticallyReleaseConnectionToPool) {

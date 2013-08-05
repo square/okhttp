@@ -25,9 +25,9 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 final class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
   private boolean inputExhausted;
 
-  UnknownLengthHttpInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine)
+  UnknownLengthHttpInputStream(InputStream in, CacheRequest cacheRequest, HttpEngine httpEngine)
       throws IOException {
-    super(is, httpEngine, cacheRequest);
+    super(in, httpEngine, cacheRequest);
   }
 
   @Override public int read(byte[] buffer, int offset, int count) throws IOException {
@@ -39,7 +39,7 @@ final class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
     int read = in.read(buffer, offset, count);
     if (read == -1) {
       inputExhausted = true;
-      endOfInput(false);
+      endOfInput();
       return -1;
     }
     cacheWrite(buffer, offset, read);
