@@ -16,54 +16,46 @@
 
 package com.squareup.okhttp.mockwebserver;
 
-/**
- * What should be done with the incoming socket.
- */
+/** What should be done with the incoming socket. */
 public enum SocketPolicy {
 
-    /**
-     * Keep the socket open after the response. This is the default HTTP/1.1
-     * behavior.
-     */
-    KEEP_OPEN,
+  /**
+   * Keep the socket open after the response. This is the default HTTP/1.1
+   * behavior.
+   */
+  KEEP_OPEN,
 
-    /**
-     * Close the socket after the response. This is the default HTTP/1.0
-     * behavior.
-     */
-    DISCONNECT_AT_END,
+  /**
+   * Close the socket after the response. This is the default HTTP/1.0
+   * behavior.
+   */
+  DISCONNECT_AT_END,
 
-    /**
-     * Wrap the socket with SSL at the completion of this request/response
-     * pair. Used for CONNECT messages to tunnel SSL over an HTTP proxy.
-     */
-    UPGRADE_TO_SSL_AT_END,
+  /**
+   * Wrap the socket with SSL at the completion of this request/response pair.
+   * Used for CONNECT messages to tunnel SSL over an HTTP proxy.
+   */
+  UPGRADE_TO_SSL_AT_END,
 
-    /**
-     * Request immediate close of connection without even reading the
-     * request.
-     *
-     * <p>Use to simulate the real life case of losing connection
-     * because of bugger SSL server close connection when it seems
-     * something like a compression method or TLS extension it doesn't
-     * understand, instead of simply ignoring it like it should.
-     */
-    DISCONNECT_AT_START,
+  /**
+   * Request immediate close of connection without even reading the request. Use
+   * to simulate buggy SSL servers closing connections in response to
+   * unrecognized TLS extensions.
+   */
+  DISCONNECT_AT_START,
 
-    /**
-     * Don't trust the client during the SSL handshake.
-     */
-    FAIL_HANDSHAKE,
+  /** Don't trust the client during the SSL handshake. */
+  FAIL_HANDSHAKE,
 
-    /**
-     * Shutdown the socket input after sending the response. For testing bad
-     * behavior.
-     */
-    SHUTDOWN_INPUT_AT_END,
+  /**
+   * Shutdown the socket input after sending the response. For testing bad
+   * behavior.
+   */
+  SHUTDOWN_INPUT_AT_END,
 
-    /**
-     * Shutdown the socket output after sending the response. For testing bad
-     * behavior.
-     */
-    SHUTDOWN_OUTPUT_AT_END
+  /**
+   * Shutdown the socket output after sending the response. For testing bad
+   * behavior.
+   */
+  SHUTDOWN_OUTPUT_AT_END
 }
