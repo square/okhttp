@@ -27,7 +27,7 @@ import static org.junit.Assert.fail;
 public final class StrictLineReaderTest {
   @Test public void lineReaderConsistencyWithReadAsciiLine() throws Exception {
     // Testing with LineReader buffer capacity 32 to check some corner cases.
-    StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32, US_ASCII);
+    StrictLineReader lineReader = new StrictLineReader(createTestInputStream(), 32);
     InputStream refStream = createTestInputStream();
     while (true) {
       try {

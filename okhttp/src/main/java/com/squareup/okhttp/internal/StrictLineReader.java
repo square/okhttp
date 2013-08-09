@@ -16,13 +16,10 @@
 
 package com.squareup.okhttp.internal;
 
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 
 /**
  * Buffers input from an {@link InputStream} for reading lines.
@@ -39,15 +36,14 @@ import java.nio.charset.Charset;
  *
  * <p>This class supports only charsets that encode '\r' and '\n' as a single byte with value 13
  * and 10, respectively, and the representation of no other character contains these values.
- * We currently check in constructor that the charset is one of US-ASCII, UTF-8 and ISO-8859-1.
- * The default charset is US_ASCII.
+ * US-ASCII, UTF-8 and ISO-8859-1 have this property. By default we use US-ASCII in
+ * {@link #readLine()}, use {@code reader.readLinRef().toString(charsetName)} for other charsets.
  */
 public class StrictLineReader implements Closeable {
   private static final byte CR = (byte) '\r';
   private static final byte LF = (byte) '\n';
 
   private final InputStream in;
-  private final Charset charset;
 
   /*
    * Buffered data is stored in {@code buf}. As long as no exception occurs, 0 <= pos <= end
@@ -59,44 +55,43 @@ public class StrictLineReader implements Closeable {
   private int pos;
   private int end;
 
+  /*
+   * We're reusing the same ByteSequence for each {@code readLineRef()} to avoid extra allocations.
+   * For lines that go across {@code fillBuf()}, we're trying to reuse a single byte array but
+   * we may need to grow that array via {@code line.append(buf, pos, x)}.
+   */
+  private ByteSequence line;
+  private byte[] splitLineData;
+
   /**
-   * Constructs a new {@code LineReader} with the specified charset and the default capacity.
+   * Constructs a new {@code LineReader} with the default capacity.
    *
    * @param in the {@code InputStream} to read data from.
-   * @param charset the charset used to decode data. Only US-ASCII, UTF-8 and ISO-8859-1 are
-   *     supported.
-   * @throws NullPointerException if {@code in} or {@code charset} is null.
-   * @throws IllegalArgumentException if the specified charset is not supported.
+   * @throws NullPointerException if {@code in} is null.
    */
-  public StrictLineReader(InputStream in, Charset charset) {
-    this(in, 8192, charset);
+  public StrictLineReader(InputStream in) {
+    this(in, 8192);
   }
 
   /**
-   * Constructs a new {@code LineReader} with the specified capacity and charset.
+   * Constructs a new {@code LineReader} with the specified capacity.
    *
    * @param in the {@code InputStream} to read data from.
    * @param capacity the capacity of the buffer.
-   * @param charset the charset used to decode data. Only US-ASCII, UTF-8 and ISO-8859-1 are
-   *     supported.
-   * @throws NullPointerException if {@code in} or {@code charset} is null.
-   * @throws IllegalArgumentException if {@code capacity} is negative or zero
-   *     or the specified charset is not supported.
+   * @throws NullPointerException if {@code in} is null.
+   * @throws IllegalArgumentException if {@code capacity} is negative or zero.
    */
-  public StrictLineReader(InputStream in, int capacity, Charset charset) {
-    if (in == null || charset == null) {
+  public StrictLineReader(InputStream in, int capacity) {
+    if (in == null) {
       throw new NullPointerException();
     }
-    if (capacity < 0) {
+    if (capacity <= 0) {
       throw new IllegalArgumentException("capacity <= 0");
-    }
-    if (!(charset.equals(Util.US_ASCII))) {
-      throw new IllegalArgumentException("Unsupported encoding");
     }
 
     this.in = in;
-    this.charset = charset;
     buf = new byte[capacity];
+    line = new ByteSequence();
   }
 
   /**
@@ -105,24 +100,27 @@ public class StrictLineReader implements Closeable {
    *
    * @throws IOException for errors when closing the underlying {@code InputStream}.
    */
-  public void close() throws IOException {
+  @Override public void close() throws IOException {
     synchronized (in) {
       if (buf != null) {
         buf = null;
+        line = null;
+        splitLineData = null;
         in.close();
       }
     }
   }
 
   /**
-   * Reads the next line. A line ends with {@code "\n"} or {@code "\r\n"},
+   * Reads the next line reference. The reference is valid until next call to any
+   * method of this reader. A line ends with {@code "\n"} or {@code "\r\n"},
    * this end of line marker is not included in the result.
    *
    * @return the next line from the input.
    * @throws IOException for underlying {@code InputStream} errors.
    * @throws EOFException for the end of source stream.
    */
-  public String readLine() throws IOException {
+  public ByteSequence readLineRef() throws IOException {
     synchronized (in) {
       if (buf == null) {
         throw new IOException("LineReader is closed");
@@ -138,26 +136,17 @@ public class StrictLineReader implements Closeable {
       for (int i = pos; i != end; ++i) {
         if (buf[i] == LF) {
           int lineEnd = (i != pos && buf[i - 1] == CR) ? i - 1 : i;
-          String res = new String(buf, pos, lineEnd - pos, charset.name());
+          line.reset(buf, pos, lineEnd - pos);
           pos = i + 1;
-          return res;
+          return line;
         }
       }
 
       // Let's anticipate up to 80 characters on top of those already read.
-      ByteArrayOutputStream out = new ByteArrayOutputStream(end - pos + 80) {
-        @Override public String toString() {
-          int length = (count > 0 && buf[count - 1] == CR) ? count - 1 : count;
-          try {
-            return new String(buf, 0, length, charset.name());
-          } catch (UnsupportedEncodingException e) {
-            throw new AssertionError(e); // Since we control the charset this will never happen.
-          }
-        }
-      };
+      line.reset(splitLineData != null ? splitLineData : new byte[end - pos + 80], 0, 0);
 
       while (true) {
-        out.write(buf, pos, end - pos);
+        line.append(buf, pos, end - pos);
         // Mark unterminated line in case fillBuf throws EOFException or IOException.
         end = -1;
         fillBuf();
@@ -165,13 +154,32 @@ public class StrictLineReader implements Closeable {
         for (int i = pos; i != end; ++i) {
           if (buf[i] == LF) {
             if (i != pos) {
-              out.write(buf, pos, i - pos);
+              line.append(buf, pos, i - pos);
             }
             pos = i + 1;
-            return out.toString();
+            int len = line.length();
+            if (len != 0 && line.byteAt(len - 1) == CR) {
+              line.truncate(len - 1);
+            }
+            splitLineData = line.data();  // reuse next time
+            return line;
           }
         }
       }
+    }
+  }
+
+  /**
+   * Reads the next line as ASCII string. A line ends with {@code "\n"} or {@code "\r\n"},
+   * this end of line marker is not included in the result.
+   *
+   * @return the next line from the input.
+   * @throws IOException for underlying {@code InputStream} errors.
+   * @throws EOFException for the end of source stream.
+   */
+  public String readLine() throws IOException {
+    synchronized (in) {
+      return readLineRef().toString("US-ASCII");
     }
   }
 
@@ -183,11 +191,13 @@ public class StrictLineReader implements Closeable {
    * @throws EOFException for the end of source stream.
    */
   public int readInt() throws IOException {
-    String intString = readLine();
-    try {
-      return Integer.parseInt(intString);
-    } catch (NumberFormatException e) {
-      throw new IOException("expected an int but was \"" + intString + "\"");
+    synchronized (in) {
+      ByteSequence line = readLineRef();
+      try {
+        return line.toInt();
+      } catch (NumberFormatException e) {
+        throw new IOException("expected an int but was \"" + line + "\"");
+      }
     }
   }
 
@@ -204,4 +214,3 @@ public class StrictLineReader implements Closeable {
     end = result;
   }
 }
-
