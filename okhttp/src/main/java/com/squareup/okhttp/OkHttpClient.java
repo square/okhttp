@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.Dispatcher;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
@@ -321,7 +320,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   /**
    * Schedules {@code request} to be executed.
    */
-  public void enqueue(Request request, Response.Receiver responseReceiver) {
+  /* OkHttp 2.0: public */ void enqueue(Request request, Response.Receiver responseReceiver) {
     // Create the HttpURLConnection immediately so the enqueued job gets the current settings of
     // this client. Otherwise changes to this client (socket factory, redirect policy, etc.) may
     // incorrectly be reflected in the request when it is dispatched later.

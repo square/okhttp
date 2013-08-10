@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp;
 
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -28,7 +26,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public final class Dispatcher {
+final class Dispatcher {
   // TODO: thread pool size should be configurable; possibly configurable per host.
   private final ThreadPoolExecutor executorService = new ThreadPoolExecutor(
       8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());

@@ -1,6 +1,30 @@
 Change Log
 ==========
 
+Version 1.2 *(2013-08-10)*
+----------------------------
+
+ * New APIs on OkHttpClient to set default timeouts for connect and read.
+ * Fix bug when caching SPDY responses.
+ * Fix a bug with SPDY plus half-closed streams. (thanks kwuollett)
+ * Fix a bug in `Content-Length` reporting for gzipped streams in the Apache
+   HTTP client adapter. (thanks kwuollett)
+ * Work around the Alcatel `getByInetAddress` bug (thanks k.kocel)
+ * Be more aggressive about testing pooled sockets before reuse. (thanks
+   warpspin)
+ * Include `Content-Type` and `Content-Encoding` in the Apache HTTP client
+   adapter. (thanks kwuollett)
+ * Add a media type class to OkHttp.
+ * Change custom header prefix:
+```
+    X-Android-Sent-Millis is now OkHttp-Sent-Millis
+    X-Android-Received-Millis is now OkHttp-Received-Millis.
+    X-Android-Response-Source is now OkHttp-Response-Source.
+    X-Android-Selected-Transport is now OkHttp-Selected-Transport.
+```
+ * Improve cache invalidation for POST-like requests.
+ * Bring MockWebServer into OkHttp and teach it SPDY.
+
 Version 1.1.1 *(2013-06-23)*
 ----------------------------
 

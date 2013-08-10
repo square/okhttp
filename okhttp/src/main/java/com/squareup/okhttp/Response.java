@@ -33,7 +33,7 @@ import java.util.Set;
  * <h3>Warning: Experimental OkHttp 2.0 API</h3>
  * This class is in beta. APIs are subject to change!
  */
-public final class Response {
+/* OkHttp 2.0: public */ final class Response {
   private final Request request;
   private final int code;
   private final RawHeaders headers;
