@@ -1,8 +1,8 @@
 Change Log
 ==========
 
-Version 1.2 *(2013-08-11)*
---------------------------
+Version 1.2.0 *(2013-08-11)*
+----------------------------
 
  *  New APIs on OkHttpClient to set default timeouts for connect and read.
  *  Fix bug when caching SPDY responses.
