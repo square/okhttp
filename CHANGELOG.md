@@ -16,11 +16,12 @@ Version 1.2 *(2013-08-11)*
     adapter. (thanks kwuollett)
  *  Add a media type class to OkHttp.
  *  Change custom header prefix:
+
     ```
     X-Android-Sent-Millis is now OkHttp-Sent-Millis
-    X-Android-Received-Millis is now OkHttp-Received-Millis.
-    X-Android-Response-Source is now OkHttp-Response-Source.
-    X-Android-Selected-Transport is now OkHttp-Selected-Transport.
+    X-Android-Received-Millis is now OkHttp-Received-Millis
+    X-Android-Response-Source is now OkHttp-Response-Source
+    X-Android-Selected-Transport is now OkHttp-Selected-Transport
     ```
  *  Improve cache invalidation for POST-like requests.
  *  Bring MockWebServer into OkHttp and teach it SPDY.
