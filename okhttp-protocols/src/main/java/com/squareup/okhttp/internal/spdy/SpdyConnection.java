@@ -79,6 +79,9 @@ public final class SpdyConnection implements Closeable {
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.daemonThreadFactory("OkHttp SpdyConnection"));
 
+  /** The protocol variant, like SPDY/3 or HTTP-draft-04/2.0. */
+  final Variant variant;
+
   /** True if this peer initiated the connection. */
   final boolean client;
 
@@ -105,10 +108,11 @@ public final class SpdyConnection implements Closeable {
   Settings settings;
 
   private SpdyConnection(Builder builder) {
+    variant = builder.variant;
     client = builder.client;
     handler = builder.handler;
-    spdyReader = new SpdyReader(builder.in);
-    spdyWriter = new SpdyWriter(builder.out);
+    spdyReader = variant.newReader(builder.in);
+    spdyWriter = variant.newWriter(builder.out);
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
 
@@ -192,11 +196,8 @@ public final class SpdyConnection implements Closeable {
     spdyWriter.synReply(flags, streamId, alternating);
   }
 
-  /** Writes a complete data frame. */
   void writeFrame(byte[] bytes, int offset, int length) throws IOException {
-    synchronized (spdyWriter) {
-      spdyWriter.out.write(bytes, offset, length);
-    }
+    spdyWriter.writeFrame(bytes, offset, length);
   }
 
   void writeSynResetLater(final int streamId, final int statusCode) {
@@ -278,9 +279,7 @@ public final class SpdyConnection implements Closeable {
   }
 
   public void flush() throws IOException {
-    synchronized (spdyWriter) {
-      spdyWriter.out.flush();
-    }
+    spdyWriter.flush();
   }
 
   /**
@@ -368,12 +367,21 @@ public final class SpdyConnection implements Closeable {
     if (thrown != null) throw thrown;
   }
 
+  /**
+   * Sends a connection header if the current variant requires it. This should
+   * be called after {@link Builder#build} for all new connections.
+   */
+  public void sendConnectionHeader() {
+    spdyWriter.connectionHeader();
+  }
+
   public static class Builder {
     private String hostName;
     private InputStream in;
     private OutputStream out;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
-    public boolean client;
+    private Variant variant = Variant.SPDY3;
+    private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
       this("", client, socket.getInputStream(), socket.getOutputStream());
@@ -404,6 +412,16 @@ public final class SpdyConnection implements Closeable {
 
     public Builder handler(IncomingStreamHandler handler) {
       this.handler = handler;
+      return this;
+    }
+
+    public Builder spdy3() {
+      this.variant = Variant.SPDY3;
+      return this;
+    }
+
+    public Builder http20Draft04() {
+      this.variant = Variant.HTTP_20_DRAFT_04;
       return this;
     }
 

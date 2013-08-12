@@ -70,11 +70,16 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
  */
 public final class MockWebServer {
   private static final byte[] NPN_PROTOCOLS = {
+      // TODO: support HTTP/2.0.
+      // 17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0',
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
   };
   private static final byte[] SPDY3 = new byte[] {
       's', 'p', 'd', 'y', '/', '3'
+  };
+  private static final byte[] HTTP_20_DRAFT_04 = new byte[] {
+      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0'
   };
   private static final byte[] HTTP_11 = new byte[] {
       'h', 't', 't', 'p', '/', '1', '.', '1'
@@ -322,6 +327,8 @@ public final class MockWebServer {
             byte[] selectedProtocol = Platform.get().getNpnSelectedProtocol(sslSocket);
             if (selectedProtocol == null || Arrays.equals(selectedProtocol, HTTP_11)) {
               transport = Transport.HTTP_11;
+            } else if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_04)) {
+              transport = Transport.HTTP_20_DRAFT_04;
             } else if (Arrays.equals(selectedProtocol, SPDY3)) {
               transport = Transport.SPDY_3;
             } else {
@@ -334,13 +341,19 @@ public final class MockWebServer {
           socket = raw;
         }
 
-        if (transport == Transport.SPDY_3) {
+        if (transport == Transport.SPDY_3 || transport == Transport.HTTP_20_DRAFT_04) {
           SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket);
-          SpdyConnection spdyConnection = new SpdyConnection.Builder(false, socket)
-              .handler(spdySocketHandler)
-              .build();
+          SpdyConnection.Builder builder = new SpdyConnection.Builder(false, socket)
+              .handler(spdySocketHandler);
+          if (transport == Transport.SPDY_3) {
+            builder.spdy3();
+          } else {
+            builder.http20Draft04();
+          }
+          SpdyConnection spdyConnection = builder.build();
           openSpdyConnections.put(spdyConnection, Boolean.TRUE);
           openClientSockets.remove(socket);
+          spdyConnection.sendConnectionHeader();
           return;
         }
 
@@ -699,6 +712,6 @@ public final class MockWebServer {
   }
 
   enum Transport {
-    HTTP_11, SPDY_3
+    HTTP_11, SPDY_3, HTTP_20_DRAFT_04
   }
 }

@@ -38,7 +38,7 @@ import static java.util.concurrent.Executors.defaultThreadFactory;
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final SpdyWriter spdyWriter = new SpdyWriter(bytesOut);
+  private final SpdyWriter spdyWriter = Variant.SPDY3.newWriter(bytesOut);
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
@@ -94,7 +94,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    SpdyReader reader = new SpdyReader(in);
+    SpdyReader reader = Variant.SPDY3.newReader(in);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();

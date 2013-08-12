@@ -159,6 +159,7 @@ public final class Connection implements Closeable {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
         spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
             .build();
+        spdyConnection.sendConnectionHeader();
       } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
         throw new IOException(
             "Unexpected NPN transport " + new String(selectedProtocol, "ISO-8859-1"));
@@ -256,7 +257,8 @@ public final class Connection implements Closeable {
 
   /** Returns the transport appropriate for this connection. */
   public Object newTransport(HttpEngine httpEngine) throws IOException {
-    return (spdyConnection != null) ? new SpdyTransport(httpEngine, spdyConnection)
+    return (spdyConnection != null)
+        ? new SpdyTransport(httpEngine, spdyConnection)
         : new HttpTransport(httpEngine, out, in);
   }
 
