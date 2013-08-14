@@ -261,7 +261,6 @@ final class Spdy3 implements Variant {
           String name = readString();
           String values = readString();
           if (name.length() == 0) throw ioException("name.length == 0");
-          if (values.length() == 0) throw ioException("values.length == 0");
           entries.add(name);
           entries.add(values);
         }
