@@ -65,7 +65,6 @@
       <property name="max" value="100"/>
     </module>
     <module name="MethodLength"/>
-    <module name="ParameterNumber"/>
 
 
     <!-- Checks for whitespace                               -->

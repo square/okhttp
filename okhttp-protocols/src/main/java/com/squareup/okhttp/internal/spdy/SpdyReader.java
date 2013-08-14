@@ -26,10 +26,11 @@ public interface SpdyReader extends Closeable {
   boolean nextFrame(Handler handler) throws IOException;
 
   public interface Handler {
-    void data(int flags, int streamId, InputStream in, int length) throws IOException;
-    void synStream(int flags, int streamId, int associatedStreamId, int priority, int slot,
-        List<String> nameValueBlock);
-    void synReply(int flags, int streamId, List<String> nameValueBlock) throws IOException;
+    void data(boolean inFinished, int streamId, InputStream in, int length)
+        throws IOException;
+    void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
+        int priority, int slot, List<String> nameValueBlock);
+    void synReply(boolean inFinished, int streamId, List<String> nameValueBlock) throws IOException;
     void headers(int flags, int streamId, List<String> nameValueBlock) throws IOException;
     void rstStream(int flags, int streamId, int statusCode);
     void settings(int flags, Settings settings);

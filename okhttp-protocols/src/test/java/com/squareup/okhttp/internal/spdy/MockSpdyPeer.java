@@ -37,14 +37,20 @@ import static java.util.concurrent.Executors.defaultThreadFactory;
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
+  private final boolean client;
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final SpdyWriter spdyWriter = Variant.SPDY3.newWriter(bytesOut);
+  private final SpdyWriter spdyWriter;
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
   private final Executor executor = Executors.newCachedThreadPool(defaultThreadFactory());
   private ServerSocket serverSocket;
   private Socket socket;
+
+  public MockSpdyPeer(boolean client) {
+    this.client = client;
+    this.spdyWriter = Variant.SPDY3.newWriter(bytesOut);
+  }
 
   public void acceptFrame() {
     frameCount++;
@@ -162,7 +168,9 @@ public final class MockSpdyPeer implements Closeable {
     public final int sequence;
     public final SpdyReader reader;
     public int type = -1;
-    public int flags;
+    public int flags = -1;
+    public boolean outFinished;
+    public boolean inFinished;
     public int streamId;
     public int associatedStreamId;
     public int priority;
@@ -180,16 +188,17 @@ public final class MockSpdyPeer implements Closeable {
 
     @Override public void settings(int flags, Settings settings) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_SETTINGS;
+      this.type = Spdy3.TYPE_SETTINGS;
       this.flags = flags;
       this.settings = settings;
     }
 
-    @Override public void synStream(int flags, int streamId, int associatedStreamId, int priority,
-        int slot, List<String> nameValueBlock) {
+    @Override public void synStream(boolean outFinished, boolean inFinished, int streamId,
+        int associatedStreamId, int priority, int slot, List<String> nameValueBlock) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_SYN_STREAM;
-      this.flags = flags;
+      this.type = Spdy3.TYPE_SYN_STREAM;
+      this.outFinished = outFinished;
+      this.inFinished = inFinished;
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.priority = priority;
@@ -197,27 +206,27 @@ public final class MockSpdyPeer implements Closeable {
       this.nameValueBlock = nameValueBlock;
     }
 
-    @Override public void synReply(int flags, int streamId, List<String> nameValueBlock) {
+    @Override public void synReply(boolean inFinished, int streamId, List<String> nameValueBlock) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_SYN_REPLY;
+      this.type = Spdy3.TYPE_SYN_REPLY;
+      this.inFinished = inFinished;
       this.streamId = streamId;
-      this.flags = flags;
       this.nameValueBlock = nameValueBlock;
     }
 
     @Override public void headers(int flags, int streamId, List<String> nameValueBlock) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_HEADERS;
+      this.type = Spdy3.TYPE_HEADERS;
       this.streamId = streamId;
       this.flags = flags;
       this.nameValueBlock = nameValueBlock;
     }
 
-    @Override public void data(int flags, int streamId, InputStream in, int length)
+    @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
         throws IOException {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_DATA;
-      this.flags = flags;
+      this.type = Spdy3.TYPE_DATA;
+      this.inFinished = inFinished;
       this.streamId = streamId;
       this.data = new byte[length];
       Util.readFully(in, this.data);
@@ -225,7 +234,7 @@ public final class MockSpdyPeer implements Closeable {
 
     @Override public void rstStream(int flags, int streamId, int statusCode) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_RST_STREAM;
+      this.type = Spdy3.TYPE_RST_STREAM;
       this.flags = flags;
       this.streamId = streamId;
       this.statusCode = statusCode;
@@ -233,19 +242,19 @@ public final class MockSpdyPeer implements Closeable {
 
     @Override public void ping(int flags, int streamId) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_PING;
+      this.type = Spdy3.TYPE_PING;
       this.flags = flags;
       this.streamId = streamId;
     }
 
     @Override public void noop() {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_NOOP;
+      this.type = Spdy3.TYPE_NOOP;
     }
 
     @Override public void goAway(int flags, int lastGoodStreamId, int statusCode) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_GOAWAY;
+      this.type = Spdy3.TYPE_GOAWAY;
       this.flags = flags;
       this.streamId = lastGoodStreamId;
       this.statusCode = statusCode;
@@ -253,7 +262,7 @@ public final class MockSpdyPeer implements Closeable {
 
     @Override public void windowUpdate(int flags, int streamId, int deltaWindowSize) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = SpdyConnection.TYPE_WINDOW_UPDATE;
+      this.type = Spdy3.TYPE_WINDOW_UPDATE;
       this.flags = flags;
       this.streamId = streamId;
       this.deltaWindowSize = deltaWindowSize;
