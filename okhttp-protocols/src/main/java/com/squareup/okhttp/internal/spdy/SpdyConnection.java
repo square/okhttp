@@ -55,22 +55,6 @@ public final class SpdyConnection implements Closeable {
   // operations must synchronize on 'this' last. This ensures that we never
   // wait for a blocking operation while holding 'this'.
 
-  static final int FLAG_FIN = 0x1;
-  static final int FLAG_UNIDIRECTIONAL = 0x2;
-
-  static final int TYPE_DATA = 0x0;
-  static final int TYPE_SYN_STREAM = 0x1;
-  static final int TYPE_SYN_REPLY = 0x2;
-  static final int TYPE_RST_STREAM = 0x3;
-  static final int TYPE_SETTINGS = 0x4;
-  static final int TYPE_NOOP = 0x5;
-  static final int TYPE_PING = 0x6;
-  static final int TYPE_GOAWAY = 0x7;
-  static final int TYPE_HEADERS = 0x8;
-  static final int TYPE_WINDOW_UPDATE = 0x9;
-  static final int TYPE_CREDENTIAL = 0x10;
-  static final int VERSION = 3;
-
   static final int GOAWAY_OK = 0;
   static final int GOAWAY_PROTOCOL_ERROR = 1;
   static final int GOAWAY_INTERNAL_ERROR = 2;
@@ -159,13 +143,14 @@ public final class SpdyConnection implements Closeable {
    * Returns a new locally-initiated stream.
    *
    * @param out true to create an output stream that we can use to send data
-   * to the remote peer. Corresponds to {@code FLAG_FIN}.
+   *     to the remote peer. Corresponds to {@code FLAG_FIN}.
    * @param in true to create an input stream that the remote peer can use to
-   * send data to us. Corresponds to {@code FLAG_UNIDIRECTIONAL}.
+   *     send data to us. Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
   public SpdyStream newStream(List<String> requestHeaders, boolean out, boolean in)
       throws IOException {
-    int flags = (out ? 0 : FLAG_FIN) | (in ? 0 : FLAG_UNIDIRECTIONAL);
+    boolean outFinished = !out;
+    boolean inFinished = !in;
     int associatedStreamId = 0;  // TODO: permit the caller to specify an associated stream?
     int priority = 0; // TODO: permit the caller to specify a priority?
     int slot = 0; // TODO: permit the caller to specify a slot?
@@ -179,25 +164,29 @@ public final class SpdyConnection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new SpdyStream(streamId, this, flags, priority, slot, requestHeaders, settings);
+        stream = new SpdyStream(streamId, this, outFinished, inFinished, priority, slot,
+            requestHeaders, settings);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
         }
       }
 
-      spdyWriter.synStream(flags, streamId, associatedStreamId, priority, slot, requestHeaders);
+      spdyWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
+          requestHeaders);
     }
 
     return stream;
   }
 
-  void writeSynReply(int streamId, int flags, List<String> alternating) throws IOException {
-    spdyWriter.synReply(flags, streamId, alternating);
+  void writeSynReply(int streamId, boolean outFinished, List<String> alternating)
+      throws IOException {
+    spdyWriter.synReply(outFinished, streamId, alternating);
   }
 
-  void writeFrame(byte[] bytes, int offset, int length) throws IOException {
-    spdyWriter.writeFrame(bytes, offset, length);
+  public void writeData(int streamId, boolean outFinished, byte[] buffer, int offset, int byteCount)
+      throws IOException {
+    spdyWriter.data(outFinished, streamId, buffer, offset, byteCount);
   }
 
   void writeSynResetLater(final int streamId, final int statusCode) {
@@ -450,7 +439,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void data(int flags, int streamId, InputStream in, int length)
+    @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
         throws IOException {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
@@ -459,19 +448,18 @@ public final class SpdyConnection implements Closeable {
         return;
       }
       dataStream.receiveData(in, length);
-      if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+      if (inFinished) {
         dataStream.receiveFin();
       }
     }
 
-    @Override public void synStream(int flags, int streamId, int associatedStreamId, int priority,
-        int slot, List<String> nameValueBlock) {
+    @Override public void synStream(boolean outFinished, boolean inFinished, int streamId,
+        int associatedStreamId, int priority, int slot, List<String> nameValueBlock) {
       final SpdyStream synStream;
       final SpdyStream previous;
       synchronized (SpdyConnection.this) {
-        synStream =
-            new SpdyStream(streamId, SpdyConnection.this, flags, priority, slot, nameValueBlock,
-                settings);
+        synStream = new SpdyStream(streamId, SpdyConnection.this, outFinished, inFinished, priority,
+            slot, nameValueBlock, settings);
         if (shutdown) {
           return;
         }
@@ -495,7 +483,7 @@ public final class SpdyConnection implements Closeable {
       });
     }
 
-    @Override public void synReply(int flags, int streamId, List<String> nameValueBlock)
+    @Override public void synReply(boolean inFinished, int streamId, List<String> nameValueBlock)
         throws IOException {
       SpdyStream replyStream = getStream(streamId);
       if (replyStream == null) {
@@ -503,7 +491,7 @@ public final class SpdyConnection implements Closeable {
         return;
       }
       replyStream.receiveReply(nameValueBlock);
-      if ((flags & SpdyConnection.FLAG_FIN) != 0) {
+      if (inFinished) {
         replyStream.receiveFin();
       }
     }
