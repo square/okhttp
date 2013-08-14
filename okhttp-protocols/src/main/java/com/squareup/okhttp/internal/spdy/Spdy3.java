@@ -34,6 +34,23 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 final class Spdy3 implements Variant {
+  static final int TYPE_DATA = 0x0;
+  static final int TYPE_SYN_STREAM = 0x1;
+  static final int TYPE_SYN_REPLY = 0x2;
+  static final int TYPE_RST_STREAM = 0x3;
+  static final int TYPE_SETTINGS = 0x4;
+  static final int TYPE_NOOP = 0x5;
+  static final int TYPE_PING = 0x6;
+  static final int TYPE_GOAWAY = 0x7;
+  static final int TYPE_HEADERS = 0x8;
+  static final int TYPE_WINDOW_UPDATE = 0x9;
+  static final int TYPE_CREDENTIAL = 0x10;
+
+  static final int FLAG_FIN = 0x1;
+  static final int FLAG_UNIDIRECTIONAL = 0x2;
+
+  static final int VERSION = 3;
+
   static final byte[] DICTIONARY;
   static {
     try {
@@ -120,44 +137,44 @@ final class Spdy3 implements Variant {
         }
 
         switch (type) {
-          case SpdyConnection.TYPE_SYN_STREAM:
+          case TYPE_SYN_STREAM:
             readSynStream(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_SYN_REPLY:
+          case TYPE_SYN_REPLY:
             readSynReply(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_RST_STREAM:
+          case TYPE_RST_STREAM:
             readRstStream(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_SETTINGS:
+          case TYPE_SETTINGS:
             readSettings(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_NOOP:
+          case TYPE_NOOP:
             if (length != 0) throw ioException("TYPE_NOOP length: %d != 0", length);
             handler.noop();
             return true;
 
-          case SpdyConnection.TYPE_PING:
+          case TYPE_PING:
             readPing(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_GOAWAY:
+          case TYPE_GOAWAY:
             readGoAway(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_HEADERS:
+          case TYPE_HEADERS:
             readHeaders(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_WINDOW_UPDATE:
+          case TYPE_WINDOW_UPDATE:
             readWindowUpdate(handler, flags, length);
             return true;
 
-          case SpdyConnection.TYPE_CREDENTIAL:
+          case TYPE_CREDENTIAL:
             Util.skipByReading(in, length);
             throw new UnsupportedOperationException("TODO"); // TODO: implement
 
@@ -166,7 +183,8 @@ final class Spdy3 implements Variant {
         }
       } else {
         int streamId = w1 & 0x7fffffff;
-        handler.data(flags, streamId, in, length);
+        boolean inFinished = (flags & FLAG_FIN) != 0;
+        handler.data(inFinished, streamId, in, length);
         return true;
       }
     }
@@ -180,14 +198,19 @@ final class Spdy3 implements Variant {
       int priority = (s3 & 0xe000) >>> 13;
       int slot = s3 & 0xff;
       List<String> nameValueBlock = readNameValueBlock(length - 10);
-      handler.synStream(flags, streamId, associatedStreamId, priority, slot, nameValueBlock);
+
+      boolean inFinished = (flags & FLAG_FIN) != 0;
+      boolean outFinished = (flags & FLAG_UNIDIRECTIONAL) != 0;
+      handler.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
+          nameValueBlock);
     }
 
     private void readSynReply(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
       List<String> nameValueBlock = readNameValueBlock(length - 4);
-      handler.synReply(flags, streamId, nameValueBlock);
+      boolean inFinished = (flags & FLAG_FIN) != 0;
+      handler.synReply(inFinished, streamId, nameValueBlock);
     }
 
     private void readRstStream(Handler handler, int flags, int length) throws IOException {
@@ -340,23 +363,20 @@ final class Spdy3 implements Variant {
       // Do nothing: no connection header for SPDY/3.
     }
 
-    @Override public synchronized void writeFrame(byte[] data, int offset, int length)
-        throws IOException {
-      out.write(data, offset, length);
-    }
-
     @Override public synchronized void flush() throws IOException {
       out.flush();
     }
 
-    @Override public synchronized void synStream(int flags, int streamId, int associatedStreamId,
-        int priority, int slot, List<String> nameValueBlock) throws IOException {
+    @Override public synchronized void synStream(boolean outFinished, boolean inFinished,
+        int streamId, int associatedStreamId, int priority, int slot, List<String> nameValueBlock)
+        throws IOException {
       writeNameValueBlockToBuffer(nameValueBlock);
       int length = 10 + nameValueBlockBuffer.size();
-      int type = SpdyConnection.TYPE_SYN_STREAM;
+      int type = TYPE_SYN_STREAM;
+      int flags = (outFinished ? FLAG_FIN : 0) | (inFinished ? FLAG_UNIDIRECTIONAL : 0);
 
       int unused = 0;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
       out.writeInt(associatedStreamId & 0x7fffffff);
@@ -366,12 +386,13 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void synReply(
-        int flags, int streamId, List<String> nameValueBlock) throws IOException {
+        boolean outFinished, int streamId, List<String> nameValueBlock) throws IOException {
       writeNameValueBlockToBuffer(nameValueBlock);
-      int type = SpdyConnection.TYPE_SYN_REPLY;
+      int type = TYPE_SYN_REPLY;
+      int flags = (outFinished ? FLAG_FIN : 0);
       int length = nameValueBlockBuffer.size() + 4;
 
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
       nameValueBlockBuffer.writeTo(out);
@@ -381,10 +402,10 @@ final class Spdy3 implements Variant {
     @Override public synchronized void headers(int flags, int streamId, List<String> nameValueBlock)
         throws IOException {
       writeNameValueBlockToBuffer(nameValueBlock);
-      int type = SpdyConnection.TYPE_HEADERS;
+      int type = TYPE_HEADERS;
       int length = nameValueBlockBuffer.size() + 4;
 
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
       nameValueBlockBuffer.writeTo(out);
@@ -393,22 +414,26 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void rstStream(int streamId, int statusCode) throws IOException {
       int flags = 0;
-      int type = SpdyConnection.TYPE_RST_STREAM;
+      int type = TYPE_RST_STREAM;
       int length = 8;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
       out.writeInt(statusCode);
       out.flush();
     }
 
-    @Override public synchronized void data(int flags, int streamId, byte[] data)
+    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data)
         throws IOException {
-      int length = data.length;
+      data(outFinished, streamId, data, 0, data.length);
+    }
+
+    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
+        int offset, int byteCount) throws IOException {
+      int flags = (outFinished ? FLAG_FIN : 0);
       out.writeInt(streamId & 0x7fffffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.write(data);
-      out.flush();
+      out.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
+      out.write(data, offset, byteCount);
     }
 
     private void writeNameValueBlockToBuffer(List<String> nameValueBlock) throws IOException {
@@ -423,10 +448,10 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void settings(int flags, Settings settings) throws IOException {
-      int type = SpdyConnection.TYPE_SETTINGS;
+      int type = TYPE_SETTINGS;
       int size = settings.size();
       int length = 4 + size * 8;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(size);
       for (int i = 0; i <= Settings.COUNT; i++) {
@@ -439,18 +464,18 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void noop() throws IOException {
-      int type = SpdyConnection.TYPE_NOOP;
+      int type = TYPE_NOOP;
       int length = 0;
       int flags = 0;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.flush();
     }
 
     @Override public synchronized void ping(int flags, int id) throws IOException {
-      int type = SpdyConnection.TYPE_PING;
+      int type = TYPE_PING;
       int length = 4;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(id);
       out.flush();
@@ -458,9 +483,9 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void goAway(int flags, int lastGoodStreamId, int statusCode)
         throws IOException {
-      int type = SpdyConnection.TYPE_GOAWAY;
+      int type = TYPE_GOAWAY;
       int length = 8;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(lastGoodStreamId);
       out.writeInt(statusCode);
@@ -469,10 +494,10 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void windowUpdate(int streamId, int deltaWindowSize)
         throws IOException {
-      int type = SpdyConnection.TYPE_WINDOW_UPDATE;
+      int type = TYPE_WINDOW_UPDATE;
       int flags = 0;
       int length = 8;
-      out.writeInt(0x80000000 | (SpdyConnection.VERSION & 0x7fff) << 16 | type & 0xffff);
+      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId);
       out.writeInt(deltaWindowSize);

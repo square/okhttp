@@ -26,16 +26,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
-import static com.squareup.okhttp.internal.Util.pokeInt;
-import static java.nio.ByteOrder.BIG_ENDIAN;
 
 /** A logical bidirectional stream. */
 public final class SpdyStream {
 
   // Internal state is guarded by this. No long-running or potentially
   // blocking operations are performed while the lock is held.
-
-  private static final int DATA_FRAME_HEADER_LENGTH = 8;
 
   private static final String[] STATUS_CODE_NAMES = {
       null,
@@ -95,25 +91,17 @@ public final class SpdyStream {
    */
   private int rstStatusCode = -1;
 
-  SpdyStream(int id, SpdyConnection connection, int flags, int priority, int slot,
-      List<String> requestHeaders, Settings settings) {
+  SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
+      int priority, int slot, List<String> requestHeaders, Settings settings) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
+    this.in.finished = inFinished;
+    this.out.finished = outFinished;
     this.priority = priority;
     this.slot = slot;
     this.requestHeaders = requestHeaders;
-
-    if (isLocallyInitiated()) {
-      // I am the sender
-      in.finished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
-      out.finished = (flags & SpdyConnection.FLAG_FIN) != 0;
-    } else {
-      // I am the receiver
-      in.finished = (flags & SpdyConnection.FLAG_FIN) != 0;
-      out.finished = (flags & SpdyConnection.FLAG_UNIDIRECTIONAL) != 0;
-    }
 
     setSettings(settings);
   }
@@ -192,7 +180,7 @@ public final class SpdyStream {
    */
   public void reply(List<String> responseHeaders, boolean out) throws IOException {
     assert (!Thread.holdsLock(SpdyStream.this));
-    int flags = 0;
+    boolean outFinished = false;
     synchronized (this) {
       if (responseHeaders == null) {
         throw new NullPointerException("responseHeaders == null");
@@ -206,10 +194,10 @@ public final class SpdyStream {
       this.responseHeaders = responseHeaders;
       if (!out) {
         this.out.finished = true;
-        flags |= SpdyConnection.FLAG_FIN;
+        outFinished = true;
       }
     }
-    connection.writeSynReply(id, flags, responseHeaders);
+    connection.writeSynReply(id, outFinished, responseHeaders);
   }
 
   /**
@@ -348,9 +336,9 @@ public final class SpdyStream {
 
   private void setSettings(Settings settings) {
     assert (Thread.holdsLock(connection)); // Because 'settings' is guarded by 'connection'.
-    this.writeWindowSize =
-        settings != null ? settings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
-            : Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+    this.writeWindowSize = settings != null
+        ? settings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE)
+        : Settings.DEFAULT_INITIAL_WINDOW_SIZE;
   }
 
   void receiveSettings(Settings settings) {
@@ -614,7 +602,7 @@ public final class SpdyStream {
    */
   private final class SpdyDataOutputStream extends OutputStream {
     private final byte[] buffer = new byte[8192];
-    private int pos = DATA_FRAME_HEADER_LENGTH;
+    private int pos = 0;
 
     /** True if the caller has closed this stream. */
     private boolean closed;
@@ -656,7 +644,7 @@ public final class SpdyStream {
     @Override public void flush() throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
       checkNotClosed();
-      if (pos > DATA_FRAME_HEADER_LENGTH) {
+      if (pos > 0) {
         writeFrame(false);
         connection.flush();
       }
@@ -677,22 +665,16 @@ public final class SpdyStream {
       cancelStreamIfNecessary();
     }
 
-    private void writeFrame(boolean last) throws IOException {
+    private void writeFrame(boolean outFinished) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
 
-      int length = pos - DATA_FRAME_HEADER_LENGTH;
+      int length = pos;
       synchronized (SpdyStream.this) {
-        waitUntilWritable(length, last);
+        waitUntilWritable(length, outFinished);
         unacknowledgedBytes += length;
       }
-      int flags = 0;
-      if (last) {
-        flags |= SpdyConnection.FLAG_FIN;
-      }
-      pokeInt(buffer, 0, id & 0x7fffffff, BIG_ENDIAN);
-      pokeInt(buffer, 4, (flags & 0xff) << 24 | length & 0xffffff, BIG_ENDIAN);
-      connection.writeFrame(buffer, 0, pos);
-      pos = DATA_FRAME_HEADER_LENGTH;
+      connection.writeData(id, outFinished, buffer, 0, pos);
+      pos = 0;
     }
 
     /**

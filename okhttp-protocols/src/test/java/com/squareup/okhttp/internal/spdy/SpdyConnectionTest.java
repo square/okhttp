@@ -30,18 +30,16 @@ import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.FLAG_FIN;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.FLAG_UNIDIRECTIONAL;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_NOOP;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_PING;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_RST_STREAM;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SYN_REPLY;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SYN_STREAM;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_WINDOW_UPDATE;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.GOAWAY_INTERNAL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.GOAWAY_PROTOCOL_ERROR;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_DATA;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_GOAWAY;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_NOOP;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_PING;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_RST_STREAM;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_SYN_REPLY;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_SYN_STREAM;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.TYPE_WINDOW_UPDATE;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_FLOW_CONTROL_ERROR;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_INVALID_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_PROTOCOL_ERROR;
@@ -49,6 +47,7 @@ import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_REFUSED_STREAM;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.RST_STREAM_IN_USE;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.WINDOW_UPDATE_THRESHOLD;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -58,7 +57,7 @@ public final class SpdyConnectionTest {
       throw new AssertionError();
     }
   };
-  private final MockSpdyPeer peer = new MockSpdyPeer();
+  private final MockSpdyPeer peer = new MockSpdyPeer(false);
 
   @After public void tearDown() throws Exception {
     peer.close();
@@ -67,8 +66,8 @@ public final class SpdyConnectionTest {
   @Test public void clientCreatesStreamAndServerReplies() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
-    peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "robot".getBytes("UTF-8"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().data(true, 1, "robot".getBytes("UTF-8"));
     peer.acceptFrame(); // DATA
     peer.play();
 
@@ -83,7 +82,8 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(0, synStream.flags);
+    assertFalse(synStream.inFinished);
+    assertFalse(synStream.outFinished);
     assertEquals(1, synStream.streamId);
     assertEquals(0, synStream.associatedStreamId);
     assertEquals(Arrays.asList("b", "banana"), synStream.nameValueBlock);
@@ -93,7 +93,7 @@ public final class SpdyConnectionTest {
 
   @Test public void headersOnlyStreamIsClosedAfterReplyHeaders() throws Exception {
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("b", "banana"));
     peer.play();
 
     SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
@@ -107,7 +107,7 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(FLAG_FIN, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(true, 1, Arrays.asList("a", "android"));
     peer.sendFrame().ping(0, 1);
     peer.play();
 
@@ -127,7 +127,7 @@ public final class SpdyConnectionTest {
 
   @Test public void serverCreatesStreamAndClientReplies() throws Exception {
     // write the mocking script
-    peer.sendFrame().synStream(0, 2, 0, 5, 129, Arrays.asList("a", "android"));
+    peer.sendFrame().synStream(false, false, 2, 0, 5, 129, Arrays.asList("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
     peer.play();
 
@@ -148,7 +148,7 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
     assertEquals(TYPE_SYN_REPLY, reply.type);
-    assertEquals(0, reply.flags);
+    assertFalse(reply.inFinished);
     assertEquals(2, reply.streamId);
     assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
     assertEquals(1, receiveCount.get());
@@ -156,7 +156,7 @@ public final class SpdyConnectionTest {
 
   @Test public void replyWithNoData() throws Exception {
     // write the mocking script
-    peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("a", "android"));
+    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, Arrays.asList("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
     peer.play();
 
@@ -173,7 +173,7 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
     assertEquals(TYPE_SYN_REPLY, reply.type);
-    assertEquals(FLAG_FIN, reply.flags);
+    assertTrue(reply.inFinished);
     assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
     assertEquals(1, receiveCount.get());
   }
@@ -192,7 +192,6 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_NOOP, ping.type);
-    assertEquals(0, ping.flags);
   }
 
   @Test public void serverPingsClient() throws Exception {
@@ -288,9 +287,9 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
 
     peer.takeFrame(); // Guarantees that the Settings frame has been processed.
     synchronized (connection) {
@@ -307,7 +306,7 @@ public final class SpdyConnectionTest {
 
   @Test public void bogusDataFrameDoesNotDisruptConnection() throws Exception {
     // write the mocking script
-    peer.sendFrame().data(SpdyConnection.FLAG_FIN, 42, "bogus".getBytes("UTF-8"));
+    peer.sendFrame().data(true, 42, "bogus".getBytes("UTF-8"));
     peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().ping(0, 2);
     peer.acceptFrame(); // PING
@@ -328,7 +327,7 @@ public final class SpdyConnectionTest {
 
   @Test public void bogusReplyFrameDoesNotDisruptConnection() throws Exception {
     // write the mocking script
-    peer.sendFrame().synReply(0, 42, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(false, 42, Arrays.asList("a", "android"));
     peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().ping(0, 2);
     peer.acceptFrame(); // PING
@@ -350,7 +349,7 @@ public final class SpdyConnectionTest {
   @Test public void clientClosesClientOutputStream() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("b", "banana"));
     peer.acceptFrame(); // TYPE_DATA
     peer.acceptFrame(); // TYPE_DATA with FLAG_FIN
     peer.acceptFrame(); // PING
@@ -358,9 +357,9 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
     SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), true, false);
     OutputStream out = stream.getOutputStream();
     out.write("square".getBytes(UTF_8));
@@ -379,14 +378,15 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(FLAG_UNIDIRECTIONAL, synStream.flags);
+    assertFalse(synStream.inFinished);
+    assertTrue(synStream.outFinished);
     MockSpdyPeer.InFrame data = peer.takeFrame();
     assertEquals(TYPE_DATA, data.type);
-    assertEquals(0, data.flags);
+    assertFalse(data.inFinished);
     assertTrue(Arrays.equals("square".getBytes("UTF-8"), data.data));
     MockSpdyPeer.InFrame fin = peer.takeFrame();
     assertEquals(TYPE_DATA, fin.type);
-    assertEquals(FLAG_FIN, fin.flags);
+    assertTrue(fin.inFinished);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     assertEquals(1, ping.streamId);
@@ -402,9 +402,9 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
     SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), true, true);
     OutputStream out = stream.getOutputStream();
     connection.ping().roundTripTime(); // Ensure that the RST_CANCEL has been received.
@@ -420,14 +420,16 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(0, synStream.flags);
+    assertFalse(synStream.inFinished);
+    assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     assertEquals(1, ping.streamId);
     MockSpdyPeer.InFrame data = peer.takeFrame();
     assertEquals(TYPE_DATA, data.type);
     assertEquals(1, data.streamId);
-    assertEquals(FLAG_FIN, data.flags);
+    assertTrue(data.inFinished);
+    assertFalse(data.outFinished);
   }
 
   /**
@@ -441,9 +443,9 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
     SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), false, true);
     InputStream in = stream.getInputStream();
     OutputStream out = stream.getOutputStream();
@@ -465,7 +467,8 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(SpdyConnection.FLAG_FIN, synStream.flags);
+    assertTrue(synStream.inFinished);
+    assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
     assertEquals(SpdyStream.RST_CANCEL, rstStream.statusCode);
@@ -484,9 +487,9 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
     SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), true, true);
     InputStream in = stream.getInputStream();
     OutputStream out = stream.getOutputStream();
@@ -505,13 +508,15 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(0, synStream.flags);
+    assertFalse(synStream.inFinished);
+    assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame data = peer.takeFrame();
     assertEquals(TYPE_DATA, data.type);
     assertTrue(Arrays.equals("square".getBytes("UTF-8"), data.data));
     MockSpdyPeer.InFrame fin = peer.takeFrame();
     assertEquals(TYPE_DATA, fin.type);
-    assertEquals(FLAG_FIN, fin.flags);
+    assertTrue(fin.inFinished);
+    assertFalse(fin.outFinished);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
     assertEquals(SpdyStream.RST_CANCEL, rstStream.statusCode);
@@ -520,14 +525,14 @@ public final class SpdyConnectionTest {
   @Test public void serverClosesClientInputStream() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
-    peer.sendFrame().data(FLAG_FIN, 1, "square".getBytes(UTF_8));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("b", "banana"));
+    peer.sendFrame().data(true, 1, "square".getBytes(UTF_8));
     peer.play();
 
     // play it back
-    SpdyConnection connection =
-        new SpdyConnection.Builder(true, peer.openSocket()).handler(REJECT_INCOMING_STREAMS)
-            .build();
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
     SpdyStream stream = connection.newStream(Arrays.asList("a", "android"), false, true);
     InputStream in = stream.getInputStream();
     assertStreamData("square", in);
@@ -536,15 +541,16 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_SYN_STREAM, synStream.type);
-    assertEquals(SpdyConnection.FLAG_FIN, synStream.flags);
+    assertTrue(synStream.inFinished);
+    assertFalse(synStream.outFinished);
   }
 
   @Test public void remoteDoubleSynReply() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("b", "banana"));
     peer.sendFrame().ping(0, 1);
     peer.acceptFrame(); // RST_STREAM
     peer.play();
@@ -575,9 +581,9 @@ public final class SpdyConnectionTest {
 
   @Test public void remoteDoubleSynStream() throws Exception {
     // write the mocking script
-    peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("a", "android"));
+    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, Arrays.asList("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
-    peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("b", "banana"));
+    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, Arrays.asList("b", "banana"));
     peer.acceptFrame(); // RST_STREAM
     peer.play();
 
@@ -607,9 +613,9 @@ public final class SpdyConnectionTest {
   @Test public void remoteSendsDataAfterInFinished() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
-    peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "robot".getBytes("UTF-8"));
-    peer.sendFrame().data(SpdyConnection.FLAG_FIN, 1, "c3po".getBytes("UTF-8")); // Ignored.
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().data(true, 1, "robot".getBytes("UTF-8"));
+    peer.sendFrame().data(true, 1, "c3po".getBytes("UTF-8")); // Ignored.
     peer.sendFrame().ping(0, 2); // Ping just to make sure the stream was fastforwarded.
     peer.acceptFrame(); // PING
     peer.play();
@@ -632,8 +638,8 @@ public final class SpdyConnectionTest {
   @Test public void remoteSendsTooMuchData() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("b", "banana"));
-    peer.sendFrame().data(0, 1, new byte[64 * 1024 + 1]);
+    peer.sendFrame().synReply(false, 1, Arrays.asList("b", "banana"));
+    peer.sendFrame().data(false, 1, new byte[64 * 1024 + 1]);
     peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().ping(0, 2); // Ping just to make sure the stream was fastforwarded.
     peer.acceptFrame(); // PING
@@ -735,7 +741,7 @@ public final class SpdyConnectionTest {
     peer.acceptFrame(); // SYN_STREAM 1
     peer.acceptFrame(); // GOAWAY
     peer.acceptFrame(); // PING
-    peer.sendFrame().synStream(0, 2, 0, 0, 0, Arrays.asList("b", "b")); // Should be ignored!
+    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, Arrays.asList("b", "b")); // Should be ignored!
     peer.sendFrame().ping(0, 1);
     peer.play();
 
@@ -837,7 +843,7 @@ public final class SpdyConnectionTest {
   @Test public void readTimeoutExpires() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(0, 1);
     peer.play();
@@ -867,7 +873,7 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
     peer.sendFrame().headers(0, 1, Arrays.asList("c", "c3po"));
     peer.sendFrame().ping(0, 1);
     peer.play();
@@ -918,12 +924,12 @@ public final class SpdyConnectionTest {
   @Test public void readSendsWindowUpdate() throws Exception {
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
     for (int i = 0; i < 3; i++) {
-      peer.sendFrame().data(0, 1, new byte[WINDOW_UPDATE_THRESHOLD]);
+      peer.sendFrame().data(false, 1, new byte[WINDOW_UPDATE_THRESHOLD]);
       peer.acceptFrame(); // WINDOW UPDATE
     }
-    peer.sendFrame().data(FLAG_FIN, 1, new byte[0]);
+    peer.sendFrame().data(true, 1, new byte[0]);
     peer.play();
 
     // Play it back.
@@ -982,8 +988,8 @@ public final class SpdyConnectionTest {
   @Test public void testTruncatedDataFrame() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(0, 1, Arrays.asList("a", "android"));
-    peer.sendTruncatedFrame(8 + 100).data(0, 1, new byte[1024]);
+    peer.sendFrame().synReply(false, 1, Arrays.asList("a", "android"));
+    peer.sendTruncatedFrame(8 + 100).data(false, 1, new byte[1024]);
     peer.play();
 
     // play it back
