@@ -21,20 +21,23 @@ import java.io.IOException;
 import java.util.List;
 
 /** Writes transport frames for SPDY/3 or HTTP/2.0. */
-public interface SpdyWriter extends Closeable {
+public interface FrameWriter extends Closeable {
+  /** HTTP/2.0 only. */
   void connectionHeader();
+
+  /** SPDY/3 only. */
   void flush() throws IOException;
   void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
       int priority, int slot, List<String> nameValueBlock) throws IOException;
   void synReply(boolean outFinished, int streamId, List<String> nameValueBlock) throws IOException;
-  void headers(int flags, int streamId, List<String> nameValueBlock) throws IOException;
+  void headers(int streamId, List<String> nameValueBlock) throws IOException;
   void rstStream(int streamId, int statusCode) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
       throws IOException;
-  void settings(int flags, Settings settings) throws IOException;
+  void settings(Settings settings) throws IOException;
   void noop() throws IOException;
-  void ping(int flags, int id) throws IOException;
-  void goAway(int flags, int lastGoodStreamId, int statusCode) throws IOException;
+  void ping(int id) throws IOException;
+  void goAway(int lastGoodStreamId, int statusCode) throws IOException;
   void windowUpdate(int streamId, int deltaWindowSize) throws IOException;
 }

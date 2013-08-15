@@ -23,15 +23,15 @@ import java.io.OutputStream;
 import java.util.List;
 
 final class Http20Draft04 implements Variant {
-  @Override public SpdyReader newReader(InputStream in) {
+  @Override public FrameReader newReader(InputStream in) {
     return new Reader(in);
   }
 
-  @Override public SpdyWriter newWriter(OutputStream out) {
+  @Override public FrameWriter newWriter(OutputStream out) {
     return new Writer(out);
   }
 
-  static final class Reader implements SpdyReader {
+  static final class Reader implements FrameReader {
     private final DataInputStream in;
 
     Reader(InputStream in) {
@@ -61,7 +61,7 @@ final class Http20Draft04 implements Variant {
     }
   }
 
-  static final class Writer implements SpdyWriter {
+  static final class Writer implements FrameWriter {
     private final DataOutputStream out;
 
     Writer(OutputStream out) {
@@ -87,7 +87,7 @@ final class Http20Draft04 implements Variant {
       throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public synchronized void headers(int flags, int streamId, List<String> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<String> nameValueBlock)
         throws IOException {
       throw new UnsupportedOperationException("TODO");
     }
@@ -106,7 +106,7 @@ final class Http20Draft04 implements Variant {
       throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public synchronized void settings(int flags, Settings settings) throws IOException {
+    @Override public synchronized void settings(Settings settings) throws IOException {
       throw new UnsupportedOperationException("TODO");
     }
 
@@ -114,11 +114,11 @@ final class Http20Draft04 implements Variant {
       throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public synchronized void ping(int flags, int id) throws IOException {
+    @Override public synchronized void ping(int id) throws IOException {
       throw new UnsupportedOperationException("TODO");
     }
 
-    @Override public synchronized void goAway(int flags, int lastGoodStreamId, int statusCode)
+    @Override public synchronized void goAway(int lastGoodStreamId, int statusCode)
         throws IOException {
       throw new UnsupportedOperationException("TODO");
     }

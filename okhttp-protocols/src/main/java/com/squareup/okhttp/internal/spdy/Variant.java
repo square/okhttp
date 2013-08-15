@@ -23,6 +23,6 @@ interface Variant {
   Variant SPDY3 = new Spdy3();
   Variant HTTP_20_DRAFT_04 = new Http20Draft04();
 
-  SpdyReader newReader(InputStream in);
-  SpdyWriter newWriter(OutputStream out);
+  FrameReader newReader(InputStream in);
+  FrameWriter newWriter(OutputStream out);
 }
