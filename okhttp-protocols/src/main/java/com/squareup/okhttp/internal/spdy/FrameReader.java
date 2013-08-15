@@ -22,21 +22,20 @@ import java.io.InputStream;
 import java.util.List;
 
 /** Reads transport frames for SPDY/3 or HTTP/2.0. */
-public interface SpdyReader extends Closeable {
+public interface FrameReader extends Closeable {
   boolean nextFrame(Handler handler) throws IOException;
 
   public interface Handler {
-    void data(boolean inFinished, int streamId, InputStream in, int length)
-        throws IOException;
+    void data(boolean inFinished, int streamId, InputStream in, int length) throws IOException;
     void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
         int priority, int slot, List<String> nameValueBlock);
     void synReply(boolean inFinished, int streamId, List<String> nameValueBlock) throws IOException;
-    void headers(int flags, int streamId, List<String> nameValueBlock) throws IOException;
-    void rstStream(int flags, int streamId, int statusCode);
-    void settings(int flags, Settings settings);
+    void headers(int streamId, List<String> nameValueBlock) throws IOException;
+    void rstStream(int streamId, int statusCode);
+    void settings(boolean clearPrevious, Settings settings);
     void noop();
-    void ping(int flags, int streamId);
-    void goAway(int flags, int lastGoodStreamId, int statusCode);
-    void windowUpdate(int flags, int streamId, int deltaWindowSize);
+    void ping(int streamId);
+    void goAway(int lastGoodStreamId, int statusCode);
+    void windowUpdate(int streamId, int deltaWindowSize);
   }
 }

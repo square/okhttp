@@ -92,16 +92,16 @@ final class Spdy3 implements Variant {
     }
   }
 
-  @Override public SpdyReader newReader(InputStream in) {
+  @Override public FrameReader newReader(InputStream in) {
     return new Reader(in);
   }
 
-  @Override public SpdyWriter newWriter(OutputStream out) {
+  @Override public FrameWriter newWriter(OutputStream out) {
     return new Writer(out);
   }
 
   /** Read spdy/3 frames. */
-  static final class Reader implements SpdyReader {
+  static final class Reader implements FrameReader {
     private final DataInputStream in;
     private final DataInputStream nameValueBlockIn;
     private int compressedLimit;
@@ -217,14 +217,14 @@ final class Spdy3 implements Variant {
       if (length != 8) throw ioException("TYPE_RST_STREAM length: %d != 8", length);
       int streamId = in.readInt() & 0x7fffffff;
       int statusCode = in.readInt();
-      handler.rstStream(flags, streamId, statusCode);
+      handler.rstStream(streamId, statusCode);
     }
 
     private void readHeaders(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
       List<String> nameValueBlock = readNameValueBlock(length - 4);
-      handler.headers(flags, streamId, nameValueBlock);
+      handler.headers(streamId, nameValueBlock);
     }
 
     private void readWindowUpdate(Handler handler, int flags, int length) throws IOException {
@@ -233,7 +233,7 @@ final class Spdy3 implements Variant {
       int w2 = in.readInt();
       int streamId = w1 & 0x7fffffff;
       int deltaWindowSize = w2 & 0x7fffffff;
-      handler.windowUpdate(flags, streamId, deltaWindowSize);
+      handler.windowUpdate(streamId, deltaWindowSize);
     }
 
     private DataInputStream newNameValueBlockStream() {
@@ -308,14 +308,14 @@ final class Spdy3 implements Variant {
     private void readPing(Handler handler, int flags, int length) throws IOException {
       if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
       int id = in.readInt();
-      handler.ping(flags, id);
+      handler.ping(id);
     }
 
     private void readGoAway(Handler handler, int flags, int length) throws IOException {
       if (length != 8) throw ioException("TYPE_GOAWAY length: %d != 8", length);
       int lastGoodStreamId = in.readInt() & 0x7fffffff;
       int statusCode = in.readInt();
-      handler.goAway(flags, lastGoodStreamId, statusCode);
+      handler.goAway(lastGoodStreamId, statusCode);
     }
 
     private void readSettings(Handler handler, int flags, int length) throws IOException {
@@ -331,7 +331,8 @@ final class Spdy3 implements Variant {
         int id = w1 & 0xffffff;
         settings.set(id, idFlags, value);
       }
-      handler.settings(flags, settings);
+      boolean clearPrevious = (flags & Settings.FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS) != 0;
+      handler.settings(clearPrevious, settings);
     }
 
     private static IOException ioException(String message, Object... args) throws IOException {
@@ -344,7 +345,7 @@ final class Spdy3 implements Variant {
   }
 
   /** Write spdy/3 frames. */
-  static final class Writer implements SpdyWriter {
+  static final class Writer implements FrameWriter {
     private final DataOutputStream out;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
@@ -399,9 +400,10 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void headers(int flags, int streamId, List<String> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<String> nameValueBlock)
         throws IOException {
       writeNameValueBlockToBuffer(nameValueBlock);
+      int flags = 0;
       int type = TYPE_HEADERS;
       int length = nameValueBlockBuffer.size() + 4;
 
@@ -447,8 +449,9 @@ final class Spdy3 implements Variant {
       nameValueBlockOut.flush();
     }
 
-    @Override public synchronized void settings(int flags, Settings settings) throws IOException {
+    @Override public synchronized void settings(Settings settings) throws IOException {
       int type = TYPE_SETTINGS;
+      int flags = 0;
       int size = settings.size();
       int length = 4 + size * 8;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
@@ -472,8 +475,9 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void ping(int flags, int id) throws IOException {
+    @Override public synchronized void ping(int id) throws IOException {
       int type = TYPE_PING;
+      int flags = 0;
       int length = 4;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
@@ -481,9 +485,10 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void goAway(int flags, int lastGoodStreamId, int statusCode)
+    @Override public synchronized void goAway(int lastGoodStreamId, int statusCode)
         throws IOException {
       int type = TYPE_GOAWAY;
+      int flags = 0;
       int length = 8;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
