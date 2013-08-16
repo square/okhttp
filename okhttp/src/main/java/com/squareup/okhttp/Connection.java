@@ -296,6 +296,11 @@ public final class Connection implements Closeable {
     return route.address.sslSocketFactory != null && route.proxy.type() == Proxy.Type.HTTP;
   }
 
+  public void updateReadTimeout(int newTimeout) throws IOException {
+    if (!connected) throw new IllegalStateException("updateReadTimeout - not connected");
+    socket.setSoTimeout(newTimeout);
+  }
+
   /**
    * To make an HTTPS connection over an HTTP proxy, send an unencrypted
    * CONNECT request to create the proxy connection. This may need to be

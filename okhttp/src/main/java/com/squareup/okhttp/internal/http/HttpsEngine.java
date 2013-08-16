@@ -43,6 +43,7 @@ public final class HttpsEngine extends HttpEngine {
 
   @Override protected void connected(Connection connection) {
     this.sslSocket = (SSLSocket) connection.getSocket();
+    super.connected(connection);
   }
 
   @Override protected boolean acceptCacheResponseType(CacheResponse cacheResponse) {

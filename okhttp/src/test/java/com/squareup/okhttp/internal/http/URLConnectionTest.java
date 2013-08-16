@@ -1207,10 +1207,7 @@ public final class URLConnectionTest {
 
   @Test public void nonStandardAuthenticationSchemeWithRealm() throws Exception {
     List<String> calls = authCallsForHeader("WWW-Authenticate: Foo realm=\"Bar\"");
-    assertEquals(1, calls.size());
-    String call = calls.get(0);
-    assertTrue(call, call.contains("scheme=Foo"));
-    assertTrue(call, call.contains("prompt=Bar"));
+    assertEquals(0, calls.size());
   }
 
   // Digest auth is currently unsupported. Test that digest requests should fail reasonably.
@@ -1220,10 +1217,7 @@ public final class URLConnectionTest {
         + "realm=\"testrealm@host.com\", qop=\"auth,auth-int\", "
         + "nonce=\"dcd98b7102dd2f0e8b11d0f600bfb0c093\", "
         + "opaque=\"5ccc069c403ebaf9f0171e9517f40e41\"");
-    assertEquals(1, calls.size());
-    String call = calls.get(0);
-    assertTrue(call, call.contains("scheme=Digest"));
-    assertTrue(call, call.contains("prompt=testrealm@host.com"));
+    assertEquals(0, calls.size());
   }
 
   @Test public void allAttributesSetInServerAuthenticationCallbacks() throws Exception {

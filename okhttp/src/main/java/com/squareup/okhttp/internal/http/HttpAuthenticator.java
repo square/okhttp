@@ -39,6 +39,10 @@ public final class HttpAuthenticator {
     @Override public Credential authenticate(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
       for (Challenge challenge : challenges) {
+        if (!"Basic".equals(challenge.getScheme())) {
+          continue;
+        }
+
         PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(url.getHost(),
             getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(),
             challenge.getRealm(), challenge.getScheme(), url, Authenticator.RequestorType.SERVER);
@@ -52,6 +56,10 @@ public final class HttpAuthenticator {
     @Override public Credential authenticateProxy(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
       for (Challenge challenge : challenges) {
+        if (!"Basic".equals(challenge.getScheme())) {
+          continue;
+        }
+
         InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
         PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(
             proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
