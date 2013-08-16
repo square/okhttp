@@ -34,25 +34,21 @@ public final class Base64 {
   }
 
   public static byte[] decode(byte[] in) {
-    return decode(in, in.length);
+    return decode(in, 0, in.length);
   }
 
-  public static byte[] decode(byte[] in, int len) {
-    // approximate output length
-    int length = len / 4 * 3;
-    // return an empty array on empty or short input without padding
-    if (length == 0) {
-      return EMPTY_BYTE_ARRAY;
-    }
-    // temporary array
-    byte[] out = new byte[length];
+  public static byte[] decode(byte[] in, int start, int len) {
     // number of padding characters ('=')
     int pad = 0;
     byte chr;
     // compute the number of the padding characters
     // and adjust the length of the input
     for (; ; len--) {
-      chr = in[len - 1];
+      if (len == 0) {
+        // return an empty array if there's no padding, otherwise fail
+        return (pad == 0) ? EMPTY_BYTE_ARRAY : null;
+      }
+      chr = in[start + len - 1];
       // skip the neutral characters
       if ((chr == '\n') || (chr == '\r') || (chr == ' ') || (chr == '\t')) {
         continue;
@@ -63,8 +59,55 @@ public final class Base64 {
         break;
       }
     }
+    // calculate the length assuming there are no neutral characters, overestimate otherwise
+    int length = len / 4 + (len + 1) / 2;
+    // output array
+    byte[] out = new byte[length];
+    // decode into out
+    int outIndex = decodeInternal(in, start, len, pad, out, 0);
+    if (outIndex == -1) {
+      return null;
+    }
+    if (outIndex == out.length) {
+      return out;
+    }
+    // extract the result range
+    byte[] result = new byte[outIndex];
+    System.arraycopy(out, 0, result, 0, outIndex);
+    return result;
+  }
+
+  public static int decodeInPlace(byte[] inOut, int start, int len) {
+    // number of padding characters ('=')
+    int pad = 0;
+    byte chr;
+    // compute the number of the padding characters
+    // and adjust the length of the input
+    for (; ; len--) {
+      if (len == 0) {
+        // return an empty array if there's no padding, otherwise fail
+        return (pad == 0) ? 0 : -1;
+      }
+      chr = inOut[start + len - 1];
+      // skip the neutral characters
+      if ((chr == '\n') || (chr == '\r') || (chr == ' ') || (chr == '\t')) {
+        continue;
+      }
+      if (chr == '=') {
+        pad++;
+      } else {
+        break;
+      }
+    }
+    // decode in-place
+    return decodeInternal(inOut, start, len, pad, inOut, start);
+  }
+
+  private static int decodeInternal(byte[] in, int inStart, int len, int pad,
+      byte[] out, int outStart) {
+    byte chr;
     // index in the output array
-    int outIndex = 0;
+    int outIndex = outStart;
     // index in the input array
     int inIndex = 0;
     // holds the value of the input character
@@ -72,7 +115,7 @@ public final class Base64 {
     // holds the value of the input quantum
     int quantum = 0;
     for (int i = 0; i < len; i++) {
-      chr = in[i];
+      chr = in[inStart + i];
       // skip the neutral characters
       if ((chr == '\n') || (chr == '\r') || (chr == ' ') || (chr == '\t')) {
         continue;
@@ -97,7 +140,7 @@ public final class Base64 {
       } else if (chr == '/') {
         bits = 63;
       } else {
-        return null;
+        return -1;
       }
       // append the value to the quantum
       quantum = (quantum << 6) | (byte) bits;
@@ -109,6 +152,10 @@ public final class Base64 {
       }
       inIndex++;
     }
+    // check that we have the right amount of padding
+    if (((inIndex << 30) >> 30) + pad != 0) {
+        return -1;
+    }
     if (pad > 0) {
       // adjust the quantum value according to the padding
       quantum = quantum << (6 * pad);
@@ -118,10 +165,7 @@ public final class Base64 {
         out[outIndex++] = (byte) (quantum >> 8);
       }
     }
-    // create the resulting array
-    byte[] result = new byte[outIndex];
-    System.arraycopy(out, 0, result, 0, outIndex);
-    return result;
+    return outIndex - outStart;
   }
 
   private static final byte[] MAP = new byte[] {

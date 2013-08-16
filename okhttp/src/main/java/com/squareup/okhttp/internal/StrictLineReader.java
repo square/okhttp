@@ -116,6 +116,10 @@ public class StrictLineReader implements Closeable {
    * method of this reader. A line ends with {@code "\n"} or {@code "\r\n"},
    * this end of line marker is not included in the result.
    *
+   * <p>The caller may overwrite the underlying data of the returned reference. However,
+   * overwriting the underlying byte array outside the range specified by the reference
+   * leads to undefined behavior. This is useful for in-place decoding.
+   *
    * @return the next line from the input.
    * @throws IOException for underlying {@code InputStream} errors.
    * @throws EOFException for the end of source stream.

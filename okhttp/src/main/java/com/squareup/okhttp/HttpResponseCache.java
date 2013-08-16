@@ -623,9 +623,13 @@ public final class HttpResponseCache extends ResponseCache {
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         Certificate[] result = new Certificate[length];
         for (int i = 0; i < result.length; i++) {
-          String line = reader.readLine();
-          byte[] bytes = Base64.decode(line.getBytes("US-ASCII"));
-          result[i] = certificateFactory.generateCertificate(new ByteArrayInputStream(bytes));
+          ByteSequence line = reader.readLineRef();
+          int len = Base64.decodeInPlace(line.data(), line.offset(), line.length());
+          if (len == -1) {
+            throw new IOException("Bad base64 certificate data");
+          }
+          result[i] = certificateFactory.generateCertificate(
+                  new ByteArrayInputStream(line.data(), line.offset(), len));
         }
         return result;
       } catch (CertificateException e) {
