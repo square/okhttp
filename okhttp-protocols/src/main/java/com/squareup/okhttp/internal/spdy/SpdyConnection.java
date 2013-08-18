@@ -55,10 +55,6 @@ public final class SpdyConnection implements Closeable {
   // operations must synchronize on 'this' last. This ensures that we never
   // wait for a blocking operation while holding 'this'.
 
-  static final int GOAWAY_OK = 0;
-  static final int GOAWAY_PROTOCOL_ERROR = 1;
-  static final int GOAWAY_INTERNAL_ERROR = 2;
-
   private static final ExecutorService executor = new ThreadPoolExecutor(0,
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.daemonThreadFactory("OkHttp SpdyConnection"));
@@ -95,8 +91,8 @@ public final class SpdyConnection implements Closeable {
     variant = builder.variant;
     client = builder.client;
     handler = builder.handler;
-    frameReader = variant.newReader(builder.in);
-    frameWriter = variant.newWriter(builder.out);
+    frameReader = variant.newReader(builder.in, client);
+    frameWriter = variant.newWriter(builder.out, client);
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
 
@@ -189,18 +185,18 @@ public final class SpdyConnection implements Closeable {
     frameWriter.data(outFinished, streamId, buffer, offset, byteCount);
   }
 
-  void writeSynResetLater(final int streamId, final int statusCode) {
+  void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
     executor.submit(new NamedRunnable("OkHttp SPDY Writer %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
-          writeSynReset(streamId, statusCode);
+          writeSynReset(streamId, errorCode);
         } catch (IOException ignored) {
         }
       }
     });
   }
 
-  void writeSynReset(int streamId, int statusCode) throws IOException {
+  void writeSynReset(int streamId, ErrorCode statusCode) throws IOException {
     frameWriter.rstStream(streamId, statusCode);
   }
 
@@ -235,26 +231,28 @@ public final class SpdyConnection implements Closeable {
       if (pings == null) pings = new HashMap<Integer, Ping>();
       pings.put(pingId, ping);
     }
-    writePing(pingId, ping);
+    writePing(false, pingId, 0x4f4b6f6b /* ASCII "OKok" */, ping);
     return ping;
   }
 
-  private void writePingLater(final int streamId, final Ping ping) {
-    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s ping %d", hostName, streamId) {
+  private void writePingLater(
+      final boolean reply, final int payload1, final int payload2, final Ping ping) {
+    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s ping %08x%08x",
+        hostName, payload1, payload2) {
       @Override public void execute() {
         try {
-          writePing(streamId, ping);
+          writePing(reply, payload1, payload2, ping);
         } catch (IOException ignored) {
         }
       }
     });
   }
 
-  private void writePing(int id, Ping ping) throws IOException {
+  private void writePing(boolean reply, int payload1, int payload2, Ping ping) throws IOException {
     synchronized (frameWriter) {
       // Observe the sent time immediately before performing I/O.
       if (ping != null) ping.send();
-      frameWriter.ping(id);
+      frameWriter.ping(reply, payload1, payload2);
     }
   }
 
@@ -276,11 +274,8 @@ public final class SpdyConnection implements Closeable {
    * locally, nor accepted from the remote peer. Existing streams are not
    * impacted. This is intended to permit an endpoint to gracefully stop
    * accepting new requests without harming previously established streams.
-   *
-   * @param statusCode one of {@link #GOAWAY_OK}, {@link
-   * #GOAWAY_INTERNAL_ERROR} or {@link #GOAWAY_PROTOCOL_ERROR}.
    */
-  public void shutdown(int statusCode) throws IOException {
+  public void shutdown(ErrorCode statusCode) throws IOException {
     synchronized (frameWriter) {
       int lastGoodStreamId;
       synchronized (this) {
@@ -300,14 +295,14 @@ public final class SpdyConnection implements Closeable {
    * internal executor services.
    */
   @Override public void close() throws IOException {
-    close(GOAWAY_OK, SpdyStream.RST_CANCEL);
+    close(ErrorCode.NO_ERROR, ErrorCode.CANCEL);
   }
 
-  private void close(int shutdownStatusCode, int rstStatusCode) throws IOException {
+  private void close(ErrorCode connectionCode, ErrorCode streamCode) throws IOException {
     assert (!Thread.holdsLock(this));
     IOException thrown = null;
     try {
-      shutdown(shutdownStatusCode);
+      shutdown(connectionCode);
     } catch (IOException e) {
       thrown = e;
     }
@@ -329,7 +324,7 @@ public final class SpdyConnection implements Closeable {
     if (streamsToClose != null) {
       for (SpdyStream stream : streamsToClose) {
         try {
-          stream.close(rstStatusCode);
+          stream.close(streamCode);
         } catch (IOException e) {
           if (thrown != null) thrown = e;
         }
@@ -421,19 +416,19 @@ public final class SpdyConnection implements Closeable {
 
   private class Reader implements Runnable, FrameReader.Handler {
     @Override public void run() {
-      int shutdownStatusCode = GOAWAY_INTERNAL_ERROR;
-      int rstStatusCode = SpdyStream.RST_INTERNAL_ERROR;
+      ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
+      ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
         while (frameReader.nextFrame(this)) {
         }
-        shutdownStatusCode = GOAWAY_OK;
-        rstStatusCode = SpdyStream.RST_CANCEL;
+        connectionErrorCode = ErrorCode.NO_ERROR;
+        streamErrorCode = ErrorCode.CANCEL;
       } catch (IOException e) {
-        shutdownStatusCode = GOAWAY_PROTOCOL_ERROR;
-        rstStatusCode = SpdyStream.RST_PROTOCOL_ERROR;
+        connectionErrorCode = ErrorCode.PROTOCOL_ERROR;
+        streamErrorCode = ErrorCode.PROTOCOL_ERROR;
       } finally {
         try {
-          close(shutdownStatusCode, rstStatusCode);
+          close(connectionErrorCode, streamErrorCode);
         } catch (IOException ignored) {
         }
       }
@@ -443,7 +438,7 @@ public final class SpdyConnection implements Closeable {
         throws IOException {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
-        writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
+        writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
         Util.skipByReading(in, length);
         return;
       }
@@ -467,7 +462,7 @@ public final class SpdyConnection implements Closeable {
         previous = streams.put(streamId, synStream);
       }
       if (previous != null) {
-        previous.closeLater(SpdyStream.RST_PROTOCOL_ERROR);
+        previous.closeLater(ErrorCode.PROTOCOL_ERROR);
         removeStream(streamId);
         return;
       }
@@ -487,7 +482,7 @@ public final class SpdyConnection implements Closeable {
         throws IOException {
       SpdyStream replyStream = getStream(streamId);
       if (replyStream == null) {
-        writeSynResetLater(streamId, SpdyStream.RST_INVALID_STREAM);
+        writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
         return;
       }
       replyStream.receiveReply(nameValueBlock);
@@ -504,10 +499,10 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void rstStream(int streamId, int statusCode) {
+    @Override public void rstStream(int streamId, ErrorCode errorCode) {
       SpdyStream rstStream = removeStream(streamId);
       if (rstStream != null) {
-        rstStream.receiveRstStream(statusCode);
+        rstStream.receiveRstStream(errorCode);
       }
     }
 
@@ -528,6 +523,7 @@ public final class SpdyConnection implements Closeable {
           // The synchronization here is ugly. We need to synchronize on 'this' to guard
           // reads to 'settings'. We synchronize on 'stream' to guard the state change.
           // And we need to acquire the 'stream' lock first, since that may block.
+          // TODO: this can block the reader thread until a write completes. That's bad!
           synchronized (stream) {
             synchronized (SpdyConnection.this) {
               stream.receiveSettings(settings);
@@ -540,19 +536,19 @@ public final class SpdyConnection implements Closeable {
     @Override public void noop() {
     }
 
-    @Override public void ping(int streamId) {
-      if (client != (streamId % 2 == 1)) {
-        // Respond to a client ping if this is a server and vice versa.
-        writePingLater(streamId, null);
-      } else {
-        Ping ping = removePing(streamId);
+    @Override public void ping(boolean reply, int payload1, int payload2) {
+      if (reply) {
+        Ping ping = removePing(payload1);
         if (ping != null) {
           ping.receive();
         }
+      } else {
+        // Send a reply to a client ping if this is a server and vice versa.
+        writePingLater(true, payload1, payload2, null);
       }
     }
 
-    @Override public void goAway(int lastGoodStreamId, int statusCode) {
+    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
       synchronized (SpdyConnection.this) {
         shutdown = true;
 
@@ -562,18 +558,28 @@ public final class SpdyConnection implements Closeable {
           Map.Entry<Integer, SpdyStream> entry = i.next();
           int streamId = entry.getKey();
           if (streamId > lastGoodStreamId && entry.getValue().isLocallyInitiated()) {
-            entry.getValue().receiveRstStream(SpdyStream.RST_REFUSED_STREAM);
+            entry.getValue().receiveRstStream(ErrorCode.REFUSED_STREAM);
             i.remove();
           }
         }
       }
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize) {
+    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+      if (streamId == 0) {
+        // TODO: honor whole-stream flow control
+        return;
+      }
+
+      // TODO: honor endFlowControl
       SpdyStream stream = getStream(streamId);
       if (stream != null) {
         stream.receiveWindowUpdate(deltaWindowSize);
       }
+    }
+
+    @Override public void priority(int streamId, int priority) {
+      // TODO: honor priority.
     }
   }
 }
