@@ -262,6 +262,8 @@ public final class Util {
    * buffer.
    */
   public static long skipByReading(InputStream in, long byteCount) throws IOException {
+    if (byteCount == 0) return 0L;
+
     // acquire the shared skip buffer.
     byte[] buffer = skipBuffer.getAndSet(null);
     if (buffer == null) {

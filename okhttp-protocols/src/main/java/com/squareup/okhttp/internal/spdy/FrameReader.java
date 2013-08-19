@@ -31,11 +31,12 @@ public interface FrameReader extends Closeable {
         int priority, int slot, List<String> nameValueBlock);
     void synReply(boolean inFinished, int streamId, List<String> nameValueBlock) throws IOException;
     void headers(int streamId, List<String> nameValueBlock) throws IOException;
-    void rstStream(int streamId, int statusCode);
+    void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
     void noop();
-    void ping(int streamId);
-    void goAway(int lastGoodStreamId, int statusCode);
-    void windowUpdate(int streamId, int deltaWindowSize);
+    void ping(boolean reply, int payload1, int payload2);
+    void goAway(int lastGoodStreamId, ErrorCode errorCode);
+    void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl);
+    void priority(int streamId, int priority);
   }
 }

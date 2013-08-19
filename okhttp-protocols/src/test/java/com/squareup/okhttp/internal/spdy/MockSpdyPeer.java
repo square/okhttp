@@ -49,7 +49,7 @@ public final class MockSpdyPeer implements Closeable {
 
   public MockSpdyPeer(boolean client) {
     this.client = client;
-    this.frameWriter = Variant.SPDY3.newWriter(bytesOut);
+    this.frameWriter = Variant.SPDY3.newWriter(bytesOut, client);
   }
 
   public void acceptFrame() {
@@ -100,7 +100,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = Variant.SPDY3.newReader(in);
+    FrameReader reader = Variant.SPDY3.newReader(in, client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();
@@ -168,7 +168,6 @@ public final class MockSpdyPeer implements Closeable {
     public final int sequence;
     public final FrameReader reader;
     public int type = -1;
-    public int flags = -1;
     public boolean clearPrevious;
     public boolean outFinished;
     public boolean inFinished;
@@ -176,7 +175,7 @@ public final class MockSpdyPeer implements Closeable {
     public int associatedStreamId;
     public int priority;
     public int slot;
-    public int statusCode;
+    public ErrorCode errorCode;
     public int deltaWindowSize;
     public List<String> nameValueBlock;
     public byte[] data;
@@ -232,17 +231,17 @@ public final class MockSpdyPeer implements Closeable {
       Util.readFully(in, this.data);
     }
 
-    @Override public void rstStream(int streamId, int statusCode) {
+    @Override public void rstStream(int streamId, ErrorCode errorCode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_RST_STREAM;
       this.streamId = streamId;
-      this.statusCode = statusCode;
+      this.errorCode = errorCode;
     }
 
-    @Override public void ping(int streamId) {
+    @Override public void ping(boolean reply, int payload1, int payload2) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_PING;
-      this.streamId = streamId;
+      this.streamId = payload1;
     }
 
     @Override public void noop() {
@@ -250,18 +249,22 @@ public final class MockSpdyPeer implements Closeable {
       this.type = Spdy3.TYPE_NOOP;
     }
 
-    @Override public void goAway(int lastGoodStreamId, int statusCode) {
+    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_GOAWAY;
       this.streamId = lastGoodStreamId;
-      this.statusCode = statusCode;
+      this.errorCode = errorCode;
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize) {
+    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_WINDOW_UPDATE;
       this.streamId = streamId;
       this.deltaWindowSize = deltaWindowSize;
+    }
+
+    @Override public void priority(int streamId, int priority) {
+      throw new UnsupportedOperationException();
     }
   }
 }
