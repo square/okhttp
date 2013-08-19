@@ -22,7 +22,7 @@ import java.io.IOException;
 public interface IncomingStreamHandler {
   IncomingStreamHandler REFUSE_INCOMING_STREAMS = new IncomingStreamHandler() {
     @Override public void receive(SpdyStream stream) throws IOException {
-      stream.close(SpdyStream.RST_REFUSED_STREAM);
+      stream.close(ErrorCode.REFUSED_STREAM);
     }
   };
 

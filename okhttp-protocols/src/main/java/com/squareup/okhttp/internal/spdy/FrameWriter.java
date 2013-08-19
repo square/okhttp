@@ -31,13 +31,13 @@ public interface FrameWriter extends Closeable {
       int priority, int slot, List<String> nameValueBlock) throws IOException;
   void synReply(boolean outFinished, int streamId, List<String> nameValueBlock) throws IOException;
   void headers(int streamId, List<String> nameValueBlock) throws IOException;
-  void rstStream(int streamId, int statusCode) throws IOException;
+  void rstStream(int streamId, ErrorCode errorCode) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
       throws IOException;
   void settings(Settings settings) throws IOException;
   void noop() throws IOException;
-  void ping(int id) throws IOException;
-  void goAway(int lastGoodStreamId, int statusCode) throws IOException;
+  void ping(boolean reply, int payload1, int payload2) throws IOException;
+  void goAway(int lastGoodStreamId, ErrorCode errorCode) throws IOException;
   void windowUpdate(int streamId, int deltaWindowSize) throws IOException;
 }

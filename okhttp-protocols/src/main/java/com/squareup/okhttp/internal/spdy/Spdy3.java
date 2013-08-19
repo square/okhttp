@@ -92,23 +92,25 @@ final class Spdy3 implements Variant {
     }
   }
 
-  @Override public FrameReader newReader(InputStream in) {
-    return new Reader(in);
+  @Override public FrameReader newReader(InputStream in, boolean client) {
+    return new Reader(in, client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out) {
-    return new Writer(out);
+  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
+    return new Writer(out, client);
   }
 
   /** Read spdy/3 frames. */
   static final class Reader implements FrameReader {
     private final DataInputStream in;
     private final DataInputStream nameValueBlockIn;
+    private final boolean client;
     private int compressedLimit;
 
-    Reader(InputStream in) {
+    Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
       this.nameValueBlockIn = newNameValueBlockStream();
+      this.client = client;
     }
 
     /**
@@ -216,8 +218,12 @@ final class Spdy3 implements Variant {
     private void readRstStream(Handler handler, int flags, int length) throws IOException {
       if (length != 8) throw ioException("TYPE_RST_STREAM length: %d != 8", length);
       int streamId = in.readInt() & 0x7fffffff;
-      int statusCode = in.readInt();
-      handler.rstStream(streamId, statusCode);
+      int errorCodeInt = in.readInt();
+      ErrorCode errorCode = ErrorCode.fromSpdy3Rst(errorCodeInt);
+      if (errorCode == null) {
+        throw ioException("TYPE_RST_STREAM unexpected error code: %d", errorCodeInt);
+      }
+      handler.rstStream(streamId, errorCode);
     }
 
     private void readHeaders(Handler handler, int flags, int length) throws IOException {
@@ -233,7 +239,7 @@ final class Spdy3 implements Variant {
       int w2 = in.readInt();
       int streamId = w1 & 0x7fffffff;
       int deltaWindowSize = w2 & 0x7fffffff;
-      handler.windowUpdate(streamId, deltaWindowSize);
+      handler.windowUpdate(streamId, deltaWindowSize, false);
     }
 
     private DataInputStream newNameValueBlockStream() {
@@ -308,14 +314,19 @@ final class Spdy3 implements Variant {
     private void readPing(Handler handler, int flags, int length) throws IOException {
       if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
       int id = in.readInt();
-      handler.ping(id);
+      boolean reply = client == ((id % 2) == 1);
+      handler.ping(reply, id, 0);
     }
 
     private void readGoAway(Handler handler, int flags, int length) throws IOException {
       if (length != 8) throw ioException("TYPE_GOAWAY length: %d != 8", length);
       int lastGoodStreamId = in.readInt() & 0x7fffffff;
-      int statusCode = in.readInt();
-      handler.goAway(lastGoodStreamId, statusCode);
+      int errorCodeInt = in.readInt();
+      ErrorCode errorCode = ErrorCode.fromSpdyGoAway(errorCodeInt);
+      if (errorCode == null) {
+        throw ioException("TYPE_GOAWAY unexpected error code: %d", errorCodeInt);
+      }
+      handler.goAway(lastGoodStreamId, errorCode);
     }
 
     private void readSettings(Handler handler, int flags, int length) throws IOException {
@@ -349,9 +360,11 @@ final class Spdy3 implements Variant {
     private final DataOutputStream out;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
+    private final boolean client;
 
-    Writer(OutputStream out) {
+    Writer(OutputStream out, boolean client) {
       this.out = new DataOutputStream(out);
+      this.client = client;
 
       Deflater deflater = new Deflater();
       deflater.setDictionary(DICTIONARY);
@@ -360,7 +373,7 @@ final class Spdy3 implements Variant {
           Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
     }
 
-    @Override public void connectionHeader() {
+    @Override public synchronized void connectionHeader() {
       // Do nothing: no connection header for SPDY/3.
     }
 
@@ -414,14 +427,16 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void rstStream(int streamId, int statusCode) throws IOException {
+    @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
+        throws IOException {
+      if (errorCode.spdyRstCode == -1) throw new IllegalArgumentException();
       int flags = 0;
       int type = TYPE_RST_STREAM;
       int length = 8;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
-      out.writeInt(statusCode);
+      out.writeInt(errorCode.spdyRstCode);
       out.flush();
     }
 
@@ -475,25 +490,29 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void ping(int id) throws IOException {
+    @Override public synchronized void ping(boolean reply, int payload1, int payload2)
+        throws IOException {
+      boolean payloadIsReply = client != ((payload1 % 2) == 1);
+      if (reply != payloadIsReply) throw new IllegalArgumentException("payload != reply");
       int type = TYPE_PING;
       int flags = 0;
       int length = 4;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(id);
+      out.writeInt(payload1);
       out.flush();
     }
 
-    @Override public synchronized void goAway(int lastGoodStreamId, int statusCode)
+    @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
         throws IOException {
+      if (errorCode.spdyGoAwayCode == -1) throw new IllegalArgumentException();
       int type = TYPE_GOAWAY;
       int flags = 0;
       int length = 8;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(lastGoodStreamId);
-      out.writeInt(statusCode);
+      out.writeInt(errorCode.spdyGoAwayCode);
       out.flush();
     }
 

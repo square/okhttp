@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
 import java.io.IOException;
@@ -84,7 +85,7 @@ public final class SpdyTransport implements Transport {
       InputStream responseBodyIn) {
     if (streamCanceled) {
       if (stream != null) {
-        stream.closeLater(SpdyStream.RST_CANCEL);
+        stream.closeLater(ErrorCode.CANCEL);
         return true;
       } else {
         // If stream is null, it either means that writeRequestHeaders wasn't called
