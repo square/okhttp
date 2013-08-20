@@ -101,13 +101,11 @@ public class StrictLineReader implements Closeable {
    * @throws IOException for errors when closing the underlying {@code InputStream}.
    */
   @Override public void close() throws IOException {
-    synchronized (in) {
-      if (buf != null) {
-        buf = null;
-        line = null;
-        splitLineData = null;
-        in.close();
-      }
+    if (buf != null) {
+      buf = null;
+      line = null;
+      splitLineData = null;
+      in.close();
     }
   }
 
@@ -125,49 +123,47 @@ public class StrictLineReader implements Closeable {
    * @throws EOFException for the end of source stream.
    */
   public ByteSequence readLineRef() throws IOException {
-    synchronized (in) {
-      if (buf == null) {
-        throw new IOException("LineReader is closed");
-      }
+    if (buf == null) {
+      throw new IOException("LineReader is closed");
+    }
 
-      // Read more data if we are at the end of the buffered data.
-      // Though it's an error to read after an exception, we will let {@code fillBuf()}
-      // throw again if that happens; thus we need to handle end == -1 as well as end == pos.
-      if (pos >= end) {
-        fillBuf();
+    // Read more data if we are at the end of the buffered data.
+    // Though it's an error to read after an exception, we will let {@code fillBuf()}
+    // throw again if that happens; thus we need to handle end == -1 as well as end == pos.
+    if (pos >= end) {
+      fillBuf();
+    }
+    // Try to find LF in the buffered data and return the line if successful.
+    for (int i = pos; i != end; ++i) {
+      if (buf[i] == LF) {
+        int lineEnd = (i != pos && buf[i - 1] == CR) ? i - 1 : i;
+        line.reset(buf, pos, lineEnd - pos);
+        pos = i + 1;
+        return line;
       }
+    }
+
+    // Let's anticipate up to 80 characters on top of those already read.
+    line.reset(splitLineData != null ? splitLineData : new byte[end - pos + 80], 0, 0);
+
+    while (true) {
+      line.append(buf, pos, end - pos);
+      // Mark unterminated line in case fillBuf throws EOFException or IOException.
+      end = -1;
+      fillBuf();
       // Try to find LF in the buffered data and return the line if successful.
       for (int i = pos; i != end; ++i) {
         if (buf[i] == LF) {
-          int lineEnd = (i != pos && buf[i - 1] == CR) ? i - 1 : i;
-          line.reset(buf, pos, lineEnd - pos);
-          pos = i + 1;
-          return line;
-        }
-      }
-
-      // Let's anticipate up to 80 characters on top of those already read.
-      line.reset(splitLineData != null ? splitLineData : new byte[end - pos + 80], 0, 0);
-
-      while (true) {
-        line.append(buf, pos, end - pos);
-        // Mark unterminated line in case fillBuf throws EOFException or IOException.
-        end = -1;
-        fillBuf();
-        // Try to find LF in the buffered data and return the line if successful.
-        for (int i = pos; i != end; ++i) {
-          if (buf[i] == LF) {
-            if (i != pos) {
-              line.append(buf, pos, i - pos);
-            }
-            pos = i + 1;
-            int len = line.length();
-            if (len != 0 && line.byteAt(len - 1) == CR) {
-              line.truncate(len - 1);
-            }
-            splitLineData = line.data();  // reuse next time
-            return line;
+          if (i != pos) {
+            line.append(buf, pos, i - pos);
           }
+          pos = i + 1;
+          int len = line.length();
+          if (len != 0 && line.byteAt(len - 1) == CR) {
+            line.truncate(len - 1);
+          }
+          splitLineData = line.data();  // reuse next time
+          return line;
         }
       }
     }
@@ -182,9 +178,7 @@ public class StrictLineReader implements Closeable {
    * @throws EOFException for the end of source stream.
    */
   public String readLine() throws IOException {
-    synchronized (in) {
-      return readLineRef().toString("US-ASCII");
-    }
+    return readLineRef().toString("US-ASCII");
   }
 
   /**
@@ -195,13 +189,11 @@ public class StrictLineReader implements Closeable {
    * @throws EOFException for the end of source stream.
    */
   public int readInt() throws IOException {
-    synchronized (in) {
-      ByteSequence line = readLineRef();
-      try {
-        return line.toInt();
-      } catch (NumberFormatException e) {
-        throw new IOException("expected an int but was \"" + line + "\"");
-      }
+    ByteSequence line = readLineRef();
+    try {
+      return line.toInt();
+    } catch (NumberFormatException e) {
+      throw new IOException("expected an int but was \"" + line + "\"");
     }
   }
 
