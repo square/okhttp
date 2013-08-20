@@ -281,7 +281,7 @@ final class Spdy3 implements Variant {
       this.compressedLimit += length;
       try {
         int numberOfPairs = nameValueBlockIn.readInt();
-        if (numberOfPairs < 0) {
+        if ((numberOfPairs * 2) < 0) {
           Logger.getLogger(getClass().getName()).warning("numberOfPairs < 0: " + numberOfPairs);
           throw ioException("numberOfPairs < 0");
         }
