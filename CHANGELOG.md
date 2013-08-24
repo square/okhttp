@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+Version 1.2.1 *(2013-08-23)*
+----------------------------
+
+ * Resolve issue with 'jar-with-dependencies' artifact creation.
+
+
 Version 1.2.0 *(2013-08-11)*
 ----------------------------
 
