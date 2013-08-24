@@ -27,7 +27,7 @@
     <dependency>
       <groupId>org.mortbay.jetty.npn</groupId>
       <artifactId>npn-boot</artifactId>
-      <optional>true</optional>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
