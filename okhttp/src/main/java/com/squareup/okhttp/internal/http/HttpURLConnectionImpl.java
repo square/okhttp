@@ -331,6 +331,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
       httpEngine = newHttpEngine(retryMethod, rawRequestHeaders, httpEngine.getConnection(),
           (RetryableOutputStream) requestBody);
+
+      if (requestBody == null) {
+        // Drop the Content-Length header when redirected from POST to GET.
+        httpEngine.getRequestHeaders().removeContentLength();
+      }
     }
   }
 
