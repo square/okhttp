@@ -5,6 +5,7 @@ Version 1.2.1 *(2013-08-23)*
 ----------------------------
 
  * Resolve issue with 'jar-with-dependencies' artifact creation.
+ * Fix: Support empty SPDY header values.
 
 
 Version 1.2.0 *(2013-08-11)*
