@@ -213,6 +213,18 @@ public final class RequestHeaders {
     this.contentLength = contentLength;
   }
 
+  /**
+   * Remove the Content-Length headers. Call this when dropping the body on a
+   * request or response, such as when a redirect changes the method from POST
+   * to GET.
+   */
+  public void removeContentLength() {
+    if (contentLength != -1) {
+      headers.removeAll("Content-Length");
+      contentLength = -1;
+    }
+  }
+
   public void setUserAgent(String userAgent) {
     if (this.userAgent != null) {
       headers.removeAll("User-Agent");
