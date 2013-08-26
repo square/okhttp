@@ -359,6 +359,14 @@ public final class SpdyConnection implements Closeable {
     frameWriter.connectionHeader();
   }
 
+  /**
+   * Reads a connection header if the current variant requires it. This should
+   * be called after {@link Builder#build} for all new connections.
+   */
+  public void readConnectionHeader() throws IOException {
+    frameReader.readConnectionHeader();
+  }
+
   public static class Builder {
     private String hostName;
     private InputStream in;

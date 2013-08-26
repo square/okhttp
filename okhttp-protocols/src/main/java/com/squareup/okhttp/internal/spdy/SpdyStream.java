@@ -260,7 +260,7 @@ public final class SpdyStream {
     }
   }
 
-  void receiveHeaders(List<String> headers) throws IOException {
+  void receiveHeaders(List<String> headers) {
     assert (!Thread.holdsLock(SpdyStream.this));
     boolean protocolError = false;
     synchronized (this) {

@@ -21,9 +21,20 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.List;
 
 final class Http20Draft04 implements Variant {
+  private static final byte[] CONNECTION_HEADER;
+  static {
+    try {
+      CONNECTION_HEADER = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes("UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new AssertionError();
+    }
+  }
+
   static final int TYPE_DATA = 0x0;
   static final int TYPE_HEADERS = 0x1;
   static final int TYPE_PRIORITY = 0x2;
@@ -41,7 +52,7 @@ final class Http20Draft04 implements Variant {
   static final int FLAG_END_FLOW_CONTROL = 0x1;
 
   @Override public FrameReader newReader(InputStream in, boolean client) {
-    return new Reader(in);
+    return new Reader(in, client);
   }
 
   @Override public FrameWriter newWriter(OutputStream out, boolean client) {
@@ -50,9 +61,20 @@ final class Http20Draft04 implements Variant {
 
   static final class Reader implements FrameReader {
     private final DataInputStream in;
+    private final Hpack.Reader hpackReader;
 
-    Reader(InputStream in) {
+    Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
+      this.hpackReader = new Hpack.Reader(this.in, client);
+    }
+
+    @Override public void readConnectionHeader() throws IOException {
+      byte[] connectionHeader = new byte[CONNECTION_HEADER.length];
+      in.readFully(connectionHeader);
+      if (!Arrays.equals(connectionHeader, CONNECTION_HEADER)) {
+        throw ioException("Expected a connection header but was "
+            + Arrays.toString(connectionHeader));
+      }
     }
 
     @Override public boolean nextFrame(Handler handler) throws IOException {
@@ -64,15 +86,19 @@ final class Http20Draft04 implements Variant {
       }
       int w2 = in.readInt();
 
-      int length = w1 & 0xffff;
-      int type = (w1 & 0xff0000) >> 16;
-      int flags = (w1 & 0xff000000) >> 24;
+      int length = (w1 & 0xffff0000) >> 16;
+      int type = (w1 & 0xff00) >> 8;
+      int flags = w1 & 0xff;
       // boolean r = (w2 & 0x80000000) != 0; // Reserved.
       int streamId = (w2 & 0x7fffffff);
 
       switch (type) {
         case TYPE_DATA:
           readData(handler, flags, length, streamId);
+          return true;
+
+        case TYPE_HEADERS:
+          readHeaders(handler, flags, length, streamId);
           return true;
 
         case TYPE_PRIORITY:
@@ -105,6 +131,35 @@ final class Http20Draft04 implements Variant {
       }
 
       throw new UnsupportedOperationException("TODO");
+    }
+
+    private void readHeaders(Handler handler, int flags, int length, int streamId)
+        throws IOException {
+      if (streamId == 0) throw ioException("TYPE_HEADERS streamId == 0");
+
+      while (true) {
+        hpackReader.readHeaders(length);
+
+        if ((flags & FLAG_END_HEADERS) != 0) {
+          hpackReader.emitReferenceSet();
+          List<String> namesAndValues = hpackReader.getAndReset();
+          handler.headers(streamId, namesAndValues);
+          return;
+        }
+
+        // Read another frame of headers.
+        int w1 = in.readInt();
+        int w2 = in.readInt();
+
+        length = (w1 & 0xffff0000) >> 16;
+        int newType = (w1 & 0xff00) >> 8;
+        flags = w1 & 0xff;
+        // boolean r = (w2 & 0x80000000) != 0; // Reserved.
+        int newStreamId = (w2 & 0x7fffffff);
+
+        if (newType != TYPE_HEADERS) throw ioException("TYPE_HEADERS didn't have FLAG_END_HEADERS");
+        if (newStreamId != streamId) throw ioException("TYPE_HEADERS streamId changed");
+      }
     }
 
     private void readData(Handler handler, int flags, int length, int streamId) throws IOException {
