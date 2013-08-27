@@ -23,6 +23,15 @@ interface Variant {
   Variant SPDY3 = new Spdy3();
   Variant HTTP_20_DRAFT_04 = new Http20Draft04();
 
+  /**
+   * @param client true if this is the HTTP client's reader, reading frames from
+   *     a peer SPDY or HTTP/2 server.
+   */
   FrameReader newReader(InputStream in, boolean client);
+
+  /**
+   * @param client true if this is the HTTP client's writer, writing frames to a
+   *     peer SPDY or HTTP/2 server.
+   */
   FrameWriter newWriter(OutputStream out, boolean client);
 }
