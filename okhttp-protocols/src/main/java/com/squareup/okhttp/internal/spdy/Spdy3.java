@@ -113,6 +113,9 @@ final class Spdy3 implements Variant {
       this.client = client;
     }
 
+    @Override public void readConnectionHeader() {
+    }
+
     /**
      * Send the next frame to {@code handler}. Returns true unless there are no
      * more frames on the stream.

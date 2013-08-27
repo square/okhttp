@@ -353,7 +353,7 @@ public final class MockWebServer {
           SpdyConnection spdyConnection = builder.build();
           openSpdyConnections.put(spdyConnection, Boolean.TRUE);
           openClientSockets.remove(socket);
-          spdyConnection.sendConnectionHeader();
+          spdyConnection.readConnectionHeader();
           return;
         }
 
