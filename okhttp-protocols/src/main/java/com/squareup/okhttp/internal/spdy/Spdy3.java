@@ -304,6 +304,8 @@ final class Spdy3 implements Variant {
         return entries;
       } catch (DataFormatException e) {
         throw new IOException(e.getMessage());
+      } catch (OutOfMemoryError e) {
+        throw new IOException(e.getMessage());
       }
     }
 
