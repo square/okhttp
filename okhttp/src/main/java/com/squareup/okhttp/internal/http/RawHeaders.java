@@ -164,14 +164,17 @@ public final class RawHeaders {
 
   /**
    * Add an HTTP header line containing a field name, a literal colon, and a
-   * value.
+   * value. This works around empty header names and header names that start
+   * with a colon (created by old broken SPDY versions of the response cache).
    */
   public void addLine(String line) {
-    int index = line.indexOf(":");
-    if (index == -1) {
-      addLenient("", line);
-    } else {
+    int index = line.indexOf(":", 1);
+    if (index != -1) {
       addLenient(line.substring(0, index), line.substring(index + 1));
+    } else if (line.startsWith(":")) {
+      addLenient("", line.substring(1)); // Empty header name.
+    } else {
+      addLenient("", line); // No header name.
     }
   }
 
