@@ -17,6 +17,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Base64;
+import com.squareup.okhttp.internal.ByteSequence;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
@@ -58,7 +59,6 @@ import java.util.Map;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 
-import static com.squareup.okhttp.internal.Util.US_ASCII;
 import static com.squareup.okhttp.internal.Util.UTF_8;
 
 /**
@@ -119,7 +119,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  * }</pre>
  */
 public final class HttpResponseCache extends ResponseCache {
-  private static final char[] DIGITS =
+  private static final byte[] DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
   // TODO: add APIs to iterate the cache?
@@ -175,7 +175,7 @@ public final class HttpResponseCache extends ResponseCache {
     cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
-  private String uriToKey(URI uri) {
+  private ByteSequence uriToKey(URI uri) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance("MD5");
       byte[] md5bytes = messageDigest.digest(uri.toString().getBytes("UTF-8"));
@@ -187,20 +187,20 @@ public final class HttpResponseCache extends ResponseCache {
     }
   }
 
-  private static String bytesToHexString(byte[] bytes) {
-    char[] digits = DIGITS;
-    char[] buf = new char[bytes.length * 2];
+  private static ByteSequence bytesToHexString(byte[] bytes) {
+    byte[] digits = DIGITS;
+    byte[] buf = new byte[bytes.length * 2];
     int c = 0;
     for (byte b : bytes) {
       buf[c++] = digits[(b >> 4) & 0xf];
       buf[c++] = digits[b & 0xf];
     }
-    return new String(buf);
+    return new ByteSequence(buf, 0, buf.length);
   }
 
   @Override public CacheResponse get(URI uri, String requestMethod,
       Map<String, List<String>> requestHeaders) {
-    String key = uriToKey(uri);
+    ByteSequence key = uriToKey(uri);
     DiskLruCache.Snapshot snapshot;
     Entry entry;
     try {
@@ -510,7 +510,7 @@ public final class HttpResponseCache extends ResponseCache {
      */
     public Entry(InputStream in) throws IOException {
       try {
-        StrictLineReader reader = new StrictLineReader(in, US_ASCII);
+        StrictLineReader reader = new StrictLineReader(in);
         uri = reader.readLine();
         requestMethod = reader.readLine();
         varyHeaders = new RawHeaders();
@@ -623,9 +623,13 @@ public final class HttpResponseCache extends ResponseCache {
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         Certificate[] result = new Certificate[length];
         for (int i = 0; i < result.length; i++) {
-          String line = reader.readLine();
-          byte[] bytes = Base64.decode(line.getBytes("US-ASCII"));
-          result[i] = certificateFactory.generateCertificate(new ByteArrayInputStream(bytes));
+          ByteSequence line = reader.readLineRef();
+          int len = Base64.decodeInPlace(line.data(), line.offset(), line.length());
+          if (len == -1) {
+            throw new IOException("Bad base64 certificate data");
+          }
+          result[i] = certificateFactory.generateCertificate(
+                  new ByteArrayInputStream(line.data(), line.offset(), len));
         }
         return result;
       } catch (CertificateException e) {
