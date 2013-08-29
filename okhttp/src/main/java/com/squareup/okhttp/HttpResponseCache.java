@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -44,8 +43,6 @@ import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
 import java.net.URLConnection;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -119,9 +116,6 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  * }</pre>
  */
 public final class HttpResponseCache extends ResponseCache {
-  private static final char[] DIGITS =
-      { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
   // TODO: add APIs to iterate the cache?
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
@@ -176,26 +170,7 @@ public final class HttpResponseCache extends ResponseCache {
   }
 
   private String uriToKey(URI uri) {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-      byte[] md5bytes = messageDigest.digest(uri.toString().getBytes("UTF-8"));
-      return bytesToHexString(md5bytes);
-    } catch (NoSuchAlgorithmException e) {
-      throw new AssertionError(e);
-    } catch (UnsupportedEncodingException e) {
-      throw new AssertionError(e);
-    }
-  }
-
-  private static String bytesToHexString(byte[] bytes) {
-    char[] digits = DIGITS;
-    char[] buf = new char[bytes.length * 2];
-    int c = 0;
-    for (byte b : bytes) {
-      buf[c++] = digits[(b >> 4) & 0xf];
-      buf[c++] = digits[b & 0xf];
-    }
-    return new String(buf);
+    return Util.hash(uri.toString());
   }
 
   @Override public CacheResponse get(URI uri, String requestMethod,
