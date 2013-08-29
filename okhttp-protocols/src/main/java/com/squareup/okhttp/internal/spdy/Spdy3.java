@@ -284,9 +284,13 @@ final class Spdy3 implements Variant {
       this.compressedLimit += length;
       try {
         int numberOfPairs = nameValueBlockIn.readInt();
-        if ((numberOfPairs * 2) < 0) {
+        if (numberOfPairs < 0) {
           Logger.getLogger(getClass().getName()).warning("numberOfPairs < 0: " + numberOfPairs);
           throw ioException("numberOfPairs < 0");
+        }
+        if (numberOfPairs > 1024) {
+          Logger.getLogger(getClass().getName()).warning("numberOfPairs > 1024: " + numberOfPairs);
+          throw ioException("numberOfPairs > 1024");
         }
         List<String> entries = new ArrayList<String>(numberOfPairs * 2);
         for (int i = 0; i < numberOfPairs; i++) {
