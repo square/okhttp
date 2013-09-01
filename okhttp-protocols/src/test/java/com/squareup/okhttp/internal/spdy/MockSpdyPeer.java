@@ -174,12 +174,12 @@ public final class MockSpdyPeer implements Closeable {
     public int streamId;
     public int associatedStreamId;
     public int priority;
-    public int slot;
     public ErrorCode errorCode;
     public int deltaWindowSize;
     public List<String> nameValueBlock;
     public byte[] data;
     public Settings settings;
+    public HeadersMode headersMode;
 
     public InFrame(int sequence, FrameReader reader) {
       this.sequence = sequence;
@@ -193,32 +193,18 @@ public final class MockSpdyPeer implements Closeable {
       this.settings = settings;
     }
 
-    @Override public void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<String> nameValueBlock) {
+    @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
+        int associatedStreamId, int priority, List<String> nameValueBlock,
+        HeadersMode headersMode) {
       if (this.type != -1) throw new IllegalStateException();
-      this.type = Spdy3.TYPE_SYN_STREAM;
+      this.type = Spdy3.TYPE_HEADERS;
       this.outFinished = outFinished;
       this.inFinished = inFinished;
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.priority = priority;
-      this.slot = slot;
       this.nameValueBlock = nameValueBlock;
-    }
-
-    @Override public void synReply(boolean inFinished, int streamId, List<String> nameValueBlock) {
-      if (this.type != -1) throw new IllegalStateException();
-      this.type = Spdy3.TYPE_SYN_REPLY;
-      this.inFinished = inFinished;
-      this.streamId = streamId;
-      this.nameValueBlock = nameValueBlock;
-    }
-
-    @Override public void headers(int streamId, List<String> nameValueBlock) {
-      if (this.type != -1) throw new IllegalStateException();
-      this.type = Spdy3.TYPE_HEADERS;
-      this.streamId = streamId;
-      this.nameValueBlock = nameValueBlock;
+      this.headersMode = headersMode;
     }
 
     @Override public void data(boolean inFinished, int streamId, InputStream in, int length)

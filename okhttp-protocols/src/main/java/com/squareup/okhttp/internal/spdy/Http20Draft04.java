@@ -143,7 +143,10 @@ final class Http20Draft04 implements Variant {
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
           List<String> namesAndValues = hpackReader.getAndReset();
-          handler.headers(streamId, namesAndValues);
+          boolean inFinished = (flags & FLAG_END_STREAM) != 0;
+          int priority = -1; // TODO: priority
+          handler.headers(false, inFinished, streamId, -1, priority, namesAndValues,
+              HeadersMode.HTTP_20_HEADERS);
           return;
         }
 
