@@ -84,7 +84,7 @@ public final class SpdyConnection implements Closeable {
   private Map<Integer, Ping> pings;
   private int nextPingId;
 
-  /** Lazily-created settings for this connection. */
+  /** Lazily-created settings for the peer. */
   Settings settings;
 
   private SpdyConnection(Builder builder) {
@@ -355,8 +355,9 @@ public final class SpdyConnection implements Closeable {
    * Sends a connection header if the current variant requires it. This should
    * be called after {@link Builder#build} for all new connections.
    */
-  public void sendConnectionHeader() {
+  public void sendConnectionHeader() throws IOException {
     frameWriter.connectionHeader();
+    frameWriter.settings(new Settings());
   }
 
   /**

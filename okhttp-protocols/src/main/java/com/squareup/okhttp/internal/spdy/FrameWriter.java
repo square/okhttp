@@ -23,7 +23,7 @@ import java.util.List;
 /** Writes transport frames for SPDY/3 or HTTP/2.0. */
 public interface FrameWriter extends Closeable {
   /** HTTP/2.0 only. */
-  void connectionHeader();
+  void connectionHeader() throws IOException;
 
   /** SPDY/3 only. */
   void flush() throws IOException;
