@@ -44,7 +44,6 @@ public final class SpdyStream {
   private final int id;
   private final SpdyConnection connection;
   private final int priority;
-  private final int slot;
   private long readTimeoutMillis = 0;
   private int writeWindowSize;
 
@@ -65,7 +64,7 @@ public final class SpdyStream {
   private ErrorCode errorCode = null;
 
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      int priority, int slot, List<String> requestHeaders, Settings settings) {
+      int priority, List<String> requestHeaders, Settings settings) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
@@ -73,7 +72,6 @@ public final class SpdyStream {
     this.in.finished = inFinished;
     this.out.finished = outFinished;
     this.priority = priority;
-    this.slot = slot;
     this.requestHeaders = requestHeaders;
 
     setSettings(settings);
@@ -240,41 +238,34 @@ public final class SpdyStream {
     return true;
   }
 
-  void receiveReply(List<String> strings) throws IOException {
+  void receiveHeaders(List<String> headers, HeadersMode headersMode) {
     assert (!Thread.holdsLock(SpdyStream.this));
-    boolean streamInUseError = false;
+    ErrorCode errorCode = null;
     boolean open = true;
     synchronized (this) {
-      if (isLocallyInitiated() && responseHeaders == null) {
-        responseHeaders = strings;
-        open = isOpen();
-        notifyAll();
+      if (responseHeaders == null) {
+        if (headersMode.failIfHeadersAbsent()) {
+          errorCode = ErrorCode.PROTOCOL_ERROR;
+        } else {
+          responseHeaders = headers;
+          open = isOpen();
+          notifyAll();
+        }
       } else {
-        streamInUseError = true;
+        if (headersMode.failIfHeadersPresent()) {
+          errorCode = ErrorCode.STREAM_IN_USE;
+        } else {
+          List<String> newHeaders = new ArrayList<String>();
+          newHeaders.addAll(responseHeaders);
+          newHeaders.addAll(headers);
+          this.responseHeaders = newHeaders;
+        }
       }
     }
-    if (streamInUseError) {
-      closeLater(ErrorCode.STREAM_IN_USE);
+    if (errorCode != null) {
+      closeLater(errorCode);
     } else if (!open) {
       connection.removeStream(id);
-    }
-  }
-
-  void receiveHeaders(List<String> headers) {
-    assert (!Thread.holdsLock(SpdyStream.this));
-    boolean protocolError = false;
-    synchronized (this) {
-      if (responseHeaders != null) {
-        List<String> newHeaders = new ArrayList<String>();
-        newHeaders.addAll(responseHeaders);
-        newHeaders.addAll(headers);
-        this.responseHeaders = newHeaders;
-      } else {
-        protocolError = true;
-      }
-    }
-    if (protocolError) {
-      closeLater(ErrorCode.PROTOCOL_ERROR);
     }
   }
 
@@ -325,10 +316,6 @@ public final class SpdyStream {
 
   int getPriority() {
     return priority;
-  }
-
-  int getSlot() {
-    return slot;
   }
 
   /**
