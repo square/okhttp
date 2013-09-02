@@ -1,8 +1,8 @@
 package com.squareup.okhttp.internal.spdy;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -312,16 +312,16 @@ final class Hpack {
   }
 
   static class Writer {
-    private final DataOutputStream out;
+    private final OutputStream out;
 
-    Writer(DataOutputStream out) {
+    Writer(OutputStream out) {
       this.out = out;
     }
 
     public void writeHeaders(List<String> nameValueBlock) throws IOException {
       // TODO: implement a compression strategy.
       for (int i = 0, size = nameValueBlock.size(); i < size; i += 2) {
-        out.writeByte(0x60); // Literal Header without Indexing - New Name.
+        out.write(0x60); // Literal Header without Indexing - New Name.
         writeString(nameValueBlock.get(i));
         writeString(nameValueBlock.get(i + 1));
       }
@@ -330,21 +330,21 @@ final class Hpack {
     public void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
-        out.writeByte(bits | value);
+        out.write(bits | value);
         return;
       }
 
       // Write the mask to start a multibyte value.
-      out.writeByte(bits | prefixMask);
+      out.write(bits | prefixMask);
       value -= prefixMask;
 
       // Write 7 bits at a time 'til we're done.
       while (value >= 0x80) {
         int b = value & 0x7f;
-        out.writeByte(b | 0x80);
+        out.write(b | 0x80);
         value >>>= 7;
       }
-      out.writeByte(value);
+      out.write(value);
     }
 
     /**
