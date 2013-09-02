@@ -160,8 +160,8 @@ public final class SpdyConnection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new SpdyStream(streamId, this, outFinished, inFinished, priority, slot,
-            requestHeaders, settings);
+        stream = new SpdyStream(
+            streamId, this, outFinished, inFinished, priority, requestHeaders, settings);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
@@ -456,55 +456,57 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<String> nameValueBlock) {
-      final SpdyStream synStream;
-      final SpdyStream previous;
+    @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
+        int associatedStreamId, int priority, List<String> nameValueBlock,
+        HeadersMode headersMode) {
+      SpdyStream stream;
       synchronized (SpdyConnection.this) {
-        synStream = new SpdyStream(streamId, SpdyConnection.this, outFinished, inFinished, priority,
-            slot, nameValueBlock, settings);
-        if (shutdown) {
+        // If we're shutdown, don't bother with this stream.
+        if (shutdown) return;
+
+        stream = getStream(streamId);
+
+        if (stream == null) {
+          // The headers claim to be for an existing stream, but we don't have one.
+          if (headersMode.failIfStreamAbsent()) {
+            writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
+            return;
+          }
+
+          // If the stream ID is less than the last created ID, assume it's already closed.
+          if (streamId <= lastGoodStreamId) return;
+
+          // If the stream ID is in the client's namespace, assume it's already closed.
+          if (streamId % 2 == nextStreamId % 2) return;
+
+          // Create a stream.
+          final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
+              inFinished, priority, nameValueBlock, settings);
+          lastGoodStreamId = streamId;
+          streams.put(streamId, newStream);
+          executor.submit(new NamedRunnable("OkHttp Callback %s stream %d", hostName, streamId) {
+            @Override public void execute() {
+              try {
+                handler.receive(newStream);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+          });
           return;
         }
-        lastGoodStreamId = streamId;
-        previous = streams.put(streamId, synStream);
       }
-      if (previous != null) {
-        previous.closeLater(ErrorCode.PROTOCOL_ERROR);
+
+      // The headers claim to be for a new stream, but we already have one.
+      if (headersMode.failIfStreamPresent()) {
+        stream.closeLater(ErrorCode.PROTOCOL_ERROR);
         removeStream(streamId);
         return;
       }
 
-      executor.submit(new NamedRunnable("OkHttp SPDY Callback %s stream %d", hostName, streamId) {
-        @Override public void execute() {
-          try {
-            handler.receive(synStream);
-          } catch (IOException e) {
-            throw new RuntimeException(e);
-          }
-        }
-      });
-    }
-
-    @Override public void synReply(boolean inFinished, int streamId, List<String> nameValueBlock)
-        throws IOException {
-      SpdyStream replyStream = getStream(streamId);
-      if (replyStream == null) {
-        writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
-        return;
-      }
-      replyStream.receiveReply(nameValueBlock);
-      if (inFinished) {
-        replyStream.receiveFin();
-      }
-    }
-
-    @Override public void headers(int streamId, List<String> nameValueBlock)
-        throws IOException {
-      SpdyStream replyStream = getStream(streamId);
-      if (replyStream != null) {
-        replyStream.receiveHeaders(nameValueBlock);
-      }
+      // Update an existing stream.
+      stream.receiveHeaders(nameValueBlock, headersMode);
+      if (inFinished) stream.receiveFin();
     }
 
     @Override public void rstStream(int streamId, ErrorCode errorCode) {

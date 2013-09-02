@@ -39,11 +39,10 @@ import static com.squareup.okhttp.internal.spdy.ErrorCode.STREAM_IN_USE;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_HEADERS;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_NOOP;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_PING;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_RST_STREAM;
-import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SYN_REPLY;
-import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SYN_STREAM;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_WINDOW_UPDATE;
 import static com.squareup.okhttp.internal.spdy.SpdyStream.WINDOW_UPDATE_THRESHOLD;
 import static org.junit.Assert.assertEquals;
@@ -81,7 +80,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertFalse(synStream.inFinished);
     assertFalse(synStream.outFinished);
     assertEquals(1, synStream.streamId);
@@ -120,7 +120,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
   }
@@ -139,7 +140,6 @@ public final class SpdyConnectionTest {
         assertEquals(Arrays.asList("a", "android"), stream.getRequestHeaders());
         assertEquals(null, stream.getErrorCode());
         assertEquals(5, stream.getPriority());
-        assertEquals(129, stream.getSlot());
         stream.reply(Arrays.asList("b", "banana"), true);
       }
     };
@@ -147,7 +147,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
-    assertEquals(TYPE_SYN_REPLY, reply.type);
+    assertEquals(TYPE_HEADERS, reply.type);
+    assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     assertFalse(reply.inFinished);
     assertEquals(2, reply.streamId);
     assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
@@ -172,7 +173,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
-    assertEquals(TYPE_SYN_REPLY, reply.type);
+    assertEquals(TYPE_HEADERS, reply.type);
+    assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     assertTrue(reply.inFinished);
     assertEquals(Arrays.asList("b", "banana"), reply.nameValueBlock);
     assertEquals(1, receiveCount.get());
@@ -373,7 +375,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertFalse(synStream.inFinished);
     assertTrue(synStream.outFinished);
     MockSpdyPeer.InFrame data = peer.takeFrame();
@@ -415,7 +418,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertFalse(synStream.inFinished);
     assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
@@ -462,7 +466,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertTrue(synStream.inFinished);
     assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -503,7 +508,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertFalse(synStream.inFinished);
     assertFalse(synStream.outFinished);
     MockSpdyPeer.InFrame data = peer.takeFrame();
@@ -536,7 +542,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertTrue(synStream.inFinished);
     assertFalse(synStream.outFinished);
   }
@@ -565,7 +572,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -596,7 +604,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
-    assertEquals(TYPE_SYN_REPLY, reply.type);
+    assertEquals(TYPE_HEADERS, reply.type);
+    assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
     assertEquals(2, rstStream.streamId);
@@ -622,7 +631,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     assertEquals(2, ping.streamId);
@@ -645,7 +655,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
     assertEquals(1, rstStream.streamId);
@@ -676,7 +687,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     assertEquals(2, ping.streamId);
@@ -716,9 +728,9 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream1 = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream1.type);
+    assertEquals(TYPE_HEADERS, synStream1.type);
     MockSpdyPeer.InFrame synStream2 = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream2.type);
+    assertEquals(TYPE_HEADERS, synStream2.type);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     MockSpdyPeer.InFrame data1 = peer.takeFrame();
@@ -746,7 +758,7 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream1 = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream1.type);
+    assertEquals(TYPE_HEADERS, synStream1.type);
     MockSpdyPeer.InFrame pingFrame = peer.takeFrame();
     assertEquals(TYPE_PING, pingFrame.type);
     MockSpdyPeer.InFrame goaway = peer.takeFrame();
@@ -810,7 +822,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame goaway = peer.takeFrame();
     assertEquals(TYPE_GOAWAY, goaway.type);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -857,7 +870,7 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
   }
 
   @Test public void headers() throws Exception {
@@ -877,7 +890,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
   }
@@ -904,7 +918,8 @@ public final class SpdyConnectionTest {
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -939,7 +954,7 @@ public final class SpdyConnectionTest {
 
     // Verify the peer received what was expected.
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
     for (int i = 0; i < 3; i++) {
       MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
       assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
@@ -971,7 +986,7 @@ public final class SpdyConnectionTest {
 
     // Verify the peer received what was expected.
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_SYN_STREAM, synStream.type);
+    assertEquals(TYPE_HEADERS, synStream.type);
     MockSpdyPeer.InFrame data = peer.takeFrame();
     assertEquals(TYPE_DATA, data.type);
   }
