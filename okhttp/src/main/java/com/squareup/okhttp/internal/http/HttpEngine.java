@@ -110,6 +110,9 @@ public class HttpEngine {
   /** The time when the request headers were written, or -1 if they haven't been written yet. */
   long sentRequestMillis = -1;
 
+  /** Whether the connection has been established. */
+  boolean connected;
+
   /**
    * True if this client added an "Accept-Encoding: gzip" header field and is
    * therefore responsible for also decompressing the transfer stream.
@@ -291,6 +294,8 @@ public class HttpEngine {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
       client.getConnectionPool().maybeShare(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
+    } else {
+      connection.updateReadTimeout(client.getReadTimeout());
     }
     connected(connection);
     if (connection.getRoute().getProxy() != client.getProxy()) {
@@ -304,6 +309,8 @@ public class HttpEngine {
    * pool. Subclasses use this hook to get a reference to the TLS data.
    */
   protected void connected(Connection connection) {
+    policy.setSelectedProxy(connection.getRoute().getProxy());
+    connected = true;
   }
 
   /**

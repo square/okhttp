@@ -75,6 +75,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   private int redirectionCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
+  private Proxy selectedProxy;
 
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
@@ -350,6 +351,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       if (readResponse) {
         httpEngine.readResponse();
       }
+
       return true;
     } catch (IOException e) {
       if (handleFailure(e)) {
@@ -482,7 +484,19 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public final boolean usingProxy() {
-    Proxy proxy = client.getProxy();
+    if (selectedProxy != null) {
+      return isValidNonDirectProxy(selectedProxy);
+    }
+
+    // This behavior is a bit odd (but is probably justified by the
+    // oddness of the APIs involved). Before a connection is established,
+    // this method will return true only if this connection was explicitly
+    // opened with a Proxy. We don't attempt to query the ProxySelector
+    // at all.
+    return isValidNonDirectProxy(client.getProxy());
+  }
+
+  private static boolean isValidNonDirectProxy(Proxy proxy) {
     return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }
 
@@ -568,5 +582,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
     this.fixedContentLength = contentLength;
     super.fixedContentLength = (int) Math.min(contentLength, Integer.MAX_VALUE);
+  }
+
+  @Override public final void setSelectedProxy(Proxy proxy) {
+    this.selectedProxy = proxy;
   }
 }

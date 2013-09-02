@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.URL;
 
 public interface Policy {
@@ -39,4 +40,10 @@ public interface Policy {
 
   /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
   long getFixedContentLength();
+
+  /**
+   * Sets the current proxy that this connection is using.
+   * @see java.net.HttpURLConnection#usingProxy
+   */
+  void setSelectedProxy(Proxy proxy);
 }

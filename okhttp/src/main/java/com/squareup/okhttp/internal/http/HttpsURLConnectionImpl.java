@@ -112,7 +112,7 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   private SSLSocket getSslSocket() {
-    if (delegate.httpEngine == null || delegate.httpEngine.sentRequestMillis == -1) {
+    if (delegate.httpEngine == null || !delegate.httpEngine.connected) {
       throw new IllegalStateException("Connection has not yet been established");
     }
     return delegate.httpEngine instanceof HttpsEngine
