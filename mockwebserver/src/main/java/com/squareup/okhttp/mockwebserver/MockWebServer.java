@@ -692,6 +692,7 @@ public final class MockWebServer {
       }
       spdyHeaders.add(":status");
       spdyHeaders.add(statusParts[1]);
+      // TODO: no ":version" header for HTTP/2.0, only SPDY.
       spdyHeaders.add(":version");
       spdyHeaders.add(statusParts[0]);
       for (String header : response.getHeaders()) {

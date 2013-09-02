@@ -21,6 +21,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -87,6 +88,17 @@ public class HpackTest {
     hpackWriter.writeString("");
     assertBytes(0);
     assertEquals("", new Hpack.Reader(byteStream(0), true).readString());
+  }
+
+  @Test public void headersRoundTrip() throws IOException {
+    List<String> sentHeaders = Arrays.asList("name", "value");
+    hpackWriter.writeHeaders(sentHeaders);
+    ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
+    Hpack.Reader reader = new Hpack.Reader(new DataInputStream(bytesIn), true);
+    reader.readHeaders(bytesOut.size());
+    reader.emitReferenceSet();
+    List<String> receivedHeaders = reader.getAndReset();
+    assertEquals(sentHeaders, receivedHeaders);
   }
 
   private DataInputStream byteStream(int... bytes) {
