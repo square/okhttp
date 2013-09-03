@@ -28,6 +28,7 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Date;
+import java.util.Random;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
@@ -101,7 +102,7 @@ public final class SslContextBuilder {
     X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
     X500Principal issuer = new X500Principal("CN=" + hostName);
     X500Principal subject = new X500Principal("CN=" + hostName);
-    generator.setSerialNumber(BigInteger.ONE);
+    generator.setSerialNumber(new BigInteger(128, new Random()));
     generator.setIssuerDN(issuer);
     generator.setNotBefore(new Date(notBefore));
     generator.setNotAfter(new Date(notAfter));
