@@ -294,27 +294,24 @@ public final class RequestHeaders {
   public void addCookies(Map<String, List<String>> allCookieHeaders) {
     for (Map.Entry<String, List<String>> entry : allCookieHeaders.entrySet()) {
       String key = entry.getKey();
-      if ("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key)) {
-        if (!entry.getValue().isEmpty()) {
-          headers.add(key, buildCookieHeader(entry.getValue()));
-        }
+      if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
+          && !entry.getValue().isEmpty()) {
+        headers.add(key, buildCookieHeader(entry.getValue()));
       }
     }
   }
 
-  // format has defined here:  http://tools.ietf.org/html/rfc6265#section-4.2.1
+  /**
+   * Send all cookies in one big header, as recommended by
+   * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
+   */
   private String buildCookieHeader(List<String> cookies) {
-    if(1 == cookies.size()) {
-        return cookies.get(0);
-    }
+    if (cookies.size() == 1) return cookies.get(0);
     StringBuilder sb = new StringBuilder();
-    for(int i=0;i < cookies.size();i++) {
-      if(i>0) {
-        sb.append("; ");
-      }
+    for (int i = 0; i < cookies.size(); i++) {
+      if (i > 0) sb.append("; ");
       sb.append(cookies.get(i));
     }
     return sb.toString();
-    }
-
+  }
 }
