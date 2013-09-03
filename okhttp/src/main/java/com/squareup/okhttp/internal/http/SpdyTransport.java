@@ -73,7 +73,7 @@ public final class SpdyTransport implements Transport {
     httpEngine.receiveHeaders(rawHeaders);
 
     ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
-    headers.setTransport("spdy/3");
+    headers.setTransport(spdyConnection.getVariant());
     return headers;
   }
 

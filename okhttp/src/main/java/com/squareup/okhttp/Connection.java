@@ -34,6 +34,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.List;
 import javax.net.ssl.SSLSocket;
 
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -67,8 +68,12 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  */
 public final class Connection implements Closeable {
   private static final byte[] NPN_PROTOCOLS = new byte[] {
+      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0',
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
+  private static final byte[] HTTP2_DRAFT_04 = new byte[] {
+      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0'
   };
   private static final byte[] SPDY3 = new byte[] {
       's', 'p', 'd', 'y', '/', '3'
@@ -137,7 +142,9 @@ public final class Connection implements Closeable {
       platform.supportTlsIntolerantServer(sslSocket);
     }
 
-    boolean useNpn = route.modernTls && route.address.transports.contains("spdy/3");
+    List<String> transports = route.address.transports;
+    boolean useNpn = route.modernTls
+        && (transports.contains("spdy/3") || transports.contains("HTTP-draft-04/2.0"));
     if (useNpn) {
       platform.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
     }
@@ -155,10 +162,17 @@ public final class Connection implements Closeable {
 
     byte[] selectedProtocol;
     if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      if (Arrays.equals(selectedProtocol, SPDY3)) {
+      if (Arrays.equals(selectedProtocol, HTTP2_DRAFT_04)
+          || Arrays.equals(selectedProtocol, SPDY3)) {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
-            .build();
+        SpdyConnection.Builder builder
+            = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out);
+        if (Arrays.equals(selectedProtocol, HTTP2_DRAFT_04)) {
+          builder.http20Draft04();
+        } else {
+          builder.spdy3();
+        }
+        spdyConnection = builder.build();
         spdyConnection.sendConnectionHeader();
       } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
         throw new IOException(

@@ -101,6 +101,10 @@ public final class SpdyConnection implements Closeable {
     new Thread(new Reader(), "Spdy Reader " + hostName).start();
   }
 
+  public String getVariant() {
+    return variant.getName();
+  }
+
   /**
    * Returns the number of {@link SpdyStream#isOpen() open streams} on this
    * connection.
@@ -360,14 +364,6 @@ public final class SpdyConnection implements Closeable {
     frameWriter.settings(new Settings());
   }
 
-  /**
-   * Reads a connection header if the current variant requires it. This should
-   * be called after {@link Builder#build} for all new connections.
-   */
-  public void readConnectionHeader() throws IOException {
-    frameReader.readConnectionHeader();
-  }
-
   public static class Builder {
     private String hostName;
     private InputStream in;
@@ -428,6 +424,7 @@ public final class SpdyConnection implements Closeable {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
+        frameReader.readConnectionHeader();
         while (frameReader.nextFrame(this)) {
         }
         connectionErrorCode = ErrorCode.NO_ERROR;
