@@ -70,8 +70,7 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
  */
 public final class MockWebServer {
   private static final byte[] NPN_PROTOCOLS = {
-      // TODO: support HTTP/2.0.
-      // 17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0',
+      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '4', '/', '2', '.', '0',
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
   };
@@ -342,7 +341,7 @@ public final class MockWebServer {
         }
 
         if (transport == Transport.SPDY_3 || transport == Transport.HTTP_20_DRAFT_04) {
-          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket);
+          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, transport);
           SpdyConnection.Builder builder = new SpdyConnection.Builder(false, socket)
               .handler(spdySocketHandler);
           if (transport == Transport.SPDY_3) {
@@ -353,7 +352,7 @@ public final class MockWebServer {
           SpdyConnection spdyConnection = builder.build();
           openSpdyConnections.put(spdyConnection, Boolean.TRUE);
           openClientSockets.remove(socket);
-          spdyConnection.readConnectionHeader();
+          spdyConnection.sendConnectionHeader();
           return;
         }
 
@@ -632,9 +631,11 @@ public final class MockWebServer {
   /** Processes HTTP requests layered over SPDY/3. */
   private class SpdySocketHandler implements IncomingStreamHandler {
     private final Socket socket;
+    private final Transport transport;
 
-    private SpdySocketHandler(Socket socket) {
+    private SpdySocketHandler(Socket socket, Transport transport) {
       this.socket = socket;
+      this.transport = transport;
     }
 
     @Override public void receive(SpdyStream stream) throws IOException {
@@ -686,13 +687,15 @@ public final class MockWebServer {
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
       List<String> spdyHeaders = new ArrayList<String>();
-      String[] statusParts = response.getStatus().split(" ", 2);
-      if (statusParts.length != 2) {
+      // Split "HTTP/1.1 200 OK" into ["HTTP", "200 OK"] for SPDY/3 and ["HTTP", "200"] for HTTP/2.
+      int partCount = (transport == Transport.SPDY_3) ? 2 : 3;
+      String[] statusParts = response.getStatus().split(" ", partCount);
+      if (statusParts.length != partCount) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
       spdyHeaders.add(":status");
       spdyHeaders.add(statusParts[1]);
-      // TODO: no ":version" header for HTTP/2.0, only SPDY.
+      // TODO: no ":version" header for HTTP/2.0, only SPDY/3.
       spdyHeaders.add(":version");
       spdyHeaders.add(statusParts[0]);
       for (String header : response.getHeaders()) {

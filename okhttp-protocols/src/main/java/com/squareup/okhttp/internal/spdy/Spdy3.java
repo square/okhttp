@@ -92,6 +92,10 @@ final class Spdy3 implements Variant {
     }
   }
 
+  @Override public String getName() {
+    return "spdy/3";
+  }
+
   @Override public FrameReader newReader(InputStream in, boolean client) {
     return new Reader(in, client);
   }

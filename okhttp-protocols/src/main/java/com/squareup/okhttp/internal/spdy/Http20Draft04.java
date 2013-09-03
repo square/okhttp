@@ -36,6 +36,8 @@ final class Http20Draft04 implements Variant {
     }
   }
 
+  static final int DEFAULT_PRIORITY = 0x40000000; // 2 ** 30.
+
   static final int TYPE_DATA = 0x0;
   static final int TYPE_HEADERS = 0x1;
   static final int TYPE_PRIORITY = 0x2;
@@ -51,6 +53,10 @@ final class Http20Draft04 implements Variant {
   static final int FLAG_PRIORITY = 0x8;
   static final int FLAG_PONG = 0x1;
   static final int FLAG_END_FLOW_CONTROL = 0x1;
+
+  @Override public String getName() {
+    return "HTTP-draft-04/2.0";
+  }
 
   @Override public FrameReader newReader(InputStream in, boolean client) {
     return new Reader(in, client);
@@ -141,14 +147,20 @@ final class Http20Draft04 implements Variant {
         throws IOException {
       if (streamId == 0) throw ioException("TYPE_HEADERS streamId == 0");
 
+      int priority = DEFAULT_PRIORITY;
       while (true) {
+        if ((flags & FLAG_PRIORITY) != 0) {
+          if (length < 4) throw ioException("TYPE_HEADERS length < 4: %s", length);
+          priority = in.readInt();
+          length -= 4;
+        }
+
         hpackReader.readHeaders(length);
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
           List<String> namesAndValues = hpackReader.getAndReset();
           boolean inFinished = (flags & FLAG_END_STREAM) != 0;
-          int priority = -1; // TODO: priority
           handler.headers(false, inFinished, streamId, -1, priority, namesAndValues,
               HeadersMode.HTTP_20_HEADERS);
           return;
@@ -305,7 +317,10 @@ final class Http20Draft04 implements Variant {
       int length = hpackBuffer.size();
       int flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
-      if (priority != -1) flags |= FLAG_PRIORITY;
+      if (priority != -1) {
+        length += 4;
+        flags |= FLAG_PRIORITY;
+      }
       out.writeInt((length & 0xffff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
       if (priority != -1) out.writeInt(priority & 0x7fffffff);
@@ -346,22 +361,22 @@ final class Http20Draft04 implements Variant {
     }
 
     @Override public synchronized void noop() throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO.
     }
 
     @Override public synchronized void ping(boolean reply, int payload1, int payload2)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO.
     }
 
     @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO.
     }
 
     @Override public synchronized void windowUpdate(int streamId, int deltaWindowSize)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO.
     }
 
     @Override public void close() throws IOException {
