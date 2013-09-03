@@ -291,30 +291,30 @@ public final class RequestHeaders {
     return ifModifiedSince != null || ifNoneMatch != null;
   }
 
-    public void addCookies(Map<String, List<String>> allCookieHeaders) {
-        for (Map.Entry<String, List<String>> entry : allCookieHeaders.entrySet()) {
-            String key = entry.getKey();
-            if ("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key)) {
-                if (!entry.getValue().isEmpty()) {
-                    headers.add(key, buildCookieHeader(entry.getValue()));
-                }
-            }
+  public void addCookies(Map<String, List<String>> allCookieHeaders) {
+    for (Map.Entry<String, List<String>> entry : allCookieHeaders.entrySet()) {
+      String key = entry.getKey();
+      if ("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key)) {
+        if (!entry.getValue().isEmpty()) {
+          headers.add(key, buildCookieHeader(entry.getValue()));
         }
+      }
     }
+  }
 
-    // format has defined here:  http://tools.ietf.org/html/rfc6265#section-4.2.1
-    private String buildCookieHeader(List<String> cookies) {
-        StringBuilder sb = new StringBuilder();
-        boolean isFirst = true;
-        for (String cookie : cookies) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
-                sb.append(';');
-            }
-            sb.append(cookie);
-        }
-        return sb.toString();
+  // format has defined here:  http://tools.ietf.org/html/rfc6265#section-4.2.1
+  private String buildCookieHeader(List<String> cookies) {
+    if(1 == cookies.size()) {
+        return cookies.get(0);
+    }
+    StringBuilder sb = new StringBuilder();
+    for(int i=0;i < cookies.size();i++) {
+      if(i>0) {
+        sb.append("; ");
+      }
+      sb.append(cookies.get(i));
+    }
+    return sb.toString();
     }
 
 }
