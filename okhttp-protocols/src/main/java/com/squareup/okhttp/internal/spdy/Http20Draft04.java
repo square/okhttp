@@ -346,22 +346,22 @@ final class Http20Draft04 implements Variant {
     }
 
     @Override public synchronized void noop() throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      throw new UnsupportedOperationException();
     }
 
     @Override public synchronized void ping(boolean reply, int payload1, int payload2)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO
     }
 
     @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO
     }
 
     @Override public synchronized void windowUpdate(int streamId, int deltaWindowSize)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      // TODO
     }
 
     @Override public void close() throws IOException {

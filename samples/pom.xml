@@ -17,5 +17,6 @@
   <modules>
     <module>guide</module>
     <module>simple-client</module>
+    <module>static-server</module>
   </modules>
 </project>
