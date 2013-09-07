@@ -342,7 +342,7 @@ public final class MockWebServer {
         }
 
         if (transport == Transport.SPDY_3 || transport == Transport.HTTP_20_DRAFT_04) {
-          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket);
+          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, transport);
           SpdyConnection.Builder builder = new SpdyConnection.Builder(false, socket)
               .handler(spdySocketHandler);
           if (transport == Transport.SPDY_3) {
@@ -632,9 +632,11 @@ public final class MockWebServer {
   /** Processes HTTP requests layered over SPDY/3. */
   private class SpdySocketHandler implements IncomingStreamHandler {
     private final Socket socket;
+    private final Transport transport;
 
-    private SpdySocketHandler(Socket socket) {
+    private SpdySocketHandler(Socket socket, Transport transport) {
       this.socket = socket;
+      this.transport = transport;
     }
 
     @Override public void receive(SpdyStream stream) throws IOException {
@@ -647,7 +649,8 @@ public final class MockWebServer {
         throw new AssertionError(e);
       }
       writeResponse(stream, response);
-      logger.info("Received request: " + request + " and responded: " + response);
+      logger.info("Received request: " + request + " and responded: " + response
+          + " transport is " + transport);
     }
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
