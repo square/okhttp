@@ -946,8 +946,14 @@ public final class HttpResponseCacheTest {
     server.enqueue(
         response.setBody(gzip("ABCABCABC".getBytes("UTF-8"))).addHeader("Content-Encoding: gzip"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     server.play();
+
+    // At least three request/response pairs are required because after the first request is cached
+    // a different execution path might be taken. Thus modifications to the cache applied during
+    // the second request might not be visible until another request is performed.
+    assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
   }
