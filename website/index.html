@@ -127,7 +127,7 @@
                 -->
 
             <h3 id="download">Download</h3>
-            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&c=jar-with-dependencies&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
             <p>The source code to the OkHttp, its samples, and this website is <a href="http://github.com/square/okhttp">available on GitHub</a>.</p>
 
             <h4>Maven</h4>
@@ -208,7 +208,11 @@ limitations under the License.</pre>
         });
 
         // Look up the latest version of the library.
-        $.fn.artifactVersion('com.squareup.okhttp', 'okhttp', function(version, url) {
+        $.fn.artifactVersion({
+          'groupId': 'com.squareup.okhttp',
+          'artifactId': 'okhttp',
+          'classifier': 'jar-with-dependencies'
+        }, function(version, url) {
           $('.version').text(version);
           $('.version-tag').text('v' + version);
           $('.version-href').attr('href', url);
