@@ -35,6 +35,7 @@ import java.net.URL;
 import java.security.Permission;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +160,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     try {
       return getResponse().getResponseHeaders().getHeaders().toMultimap(true);
     } catch (IOException e) {
-      return null;
+      return Collections.emptyMap();
     }
   }
 
