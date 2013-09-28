@@ -633,6 +633,7 @@ public final class MockWebServer {
   private class SpdySocketHandler implements IncomingStreamHandler {
     private final Socket socket;
     private final Transport transport;
+    private final AtomicInteger sequenceNumber = new AtomicInteger();
 
     private SpdySocketHandler(Socket socket, Transport transport) {
       this.socket = socket;
@@ -684,7 +685,7 @@ public final class MockWebServer {
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
       return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.size(),
-          bodyOut.toByteArray(), 0, socket);
+          bodyOut.toByteArray(), sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
