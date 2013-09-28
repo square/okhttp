@@ -649,10 +649,17 @@ public class HttpEngine {
       if (cachedResponseHeaders.validate(responseHeaders)) {
         release(false);
         ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
-        setResponse(combinedHeaders, cachedResponseBody);
+        this.responseHeaders = combinedHeaders;
+
+        // Update the cache after applying the combined headers but before initializing the content
+        // stream, otherwise the Content-Encoding header (if present) will be stripped from the
+        // combined headers and not end up in the cache file if transparent gzip compression is
+        // turned on.
         OkResponseCache responseCache = client.getOkResponseCache();
         responseCache.trackConditionalCacheHit();
         responseCache.update(cacheResponse, policy.getHttpConnectionToCache());
+
+        initContentStream(cachedResponseBody);
         return;
       } else {
         Util.closeQuietly(cachedResponseBody);
