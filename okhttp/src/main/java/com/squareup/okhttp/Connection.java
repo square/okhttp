@@ -244,7 +244,7 @@ public final class Connection implements Closeable {
    * {@code keepAliveDurationNs}.
    */
   public boolean isExpired(long keepAliveDurationNs) {
-    return isIdle() && System.nanoTime() - getIdleStartTimeNs() > keepAliveDurationNs;
+    return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
   }
 
   /**
