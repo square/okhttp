@@ -87,6 +87,7 @@ public class HttpEngine {
     }
   };
   public static final int HTTP_CONTINUE = 100;
+  public static final long SEC2NS = 1000 * 1000 * 1000;
 
   protected final Policy policy;
   protected final OkHttpClient client;
@@ -333,6 +334,30 @@ public class HttpEngine {
       throw new IllegalStateException();
     }
     this.responseHeaders = headers;
+    // if connection is not SPDY, search headers for Keep-Alive, parse and set timeout
+    if (connection != null && !connection.isSpdy()) {
+      String keepAliveHeader = headers.getHeaders().get("Keep-Alive");
+      if (keepAliveHeader != null) {    // parse header
+        // we only care about the timeout, the server will issue
+        // "Connection: Close" on the last allowable request, so we do
+        // not need to handle max
+        int i = keepAliveHeader.indexOf("timeout");
+        if (i > -1) {
+          int j = keepAliveHeader.indexOf(' ', i + 8);
+          String timeoutStr;
+          if (j > -1) {
+            timeoutStr = keepAliveHeader.substring(i + 8, j);
+          } else {
+            timeoutStr = keepAliveHeader.substring(i + 8);
+          }
+          try {
+            connection.setKeepAliveDurationNs(Integer.decode(timeoutStr) * SEC2NS);
+          } catch (NumberFormatException e) {
+            //Log.w("OkHTTP","failed to parse string ("+timeoutStr+") as integer", e);
+          }
+        }
+      }
+    }
     if (body != null) {
       initContentStream(body);
     }

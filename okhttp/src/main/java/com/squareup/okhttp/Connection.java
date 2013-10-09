@@ -86,9 +86,16 @@ public final class Connection implements Closeable {
   private SpdyConnection spdyConnection;
   private int httpMinorVersion = 1; // Assume HTTP/1.1
   private long idleStartTimeNs;
+  private long keepAliveDurationNs;
 
   public Connection(Route route) {
     this.route = route;
+    this.keepAliveDurationNs = ConnectionPool.DEFAULT_KEEP_ALIVE_DURATION_MS  * 1000 * 1000;
+  }
+
+  public Connection(Route route, long keepAliveDuration) {
+    this.route = route;
+    this.keepAliveDurationNs = keepAliveDuration;
   }
 
   public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
@@ -234,6 +241,10 @@ public final class Connection implements Closeable {
     this.idleStartTimeNs = System.nanoTime();
   }
 
+  public void setKeepAliveDurationNs(long keepAliveDuration) {
+    this.keepAliveDurationNs = keepAliveDuration;
+  }
+
   /** Returns true if this connection is idle. */
   public boolean isIdle() {
     return spdyConnection == null || spdyConnection.isIdle();
@@ -243,7 +254,7 @@ public final class Connection implements Closeable {
    * Returns true if this connection has been idle for longer than
    * {@code keepAliveDurationNs}.
    */
-  public boolean isExpired(long keepAliveDurationNs) {
+  public boolean isExpired() {
     return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
   }
 
