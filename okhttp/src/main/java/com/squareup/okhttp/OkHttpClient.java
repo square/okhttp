@@ -331,7 +331,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
    * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
    * in flight might not be canceled.
    */
-  public void cancel(Object tag) {
+  /* OkHttp 2.0: public */ void cancel(Object tag) {
     dispatcher.cancel(tag);
   }
 
