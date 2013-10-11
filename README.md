@@ -51,6 +51,26 @@ vogar \
     ./src/test/java
 ```
 
+MockWebServer
+-------------
+
+A library for testing HTTP, HTTPS, HTTP/2.0, and SPDY clients.
+
+MockWebServer coupling with OkHttp is essential for proper testing of SPDY and HTTP/2.0 so that code can be shared.
+
+### Download
+
+Download [the latest JAR][5] or grab via Maven:
+
+```xml
+<dependency>
+    <groupId>com.squareup.okhttp</groupId>
+    <artifactId>mockwebserver</artifactId>
+    <version>(insert latest version)</version>
+    <scope>test</scope>
+</dependency>
+```
+
 
 License
 -------
@@ -74,3 +94,4 @@ License
  [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
  [3]: http://wiki.eclipse.org/Jetty/Feature/NPN
  [4]: https://code.google.com/p/vogar/
+ [5]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
