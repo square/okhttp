@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
@@ -129,6 +130,21 @@ public final class Util {
     if (socket != null) {
       try {
         socket.close();
+      } catch (RuntimeException rethrown) {
+        throw rethrown;
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  /**
+   * Closes {@code serverSocket}, ignoring any checked exceptions. Does nothing if
+   * {@code serverSocket} is null.
+   */
+  public static void closeQuietly(ServerSocket serverSocket) {
+    if (serverSocket != null) {
+      try {
+        serverSocket.close();
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
