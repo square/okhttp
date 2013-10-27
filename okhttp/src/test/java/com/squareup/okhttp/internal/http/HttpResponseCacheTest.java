@@ -1819,7 +1819,7 @@ public final class HttpResponseCacheTest {
 
   private String formatDate(Date date) {
     DateFormat rfc1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-    rfc1123.setTimeZone(TimeZone.getTimeZone("UTC"));
+    rfc1123.setTimeZone(TimeZone.getTimeZone("GMT"));
     return rfc1123.format(date);
   }
 
