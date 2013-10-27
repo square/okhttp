@@ -91,7 +91,7 @@ License
 
 
  [1]: http://square.github.io/okhttp
- [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
+ [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST&c=jar-with-dependencies
  [3]: http://wiki.eclipse.org/Jetty/Feature/NPN
  [4]: https://code.google.com/p/vogar/
- [5]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [5]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST&c=jar-with-dependencies
