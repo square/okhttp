@@ -254,8 +254,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         if (method.equals("GET")) {
           // they are requesting a stream to write to. This implies a POST method
           method = "POST";
-        } else if (!method.equals("POST") && !method.equals("PUT")) {
-          // If the request method is neither POST nor PUT, then you're not writing
+        } else if (!method.equals("POST") && !method.equals("PUT") && !method.equals("PATCH")) {
+          // If the request method is neither POST nor PUT nor PATCH, then you're not writing
           throw new ProtocolException(method + " does not support writing");
         }
       }
