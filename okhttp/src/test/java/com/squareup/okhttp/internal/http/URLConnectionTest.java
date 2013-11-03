@@ -16,16 +16,16 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -76,11 +76,11 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static com.squareup.okhttp.OkAuthenticator.Credential;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
-import static com.squareup.okhttp.OkAuthenticator.Credential;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -1478,6 +1478,19 @@ public final class URLConnectionTest {
       assertContains(request.getHeaders(),
           "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
     }
+  }
+
+  /** https://github.com/square/okhttp/issues/342 */
+  @Test public void authenticateRealmUppercase() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401)
+        .addHeader("wWw-aUtHeNtIcAtE: bAsIc rEaLm=\"pRoTeCtEd aReA\"")
+        .setBody("Please authenticate."));
+    server.enqueue(new MockResponse().setBody("Successful auth!"));
+    server.play();
+
+    Authenticator.setDefault(new RecordingAuthenticator());
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
   }
 
   @Test public void redirectedWithChunkedEncoding() throws Exception {

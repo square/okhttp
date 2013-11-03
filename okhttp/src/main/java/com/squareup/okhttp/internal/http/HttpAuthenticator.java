@@ -39,7 +39,7 @@ public final class HttpAuthenticator {
     @Override public Credential authenticate(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
       for (Challenge challenge : challenges) {
-        if (!"Basic".equals(challenge.getScheme())) {
+        if (!"Basic".equalsIgnoreCase(challenge.getScheme())) {
           continue;
         }
 
@@ -56,7 +56,7 @@ public final class HttpAuthenticator {
     @Override public Credential authenticateProxy(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
       for (Challenge challenge : challenges) {
-        if (!"Basic".equals(challenge.getScheme())) {
+        if (!"Basic".equalsIgnoreCase(challenge.getScheme())) {
           continue;
         }
 
@@ -146,7 +146,7 @@ public final class HttpAuthenticator {
         //       It needs to be fixed to handle any scheme and any parameters
         //       http://code.google.com/p/android/issues/detail?id=11140
 
-        if (!value.regionMatches(pos, "realm=\"", 0, "realm=\"".length())) {
+        if (!value.regionMatches(true, pos, "realm=\"", 0, "realm=\"".length())) {
           break; // Unexpected challenge parameter; give up!
         }
 
