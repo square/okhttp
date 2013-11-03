@@ -339,7 +339,7 @@ public class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    return method.equals("POST") || method.equals("PUT");
+    return method.equals("POST") || method.equals("PUT") || method.equals("PATCH");
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
