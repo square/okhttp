@@ -85,7 +85,7 @@ class NameValueBlockReader implements Closeable {
       for (int i = 0; i < numberOfPairs; i++) {
         String name = readString();
         String values = readString();
-        if (name.length() == 0) throw new IOException(String.format("name.length == 0"));
+        if (name.length() == 0) throw new IOException("name.length == 0");
         entries.add(name);
         entries.add(values);
       }
