@@ -25,13 +25,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 
 final class Spdy3 implements Variant {
   static final int TYPE_DATA = 0x0;
@@ -103,13 +98,12 @@ final class Spdy3 implements Variant {
   /** Read spdy/3 frames. */
   static final class Reader implements FrameReader {
     private final DataInputStream in;
-    private final DataInputStream nameValueBlockIn;
     private final boolean client;
-    private int compressedLimit;
+    private final NameValueBlockReader nameValueBlockReader;
 
     Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
-      this.nameValueBlockIn = newNameValueBlockStream();
+      this.nameValueBlockReader = new NameValueBlockReader(in);
       this.client = client;
     }
 
@@ -202,7 +196,7 @@ final class Spdy3 implements Variant {
       int associatedStreamId = w2 & 0x7fffffff;
       int priority = (s3 & 0xe000) >>> 13;
       int slot = s3 & 0xff;
-      List<String> nameValueBlock = readNameValueBlock(length - 10);
+      List<String> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 10);
 
       boolean inFinished = (flags & FLAG_FIN) != 0;
       boolean outFinished = (flags & FLAG_UNIDIRECTIONAL) != 0;
@@ -213,7 +207,7 @@ final class Spdy3 implements Variant {
     private void readSynReply(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
-      List<String> nameValueBlock = readNameValueBlock(length - 4);
+      List<String> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 4);
       boolean inFinished = (flags & FLAG_FIN) != 0;
       handler.headers(false, inFinished, streamId, -1, -1, nameValueBlock, HeadersMode.SPDY_REPLY);
     }
@@ -232,7 +226,7 @@ final class Spdy3 implements Variant {
     private void readHeaders(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
-      List<String> nameValueBlock = readNameValueBlock(length - 4);
+      List<String> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 4);
       handler.headers(false, false, streamId, -1, -1, nameValueBlock, HeadersMode.SPDY_HEADERS);
     }
 
@@ -243,79 +237,6 @@ final class Spdy3 implements Variant {
       int streamId = w1 & 0x7fffffff;
       int deltaWindowSize = w2 & 0x7fffffff;
       handler.windowUpdate(streamId, deltaWindowSize, false);
-    }
-
-    private DataInputStream newNameValueBlockStream() {
-      // Limit the inflater input stream to only those bytes in the Name/Value block.
-      final InputStream throttleStream = new InputStream() {
-        @Override public int read() throws IOException {
-          return Util.readSingleByte(this);
-        }
-
-        @Override public int read(byte[] buffer, int offset, int byteCount) throws IOException {
-          byteCount = Math.min(byteCount, compressedLimit);
-          int consumed = in.read(buffer, offset, byteCount);
-          compressedLimit -= consumed;
-          return consumed;
-        }
-
-        @Override public void close() throws IOException {
-          in.close();
-        }
-      };
-
-      // Subclass inflater to install a dictionary when it's needed.
-      Inflater inflater = new Inflater() {
-        @Override public int inflate(byte[] buffer, int offset, int count)
-            throws DataFormatException {
-          int result = super.inflate(buffer, offset, count);
-          if (result == 0 && needsDictionary()) {
-            setDictionary(DICTIONARY);
-            result = super.inflate(buffer, offset, count);
-          }
-          return result;
-        }
-      };
-
-      return new DataInputStream(new InflaterInputStream(throttleStream, inflater));
-    }
-
-    private List<String> readNameValueBlock(int length) throws IOException {
-      this.compressedLimit += length;
-      try {
-        int numberOfPairs = nameValueBlockIn.readInt();
-        if (numberOfPairs < 0) {
-          Logger.getLogger(getClass().getName()).warning("numberOfPairs < 0: " + numberOfPairs);
-          throw ioException("numberOfPairs < 0");
-        }
-        if (numberOfPairs > 1024) {
-          Logger.getLogger(getClass().getName()).warning("numberOfPairs > 1024: " + numberOfPairs);
-          throw ioException("numberOfPairs > 1024");
-        }
-        List<String> entries = new ArrayList<String>(numberOfPairs * 2);
-        for (int i = 0; i < numberOfPairs; i++) {
-          String name = readString();
-          String values = readString();
-          if (name.length() == 0) throw ioException("name.length == 0");
-          entries.add(name);
-          entries.add(values);
-        }
-
-        if (compressedLimit != 0) {
-          Logger.getLogger(getClass().getName()).warning("compressedLimit > 0: " + compressedLimit);
-        }
-
-        return entries;
-      } catch (DataFormatException e) {
-        throw new IOException(e.getMessage());
-      }
-    }
-
-    private String readString() throws DataFormatException, IOException {
-      int length = nameValueBlockIn.readInt();
-      byte[] bytes = new byte[length];
-      Util.readFully(nameValueBlockIn, bytes);
-      return new String(bytes, 0, length, "UTF-8");
     }
 
     private void readPing(Handler handler, int flags, int length) throws IOException {
@@ -358,7 +279,7 @@ final class Spdy3 implements Variant {
     }
 
     @Override public void close() throws IOException {
-      Util.closeAll(in, nameValueBlockIn);
+      Util.closeAll(in, nameValueBlockReader);
     }
   }
 
