@@ -62,6 +62,15 @@ public final class MockSpdyPeer implements Closeable {
   }
 
   /**
+   * Sends a manually-constructed frame. This is useful to test frames that
+   * won't be generated naturally.
+   */
+  public void sendFrame(byte[] frame) throws IOException {
+    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    bytesOut.write(frame);
+  }
+
+  /**
    * Sends a frame, truncated to {@code truncateToLength} bytes. This is only
    * useful for testing error handling as the truncated frame will be
    * malformed.

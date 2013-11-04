@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1009,6 +1010,33 @@ public final class SpdyConnectionTest {
     } catch (IOException expected) {
       assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
     }
+  }
+
+  /** https://github.com/square/okhttp/issues/333 */
+  @Test public void nameValueBlockHasTrailingCompressedBytes() throws Exception {
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    // This specially-formatted frame has trailing deflated bytes after the name value block.
+    String frame = "gAMAAgAAAgkAAAABeLvjxqfCYgAAAAD//2IAAAAA//9iAAAAAP//YgQAAAD//2IAAAAA//9iAAAAAP/"
+        + "/YgAAAAD//2IEAAAA//9KBAAAAP//YgAAAAD//2IAAAAA//9iAAAAAP//sgEAAAD//2IAAAAA\n//9iBAAAAP//Y"
+        + "gIAAAD//2IGAAAA//9iAQAAAP//YgUAAAD//2IDAAAA//9iBwAAAP//4gAAAAD//+IEAAAA///iAgAAAP//4gYAA"
+        + "AD//+IBAAAA///iBQAAAP//4gMAAAD//+IHAAAA//8SAAAAAP//EgQAAAD//xICAAAA//8SBgAAAP//EgEAAAD//"
+        + "xIFAAAA//8SAwAAAP//EgcAAAD//5IAAAAA//+SBAAAAP//kgIAAAD//5IGAAAA//+SAQAAAP//kgUAAAD//5IDA"
+        + "AAA//+SBwAAAP//UgAAAAD//1IEAAAA//9SAgAAAP//UgYAAAD//1IBAAAA//9SBQAAAP//UgMAAAD//1IHAAAA/"
+        + "//SAAAAAP//0gQAAAD//9ICAAAA///SBgAAAP//0gEAAAD//9IFAAAA///SAwAAAP//0gcAAAD//zIAAAAA//8yB"
+        + "AAAAP//MgIAAAD//zIGAAAA//8yAQAAAP//MgUAAAD//zIDAAAA//8yBwAAAP//sgAAAAD//7IEAAAA//+yAgAAA"
+        + "P//sgYAAAD//w==";
+    peer.sendFrame(Base64.decode(frame.getBytes(UTF_8)));
+    peer.sendFrame().data(true, 1, "robot".getBytes("UTF-8"));
+    peer.acceptFrame(); // DATA
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyStream stream = connection.newStream(Arrays.asList("b", "banana"), true, true);
+    assertEquals("a", stream.getResponseHeaders().get(0));
+    assertEquals(60, stream.getResponseHeaders().get(1).length());
+    assertStreamData("robot", stream.getInputStream());
   }
 
   private void writeAndClose(SpdyStream stream, String data) throws IOException {
