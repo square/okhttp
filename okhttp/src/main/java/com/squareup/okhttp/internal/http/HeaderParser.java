@@ -27,11 +27,11 @@ final class HeaderParser {
     int pos = 0;
     while (pos < value.length()) {
       int tokenStart = pos;
-      pos = skipUntil(value, pos, "=,");
+      pos = skipUntil(value, pos, "=,;");
       String directive = value.substring(tokenStart, pos).trim();
 
-      if (pos == value.length() || value.charAt(pos) == ',') {
-        pos++; // consume ',' (if necessary)
+      if (pos == value.length() || value.charAt(pos) == ',' || value.charAt(pos) == ';') {
+        pos++; // consume ',' or ';' (if necessary)
         handler.handle(directive, null);
         continue;
       }
@@ -52,7 +52,7 @@ final class HeaderParser {
         // unquoted string
       } else {
         int parameterStart = pos;
-        pos = skipUntil(value, pos, ",");
+        pos = skipUntil(value, pos, ",;");
         parameter = value.substring(parameterStart, pos).trim();
       }
 
