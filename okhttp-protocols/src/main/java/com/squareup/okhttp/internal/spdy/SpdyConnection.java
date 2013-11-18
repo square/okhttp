@@ -435,6 +435,9 @@ public final class SpdyConnection implements Closeable {
         }
         connectionErrorCode = ErrorCode.NO_ERROR;
         streamErrorCode = ErrorCode.CANCEL;
+      } catch (ProtocolException e) {
+        connectionErrorCode = e.errorCode;
+        streamErrorCode = ErrorCode.PROTOCOL_ERROR;
       } catch (IOException e) {
         connectionErrorCode = ErrorCode.PROTOCOL_ERROR;
         streamErrorCode = ErrorCode.PROTOCOL_ERROR;
