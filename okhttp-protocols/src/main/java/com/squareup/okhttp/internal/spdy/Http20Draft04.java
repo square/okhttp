@@ -36,6 +36,9 @@ final class Http20Draft04 implements Variant {
     }
   }
 
+  /**  Frames used for HTTP messages MUST NOT exceed 2^14-1 (16383) octets. */
+  static final int MAX_PAYLOAD_SIZE = 0x4000 - 1;
+
   static final int TYPE_DATA = 0x0;
   static final int TYPE_HEADERS = 0x1;
   static final int TYPE_PRIORITY = 0x2;
@@ -303,6 +306,10 @@ final class Http20Draft04 implements Variant {
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;
       int length = hpackBuffer.size();
+      int byteCount = length;
+      if (priority != -1) byteCount += 4;
+      // TODO when CONTINUATION is supported, revisit this.
+      if (byteCount > MAX_PAYLOAD_SIZE) throw new ProtocolException(ErrorCode.FRAME_TOO_LARGE);
       int flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
       if (priority != -1) flags |= FLAG_PRIORITY;
@@ -323,6 +330,7 @@ final class Http20Draft04 implements Variant {
 
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
         int offset, int byteCount) throws IOException {
+      if (byteCount > MAX_PAYLOAD_SIZE) throw new ProtocolException(ErrorCode.FRAME_TOO_LARGE);
       int type = TYPE_DATA;
       int flags = 0;
       if (outFinished) flags |= FLAG_END_STREAM;
