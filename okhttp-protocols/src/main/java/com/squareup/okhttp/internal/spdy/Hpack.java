@@ -9,8 +9,8 @@ import java.util.BitSet;
 import java.util.List;
 
 /**
- * Read and write HPACK v01.
- * http://http2.github.io/compression-spec/compression-spec.html#rfc.status
+ * Read and write HPACK v03.
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-03
  */
 final class Hpack {
   static final int PREFIX_5_BITS = 0x1f;

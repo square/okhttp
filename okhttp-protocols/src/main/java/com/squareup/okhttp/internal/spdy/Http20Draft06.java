@@ -26,7 +26,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 
-final class Http20Draft04 implements Variant {
+/**
+ * Read and write http/2 v06 frames.
+ * http://tools.ietf.org/html/draft-ietf-httpbis-http2-06
+ */
+final class Http20Draft06 implements Variant {
   private static final byte[] CONNECTION_HEADER;
   static {
     try {
@@ -45,8 +49,10 @@ final class Http20Draft04 implements Variant {
   static final int TYPE_PING = 0x6;
   static final int TYPE_GOAWAY = 0x7;
   static final int TYPE_WINDOW_UPDATE = 0x9;
+  static final int TYPE_CONTINUATION = 0xa;
 
   static final int FLAG_END_STREAM = 0x1;
+  /** Used for headers, push-promise and continuation. */
   static final int FLAG_END_HEADERS = 0x4;
   static final int FLAG_PRIORITY = 0x8;
   static final int FLAG_PONG = 0x1;
@@ -141,31 +147,38 @@ final class Http20Draft04 implements Variant {
         throws IOException {
       if (streamId == 0) throw ioException("TYPE_HEADERS streamId == 0");
 
+      boolean inFinished = (flags & FLAG_END_STREAM) != 0;
+
       while (true) {
         hpackReader.readHeaders(length);
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
           List<String> namesAndValues = hpackReader.getAndReset();
-          boolean inFinished = (flags & FLAG_END_STREAM) != 0;
           int priority = -1; // TODO: priority
           handler.headers(false, inFinished, streamId, -1, priority, namesAndValues,
               HeadersMode.HTTP_20_HEADERS);
           return;
         }
 
-        // Read another frame of headers.
+        // Read another continuation frame.
         int w1 = in.readInt();
         int w2 = in.readInt();
 
         length = (w1 & 0xffff0000) >> 16;
         int newType = (w1 & 0xff00) >> 8;
         flags = w1 & 0xff;
-        // boolean r = (w2 & 0x80000000) != 0; // Reserved.
+
+        // TODO: remove in draft 8: CONTINUATION no longer sets END_STREAM
+        inFinished = (flags & FLAG_END_STREAM) != 0;
+
+        // boolean u = (w2 & 0x80000000) != 0; // Unused.
         int newStreamId = (w2 & 0x7fffffff);
 
-        if (newType != TYPE_HEADERS) throw ioException("TYPE_HEADERS didn't have FLAG_END_HEADERS");
-        if (newStreamId != streamId) throw ioException("TYPE_HEADERS streamId changed");
+        if (newType != TYPE_CONTINUATION) {
+          throw ioException("TYPE_CONTINUATION didn't have FLAG_END_HEADERS");
+        }
+        if (newStreamId != streamId) throw ioException("TYPE_CONTINUATION streamId changed");
       }
     }
 
@@ -302,6 +315,7 @@ final class Http20Draft04 implements Variant {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;
+      // TODO: implement CONTINUATION
       int length = hpackBuffer.size();
       int flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
