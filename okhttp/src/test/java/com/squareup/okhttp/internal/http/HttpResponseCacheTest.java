@@ -975,6 +975,27 @@ public final class HttpResponseCacheTest {
     assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     assertEquals("DEFDEFDEF", readAscii(openConnection(server.getUrl("/"))));
   }
+  
+  @Test public void notModifiedSpecifiesEncodingWithConditionals() throws Exception {
+	    String lastModified = formatDate(-2, TimeUnit.HOURS);
+      server.enqueue(new MockResponse()
+	        .setBody(gzip("ABCABCABC".getBytes("UTF-8")))
+	        .addHeader("Content-Encoding: gzip")
+	        .addHeader("Last-Modified: " + lastModified)
+	        .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
+	    server.enqueue(new MockResponse()
+	        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+	        .addHeader("Content-Encoding: gzip"));
+	    server.enqueue(new MockResponse()
+	        .setBody("DEFDEFDEF"));
+
+	    server.play();
+	    assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
+	    URLConnection connection = openConnection(server.getUrl("/"));
+	    connection.setRequestProperty("If-Modified-Since", lastModified);
+	    assertEquals("", readAscii(connection));
+	    assertEquals("DEFDEFDEF", readAscii(openConnection(server.getUrl("/"))));
+  }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
     assertConditionallyCached(

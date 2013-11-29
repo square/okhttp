@@ -465,7 +465,13 @@ public class HttpEngine {
       // the content encoding.
       responseHeaders.stripContentEncoding();
       responseHeaders.stripContentLength();
-      responseBodyIn = new GZIPInputStream(transferStream);
+      int responseCode = responseHeaders.getHeaders().getResponseCode();
+      if (responseCode == HttpURLConnectionImpl.HTTP_NOT_MODIFIED) {
+        // 304 have no bodies - this will cause GZIPInputStream to throw an exception
+        responseBodyIn = transferStream;
+      } else {
+        responseBodyIn = new GZIPInputStream(transferStream);
+      }
     } else {
       responseBodyIn = transferStream;
     }
