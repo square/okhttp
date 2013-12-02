@@ -27,7 +27,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class Http20Draft04Test {
+public class Http20Draft06Test {
 
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
     final int expectedStreamId = 15;
@@ -40,13 +40,13 @@ public class Http20Draft04Test {
     {
       byte[] headerBytes = literalHeaders(sentHeaders);
       dataOut.writeShort(headerBytes.length);
-      dataOut.write(Http20Draft04.TYPE_HEADERS);
-      dataOut.write(Http20Draft04.FLAG_END_HEADERS | Http20Draft04.FLAG_END_STREAM);
+      dataOut.write(Http20Draft06.TYPE_HEADERS);
+      dataOut.write(Http20Draft06.FLAG_END_HEADERS | Http20Draft06.FLAG_END_STREAM);
       dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
       dataOut.write(headerBytes);
     }
 
-    FrameReader fr = new Http20Draft04.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+    FrameReader fr = new Http20Draft06.Reader(new ByteArrayInputStream(out.toByteArray()), false);
 
     // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -66,7 +66,7 @@ public class Http20Draft04Test {
     });
   }
 
-  @Test public void twoLiteralHeadersFrames() throws IOException {
+  @Test public void headersFrameThenContinuation() throws IOException {
     final int expectedStreamId = 15;
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -76,23 +76,23 @@ public class Http20Draft04Test {
     {
       byte[] headerBytes = literalHeaders(Arrays.asList("foo", "bar"));
       dataOut.writeShort(headerBytes.length);
-      dataOut.write(Http20Draft04.TYPE_HEADERS);
+      dataOut.write(Http20Draft06.TYPE_HEADERS);
       dataOut.write(0); // no flags
       dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
       dataOut.write(headerBytes);
     }
 
-    // Write the second headers frame, specifying no more frames are expected.
+    // Write the continuation frame, specifying no more frames are expected.
     {
       byte[] headerBytes = literalHeaders(Arrays.asList("baz", "qux"));
       dataOut.writeShort(headerBytes.length);
-      dataOut.write(Http20Draft04.TYPE_HEADERS);
-      dataOut.write(Http20Draft04.FLAG_END_HEADERS | Http20Draft04.FLAG_END_STREAM);
+      dataOut.write(Http20Draft06.TYPE_CONTINUATION);
+      dataOut.write(Http20Draft06.FLAG_END_HEADERS | Http20Draft06.FLAG_END_STREAM);
       dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
       dataOut.write(headerBytes);
     }
 
-    FrameReader fr = new Http20Draft04.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+    FrameReader fr = new Http20Draft06.Reader(new ByteArrayInputStream(out.toByteArray()), false);
 
     // Reading the above frames should result in a concatenated nameValueBlock.
     fr.nextFrame(new BaseTestHandler() {

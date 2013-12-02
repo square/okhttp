@@ -21,7 +21,7 @@ import java.io.OutputStream;
 /** A version and dialect of the framed socket protocol. */
 interface Variant {
   Variant SPDY3 = new Spdy3();
-  Variant HTTP_20_DRAFT_04 = new Http20Draft04();
+  Variant HTTP_20_DRAFT_06 = new Http20Draft06();
 
   /**
    * @param client true if this is the HTTP client's reader, reading frames from
