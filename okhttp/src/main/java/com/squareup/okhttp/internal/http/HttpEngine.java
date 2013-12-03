@@ -464,10 +464,10 @@ public class HttpEngine {
       // dangerous because 529 clients can query the content length, but not
       // the content encoding.
       responseHeaders.stripContentEncoding();
+      int contentLength = responseHeaders.getContentLength();
       responseHeaders.stripContentLength();
-      int responseCode = responseHeaders.getHeaders().getResponseCode();
-      if (responseCode == HttpURLConnectionImpl.HTTP_NOT_MODIFIED) {
-        // 304 have no bodies - this will cause GZIPInputStream to throw an exception
+      if (contentLength == 0 && responseSource == ResponseSource.NETWORK) {
+        // This would cause GZIPInputStream to throw an exception
         responseBodyIn = transferStream;
       } else {
         responseBodyIn = new GZIPInputStream(transferStream);
