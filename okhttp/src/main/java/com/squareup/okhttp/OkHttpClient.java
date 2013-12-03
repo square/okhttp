@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
@@ -56,6 +57,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   private boolean followProtocolRedirects = true;
   private int connectTimeout;
   private int readTimeout;
+  private Dns dnsResolver;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -204,6 +206,21 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     return sslSocketFactory;
   }
 
+  /**
+   * sets the dns resolver used to resolve domain name
+   * <p>If unset, the {@link Dns#DEFAULT system-wide default} dns resolver will be used.
+   */
+  public OkHttpClient setDnsResolver(Dns dnsResolver){
+	  this.dnsResolver = dnsResolver;
+	  return this;
+  }
+  
+  public Dns getDnsResolver(){
+	  if(dnsResolver != null)
+		  return dnsResolver;
+	  else 
+		  return Dns.DEFAULT;
+  }
   /**
    * Sets the verifier used to confirm that response certificates apply to
    * requested hostnames for HTTPS connections.
