@@ -22,12 +22,21 @@ import java.net.UnknownHostException;
  * Domain name service. Prefer this over {@link InetAddress#getAllByName} to
  * make code more testable.
  */
-public interface Dns {
-  Dns DEFAULT = new Dns() {
-    @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
-      return InetAddress.getAllByName(host);
-    }
-  };
+public abstract class Dns {
+    private static Dns defaultDns = new Dns() {
+        @Override
+        public InetAddress[] getAllByName(String host) throws UnknownHostException {
+            return InetAddress.getAllByName(host);
+        }
+    };
 
-  InetAddress[] getAllByName(String host) throws UnknownHostException;
+    public static Dns getDefault() {
+        return defaultDns;
+    }
+
+    public static void setDefault(Dns dns) {
+        defaultDns = dns;
+    }
+
+    public abstract InetAddress[] getAllByName(String host) throws UnknownHostException;
 }

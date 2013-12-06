@@ -287,7 +287,7 @@ public class HttpEngine {
       Address address = new Address(uriHost, getEffectivePort(uri), sslSocketFactory,
           hostnameVerifier, client.getAuthenticator(), client.getProxy(), client.getTransports());
       routeSelector = new RouteSelector(address, uri, client.getProxySelector(),
-          client.getConnectionPool(), Dns.DEFAULT, client.getRoutesDatabase());
+          client.getConnectionPool(), Dns.getDefault(), client.getRoutesDatabase());
     }
     connection = routeSelector.next(method);
     if (!connection.isConnected()) {

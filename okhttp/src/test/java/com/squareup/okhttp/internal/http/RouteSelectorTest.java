@@ -410,7 +410,7 @@ public final class RouteSelectorTest {
     }
   }
 
-  private static class FakeDns implements Dns {
+  private static class FakeDns extends Dns {
     List<String> requestedHosts = new ArrayList<String>();
     InetAddress[] inetAddresses;
 
