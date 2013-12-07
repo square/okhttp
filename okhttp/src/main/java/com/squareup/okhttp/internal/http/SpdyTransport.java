@@ -37,6 +37,10 @@ public final class SpdyTransport implements Transport {
   }
 
   @Override public OutputStream createRequestBody() throws IOException {
+    long fixedContentLength = httpEngine.policy.getFixedContentLength();
+    if (fixedContentLength != -1) {
+      httpEngine.requestHeaders.setContentLength(fixedContentLength);
+    }
     // TODO: if we aren't streaming up to the server, we should buffer the whole request
     writeRequestHeaders();
     return stream.getOutputStream();
