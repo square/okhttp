@@ -50,7 +50,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -115,19 +117,57 @@ public final class HttpOverSpdyTest {
     assertEquals(-1, connection.getInputStream().read());
   }
 
-  @Test public void post() throws Exception {
+  byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
+
+  /** An output stream can be written to more than once, so we can't guess content length. */
+   @Test public void noDefaultContentLengthOnPost() throws Exception {
     MockResponse response = new MockResponse().setBody("ABCDE");
     server.enqueue(response);
     server.play();
 
     HttpURLConnection connection = client.open(server.getUrl("/foo"));
     connection.setDoOutput(true);
-    connection.getOutputStream().write("FGHIJ".getBytes(Util.UTF_8));
+    connection.getOutputStream().write(postBytes);
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertEquals("FGHIJ", request.getUtf8Body());
+    assertArrayEquals(postBytes, request.getBody());
+    assertNull(request.getHeader("Content-Length"));
+  }
+
+  @Test public void userSuppliedContentLengthHeader() throws Exception {
+    MockResponse response = new MockResponse().setBody("ABCDE");
+    server.enqueue(response);
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection.setRequestProperty("Content-Length", String.valueOf(postBytes.length));
+    connection.setDoOutput(true);
+    connection.getOutputStream().write(postBytes);
+    assertContent("ABCDE", connection, Integer.MAX_VALUE);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    assertArrayEquals(postBytes, request.getBody());
+    assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
+  }
+
+  @Test public void setFixedLengthStreamingModeSetsContentLength() throws Exception {
+    MockResponse response = new MockResponse().setBody("ABCDE");
+    server.enqueue(response);
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection.setFixedLengthStreamingMode(postBytes.length);
+    connection.setDoOutput(true);
+    connection.getOutputStream().write(postBytes);
+    assertContent("ABCDE", connection, Integer.MAX_VALUE);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    assertArrayEquals(postBytes, request.getBody());
+    assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
   @Test public void spdyConnectionReuse() throws Exception {
