@@ -28,9 +28,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class Http20Draft06Test {
+  static final int expectedStreamId = 15;
 
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
-    final int expectedStreamId = 15;
     final List<String> sentHeaders = Arrays.asList("name", "value");
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -67,7 +67,6 @@ public class Http20Draft06Test {
   }
 
   @Test public void headersFrameThenContinuation() throws IOException {
-    final int expectedStreamId = 15;
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
@@ -110,6 +109,122 @@ public class Http20Draft06Test {
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
+  }
+
+  /**
+   * HPACK has a max header table size, which can be smaller than the max header message.
+   * Ensure the larger header content is not lost.
+   */
+  @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
+    char[] tooLarge = new char[4096];
+    Arrays.fill(tooLarge, 'a');
+    final List<String> sentHeaders = Arrays.asList("foo", new String(tooLarge));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    writeOnlyHeadersFrame(literalHeaders(sentHeaders), dataOut);
+
+    FrameReader fr = new Http20Draft06.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+
+    // Consume the large header set.
+    fr.nextFrame(new BaseTestHandler() {
+
+      @Override
+      public void headers(boolean outFinished, boolean inFinished, int streamId,
+          int associatedStreamId, int priority, List<String> nameValueBlock,
+          HeadersMode headersMode) {
+        assertEquals(sentHeaders, nameValueBlock);
+      }
+    });
+  }
+
+  @Test public void usingDraft06Examples() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    writeOnlyHeadersFrame(firstHeaderSetBytes(), dataOut);
+    writeOnlyHeadersFrame(secondHeaderSetBytes(), dataOut);
+
+    FrameReader fr = new Http20Draft06.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+
+    // Consume the first header set.
+    fr.nextFrame(new BaseTestHandler() {
+
+      @Override
+      public void headers(boolean outFinished, boolean inFinished, int streamId,
+          int associatedStreamId, int priority, List<String> nameValueBlock,
+          HeadersMode headersMode) {
+        assertEquals(Arrays.asList(":path", "/my-example/index.html", "user-agent", "my-user-agent",
+            "mynewheader", "first"), nameValueBlock);
+      }
+    });
+
+    // Consume the second header set.
+    fr.nextFrame(new BaseTestHandler() {
+
+      @Override
+      public void headers(boolean outFinished, boolean inFinished, int streamId,
+          int associatedStreamId, int priority, List<String> nameValueBlock,
+          HeadersMode headersMode) {
+        assertEquals(Arrays.asList(
+            ":path", "/my-example/resources/script.js",
+            "user-agent", "my-user-agent",
+            "mynewheader", "second"
+        ), nameValueBlock);
+      }
+    });
+  }
+
+  // Deviates from draft only to fix doc bugs noted in https://github.com/igrigorik/http-2 specs.
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-03#appendix-C.1
+  static byte[] firstHeaderSetBytes() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x44); // literal header with incremental indexing, name index = 3
+    out.write(0x16); // header value string length = 22
+    out.write("/my-example/index.html".getBytes(), 0, 22);
+
+    out.write(0x4C); // literal header with incremental indexing, name index = 11
+    out.write(0x0D); // header value string length = 13
+    out.write("my-user-agent".getBytes(), 0, 13);
+
+    out.write(0x40); // literal header with incremental indexing, new name
+    out.write(0x0B); // header name string length = 11
+    out.write("mynewheader".getBytes(), 0, 11);
+    out.write(0x05); // header value string length = 5
+    out.write("first".getBytes(), 0, 5);
+
+    return out.toByteArray();
+  }
+
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-03#appendix-C.2
+  static byte[] secondHeaderSetBytes() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x9e); // indexed header, index = 30: removal from reference set
+    out.write(0xa0); // indexed header, index = 32: removal from reference set
+    out.write(0x04); // literal header, substitution indexing, name index = 3
+
+    out.write(0x1e); // replaced entry index = 30
+    out.write(0x1f); // header value string length = 31
+    out.write("/my-example/resources/script.js".getBytes(), 0, 31);
+
+    out.write(0x5f);
+    out.write(0x02); // literal header, incremental indexing, name index = 32
+    out.write(0x06); // header value string length = 6
+    out.write("second".getBytes(), 0, 6);
+
+    return out.toByteArray();
+  }
+
+  static void writeOnlyHeadersFrame(byte[] headersSet, DataOutputStream dataOut)
+      throws IOException {
+    dataOut.writeShort(headersSet.length);
+    dataOut.write(Http20Draft06.TYPE_HEADERS);
+    dataOut.write(Http20Draft06.FLAG_END_HEADERS | Http20Draft06.FLAG_END_STREAM);
+    dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream 15 with reserved bit set
+    dataOut.write(headersSet);
   }
 
   static byte[] literalHeaders(List<String> sentHeaders) throws IOException {

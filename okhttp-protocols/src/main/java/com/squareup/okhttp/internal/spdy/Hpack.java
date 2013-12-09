@@ -13,76 +13,96 @@ import java.util.List;
  * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-03
  */
 final class Hpack {
+
+  static class HeaderEntry {
+    private final String name;
+    private final String value;
+
+    HeaderEntry(String name, String value) {
+      this.name = name;
+      this.value = value;
+    }
+
+    // TODO: This needs to be the length in UTF-8 bytes, not the length in chars.
+    int length() {
+      return 32 + name.length() + value.length();
+    }
+  }
+
   static final int PREFIX_5_BITS = 0x1f;
   static final int PREFIX_6_BITS = 0x3f;
   static final int PREFIX_7_BITS = 0x7f;
   static final int PREFIX_8_BITS = 0xff;
 
-  static final List<String> INITIAL_CLIENT_TO_SERVER_HEADER_TABLE = Arrays.asList(
-      ":scheme", "http",
-      ":scheme", "https",
-      ":host", "",
-      ":path", "/",
-      ":method", "GET",
-      "accept", "",
-      "accept-charset", "",
-      "accept-encoding", "",
-      "accept-language", "",
-      "cookie", "",
-      "if-modified-since", "",
-      "user-agent", "",
-      "referer", "",
-      "authorization", "",
-      "allow", "",
-      "cache-control", "",
-      "connection", "",
-      "content-length", "",
-      "content-type", "",
-      "date", "",
-      "expect", "",
-      "from", "",
-      "if-match", "",
-      "if-none-match", "",
-      "if-range", "",
-      "if-unmodified-since", "",
-      "max-forwards", "",
-      "proxy-authorization", "",
-      "range", "",
-      "via", ""
+  static final List<HeaderEntry> INITIAL_CLIENT_TO_SERVER_HEADER_TABLE = Arrays.asList(
+      new HeaderEntry(":scheme", "http"),
+      new HeaderEntry(":scheme", "https"),
+      new HeaderEntry(":host", ""),
+      new HeaderEntry(":path", "/"),
+      new HeaderEntry(":method", "GET"),
+      new HeaderEntry("accept", ""),
+      new HeaderEntry("accept-charset", ""),
+      new HeaderEntry("accept-encoding", ""),
+      new HeaderEntry("accept-language", ""),
+      new HeaderEntry("cookie", ""),
+      new HeaderEntry("if-modified-since", ""),
+      new HeaderEntry("user-agent", ""),
+      new HeaderEntry("referer", ""),
+      new HeaderEntry("authorization", ""),
+      new HeaderEntry("allow", ""),
+      new HeaderEntry("cache-control", ""),
+      new HeaderEntry("connection", ""),
+      new HeaderEntry("content-length", ""),
+      new HeaderEntry("content-type", ""),
+      new HeaderEntry("date", ""),
+      new HeaderEntry("expect", ""),
+      new HeaderEntry("from", ""),
+      new HeaderEntry("if-match", ""),
+      new HeaderEntry("if-none-match", ""),
+      new HeaderEntry("if-range", ""),
+      new HeaderEntry("if-unmodified-since", ""),
+      new HeaderEntry("max-forwards", ""),
+      new HeaderEntry("proxy-authorization", ""),
+      new HeaderEntry("range", ""),
+      new HeaderEntry("via", "")
   );
 
-  static final List<String> INITIAL_SERVER_TO_CLIENT_HEADER_TABLE = Arrays.asList(
-      ":status", "200",
-      "age", "",
-      "cache-control", "",
-      "content-length", "",
-      "content-type", "",
-      "date", "",
-      "etag", "",
-      "expires", "",
-      "last-modified", "",
-      "server", "",
-      "set-cookie", "",
-      "vary", "",
-      "via", "",
-      "access-control-allow-origin", "",
-      "accept-ranges", "",
-      "allow", "",
-      "connection", "",
-      "content-disposition", "",
-      "content-encoding", "",
-      "content-language", "",
-      "content-location", "",
-      "content-range", "",
-      "link", "",
-      "location", "",
-      "proxy-authenticate", "",
-      "refresh", "",
-      "retry-after", "",
-      "strict-transport-security", "",
-      "transfer-encoding", "",
-      "www-authenticate", ""
+  static final List<HeaderEntry> INITIAL_SERVER_TO_CLIENT_HEADER_TABLE = Arrays.asList(
+      new HeaderEntry(":status", "200"),
+      new HeaderEntry("age", ""),
+      new HeaderEntry("cache-control", ""),
+      new HeaderEntry("content-length", ""),
+      new HeaderEntry("content-type", ""),
+      new HeaderEntry("date", ""),
+      new HeaderEntry("etag", ""),
+      new HeaderEntry("expires", ""),
+      new HeaderEntry("last-modified", ""),
+      new HeaderEntry("server", ""),
+      new HeaderEntry("set-cookie", ""),
+      new HeaderEntry("vary", ""),
+      new HeaderEntry("via", ""),
+      new HeaderEntry("access-control-allow-origin", ""),
+      new HeaderEntry("accept-ranges", ""),
+      new HeaderEntry("allow", ""),
+      new HeaderEntry("connection", ""),
+      new HeaderEntry("content-disposition", ""),
+      new HeaderEntry("content-encoding", ""),
+      new HeaderEntry("content-language", ""),
+      new HeaderEntry("content-location", ""),
+      new HeaderEntry("content-range", ""),
+      new HeaderEntry("link", ""),
+      new HeaderEntry("location", ""),
+      new HeaderEntry("proxy-authenticate", ""),
+      new HeaderEntry("refresh", ""),
+      new HeaderEntry("retry-after", ""),
+      new HeaderEntry("strict-transport-security", ""),
+      new HeaderEntry("transfer-encoding", ""),
+      new HeaderEntry("www-authenticate", "")
   );
+
+  // Update these when initial tables change to sum of each entry length.
+  static final int INITIAL_CLIENT_TO_SERVER_HEADER_TABLE_LENGTH = 1262;
+  static final int INITIAL_SERVER_TO_CLIENT_HEADER_TABLE_LENGTH = 1304;
 
   private Hpack() {
   }
@@ -92,16 +112,20 @@ final class Hpack {
     private final DataInputStream in;
 
     private final BitSet referenceSet = new BitSet();
-    private final List<String> headerTable;
+    private final List<HeaderEntry> headerTable;
     private final List<String> emittedHeaders = new ArrayList<String>();
-    private long bufferSize = 4096;
+    private long bufferSize = 0;
     private long bytesLeft = 0;
 
     Reader(DataInputStream in, boolean client) {
       this.in = in;
-      this.headerTable = new ArrayList<String>(client
-          ? INITIAL_CLIENT_TO_SERVER_HEADER_TABLE
-          : INITIAL_SERVER_TO_CLIENT_HEADER_TABLE);
+      if (client) {  // we are reading from the server
+        this.headerTable = new ArrayList<HeaderEntry>(INITIAL_SERVER_TO_CLIENT_HEADER_TABLE);
+        this.bufferSize = INITIAL_SERVER_TO_CLIENT_HEADER_TABLE_LENGTH;
+      } else {
+        this.headerTable = new ArrayList<HeaderEntry>(INITIAL_CLIENT_TO_SERVER_HEADER_TABLE);
+        this.bufferSize = INITIAL_CLIENT_TO_SERVER_HEADER_TABLE_LENGTH;
+      }
     }
 
     /**
@@ -161,8 +185,6 @@ final class Hpack {
         referenceSet.clear(index);
       } else {
         referenceSet.set(index);
-        emittedHeaders.add(getName(index));
-        emittedHeaders.add(getValue(index));
       }
     }
 
@@ -184,23 +206,17 @@ final class Hpack {
 
     private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
         throws IOException {
-      int index = headerTable.size();
       String name = getName(nameIndex);
       String value = readString();
-      appendToHeaderTable(name, value);
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
-      referenceSet.set(index);
+      int index = headerTable.size(); // append to tail
+      insertIntoHeaderTable(index, new HeaderEntry(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
-      int index = headerTable.size();
       String name = readString();
       String value = readString();
-      appendToHeaderTable(name, value);
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
-      referenceSet.set(index);
+      int index = headerTable.size(); // append to tail
+      insertIntoHeaderTable(index, new HeaderEntry(name, value));
     }
 
     private void readLiteralHeaderWithSubstitutionIndexingIndexedName(int nameIndex)
@@ -208,43 +224,39 @@ final class Hpack {
       int index = readInt(readByte(), PREFIX_8_BITS);
       String name = getName(nameIndex);
       String value = readString();
-      replaceInHeaderTable(index, name, value);
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
-      referenceSet.set(index);
+      insertIntoHeaderTable(index, new HeaderEntry(name, value));
     }
 
     private void readLiteralHeaderWithSubstitutionIndexingNewName() throws IOException {
       String name = readString();
       int index = readInt(readByte(), PREFIX_8_BITS);
       String value = readString();
-      replaceInHeaderTable(index, name, value);
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
-      referenceSet.set(index);
+      insertIntoHeaderTable(index, new HeaderEntry(name, value));
     }
 
     private String getName(int index) {
-      return headerTable.get(index * 2);
+      return headerTable.get(index).name;
     }
 
     private String getValue(int index) {
-      return headerTable.get(index * 2 + 1);
+      return headerTable.get(index).value;
     }
 
-    private void appendToHeaderTable(String name, String value) {
-      insertIntoHeaderTable(headerTable.size() * 2, name, value);
-    }
+    private void insertIntoHeaderTable(int index, HeaderEntry entry) {
+      int delta = entry.length();
+      if (index != headerTable.size()) {
+        delta -= headerTable.get(index).length();
+      }
 
-    private void replaceInHeaderTable(int index, String name, String value) {
-      remove(index);
-      insertIntoHeaderTable(index, name, value);
-    }
-
-    private void insertIntoHeaderTable(int index, String name, String value) {
-      // TODO: This needs to be the length in UTF-8 bytes, not the length in chars.
-
-      int delta = 32 + name.length() + value.length();
+      // if the new or replacement header is too big, drop all entries.
+      if (delta > maxBufferSize) {
+        headerTable.clear();
+        bufferSize = 0;
+        // emit the large header to the callback.
+        emittedHeaders.add(entry.name);
+        emittedHeaders.add(entry.value);
+        return;
+      }
 
       // Prune headers to the required length.
       while (bufferSize + delta > maxBufferSize) {
@@ -252,22 +264,21 @@ final class Hpack {
         index--;
       }
 
-      if (delta > maxBufferSize) {
-        return; // New values won't fit in the buffer; skip 'em.
+      if (index < 0) { // we pruned it, so insert at beginning
+        index = 0;
+        headerTable.add(index, entry);
+      } else if (index == headerTable.size()) { // append to the end
+        headerTable.add(index, entry);
+      } else { // replace value at same position
+        headerTable.set(index, entry);
       }
 
-      if (index == 0) index = 0;
-
-      headerTable.add(index * 2, name);
-      headerTable.add(index * 2 + 1, value);
       bufferSize += delta;
+      referenceSet.set(index);
     }
 
     private void remove(int index) {
-      String name = headerTable.remove(index * 2);
-      String value = headerTable.remove(index * 2); // No +1 because it's shifted by remove() above.
-      // TODO: This needs to be the length in UTF-8 bytes, not the length in chars.
-      bufferSize -= (32 + name.length() + value.length());
+      bufferSize -= headerTable.remove(index).length();
     }
 
     private int readByte() throws IOException {
