@@ -504,7 +504,9 @@ public final class MockWebServer {
       if (hasBody) {
         throw new IllegalArgumentException("Request must not have a body: " + request);
       }
-    } else if (!request.startsWith("POST ") && !request.startsWith("PUT ")) {
+    } else if (!request.startsWith("POST ")
+        && !request.startsWith("PUT ")
+        && !request.startsWith("PATCH ")) {
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
