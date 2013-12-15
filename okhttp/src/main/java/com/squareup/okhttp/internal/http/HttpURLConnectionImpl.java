@@ -369,6 +369,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    * failure is permanent.
    */
   private boolean handleFailure(IOException e) throws IOException {
+    // If client is configured without retries, don't continue
+    if (!client.getRetryOnFailure()) {
+        return false;
+    }
+
     RouteSelector routeSelector = httpEngine.routeSelector;
     if (routeSelector != null && httpEngine.connection != null) {
       routeSelector.connectFailed(httpEngine.connection, e);

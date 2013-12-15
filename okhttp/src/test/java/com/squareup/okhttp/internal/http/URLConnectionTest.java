@@ -43,6 +43,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.SocketAddress;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
@@ -290,6 +291,19 @@ public final class URLConnectionTest {
       connection.connect();
       fail();
     } catch (IOException expected) {
+    }
+  }
+
+  @Test public void requestNotRetriedIfRetriesDisables() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+    server.enqueue(new MockResponse()); // unused
+    server.play();
+
+    OkHttpClient nonRetryingClient = new OkHttpClient().setRetryOnFailure(false);
+    try {
+        nonRetryingClient.open(server.getUrl("/")).getResponseCode();
+        fail();
+    } catch (SocketException expected) {
     }
   }
 
