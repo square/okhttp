@@ -294,7 +294,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void requestNotRetriedIfRetriesDisables() throws Exception {
+  @Test public void requestNotRetriedIfRetriesDisabled() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
     server.enqueue(new MockResponse()); // unused
     server.play();
@@ -303,7 +303,7 @@ public final class URLConnectionTest {
     try {
         nonRetryingClient.open(server.getUrl("/")).getResponseCode();
         fail();
-    } catch (SocketException expected) {
+    } catch (IOException expected) {
     }
   }
 
