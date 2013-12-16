@@ -271,7 +271,14 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   /**
    * Configure this client to retry the failed requests, if possible.
    *
-   * <p>If unset, failed requests will be retried.
+   * <p>By default, the {@link HttpURLConnectionImpl} will attempt to get a
+   * response for each sent request. If a request fails and the response cannot
+   * be read, the request will be retried.
+   *
+   * <p>This property controls whether this behavior is enabled or not. If unset or
+   * set to <code>true</code>, failed requests will be retried. If set to
+   * <code>false</code>, failed requests will generate an exception and no retry will
+   * be attempted.
    */
   public OkHttpClient setRetryOnFailure(boolean retryOnFailure) {
     this.retryOnFailure = retryOnFailure;
