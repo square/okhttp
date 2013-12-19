@@ -349,18 +349,27 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   private boolean execute(boolean readResponse) throws IOException {
     try {
       httpEngine.sendRequest();
-      if (readResponse) {
-        httpEngine.readResponse();
-      }
-
-      return true;
     } catch (IOException e) {
-      if (client.getRetryOnFailure() && handleFailure(e)) {
+      if (handleFailure(e)) {
         return false;
       } else {
         throw e;
       }
     }
+
+    if (readResponse) {
+      try {
+        httpEngine.readResponse();
+      } catch (IOException e) {
+        if (client.getRetryOnFailure() && handleFailure(e)) {
+          return false;
+        } else {
+          throw e;
+        }
+      }
+    }
+
+    return true;
   }
 
   /**
