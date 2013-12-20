@@ -107,12 +107,8 @@ public final class Connection implements Closeable {
       upgradeToTls(tunnelRequest);
     }
 
-    // Use MTU-sized buffers to send fewer packets.
-    int mtu = Platform.get().getMtu(socket);
-    if (mtu < 1024) mtu = 1024;
-    if (mtu > 8192) mtu = 8192;
-    in = new BufferedInputStream(in, mtu);
-    out = new BufferedOutputStream(out, mtu);
+    in = new BufferedInputStream(in, 4096);
+    out = new BufferedOutputStream(out, 1024);
   }
 
   /**
