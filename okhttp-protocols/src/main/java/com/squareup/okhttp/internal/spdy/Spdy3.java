@@ -17,6 +17,9 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.spdy.Settings;
+import com.squareup.okhttp.internal.spdy.SpdyConnection;
+
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -288,6 +291,7 @@ final class Spdy3 implements Variant {
     private final DataOutputStream out;
     private final ByteArrayOutputStream nameValueBlockBuffer;
     private final DataOutputStream nameValueBlockOut;
+    private final ByteArrayOutputStream headBuffer;
     private final boolean client;
 
     Writer(OutputStream out, boolean client) {
@@ -297,8 +301,25 @@ final class Spdy3 implements Variant {
       Deflater deflater = new Deflater();
       deflater.setDictionary(DICTIONARY);
       nameValueBlockBuffer = new ByteArrayOutputStream();
+      headBuffer = new ByteArrayOutputStream();
       nameValueBlockOut = new DataOutputStream(
           Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
+    }
+
+    public static byte[] intToByteArray(int value) {
+      byte[] ret = new byte[4];
+      ret[3] = (byte) (value & 0xFF);
+      ret[2] = (byte) ((value >> 8) & 0xFF);
+      ret[1] = (byte) ((value >> 16) & 0xFF);
+      ret[0] = (byte) ((value >> 24) & 0xFF);
+      return ret;
+    }
+
+    public static byte[] shortToByteArray(short value) {
+      byte[] ret = new byte[2];
+      ret[1] = (byte) (value & 0xFF);
+      ret[0] = (byte) ((value >> 8) & 0xFF);
+      return ret;
     }
 
     @Override public synchronized void connectionHeader() {
@@ -318,12 +339,16 @@ final class Spdy3 implements Variant {
       int flags = (outFinished ? FLAG_FIN : 0) | (inFinished ? FLAG_UNIDIRECTIONAL : 0);
 
       int unused = 0;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(streamId & 0x7fffffff);
-      out.writeInt(associatedStreamId & 0x7fffffff);
-      out.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
-      nameValueBlockBuffer.writeTo(out);
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray(streamId & 0x7fffffff));
+      headBuffer.write(intToByteArray(associatedStreamId & 0x7fffffff));
+      headBuffer.write(shortToByteArray((short)((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff))));
+      nameValueBlockBuffer.writeTo(headBuffer);
+      nameValueBlockBuffer.flush();
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -334,10 +359,14 @@ final class Spdy3 implements Variant {
       int flags = (outFinished ? FLAG_FIN : 0);
       int length = nameValueBlockBuffer.size() + 4;
 
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(streamId & 0x7fffffff);
-      nameValueBlockBuffer.writeTo(out);
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray((streamId & 0x7fffffff)));
+      nameValueBlockBuffer.writeTo(headBuffer);
+      nameValueBlockBuffer.flush();
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -348,10 +377,14 @@ final class Spdy3 implements Variant {
       int type = TYPE_HEADERS;
       int length = nameValueBlockBuffer.size() + 4;
 
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(streamId & 0x7fffffff);
-      nameValueBlockBuffer.writeTo(out);
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray((streamId & 0x7fffffff)));
+      nameValueBlockBuffer.writeTo(headBuffer);
+      nameValueBlockBuffer.flush();
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -361,10 +394,14 @@ final class Spdy3 implements Variant {
       int flags = 0;
       int type = TYPE_RST_STREAM;
       int length = 8;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(streamId & 0x7fffffff);
-      out.writeInt(errorCode.spdyRstCode);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray((streamId & 0x7fffffff)));
+      headBuffer.write(intToByteArray(errorCode.spdyRstCode));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -376,8 +413,11 @@ final class Spdy3 implements Variant {
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
         int offset, int byteCount) throws IOException {
       int flags = (outFinished ? FLAG_FIN : 0);
-      out.writeInt(streamId & 0x7fffffff);
-      out.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(streamId & 0x7fffffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | byteCount & 0xffffff));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.write(data, offset, byteCount);
     }
 
@@ -397,15 +437,19 @@ final class Spdy3 implements Variant {
       int flags = 0;
       int size = settings.size();
       int length = 4 + size * 8;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(size);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray(size));
       for (int i = 0; i <= Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
         int settingsFlags = settings.flags(i);
-        out.writeInt((settingsFlags & 0xff) << 24 | (i & 0xffffff));
-        out.writeInt(settings.get(i));
+        headBuffer.write(intToByteArray((settingsFlags & 0xff) << 24 | (i & 0xffffff)));
+        headBuffer.write(intToByteArray(settings.get(i)));
       }
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -413,8 +457,12 @@ final class Spdy3 implements Variant {
       int type = TYPE_NOOP;
       int length = 0;
       int flags = 0;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -425,9 +473,13 @@ final class Spdy3 implements Variant {
       int type = TYPE_PING;
       int flags = 0;
       int length = 4;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(payload1);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray(payload1));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -437,10 +489,14 @@ final class Spdy3 implements Variant {
       int type = TYPE_GOAWAY;
       int flags = 0;
       int length = 8;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(lastGoodStreamId);
-      out.writeInt(errorCode.spdyGoAwayCode);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray(lastGoodStreamId));
+      headBuffer.write(intToByteArray(errorCode.spdyGoAwayCode));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
@@ -449,10 +505,14 @@ final class Spdy3 implements Variant {
       int type = TYPE_WINDOW_UPDATE;
       int flags = 0;
       int length = 8;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
-      out.writeInt(streamId);
-      out.writeInt(deltaWindowSize);
+
+      headBuffer.reset();
+      headBuffer.write(intToByteArray(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff));
+      headBuffer.write(intToByteArray((flags & 0xff) << 24 | length & 0xffffff));
+      headBuffer.write(intToByteArray(streamId));
+      headBuffer.write(intToByteArray(deltaWindowSize));
+      headBuffer.writeTo(out);
+      headBuffer.flush();
       out.flush();
     }
 
