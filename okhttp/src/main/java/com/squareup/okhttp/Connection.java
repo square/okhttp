@@ -106,13 +106,14 @@ public final class Connection implements Closeable {
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
     }
-
-    // Use MTU-sized buffers to send fewer packets.
-    int mtu = Platform.get().getMtu(socket);
-    if (mtu < 1024) mtu = 1024;
-    if (mtu > 8192) mtu = 8192;
-    in = new BufferedInputStream(in, mtu);
-    out = new BufferedOutputStream(out, mtu);
+    else{
+      // Use MTU-sized buffers to send fewer packets.
+      int mtu = Platform.get().getMtu(socket);
+      if (mtu < 1024) mtu = 1024;
+      if (mtu > 8192) mtu = 8192;
+      in = new BufferedInputStream(in, mtu);
+      out = new BufferedOutputStream(out, mtu);
+    }
   }
 
   /**
@@ -152,6 +153,13 @@ public final class Connection implements Closeable {
 
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
+    
+    // Use MTU-sized buffers to send fewer packets.
+    int mtu = Platform.get().getMtu(socket);
+    if (mtu < 1024) mtu = 1024;
+    if (mtu > 8192) mtu = 8192;
+    in = new BufferedInputStream(in, mtu);
+    out = new BufferedOutputStream(out, mtu);
 
     byte[] selectedProtocol;
     if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
