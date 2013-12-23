@@ -87,12 +87,12 @@ public final class SpdyConnection implements Closeable {
   /** Lazily-created settings for the peer. */
   Settings settings;
 
-  /** Pre-allocated buffers for SpdyStreams to avoid GC */
-  public final int BUFFERSIZE = 5;
-  public byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE * BUFFERSIZE];
-  public boolean[] lock = new boolean[BUFFERSIZE];
-  public int freeBufferSize = BUFFERSIZE;
-  
+  /** Pre-allocated buffers for SpdyStreams to avoid GC. */
+  static final int BUFFERSIZE = 5;
+  protected byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE * BUFFERSIZE];
+  protected boolean[] lock = new boolean[BUFFERSIZE];
+  protected int freeBufferSize = BUFFERSIZE;
+
   private SpdyConnection(Builder builder) {
     variant = builder.variant;
     client = builder.client;

@@ -76,25 +76,25 @@ public final class SpdyStream {
     this.requestHeaders = requestHeaders;
 
     int i = id % this.connection.BUFFERSIZE;
-    while(this.in.bufferOffset == -1){
-      if(this.connection.freeBufferSize == 0){
+    while (this.in.bufferOffset == -1) {
+      if (this.connection.freeBufferSize == 0) {
         this.readbuffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
         this.in.bufferOffset = 0;
-      }else{
-        synchronized(this.connection.lock){
-        	  if(this.connection.lock[i] == true){
-            i = (i == this.connection.BUFFERSIZE - 1)? 0 : i + 1;
-        	  }else{
+      } else {
+        synchronized (this.connection.lock) {
+          if (this.connection.lock[i]) {
+            i = (i == this.connection.BUFFERSIZE - 1) ? 0 : i + 1;
+          } else {
             this.readbuffer = connection.buffer;
             this.connection.lock[i] = true;
             this.connection.freeBufferSize--;
             this.in.bufferOffset = i * Settings.DEFAULT_INITIAL_WINDOW_SIZE;
             this.bufferLockId = i;
-        	  }
+          }
         }
-      }      
+      }
     }
-    
+
     setSettings(settings);
   }
 
@@ -260,19 +260,19 @@ public final class SpdyStream {
     return true;
   }
 
-  public void releaseLock(){
-		if(bufferLockId == -1){
-			return;
-		}else
-	    synchronized(this.connection.lock){
-		    if(in.bufferOffset != -1){
-			    this.connection.lock[bufferLockId] = false;
-			    bufferLockId = -1;
-			    this.connection.freeBufferSize++;
-			    in.bufferOffset = -1;
-		    }
-	    }
-  }  
+  public void releaseLock() {
+    if (bufferLockId == -1) {
+      return;
+    } else
+        synchronized (this.connection.lock) {
+          if (in.bufferOffset != -1) {
+            this.connection.lock[bufferLockId] = false;
+            bufferLockId = -1;
+            this.connection.freeBufferSize++;
+            in.bufferOffset = -1;
+          }
+        }
+  }
 
   void receiveHeaders(List<String> headers, HeadersMode headersMode) {
     assert (!Thread.holdsLock(SpdyStream.this));
@@ -372,7 +372,7 @@ public final class SpdyStream {
     //         ^       ^
     //       limit    pos
 
-/** The offset of the buffer in SpdyConnection */
+    /** The offset of the buffer in SpdyConnection. */
     public int bufferOffset = -1;
     private int bufferLen = Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 
@@ -412,15 +412,15 @@ public final class SpdyStream {
     }
 
     @Override public int read() throws IOException {
-	    int returns = 0;
-	    try{
-		    returns = Util.readSingleByte(this);
-		    return returns;
-	    }finally{
-		    if(returns == -1){
-			    releaseLock();
-		    }
-	    }
+      int returns = 0;
+      try {
+        returns = Util.readSingleByte(this);
+        return returns;
+      } finally {
+        if (returns == -1) {
+          releaseLock();
+        }
+      }
     }
 
     @Override public int read(byte[] b, int offset, int count) throws IOException {
@@ -430,9 +430,9 @@ public final class SpdyStream {
         checkNotClosed();
 
         if (pos == -1) {
-        		//The end of the stream, release the lock.
-        		releaseLock();
-        		return -1;
+          //The end of the stream, release the lock.
+          releaseLock();
+          return -1;
         }
 
         int copied = 0;
@@ -451,7 +451,8 @@ public final class SpdyStream {
         // drain from [pos..limit)
         if (copied < count) {
           int bytesToCopy = Math.min(limit - pos, count - copied);
-          System.arraycopy(SpdyStream.this.readbuffer, pos + bufferOffset, b, offset + copied, bytesToCopy);
+          System.arraycopy(SpdyStream.this.readbuffer, pos + bufferOffset, b,
+            offset + copied, bytesToCopy);
           pos += bytesToCopy;
           copied += bytesToCopy;
         }
