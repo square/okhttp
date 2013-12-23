@@ -373,7 +373,7 @@ public final class SpdyStream {
     //       limit    pos
 
     /** The offset of the buffer in SpdyConnection. */
-    public int bufferOffset = -1;
+    private int bufferOffset = -1;
     private int bufferLen = Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 
     /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
