@@ -62,8 +62,8 @@ public final class SpdyStream {
    * near-simultaneously) then this is the first reason known to this peer.
    */
   private ErrorCode errorCode = null;
-  public byte[] readbuffer;
-  public int bufferLockId = -1;
+  private byte[] readbuffer;
+  private int bufferLockId = -1;
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
       int priority, List<String> requestHeaders, Settings settings) {
     if (connection == null) throw new NullPointerException("connection == null");
@@ -260,7 +260,7 @@ public final class SpdyStream {
     return true;
   }
 
-  public void releaseLock() {
+  private void releaseLock() {
     if (bufferLockId == -1) {
       return;
     } else
