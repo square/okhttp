@@ -107,12 +107,7 @@ public final class Connection implements Closeable {
       upgradeToTls(tunnelRequest);
     }
     else{
-      // Use MTU-sized buffers to send fewer packets.
-      int mtu = Platform.get().getMtu(socket);
-      if (mtu < 1024) mtu = 1024;
-      if (mtu > 8192) mtu = 8192;
-      in = new BufferedInputStream(in, mtu);
-      out = new BufferedOutputStream(out, mtu);
+      streamWrapper();
     }
   }
 
@@ -153,13 +148,7 @@ public final class Connection implements Closeable {
 
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
-    
-    // Use MTU-sized buffers to send fewer packets.
-    int mtu = Platform.get().getMtu(socket);
-    if (mtu < 1024) mtu = 1024;
-    if (mtu > 8192) mtu = 8192;
-    in = new BufferedInputStream(in, mtu);
-    out = new BufferedOutputStream(out, mtu);
+    streamWrapper();
 
     byte[] selectedProtocol;
     if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
@@ -339,5 +328,14 @@ public final class Connection implements Closeable {
               "Unexpected response code for CONNECT: " + responseHeaders.getResponseCode());
       }
     }
+  }
+  
+  private void streamWrapper(){
+    //Use MTU-sized buffers to send fewer packets.
+    int mtu = Platform.get().getMtu(socket);
+    if (mtu < 1024) mtu = 1024;
+    if (mtu > 8192) mtu = 8192;
+    in = new BufferedInputStream(in, mtu);
+    out = new BufferedOutputStream(out, mtu);
   }
 }
