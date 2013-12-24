@@ -105,8 +105,7 @@ public final class Connection implements Closeable {
 
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
-    }
-    else{
+    } else {
       streamWrapper();
     }
   }
@@ -329,8 +328,8 @@ public final class Connection implements Closeable {
       }
     }
   }
-  
-  private void streamWrapper(){
+
+  private void streamWrapper() throws IOException {
     //Use MTU-sized buffers to send fewer packets.
     int mtu = Platform.get().getMtu(socket);
     if (mtu < 1024) mtu = 1024;
