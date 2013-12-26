@@ -17,12 +17,6 @@ package com.squareup.okhttp;
 
 import java.io.IOException;
 import java.net.CacheRequest;
-import java.net.CacheResponse;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URLConnection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An extended response cache API. Unlike {@link java.net.ResponseCache}, this
@@ -32,21 +26,25 @@ import java.util.Map;
  * This class is in beta. APIs are subject to change!
  */
 public interface OkResponseCache {
-  CacheResponse get(URI uri, String requestMethod, Map<String, List<String>> requestHeaders)
-      throws IOException;
+  Response get(Request request) throws IOException;
 
-  CacheRequest put(URI uri, URLConnection urlConnection) throws IOException;
+  CacheRequest put(Response response) throws IOException;
 
-  /** Remove any cache entries for the supplied {@code uri} if the request method invalidates. */
-  void maybeRemove(String requestMethod, URI uri) throws IOException;
+  /**
+   * Remove any cache entries for the supplied {@code uri}. Returns true if the
+   * supplied {@code requestMethod} potentially invalidates an entry in the
+   * cache.
+   */
+  // TODO: this shouldn't return a boolean.
+  boolean maybeRemove(Request request) throws IOException;
 
   /**
    * Handles a conditional request hit by updating the stored cache response
-   * with the headers from {@code httpConnection}. The cached response body is
-   * not updated. If the stored response has changed since {@code
-   * conditionalCacheHit} was returned, this does nothing.
+   * with the headers from {@code network}. The cached response body is not
+   * updated. If the stored response has changed since {@code cached} was
+   * returned, this does nothing.
    */
-  void update(CacheResponse conditionalCacheHit, HttpURLConnection connection) throws IOException;
+  void update(Response cached, Response network) throws IOException;
 
   /** Track an conditional GET that was satisfied by this cache. */
   void trackConditionalCacheHit();

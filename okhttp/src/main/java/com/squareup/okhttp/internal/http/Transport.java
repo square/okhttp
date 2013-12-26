@@ -16,6 +16,8 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,10 +40,10 @@ interface Transport {
    */
   // TODO: don't bother retransmitting the request body? It's quite a corner
   // case and there's uncertainty whether Firefox or Chrome do this
-  OutputStream createRequestBody() throws IOException;
+  OutputStream createRequestBody(Request request) throws IOException;
 
   /** This should update the HTTP engine's sentRequestMillis field. */
-  void writeRequestHeaders() throws IOException;
+  void writeRequestHeaders(Request request) throws IOException;
 
   /**
    * Sends the request body returned by {@link #createRequestBody} to the
@@ -53,7 +55,7 @@ interface Transport {
   void flushRequest() throws IOException;
 
   /** Read response headers and update the cookie manager. */
-  ResponseHeaders readResponseHeaders() throws IOException;
+  Response.Builder readResponseHeaders() throws IOException;
 
   // TODO: make this the content stream?
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;

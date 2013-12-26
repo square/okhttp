@@ -59,16 +59,14 @@ public final class RouteSelectorTest {
   private static final String uriHost = "hostA";
   private static final int uriPort = 80;
 
-  private static final SSLContext sslContext;
-  private static final SSLSocketFactory socketFactory;
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+  private static final SSLSocketFactory socketFactory = sslContext.getSocketFactory();
   private static final HostnameVerifier hostnameVerifier;
   private static final ConnectionPool pool;
 
   static {
     try {
       uri = new URI("http://" + uriHost + ":" + uriPort + "/path");
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-      socketFactory = sslContext.getSocketFactory();
       pool = ConnectionPool.getDefault();
       hostnameVerifier = HttpsURLConnectionImpl.getDefaultHostnameVerifier();
     } catch (Exception e) {

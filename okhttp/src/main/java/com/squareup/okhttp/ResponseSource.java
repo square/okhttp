@@ -29,9 +29,20 @@ public enum ResponseSource {
   CONDITIONAL_CACHE,
 
   /** The response was returned from the network. */
-  NETWORK;
+  NETWORK,
+
+  /**
+   * The request demanded a cached response that the cache couldn't satisfy.
+   * This yields a 504 (Gateway Timeout) response as specified by
+   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
+   */
+  NONE;
 
   public boolean requiresConnection() {
     return this == CONDITIONAL_CACHE || this == NETWORK;
+  }
+
+  public boolean usesCache() {
+    return this == CACHE || this == CONDITIONAL_CACHE;
   }
 }

@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -45,8 +47,9 @@ public class RecordedResponse {
 
   public RecordedResponse assertContainsHeaders(String... expectedHeaders) {
     List<String> actualHeaders = new ArrayList<String>();
-    for (int i = 0; i < response.headerCount(); i++) {
-      actualHeaders.add(response.headerName(i) + ": " + response.headerValue(i));
+    Headers headers = response.headers();
+    for (int i = 0; i < headers.size(); i++) {
+      actualHeaders.add(headers.name(i) + ": " + headers.value(i));
     }
     if (!actualHeaders.containsAll(Arrays.asList(expectedHeaders))) {
       fail("Expected: " + actualHeaders + "\nto contain: " + Arrays.toString(expectedHeaders));
@@ -57,5 +60,26 @@ public class RecordedResponse {
   public RecordedResponse assertBody(String expectedBody) {
     assertEquals(expectedBody, body);
     return this;
+  }
+
+  public RecordedResponse assertHandshake() {
+    Handshake handshake = response.handshake();
+    assertNotNull(handshake.cipherSuite());
+    assertNotNull(handshake.peerPrincipal());
+    assertEquals(1, handshake.peerCertificates().size());
+    assertNull(handshake.localPrincipal());
+    assertEquals(0, handshake.localCertificates().size());
+    return this;
+  }
+
+  /**
+   * Asserts that the current response was redirected and returns a new recorded
+   * response for the original request.
+   */
+  public RecordedResponse redirectedBy() {
+    Response redirectedBy = response.redirectedBy();
+    assertNotNull(redirectedBy);
+    assertNull(redirectedBy.body());
+    return new RecordedResponse(redirectedBy.request(), redirectedBy, null, null);
   }
 }

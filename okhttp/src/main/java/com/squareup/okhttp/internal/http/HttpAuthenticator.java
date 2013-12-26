@@ -16,8 +16,11 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkAuthenticator.Challenge;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetAddress;
@@ -84,44 +87,40 @@ public final class HttpAuthenticator {
 
   /**
    * React to a failed authorization response by looking up new credentials.
-   *
-   * @return true if credentials have been added to successorRequestHeaders
-   *         and another request should be attempted.
+   * Returns a request for a subsequent attempt, or null if no further attempts
+   * should be made.
    */
-  public static boolean processAuthHeader(OkAuthenticator authenticator, int responseCode,
-      RawHeaders responseHeaders, RawHeaders successorRequestHeaders, Proxy proxy, URL url)
-      throws IOException {
+  public static Request processAuthHeader(
+      OkAuthenticator authenticator, Response response, Proxy proxy) throws IOException {
     String responseField;
     String requestField;
-    if (responseCode == HTTP_UNAUTHORIZED) {
+    if (response.code() == HTTP_UNAUTHORIZED) {
       responseField = "WWW-Authenticate";
       requestField = "Authorization";
-    } else if (responseCode == HTTP_PROXY_AUTH) {
+    } else if (response.code() == HTTP_PROXY_AUTH) {
       responseField = "Proxy-Authenticate";
       requestField = "Proxy-Authorization";
     } else {
       throw new IllegalArgumentException(); // TODO: ProtocolException?
     }
-    List<Challenge> challenges = parseChallenges(responseHeaders, responseField);
-    if (challenges.isEmpty()) {
-      return false; // Could not find a challenge so end the request cycle.
-    }
-    Credential credential = responseHeaders.getResponseCode() == HTTP_PROXY_AUTH
-        ? authenticator.authenticateProxy(proxy, url, challenges)
-        : authenticator.authenticate(proxy, url, challenges);
-    if (credential == null) {
-      return false; // Could not satisfy the challenge so end the request cycle.
-    }
+    List<Challenge> challenges = parseChallenges(response.headers(), responseField);
+    if (challenges.isEmpty()) return null; // Could not find a challenge so end the request cycle.
+
+    Request request = response.request();
+    Credential credential = response.code() == HTTP_PROXY_AUTH
+        ? authenticator.authenticateProxy(proxy, request.url(), challenges)
+        : authenticator.authenticate(proxy, request.url(), challenges);
+    if (credential == null) return null; // Couldn't satisfy the challenge so end the request cycle.
+
     // Add authorization credentials, bypassing the already-connected check.
-    successorRequestHeaders.set(requestField, credential.getHeaderValue());
-    return true;
+    return request.newBuilder().header(requestField, credential.getHeaderValue()).build();
   }
 
   /**
    * Parse RFC 2617 challenges. This API is only interested in the scheme
    * name and realm.
    */
-  private static List<Challenge> parseChallenges(RawHeaders responseHeaders,
+  private static List<Challenge> parseChallenges(Headers responseHeaders,
       String challengeHeader) {
     // auth-scheme = token
     // auth-param  = token "=" ( token | quoted-string )
@@ -129,11 +128,11 @@ public final class HttpAuthenticator {
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
     List<Challenge> result = new ArrayList<Challenge>();
-    for (int h = 0; h < responseHeaders.length(); h++) {
-      if (!challengeHeader.equalsIgnoreCase(responseHeaders.getFieldName(h))) {
+    for (int h = 0; h < responseHeaders.size(); h++) {
+      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
         continue;
       }
-      String value = responseHeaders.getValue(h);
+      String value = responseHeaders.value(h);
       int pos = 0;
       while (pos < value.length()) {
         int tokenStart = pos;

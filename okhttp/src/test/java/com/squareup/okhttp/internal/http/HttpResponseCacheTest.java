@@ -18,6 +18,9 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkResponseCache;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
@@ -39,22 +42,18 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -63,6 +62,7 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
@@ -89,22 +89,14 @@ public final class HttpResponseCacheTest {
       return true;
     }
   };
+
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+
   private final OkHttpClient client = new OkHttpClient();
   private MockWebServer server = new MockWebServer();
   private MockWebServer server2 = new MockWebServer();
   private HttpResponseCache cache;
   private final CookieManager cookieManager = new CookieManager();
-
-  private static final SSLContext sslContext;
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   @Before public void setUp() throws Exception {
     String tmp = System.getProperty("java.io.tmpdir");
@@ -212,11 +204,10 @@ public final class HttpResponseCacheTest {
     // exhaust the content stream
     readAscii(conn);
 
-    CacheResponse cached =
-        cache.get(url.toURI(), "GET", Collections.<String, List<String>>emptyMap());
+    Response cached = cache.get(new Request.Builder().url(url).build());
     if (shouldPut) {
       assertNotNull(Integer.toString(responseCode), cached);
-      cached.getBody().close();
+      cached.body().close();
     } else {
       assertNull(Integer.toString(responseCode), cached);
     }
@@ -231,40 +222,21 @@ public final class HttpResponseCacheTest {
     final String body = "ABCDE";
     final AtomicInteger cacheCount = new AtomicInteger();
 
-    server.enqueue(
-        new MockResponse().setStatus("HTTP/1.1 200 Fantastic").addHeader("fgh: ijk").setBody(body));
+    server.enqueue(new MockResponse()
+        .setStatus("HTTP/1.1 200 Fantastic")
+        .addHeader("Content-Type: text/plain")
+        .addHeader("fgh: ijk")
+        .setBody(body));
     server.play();
 
-    ResponseCache.setDefault(new ResponseCache() {
-      @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        return null;
-      }
-
-      @Override public CacheRequest put(URI uri, URLConnection conn) throws IOException {
-        HttpURLConnection httpConnection = (HttpURLConnection) conn;
-        try {
-          httpConnection.getRequestProperties();
-          fail();
-        } catch (IllegalStateException expected) {
-        }
-        try {
-          httpConnection.addRequestProperty("K", "V");
-          fail();
-        } catch (IllegalStateException expected) {
-        }
-        assertEquals("HTTP/1.1 200 Fantastic", httpConnection.getHeaderField(null));
-        assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"),
-            httpConnection.getHeaderFields().get(null));
-        assertEquals(200, httpConnection.getResponseCode());
-        assertEquals("Fantastic", httpConnection.getResponseMessage());
-        assertEquals(body.length(), httpConnection.getContentLength());
-        assertEquals("ijk", httpConnection.getHeaderField("fgh"));
-        try {
-          httpConnection.getInputStream(); // the RI doesn't forbid this, but it should
-          fail();
-        } catch (IOException expected) {
-        }
+    client.setOkResponseCache(new AbstractOkResponseCache() {
+      @Override public CacheRequest put(Response response) throws IOException {
+        assertEquals(server.getUrl("/"), response.request().url());
+        assertEquals(200, response.code());
+        assertNull(response.body());
+        assertEquals("5", response.header("Content-Length"));
+        assertEquals("text/plain", response.header("Content-Type"));
+        assertEquals("ijk", response.header("fgh"));
         cacheCount.incrementAndGet();
         return null;
       }
@@ -274,6 +246,32 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(url);
     assertEquals(body, readAscii(connection));
     assertEquals(1, cacheCount.get());
+  }
+
+  /** Don't explode if the cache returns a null body. http://b/3373699 */
+  @Test public void responseCacheReturnsNullOutputStream() throws Exception {
+    final AtomicBoolean aborted = new AtomicBoolean();
+    client.setOkResponseCache(new AbstractOkResponseCache() {
+      @Override public CacheRequest put(Response response) throws IOException {
+        return new CacheRequest() {
+          @Override public void abort() {
+            aborted.set(true);
+          }
+
+          @Override public OutputStream getBody() throws IOException {
+            return null;
+          }
+        };
+      }
+    });
+
+    server.enqueue(new MockResponse().setBody("abcdef"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertEquals("abc", readAscii(connection, 3));
+    connection.getInputStream().close();
+    assertFalse(aborted.get()); // The best behavior is ambiguous, but RI 6 doesn't abort here
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
@@ -334,32 +332,32 @@ public final class HttpResponseCacheTest {
         .setBody("ABC"));
     server.play();
 
-    HttpsURLConnection connection = (HttpsURLConnection) client.open(server.getUrl("/"));
-    connection.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    assertEquals("ABC", readAscii(connection));
+    HttpsURLConnection c1 = (HttpsURLConnection) client.open(server.getUrl("/"));
+    c1.setSSLSocketFactory(sslContext.getSocketFactory());
+    c1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    assertEquals("ABC", readAscii(c1));
 
     // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
-    String suite = connection.getCipherSuite();
-    List<Certificate> localCerts = toListOrNull(connection.getLocalCertificates());
-    List<Certificate> serverCerts = toListOrNull(connection.getServerCertificates());
-    Principal peerPrincipal = connection.getPeerPrincipal();
-    Principal localPrincipal = connection.getLocalPrincipal();
+    String suite = c1.getCipherSuite();
+    List<Certificate> localCerts = toListOrNull(c1.getLocalCertificates());
+    List<Certificate> serverCerts = toListOrNull(c1.getServerCertificates());
+    Principal peerPrincipal = c1.getPeerPrincipal();
+    Principal localPrincipal = c1.getLocalPrincipal();
 
-    connection = (HttpsURLConnection) client.open(server.getUrl("/")); // cached!
-    connection.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    assertEquals("ABC", readAscii(connection));
+    HttpsURLConnection c2 = (HttpsURLConnection) client.open(server.getUrl("/")); // cached!
+    c2.setSSLSocketFactory(sslContext.getSocketFactory());
+    c2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    assertEquals("ABC", readAscii(c2));
 
     assertEquals(2, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
     assertEquals(1, cache.getHitCount());
 
-    assertEquals(suite, connection.getCipherSuite());
-    assertEquals(localCerts, toListOrNull(connection.getLocalCertificates()));
-    assertEquals(serverCerts, toListOrNull(connection.getServerCertificates()));
-    assertEquals(peerPrincipal, connection.getPeerPrincipal());
-    assertEquals(localPrincipal, connection.getLocalPrincipal());
+    assertEquals(suite, c2.getCipherSuite());
+    assertEquals(localCerts, toListOrNull(c2.getLocalCertificates()));
+    assertEquals(serverCerts, toListOrNull(c2.getServerCertificates()));
+    assertEquals(peerPrincipal, c2.getPeerPrincipal());
+    assertEquals(localPrincipal, c2.getLocalPrincipal());
   }
 
   @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
@@ -445,13 +443,16 @@ public final class HttpResponseCacheTest {
 
     HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
+    assertNotNull(connection1.getCipherSuite());
 
     // Cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection2));
+    assertNotNull(connection2.getCipherSuite());
 
     assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
     assertEquals(2, cache.getHitCount());
+    assertEquals(connection1.getCipherSuite(), connection2.getCipherSuite());
   }
 
   /**
@@ -494,15 +495,10 @@ public final class HttpResponseCacheTest {
     server.enqueue(new MockResponse().setBody("ABC"));
     server.play();
 
-    final AtomicReference<Map<String, List<String>>> requestHeadersRef =
-        new AtomicReference<Map<String, List<String>>>();
-    ResponseCache.setDefault(new ResponseCache() {
-      @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        requestHeadersRef.set(requestHeaders);
-        return null;
-      }
-      @Override public CacheRequest put(URI uri, URLConnection conn) throws IOException {
+    final AtomicReference<Request> requestRef = new AtomicReference<Request>();
+    client.setOkResponseCache(new AbstractOkResponseCache() {
+      @Override public Response get(Request request) throws IOException {
+        requestRef.set(request);
         return null;
       }
     });
@@ -511,7 +507,7 @@ public final class HttpResponseCacheTest {
     URLConnection urlConnection = openConnection(url);
     urlConnection.addRequestProperty("A", "android");
     readAscii(urlConnection);
-    assertEquals(Arrays.asList("android"), requestHeadersRef.get().get("A"));
+    assertEquals(Arrays.asList("android"), requestRef.get().headers("A"));
   }
 
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
@@ -774,7 +770,7 @@ public final class HttpResponseCacheTest {
 
     URLConnection request2 = openConnection(url);
     if (expectCached) {
-      assertEquals("1", request1.getHeaderField("X-Response-ID"));
+      assertEquals("1", request2.getHeaderField("X-Response-ID"));
     } else {
       assertEquals("2", request2.getHeaderField("X-Response-ID"));
     }
@@ -1048,6 +1044,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(1, cache.getRequestCount());
+    assertEquals(0, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
@@ -1060,6 +1059,9 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(1, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
@@ -1072,6 +1074,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
@@ -1082,6 +1087,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestCacheControlNoCache() throws Exception {
@@ -1684,8 +1692,8 @@ public final class HttpResponseCacheTest {
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CACHE.toString() + " 200", source);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
@@ -1701,8 +1709,8 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 200", source);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
@@ -1716,8 +1724,8 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 304", source);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 304", source);
   }
 
   @Test public void responseSourceHeaderFetched() throws IOException {
@@ -1727,8 +1735,8 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.NETWORK.toString() + " 200", source);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.NETWORK + " 200", source);
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
@@ -1911,7 +1919,8 @@ public final class HttpResponseCacheTest {
   private String readAscii(URLConnection connection, int count) throws IOException {
     HttpURLConnection httpConnection = (HttpURLConnection) connection;
     InputStream in = httpConnection.getResponseCode() < HttpURLConnection.HTTP_BAD_REQUEST
-        ? connection.getInputStream() : httpConnection.getErrorStream();
+        ? connection.getInputStream()
+        : httpConnection.getErrorStream();
     StringBuilder result = new StringBuilder();
     for (int i = 0; i < count; i++) {
       int value = in.read();
@@ -1942,6 +1951,8 @@ public final class HttpResponseCacheTest {
     }
     assertEquals(504, connection.getResponseCode());
     assertEquals(-1, connection.getErrorStream().read());
+    assertEquals(ResponseSource.NONE + " 504",
+        connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
   }
 
   enum TransferKind {
@@ -2008,6 +2019,29 @@ public final class HttpResponseCacheTest {
         };
       }
       return response;
+    }
+  }
+
+  static abstract class AbstractOkResponseCache implements OkResponseCache {
+    @Override public Response get(Request request) throws IOException {
+      return null;
+    }
+
+    @Override public CacheRequest put(Response response) throws IOException {
+      return null;
+    }
+
+    @Override public boolean maybeRemove(Request request) throws IOException {
+      return false;
+    }
+
+    @Override public void update(Response cached, Response network) throws IOException {
+    }
+
+    @Override public void trackConditionalCacheHit() {
+    }
+
+    @Override public void trackResponse(ResponseSource source) {
     }
   }
 }

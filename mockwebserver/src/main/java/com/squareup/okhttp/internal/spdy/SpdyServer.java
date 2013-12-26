@@ -24,12 +24,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.jetty.npn.NextProtoNego;
@@ -154,8 +152,7 @@ public final class SpdyServer implements IncomingStreamHandler {
     }
 
     SpdyServer server = new SpdyServer(new File(args[0]));
-    SSLContext sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    server.useHttps(sslContext.getSocketFactory());
+    server.useHttps(SslContextBuilder.localhost().getSocketFactory());
     server.run();
   }
 }

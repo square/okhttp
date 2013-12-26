@@ -48,7 +48,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -61,7 +60,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
@@ -77,6 +75,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.squareup.okhttp.OkAuthenticator.Credential;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
@@ -89,23 +88,14 @@ import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest. */
 public final class URLConnectionTest {
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+
   private MockWebServer server = new MockWebServer();
   private MockWebServer server2 = new MockWebServer();
 
   private final OkHttpClient client = new OkHttpClient();
   private HttpResponseCache cache;
   private String hostName;
-
-  private static final SSLContext sslContext;
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   @Before public void setUp() throws Exception {
     hostName = server.getHostName();
@@ -623,6 +613,7 @@ public final class URLConnectionTest {
     URL url = new URL("http://android.com/foo");
     HttpURLConnection connection = proxyConfig.connect(server, client, url);
     assertContent("this response comes via a proxy", connection);
+    assertTrue(connection.usingProxy());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET http://android.com/foo HTTP/1.1", request.getRequestLine());
@@ -1139,26 +1130,21 @@ public final class URLConnectionTest {
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection is pooled!
   }
 
-  /**
-   * Obnoxiously test that the chunk sizes transmitted exactly equal the
-   * requested data+chunk header size. Although setChunkedStreamingMode()
-   * isn't specific about whether the size applies to the data or the
-   * complete chunk, the RI interprets it as a complete chunk.
-   */
   @Test public void setChunkedStreamingMode() throws IOException, InterruptedException {
     server.enqueue(new MockResponse());
     server.play();
 
+    String body = "ABCDEFGHIJKLMNOPQ";
     HttpURLConnection urlConnection = client.open(server.getUrl("/"));
-    urlConnection.setChunkedStreamingMode(8);
+    urlConnection.setChunkedStreamingMode(0); // OkHttp does not honor specific chunk sizes.
     urlConnection.setDoOutput(true);
     OutputStream outputStream = urlConnection.getOutputStream();
-    outputStream.write("ABCDEFGHIJKLMNOPQ".getBytes("US-ASCII"));
+    outputStream.write(body.getBytes("US-ASCII"));
     assertEquals(200, urlConnection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("ABCDEFGHIJKLMNOPQ", new String(request.getBody(), "US-ASCII"));
-    assertEquals(Arrays.asList(3, 3, 3, 3, 3, 2), request.getChunkSizes());
+    assertEquals(body, new String(request.getBody(), "US-ASCII"));
+    assertEquals(Arrays.asList(body.length()), request.getChunkSizes());
   }
 
   @Test public void authenticateWithFixedLengthStreaming() throws Exception {
@@ -1789,7 +1775,7 @@ public final class URLConnectionTest {
 
   private void test307Redirect(String method) throws Exception {
     MockResponse response1 = new MockResponse()
-        .setResponseCode(HttpURLConnectionImpl.HTTP_TEMP_REDIRECT)
+        .setResponseCode(HTTP_TEMP_REDIRECT)
         .addHeader("Location: /page2");
     if (!method.equals("HEAD")) {
       response1.setBody("This page has moved!");
@@ -2123,35 +2109,22 @@ public final class URLConnectionTest {
   }
 
   /** Don't explode if the cache returns a null body. http://b/3373699 */
-  @Test public void responseCacheReturnsNullOutputStream() throws Exception {
-    final AtomicBoolean aborted = new AtomicBoolean();
-    client.setResponseCache(new ResponseCache() {
+  @Test public void installDeprecatedJavaNetResponseCache() throws Exception {
+    ResponseCache cache = new ResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         return null;
       }
-
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        return new CacheRequest() {
-          @Override public void abort() {
-            aborted.set(true);
-          }
-
-          @Override public OutputStream getBody() throws IOException {
-            return null;
-          }
-        };
+        return null;
       }
-    });
+    };
 
-    server.enqueue(new MockResponse().setBody("abcdef"));
-    server.play();
-
-    HttpURLConnection connection = client.open(server.getUrl("/"));
-    InputStream in = connection.getInputStream();
-    assertEquals("abc", readAscii(in, 3));
-    in.close();
-    assertFalse(aborted.get()); // The best behavior is ambiguous, but RI 6 doesn't abort here
+    try {
+      client.setResponseCache(cache);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 
   /** http://code.google.com/p/android/issues/detail?id=14562 */

@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -25,8 +26,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
@@ -34,6 +35,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -43,9 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
-
-  /** A cheap and type-safe constant for the ISO-8859-1 Charset. */
-  public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+  public static final InputStream EMPTY_INPUT_STREAM = new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
 
   /** A cheap and type-safe constant for the US-ASCII Charset. */
   public static final Charset US_ASCII = Charset.forName("US-ASCII");
@@ -72,14 +72,10 @@ public final class Util {
     return specifiedPort != -1 ? specifiedPort : getDefaultPort(scheme);
   }
 
-  public static int getDefaultPort(String scheme) {
-    if ("http".equalsIgnoreCase(scheme)) {
-      return 80;
-    } else if ("https".equalsIgnoreCase(scheme)) {
-      return 443;
-    } else {
-      return -1;
-    }
+  public static int getDefaultPort(String protocol) {
+    if ("http".equals(protocol)) return 80;
+    if ("https".equals(protocol)) return 443;
+    return -1;
   }
 
   public static void checkOffsetAndCount(int arrayLength, int offset, int count) {
@@ -380,6 +376,11 @@ public final class Util {
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
     return Collections.unmodifiableList(new ArrayList<T>(list));
+  }
+
+  /** Returns an immutable list containing {@code elements}. */
+  public static <T> List<T> immutableList(T[] elements) {
+    return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
   public static ThreadFactory daemonThreadFactory(final String name) {
