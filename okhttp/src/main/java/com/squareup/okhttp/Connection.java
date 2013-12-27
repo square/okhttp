@@ -108,7 +108,7 @@ public final class Connection implements Closeable {
     }
 
     in = new BufferedInputStream(in, 4096);
-    out = new BufferedOutputStream(out, 1024);
+    out = new BufferedOutputStream(out, 256);
   }
 
   /**
