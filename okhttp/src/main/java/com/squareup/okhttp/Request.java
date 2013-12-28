@@ -74,6 +74,10 @@ import java.util.Set;
     return headers.names();
   }
 
+  RawHeaders rawHeaders() {
+    return new RawHeaders(headers);
+  }
+
   public int headerCount() {
     return headers.length();
   }
@@ -94,16 +98,21 @@ import java.util.Set;
     return tag;
   }
 
-  public abstract static class Body {
-    /**
-     * Returns the Content-Type header for this body, or null if the content
-     * type is unknown.
-     */
-    public MediaType contentType() {
-      return null;
-    }
+  Builder newBuilder() {
+    return new Builder(url)
+        .method(method, body)
+        .rawHeaders(headers)
+        .tag(tag);
+  }
 
-    /** Returns the number of bytes in this body, or -1 if that count is unknown. */
+  public abstract static class Body {
+    /** Returns the Content-Type header for this body. */
+    public abstract MediaType contentType();
+
+    /**
+     * Returns the number of bytes that will be written to {@code out} in a call
+     * to {@link #writeTo}, or -1 if that count is unknown.
+     */
     public long contentLength() {
       return -1;
     }
@@ -183,7 +192,7 @@ import java.util.Set;
   public static class Builder {
     private URL url;
     private String method = "GET";
-    private final RawHeaders headers = new RawHeaders();
+    private RawHeaders headers = new RawHeaders();
     private Body body;
     private Object tag;
 
@@ -225,6 +234,11 @@ import java.util.Set;
      */
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
+      return this;
+    }
+
+    Builder rawHeaders(RawHeaders rawHeaders) {
+      headers = new RawHeaders(rawHeaders);
       return this;
     }
 

@@ -60,7 +60,7 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
 public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   /** Numeric status code, 307: Temporary Redirect. */
-  static final int HTTP_TEMP_REDIRECT = 307;
+  public static final int HTTP_TEMP_REDIRECT = 307;
 
   /**
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
@@ -311,7 +311,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
       // redirect should keep the same method, Chrome, Firefox and the
       // RI all issue GETs when following any redirect.
-      int responseCode = getResponseCode();
+      int responseCode = httpEngine.getResponseCode();
       if (responseCode == HTTP_MULT_CHOICE
           || responseCode == HTTP_MOVED_PERM
           || responseCode == HTTP_MOVED_TEMP
@@ -321,8 +321,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       }
 
       if (requestBody != null && !(requestBody instanceof RetryableOutputStream)) {
-        throw new HttpRetryException("Cannot retry streamed HTTP body",
-            httpEngine.getResponseCode());
+        throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
       if (retry == Retry.DIFFERENT_CONNECTION) {
@@ -413,7 +412,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   /**
    * Returns the retry action to take for the current response headers. The
-   * headers, proxy and target URL or this connection may be adjusted to
+   * headers, proxy and target URL for this connection may be adjusted to
    * prepare for a follow up request.
    */
   private Retry processResponseHeaders() throws IOException {

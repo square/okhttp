@@ -15,9 +15,12 @@
  */
 package com.squareup.okhttp;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -26,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class RecordingReceiver implements Response.Receiver {
   public static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
+  private final Map<Request, ByteArrayOutputStream> inFlightResponses
+      = new LinkedHashMap<Request, ByteArrayOutputStream>();
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();
 
   @Override public synchronized void onFailure(Failure failure) {
@@ -33,10 +38,31 @@ public class RecordingReceiver implements Response.Receiver {
     notifyAll();
   }
 
-  @Override public synchronized void onResponse(Response response) throws IOException {
-    responses.add(new RecordedResponse(
-        response.request(), response, response.body().string(), null));
-    notifyAll();
+  @Override public synchronized boolean onResponse(Response response) throws IOException {
+    ByteArrayOutputStream out = inFlightResponses.get(response.request());
+    if (out == null) {
+      out = new ByteArrayOutputStream();
+      inFlightResponses.put(response.request(), out);
+    }
+
+    byte[] buffer = new byte[1024];
+    Response.Body body = response.body();
+
+    while (body.ready()) {
+      int c = body.byteStream().read(buffer);
+
+      if (c == -1) {
+        inFlightResponses.remove(response.request());
+        responses.add(new RecordedResponse(
+            response.request(), response, out.toString("UTF-8"), null));
+        notifyAll();
+        return true;
+      }
+
+      out.write(buffer, 0, c);
+    }
+
+    return false;
   }
 
   /**

@@ -324,7 +324,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     // Create the HttpURLConnection immediately so the enqueued job gets the current settings of
     // this client. Otherwise changes to this client (socket factory, redirect policy, etc.) may
     // incorrectly be reflected in the request when it is dispatched later.
-    dispatcher.enqueue(open(request.url()), request, responseReceiver);
+    dispatcher.enqueue(copyWithDefaults(), request, responseReceiver);
   }
 
   /**

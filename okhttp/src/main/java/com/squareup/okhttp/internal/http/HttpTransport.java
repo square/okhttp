@@ -370,10 +370,10 @@ public final class HttpTransport implements Transport {
 
   /** An HTTP body with a fixed length specified in advance. */
   private static class FixedLengthInputStream extends AbstractHttpInputStream {
-    private int bytesRemaining;
+    private long bytesRemaining;
 
     public FixedLengthInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine,
-        int length) throws IOException {
+        long length) throws IOException {
       super(is, httpEngine, cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
@@ -387,7 +387,7 @@ public final class HttpTransport implements Transport {
       if (bytesRemaining == 0) {
         return -1;
       }
-      int read = in.read(buffer, offset, Math.min(count, bytesRemaining));
+      int read = in.read(buffer, offset, (int) Math.min(count, bytesRemaining));
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised content length
         throw new ProtocolException("unexpected end of stream");
@@ -402,7 +402,7 @@ public final class HttpTransport implements Transport {
 
     @Override public int available() throws IOException {
       checkNotClosed();
-      return bytesRemaining == 0 ? 0 : Math.min(in.available(), bytesRemaining);
+      return bytesRemaining == 0 ? 0 : (int) Math.min(in.available(), bytesRemaining);
     }
 
     @Override public void close() throws IOException {
