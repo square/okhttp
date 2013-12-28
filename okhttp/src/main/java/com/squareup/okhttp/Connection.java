@@ -105,10 +105,9 @@ public final class Connection implements Closeable {
 
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
+    } else {
+      streamWrapper();
     }
-
-    in = new BufferedInputStream(in, 4096);
-    out = new BufferedOutputStream(out, 256);
   }
 
   /**
@@ -148,6 +147,7 @@ public final class Connection implements Closeable {
 
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
+    streamWrapper();
 
     byte[] selectedProtocol;
     if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
@@ -327,5 +327,10 @@ public final class Connection implements Closeable {
               "Unexpected response code for CONNECT: " + responseHeaders.getResponseCode());
       }
     }
+  }
+
+  private void streamWrapper() throws IOException {
+    in = new BufferedInputStream(in, 4096);
+    out = new BufferedOutputStream(out, 256);
   }
 }
