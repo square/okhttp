@@ -39,15 +39,12 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
@@ -89,22 +86,14 @@ public final class HttpResponseCacheTest {
       return true;
     }
   };
+
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+
   private final OkHttpClient client = new OkHttpClient();
   private MockWebServer server = new MockWebServer();
   private MockWebServer server2 = new MockWebServer();
   private HttpResponseCache cache;
   private final CookieManager cookieManager = new CookieManager();
-
-  private static final SSLContext sslContext;
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   @Before public void setUp() throws Exception {
     String tmp = System.getProperty("java.io.tmpdir");
@@ -445,13 +434,16 @@ public final class HttpResponseCacheTest {
 
     HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
+    assertNotNull(connection1.getCipherSuite());
 
     // Cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection2));
+    assertNotNull(connection2.getCipherSuite());
 
     assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
     assertEquals(2, cache.getHitCount());
+    assertEquals(connection1.getCipherSuite(), connection2.getCipherSuite());
   }
 
   /**

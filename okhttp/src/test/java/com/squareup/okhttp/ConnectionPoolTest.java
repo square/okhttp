@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
@@ -40,17 +38,7 @@ import static org.junit.Assert.assertTrue;
 
 public final class ConnectionPoolTest {
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
-  private static final SSLContext sslContext;
-
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   private final MockWebServer spdyServer = new MockWebServer();
   private InetSocketAddress spdySocketAddress;

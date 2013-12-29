@@ -48,7 +48,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -89,23 +88,14 @@ import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest. */
 public final class URLConnectionTest {
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+
   private MockWebServer server = new MockWebServer();
   private MockWebServer server2 = new MockWebServer();
 
   private final OkHttpClient client = new OkHttpClient();
   private HttpResponseCache cache;
   private String hostName;
-
-  private static final SSLContext sslContext;
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   @Before public void setUp() throws Exception {
     hostName = server.getHostName();

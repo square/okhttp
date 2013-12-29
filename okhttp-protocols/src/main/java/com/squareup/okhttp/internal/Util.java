@@ -25,8 +25,8 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.Socket;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -380,6 +381,11 @@ public final class Util {
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
     return Collections.unmodifiableList(new ArrayList<T>(list));
+  }
+
+  /** Returns an immutable list containing {@code elements}. */
+  public static <T> List<T> immutableList(T[] elements) {
+    return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
   public static ThreadFactory daemonThreadFactory(final String name) {

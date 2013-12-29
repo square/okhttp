@@ -39,6 +39,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
 /* OkHttp 2.0: public */ final class Response {
   private final Request request;
   private final int code;
+  private final Handshake handshake;
   private final RawHeaders headers;
   private final Body body;
   private final Response redirectedBy;
@@ -46,6 +47,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
   private Response(Builder builder) {
     this.request = builder.request;
     this.code = builder.code;
+    this.handshake = builder.handshake;
     this.headers = new RawHeaders(builder.headers);
     this.body = builder.body;
     this.redirectedBy = builder.redirectedBy;
@@ -69,6 +71,14 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
 
   public int code() {
     return code;
+  }
+
+  /**
+   * Returns the TLS handshake of the connection that carried this response, or
+   * null if the response was received without TLS.
+   */
+  public Handshake handshake() {
+    return handshake;
   }
 
   public String header(String name) {
@@ -237,6 +247,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
   public static class Builder {
     private final Request request;
     private final int code;
+    private Handshake handshake;
     private RawHeaders headers = new RawHeaders();
     private Body body;
     private Response redirectedBy;
@@ -246,6 +257,11 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
       if (code <= 0) throw new IllegalArgumentException("code <= 0");
       this.request = request;
       this.code = code;
+    }
+
+    public Builder handshake(Handshake handshake) {
+      this.handshake = handshake;
+      return this;
     }
 
     /**

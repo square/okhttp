@@ -214,7 +214,7 @@ import java.util.Set;
     }
 
     public Builder url(URL url) {
-      if (url == null) throw new IllegalStateException("url == null");
+      if (url == null) throw new IllegalArgumentException("url == null");
       this.url = url;
       return this;
     }

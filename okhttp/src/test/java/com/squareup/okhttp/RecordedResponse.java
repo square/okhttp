@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 /**
@@ -56,6 +58,16 @@ public class RecordedResponse {
 
   public RecordedResponse assertBody(String expectedBody) {
     assertEquals(expectedBody, body);
+    return this;
+  }
+
+  public RecordedResponse assertHandshake() {
+    Handshake handshake = response.handshake();
+    assertNotNull(handshake.cipherSuite());
+    assertNotNull(handshake.peerPrincipal());
+    assertEquals(1, handshake.peerCertificates().size());
+    assertNull(handshake.localPrincipal());
+    assertEquals(0, handshake.localCertificates().size());
     return this;
   }
 }
