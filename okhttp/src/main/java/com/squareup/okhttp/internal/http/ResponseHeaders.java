@@ -114,8 +114,9 @@ public final class ResponseHeaders {
 
   private String contentEncoding;
   private String transferEncoding;
-  private int contentLength = -1;
+  private long contentLength = -1;
   private String connection;
+  private String contentType;
 
   public ResponseHeaders(URI uri, RawHeaders headers) {
     this.uri = uri;
@@ -172,9 +173,11 @@ public final class ResponseHeaders {
         transferEncoding = value;
       } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
         try {
-          contentLength = Integer.parseInt(value);
+          contentLength = Long.parseLong(value);
         } catch (NumberFormatException ignored) {
         }
+      } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
+        contentType = value;
       } else if ("Connection".equalsIgnoreCase(fieldName)) {
         connection = value;
       } else if (SENT_MILLIS.equalsIgnoreCase(fieldName)) {
@@ -263,8 +266,12 @@ public final class ResponseHeaders {
     return contentEncoding;
   }
 
-  public int getContentLength() {
+  public long getContentLength() {
     return contentLength;
+  }
+
+  public String getContentType() {
+    return contentType;
   }
 
   public String getConnection() {

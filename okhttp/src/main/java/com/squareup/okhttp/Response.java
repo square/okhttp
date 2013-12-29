@@ -22,8 +22,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
+
+import static com.squareup.okhttp.internal.Util.UTF_8;
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response
@@ -93,6 +96,10 @@ import java.util.Set;
     return headers.getFieldName(index);
   }
 
+  RawHeaders rawHeaders() {
+    return new RawHeaders(headers);
+  }
+
   public String headerValue(int index) {
     return headers.getValue(index);
   }
@@ -112,17 +119,34 @@ import java.util.Set;
   }
 
   public abstract static class Body {
-    public String contentType() {
-      return null;
-    }
+    /** Multiple calls to {@link #charStream()} must return the same instance. */
+    private Reader reader;
 
-    public long contentLength() {
-      return -1;
-    }
+    /**
+     * Returns true if further data from this response body should be read at
+     * this time. For asynchronous transports like SPDY and HTTP/2.0, this will
+     * return false once all locally-available body bytes have been read.
+     *
+     * <p>Clients with many concurrent downloads can use this method to reduce
+     * the number of idle threads blocking on reads. See {@link
+     * Receiver#onResponse} for details.
+     */
+    // <h3>Body.ready() vs. InputStream.available()</h3>
+    // TODO: Can we fix response bodies to implement InputStream.available well?
+    // The deflater implementation is broken by default but we could do better.
+    public abstract boolean ready() throws IOException;
+
+    public abstract MediaType contentType();
+
+    /**
+     * Returns the number of bytes in that will returned by {@link #bytes}, or
+     * {@link #byteStream}, or -1 if unknown.
+     */
+    public abstract long contentLength();
 
     public abstract InputStream byteStream() throws IOException;
 
-    public byte[] bytes() throws IOException {
+    public final byte[] bytes() throws IOException {
       long contentLength = contentLength();
       if (contentLength > Integer.MAX_VALUE) {
         throw new IOException("Cannot buffer entire body for content length: " + contentLength);
@@ -143,33 +167,77 @@ import java.util.Set;
     }
 
     /**
-     * Returns the response bytes as a UTF-8 character stream. Do not call this
-     * method if the response content is not a UTF-8 character stream.
+     * Returns the response as a character stream decoded with the charset
+     * of the Content-Type header. If that header is either absent or lacks a
+     * charset, this will attempt to decode the response body as UTF-8.
      */
-    public Reader charStream() throws IOException {
-      // TODO: parse content-type.
-      return new InputStreamReader(byteStream(), "UTF-8");
+    public final Reader charStream() throws IOException {
+      if (reader == null) {
+        reader = new InputStreamReader(byteStream(), charset());
+      }
+      return reader;
     }
 
     /**
-     * Returns the response bytes as a UTF-8 string. Do not call this method if
-     * the response content is not a UTF-8 character stream.
+     * Returns the response as a string decoded with the charset of the
+     * Content-Type header. If that header is either absent or lacks a charset,
+     * this will attempt to decode the response body as UTF-8.
      */
-    public String string() throws IOException {
-      // TODO: parse content-type.
-      return new String(bytes(), "UTF-8");
+    public final String string() throws IOException {
+      return new String(bytes(), charset().name());
+    }
+
+    private Charset charset() {
+      MediaType contentType = contentType();
+      return contentType != null ? contentType.charset(UTF_8) : UTF_8;
     }
   }
 
   public interface Receiver {
+    /**
+     * Called when the request could not be executed due to a connectivity
+     * problem or timeout. Because networks can fail during an exchange, it is
+     * possible that the remote server accepted the request before the failure.
+     */
     void onFailure(Failure failure);
-    void onResponse(Response response) throws IOException;
+
+    /**
+     * Called when the HTTP response was successfully returned by the remote
+     * server. The receiver may proceed to read the response body with the
+     * response's {@link #body} method.
+     *
+     * <p>Note that transport-layer success (receiving a HTTP response code,
+     * headers and body) does not necessarily indicate application-layer
+     * success: {@code response} may still indicate an unhappy HTTP response
+     * code like 404 or 500.
+     *
+     * <h3>Non-blocking responses</h3>
+     *
+     * <p>Receivers do not need to block while waiting for the response body to
+     * download. Instead, they can get called back as data arrives. Use {@link
+     * Body#ready} to check if bytes should be read immediately. While there is
+     * data ready, read it. If there isn't, return false: receivers will be
+     * called back with {@code onResponse()} as additional data is downloaded.
+     *
+     * <p>Return true to indicate that the receiver has finished handling the
+     * response body. If the response body has unread data, it will be
+     * discarded.
+     *
+     * <p>When the response body has been fully consumed the returned value is
+     * undefined.
+     *
+     * <p>The current implementation of {@link Body#ready} always returns true
+     * when the underlying transport is HTTP/1. This results in blocking on that
+     * transport. For effective non-blocking your server must support SPDY or
+     * HTTP/2.
+     */
+    boolean onResponse(Response response) throws IOException;
   }
 
   public static class Builder {
     private final Request request;
     private final int code;
-    private final RawHeaders headers = new RawHeaders();
+    private RawHeaders headers = new RawHeaders();
     private Body body;
     private Response redirectedBy;
 
@@ -195,6 +263,11 @@ import java.util.Set;
      */
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
+      return this;
+    }
+
+    Builder rawHeaders(RawHeaders rawHeaders) {
+      headers = new RawHeaders(rawHeaders);
       return this;
     }
 

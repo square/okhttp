@@ -68,5 +68,6 @@ public final class AsyncApiTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("def", recordedRequest.getUtf8Body());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
+    assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 }

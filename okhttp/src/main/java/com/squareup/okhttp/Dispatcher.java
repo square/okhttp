@@ -15,9 +15,9 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.ResponseHeaders;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,8 +33,8 @@ final class Dispatcher {
   private final Map<Object, List<Job>> enqueuedJobs = new LinkedHashMap<Object, List<Job>>();
 
   public synchronized void enqueue(
-      HttpURLConnection connection, Request request, Response.Receiver responseReceiver) {
-    Job job = new Job(this, connection, request, responseReceiver);
+      OkHttpClient client, Request request, Response.Receiver responseReceiver) {
+    Job job = new Job(this, client, request, responseReceiver);
     List<Job> jobsForTag = enqueuedJobs.get(request.tag());
     if (jobsForTag == null) {
       jobsForTag = new ArrayList<Job>(2);
@@ -53,25 +53,30 @@ final class Dispatcher {
   }
 
   synchronized void finished(Job job) {
-    List<Job> jobs = enqueuedJobs.get(job.request.tag());
+    List<Job> jobs = enqueuedJobs.get(job.tag());
     if (jobs != null) jobs.remove(job);
   }
 
   static class RealResponseBody extends Response.Body {
-    private final HttpURLConnection connection;
+    private final ResponseHeaders responseHeaders;
     private final InputStream in;
 
-    RealResponseBody(HttpURLConnection connection, InputStream in) {
-      this.connection = connection;
+    RealResponseBody(ResponseHeaders responseHeaders, InputStream in) {
+      this.responseHeaders = responseHeaders;
       this.in = in;
     }
 
-    @Override public String contentType() {
-      return connection.getHeaderField("Content-Type");
+    @Override public boolean ready() throws IOException {
+      return true;
+    }
+
+    @Override public MediaType contentType() {
+      String contentType = responseHeaders.getContentType();
+      return contentType != null ? MediaType.parse(contentType) : null;
     }
 
     @Override public long contentLength() {
-      return connection.getContentLength(); // TODO: getContentLengthLong
+      return responseHeaders.getContentLength();
     }
 
     @Override public InputStream byteStream() throws IOException {
