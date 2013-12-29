@@ -60,7 +60,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
@@ -2113,35 +2112,22 @@ public final class URLConnectionTest {
   }
 
   /** Don't explode if the cache returns a null body. http://b/3373699 */
-  @Test public void responseCacheReturnsNullOutputStream() throws Exception {
-    final AtomicBoolean aborted = new AtomicBoolean();
-    client.setResponseCache(new ResponseCache() {
+  @Test public void installDeprecatedJavaNetResponseCache() throws Exception {
+    ResponseCache cache = new ResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         return null;
       }
-
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        return new CacheRequest() {
-          @Override public void abort() {
-            aborted.set(true);
-          }
-
-          @Override public OutputStream getBody() throws IOException {
-            return null;
-          }
-        };
+        return null;
       }
-    });
+    };
 
-    server.enqueue(new MockResponse().setBody("abcdef"));
-    server.play();
-
-    HttpURLConnection connection = client.open(server.getUrl("/"));
-    InputStream in = connection.getInputStream();
-    assertEquals("abc", readAscii(in, 3));
-    in.close();
-    assertFalse(aborted.get()); // The best behavior is ambiguous, but RI 6 doesn't abort here
+    try {
+      client.setResponseCache(cache);
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 
   /** http://code.google.com/p/android/issues/detail?id=14562 */

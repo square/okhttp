@@ -46,7 +46,7 @@ abstract class AbstractHttpInputStream extends InputStream {
 
     OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
 
-    // some apps return a null body; for compatibility we treat that like a null cache request
+    // Some apps return a null body; for compatibility we treat that like a null cache request.
     if (cacheBody == null) {
       cacheRequest = null;
     }

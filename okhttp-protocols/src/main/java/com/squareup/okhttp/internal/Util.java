@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal;
 
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -44,9 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
-
-  /** A cheap and type-safe constant for the ISO-8859-1 Charset. */
-  public static final Charset ISO_8859_1 = Charset.forName("ISO-8859-1");
+  public static final InputStream EMPTY_INPUT_STREAM = new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
 
   /** A cheap and type-safe constant for the US-ASCII Charset. */
   public static final Charset US_ASCII = Charset.forName("US-ASCII");

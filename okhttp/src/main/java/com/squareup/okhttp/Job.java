@@ -22,7 +22,6 @@ import com.squareup.okhttp.internal.http.HttpsEngine;
 import com.squareup.okhttp.internal.http.Policy;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
@@ -61,11 +60,7 @@ final class Job implements Runnable, Policy {
   }
 
   @Override public boolean getUseCaches() {
-    return false; // TODO.
-  }
-
-  @Override public HttpURLConnection getHttpConnectionToCache() {
-    return null;
+    return true;
   }
 
   @Override public URL getURL() {

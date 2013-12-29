@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Platform;
 import java.io.IOException;
@@ -23,8 +24,6 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -381,12 +380,9 @@ public final class ResponseHeaders {
    * Returns true if none of the Vary headers on this response have changed
    * between {@code cachedRequest} and {@code newRequest}.
    */
-  public boolean varyMatches(Map<String, List<String>> cachedRequest,
-      Map<String, List<String>> newRequest) {
+  public boolean varyMatches(RawHeaders varyHeaders, Request newRequest) {
     for (String field : varyFields) {
-      if (!equal(cachedRequest.get(field), newRequest.get(field))) {
-        return false;
-      }
+      if (!equal(varyHeaders.values(field), newRequest.headers(field))) return false;
     }
     return true;
   }

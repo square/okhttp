@@ -21,9 +21,7 @@ import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.ProtocolException;
-import java.net.SecureCacheResponse;
 import java.net.URL;
 import java.security.Permission;
 import java.security.Principal;
@@ -37,29 +35,20 @@ import javax.net.ssl.SSLSocketFactory;
 
 public final class HttpsURLConnectionImpl extends HttpsURLConnection {
 
-  /** HttpUrlConnectionDelegate allows reuse of HttpURLConnectionImpl. */
-  private final HttpUrlConnectionDelegate delegate;
+  /** Reuse HttpURLConnectionImpl. */
+  private final HttpURLConnectionImpl delegate;
 
   public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
-    delegate = new HttpUrlConnectionDelegate(url, client);
+    delegate = new HttpURLConnectionImpl(url, client);
   }
 
   @Override public String getCipherSuite() {
-    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getCipherSuite();
-    }
     Handshake handshake = handshake();
     return handshake != null ? handshake.cipherSuite() : null;
   }
 
   @Override public Certificate[] getLocalCertificates() {
-    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) {
-      List<Certificate> result = cacheResponse.getLocalCertificateChain();
-      return result != null ? result.toArray(new Certificate[result.size()]) : null;
-    }
     Handshake handshake = handshake();
     if (handshake == null) return null;
     List<Certificate> result = handshake.localCertificates();
@@ -67,11 +56,6 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   @Override public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
-    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) {
-      List<Certificate> result = cacheResponse.getServerCertificateChain();
-      return result != null ? result.toArray(new Certificate[result.size()]) : null;
-    }
     Handshake handshake = handshake();
     if (handshake == null) return null;
     List<Certificate> result = handshake.peerCertificates();
@@ -79,25 +63,17 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
   }
 
   @Override public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) return cacheResponse.getPeerPrincipal();
     Handshake handshake = handshake();
     return handshake != null ? handshake.peerPrincipal() : null;
   }
 
   @Override public Principal getLocalPrincipal() {
-    SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) return cacheResponse.getLocalPrincipal();
     Handshake handshake = handshake();
     return handshake != null ? handshake.localPrincipal() : null;
   }
 
-  public HttpEngine getHttpEngine() {
-    return delegate.getHttpEngine();
-  }
-
   private Handshake handshake() {
-    if (delegate.httpEngine == null || !delegate.httpEngine.connected) {
+    if (delegate.httpEngine == null) {
       throw new IllegalStateException("Connection has not yet been established");
     }
     return delegate.httpEngine.getHandshake();
@@ -323,21 +299,5 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
 
   @Override public SSLSocketFactory getSSLSocketFactory() {
     return delegate.client.getSslSocketFactory();
-  }
-
-  private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
-    private HttpUrlConnectionDelegate(URL url, OkHttpClient client) {
-      super(url, client);
-    }
-
-    @Override public HttpURLConnection getHttpConnectionToCache() {
-      return HttpsURLConnectionImpl.this;
-    }
-
-    public SecureCacheResponse getSecureCacheResponse() {
-      return httpEngine instanceof HttpsEngine
-          ? (SecureCacheResponse) httpEngine.getCacheResponse()
-          : null;
-    }
   }
 }

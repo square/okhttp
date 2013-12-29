@@ -20,37 +20,33 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Handshake;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
-import java.net.CacheResponse;
 import java.net.CookieHandler;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
+import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -82,16 +78,21 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * implementation type of its HttpEngine.
  */
 public class HttpEngine {
-  private static final CacheResponse GATEWAY_TIMEOUT_RESPONSE = new CacheResponse() {
-    @Override public Map<String, List<String>> getHeaders() throws IOException {
-      Map<String, List<String>> result = new HashMap<String, List<String>>();
-      result.put(null, Collections.singletonList("HTTP/1.1 504 Gateway Timeout"));
-      return result;
+  private static final Response.Body EMPTY_BODY = new Response.Body() {
+    @Override public boolean ready() throws IOException {
+      return true;
     }
-    @Override public InputStream getBody() throws IOException {
-      return new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
+    @Override public MediaType contentType() {
+      return null;
+    }
+    @Override public long contentLength() {
+      return 0;
+    }
+    @Override public InputStream byteStream() {
+      return EMPTY_INPUT_STREAM;
     }
   };
+
   public static final int HTTP_CONTINUE = 100;
 
   protected final Policy policy;
@@ -111,14 +112,8 @@ public class HttpEngine {
   private InputStream responseTransferIn;
   private InputStream responseBodyIn;
 
-  private CacheResponse cacheResponse;
-  private CacheRequest cacheRequest;
-
   /** The time when the request headers were written, or -1 if they haven't been written yet. */
   long sentRequestMillis = -1;
-
-  /** Whether the connection has been established. */
-  boolean connected;
 
   /**
    * True if this client added an "Accept-Encoding: gzip" header field and is
@@ -133,12 +128,16 @@ public class HttpEngine {
   /** Null until a response is received from the network or the cache. */
   ResponseHeaders responseHeaders;
 
-  // The cache response currently being validated on a conditional get. Null
-  // if the cached response doesn't exist or doesn't need validation. If the
-  // conditional get succeeds, these will be used for the response headers and
-  // body. If it fails, these be closed and set to null.
-  private ResponseHeaders cachedResponseHeaders;
-  private InputStream cachedResponseBody;
+  /**
+   * The cache response currently being validated on a conditional get. Null
+   * if the cached response doesn't exist or doesn't need validation. If the
+   * conditional get succeeds, these will be used for the response. If it fails,
+   * it will be set to null.
+   */
+  private Response validatingResponse;
+
+  /** The cache request currently being populated from a network response. */
+  private CacheRequest cacheRequest;
 
   /**
    * True if the socket connection should be released to the connection pool
@@ -173,11 +172,8 @@ public class HttpEngine {
 
     this.requestHeaders = new RequestHeaders(uri, new RawHeaders(requestHeaders));
 
-    if (connection != null) {
-      connected = true;
-      if (connection.getSocket() instanceof SSLSocket) {
-        handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
-      }
+    if (connection != null && connection.getSocket() instanceof SSLSocket) {
+      handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
     }
   }
 
@@ -204,16 +200,21 @@ public class HttpEngine {
 
     // The raw response source may require the network, but the request
     // headers may forbid network use. In that case, dispose of the network
-    // response and use a GATEWAY_TIMEOUT response instead, as specified
+    // response and use a gateway timeout response instead, as specified
     // by http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
     if (requestHeaders.isOnlyIfCached() && responseSource.requiresConnection()) {
       if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-        Util.closeQuietly(cachedResponseBody);
+        Util.closeQuietly(validatingResponse.body());
       }
       this.responseSource = ResponseSource.CACHE;
-      this.cacheResponse = GATEWAY_TIMEOUT_RESPONSE;
-      RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(cacheResponse.getHeaders(), true);
-      setResponse(new ResponseHeaders(uri, rawResponseHeaders), cacheResponse.getBody());
+
+      RawHeaders gatewayTimeoutHeaders = new RawHeaders();
+      gatewayTimeoutHeaders.setStatusLine("HTTP/1.1 504 Gateway Timeout");
+      this.validatingResponse = new Response.Builder(request(), 504)
+          .rawHeaders(gatewayTimeoutHeaders)
+          .body(EMPTY_BODY)
+          .build();
+      promoteValidatingResponse(new ResponseHeaders(uri, gatewayTimeoutHeaders));
     }
 
     if (responseSource.requiresConnection()) {
@@ -235,33 +236,50 @@ public class HttpEngine {
     OkResponseCache responseCache = client.getOkResponseCache();
     if (responseCache == null) return;
 
-    CacheResponse candidate = responseCache.get(
-        uri, method, requestHeaders.getHeaders().toMultimap(false));
+    Response candidate = responseCache.get(request());
     if (candidate == null) return;
 
-    Map<String, List<String>> responseHeadersMap = candidate.getHeaders();
-    cachedResponseBody = candidate.getBody();
-    if (!acceptCacheResponseType(candidate)
-        || responseHeadersMap == null
-        || cachedResponseBody == null) {
-      Util.closeQuietly(cachedResponseBody);
+    if (!acceptCacheResponseType(candidate)) {
+      Util.closeQuietly(candidate.body());
       return;
     }
 
-    RawHeaders rawResponseHeaders = RawHeaders.fromMultimap(responseHeadersMap, true);
-    cachedResponseHeaders = new ResponseHeaders(uri, rawResponseHeaders);
+    ResponseHeaders cachedResponseHeaders = new ResponseHeaders(uri, candidate.rawHeaders());
     long now = System.currentTimeMillis();
     this.responseSource = cachedResponseHeaders.chooseResponseSource(now, requestHeaders);
     if (responseSource == ResponseSource.CACHE) {
-      this.cacheResponse = candidate;
-      setResponse(cachedResponseHeaders, cachedResponseBody);
+      this.validatingResponse = candidate;
+      promoteValidatingResponse(cachedResponseHeaders);
     } else if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-      this.cacheResponse = candidate;
+      this.validatingResponse = candidate;
     } else if (responseSource == ResponseSource.NETWORK) {
-      Util.closeQuietly(cachedResponseBody);
+      Util.closeQuietly(candidate.body());
     } else {
       throw new AssertionError();
     }
+  }
+
+  private Request request() {
+    // This doesn't have a body. When we're sending requests to the cache, we don't need it.
+    return new Request.Builder(policy.getURL())
+        .method(method, null)
+        .rawHeaders(requestHeaders.getHeaders())
+        .build();
+  }
+
+  private Response response() {
+    RawHeaders rawHeaders = responseHeaders.getHeaders();
+
+    // Use an unreadable response body when offering the response to the cache. The cache isn't
+    // allowed to consume the response body bytes!
+    Response.Body body = new UnreadableResponseBody(responseHeaders.getContentType(),
+        responseHeaders.getContentLength());
+
+    return new Response.Builder(request(), rawHeaders.getResponseCode())
+        .body(body)
+        .rawHeaders(rawHeaders)
+        .handshake(handshake)
+        .build();
   }
 
   private void sendSocketRequest() throws IOException {
@@ -322,12 +340,11 @@ public class HttpEngine {
    * Called after a socket connection has been created or retrieved from the
    * pool. Subclasses use this hook to get a reference to the TLS data.
    */
-  protected void connected(Connection connection) {
+  private void connected(Connection connection) {
     if (handshake == null && connection.getSocket() instanceof SSLSocket) {
       handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
     }
     policy.setSelectedProxy(connection.getRoute().getProxy());
-    connected = true;
   }
 
   /**
@@ -341,17 +358,13 @@ public class HttpEngine {
     sentRequestMillis = System.currentTimeMillis();
   }
 
-  /**
-   * @param body the response body, or null if it doesn't exist or isn't
-   * available.
-   */
-  private void setResponse(ResponseHeaders headers, InputStream body) throws IOException {
-    if (this.responseBodyIn != null) {
-      throw new IllegalStateException();
-    }
-    this.responseHeaders = headers;
-    if (body != null) {
-      initContentStream(body);
+  private void promoteValidatingResponse(ResponseHeaders responseHeaders) throws IOException {
+    if (this.responseBodyIn != null) throw new IllegalStateException();
+
+    this.responseHeaders = responseHeaders;
+    this.handshake = validatingResponse.handshake();
+    if (validatingResponse.body() != null) {
+      initContentStream(validatingResponse.body().byteStream());
     }
   }
 
@@ -396,20 +409,15 @@ public class HttpEngine {
     return responseBodyIn;
   }
 
-  public final CacheResponse getCacheResponse() {
-    return cacheResponse;
-  }
-
   public final Connection getConnection() {
     return connection;
   }
 
   /**
-   * Returns true if {@code cacheResponse} is of the right type. This
-   * condition is necessary but not sufficient for the cached response to
-   * be used.
+   * Returns true if {@code response} is of the right type. This condition is
+   * necessary but not sufficient for the cached response to be used.
    */
-  protected boolean acceptCacheResponseType(CacheResponse cacheResponse) {
+  protected boolean acceptCacheResponseType(Response response) {
     return true;
   }
 
@@ -419,16 +427,14 @@ public class HttpEngine {
     OkResponseCache responseCache = client.getOkResponseCache();
     if (responseCache == null) return;
 
-    HttpURLConnection connectionToCache = policy.getHttpConnectionToCache();
-
     // Should we cache this response for this request?
     if (!responseHeaders.isCacheable(requestHeaders)) {
-      responseCache.maybeRemove(connectionToCache.getRequestMethod(), uri);
+      responseCache.maybeRemove(request());
       return;
     }
 
     // Offer this request to the cache.
-    cacheRequest = responseCache.put(uri, connectionToCache);
+    cacheRequest = responseCache.put(response());
   }
 
   /**
@@ -452,7 +458,9 @@ public class HttpEngine {
    */
   public final void release(boolean streamCanceled) {
     // If the response body comes from the cache, close it.
-    if (responseBodyIn == cachedResponseBody) {
+    if (validatingResponse != null
+        && validatingResponse.body() != null
+        && responseBodyIn == validatingResponse.body().byteStream()) {
       Util.closeQuietly(responseBodyIn);
     }
 
@@ -477,9 +485,9 @@ public class HttpEngine {
       // so clients don't double decompress. http://b/3009828
       //
       // Also remove the Content-Length in this case because it contains the
-      // length 528 of the gzipped response. This isn't terribly useful and is
-      // dangerous because 529 clients can query the content length, but not
-      // the content encoding.
+      // length of the gzipped response. This isn't terribly useful and is
+      // dangerous because clients can query the content length, but not the
+      // content encoding.
       responseHeaders.stripContentEncoding();
       responseHeaders.stripContentLength();
       responseBodyIn = new GZIPInputStream(transferStream);
@@ -614,7 +622,6 @@ public class HttpEngine {
    * no TLS connection was made.
    */
   public Handshake getHandshake() {
-    // TODO: initialize handshake when populating a response from the cache.
     return handshake;
   }
 
@@ -672,23 +679,26 @@ public class HttpEngine {
     responseHeaders.setResponseSource(responseSource);
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-      if (cachedResponseHeaders.validate(responseHeaders)) {
-        release(false);
-        ResponseHeaders combinedHeaders = cachedResponseHeaders.combine(responseHeaders);
-        this.responseHeaders = combinedHeaders;
+      ResponseHeaders validatingResponseHeaders = new ResponseHeaders(
+          uri, validatingResponse.rawHeaders());
 
-        // Update the cache after applying the combined headers but before initializing the content
-        // stream, otherwise the Content-Encoding header (if present) will be stripped from the
-        // combined headers and not end up in the cache file if transparent gzip compression is
-        // turned on.
+      if (validatingResponseHeaders.validate(responseHeaders)) {
+        release(false);
+        responseHeaders = validatingResponseHeaders.combine(responseHeaders);
+        handshake = validatingResponse.handshake();
+
+        // Update the cache after combining headers but before stripping the
+        // Content-Encoding header (as performed by initContentStream()).
         OkResponseCache responseCache = client.getOkResponseCache();
         responseCache.trackConditionalCacheHit();
-        responseCache.update(cacheResponse, policy.getHttpConnectionToCache());
+        responseCache.update(validatingResponse, response());
 
-        initContentStream(cachedResponseBody);
+        if (validatingResponse.body() != null) {
+          initContentStream(validatingResponse.body().byteStream());
+        }
         return;
       } else {
-        Util.closeQuietly(cachedResponseBody);
+        Util.closeQuietly(validatingResponse.body());
       }
     }
 
@@ -707,6 +717,32 @@ public class HttpEngine {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
       cookieHandler.put(uri, headers.toMultimap(true));
+    }
+  }
+
+  static class UnreadableResponseBody extends Response.Body {
+    private final String contentType;
+    private final long contentLength;
+
+    public UnreadableResponseBody(String contentType, long contentLength) {
+      this.contentType = contentType;
+      this.contentLength = contentLength;
+    }
+
+    @Override public boolean ready() throws IOException {
+      throw new IllegalStateException("It is an error to read this response body at this time.");
+    }
+
+    @Override public MediaType contentType() {
+      return contentType != null ? MediaType.parse(contentType) : null;
+    }
+
+    @Override public long contentLength() {
+      return contentLength;
+    }
+
+    @Override public InputStream byteStream() {
+      throw new IllegalStateException("It is an error to read this response body at this time.");
     }
   }
 }

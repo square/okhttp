@@ -15,16 +15,12 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 
 public interface Policy {
   /** Returns true if HTTP response caches should be used. */
   boolean getUseCaches();
-
-  /** Returns the HttpURLConnection instance to store in the cache. */
-  HttpURLConnection getHttpConnectionToCache();
 
   /** Returns the current destination URL, possibly a redirect. */
   URL getURL();

@@ -79,7 +79,7 @@ final class Dispatcher {
       return responseHeaders.getContentLength();
     }
 
-    @Override public InputStream byteStream() throws IOException {
+    @Override public InputStream byteStream() {
       return in;
     }
   }
