@@ -15,9 +15,12 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.RecordingHostnameVerifier;
+import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import javax.net.ssl.SSLContext;
 import org.junit.After;
 import org.junit.Test;
 
@@ -28,6 +31,8 @@ public final class AsyncApiTest {
   private MockWebServer server = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
   private RecordingReceiver receiver = new RecordingReceiver();
+
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   @After public void tearDown() throws Exception {
     server.shutdown();
@@ -50,6 +55,22 @@ public final class AsyncApiTest {
         .assertBody("abc");
 
     assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
+  }
+
+  @Test public void tls() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .addHeader("Content-Type: text/plain"));
+    server.play();
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    Request request = new Request.Builder(server.getUrl("/")).build();
+    client.enqueue(request, receiver);
+
+    receiver.await(request).assertHandshake();
   }
 
   @Test public void post() throws Exception {

@@ -22,7 +22,6 @@ import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.http.HttpsEngine;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.ResponseHeaders;
@@ -48,12 +47,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
 
 import static com.squareup.okhttp.internal.Util.US_ASCII;
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -194,7 +192,8 @@ public final class HttpResponseCache extends ResponseCache {
       return null;
     }
 
-    return entry.isHttps() ? new EntrySecureCacheResponse(entry, snapshot)
+    return entry.isHttps()
+        ? new EntrySecureCacheResponse(entry, snapshot)
         : new EntryCacheResponse(entry, snapshot);
   }
 
@@ -430,9 +429,7 @@ public final class HttpResponseCache extends ResponseCache {
     private final RawHeaders varyHeaders;
     private final String requestMethod;
     private final RawHeaders responseHeaders;
-    private final String cipherSuite;
-    private final Certificate[] peerCertificates;
-    private final Certificate[] localCertificates;
+    private final Handshake handshake;
 
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
@@ -506,13 +503,12 @@ public final class HttpResponseCache extends ResponseCache {
           if (blank.length() > 0) {
             throw new IOException("expected \"\" but was \"" + blank + "\"");
           }
-          cipherSuite = reader.readLine();
-          peerCertificates = readCertArray(reader);
-          localCertificates = readCertArray(reader);
+          String cipherSuite = reader.readLine();
+          List<Certificate> peerCertificates = readCertificateList(reader);
+          List<Certificate> localCertificates = readCertificateList(reader);
+          handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
         } else {
-          cipherSuite = null;
-          peerCertificates = null;
-          localCertificates = null;
+          handshake = null;
         }
       } finally {
         in.close();
@@ -525,38 +521,13 @@ public final class HttpResponseCache extends ResponseCache {
       this.varyHeaders = varyHeaders;
       this.requestMethod = httpConnection.getRequestMethod();
       this.responseHeaders = RawHeaders.fromMultimap(httpConnection.getHeaderFields(), true);
-
-      SSLSocket sslSocket = getSslSocket(httpConnection);
-      if (sslSocket != null) {
-        cipherSuite = sslSocket.getSession().getCipherSuite();
-        Certificate[] peerCertificatesNonFinal = null;
-        try {
-          peerCertificatesNonFinal = sslSocket.getSession().getPeerCertificates();
-        } catch (SSLPeerUnverifiedException ignored) {
-        }
-        peerCertificates = peerCertificatesNonFinal;
-        localCertificates = sslSocket.getSession().getLocalCertificates();
-      } else {
-        cipherSuite = null;
-        peerCertificates = null;
-        localCertificates = null;
-      }
+      this.handshake = getHttpEngine(httpConnection).getHandshake();
     }
 
-    /**
-     * Returns the SSL socket used by {@code httpConnection} for HTTPS, nor null
-     * if the connection isn't using HTTPS. Since we permit redirects across
-     * protocols (HTTP to HTTPS or vice versa), the implementation type of the
-     * connection doesn't necessarily match the implementation type of its HTTP
-     * engine.
-     */
-    private SSLSocket getSslSocket(HttpURLConnection httpConnection) {
-      HttpEngine engine = httpConnection instanceof HttpsURLConnectionImpl
+    private HttpEngine getHttpEngine(HttpURLConnection httpConnection) {
+      return httpConnection instanceof HttpsURLConnectionImpl
           ? ((HttpsURLConnectionImpl) httpConnection).getHttpEngine()
           : ((HttpURLConnectionImpl) httpConnection).getHttpEngine();
-      return engine instanceof HttpsEngine
-          ? ((HttpsEngine) engine).getSslSocket()
-          : null;
     }
 
     public void writeTo(DiskLruCache.Editor editor) throws IOException {
@@ -578,9 +549,9 @@ public final class HttpResponseCache extends ResponseCache {
 
       if (isHttps()) {
         writer.write('\n');
-        writer.write(cipherSuite + '\n');
-        writeCertArray(writer, peerCertificates);
-        writeCertArray(writer, localCertificates);
+        writer.write(handshake.cipherSuite() + '\n');
+        writeCertArray(writer, handshake.peerCertificates());
+        writeCertArray(writer, handshake.localCertificates());
       }
       writer.close();
     }
@@ -589,18 +560,17 @@ public final class HttpResponseCache extends ResponseCache {
       return uri.startsWith("https://");
     }
 
-    private Certificate[] readCertArray(StrictLineReader reader) throws IOException {
+    private List<Certificate> readCertificateList(StrictLineReader reader) throws IOException {
       int length = reader.readInt();
-      if (length == -1) {
-        return null;
-      }
+      if (length == -1) return Collections.emptyList(); // OkHttp v1.2 used -1 to indicate null.
+
       try {
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-        Certificate[] result = new Certificate[length];
-        for (int i = 0; i < result.length; i++) {
+        List<Certificate> result = new ArrayList<Certificate>(length);
+        for (int i = 0; i < length; i++) {
           String line = reader.readLine();
           byte[] bytes = Base64.decode(line.getBytes("US-ASCII"));
-          result[i] = certificateFactory.generateCertificate(new ByteArrayInputStream(bytes));
+          result.add(certificateFactory.generateCertificate(new ByteArrayInputStream(bytes)));
         }
         return result;
       } catch (CertificateException e) {
@@ -608,13 +578,9 @@ public final class HttpResponseCache extends ResponseCache {
       }
     }
 
-    private void writeCertArray(Writer writer, Certificate[] certificates) throws IOException {
-      if (certificates == null) {
-        writer.write("-1\n");
-        return;
-      }
+    private void writeCertArray(Writer writer, List<Certificate> certificates) throws IOException {
       try {
-        writer.write(Integer.toString(certificates.length) + '\n');
+        writer.write(Integer.toString(certificates.size()) + '\n');
         for (Certificate certificate : certificates) {
           byte[] bytes = certificate.getEncoded();
           String line = Base64.encode(bytes);
@@ -687,36 +653,28 @@ public final class HttpResponseCache extends ResponseCache {
     }
 
     @Override public String getCipherSuite() {
-      return entry.cipherSuite;
+      return entry.handshake.cipherSuite();
     }
 
     @Override public List<Certificate> getServerCertificateChain()
         throws SSLPeerUnverifiedException {
-      if (entry.peerCertificates == null || entry.peerCertificates.length == 0) {
-        throw new SSLPeerUnverifiedException(null);
-      }
-      return Arrays.asList(entry.peerCertificates.clone());
+      if (entry.handshake.peerCertificates().isEmpty()) throw new SSLPeerUnverifiedException(null);
+      return entry.handshake.peerCertificates();
     }
 
     @Override public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-      if (entry.peerCertificates == null || entry.peerCertificates.length == 0) {
-        throw new SSLPeerUnverifiedException(null);
-      }
-      return ((X509Certificate) entry.peerCertificates[0]).getSubjectX500Principal();
+      if (entry.handshake.peerCertificates().isEmpty()) throw new SSLPeerUnverifiedException(null);
+      return entry.handshake.peerPrincipal();
     }
 
     @Override public List<Certificate> getLocalCertificateChain() {
-      if (entry.localCertificates == null || entry.localCertificates.length == 0) {
-        return null;
-      }
-      return Arrays.asList(entry.localCertificates.clone());
+      return !entry.handshake.localCertificates().isEmpty()
+          ? entry.handshake.localCertificates()
+          : null;
     }
 
     @Override public Principal getLocalPrincipal() {
-      if (entry.localCertificates == null || entry.localCertificates.length == 0) {
-        return null;
-      }
-      return ((X509Certificate) entry.localCertificates[0]).getSubjectX500Principal();
+      return entry.handshake.localPrincipal();
     }
   }
 }

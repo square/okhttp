@@ -23,26 +23,16 @@ import java.io.IOException;
 import java.net.CacheResponse;
 import java.net.SecureCacheResponse;
 import java.net.URL;
-import javax.net.ssl.SSLSocket;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
 public final class HttpsEngine extends HttpEngine {
-  /**
-   * Stash of HttpsEngine.connection.socket to implement requests like {@code
-   * HttpsURLConnection#getCipherSuite} even after the connection has been
-   * recycled.
-   */
-  private SSLSocket sslSocket;
-
   public HttpsEngine(OkHttpClient client, Policy policy, String method, RawHeaders requestHeaders,
       Connection connection, RetryableOutputStream requestBody) throws IOException {
     super(client, policy, method, requestHeaders, connection, requestBody);
-    this.sslSocket = connection != null ? (SSLSocket) connection.getSocket() : null;
   }
 
   @Override protected void connected(Connection connection) {
-    this.sslSocket = (SSLSocket) connection.getSocket();
     super.connected(connection);
   }
 
@@ -53,10 +43,6 @@ public final class HttpsEngine extends HttpEngine {
   @Override protected boolean includeAuthorityInRequestLine() {
     // Even if there is a proxy, it isn't involved. Always request just the path.
     return false;
-  }
-
-  public SSLSocket getSslSocket() {
-    return sslSocket;
   }
 
   @Override protected TunnelRequest getTunnelConfig() {

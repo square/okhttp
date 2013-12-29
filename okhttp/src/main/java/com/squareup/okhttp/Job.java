@@ -133,6 +133,7 @@ final class Job implements Runnable, Policy {
           engine.getResponseHeaders(), engine.getResponseBody());
 
       Response response = new Response.Builder(request, responseCode)
+          .handshake(engine.getHandshake())
           .rawHeaders(engine.getResponseHeaders().getHeaders())
           .body(responseBody)
           .redirectedBy(redirectedBy)
@@ -224,7 +225,7 @@ final class Job implements Runnable, Policy {
     }
   }
 
-  private boolean sameConnection(Request a, Request b) {
+  static boolean sameConnection(Request a, Request b) {
     return a.url().getHost().equals(b.url().getHost())
         && getEffectivePort(a.url()) == getEffectivePort(b.url())
         && a.url().getProtocol().equals(b.url().getProtocol());

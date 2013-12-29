@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +33,6 @@ import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 public final class HttpsURLConnectionImpl extends HttpsURLConnection {
@@ -50,11 +50,8 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     if (cacheResponse != null) {
       return cacheResponse.getCipherSuite();
     }
-    SSLSocket sslSocket = getSslSocket();
-    if (sslSocket != null) {
-      return sslSocket.getSession().getCipherSuite();
-    }
-    return null;
+    Handshake handshake = handshake();
+    return handshake != null ? handshake.cipherSuite() : null;
   }
 
   @Override public Certificate[] getLocalCertificates() {
@@ -63,11 +60,10 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
       List<Certificate> result = cacheResponse.getLocalCertificateChain();
       return result != null ? result.toArray(new Certificate[result.size()]) : null;
     }
-    SSLSocket sslSocket = getSslSocket();
-    if (sslSocket != null) {
-      return sslSocket.getSession().getLocalCertificates();
-    }
-    return null;
+    Handshake handshake = handshake();
+    if (handshake == null) return null;
+    List<Certificate> result = handshake.localCertificates();
+    return !result.isEmpty() ? result.toArray(new Certificate[result.size()]) : null;
   }
 
   @Override public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
@@ -76,48 +72,35 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
       List<Certificate> result = cacheResponse.getServerCertificateChain();
       return result != null ? result.toArray(new Certificate[result.size()]) : null;
     }
-    SSLSocket sslSocket = getSslSocket();
-    if (sslSocket != null) {
-      return sslSocket.getSession().getPeerCertificates();
-    }
-    return null;
+    Handshake handshake = handshake();
+    if (handshake == null) return null;
+    List<Certificate> result = handshake.peerCertificates();
+    return !result.isEmpty() ? result.toArray(new Certificate[result.size()]) : null;
   }
 
   @Override public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
     SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getPeerPrincipal();
-    }
-    SSLSocket sslSocket = getSslSocket();
-    if (sslSocket != null) {
-      return sslSocket.getSession().getPeerPrincipal();
-    }
-    return null;
+    if (cacheResponse != null) return cacheResponse.getPeerPrincipal();
+    Handshake handshake = handshake();
+    return handshake != null ? handshake.peerPrincipal() : null;
   }
 
   @Override public Principal getLocalPrincipal() {
     SecureCacheResponse cacheResponse = delegate.getSecureCacheResponse();
-    if (cacheResponse != null) {
-      return cacheResponse.getLocalPrincipal();
-    }
-    SSLSocket sslSocket = getSslSocket();
-    if (sslSocket != null) {
-      return sslSocket.getSession().getLocalPrincipal();
-    }
-    return null;
+    if (cacheResponse != null) return cacheResponse.getLocalPrincipal();
+    Handshake handshake = handshake();
+    return handshake != null ? handshake.localPrincipal() : null;
   }
 
   public HttpEngine getHttpEngine() {
     return delegate.getHttpEngine();
   }
 
-  private SSLSocket getSslSocket() {
+  private Handshake handshake() {
     if (delegate.httpEngine == null || !delegate.httpEngine.connected) {
       throw new IllegalStateException("Connection has not yet been established");
     }
-    return delegate.httpEngine instanceof HttpsEngine
-        ? ((HttpsEngine) delegate.httpEngine).getSslSocket()
-        : null; // Not HTTPS! Probably an https:// to http:// redirect.
+    return delegate.httpEngine.getHandshake();
   }
 
   @Override public void disconnect() {

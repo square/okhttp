@@ -31,11 +31,8 @@ import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,16 +61,7 @@ public final class HttpOverSpdyTest {
     }
   };
 
-  private static final SSLContext sslContext;
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
   private final MockWebServer server = new MockWebServer();
   private final String hostName = server.getHostName();
   private final OkHttpClient client = new OkHttpClient();

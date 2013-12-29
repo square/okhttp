@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.ResponseSource;
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
@@ -74,6 +76,10 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * recycled. By default, this socket connection is held when the last byte of
  * the response is consumed. To release the connection when it is no longer
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
+ *
+ * <p>Since we permit redirects across protocols (HTTP to HTTPS or vice versa),
+ * the implementation type of the connection doesn't necessarily match the
+ * implementation type of its HttpEngine.
  */
 public class HttpEngine {
   private static final CacheResponse GATEWAY_TIMEOUT_RESPONSE = new CacheResponse() {
@@ -96,6 +102,7 @@ public class HttpEngine {
   private ResponseSource responseSource;
 
   protected Connection connection;
+  private Handshake handshake;
   protected RouteSelector routeSelector;
   private OutputStream requestBodyOut;
 
@@ -165,6 +172,13 @@ public class HttpEngine {
     }
 
     this.requestHeaders = new RequestHeaders(uri, new RawHeaders(requestHeaders));
+
+    if (connection != null) {
+      connected = true;
+      if (connection.getSocket() instanceof SSLSocket) {
+        handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
+      }
+    }
   }
 
   public URI getUri() {
@@ -309,6 +323,9 @@ public class HttpEngine {
    * pool. Subclasses use this hook to get a reference to the TLS data.
    */
   protected void connected(Connection connection) {
+    if (handshake == null && connection.getSocket() instanceof SSLSocket) {
+      handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
+    }
     policy.setSelectedProxy(connection.getRoute().getProxy());
     connected = true;
   }
@@ -590,6 +607,15 @@ public class HttpEngine {
     return connection == null
         ? policy.usingProxy() // A proxy was requested.
         : connection.getRoute().getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
+  }
+
+  /**
+   * Returns the TLS handshake created when this engine connected, or null if
+   * no TLS connection was made.
+   */
+  public Handshake getHandshake() {
+    // TODO: initialize handshake when populating a response from the cache.
+    return handshake;
   }
 
   public static String getDefaultUserAgent() {
