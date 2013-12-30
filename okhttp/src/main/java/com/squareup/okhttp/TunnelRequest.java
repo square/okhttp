@@ -55,8 +55,8 @@ public final class TunnelRequest {
    * the proxy unencrypted.
    */
   RawHeaders getRequestHeaders() {
-    RawHeaders result = new RawHeaders();
-    result.setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
+    RawHeaders.Builder result = new RawHeaders.Builder()
+        .setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
 
     // Always set Host and User-Agent.
     result.set("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
@@ -70,6 +70,6 @@ public final class TunnelRequest {
     // Always set the Proxy-Connection to Keep-Alive for the benefit of
     // HTTP/1.0 proxies like Squid.
     result.set("Proxy-Connection", "Keep-Alive");
-    return result;
+    return result.build();
   }
 }

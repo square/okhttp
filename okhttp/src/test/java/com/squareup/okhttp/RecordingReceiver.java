@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,8 +30,8 @@ import java.util.concurrent.TimeUnit;
 public class RecordingReceiver implements Response.Receiver {
   public static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
-  private final Map<Request, ByteArrayOutputStream> inFlightResponses
-      = new LinkedHashMap<Request, ByteArrayOutputStream>();
+  private final Map<Response, ByteArrayOutputStream> inFlightResponses
+      = new LinkedHashMap<Response, ByteArrayOutputStream>();
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();
 
   @Override public synchronized void onFailure(Failure failure) {
@@ -39,10 +40,10 @@ public class RecordingReceiver implements Response.Receiver {
   }
 
   @Override public synchronized boolean onResponse(Response response) throws IOException {
-    ByteArrayOutputStream out = inFlightResponses.get(response.request());
+    ByteArrayOutputStream out = inFlightResponses.get(response);
     if (out == null) {
       out = new ByteArrayOutputStream();
-      inFlightResponses.put(response.request(), out);
+      inFlightResponses.put(response, out);
     }
 
     byte[] buffer = new byte[1024];
@@ -52,7 +53,7 @@ public class RecordingReceiver implements Response.Receiver {
       int c = body.byteStream().read(buffer);
 
       if (c == -1) {
-        inFlightResponses.remove(response.request());
+        inFlightResponses.remove(response);
         responses.add(new RecordedResponse(
             response.request(), response, out.toString("UTF-8"), null));
         notifyAll();
@@ -69,11 +70,11 @@ public class RecordingReceiver implements Response.Receiver {
    * Returns the recorded response triggered by {@code request}. Throws if the
    * response isn't enqueued before the timeout.
    */
-  public synchronized RecordedResponse await(Request request) throws Exception {
+  public synchronized RecordedResponse await(URL url) throws Exception {
     long timeoutMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) + TIMEOUT_MILLIS;
     while (true) {
       for (RecordedResponse recordedResponse : responses) {
-        if (recordedResponse.request == request) {
+        if (recordedResponse.request.url().equals(url)) {
           return recordedResponse;
         }
       }
@@ -83,6 +84,6 @@ public class RecordingReceiver implements Response.Receiver {
       wait(timeoutMillis - nowMillis);
     }
 
-    throw new AssertionError("Timed out waiting for response to " + request);
+    throw new AssertionError("Timed out waiting for response to " + url);
   }
 }

@@ -415,18 +415,20 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         StrictLineReader reader = new StrictLineReader(in, US_ASCII);
         url = reader.readLine();
         requestMethod = reader.readLine();
-        varyHeaders = new RawHeaders();
+        RawHeaders.Builder varyHeadersBuilder = new RawHeaders.Builder();
         int varyRequestHeaderLineCount = reader.readInt();
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
-          varyHeaders.addLine(reader.readLine());
+          varyHeadersBuilder.addLine(reader.readLine());
         }
+        varyHeaders = varyHeadersBuilder.build();
 
-        responseHeaders = new RawHeaders();
-        responseHeaders.setStatusLine(reader.readLine());
+        RawHeaders.Builder responseHeadersBuilder = new RawHeaders.Builder();
+        responseHeadersBuilder.setStatusLine(reader.readLine());
         int responseHeaderLineCount = reader.readInt();
         for (int i = 0; i < responseHeaderLineCount; i++) {
-          responseHeaders.addLine(reader.readLine());
+          responseHeadersBuilder.addLine(reader.readLine());
         }
+        responseHeaders = responseHeadersBuilder.build();
 
         if (isHttps()) {
           String blank = reader.readLine();

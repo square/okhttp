@@ -197,91 +197,6 @@ public final class RequestHeaders {
     return proxyAuthorization;
   }
 
-  public void setChunked() {
-    if (this.transferEncoding != null) {
-      headers.removeAll("Transfer-Encoding");
-    }
-    headers.add("Transfer-Encoding", "chunked");
-    this.transferEncoding = "chunked";
-  }
-
-  public void setContentLength(long contentLength) {
-    if (this.contentLength != -1) {
-      headers.removeAll("Content-Length");
-    }
-    headers.add("Content-Length", Long.toString(contentLength));
-    this.contentLength = contentLength;
-  }
-
-  /**
-   * Remove the Content-Length headers. Call this when dropping the body on a
-   * request or response, such as when a redirect changes the method from POST
-   * to GET.
-   */
-  public void removeContentLength() {
-    if (contentLength != -1) {
-      headers.removeAll("Content-Length");
-      contentLength = -1;
-    }
-  }
-
-  public void setUserAgent(String userAgent) {
-    if (this.userAgent != null) {
-      headers.removeAll("User-Agent");
-    }
-    headers.add("User-Agent", userAgent);
-    this.userAgent = userAgent;
-  }
-
-  public void setHost(String host) {
-    if (this.host != null) {
-      headers.removeAll("Host");
-    }
-    headers.add("Host", host);
-    this.host = host;
-  }
-
-  public void setConnection(String connection) {
-    if (this.connection != null) {
-      headers.removeAll("Connection");
-    }
-    headers.add("Connection", connection);
-    this.connection = connection;
-  }
-
-  public void setAcceptEncoding(String acceptEncoding) {
-    if (this.acceptEncoding != null) {
-      headers.removeAll("Accept-Encoding");
-    }
-    headers.add("Accept-Encoding", acceptEncoding);
-    this.acceptEncoding = acceptEncoding;
-  }
-
-  public void setContentType(String contentType) {
-    if (this.contentType != null) {
-      headers.removeAll("Content-Type");
-    }
-    headers.add("Content-Type", contentType);
-    this.contentType = contentType;
-  }
-
-  public void setIfModifiedSince(Date date) {
-    if (ifModifiedSince != null) {
-      headers.removeAll("If-Modified-Since");
-    }
-    String formattedDate = HttpDate.format(date);
-    headers.add("If-Modified-Since", formattedDate);
-    ifModifiedSince = formattedDate;
-  }
-
-  public void setIfNoneMatch(String ifNoneMatch) {
-    if (this.ifNoneMatch != null) {
-      headers.removeAll("If-None-Match");
-    }
-    headers.add("If-None-Match", ifNoneMatch);
-    this.ifNoneMatch = ifNoneMatch;
-  }
-
   /**
    * Returns true if the request contains conditions that save the server from
    * sending a response that the client has locally. When the caller adds
@@ -291,27 +206,115 @@ public final class RequestHeaders {
     return ifModifiedSince != null || ifNoneMatch != null;
   }
 
-  public void addCookies(Map<String, List<String>> allCookieHeaders) {
-    for (Map.Entry<String, List<String>> entry : allCookieHeaders.entrySet()) {
-      String key = entry.getKey();
-      if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
-          && !entry.getValue().isEmpty()) {
-        headers.add(key, buildCookieHeader(entry.getValue()));
-      }
-    }
+  public Builder newBuilder() {
+    return new Builder(uri, headers);
   }
 
-  /**
-   * Send all cookies in one big header, as recommended by
-   * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
-   */
-  private String buildCookieHeader(List<String> cookies) {
-    if (cookies.size() == 1) return cookies.get(0);
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < cookies.size(); i++) {
-      if (i > 0) sb.append("; ");
-      sb.append(cookies.get(i));
+  static class Builder {
+    private final URI uri;
+    private final RawHeaders.Builder headers;
+
+    public Builder(URI uri, RawHeaders headers) {
+      this.uri = uri;
+      this.headers = headers.newBuilder();
     }
-    return sb.toString();
+
+    public Builder setRequestLine(String requestLine) {
+      headers.setRequestLine(requestLine);
+      return this;
+    }
+
+    public Builder setChunked() {
+      headers.set("Transfer-Encoding", "chunked");
+      return this;
+    }
+
+    public Builder setContentLength(long contentLength) {
+      headers.set("Content-Length", Long.toString(contentLength));
+      return this;
+    }
+
+    /**
+     * Remove the Content-Length headers. Call this when dropping the body on a
+     * request or response, such as when a redirect changes the method from POST
+     * to GET.
+     */
+    public void removeContentLength() {
+      headers.removeAll("Content-Length");
+    }
+
+    public void setUserAgent(String userAgent) {
+      headers.set("User-Agent", userAgent);
+    }
+
+    public void setHost(String host) {
+      headers.set("Host", host);
+    }
+
+    public void setConnection(String connection) {
+      headers.set("Connection", connection);
+    }
+
+    public void setAcceptEncoding(String acceptEncoding) {
+      headers.set("Accept-Encoding", acceptEncoding);
+    }
+
+    public void setContentType(String contentType) {
+      headers.set("Content-Type", contentType);
+    }
+
+    public void setIfModifiedSince(Date date) {
+      headers.set("If-Modified-Since", HttpDate.format(date));
+    }
+
+    public void setIfNoneMatch(String ifNoneMatch) {
+      headers.set("If-None-Match", ifNoneMatch);
+    }
+
+    public void addCookies(Map<String, List<String>> allCookieHeaders) {
+      for (Map.Entry<String, List<String>> entry : allCookieHeaders.entrySet()) {
+        String key = entry.getKey();
+        if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
+            && !entry.getValue().isEmpty()) {
+          headers.add(key, buildCookieHeader(entry.getValue()));
+        }
+      }
+    }
+
+    /**
+     * Send all cookies in one big header, as recommended by
+     * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
+     */
+    private String buildCookieHeader(List<String> cookies) {
+      if (cookies.size() == 1) return cookies.get(0);
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < cookies.size(); i++) {
+        if (i > 0) sb.append("; ");
+        sb.append(cookies.get(i));
+      }
+      return sb.toString();
+    }
+
+    /**
+     * @param method like "GET", "POST", "HEAD", etc.
+     * @param path like "/foo/bar.html"
+     * @param version like "HTTP/1.1"
+     * @param host like "www.android.com:1234"
+     * @param scheme like "https"
+     */
+    public Builder addSpdyRequestHeaders(
+        String method, String path, String version, String host, String scheme) {
+      // TODO: populate the statusLine for the client's benefit?
+      headers.add(":method", method);
+      headers.add(":scheme", scheme);
+      headers.add(":path", path);
+      headers.add(":version", version);
+      headers.add(":host", host);
+      return this;
+    }
+
+    public RequestHeaders build() {
+      return new RequestHeaders(uri, headers.build());
+    }
   }
 }

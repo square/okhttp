@@ -36,30 +36,38 @@ public final class SpdyTransport implements Transport {
     this.spdyConnection = spdyConnection;
   }
 
-  @Override public OutputStream createRequestBody() throws IOException {
-    long fixedContentLength = httpEngine.policy.getFixedContentLength();
-    if (fixedContentLength != -1) {
-      httpEngine.requestHeaders.setContentLength(fixedContentLength);
+  @Override public RequestHeaders prepareRequestHeaders(RequestHeaders requestHeaders) {
+    RequestHeaders.Builder builder = requestHeaders.newBuilder();
+
+    String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
+    URL url = httpEngine.policy.getURL();
+    builder.addSpdyRequestHeaders(httpEngine.method, HttpEngine.requestPath(url), version,
+        HttpEngine.getOriginAddress(url), httpEngine.uri.getScheme());
+
+    if (httpEngine.hasRequestBody()) {
+      long fixedContentLength = httpEngine.policy.getFixedContentLength();
+      if (fixedContentLength != -1) {
+        builder.setContentLength(fixedContentLength);
+      }
     }
+
+    return builder.build();
+  }
+
+  @Override public OutputStream createRequestBody() throws IOException {
     // TODO: if we aren't streaming up to the server, we should buffer the whole request
     writeRequestHeaders();
     return stream.getOutputStream();
   }
 
   @Override public void writeRequestHeaders() throws IOException {
-    if (stream != null) {
-      return;
-    }
+    if (stream != null) return;
+
     httpEngine.writingRequestHeaders();
-    RawHeaders requestHeaders = httpEngine.requestHeaders.getHeaders();
-    String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
-    URL url = httpEngine.policy.getURL();
-    requestHeaders.addSpdyRequestHeaders(httpEngine.method, HttpEngine.requestPath(url), version,
-        HttpEngine.getOriginAddress(url), httpEngine.uri.getScheme());
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
-    stream = spdyConnection.newStream(requestHeaders.toNameValueBlock(), hasRequestBody,
-        hasResponseBody);
+    stream = spdyConnection.newStream(httpEngine.requestHeaders.getHeaders().toNameValueBlock(),
+        hasRequestBody, hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
 
@@ -75,10 +83,7 @@ public final class SpdyTransport implements Transport {
     List<String> nameValueBlock = stream.getResponseHeaders();
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
     httpEngine.receiveHeaders(rawHeaders);
-
-    ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
-    headers.setTransport("spdy/3");
-    return headers;
+    return new ResponseHeaders(httpEngine.uri, rawHeaders);
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {

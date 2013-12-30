@@ -84,12 +84,11 @@ public final class HttpAuthenticator {
 
   /**
    * React to a failed authorization response by looking up new credentials.
-   *
-   * @return true if credentials have been added to successorRequestHeaders
-   *         and another request should be attempted.
+   * Returns headers for a subsequent attempt, or null if no further attempts
+   * should be made.
    */
-  public static boolean processAuthHeader(OkAuthenticator authenticator, int responseCode,
-      RawHeaders responseHeaders, RawHeaders successorRequestHeaders, Proxy proxy, URL url)
+  public static RawHeaders processAuthHeader(OkAuthenticator authenticator, int responseCode,
+      RawHeaders responseHeaders, RawHeaders requestHeaders, Proxy proxy, URL url)
       throws IOException {
     String responseField;
     String requestField;
@@ -103,18 +102,14 @@ public final class HttpAuthenticator {
       throw new IllegalArgumentException(); // TODO: ProtocolException?
     }
     List<Challenge> challenges = parseChallenges(responseHeaders, responseField);
-    if (challenges.isEmpty()) {
-      return false; // Could not find a challenge so end the request cycle.
-    }
+    if (challenges.isEmpty()) return null; // Could not find a challenge so end the request cycle.
     Credential credential = responseHeaders.getResponseCode() == HTTP_PROXY_AUTH
         ? authenticator.authenticateProxy(proxy, url, challenges)
         : authenticator.authenticate(proxy, url, challenges);
-    if (credential == null) {
-      return false; // Could not satisfy the challenge so end the request cycle.
-    }
+    if (credential == null) return null; // Couldn't satisfy the challenge so end the request cycle.
+
     // Add authorization credentials, bypassing the already-connected check.
-    successorRequestHeaders.set(requestField, credential.getHeaderValue());
-    return true;
+    return requestHeaders.newBuilder().set(requestField, credential.getHeaderValue()).build();
   }
 
   /**

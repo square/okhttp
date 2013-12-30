@@ -70,7 +70,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   final OkHttpClient client;
 
-  private final RawHeaders rawRequestHeaders = new RawHeaders();
+  private RawHeaders.Builder requestHeaders = new RawHeaders.Builder();
+
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
   private int redirectionCount;
@@ -169,7 +170,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       throw new IllegalStateException(
           "Cannot access request header fields after connection is set");
     }
-    return rawRequestHeaders.toMultimap(false);
+    return requestHeaders.build().toMultimap(false);
   }
 
   @Override public final InputStream getInputStream() throws IOException {
@@ -219,10 +220,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public final String getRequestProperty(String field) {
-    if (field == null) {
-      return null;
-    }
-    return rawRequestHeaders.get(field);
+    if (field == null) return null;
+    return requestHeaders.get(field);
   }
 
   @Override public void setConnectTimeout(int timeoutMillis) {
@@ -259,19 +258,19 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
           throw new ProtocolException(method + " does not support writing");
         }
       }
-      httpEngine = newHttpEngine(method, rawRequestHeaders, null, null);
+      httpEngine = newHttpEngine(method, null, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
     }
   }
 
-  private HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
-      Connection connection, RetryableOutputStream requestBody) throws IOException {
+  private HttpEngine newHttpEngine(String method, Connection connection,
+      RetryableOutputStream requestBody) throws IOException {
     if (url.getProtocol().equals("http")) {
-      return new HttpEngine(client, this, method, requestHeaders, connection, requestBody);
+      return new HttpEngine(client, this, method, requestHeaders.build(), connection, requestBody);
     } else if (url.getProtocol().equals("https")) {
-      return new HttpsEngine(client, this, method, requestHeaders, connection, requestBody);
+      return new HttpsEngine(client, this, method, requestHeaders.build(), connection, requestBody);
     } else {
       throw new AssertionError();
     }
@@ -313,6 +312,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
           || responseCode == HTTP_MOVED_TEMP
           || responseCode == HTTP_SEE_OTHER) {
         retryMethod = "GET";
+        requestHeaders.removeAll("Content-Length");
         requestBody = null;
       }
 
@@ -325,14 +325,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       }
 
       httpEngine.release(false);
-
-      httpEngine = newHttpEngine(retryMethod, rawRequestHeaders, httpEngine.getConnection(),
+      httpEngine = newHttpEngine(retryMethod, httpEngine.getConnection(),
           (RetryableOutputStream) requestBody);
-
-      if (requestBody == null) {
-        // Drop the Content-Length header when redirected from POST to GET.
-        httpEngine.getRequestHeaders().removeContentLength();
-      }
     }
   }
 
@@ -382,7 +376,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
     httpEngine.release(true);
     RetryableOutputStream retryableOutputStream = (RetryableOutputStream) requestBody;
-    httpEngine = newHttpEngine(method, rawRequestHeaders, null, retryableOutputStream);
+    httpEngine = newHttpEngine(method, null, retryableOutputStream);
     httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
     return true;
   }
@@ -423,10 +417,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        boolean credentialsFound = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
-            getResponseCode(), httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders,
-            selectedProxy, url);
-        return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
+        RawHeaders successorRequestHeaders = HttpAuthenticator.processAuthHeader(
+            client.getAuthenticator(), getResponseCode(),
+            httpEngine.getResponseHeaders().getHeaders(), requestHeaders.build(), selectedProxy,
+            url);
+        if (successorRequestHeaders == null) return Retry.NONE;
+        requestHeaders = successorRequestHeaders.newBuilder();
+        return Retry.SAME_CONNECTION;
 
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:
@@ -524,7 +521,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     if ("X-Android-Transports".equals(field)) {
       setTransports(newValue, false /* append */);
     } else {
-      rawRequestHeaders.set(field, newValue);
+      requestHeaders.set(field, newValue);
     }
   }
 
@@ -548,7 +545,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     if ("X-Android-Transports".equals(field)) {
       setTransports(value, true /* append */);
     } else {
-      rawRequestHeaders.add(field, value);
+      requestHeaders.add(field, value);
     }
   }
 

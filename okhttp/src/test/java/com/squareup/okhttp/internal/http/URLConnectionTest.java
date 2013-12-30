@@ -213,12 +213,14 @@ public final class URLConnectionTest {
       fail("Modified an unmodifiable view.");
     } catch (UnsupportedOperationException expected) {
     }
-    assertEquals("A", urlConnection.getHeaderFieldKey(0));
-    assertEquals("c", urlConnection.getHeaderField(0));
-    assertEquals("B", urlConnection.getHeaderFieldKey(1));
-    assertEquals("d", urlConnection.getHeaderField(1));
-    assertEquals("A", urlConnection.getHeaderFieldKey(2));
-    assertEquals("e", urlConnection.getHeaderField(2));
+    assertEquals(ResponseHeaders.SELECTED_TRANSPORT, urlConnection.getHeaderFieldKey(0));
+    assertEquals("http/1.1", urlConnection.getHeaderField(0));
+    assertEquals("A", urlConnection.getHeaderFieldKey(1));
+    assertEquals("c", urlConnection.getHeaderField(1));
+    assertEquals("B", urlConnection.getHeaderFieldKey(2));
+    assertEquals("d", urlConnection.getHeaderField(2));
+    assertEquals("A", urlConnection.getHeaderFieldKey(3));
+    assertEquals("e", urlConnection.getHeaderField(3));
   }
 
   @Test public void serverSendsInvalidResponseHeaders() throws Exception {

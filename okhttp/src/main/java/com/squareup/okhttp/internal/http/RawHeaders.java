@@ -29,7 +29,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -66,78 +65,20 @@ public final class RawHeaders {
     }
   };
 
-  private final List<String> namesAndValues = new ArrayList<String>(20);
-  private String requestLine;
-  private String statusLine;
-  private int httpMinorVersion = 1;
-  private int responseCode = -1;
-  private String responseMessage;
+  private final List<String> namesAndValues;
+  private final String requestLine;
+  private final String statusLine;
+  private final int httpMinorVersion;
+  private final int responseCode;
+  private final String responseMessage;
 
-  public RawHeaders() {
-  }
-
-  public RawHeaders(RawHeaders copyFrom) {
-    namesAndValues.addAll(copyFrom.namesAndValues);
-    requestLine = copyFrom.requestLine;
-    statusLine = copyFrom.statusLine;
-    httpMinorVersion = copyFrom.httpMinorVersion;
-    responseCode = copyFrom.responseCode;
-    responseMessage = copyFrom.responseMessage;
-  }
-
-  /** Sets the request line (like "GET / HTTP/1.1"). */
-  public void setRequestLine(String requestLine) {
-    requestLine = requestLine.trim();
-    this.requestLine = requestLine;
-  }
-
-  /** Sets the response status line (like "HTTP/1.0 200 OK"). */
-  public void setStatusLine(String statusLine) throws IOException {
-    // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
-    // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
-    if (this.responseMessage != null) {
-      throw new IllegalStateException("statusLine is already set");
-    }
-    // We allow empty message without leading white space since some servers
-    // do not send the white space when the message is empty.
-    boolean hasMessage = statusLine.length() > 13;
-    if (!statusLine.startsWith("HTTP/1.")
-        || statusLine.length() < 12
-        || statusLine.charAt(8) != ' '
-        || (hasMessage && statusLine.charAt(12) != ' ')) {
-      throw new ProtocolException("Unexpected status line: " + statusLine);
-    }
-    int httpMinorVersion = statusLine.charAt(7) - '0';
-    if (httpMinorVersion < 0 || httpMinorVersion > 9) {
-      throw new ProtocolException("Unexpected status line: " + statusLine);
-    }
-    int responseCode;
-    try {
-      responseCode = Integer.parseInt(statusLine.substring(9, 12));
-    } catch (NumberFormatException e) {
-      throw new ProtocolException("Unexpected status line: " + statusLine);
-    }
-    this.responseMessage = hasMessage ? statusLine.substring(13) : "";
-    this.responseCode = responseCode;
-    this.statusLine = statusLine;
-    this.httpMinorVersion = httpMinorVersion;
-  }
-
-  /**
-   * @param method like "GET", "POST", "HEAD", etc.
-   * @param path like "/foo/bar.html"
-   * @param version like "HTTP/1.1"
-   * @param host like "www.android.com:1234"
-   * @param scheme like "https"
-   */
-  public void addSpdyRequestHeaders(String method, String path, String version, String host,
-      String scheme) {
-    // TODO: populate the statusLine for the client's benefit?
-    add(":method", method);
-    add(":scheme", scheme);
-    add(":path", path);
-    add(":version", version);
-    add(":host", host);
+  private RawHeaders(Builder builder) {
+    this.namesAndValues = Util.immutableList(builder.namesAndValues);
+    this.requestLine = builder.requestLine;
+    this.statusLine = builder.statusLine;
+    this.httpMinorVersion = builder.httpMinorVersion;
+    this.responseCode = builder.responseCode;
+    this.responseMessage = builder.responseMessage;
   }
 
   public String getStatusLine() {
@@ -160,65 +101,6 @@ public final class RawHeaders {
   /** Returns the HTTP status message or null if it is unknown. */
   public String getResponseMessage() {
     return responseMessage;
-  }
-
-  /**
-   * Add an HTTP header line containing a field name, a literal colon, and a
-   * value. This works around empty header names and header names that start
-   * with a colon (created by old broken SPDY versions of the response cache).
-   */
-  public void addLine(String line) {
-    int index = line.indexOf(":", 1);
-    if (index != -1) {
-      addLenient(line.substring(0, index), line.substring(index + 1));
-    } else if (line.startsWith(":")) {
-      addLenient("", line.substring(1)); // Empty header name.
-    } else {
-      addLenient("", line); // No header name.
-    }
-  }
-
-  /** Add a field with the specified value. */
-  public void add(String fieldName, String value) {
-    if (fieldName == null) throw new IllegalArgumentException("fieldname == null");
-    if (value == null) throw new IllegalArgumentException("value == null");
-    if (fieldName.length() == 0 || fieldName.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-      throw new IllegalArgumentException("Unexpected header: " + fieldName + ": " + value);
-    }
-    addLenient(fieldName, value);
-  }
-
-  /**
-   * Add a field with the specified value without any validation. Only
-   * appropriate for headers from the remote peer.
-   */
-  private void addLenient(String fieldName, String value) {
-    namesAndValues.add(fieldName);
-    namesAndValues.add(value.trim());
-  }
-
-  public void removeAll(String fieldName) {
-    for (int i = 0; i < namesAndValues.size(); i += 2) {
-      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-        namesAndValues.remove(i); // field name
-        namesAndValues.remove(i); // value
-      }
-    }
-  }
-
-  public void addAll(String fieldName, List<String> headerFields) {
-    for (String value : headerFields) {
-      add(fieldName, value);
-    }
-  }
-
-  /**
-   * Set a field with the specified value. If the field is not found, it is
-   * added. If the field is found, the existing values are replaced.
-   */
-  public void set(String fieldName, String value) {
-    removeAll(fieldName);
-    add(fieldName, value);
   }
 
   /** Returns the number of field values. */
@@ -255,12 +137,7 @@ public final class RawHeaders {
 
   /** Returns the last value corresponding to the specified field, or null. */
   public String get(String fieldName) {
-    for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
-      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-        return namesAndValues.get(i + 1);
-      }
-    }
-    return null;
+    return get(namesAndValues, fieldName);
   }
 
   /** Returns an immutable list of the header values for {@code name}. */
@@ -279,14 +156,14 @@ public final class RawHeaders {
 
   /** @param fieldNames a case-insensitive set of HTTP header field names. */
   public RawHeaders getAll(Set<String> fieldNames) {
-    RawHeaders result = new RawHeaders();
+    Builder result = new Builder();
     for (int i = 0; i < namesAndValues.size(); i += 2) {
       String fieldName = namesAndValues.get(i);
       if (fieldNames.contains(fieldName)) {
         result.add(fieldName, namesAndValues.get(i + 1));
       }
     }
-    return result;
+    return result.build();
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
@@ -304,23 +181,15 @@ public final class RawHeaders {
   }
 
   /** Parses bytes of a response header from an HTTP transport. */
-  public static RawHeaders fromBytes(InputStream in) throws IOException {
-    RawHeaders headers;
+  public static RawHeaders readHttpHeaders(InputStream in) throws IOException {
+    Builder builder;
     do {
-      headers = new RawHeaders();
-      headers.setStatusLine(Util.readAsciiLine(in));
-      readHeaders(in, headers);
-    } while (headers.getResponseCode() == HttpEngine.HTTP_CONTINUE);
-    return headers;
-  }
-
-  /** Reads headers or trailers into {@code out}. */
-  public static void readHeaders(InputStream in, RawHeaders out) throws IOException {
-    // parse the result headers until the first blank line
-    String line;
-    while ((line = Util.readAsciiLine(in)).length() != 0) {
-      out.addLine(line);
-    }
+      builder = new Builder();
+      builder.set(ResponseHeaders.SELECTED_TRANSPORT, "http/1.1");
+      builder.setStatusLine(Util.readAsciiLine(in));
+      builder.readHeaders(in);
+    } while (builder.responseCode == HttpEngine.HTTP_CONTINUE);
+    return builder.build();
   }
 
   /**
@@ -347,29 +216,6 @@ public final class RawHeaders {
       result.put(null, Collections.unmodifiableList(Collections.singletonList(requestLine)));
     }
     return Collections.unmodifiableMap(result);
-  }
-
-  /**
-   * Creates a new instance from the given map of fields to values. If
-   * present, the null field's last element will be used to set the status
-   * line.
-   */
-  public static RawHeaders fromMultimap(Map<String, List<String>> map, boolean response)
-      throws IOException {
-    if (!response) throw new UnsupportedOperationException();
-    RawHeaders result = new RawHeaders();
-    for (Entry<String, List<String>> entry : map.entrySet()) {
-      String fieldName = entry.getKey();
-      List<String> values = entry.getValue();
-      if (fieldName != null) {
-        for (String value : values) {
-          result.addLenient(fieldName, value);
-        }
-      } else if (!values.isEmpty()) {
-        result.setStatusLine(values.get(values.size() - 1));
-      }
-    }
-    return result;
   }
 
   /**
@@ -418,7 +264,8 @@ public final class RawHeaders {
     }
     String status = null;
     String version = null;
-    RawHeaders result = new RawHeaders();
+    Builder builder = new Builder();
+    builder.set(ResponseHeaders.SELECTED_TRANSPORT, "spdy/3");
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
       String values = nameValueBlock.get(i + 1);
@@ -433,15 +280,170 @@ public final class RawHeaders {
         } else if (":version".equals(name)) {
           version = value;
         } else {
-          result.namesAndValues.add(name);
-          result.namesAndValues.add(value);
+          builder.namesAndValues.add(name);
+          builder.namesAndValues.add(value);
         }
         start = end + 1;
       }
     }
     if (status == null) throw new ProtocolException("Expected ':status' header not present");
     if (version == null) throw new ProtocolException("Expected ':version' header not present");
-    result.setStatusLine(version + " " + status);
+    builder.setStatusLine(version + " " + status);
+    return builder.build();
+  }
+
+  public Builder newBuilder() {
+    Builder result = new Builder();
+    result.namesAndValues.addAll(namesAndValues);
+    result.requestLine = requestLine;
+    result.statusLine = statusLine;
+    result.httpMinorVersion = httpMinorVersion;
+    result.responseCode = responseCode;
+    result.responseMessage = responseMessage;
     return result;
+  }
+
+  private static String get(List<String> namesAndValues, String fieldName) {
+    for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
+      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+        return namesAndValues.get(i + 1);
+      }
+    }
+    return null;
+  }
+
+  public static class Builder {
+    private final List<String> namesAndValues = new ArrayList<String>(20);
+    private String requestLine;
+    private String statusLine;
+    private int httpMinorVersion = 1;
+    private int responseCode = -1;
+    private String responseMessage;
+    private String transport;
+
+    /** Sets the request line (like "GET / HTTP/1.1"). */
+    public Builder setRequestLine(String requestLine) {
+      this.requestLine = requestLine.trim();
+      return this;
+    }
+
+    /** Equivalent to {@code build().get(fieldName)}, but potentially faster. */
+    public String get(String fieldName) {
+      return RawHeaders.get(namesAndValues, fieldName);
+    }
+
+    /** Equivalent to {@code build().getResponseCode()}, but potentially faster. */
+    public int getResponseCode() {
+      return responseCode;
+    }
+
+    /** Sets the response status line (like "HTTP/1.0 200 OK"). */
+    public Builder setStatusLine(String statusLine) throws IOException {
+      // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
+      // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
+      if (this.responseMessage != null) {
+        throw new IllegalStateException("statusLine is already set");
+      }
+      // We allow empty message without leading white space since some servers
+      // do not send the white space when the message is empty.
+      boolean hasMessage = statusLine.length() > 13;
+      if (!statusLine.startsWith("HTTP/1.")
+          || statusLine.length() < 12
+          || statusLine.charAt(8) != ' '
+          || (hasMessage && statusLine.charAt(12) != ' ')) {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+      int httpMinorVersion = statusLine.charAt(7) - '0';
+      if (httpMinorVersion < 0 || httpMinorVersion > 9) {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+      int responseCode;
+      try {
+        responseCode = Integer.parseInt(statusLine.substring(9, 12));
+      } catch (NumberFormatException e) {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+      this.responseMessage = hasMessage ? statusLine.substring(13) : "";
+      this.responseCode = responseCode;
+      this.statusLine = statusLine;
+      this.httpMinorVersion = httpMinorVersion;
+      return this;
+    }
+
+    /**
+     * Add an HTTP header line containing a field name, a literal colon, and a
+     * value. This works around empty header names and header names that start
+     * with a colon (created by old broken SPDY versions of the response cache).
+     */
+    public Builder addLine(String line) {
+      int index = line.indexOf(":", 1);
+      if (index != -1) {
+        return addLenient(line.substring(0, index), line.substring(index + 1));
+      } else if (line.startsWith(":")) {
+        return addLenient("", line.substring(1)); // Empty header name.
+      } else {
+        return addLenient("", line); // No header name.
+      }
+    }
+
+    /** Add a field with the specified value. */
+    public Builder add(String fieldName, String value) {
+      if (fieldName == null) throw new IllegalArgumentException("fieldname == null");
+      if (value == null) throw new IllegalArgumentException("value == null");
+      if (fieldName.length() == 0 || fieldName.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Unexpected header: " + fieldName + ": " + value);
+      }
+      return addLenient(fieldName, value);
+    }
+
+    /**
+     * Add a field with the specified value without any validation. Only
+     * appropriate for headers from the remote peer.
+     */
+    private Builder addLenient(String fieldName, String value) {
+      namesAndValues.add(fieldName);
+      namesAndValues.add(value.trim());
+      return this;
+    }
+
+    public Builder removeAll(String fieldName) {
+      for (int i = 0; i < namesAndValues.size(); i += 2) {
+        if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+          namesAndValues.remove(i); // field name
+          namesAndValues.remove(i); // value
+        }
+      }
+      return this;
+    }
+
+    public Builder addAll(String fieldName, List<String> headerFields) {
+      for (String value : headerFields) {
+        add(fieldName, value);
+      }
+      return this;
+    }
+
+    /**
+     * Set a field with the specified value. If the field is not found, it is
+     * added. If the field is found, the existing values are replaced.
+     */
+    public Builder set(String fieldName, String value) {
+      removeAll(fieldName);
+      add(fieldName, value);
+      return this;
+    }
+
+    /** Reads headers or trailers into {@code out}. */
+    public Builder readHeaders(InputStream in) throws IOException {
+      // parse the result headers until the first blank line
+      for (String line; (line = Util.readAsciiLine(in)).length() != 0; ) {
+        addLine(line);
+      }
+      return this;
+    }
+
+    public RawHeaders build() {
+      return new RawHeaders(this);
+    }
   }
 }
