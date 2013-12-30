@@ -1684,7 +1684,7 @@ public final class HttpResponseCacheTest {
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CACHE.toString() + " 200", source);
   }
 
@@ -1701,7 +1701,7 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 200", source);
   }
 
@@ -1716,7 +1716,7 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 304", source);
   }
 
@@ -1727,7 +1727,7 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(ResponseHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
     assertEquals(ResponseSource.NETWORK.toString() + " 200", source);
   }
 

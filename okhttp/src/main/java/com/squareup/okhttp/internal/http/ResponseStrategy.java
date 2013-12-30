@@ -1,5 +1,7 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
@@ -10,12 +12,12 @@ import java.util.concurrent.TimeUnit;
  * warnings.
  */
 public final class ResponseStrategy {
-  public final RequestHeaders request;
-  public final ResponseHeaders response;
+  public final Request request;
+  public final Response response;
   public final ResponseSource source;
 
   private ResponseStrategy(
-      RequestHeaders request, ResponseHeaders response, ResponseSource source) {
+      Request request, Response response, ResponseSource source) {
     this.request = request;
     this.response = response;
     this.source = source;
@@ -25,15 +27,15 @@ public final class ResponseStrategy {
    * Returns the current age of the response, in milliseconds. The calculation
    * is specified by RFC 2616, 13.2.3 Age Calculations.
    */
-  private static long computeAge(ResponseHeaders response, long nowMillis) {
-    long apparentReceivedAge = response.servedDate != null
-        ? Math.max(0, response.receivedResponseMillis - response.servedDate.getTime())
+  private static long computeAge(Response response, long nowMillis) {
+    long apparentReceivedAge = response.getServedDate() != null
+        ? Math.max(0, response.getReceivedResponseMillis() - response.getServedDate().getTime())
         : 0;
-    long receivedAge = response.ageSeconds != -1
-        ? Math.max(apparentReceivedAge, TimeUnit.SECONDS.toMillis(response.ageSeconds))
+    long receivedAge = response.getAgeSeconds() != -1
+        ? Math.max(apparentReceivedAge, TimeUnit.SECONDS.toMillis(response.getAgeSeconds()))
         : apparentReceivedAge;
-    long responseDuration = response.receivedResponseMillis - response.sentRequestMillis;
-    long residentDuration = nowMillis - response.receivedResponseMillis;
+    long responseDuration = response.getReceivedResponseMillis() - response.getSentRequestMillis();
+    long residentDuration = nowMillis - response.getReceivedResponseMillis();
     return receivedAge + responseDuration + residentDuration;
   }
 
@@ -41,24 +43,24 @@ public final class ResponseStrategy {
    * Returns the number of milliseconds that the response was fresh for,
    * starting from the served date.
    */
-  private static long computeFreshnessLifetime(ResponseHeaders response) {
-    if (response.maxAgeSeconds != -1) {
-      return TimeUnit.SECONDS.toMillis(response.maxAgeSeconds);
-    } else if (response.expires != null) {
-      long servedMillis = response.servedDate != null
-          ? response.servedDate.getTime()
-          : response.receivedResponseMillis;
-      long delta = response.expires.getTime() - servedMillis;
+  private static long computeFreshnessLifetime(Response response) {
+    if (response.getMaxAgeSeconds() != -1) {
+      return TimeUnit.SECONDS.toMillis(response.getMaxAgeSeconds());
+    } else if (response.getExpires() != null) {
+      long servedMillis = response.getServedDate() != null
+          ? response.getServedDate().getTime()
+          : response.getReceivedResponseMillis();
+      long delta = response.getExpires().getTime() - servedMillis;
       return delta > 0 ? delta : 0;
-    } else if (response.lastModified != null && response.uri.getRawQuery() == null) {
+    } else if (response.getLastModified() != null && response.request().url().getQuery() == null) {
       // As recommended by the HTTP RFC and implemented in Firefox, the
       // max age of a document should be defaulted to 10% of the
       // document's age at the time it was served. Default expiration
       // dates aren't used for URIs containing a query.
-      long servedMillis = response.servedDate != null
-          ? response.servedDate.getTime()
-          : response.sentRequestMillis;
-      long delta = servedMillis - response.lastModified.getTime();
+      long servedMillis = response.getServedDate() != null
+          ? response.getServedDate().getTime()
+          : response.getSentRequestMillis();
+      long delta = servedMillis - response.getLastModified().getTime();
       return delta > 0 ? (delta / 10) : 0;
     }
     return 0;
@@ -69,18 +71,18 @@ public final class ResponseStrategy {
    * heuristic to serve a cached response older than 24 hours, we are required
    * to attach a warning.
    */
-  private static boolean isFreshnessLifetimeHeuristic(ResponseHeaders response) {
-    return response.maxAgeSeconds == -1 && response.expires == null;
+  private static boolean isFreshnessLifetimeHeuristic(Response response) {
+    return response.getMaxAgeSeconds() == -1 && response.getExpires() == null;
   }
 
   /**
    * Returns true if this response can be stored to later serve another
    * request.
    */
-  public static boolean isCacheable(ResponseHeaders response, RequestHeaders request) {
+  public static boolean isCacheable(Response response, Request request) {
     // Always go to network for uncacheable response codes (RFC 2616, 13.4),
     // This implementation doesn't support caching partial content.
-    int responseCode = response.headers.getResponseCode();
+    int responseCode = response.code();
     if (responseCode != HttpURLConnection.HTTP_OK
         && responseCode != HttpURLConnection.HTTP_NOT_AUTHORITATIVE
         && responseCode != HttpURLConnection.HTTP_MULT_CHOICE
@@ -92,13 +94,13 @@ public final class ResponseStrategy {
     // Responses to authorized requests aren't cacheable unless they include
     // a 'public', 'must-revalidate' or 's-maxage' directive.
     if (request.hasAuthorization()
-        && !response.isPublic
-        && !response.mustRevalidate
-        && response.sMaxAgeSeconds == -1) {
+        && !response.isPublic()
+        && !response.isMustRevalidate()
+        && response.getSMaxAgeSeconds() == -1) {
       return false;
     }
 
-    if (response.noStore) {
+    if (response.isNoStore()) {
       return false;
     }
 
@@ -110,7 +112,7 @@ public final class ResponseStrategy {
    * {@code response}.
    */
   public static ResponseStrategy get(
-      long nowMillis, ResponseHeaders response, RequestHeaders request) {
+      long nowMillis, Response response, Request request) {
     // If this response shouldn't have been stored, it should never be used
     // as a response source. This check should be redundant as long as the
     // persistence store is well-behaved and the rules are constant.
@@ -135,12 +137,12 @@ public final class ResponseStrategy {
     }
 
     long maxStaleMillis = 0;
-    if (!response.mustRevalidate && request.getMaxStaleSeconds() != -1) {
+    if (!response.isMustRevalidate() && request.getMaxStaleSeconds() != -1) {
       maxStaleMillis = TimeUnit.SECONDS.toMillis(request.getMaxStaleSeconds());
     }
 
-    if (!response.noCache && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
-      ResponseHeaders.Builder builder = response.newBuilder();
+    if (!response.isNoCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
+      Response.Builder builder = response.newBuilder();
       if (ageMillis + minFreshMillis >= freshMillis) {
         builder.addWarning("110 HttpURLConnection \"Response is stale\"");
       }
@@ -151,19 +153,19 @@ public final class ResponseStrategy {
       return new ResponseStrategy(request, builder.build(), ResponseSource.CACHE);
     }
 
-    RequestHeaders.Builder conditionalRequestBuilder = request.newBuilder();
+    Request.Builder conditionalRequestBuilder = request.newBuilder();
 
-    if (response.lastModified != null) {
-      conditionalRequestBuilder.setIfModifiedSince(response.lastModified);
-    } else if (response.servedDate != null) {
-      conditionalRequestBuilder.setIfModifiedSince(response.servedDate);
+    if (response.getLastModified() != null) {
+      conditionalRequestBuilder.setIfModifiedSince(response.getLastModified());
+    } else if (response.getServedDate() != null) {
+      conditionalRequestBuilder.setIfModifiedSince(response.getServedDate());
     }
 
-    if (response.etag != null) {
-      conditionalRequestBuilder.setIfNoneMatch(response.etag);
+    if (response.getEtag() != null) {
+      conditionalRequestBuilder.setIfNoneMatch(response.getEtag());
     }
 
-    RequestHeaders conditionalRequest = conditionalRequestBuilder.build();
+    Request conditionalRequest = conditionalRequestBuilder.build();
     ResponseSource responseSource = conditionalRequest.hasConditions()
         ? ResponseSource.CONDITIONAL_CACHE
         : ResponseSource.NETWORK;

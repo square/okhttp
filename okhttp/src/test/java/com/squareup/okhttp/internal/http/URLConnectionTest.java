@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -213,7 +214,7 @@ public final class URLConnectionTest {
       fail("Modified an unmodifiable view.");
     } catch (UnsupportedOperationException expected) {
     }
-    assertEquals(ResponseHeaders.SELECTED_TRANSPORT, urlConnection.getHeaderFieldKey(0));
+    assertEquals(Response.SELECTED_TRANSPORT, urlConnection.getHeaderFieldKey(0));
     assertEquals("http/1.1", urlConnection.getHeaderField(0));
     assertEquals("A", urlConnection.getHeaderFieldKey(1));
     assertEquals("c", urlConnection.getHeaderField(1));

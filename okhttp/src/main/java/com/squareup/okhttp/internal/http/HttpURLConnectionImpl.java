@@ -129,7 +129,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponseHeaders().getHeaders().getValue(position);
+      return getResponse().getResponse().getHeaders().getValue(position);
     } catch (IOException e) {
       return null;
     }
@@ -142,7 +142,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
-      RawHeaders rawHeaders = getResponse().getResponseHeaders().getHeaders();
+      RawHeaders rawHeaders = getResponse().getResponse().getHeaders();
       return fieldName == null ? rawHeaders.getStatusLine() : rawHeaders.get(fieldName);
     } catch (IOException e) {
       return null;
@@ -151,7 +151,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponseHeaders().getHeaders().getFieldName(position);
+      return getResponse().getResponse().getHeaders().getFieldName(position);
     } catch (IOException e) {
       return null;
     }
@@ -159,7 +159,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      return getResponse().getResponseHeaders().getHeaders().toMultimap(true);
+      return getResponse().getResponse().getHeaders().toMultimap(true);
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -419,7 +419,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       case HTTP_UNAUTHORIZED:
         RawHeaders successorRequestHeaders = HttpAuthenticator.processAuthHeader(
             client.getAuthenticator(), getResponseCode(),
-            httpEngine.getResponseHeaders().getHeaders(), requestHeaders.build(), selectedProxy,
+            httpEngine.getResponse().getHeaders(), requestHeaders.build(), selectedProxy,
             url);
         if (successorRequestHeaders == null) return Retry.NONE;
         requestHeaders = successorRequestHeaders.newBuilder();
@@ -494,7 +494,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().getResponseHeaders().getHeaders().getResponseMessage();
+    return getResponse().getResponse().getHeaders().getResponseMessage();
   }
 
   @Override public final int getResponseCode() throws IOException {

@@ -41,13 +41,13 @@ public final class HttpsEngine extends HttpEngine {
   }
 
   @Override protected TunnelRequest getTunnelConfig() {
-    String userAgent = requestHeaders.getUserAgent();
+    String userAgent = getRequest().getUserAgent();
     if (userAgent == null) {
       userAgent = getDefaultUserAgent();
     }
 
-    URL url = policy.getURL();
+    URL url = getRequest().url();
     return new TunnelRequest(url.getHost(), getEffectivePort(url), userAgent,
-        requestHeaders.getProxyAuthorization());
+        getRequest().getProxyAuthorization());
   }
 }

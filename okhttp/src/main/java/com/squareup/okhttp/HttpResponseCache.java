@@ -21,7 +21,6 @@ import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.RawHeaders;
-import com.squareup.okhttp.internal.http.ResponseHeaders;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -154,12 +153,14 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       return null;
     }
 
-    if (!entry.matches(request)) {
-      snapshot.close();
+    Response response = entry.response(request, snapshot);
+
+    if (!entry.matches(request, response)) {
+      Util.closeQuietly(response.body());
       return null;
     }
 
-    return entry.response(request, snapshot);
+    return response;
   }
 
   @Override public CacheRequest put(Response response) throws IOException {
@@ -175,8 +176,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       return null;
     }
 
-    ResponseHeaders responseHeaders = new ResponseHeaders(null, response.rawHeaders());
-    if (responseHeaders.hasVaryAll()) {
+    if (response.hasVaryAll()) {
       return null;
     }
 
@@ -449,8 +449,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
     public Entry(Response response) {
       this.url = response.request().urlString();
-      this.varyHeaders = response.request().rawHeaders().getAll(
-          new ResponseHeaders(null, response.rawHeaders()).getVaryFields());
+      this.varyHeaders = response.request().rawHeaders().getAll(response.getVaryFields());
       this.requestMethod = response.request().method();
       this.responseHeaders = response.rawHeaders();
       this.handshake = response.handshake();
@@ -517,10 +516,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       }
     }
 
-    public boolean matches(Request request) {
+    public boolean matches(Request request, Response response) {
       return url.equals(request.urlString())
           && requestMethod.equals(request.method())
-          && new ResponseHeaders(null, responseHeaders).varyMatches(varyHeaders, request);
+          && response.varyMatches(varyHeaders, request);
     }
 
     public Response response(Request request, DiskLruCache.Snapshot snapshot) {

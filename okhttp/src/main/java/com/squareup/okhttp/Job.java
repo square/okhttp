@@ -122,14 +122,9 @@ final class Job implements Runnable, Policy {
 
       engine.readResponse();
 
-      int responseCode = engine.getResponseCode();
-      Dispatcher.RealResponseBody responseBody = new Dispatcher.RealResponseBody(
-          engine.getResponseHeaders(), engine.getResponseBody());
-
-      Response response = new Response.Builder(request, responseCode)
-          .handshake(engine.getHandshake())
-          .rawHeaders(engine.getResponseHeaders().getHeaders())
-          .body(responseBody)
+      Response engineResponse = engine.getResponse();
+      Response response = engineResponse.newBuilder()
+          .body(new Dispatcher.RealResponseBody(engineResponse, engine.getResponseBody()))
           .redirectedBy(redirectedBy)
           .build();
 

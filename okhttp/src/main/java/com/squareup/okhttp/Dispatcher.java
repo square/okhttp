@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.http.ResponseHeaders;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -58,11 +57,11 @@ final class Dispatcher {
   }
 
   static class RealResponseBody extends Response.Body {
-    private final ResponseHeaders responseHeaders;
+    private final Response response;
     private final InputStream in;
 
-    RealResponseBody(ResponseHeaders responseHeaders, InputStream in) {
-      this.responseHeaders = responseHeaders;
+    RealResponseBody(Response response, InputStream in) {
+      this.response = response;
       this.in = in;
     }
 
@@ -71,12 +70,12 @@ final class Dispatcher {
     }
 
     @Override public MediaType contentType() {
-      String contentType = responseHeaders.getContentType();
+      String contentType = response.getContentType();
       return contentType != null ? MediaType.parse(contentType) : null;
     }
 
     @Override public long contentLength() {
-      return responseHeaders.getContentLength();
+      return response.getContentLength();
     }
 
     @Override public InputStream byteStream() {

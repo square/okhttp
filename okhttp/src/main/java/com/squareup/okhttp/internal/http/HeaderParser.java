@@ -16,7 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
-final class HeaderParser {
+public final class HeaderParser {
 
   public interface CacheControlHandler {
     void handle(String directive, String parameter);

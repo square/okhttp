@@ -86,6 +86,7 @@ public final class Connection implements Closeable {
   private SpdyConnection spdyConnection;
   private int httpMinorVersion = 1; // Assume HTTP/1.1
   private long idleStartTimeNs;
+  private Handshake handshake;
 
   public Connection(Route route) {
     this.route = route;
@@ -147,6 +148,7 @@ public final class Connection implements Closeable {
 
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
+    handshake = Handshake.get(sslSocket.getSession());
     streamWrapper();
 
     byte[] selectedProtocol;
@@ -249,6 +251,10 @@ public final class Connection implements Closeable {
    */
   public long getIdleStartTimeNs() {
     return spdyConnection == null ? idleStartTimeNs : spdyConnection.getIdleStartTimeNs();
+  }
+
+  public Handshake getHandshake() {
+    return handshake;
   }
 
   /** Returns the transport appropriate for this connection. */

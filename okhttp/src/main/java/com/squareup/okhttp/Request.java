@@ -15,7 +15,10 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HeaderParser;
+import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,8 +27,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,6 +49,9 @@ public final class Request {
   private final Body body;
   private final Object tag;
 
+  private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
+  private volatile URI uri; // Lazily initialized.
+
   private Request(Builder builder) {
     this.url = builder.url;
     this.method = builder.method;
@@ -52,6 +62,15 @@ public final class Request {
 
   public URL url() {
     return url;
+  }
+
+  public URI uri() throws IOException {
+    try {
+      URI result = uri;
+      return result != null ? result : (uri = Platform.get().toUriLenient(url));
+    } catch (URISyntaxException e) {
+      throw new IOException(e.getMessage());
+    }
   }
 
   public String urlString() {
@@ -98,11 +117,194 @@ public final class Request {
     return tag;
   }
 
-  Builder newBuilder() {
+  public Builder newBuilder() {
     return new Builder(url)
         .method(method, body)
         .rawHeaders(headers)
         .tag(tag);
+  }
+
+  public boolean isChunked() {
+    return "chunked".equalsIgnoreCase(parsedHeaders().transferEncoding);
+  }
+
+  public boolean hasConnectionClose() {
+    return "close".equalsIgnoreCase(parsedHeaders().connection);
+  }
+
+  public RawHeaders getHeaders() {
+    return headers;
+  }
+
+  public boolean isNoCache() {
+    return parsedHeaders().noCache;
+  }
+
+  public int getMaxAgeSeconds() {
+    return parsedHeaders().maxAgeSeconds;
+  }
+
+  public int getMaxStaleSeconds() {
+    return parsedHeaders().maxStaleSeconds;
+  }
+
+  public int getMinFreshSeconds() {
+    return parsedHeaders().minFreshSeconds;
+  }
+
+  public boolean isOnlyIfCached() {
+    return parsedHeaders().onlyIfCached;
+  }
+
+  public boolean hasAuthorization() {
+    return parsedHeaders().hasAuthorization;
+  }
+
+  // TODO: Make non-public. This conflicts with the Body's content length!
+  public long getContentLength() {
+    return parsedHeaders().contentLength;
+  }
+
+  public String getTransferEncoding() {
+    return parsedHeaders().transferEncoding;
+  }
+
+  public String getUserAgent() {
+    return parsedHeaders().userAgent;
+  }
+
+  public String getHost() {
+    return parsedHeaders().host;
+  }
+
+  public String getConnection() {
+    return parsedHeaders().connection;
+  }
+
+  public String getAcceptEncoding() {
+    return parsedHeaders().acceptEncoding;
+  }
+
+  // TODO: Make non-public. This conflicts with the Body's content type!
+  public String getContentType() {
+    return parsedHeaders().contentType;
+  }
+
+  public String getIfModifiedSince() {
+    return parsedHeaders().ifModifiedSince;
+  }
+
+  public String getIfNoneMatch() {
+    return parsedHeaders().ifNoneMatch;
+  }
+
+  public String getProxyAuthorization() {
+    return parsedHeaders().proxyAuthorization;
+  }
+
+  /**
+   * Returns true if the request contains conditions that save the server from
+   * sending a response that the client has locally. When a request is enqueued
+   * with conditions, built-in response caches won't be used for that request.
+   */
+  public boolean hasConditions() {
+    return parsedHeaders().ifModifiedSince != null || parsedHeaders().ifNoneMatch != null;
+  }
+
+  private ParsedHeaders parsedHeaders() {
+    ParsedHeaders result = parsedHeaders;
+    return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
+  }
+
+  /** Parsed request headers, computed on-demand and cached. */
+  private static class ParsedHeaders {
+    /** Don't use a cache to satisfy this request. */
+    private boolean noCache;
+    private int maxAgeSeconds = -1;
+    private int maxStaleSeconds = -1;
+    private int minFreshSeconds = -1;
+
+    /**
+     * This field's name "only-if-cached" is misleading. It actually means "do
+     * not use the network". It is set by a client who only wants to make a
+     * request if it can be fully satisfied by the cache. Cached responses that
+     * would require validation (ie. conditional gets) are not permitted if this
+     * header is set.
+     */
+    private boolean onlyIfCached;
+
+    /**
+     * True if the request contains an authorization field. Although this isn't
+     * necessarily a shared cache, it follows the spec's strict requirements for
+     * shared caches.
+     */
+    private boolean hasAuthorization;
+
+    private long contentLength = -1;
+    private String transferEncoding;
+    private String userAgent;
+    private String host;
+    private String connection;
+    private String acceptEncoding;
+    private String contentType;
+    private String ifModifiedSince;
+    private String ifNoneMatch;
+    private String proxyAuthorization;
+
+    public ParsedHeaders(RawHeaders headers) {
+      HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
+        @Override public void handle(String directive, String parameter) {
+          if ("no-cache".equalsIgnoreCase(directive)) {
+            noCache = true;
+          } else if ("max-age".equalsIgnoreCase(directive)) {
+            maxAgeSeconds = HeaderParser.parseSeconds(parameter);
+          } else if ("max-stale".equalsIgnoreCase(directive)) {
+            maxStaleSeconds = HeaderParser.parseSeconds(parameter);
+          } else if ("min-fresh".equalsIgnoreCase(directive)) {
+            minFreshSeconds = HeaderParser.parseSeconds(parameter);
+          } else if ("only-if-cached".equalsIgnoreCase(directive)) {
+            onlyIfCached = true;
+          }
+        }
+      };
+
+      for (int i = 0; i < headers.length(); i++) {
+        String fieldName = headers.getFieldName(i);
+        String value = headers.getValue(i);
+        if ("Cache-Control".equalsIgnoreCase(fieldName)) {
+          HeaderParser.parseCacheControl(value, handler);
+        } else if ("Pragma".equalsIgnoreCase(fieldName)) {
+          if ("no-cache".equalsIgnoreCase(value)) {
+            noCache = true;
+          }
+        } else if ("If-None-Match".equalsIgnoreCase(fieldName)) {
+          ifNoneMatch = value;
+        } else if ("If-Modified-Since".equalsIgnoreCase(fieldName)) {
+          ifModifiedSince = value;
+        } else if ("Authorization".equalsIgnoreCase(fieldName)) {
+          hasAuthorization = true;
+        } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
+          try {
+            contentLength = Integer.parseInt(value);
+          } catch (NumberFormatException ignored) {
+          }
+        } else if ("Transfer-Encoding".equalsIgnoreCase(fieldName)) {
+          transferEncoding = value;
+        } else if ("User-Agent".equalsIgnoreCase(fieldName)) {
+          userAgent = value;
+        } else if ("Host".equalsIgnoreCase(fieldName)) {
+          host = value;
+        } else if ("Connection".equalsIgnoreCase(fieldName)) {
+          connection = value;
+        } else if ("Accept-Encoding".equalsIgnoreCase(fieldName)) {
+          acceptEncoding = value;
+        } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
+          contentType = value;
+        } else if ("Proxy-Authorization".equalsIgnoreCase(fieldName)) {
+          proxyAuthorization = value;
+        }
+      }
+    }
   }
 
   public abstract static class Body {
@@ -240,6 +442,96 @@ public final class Request {
     // TODO: this shouldn't be public.
     public Builder rawHeaders(RawHeaders rawHeaders) {
       headers = rawHeaders.newBuilder();
+      return this;
+    }
+
+    // TODO: this shouldn't be public.
+    public Builder setRequestLine(String requestLine) {
+      headers.setRequestLine(requestLine);
+      return this;
+    }
+
+    public Builder setChunked() {
+      headers.set("Transfer-Encoding", "chunked");
+      return this;
+    }
+
+    // TODO: conflict's with the body's content type.
+    public Builder setContentLength(long contentLength) {
+      headers.set("Content-Length", Long.toString(contentLength));
+      return this;
+    }
+
+    public void setUserAgent(String userAgent) {
+      headers.set("User-Agent", userAgent);
+    }
+
+    // TODO: this shouldn't be public.
+    public void setHost(String host) {
+      headers.set("Host", host);
+    }
+
+    public void setConnection(String connection) {
+      headers.set("Connection", connection);
+    }
+
+    public void setAcceptEncoding(String acceptEncoding) {
+      headers.set("Accept-Encoding", acceptEncoding);
+    }
+
+    // TODO: conflict's with the body's content type.
+    public void setContentType(String contentType) {
+      headers.set("Content-Type", contentType);
+    }
+
+    public void setIfModifiedSince(Date date) {
+      headers.set("If-Modified-Since", HttpDate.format(date));
+    }
+
+    public void setIfNoneMatch(String ifNoneMatch) {
+      headers.set("If-None-Match", ifNoneMatch);
+    }
+
+    public void addCookies(Map<String, List<String>> cookieHeaders) {
+      for (Map.Entry<String, List<String>> entry : cookieHeaders.entrySet()) {
+        String key = entry.getKey();
+        if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
+            && !entry.getValue().isEmpty()) {
+          headers.add(key, buildCookieHeader(entry.getValue()));
+        }
+      }
+    }
+
+    /**
+     * Send all cookies in one big header, as recommended by
+     * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
+     */
+    private String buildCookieHeader(List<String> cookies) {
+      if (cookies.size() == 1) return cookies.get(0);
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < cookies.size(); i++) {
+        if (i > 0) sb.append("; ");
+        sb.append(cookies.get(i));
+      }
+      return sb.toString();
+    }
+
+    // TODO: this shouldn't be public.
+    /**
+     * @param method like "GET", "POST", "HEAD", etc.
+     * @param path like "/foo/bar.html"
+     * @param version like "HTTP/1.1"
+     * @param host like "www.android.com:1234"
+     * @param scheme like "https"
+     */
+    public Builder addSpdyRequestHeaders(
+        String method, String path, String version, String host, String scheme) {
+      // TODO: populate the statusLine for the client's benefit?
+      headers.add(":method", method);
+      headers.add(":scheme", scheme);
+      headers.add(":path", path);
+      headers.add(":version", version);
+      headers.add(":host", host);
       return this;
     }
 
