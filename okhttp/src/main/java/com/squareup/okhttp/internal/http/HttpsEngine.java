@@ -18,10 +18,9 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.TunnelRequest;
 import java.io.IOException;
-import java.net.CacheResponse;
-import java.net.SecureCacheResponse;
 import java.net.URL;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
@@ -32,12 +31,8 @@ public final class HttpsEngine extends HttpEngine {
     super(client, policy, method, requestHeaders, connection, requestBody);
   }
 
-  @Override protected void connected(Connection connection) {
-    super.connected(connection);
-  }
-
-  @Override protected boolean acceptCacheResponseType(CacheResponse cacheResponse) {
-    return cacheResponse instanceof SecureCacheResponse;
+  @Override protected boolean acceptCacheResponseType(Response response) {
+    return response.handshake() != null;
   }
 
   @Override protected boolean includeAuthorityInRequestLine() {

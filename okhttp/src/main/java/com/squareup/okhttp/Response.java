@@ -18,6 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.RawHeaders;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +37,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  * <h3>Warning: Experimental OkHttp 2.0 API</h3>
  * This class is in beta. APIs are subject to change!
  */
-/* OkHttp 2.0: public */ final class Response {
+public final class Response {
   private final Request request;
   private final int code;
   private final Handshake handshake;
@@ -106,7 +107,8 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
     return headers.getFieldName(index);
   }
 
-  RawHeaders rawHeaders() {
+  // TODO: this shouldn't be public.
+  public RawHeaders rawHeaders() {
     return new RawHeaders(headers);
   }
 
@@ -128,7 +130,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
     return redirectedBy;
   }
 
-  public abstract static class Body {
+  public abstract static class Body implements Closeable {
     /** Multiple calls to {@link #charStream()} must return the same instance. */
     private Reader reader;
 
@@ -154,7 +156,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
      */
     public abstract long contentLength();
 
-    public abstract InputStream byteStream() throws IOException;
+    public abstract InputStream byteStream();
 
     public final byte[] bytes() throws IOException {
       long contentLength = contentLength();
@@ -181,7 +183,7 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
      * of the Content-Type header. If that header is either absent or lacks a
      * charset, this will attempt to decode the response body as UTF-8.
      */
-    public final Reader charStream() throws IOException {
+    public final Reader charStream() {
       if (reader == null) {
         reader = new InputStreamReader(byteStream(), charset());
       }
@@ -200,6 +202,10 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
     private Charset charset() {
       MediaType contentType = contentType();
       return contentType != null ? contentType.charset(UTF_8) : UTF_8;
+    }
+
+    @Override public void close() throws IOException {
+      byteStream().close();
     }
   }
 
@@ -282,7 +288,8 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
       return this;
     }
 
-    Builder rawHeaders(RawHeaders rawHeaders) {
+    // TODO: this shouldn't be public.
+    public Builder rawHeaders(RawHeaders rawHeaders) {
       headers = new RawHeaders(rawHeaders);
       return this;
     }

@@ -20,11 +20,16 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import java.io.File;
+import java.net.HttpURLConnection;
+import java.util.UUID;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class AsyncApiTest {
@@ -33,9 +38,17 @@ public final class AsyncApiTest {
   private RecordingReceiver receiver = new RecordingReceiver();
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
+  private HttpResponseCache cache;
+
+  @Before public void setUp() throws Exception {
+    String tmp = System.getProperty("java.io.tmpdir");
+    File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
+    cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
+  }
 
   @After public void tearDown() throws Exception {
     server.shutdown();
+    cache.delete();
   }
 
   @Test public void get() throws Exception {
@@ -90,5 +103,23 @@ public final class AsyncApiTest {
     assertEquals("def", recordedRequest.getUtf8Body());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
+  }
+
+  @Test public void cache() throws Exception {
+    server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
+    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.play();
+
+    client.setOkResponseCache(cache);
+
+    Request request1 = new Request.Builder(server.getUrl("/")).build();
+    client.enqueue(request1, receiver);
+    receiver.await(request1).assertCode(200).assertBody("A");
+    assertNull(server.takeRequest().getHeader("If-None-Match"));
+
+    Request request2 = new Request.Builder(server.getUrl("/")).build();
+    client.enqueue(request2, receiver);
+    receiver.await(request2).assertCode(200).assertBody("A");
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 }

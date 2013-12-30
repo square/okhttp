@@ -35,7 +35,7 @@ import java.util.Set;
  * <h3>Warning: Experimental OkHttp 2.0 API</h3>
  * This class is in beta. APIs are subject to change!
  */
-/* OkHttp 2.0: public */ final class Request {
+public final class Request {
   private final URL url;
   private final String method;
   private final RawHeaders headers;
@@ -237,7 +237,8 @@ import java.util.Set;
       return this;
     }
 
-    Builder rawHeaders(RawHeaders rawHeaders) {
+    // TODO: this shouldn't be public.
+    public Builder rawHeaders(RawHeaders rawHeaders) {
       headers = new RawHeaders(rawHeaders);
       return this;
     }

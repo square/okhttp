@@ -266,10 +266,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     }
   }
 
-  @Override public HttpURLConnection getHttpConnectionToCache() {
-    return this;
-  }
-
   private HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
       Connection connection, RetryableOutputStream requestBody) throws IOException {
     if (url.getProtocol().equals("http")) {
