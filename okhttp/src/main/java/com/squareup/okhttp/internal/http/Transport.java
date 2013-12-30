@@ -16,6 +16,8 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,11 +25,11 @@ import java.net.CacheRequest;
 
 interface Transport {
   /**
-   * Returns headers equivalent to {@code requestHeaders} but with
-   * transport-specific changes. For example, this may set a Transfer-Encoding
-   * header if it is required but not present for the current transport.
+   * Returns a request equivalent to {@code request} but with transport-specific
+   * changes. For example, this may set a Transfer-Encoding header if it is
+   * required but not present for the current transport.
    */
-  RequestHeaders prepareRequestHeaders(RequestHeaders requestHeaders);
+  Request prepareRequest(Request request);
 
   /**
    * Returns an output stream where the request body can be written. The
@@ -60,7 +62,7 @@ interface Transport {
   void flushRequest() throws IOException;
 
   /** Read response headers and update the cookie manager. */
-  ResponseHeaders readResponseHeaders() throws IOException;
+  Response readResponseHeaders() throws IOException;
 
   // TODO: make this the content stream?
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;

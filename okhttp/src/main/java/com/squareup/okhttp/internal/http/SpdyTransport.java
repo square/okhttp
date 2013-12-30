@@ -16,6 +16,8 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -36,13 +38,13 @@ public final class SpdyTransport implements Transport {
     this.spdyConnection = spdyConnection;
   }
 
-  @Override public RequestHeaders prepareRequestHeaders(RequestHeaders requestHeaders) {
-    RequestHeaders.Builder builder = requestHeaders.newBuilder();
+  @Override public Request prepareRequest(Request request) {
+    Request.Builder builder = request.newBuilder();
 
     String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
-    URL url = httpEngine.policy.getURL();
-    builder.addSpdyRequestHeaders(httpEngine.method, HttpEngine.requestPath(url), version,
-        HttpEngine.getOriginAddress(url), httpEngine.uri.getScheme());
+    URL url = request.url();
+    builder.addSpdyRequestHeaders(request.method(), HttpEngine.requestPath(url), version,
+        HttpEngine.getOriginAddress(url), httpEngine.getRequest().url().getProtocol());
 
     if (httpEngine.hasRequestBody()) {
       long fixedContentLength = httpEngine.policy.getFixedContentLength();
@@ -66,7 +68,7 @@ public final class SpdyTransport implements Transport {
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
-    stream = spdyConnection.newStream(httpEngine.requestHeaders.getHeaders().toNameValueBlock(),
+    stream = spdyConnection.newStream(httpEngine.getRequest().getHeaders().toNameValueBlock(),
         hasRequestBody, hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
@@ -79,11 +81,14 @@ public final class SpdyTransport implements Transport {
     stream.getOutputStream().close();
   }
 
-  @Override public ResponseHeaders readResponseHeaders() throws IOException {
+  @Override public Response readResponseHeaders() throws IOException {
     List<String> nameValueBlock = stream.getResponseHeaders();
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
     httpEngine.receiveHeaders(rawHeaders);
-    return new ResponseHeaders(httpEngine.uri, rawHeaders);
+    return new Response.Builder(httpEngine.getRequest(), rawHeaders.getResponseCode())
+        .handshake(httpEngine.connection.getHandshake())
+        .rawHeaders(rawHeaders)
+        .build();
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {

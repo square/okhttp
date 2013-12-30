@@ -17,6 +17,8 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
@@ -58,26 +60,26 @@ public final class HttpTransport implements Transport {
     this.socketIn = inputStream;
   }
 
-  public RequestHeaders prepareRequestHeaders(RequestHeaders requestHeaders) {
-    if (!httpEngine.hasRequestBody()) return requestHeaders;
+  public Request prepareRequest(Request request) {
+    if (!httpEngine.hasRequestBody()) return request;
 
-    if (!requestHeaders.isChunked()
+    if (!request.isChunked()
         && httpEngine.policy.getChunkLength() > 0
         && httpEngine.connection.getHttpMinorVersion() != 0) {
-      return requestHeaders.newBuilder().setChunked().build();
+      return request.newBuilder().setChunked().build();
     }
 
     long fixedContentLength = httpEngine.policy.getFixedContentLength();
     if (fixedContentLength != -1) {
-      return requestHeaders.newBuilder().setContentLength(fixedContentLength).build();
+      return request.newBuilder().setContentLength(fixedContentLength).build();
     }
 
-    return requestHeaders;
+    return request;
   }
 
   @Override public OutputStream createRequestBody() throws IOException {
     // Stream a request body of unknown length.
-    if (httpEngine.requestHeaders.isChunked()) {
+    if (httpEngine.getRequest().isChunked()) {
       int chunkLength = httpEngine.policy.getChunkLength();
       if (chunkLength == -1) chunkLength = DEFAULT_CHUNK_LENGTH;
       writeRequestHeaders();
@@ -91,7 +93,7 @@ public final class HttpTransport implements Transport {
       return new FixedLengthOutputStream(requestOut, fixedContentLength);
     }
 
-    long contentLength = httpEngine.requestHeaders.getContentLength();
+    long contentLength = httpEngine.getRequest().getContentLength();
     if (contentLength > Integer.MAX_VALUE) {
       throw new IllegalArgumentException("Use setFixedLengthStreamingMode() or "
           + "setChunkedStreamingMode() for requests larger than 2 GiB.");
@@ -132,16 +134,19 @@ public final class HttpTransport implements Transport {
    */
   public void writeRequestHeaders() throws IOException {
     httpEngine.writingRequestHeaders();
-    RawHeaders headersToSend = httpEngine.requestHeaders.getHeaders();
+    RawHeaders headersToSend = httpEngine.getRequest().getHeaders();
     byte[] bytes = headersToSend.toBytes();
     requestOut.write(bytes);
   }
 
-  @Override public ResponseHeaders readResponseHeaders() throws IOException {
+  @Override public Response readResponseHeaders() throws IOException {
     RawHeaders rawHeaders = RawHeaders.readHttpHeaders(socketIn);
     httpEngine.connection.setHttpMinorVersion(rawHeaders.getHttpMinorVersion());
     httpEngine.receiveHeaders(rawHeaders);
-    return new ResponseHeaders(httpEngine.uri, rawHeaders);
+    return new Response.Builder(httpEngine.getRequest(), rawHeaders.getResponseCode())
+        .handshake(httpEngine.connection.getHandshake())
+        .rawHeaders(rawHeaders)
+        .build();
   }
 
   public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
@@ -156,12 +161,12 @@ public final class HttpTransport implements Transport {
     }
 
     // If the request specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.requestHeaders.hasConnectionClose()) {
+    if (httpEngine.getRequest().hasConnectionClose()) {
       return false;
     }
 
     // If the response specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.responseHeaders != null && httpEngine.responseHeaders.hasConnectionClose()) {
+    if (httpEngine.getResponse() != null && httpEngine.getResponse().hasConnectionClose()) {
       return false;
     }
 
@@ -209,13 +214,13 @@ public final class HttpTransport implements Transport {
       return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine, 0);
     }
 
-    if (httpEngine.responseHeaders.isChunked()) {
+    if (httpEngine.getResponse().isChunked()) {
       return new ChunkedInputStream(socketIn, cacheRequest, this);
     }
 
-    if (httpEngine.responseHeaders.getContentLength() != -1) {
+    if (httpEngine.getResponse().getContentLength() != -1) {
       return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine,
-          httpEngine.responseHeaders.getContentLength());
+          httpEngine.getResponse().getContentLength());
     }
 
     // Wrap the input stream from the connection (rather than just returning

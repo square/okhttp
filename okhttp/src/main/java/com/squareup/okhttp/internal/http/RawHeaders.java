@@ -17,6 +17,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,8 +36,8 @@ import java.util.TreeSet;
 
 /**
  * The HTTP status and unparsed header fields of a single HTTP message. Values
- * are represented as uninterpreted strings; use {@link RequestHeaders} and
- * {@link ResponseHeaders} for interpreted headers. This class maintains the
+ * are represented as uninterpreted strings; use {@code Request} and
+ * {@code Response} for interpreted headers. This class maintains the
  * order of the header fields within the HTTP message.
  *
  * <p>This class tracks fields line-by-line. A field with multiple comma-
@@ -185,7 +186,7 @@ public final class RawHeaders {
     Builder builder;
     do {
       builder = new Builder();
-      builder.set(ResponseHeaders.SELECTED_TRANSPORT, "http/1.1");
+      builder.set(Response.SELECTED_TRANSPORT, "http/1.1");
       builder.setStatusLine(Util.readAsciiLine(in));
       builder.readHeaders(in);
     } while (builder.responseCode == HttpEngine.HTTP_CONTINUE);
@@ -265,7 +266,7 @@ public final class RawHeaders {
     String status = null;
     String version = null;
     Builder builder = new Builder();
-    builder.set(ResponseHeaders.SELECTED_TRANSPORT, "spdy/3");
+    builder.set(Response.SELECTED_TRANSPORT, "spdy/3");
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
       String values = nameValueBlock.get(i + 1);
@@ -319,7 +320,6 @@ public final class RawHeaders {
     private int httpMinorVersion = 1;
     private int responseCode = -1;
     private String responseMessage;
-    private String transport;
 
     /** Sets the request line (like "GET / HTTP/1.1"). */
     public Builder setRequestLine(String requestLine) {
@@ -412,13 +412,6 @@ public final class RawHeaders {
           namesAndValues.remove(i); // field name
           namesAndValues.remove(i); // value
         }
-      }
-      return this;
-    }
-
-    public Builder addAll(String fieldName, List<String> headerFields) {
-      for (String value : headerFields) {
-        add(fieldName, value);
       }
       return this;
     }
