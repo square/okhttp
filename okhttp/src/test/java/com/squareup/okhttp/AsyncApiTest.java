@@ -62,7 +62,7 @@ public final class AsyncApiTest {
         .build();
     client.enqueue(request, receiver);
 
-    receiver.await(request)
+    receiver.await(request.url())
         .assertCode(200)
         .assertContainsHeaders("Content-Type: text/plain")
         .assertBody("abc");
@@ -83,7 +83,7 @@ public final class AsyncApiTest {
     Request request = new Request.Builder(server.getUrl("/")).build();
     client.enqueue(request, receiver);
 
-    receiver.await(request).assertHandshake();
+    receiver.await(request.url()).assertHandshake();
   }
 
   @Test public void post() throws Exception {
@@ -95,7 +95,7 @@ public final class AsyncApiTest {
         .build();
     client.enqueue(request, receiver);
 
-    receiver.await(request)
+    receiver.await(request.url())
         .assertCode(200)
         .assertBody("abc");
 
@@ -114,12 +114,12 @@ public final class AsyncApiTest {
 
     Request request1 = new Request.Builder(server.getUrl("/")).build();
     client.enqueue(request1, receiver);
-    receiver.await(request1).assertCode(200).assertBody("A");
+    receiver.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder(server.getUrl("/")).build();
     client.enqueue(request2, receiver);
-    receiver.await(request2).assertCode(200).assertBody("A");
+    receiver.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 }

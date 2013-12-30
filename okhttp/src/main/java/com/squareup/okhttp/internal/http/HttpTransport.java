@@ -58,21 +58,28 @@ public final class HttpTransport implements Transport {
     this.socketIn = inputStream;
   }
 
-  @Override public OutputStream createRequestBody() throws IOException {
-    boolean chunked = httpEngine.requestHeaders.isChunked();
-    if (!chunked
+  public RequestHeaders prepareRequestHeaders(RequestHeaders requestHeaders) {
+    if (!httpEngine.hasRequestBody()) return requestHeaders;
+
+    if (!requestHeaders.isChunked()
         && httpEngine.policy.getChunkLength() > 0
         && httpEngine.connection.getHttpMinorVersion() != 0) {
-      httpEngine.requestHeaders.setChunked();
-      chunked = true;
+      return requestHeaders.newBuilder().setChunked().build();
     }
 
+    long fixedContentLength = httpEngine.policy.getFixedContentLength();
+    if (fixedContentLength != -1) {
+      return requestHeaders.newBuilder().setContentLength(fixedContentLength).build();
+    }
+
+    return requestHeaders;
+  }
+
+  @Override public OutputStream createRequestBody() throws IOException {
     // Stream a request body of unknown length.
-    if (chunked) {
+    if (httpEngine.requestHeaders.isChunked()) {
       int chunkLength = httpEngine.policy.getChunkLength();
-      if (chunkLength == -1) {
-        chunkLength = DEFAULT_CHUNK_LENGTH;
-      }
+      if (chunkLength == -1) chunkLength = DEFAULT_CHUNK_LENGTH;
       writeRequestHeaders();
       return new ChunkedOutputStream(requestOut, chunkLength);
     }
@@ -80,7 +87,6 @@ public final class HttpTransport implements Transport {
     // Stream a request body of a known length.
     long fixedContentLength = httpEngine.policy.getFixedContentLength();
     if (fixedContentLength != -1) {
-      httpEngine.requestHeaders.setContentLength(fixedContentLength);
       writeRequestHeaders();
       return new FixedLengthOutputStream(requestOut, fixedContentLength);
     }
@@ -132,13 +138,10 @@ public final class HttpTransport implements Transport {
   }
 
   @Override public ResponseHeaders readResponseHeaders() throws IOException {
-    RawHeaders rawHeaders = RawHeaders.fromBytes(socketIn);
+    RawHeaders rawHeaders = RawHeaders.readHttpHeaders(socketIn);
     httpEngine.connection.setHttpMinorVersion(rawHeaders.getHttpMinorVersion());
     httpEngine.receiveHeaders(rawHeaders);
-
-    ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
-    headers.setTransport("http/1.1");
-    return headers;
+    return new ResponseHeaders(httpEngine.uri, rawHeaders);
   }
 
   public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
@@ -469,9 +472,10 @@ public final class HttpTransport implements Transport {
       }
       if (bytesRemainingInChunk == 0) {
         hasMoreChunks = false;
-        RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
-        RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
-        httpEngine.receiveHeaders(rawResponseHeaders);
+        RawHeaders trailers = new RawHeaders.Builder()
+            .readHeaders(transport.socketIn)
+            .build();
+        httpEngine.receiveHeaders(trailers);
         endOfInput();
       }
     }

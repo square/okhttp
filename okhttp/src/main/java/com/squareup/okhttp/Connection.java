@@ -306,22 +306,17 @@ public final class Connection implements Closeable {
     RawHeaders requestHeaders = tunnelRequest.getRequestHeaders();
     while (true) {
       out.write(requestHeaders.toBytes());
-      RawHeaders responseHeaders = RawHeaders.fromBytes(in);
+      RawHeaders responseHeaders = RawHeaders.readHttpHeaders(in);
 
       switch (responseHeaders.getResponseCode()) {
         case HTTP_OK:
           return;
         case HTTP_PROXY_AUTH:
-          requestHeaders = new RawHeaders(requestHeaders);
           URL url = new URL("https", tunnelRequest.host, tunnelRequest.port, "/");
-          boolean credentialsFound = HttpAuthenticator.processAuthHeader(
-              route.address.authenticator, HTTP_PROXY_AUTH, responseHeaders, requestHeaders,
-              route.proxy, url);
-          if (credentialsFound) {
-            continue;
-          } else {
-            throw new IOException("Failed to authenticate with proxy");
-          }
+          requestHeaders = HttpAuthenticator.processAuthHeader(route.address.authenticator,
+              HTTP_PROXY_AUTH, responseHeaders, requestHeaders, route.proxy, url);
+          if (requestHeaders != null) continue;
+          throw new IOException("Failed to authenticate with proxy");
         default:
           throw new IOException(
               "Unexpected response code for CONNECT: " + responseHeaders.getResponseCode());

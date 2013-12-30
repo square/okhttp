@@ -49,7 +49,7 @@ public final class Response {
     this.request = builder.request;
     this.code = builder.code;
     this.handshake = builder.handshake;
-    this.headers = new RawHeaders(builder.headers);
+    this.headers = builder.headers.build();
     this.body = builder.body;
     this.redirectedBy = builder.redirectedBy;
   }
@@ -109,7 +109,7 @@ public final class Response {
 
   // TODO: this shouldn't be public.
   public RawHeaders rawHeaders() {
-    return new RawHeaders(headers);
+    return headers;
   }
 
   public String headerValue(int index) {
@@ -254,7 +254,7 @@ public final class Response {
     private final Request request;
     private final int code;
     private Handshake handshake;
-    private RawHeaders headers = new RawHeaders();
+    private RawHeaders.Builder headers = new RawHeaders.Builder();
     private Body body;
     private Response redirectedBy;
 
@@ -290,7 +290,7 @@ public final class Response {
 
     // TODO: this shouldn't be public.
     public Builder rawHeaders(RawHeaders rawHeaders) {
-      headers = new RawHeaders(rawHeaders);
+      headers = rawHeaders.newBuilder();
       return this;
     }
 

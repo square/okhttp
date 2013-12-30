@@ -774,7 +774,7 @@ public final class HttpResponseCacheTest {
 
     URLConnection request2 = openConnection(url);
     if (expectCached) {
-      assertEquals("1", request1.getHeaderField("X-Response-ID"));
+      assertEquals("1", request2.getHeaderField("X-Response-ID"));
     } else {
       assertEquals("2", request2.getHeaderField("X-Response-ID"));
     }

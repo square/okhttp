@@ -45,7 +45,7 @@ public final class Request {
   private Request(Builder builder) {
     this.url = builder.url;
     this.method = builder.method;
-    this.headers = new RawHeaders(builder.headers);
+    this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
   }
@@ -75,7 +75,7 @@ public final class Request {
   }
 
   RawHeaders rawHeaders() {
-    return new RawHeaders(headers);
+    return headers;
   }
 
   public int headerCount() {
@@ -192,7 +192,7 @@ public final class Request {
   public static class Builder {
     private URL url;
     private String method = "GET";
-    private RawHeaders headers = new RawHeaders();
+    private RawHeaders.Builder headers = new RawHeaders.Builder();
     private Body body;
     private Object tag;
 
@@ -239,7 +239,7 @@ public final class Request {
 
     // TODO: this shouldn't be public.
     public Builder rawHeaders(RawHeaders rawHeaders) {
-      headers = new RawHeaders(rawHeaders);
+      headers = rawHeaders.newBuilder();
       return this;
     }
 

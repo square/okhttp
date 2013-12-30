@@ -104,17 +104,16 @@ final class Job implements Runnable, Policy {
     Response redirectedBy = null;
 
     while (true) {
-      HttpEngine engine = newEngine(connection);
-
       Request.Body body = request.body();
       if (body != null) {
         MediaType contentType = body.contentType();
         if (contentType == null) throw new IllegalStateException("contentType == null");
-        if (engine.getRequestHeaders().getContentType() == null) {
-          engine.getRequestHeaders().setContentType(contentType.toString());
+        if (request.header("Content-Type") == null) {
+          request = request.newBuilder().header("Content-Type", contentType.toString()).build();
         }
       }
 
+      HttpEngine engine = newEngine(connection);
       engine.sendRequest();
 
       if (body != null) {
@@ -183,11 +182,10 @@ final class Job implements Runnable, Policy {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        RawHeaders successorRequestHeaders = request.rawHeaders();
-        boolean credentialsFound = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
-            response.code(), response.rawHeaders(), successorRequestHeaders, selectedProxy,
-            this.request.url());
-        return credentialsFound
+        RawHeaders successorRequestHeaders = HttpAuthenticator.processAuthHeader(
+            client.getAuthenticator(), response.code(), response.rawHeaders(), request.rawHeaders(),
+            selectedProxy, this.request.url());
+        return successorRequestHeaders != null
             ? request.newBuilder().rawHeaders(successorRequestHeaders).build()
             : null;
 

@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
 import static com.squareup.okhttp.internal.Util.equal;
 
@@ -45,32 +44,32 @@ public final class ResponseHeaders {
   /** HTTP synthetic header with the selected transport (spdy/3, http/1.1, etc). */
   static final String SELECTED_TRANSPORT = Platform.get().getPrefix() + "-Selected-Transport";
 
-  private final URI uri;
-  private final RawHeaders headers;
+  final URI uri;
+  final RawHeaders headers;
 
   /** The server's time when this response was served, if known. */
-  private Date servedDate;
+  Date servedDate;
 
   /** The last modified date of the response, if known. */
-  private Date lastModified;
+  Date lastModified;
 
   /**
    * The expiration date of the response, if known. If both this field and the
    * max age are set, the max age is preferred.
    */
-  private Date expires;
+  Date expires;
 
   /**
    * Extension header set by HttpURLConnectionImpl specifying the timestamp
    * when the HTTP request was first initiated.
    */
-  private long sentRequestMillis;
+  long sentRequestMillis;
 
   /**
    * Extension header set by HttpURLConnectionImpl specifying the timestamp
    * when the HTTP response was first received.
    */
-  private long receivedResponseMillis;
+  long receivedResponseMillis;
 
   /**
    * In the response, this field's name "no-cache" is misleading. It doesn't
@@ -78,23 +77,23 @@ public final class ResponseHeaders {
    * the response with the origin server before returning it. We can do this
    * with a conditional get.
    */
-  private boolean noCache;
+  boolean noCache;
 
   /** If true, this response should not be cached. */
-  private boolean noStore;
+  boolean noStore;
 
   /**
    * The duration past the response's served date that it can be served
    * without validation.
    */
-  private int maxAgeSeconds = -1;
+  int maxAgeSeconds = -1;
 
   /**
    * The "s-maxage" directive is the max age for shared caches. Not to be
    * confused with "max-age" for non-shared caches, As in Firefox and Chrome,
    * this directive is not honored by this cache.
    */
-  private int sMaxAgeSeconds = -1;
+  int sMaxAgeSeconds = -1;
 
   /**
    * This request header field's name "only-if-cached" is misleading. It
@@ -103,10 +102,10 @@ public final class ResponseHeaders {
    * Cached responses that would require validation (ie. conditional gets) are
    * not permitted if this header is set.
    */
-  private boolean isPublic;
-  private boolean mustRevalidate;
-  private String etag;
-  private int ageSeconds = -1;
+  boolean isPublic;
+  boolean mustRevalidate;
+  String etag;
+  int ageSeconds = -1;
 
   /** Case-insensitive set of field names. */
   private Set<String> varyFields = Collections.emptySet();
@@ -191,16 +190,6 @@ public final class ResponseHeaders {
     return "gzip".equalsIgnoreCase(contentEncoding);
   }
 
-  public void stripContentEncoding() {
-    contentEncoding = null;
-    headers.removeAll("Content-Encoding");
-  }
-
-  public void stripContentLength() {
-    contentLength = -1;
-    headers.removeAll("Content-Length");
-  }
-
   public boolean isChunked() {
     return "chunked".equalsIgnoreCase(transferEncoding);
   }
@@ -277,97 +266,6 @@ public final class ResponseHeaders {
     return connection;
   }
 
-  public void setLocalTimestamps(long sentRequestMillis, long receivedResponseMillis) {
-    this.sentRequestMillis = sentRequestMillis;
-    headers.add(SENT_MILLIS, Long.toString(sentRequestMillis));
-    this.receivedResponseMillis = receivedResponseMillis;
-    headers.add(RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
-  }
-
-  public void setResponseSource(ResponseSource responseSource) {
-    headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + headers.getResponseCode());
-  }
-
-  public void setTransport(String transport) {
-    headers.set(SELECTED_TRANSPORT, transport);
-  }
-
-  /**
-   * Returns the current age of the response, in milliseconds. The calculation
-   * is specified by RFC 2616, 13.2.3 Age Calculations.
-   */
-  private long computeAge(long nowMillis) {
-    long apparentReceivedAge =
-        servedDate != null ? Math.max(0, receivedResponseMillis - servedDate.getTime()) : 0;
-    long receivedAge =
-        ageSeconds != -1 ? Math.max(apparentReceivedAge, TimeUnit.SECONDS.toMillis(ageSeconds))
-            : apparentReceivedAge;
-    long responseDuration = receivedResponseMillis - sentRequestMillis;
-    long residentDuration = nowMillis - receivedResponseMillis;
-    return receivedAge + responseDuration + residentDuration;
-  }
-
-  /**
-   * Returns the number of milliseconds that the response was fresh for,
-   * starting from the served date.
-   */
-  private long computeFreshnessLifetime() {
-    if (maxAgeSeconds != -1) {
-      return TimeUnit.SECONDS.toMillis(maxAgeSeconds);
-    } else if (expires != null) {
-      long servedMillis = servedDate != null ? servedDate.getTime() : receivedResponseMillis;
-      long delta = expires.getTime() - servedMillis;
-      return delta > 0 ? delta : 0;
-    } else if (lastModified != null && uri.getRawQuery() == null) {
-      // As recommended by the HTTP RFC and implemented in Firefox, the
-      // max age of a document should be defaulted to 10% of the
-      // document's age at the time it was served. Default expiration
-      // dates aren't used for URIs containing a query.
-      long servedMillis = servedDate != null ? servedDate.getTime() : sentRequestMillis;
-      long delta = servedMillis - lastModified.getTime();
-      return delta > 0 ? (delta / 10) : 0;
-    }
-    return 0;
-  }
-
-  /**
-   * Returns true if computeFreshnessLifetime used a heuristic. If we used a
-   * heuristic to serve a cached response older than 24 hours, we are required
-   * to attach a warning.
-   */
-  private boolean isFreshnessLifetimeHeuristic() {
-    return maxAgeSeconds == -1 && expires == null;
-  }
-
-  /**
-   * Returns true if this response can be stored to later serve another
-   * request.
-   */
-  public boolean isCacheable(RequestHeaders request) {
-    // Always go to network for uncacheable response codes (RFC 2616, 13.4),
-    // This implementation doesn't support caching partial content.
-    int responseCode = headers.getResponseCode();
-    if (responseCode != HttpURLConnection.HTTP_OK
-        && responseCode != HttpURLConnection.HTTP_NOT_AUTHORITATIVE
-        && responseCode != HttpURLConnection.HTTP_MULT_CHOICE
-        && responseCode != HttpURLConnection.HTTP_MOVED_PERM
-        && responseCode != HttpURLConnection.HTTP_GONE) {
-      return false;
-    }
-
-    // Responses to authorized requests aren't cacheable unless they include
-    // a 'public', 'must-revalidate' or 's-maxage' directive.
-    if (request.hasAuthorization() && !isPublic && !mustRevalidate && sMaxAgeSeconds == -1) {
-      return false;
-    }
-
-    if (noStore) {
-      return false;
-    }
-
-    return true;
-  }
-
   /**
    * Returns true if a Vary header contains an asterisk. Such responses cannot
    * be cached.
@@ -385,60 +283,6 @@ public final class ResponseHeaders {
       if (!equal(varyHeaders.values(field), newRequest.headers(field))) return false;
     }
     return true;
-  }
-
-  /** Returns the source to satisfy {@code request} given this cached response. */
-  public ResponseSource chooseResponseSource(long nowMillis, RequestHeaders request) {
-    // If this response shouldn't have been stored, it should never be used
-    // as a response source. This check should be redundant as long as the
-    // persistence store is well-behaved and the rules are constant.
-    if (!isCacheable(request)) {
-      return ResponseSource.NETWORK;
-    }
-
-    if (request.isNoCache() || request.hasConditions()) {
-      return ResponseSource.NETWORK;
-    }
-
-    long ageMillis = computeAge(nowMillis);
-    long freshMillis = computeFreshnessLifetime();
-
-    if (request.getMaxAgeSeconds() != -1) {
-      freshMillis = Math.min(freshMillis, TimeUnit.SECONDS.toMillis(request.getMaxAgeSeconds()));
-    }
-
-    long minFreshMillis = 0;
-    if (request.getMinFreshSeconds() != -1) {
-      minFreshMillis = TimeUnit.SECONDS.toMillis(request.getMinFreshSeconds());
-    }
-
-    long maxStaleMillis = 0;
-    if (!mustRevalidate && request.getMaxStaleSeconds() != -1) {
-      maxStaleMillis = TimeUnit.SECONDS.toMillis(request.getMaxStaleSeconds());
-    }
-
-    if (!noCache && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
-      if (ageMillis + minFreshMillis >= freshMillis) {
-        headers.add("Warning", "110 HttpURLConnection \"Response is stale\"");
-      }
-      long oneDayMillis = 24 * 60 * 60 * 1000L;
-      if (ageMillis > oneDayMillis && isFreshnessLifetimeHeuristic()) {
-        headers.add("Warning", "113 HttpURLConnection \"Heuristic expiration\"");
-      }
-      return ResponseSource.CACHE;
-    }
-
-    if (lastModified != null) {
-      request.setIfModifiedSince(lastModified);
-    } else if (servedDate != null) {
-      request.setIfModifiedSince(servedDate);
-    }
-
-    if (etag != null) {
-      request.setIfNoneMatch(etag);
-    }
-
-    return request.hasConditions() ? ResponseSource.CONDITIONAL_CACHE : ResponseSource.NETWORK;
   }
 
   /**
@@ -467,7 +311,7 @@ public final class ResponseHeaders {
    * 13.5.3.
    */
   public ResponseHeaders combine(ResponseHeaders network) throws IOException {
-    RawHeaders result = new RawHeaders();
+    RawHeaders.Builder result = new RawHeaders.Builder();
     result.setStatusLine(headers.getStatusLine());
 
     for (int i = 0; i < headers.length(); i++) {
@@ -488,7 +332,7 @@ public final class ResponseHeaders {
       }
     }
 
-    return new ResponseHeaders(uri, result);
+    return new ResponseHeaders(uri, result.build());
   }
 
   /**
@@ -504,5 +348,49 @@ public final class ResponseHeaders {
         && !"Trailers".equalsIgnoreCase(fieldName)
         && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
         && !"Upgrade".equalsIgnoreCase(fieldName);
+  }
+
+  public Builder newBuilder() {
+    return new Builder(uri, headers);
+  }
+
+  static class Builder {
+    private final URI uri;
+    private final RawHeaders.Builder headers;
+
+    public Builder(URI uri, RawHeaders headers) {
+      this.uri = uri;
+      this.headers = headers.newBuilder();
+    }
+
+    public Builder stripContentEncoding() {
+      headers.removeAll("Content-Encoding");
+      return this;
+    }
+
+    public Builder stripContentLength() {
+      headers.removeAll("Content-Length");
+      return this;
+    }
+
+    public Builder setLocalTimestamps(long sentRequestMillis, long receivedResponseMillis) {
+      headers.set(SENT_MILLIS, Long.toString(sentRequestMillis));
+      headers.set(RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
+      return this;
+    }
+
+    public Builder setResponseSource(ResponseSource responseSource) {
+      headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + headers.getResponseCode());
+      return this;
+    }
+
+    public Builder addWarning(String message) {
+      headers.add("Warning", message);
+      return this;
+    }
+
+    public ResponseHeaders build() {
+      return new ResponseHeaders(uri, headers.build());
+    }
   }
 }

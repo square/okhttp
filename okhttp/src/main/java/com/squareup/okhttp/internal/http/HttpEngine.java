@@ -123,7 +123,7 @@ public class HttpEngine {
 
   final URI uri;
 
-  final RequestHeaders requestHeaders;
+  RequestHeaders requestHeaders;
 
   /** Null until a response is received from the network or the cache. */
   ResponseHeaders responseHeaders;
@@ -170,7 +170,7 @@ public class HttpEngine {
       throw new IOException(e.getMessage());
     }
 
-    this.requestHeaders = new RequestHeaders(uri, new RawHeaders(requestHeaders));
+    this.requestHeaders = new RequestHeaders(uri, requestHeaders);
 
     if (connection != null && connection.getSocket() instanceof SSLSocket) {
       handshake = Handshake.get(((SSLSocket) connection.getSocket()).getSession());
@@ -208,8 +208,9 @@ public class HttpEngine {
       }
       this.responseSource = ResponseSource.CACHE;
 
-      RawHeaders gatewayTimeoutHeaders = new RawHeaders();
-      gatewayTimeoutHeaders.setStatusLine("HTTP/1.1 504 Gateway Timeout");
+      RawHeaders gatewayTimeoutHeaders = new RawHeaders.Builder()
+          .setStatusLine("HTTP/1.1 504 Gateway Timeout")
+          .build();
       this.validatingResponse = new Response.Builder(request(), 504)
           .rawHeaders(gatewayTimeoutHeaders)
           .body(EMPTY_BODY)
@@ -246,7 +247,12 @@ public class HttpEngine {
 
     ResponseHeaders cachedResponseHeaders = new ResponseHeaders(uri, candidate.rawHeaders());
     long now = System.currentTimeMillis();
-    this.responseSource = cachedResponseHeaders.chooseResponseSource(now, requestHeaders);
+    ResponseStrategy responseStrategy = ResponseStrategy.get(
+        now, cachedResponseHeaders, requestHeaders);
+    this.responseSource = responseStrategy.source;
+    this.requestHeaders = responseStrategy.request;
+    cachedResponseHeaders = responseStrategy.response;
+
     if (responseSource == ResponseSource.CACHE) {
       this.validatingResponse = candidate;
       promoteValidatingResponse(cachedResponseHeaders);
@@ -292,6 +298,7 @@ public class HttpEngine {
     }
 
     transport = (Transport) connection.newTransport(this);
+    requestHeaders = transport.prepareRequestHeaders(requestHeaders);
 
     if (hasRequestBody() && requestBodyOut == null) {
       // Create a request body if we don't have one already. We'll already
@@ -332,7 +339,7 @@ public class HttpEngine {
     connected(connection);
     if (connection.getRoute().getProxy() != client.getProxy()) {
       // Update the request line if the proxy changed; it may need a host name.
-      requestHeaders.getHeaders().setRequestLine(getRequestLine());
+      requestHeaders = requestHeaders.newBuilder().setRequestLine(getRequestLine()).build();
     }
   }
 
@@ -428,7 +435,7 @@ public class HttpEngine {
     if (responseCache == null) return;
 
     // Should we cache this response for this request?
-    if (!responseHeaders.isCacheable(requestHeaders)) {
+    if (!ResponseStrategy.isCacheable(responseHeaders, requestHeaders)) {
       responseCache.maybeRemove(request());
       return;
     }
@@ -488,8 +495,10 @@ public class HttpEngine {
       // length of the gzipped response. This isn't terribly useful and is
       // dangerous because clients can query the content length, but not the
       // content encoding.
-      responseHeaders.stripContentEncoding();
-      responseHeaders.stripContentLength();
+      responseHeaders = responseHeaders.newBuilder()
+          .stripContentEncoding()
+          .stripContentLength()
+          .build();
       responseBodyIn = new GZIPInputStream(transferStream);
     } else {
       responseBodyIn = transferStream;
@@ -531,40 +540,44 @@ public class HttpEngine {
    * doesn't know what content types the application is interested in.
    */
   private void prepareRawRequestHeaders() throws IOException {
-    requestHeaders.getHeaders().setRequestLine(getRequestLine());
+    RequestHeaders.Builder result = requestHeaders.newBuilder();
+
+    result.setRequestLine(getRequestLine());
 
     if (requestHeaders.getUserAgent() == null) {
-      requestHeaders.setUserAgent(getDefaultUserAgent());
+      result.setUserAgent(getDefaultUserAgent());
     }
 
     if (requestHeaders.getHost() == null) {
-      requestHeaders.setHost(getOriginAddress(policy.getURL()));
+      result.setHost(getOriginAddress(policy.getURL()));
     }
 
     if ((connection == null || connection.getHttpMinorVersion() != 0)
         && requestHeaders.getConnection() == null) {
-      requestHeaders.setConnection("Keep-Alive");
+      result.setConnection("Keep-Alive");
     }
 
     if (requestHeaders.getAcceptEncoding() == null) {
       transparentGzip = true;
-      requestHeaders.setAcceptEncoding("gzip");
+      result.setAcceptEncoding("gzip");
     }
 
     if (hasRequestBody() && requestHeaders.getContentType() == null) {
-      requestHeaders.setContentType("application/x-www-form-urlencoded");
+      result.setContentType("application/x-www-form-urlencoded");
     }
 
     long ifModifiedSince = policy.getIfModifiedSince();
     if (ifModifiedSince != 0) {
-      requestHeaders.setIfModifiedSince(new Date(ifModifiedSince));
+      result.setIfModifiedSince(new Date(ifModifiedSince));
     }
 
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      requestHeaders.addCookies(
+      result.addCookies(
           cookieHandler.get(uri, requestHeaders.getHeaders().toMultimap(false)));
     }
+
+    requestHeaders = result.build();
   }
 
   /**
@@ -645,7 +658,7 @@ public class HttpEngine {
    */
   public final void readResponse() throws IOException {
     if (hasResponse()) {
-      responseHeaders.setResponseSource(responseSource);
+      responseHeaders = responseHeaders.newBuilder().setResponseSource(responseSource).build();
       return;
     }
 
@@ -658,9 +671,11 @@ public class HttpEngine {
     }
 
     if (sentRequestMillis == -1) {
-      if (requestBodyOut instanceof RetryableOutputStream) {
+      if (requestHeaders.getContentLength() == -1
+          && requestBodyOut instanceof RetryableOutputStream) {
+        // We might not learn the Content-Length until the request body has been buffered.
         int contentLength = ((RetryableOutputStream) requestBodyOut).contentLength();
-        requestHeaders.setContentLength(contentLength);
+        requestHeaders = requestHeaders.newBuilder().setContentLength(contentLength).build();
       }
       transport.writeRequestHeaders();
     }
@@ -674,9 +689,11 @@ public class HttpEngine {
 
     transport.flushRequest();
 
-    responseHeaders = transport.readResponseHeaders();
-    responseHeaders.setLocalTimestamps(sentRequestMillis, System.currentTimeMillis());
-    responseHeaders.setResponseSource(responseSource);
+    responseHeaders = transport.readResponseHeaders()
+        .newBuilder()
+        .setLocalTimestamps(sentRequestMillis, System.currentTimeMillis())
+        .setResponseSource(responseSource)
+        .build();
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       ResponseHeaders validatingResponseHeaders = new ResponseHeaders(

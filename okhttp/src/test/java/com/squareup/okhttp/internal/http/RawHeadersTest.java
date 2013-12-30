@@ -31,57 +31,63 @@ public final class RawHeadersTest {
         ":status", "200 OK",
         ":version", "HTTP/1.1");
     RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
-    assertEquals(3, rawHeaders.length());
+    assertEquals(4, rawHeaders.length());
     assertEquals("HTTP/1.1 200 OK", rawHeaders.getStatusLine());
     assertEquals("no-cache, no-store", rawHeaders.get("cache-control"));
     assertEquals("Cookie2", rawHeaders.get("set-cookie"));
-    assertEquals("cache-control", rawHeaders.getFieldName(0));
-    assertEquals("no-cache, no-store", rawHeaders.getValue(0));
-    assertEquals("set-cookie", rawHeaders.getFieldName(1));
-    assertEquals("Cookie1", rawHeaders.getValue(1));
+    assertEquals("spdy/3", rawHeaders.get(ResponseHeaders.SELECTED_TRANSPORT));
+    assertEquals(ResponseHeaders.SELECTED_TRANSPORT, rawHeaders.getFieldName(0));
+    assertEquals("spdy/3", rawHeaders.getValue(0));
+    assertEquals("cache-control", rawHeaders.getFieldName(1));
+    assertEquals("no-cache, no-store", rawHeaders.getValue(1));
     assertEquals("set-cookie", rawHeaders.getFieldName(2));
-    assertEquals("Cookie2", rawHeaders.getValue(2));
+    assertEquals("Cookie1", rawHeaders.getValue(2));
+    assertEquals("set-cookie", rawHeaders.getFieldName(3));
+    assertEquals("Cookie2", rawHeaders.getValue(3));
     assertNull(rawHeaders.get(":status"));
     assertNull(rawHeaders.get(":version"));
   }
 
   @Test public void toNameValueBlock() {
-    RawHeaders rawHeaders = new RawHeaders();
-    rawHeaders.add("cache-control", "no-cache, no-store");
-    rawHeaders.add("set-cookie", "Cookie1");
-    rawHeaders.add("set-cookie", "Cookie2");
-    rawHeaders.add(":status", "200 OK");
+    RawHeaders.Builder builder = new RawHeaders.Builder();
+    builder.add("cache-control", "no-cache, no-store");
+    builder.add("set-cookie", "Cookie1");
+    builder.add("set-cookie", "Cookie2");
+    builder.add(":status", "200 OK");
     // TODO: fromNameValueBlock should take the status line headers
-    List<String> nameValueBlock = rawHeaders.toNameValueBlock();
-    List<String> expected =
-        Arrays.asList("cache-control", "no-cache, no-store", "set-cookie", "Cookie1\u0000Cookie2",
-            ":status", "200 OK");
+    List<String> nameValueBlock = builder.build().toNameValueBlock();
+    List<String> expected = Arrays.asList(
+        "cache-control", "no-cache, no-store",
+        "set-cookie", "Cookie1\u0000Cookie2",
+        ":status", "200 OK");
     assertEquals(expected, nameValueBlock);
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeaders() {
-    RawHeaders rawHeaders = new RawHeaders();
-    rawHeaders.add("Connection", "close");
-    rawHeaders.add("Transfer-Encoding", "chunked");
-    assertEquals(Arrays.<String>asList(), rawHeaders.toNameValueBlock());
+    RawHeaders.Builder builder = new RawHeaders.Builder();
+    builder.add("Connection", "close");
+    builder.add("Transfer-Encoding", "chunked");
+    assertEquals(Arrays.<String>asList(), builder.build().toNameValueBlock());
   }
 
   @Test public void statusMessage() throws IOException {
-    RawHeaders rawHeaders = new RawHeaders();
-    final String message = "Temporary Redirect";
-    final int version = 1;
-    final int code = 200;
-    rawHeaders.setStatusLine("HTTP/1." + version + " " + code + " " + message);
+    RawHeaders.Builder builder = new RawHeaders.Builder();
+    String message = "Temporary Redirect";
+    int version = 1;
+    int code = 200;
+    builder.setStatusLine("HTTP/1." + version + " " + code + " " + message);
+    RawHeaders rawHeaders = builder.build();
     assertEquals(message, rawHeaders.getResponseMessage());
     assertEquals(version, rawHeaders.getHttpMinorVersion());
     assertEquals(code, rawHeaders.getResponseCode());
   }
 
   @Test public void statusMessageWithEmptyMessage() throws IOException {
-    RawHeaders rawHeaders = new RawHeaders();
-    final int version = 1;
-    final int code = 503;
-    rawHeaders.setStatusLine("HTTP/1." + version + " " + code + " ");
+    RawHeaders.Builder builder = new RawHeaders.Builder();
+    int version = 1;
+    int code = 503;
+    builder.setStatusLine("HTTP/1." + version + " " + code + " ");
+    RawHeaders rawHeaders = builder.build();
     assertEquals("", rawHeaders.getResponseMessage());
     assertEquals(version, rawHeaders.getHttpMinorVersion());
     assertEquals(code, rawHeaders.getResponseCode());
@@ -93,10 +99,11 @@ public final class RawHeadersTest {
    * http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
    */
   @Test public void statusMessageWithEmptyMessageAndNoLeadingSpace() throws IOException {
-    RawHeaders rawHeaders = new RawHeaders();
-    final int version = 1;
-    final int code = 503;
-    rawHeaders.setStatusLine("HTTP/1." + version + " " + code);
+    RawHeaders.Builder builder = new RawHeaders.Builder();
+    int version = 1;
+    int code = 503;
+    builder.setStatusLine("HTTP/1." + version + " " + code);
+    RawHeaders rawHeaders = builder.build();
     assertEquals("", rawHeaders.getResponseMessage());
     assertEquals(version, rawHeaders.getHttpMinorVersion());
     assertEquals(code, rawHeaders.getResponseCode());
