@@ -53,6 +53,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   private OkAuthenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followProtocolRedirects = true;
+  private boolean retryOnFailure = true;
   private int connectTimeout;
   private int readTimeout;
 
@@ -282,6 +283,27 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
     return followProtocolRedirects;
   }
 
+  /**
+   * Configure this client to retry the failed requests, if possible.
+   *
+   * <p>By default, the {@link HttpURLConnectionImpl} will attempt to get a
+   * response for each sent request. If a request fails and the response cannot
+   * be read, the request will be retried.
+   *
+   * <p>This property controls whether this behavior is enabled or not. If unset or
+   * set to <code>true</code>, failed requests will be retried. If set to
+   * <code>false</code>, failed requests will generate an exception and no retry will
+   * be attempted.
+   */
+  public OkHttpClient setRetryOnFailure(boolean retryOnFailure) {
+    this.retryOnFailure = retryOnFailure;
+    return this;
+  }
+
+  public boolean getRetryOnFailure() {
+    return retryOnFailure;
+  }
+
   public RouteDatabase getRoutesDatabase() {
     return routeDatabase;
   }
@@ -392,6 +414,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
         : HttpAuthenticator.SYSTEM_DEFAULT;
     result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
     result.followProtocolRedirects = followProtocolRedirects;
+    result.retryOnFailure = retryOnFailure;
     result.transports = transports != null ? transports : DEFAULT_TRANSPORTS;
     result.connectTimeout = connectTimeout;
     result.readTimeout = readTimeout;

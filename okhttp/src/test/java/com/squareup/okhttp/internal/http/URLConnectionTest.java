@@ -284,6 +284,36 @@ public final class URLConnectionTest {
     }
   }
 
+  @Test public void requestNotRetriedIfFailedToReadResponseAndRetriesDisabled() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+    server.enqueue(new MockResponse()); // unused
+    server.play();
+
+    OkHttpClient nonRetryingClient = new OkHttpClient().setRetryOnFailure(false);
+    try {
+        nonRetryingClient.open(server.getUrl("/")).getResponseCode();
+        fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  @Test public void requestIsRetriedIfRequestFailedAndRetriesDisabled() throws IOException, InterruptedException {
+      server.useHttps(sslContext.getSocketFactory(), false);
+      server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+      server.enqueue(new MockResponse().setBody("this response comes via SSL"));
+      server.play();
+
+      OkHttpClient nonRetryingClient = new OkHttpClient().setRetryOnFailure(false);
+      nonRetryingClient.setSslSocketFactory(sslContext.getSocketFactory());
+      nonRetryingClient.setHostnameVerifier(new RecordingHostnameVerifier());
+      HttpURLConnection connection = nonRetryingClient.open(server.getUrl("/foo"));
+
+      assertContent("this response comes via SSL", connection);
+
+      RecordedRequest request = server.takeRequest();
+      assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    }
+
   @Test public void requestBodySurvivesRetriesWithFixedLength() throws Exception {
     testRequestBodySurvivesRetries(TransferKind.FIXED_LENGTH);
   }
