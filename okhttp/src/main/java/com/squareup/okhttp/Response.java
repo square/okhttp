@@ -18,8 +18,8 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
+import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
-import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -65,7 +65,7 @@ public final class Response {
   private final Request request;
   private final StatusLine statusLine;
   private final Handshake handshake;
-  private final RawHeaders headers;
+  private final Headers headers;
   private final Body body;
   private final Response redirectedBy;
 
@@ -146,7 +146,7 @@ public final class Response {
   }
 
   // TODO: this shouldn't be public.
-  public RawHeaders rawHeaders() {
+  public Headers headers() {
     return headers;
   }
 
@@ -162,7 +162,7 @@ public final class Response {
     return new Builder(request)
         .statusLine(statusLine)
         .handshake(handshake)
-        .rawHeaders(headers)
+        .headers(headers)
         .body(body)
         .redirectedBy(redirectedBy);
   }
@@ -187,10 +187,6 @@ public final class Response {
 
   public boolean hasConnectionClose() {
     return "close".equalsIgnoreCase(parsedHeaders().connection);
-  }
-
-  public RawHeaders getHeaders() {
-    return headers;
   }
 
   public Date getServedDate() {
@@ -267,7 +263,7 @@ public final class Response {
    * Returns true if none of the Vary headers on this response have changed
    * between {@code cachedRequest} and {@code newRequest}.
    */
-  public boolean varyMatches(RawHeaders varyHeaders, Request newRequest) {
+  public boolean varyMatches(Headers varyHeaders, Request newRequest) {
     for (String field : parsedHeaders().varyFields) {
       if (!equal(varyHeaders.values(field), newRequest.headers(field))) return false;
     }
@@ -301,7 +297,7 @@ public final class Response {
    * 13.5.3.
    */
   public Response combine(Response network) throws IOException {
-    RawHeaders.Builder result = new RawHeaders.Builder();
+    Headers.Builder result = new Headers.Builder();
 
     for (int i = 0; i < headers.length(); i++) {
       String fieldName = headers.getFieldName(i);
@@ -321,7 +317,7 @@ public final class Response {
       }
     }
 
-    return newBuilder().rawHeaders(result.build()).build();
+    return newBuilder().headers(result.build()).build();
   }
 
   /**
@@ -506,7 +502,7 @@ public final class Response {
     private String connection;
     private String contentType;
 
-    private ParsedHeaders(RawHeaders headers) {
+    private ParsedHeaders(Headers headers) {
       HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
         @Override public void handle(String directive, String parameter) {
           if ("no-cache".equalsIgnoreCase(directive)) {
@@ -619,7 +615,7 @@ public final class Response {
     private final Request request;
     private StatusLine statusLine;
     private Handshake handshake;
-    private RawHeaders.Builder headers = new RawHeaders.Builder();
+    private Headers.Builder headers = new Headers.Builder();
     private Body body;
     private Response redirectedBy;
 
@@ -666,8 +662,8 @@ public final class Response {
     }
 
     // TODO: this shouldn't be public.
-    public Builder rawHeaders(RawHeaders rawHeaders) {
-      headers = rawHeaders.newBuilder();
+    public Builder headers(Headers headers) {
+      this.headers = headers.newBuilder();
       return this;
     }
 

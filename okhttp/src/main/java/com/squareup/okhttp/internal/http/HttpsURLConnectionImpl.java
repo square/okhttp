@@ -76,7 +76,7 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     if (delegate.httpEngine == null) {
       throw new IllegalStateException("Connection has not yet been established");
     }
-    return delegate.httpEngine.getHandshake();
+    return delegate.httpEngine.getResponse().handshake();
   }
 
   @Override public void disconnect() {

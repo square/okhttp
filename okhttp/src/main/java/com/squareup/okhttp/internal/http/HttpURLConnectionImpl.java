@@ -69,7 +69,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   final OkHttpClient client;
 
-  private RawHeaders.Builder requestHeaders = new RawHeaders.Builder();
+  private Headers.Builder requestHeaders = new Headers.Builder();
 
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
@@ -113,7 +113,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   @Override public final InputStream getErrorStream() {
     try {
       HttpEngine response = getResponse();
-      if (response.hasResponseBody() && response.getResponseCode() >= HTTP_BAD_REQUEST) {
+      if (response.hasResponseBody() && response.getResponse().code() >= HTTP_BAD_REQUEST) {
         return response.getResponseBody();
       }
       return null;
@@ -128,7 +128,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponse().getHeaders().getValue(position);
+      return getResponse().getResponse().headers().getValue(position);
     } catch (IOException e) {
       return null;
     }
@@ -142,7 +142,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   @Override public final String getHeaderField(String fieldName) {
     try {
       Response response = getResponse().getResponse();
-      return fieldName == null ? response.statusLine() : response.getHeaders().get(fieldName);
+      return fieldName == null ? response.statusLine() : response.headers().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -150,7 +150,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponse().getHeaders().getFieldName(position);
+      return getResponse().getResponse().headers().getFieldName(position);
     } catch (IOException e) {
       return null;
     }
@@ -159,7 +159,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
       Response response = getResponse().getResponse();
-      return response.getHeaders().toMultimap(response.statusLine());
+      return response.headers().toMultimap(response.statusLine());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -273,7 +273,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       RetryableOutputStream requestBody) throws IOException {
     Request request = new Request.Builder(getURL())
         .method(method, null) // No body: that's provided later!
-        .rawHeaders(requestHeaders.build())
+        .headers(requestHeaders.build())
         .build();
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
@@ -315,7 +315,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
       // redirect should keep the same method, Chrome, Firefox and the
       // RI all issue GETs when following any redirect.
-      int responseCode = httpEngine.getResponseCode();
+      int responseCode = httpEngine.getResponse().code();
       if (responseCode == HTTP_MULT_CHOICE
           || responseCode == HTTP_MOVED_PERM
           || responseCode == HTTP_MOVED_TEMP
@@ -501,7 +501,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public final int getResponseCode() throws IOException {
-    return getResponse().getResponseCode();
+    return getResponse().getResponse().code();
   }
 
   @Override public final void setRequestProperty(String field, String newValue) {

@@ -18,8 +18,8 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
+import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
-import com.squareup.okhttp.internal.http.RawHeaders;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import java.util.Set;
 public final class Request {
   private final URL url;
   private final String method;
-  private final RawHeaders headers;
+  private final Headers headers;
   private final Body body;
   private final Object tag;
 
@@ -93,7 +93,7 @@ public final class Request {
     return headers.names();
   }
 
-  RawHeaders rawHeaders() {
+  Headers headers() {
     return headers;
   }
 
@@ -120,7 +120,7 @@ public final class Request {
   public Builder newBuilder() {
     return new Builder(url)
         .method(method, body)
-        .rawHeaders(headers)
+        .headers(headers)
         .tag(tag);
   }
 
@@ -132,7 +132,7 @@ public final class Request {
     return "close".equalsIgnoreCase(parsedHeaders().connection);
   }
 
-  public RawHeaders getHeaders() {
+  public Headers getHeaders() {
     return headers;
   }
 
@@ -255,7 +255,7 @@ public final class Request {
     private String ifNoneMatch;
     private String proxyAuthorization;
 
-    public ParsedHeaders(RawHeaders headers) {
+    public ParsedHeaders(Headers headers) {
       HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
         @Override public void handle(String directive, String parameter) {
           if ("no-cache".equalsIgnoreCase(directive)) {
@@ -398,7 +398,7 @@ public final class Request {
   public static class Builder {
     private URL url;
     private String method = "GET";
-    private RawHeaders.Builder headers = new RawHeaders.Builder();
+    private Headers.Builder headers = new Headers.Builder();
     private Body body;
     private Object tag;
 
@@ -444,8 +444,8 @@ public final class Request {
     }
 
     // TODO: this shouldn't be public.
-    public Builder rawHeaders(RawHeaders rawHeaders) {
-      headers = rawHeaders.newBuilder();
+    public Builder headers(Headers headers) {
+      this.headers = headers.newBuilder();
       return this;
     }
 

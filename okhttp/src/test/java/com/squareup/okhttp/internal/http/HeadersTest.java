@@ -25,7 +25,7 @@ import org.junit.Test;
 import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 
-public final class RawHeadersTest {
+public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
     List<String> nameValueBlock = Arrays.asList(
         "cache-control", "no-cache, no-store",
@@ -34,31 +34,31 @@ public final class RawHeadersTest {
         ":version", "HTTP/1.1");
     Request request = new Request.Builder("http://square.com/").build();
     Response response = SpdyTransport.readNameValueBlock(request, nameValueBlock).build();
-    RawHeaders rawHeaders = response.rawHeaders();
-    assertEquals(4, rawHeaders.length());
+    Headers headers = response.headers();
+    assertEquals(4, headers.length());
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
-    assertEquals("no-cache, no-store", rawHeaders.get("cache-control"));
-    assertEquals("Cookie2", rawHeaders.get("set-cookie"));
-    assertEquals("spdy/3", rawHeaders.get(Response.SELECTED_TRANSPORT));
-    assertEquals(Response.SELECTED_TRANSPORT, rawHeaders.getFieldName(0));
-    assertEquals("spdy/3", rawHeaders.getValue(0));
-    assertEquals("cache-control", rawHeaders.getFieldName(1));
-    assertEquals("no-cache, no-store", rawHeaders.getValue(1));
-    assertEquals("set-cookie", rawHeaders.getFieldName(2));
-    assertEquals("Cookie1", rawHeaders.getValue(2));
-    assertEquals("set-cookie", rawHeaders.getFieldName(3));
-    assertEquals("Cookie2", rawHeaders.getValue(3));
-    assertNull(rawHeaders.get(":status"));
-    assertNull(rawHeaders.get(":version"));
+    assertEquals("no-cache, no-store", headers.get("cache-control"));
+    assertEquals("Cookie2", headers.get("set-cookie"));
+    assertEquals("spdy/3", headers.get(Response.SELECTED_TRANSPORT));
+    assertEquals(Response.SELECTED_TRANSPORT, headers.getFieldName(0));
+    assertEquals("spdy/3", headers.getValue(0));
+    assertEquals("cache-control", headers.getFieldName(1));
+    assertEquals("no-cache, no-store", headers.getValue(1));
+    assertEquals("set-cookie", headers.getFieldName(2));
+    assertEquals("Cookie1", headers.getValue(2));
+    assertEquals("set-cookie", headers.getFieldName(3));
+    assertEquals("Cookie2", headers.getValue(3));
+    assertNull(headers.get(":status"));
+    assertNull(headers.get(":version"));
   }
 
   @Test public void toNameValueBlock() {
-    RawHeaders.Builder builder = new RawHeaders.Builder();
+    Headers.Builder builder = new Headers.Builder();
     builder.add("cache-control", "no-cache, no-store");
     builder.add("set-cookie", "Cookie1");
     builder.add("set-cookie", "Cookie2");
     builder.add(":status", "200 OK");
-    List<String> nameValueBlock = builder.build().toNameValueBlock();
+    List<String> nameValueBlock = SpdyTransport.writeNameValueBlock(builder.build());
     List<String> expected = Arrays.asList(
         "cache-control", "no-cache, no-store",
         "set-cookie", "Cookie1\u0000Cookie2",
@@ -67,9 +67,9 @@ public final class RawHeadersTest {
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeaders() {
-    RawHeaders.Builder builder = new RawHeaders.Builder();
+    Headers.Builder builder = new Headers.Builder();
     builder.add("Connection", "close");
     builder.add("Transfer-Encoding", "chunked");
-    assertEquals(Arrays.<String>asList(), builder.build().toNameValueBlock());
+    assertEquals(Arrays.<String>asList(), SpdyTransport.writeNameValueBlock(builder.build()));
   }
 }
