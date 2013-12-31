@@ -15,7 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.http.RawHeaders;
+import java.io.IOException;
+import java.net.URL;
 
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 
@@ -49,27 +50,30 @@ public final class TunnelRequest {
     this.proxyAuthorization = proxyAuthorization;
   }
 
+  String requestLine() {
+    return "CONNECT " + host + ":" + port + " HTTP/1.1";
+  }
+
   /**
    * If we're creating a TLS tunnel, send only the minimum set of headers.
    * This avoids sending potentially sensitive data like HTTP cookies to
    * the proxy unencrypted.
    */
-  RawHeaders getRequestHeaders() {
-    RawHeaders.Builder result = new RawHeaders.Builder()
-        .setRequestLine("CONNECT " + host + ":" + port + " HTTP/1.1");
+  Request getRequest() throws IOException {
+    Request.Builder result = new Request.Builder(new URL("https", host, port, "/"));
 
     // Always set Host and User-Agent.
-    result.set("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
-    result.set("User-Agent", userAgent);
+    result.header("Host", port == getDefaultPort("https") ? host : (host + ":" + port));
+    result.header("User-Agent", userAgent);
 
     // Copy over the Proxy-Authorization header if it exists.
     if (proxyAuthorization != null) {
-      result.set("Proxy-Authorization", proxyAuthorization);
+      result.header("Proxy-Authorization", proxyAuthorization);
     }
 
     // Always set the Proxy-Connection to Keep-Alive for the benefit of
     // HTTP/1.0 proxies like Squid.
-    result.set("Proxy-Connection", "Keep-Alive");
+    result.header("Proxy-Connection", "Keep-Alive");
     return result.build();
   }
 }

@@ -34,7 +34,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
-import java.net.Proxy;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Date;
@@ -139,22 +138,18 @@ public class HttpEngine {
   private boolean connectionReleased;
 
   /**
+   * @param request the HTTP request without a body. The body must be
+   *     written via the engine's request body stream.
    * @param connection the connection used for an intermediate response
    *     immediately prior to this request/response pair, such as a same-host
    *     redirect. This engine assumes ownership of the connection and must
    *     release it when it is unneeded.
    */
-  public HttpEngine(OkHttpClient client, Policy policy, String method, RawHeaders requestHeaders,
+  public HttpEngine(OkHttpClient client, Policy policy, Request request,
       Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
     this.client = client;
     this.policy = policy;
-
-    // This doesn't have a body. When we're sending requests to the cache, we don't need it.
-    this.request = new Request.Builder(policy.getURL())
-        .method(method, null)
-        .rawHeaders(requestHeaders)
-        .build();
-
+    this.request = request;
     this.connection = connection;
     this.requestBodyOut = requestBodyOut;
   }
@@ -186,11 +181,8 @@ public class HttpEngine {
       }
       this.responseSource = ResponseSource.CACHE;
 
-      RawHeaders gatewayTimeoutHeaders = new RawHeaders.Builder()
-          .setStatusLine("HTTP/1.1 504 Gateway Timeout")
-          .build();
-      this.validatingResponse = new Response.Builder(request, 504)
-          .rawHeaders(gatewayTimeoutHeaders)
+      this.validatingResponse = new Response.Builder(request)
+          .statusLine(new StatusLine("HTTP/1.1 504 Gateway Timeout"))
           .body(EMPTY_BODY)
           .build();
       promoteValidatingResponse();
@@ -218,7 +210,8 @@ public class HttpEngine {
     Response candidate = responseCache.get(request);
     if (candidate == null) return;
 
-    if (!acceptCacheResponseType(candidate)) {
+    // Drop the cached response if it's missing a required handshake.
+    if (request.isHttps() && candidate.handshake() == null) {
       Util.closeQuietly(candidate.body());
       return;
     }
@@ -296,10 +289,6 @@ public class HttpEngine {
       connection.updateReadTimeout(client.getReadTimeout());
     }
     connected(connection);
-    if (connection.getRoute().getProxy() != client.getProxy()) {
-      // Update the request line if the proxy changed; it may need a host name.
-      request = request.newBuilder().setRequestLine(getRequestLine()).build();
-    }
   }
 
   /**
@@ -364,7 +353,7 @@ public class HttpEngine {
     if (response == null) {
       throw new IllegalStateException();
     }
-    return response.getHeaders().getResponseCode();
+    return response.code();
   }
 
   public final InputStream getResponseBody() {
@@ -376,14 +365,6 @@ public class HttpEngine {
 
   public final Connection getConnection() {
     return connection;
-  }
-
-  /**
-   * Returns true if {@code response} is of the right type. This condition is
-   * necessary but not sufficient for the cached response to be used.
-   */
-  protected boolean acceptCacheResponseType(Response response) {
-    return true;
   }
 
   private void maybeCache() throws IOException {
@@ -468,7 +449,7 @@ public class HttpEngine {
    * See RFC 2616 section 4.3.
    */
   public final boolean hasResponseBody() {
-    int responseCode = response.getHeaders().getResponseCode();
+    int responseCode = response.code();
 
     // HEAD requests never yield a body regardless of the response headers.
     if (request.method().equals("HEAD")) {
@@ -500,8 +481,6 @@ public class HttpEngine {
   private void prepareRawRequestHeaders() throws IOException {
     Request.Builder result = request.newBuilder();
 
-    result.setRequestLine(getRequestLine());
-
     if (request.getUserAgent() == null) {
       result.setUserAgent(getDefaultUserAgent());
     }
@@ -531,61 +510,10 @@ public class HttpEngine {
 
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      result.addCookies(cookieHandler.get(
-          request.uri(), request.getHeaders().toMultimap(false)));
+      result.addCookies(cookieHandler.get(request.uri(), request.getHeaders().toMultimap(null)));
     }
 
     request = result.build();
-  }
-
-  /**
-   * Returns the request status line, like "GET / HTTP/1.1". This is exposed
-   * to the application by {@link HttpURLConnectionImpl#getHeaderFields}, so
-   * it needs to be set even if the transport is SPDY.
-   */
-  String getRequestLine() {
-    String protocol =
-        (connection == null || connection.getHttpMinorVersion() != 0) ? "HTTP/1.1" : "HTTP/1.0";
-    return request.method() + " " + requestString() + " " + protocol;
-  }
-
-  private String requestString() {
-    URL url = request.url();
-    if (includeAuthorityInRequestLine()) {
-      return url.toString();
-    } else {
-      return requestPath(url);
-    }
-  }
-
-  /**
-   * Returns the path to request, like the '/' in 'GET / HTTP/1.1'. Never
-   * empty, even if the request URL is. Includes the query component if it
-   * exists.
-   */
-  public static String requestPath(URL url) {
-    String fileOnly = url.getFile();
-    if (fileOnly == null) {
-      return "/";
-    } else if (!fileOnly.startsWith("/")) {
-      return "/" + fileOnly;
-    } else {
-      return fileOnly;
-    }
-  }
-
-  /**
-   * Returns true if the request line should contain the full URL with host
-   * and port (like "GET http://android.com/foo HTTP/1.1") or only the path
-   * (like "GET /foo HTTP/1.1").
-   *
-   * <p>This is non-final because for HTTPS it's never necessary to supply the
-   * full URL, even if a proxy is in use.
-   */
-  protected boolean includeAuthorityInRequestLine() {
-    return connection == null
-        ? policy.usingProxy() // A proxy was requested.
-        : connection.getRoute().getProxy().type() == Proxy.Type.HTTP; // A proxy was selected.
   }
 
   /**
@@ -680,14 +608,21 @@ public class HttpEngine {
     initContentStream(transport.getTransferStream(cacheRequest));
   }
 
-  protected TunnelRequest getTunnelConfig() {
-    return null;
+  private TunnelRequest getTunnelConfig() {
+    if (!request.isHttps()) return null;
+
+    String userAgent = request.getUserAgent();
+    if (userAgent == null) userAgent = getDefaultUserAgent();
+
+    URL url = request.url();
+    return new TunnelRequest(url.getHost(), getEffectivePort(url), userAgent,
+        request.getProxyAuthorization());
   }
 
   public void receiveHeaders(RawHeaders headers) throws IOException {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      cookieHandler.put(request.uri(), headers.toMultimap(true));
+      cookieHandler.put(request.uri(), headers.toMultimap(null));
     }
   }
 

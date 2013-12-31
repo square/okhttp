@@ -216,6 +216,10 @@ public final class Request {
     return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
   }
 
+  public boolean isHttps() {
+    return url().getProtocol().equals("https");
+  }
+
   /** Parsed request headers, computed on-demand and cached. */
   private static class ParsedHeaders {
     /** Don't use a cache to satisfy this request. */
@@ -445,12 +449,6 @@ public final class Request {
       return this;
     }
 
-    // TODO: this shouldn't be public.
-    public Builder setRequestLine(String requestLine) {
-      headers.setRequestLine(requestLine);
-      return this;
-    }
-
     public Builder setChunked() {
       headers.set("Transfer-Encoding", "chunked");
       return this;
@@ -527,11 +525,11 @@ public final class Request {
     public Builder addSpdyRequestHeaders(
         String method, String path, String version, String host, String scheme) {
       // TODO: populate the statusLine for the client's benefit?
-      headers.add(":method", method);
-      headers.add(":scheme", scheme);
-      headers.add(":path", path);
-      headers.add(":version", version);
-      headers.add(":host", host);
+      headers.set(":method", method);
+      headers.set(":scheme", scheme);
+      headers.set(":path", path);
+      headers.set(":version", version);
+      headers.set(":host", host);
       return this;
     }
 

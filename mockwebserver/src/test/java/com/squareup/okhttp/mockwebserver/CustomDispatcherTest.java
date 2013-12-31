@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
-import junit.framework.TestCase;
-
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -24,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
+import junit.framework.TestCase;
 
 public class CustomDispatcherTest extends TestCase {
 

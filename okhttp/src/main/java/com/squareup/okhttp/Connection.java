@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
-import com.squareup.okhttp.internal.http.RawHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.BufferedInputStream;
@@ -32,7 +31,6 @@ import java.io.OutputStream;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.Arrays;
 import javax.net.ssl.SSLSocket;
 
@@ -309,23 +307,23 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    RawHeaders requestHeaders = tunnelRequest.getRequestHeaders();
+    Request request = tunnelRequest.getRequest();
+    String requestLine = tunnelRequest.requestLine();
     while (true) {
-      out.write(requestHeaders.toBytes());
-      RawHeaders responseHeaders = RawHeaders.readHttpHeaders(in);
+      out.write(request.rawHeaders().toBytes(requestLine));
+      Response response = HttpTransport.readResponse(request, in).build();
 
-      switch (responseHeaders.getResponseCode()) {
+      switch (response.code()) {
         case HTTP_OK:
           return;
         case HTTP_PROXY_AUTH:
-          URL url = new URL("https", tunnelRequest.host, tunnelRequest.port, "/");
-          requestHeaders = HttpAuthenticator.processAuthHeader(route.address.authenticator,
-              HTTP_PROXY_AUTH, responseHeaders, requestHeaders, route.proxy, url);
-          if (requestHeaders != null) continue;
+          request = HttpAuthenticator.processAuthHeader(
+              route.address.authenticator, response, route.proxy);
+          if (request != null) continue;
           throw new IOException("Failed to authenticate with proxy");
         default:
           throw new IOException(
-              "Unexpected response code for CONNECT: " + responseHeaders.getResponseCode());
+              "Unexpected response code for CONNECT: " + response.code());
       }
     }
   }

@@ -18,6 +18,8 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkAuthenticator.Challenge;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetAddress;
@@ -84,32 +86,33 @@ public final class HttpAuthenticator {
 
   /**
    * React to a failed authorization response by looking up new credentials.
-   * Returns headers for a subsequent attempt, or null if no further attempts
+   * Returns a request for a subsequent attempt, or null if no further attempts
    * should be made.
    */
-  public static RawHeaders processAuthHeader(OkAuthenticator authenticator, int responseCode,
-      RawHeaders responseHeaders, RawHeaders requestHeaders, Proxy proxy, URL url)
-      throws IOException {
+  public static Request processAuthHeader(
+      OkAuthenticator authenticator, Response response, Proxy proxy) throws IOException {
     String responseField;
     String requestField;
-    if (responseCode == HTTP_UNAUTHORIZED) {
+    if (response.code() == HTTP_UNAUTHORIZED) {
       responseField = "WWW-Authenticate";
       requestField = "Authorization";
-    } else if (responseCode == HTTP_PROXY_AUTH) {
+    } else if (response.code() == HTTP_PROXY_AUTH) {
       responseField = "Proxy-Authenticate";
       requestField = "Proxy-Authorization";
     } else {
       throw new IllegalArgumentException(); // TODO: ProtocolException?
     }
-    List<Challenge> challenges = parseChallenges(responseHeaders, responseField);
+    List<Challenge> challenges = parseChallenges(response.rawHeaders(), responseField);
     if (challenges.isEmpty()) return null; // Could not find a challenge so end the request cycle.
-    Credential credential = responseHeaders.getResponseCode() == HTTP_PROXY_AUTH
-        ? authenticator.authenticateProxy(proxy, url, challenges)
-        : authenticator.authenticate(proxy, url, challenges);
+
+    Request request = response.request();
+    Credential credential = response.code() == HTTP_PROXY_AUTH
+        ? authenticator.authenticateProxy(proxy, request.url(), challenges)
+        : authenticator.authenticate(proxy, request.url(), challenges);
     if (credential == null) return null; // Couldn't satisfy the challenge so end the request cycle.
 
     // Add authorization credentials, bypassing the already-connected check.
-    return requestHeaders.newBuilder().set(requestField, credential.getHeaderValue()).build();
+    return request.newBuilder().header(requestField, credential.getHeaderValue()).build();
   }
 
   /**

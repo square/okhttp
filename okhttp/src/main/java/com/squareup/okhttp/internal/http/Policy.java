@@ -16,14 +16,10 @@
 package com.squareup.okhttp.internal.http;
 
 import java.net.Proxy;
-import java.net.URL;
 
 public interface Policy {
   /** Returns true if HTTP response caches should be used. */
   boolean getUseCaches();
-
-  /** Returns the current destination URL, possibly a redirect. */
-  URL getURL();
 
   /** Returns the If-Modified-Since timestamp, or 0 if none is set. */
   long getIfModifiedSince();

@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.util.Arrays;
@@ -31,9 +32,11 @@ public final class RawHeadersTest {
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK",
         ":version", "HTTP/1.1");
-    RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
+    Request request = new Request.Builder("http://square.com/").build();
+    Response response = SpdyTransport.readNameValueBlock(request, nameValueBlock).build();
+    RawHeaders rawHeaders = response.rawHeaders();
     assertEquals(4, rawHeaders.length());
-    assertEquals("HTTP/1.1 200 OK", rawHeaders.getStatusLine());
+    assertEquals("HTTP/1.1 200 OK", response.statusLine());
     assertEquals("no-cache, no-store", rawHeaders.get("cache-control"));
     assertEquals("Cookie2", rawHeaders.get("set-cookie"));
     assertEquals("spdy/3", rawHeaders.get(Response.SELECTED_TRANSPORT));
@@ -55,7 +58,6 @@ public final class RawHeadersTest {
     builder.add("set-cookie", "Cookie1");
     builder.add("set-cookie", "Cookie2");
     builder.add(":status", "200 OK");
-    // TODO: fromNameValueBlock should take the status line headers
     List<String> nameValueBlock = builder.build().toNameValueBlock();
     List<String> expected = Arrays.asList(
         "cache-control", "no-cache, no-store",
@@ -69,44 +71,5 @@ public final class RawHeadersTest {
     builder.add("Connection", "close");
     builder.add("Transfer-Encoding", "chunked");
     assertEquals(Arrays.<String>asList(), builder.build().toNameValueBlock());
-  }
-
-  @Test public void statusMessage() throws IOException {
-    RawHeaders.Builder builder = new RawHeaders.Builder();
-    String message = "Temporary Redirect";
-    int version = 1;
-    int code = 200;
-    builder.setStatusLine("HTTP/1." + version + " " + code + " " + message);
-    RawHeaders rawHeaders = builder.build();
-    assertEquals(message, rawHeaders.getResponseMessage());
-    assertEquals(version, rawHeaders.getHttpMinorVersion());
-    assertEquals(code, rawHeaders.getResponseCode());
-  }
-
-  @Test public void statusMessageWithEmptyMessage() throws IOException {
-    RawHeaders.Builder builder = new RawHeaders.Builder();
-    int version = 1;
-    int code = 503;
-    builder.setStatusLine("HTTP/1." + version + " " + code + " ");
-    RawHeaders rawHeaders = builder.build();
-    assertEquals("", rawHeaders.getResponseMessage());
-    assertEquals(version, rawHeaders.getHttpMinorVersion());
-    assertEquals(code, rawHeaders.getResponseCode());
-  }
-
-  /**
-   * This is not defined in the protocol but some servers won't add the leading
-   * empty space when the message is empty.
-   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
-   */
-  @Test public void statusMessageWithEmptyMessageAndNoLeadingSpace() throws IOException {
-    RawHeaders.Builder builder = new RawHeaders.Builder();
-    int version = 1;
-    int code = 503;
-    builder.setStatusLine("HTTP/1." + version + " " + code);
-    RawHeaders rawHeaders = builder.build();
-    assertEquals("", rawHeaders.getResponseMessage());
-    assertEquals(version, rawHeaders.getHttpMinorVersion());
-    assertEquals(code, rawHeaders.getResponseCode());
   }
 }

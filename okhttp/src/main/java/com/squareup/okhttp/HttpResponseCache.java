@@ -358,6 +358,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     private final String url;
     private final RawHeaders varyHeaders;
     private final String requestMethod;
+    private final String statusLine;
     private final RawHeaders responseHeaders;
     private final Handshake handshake;
 
@@ -422,8 +423,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         }
         varyHeaders = varyHeadersBuilder.build();
 
+        statusLine = reader.readLine();
         RawHeaders.Builder responseHeadersBuilder = new RawHeaders.Builder();
-        responseHeadersBuilder.setStatusLine(reader.readLine());
         int responseHeaderLineCount = reader.readInt();
         for (int i = 0; i < responseHeaderLineCount; i++) {
           responseHeadersBuilder.addLine(reader.readLine());
@@ -451,6 +452,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       this.url = response.request().urlString();
       this.varyHeaders = response.request().rawHeaders().getAll(response.getVaryFields());
       this.requestMethod = response.request().method();
+      this.statusLine = response.statusLine();
       this.responseHeaders = response.rawHeaders();
       this.handshake = response.handshake();
     }
@@ -466,7 +468,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         writer.write(varyHeaders.getFieldName(i) + ": " + varyHeaders.getValue(i) + '\n');
       }
 
-      writer.write(responseHeaders.getStatusLine() + '\n');
+      writer.write(statusLine + '\n');
       writer.write(Integer.toString(responseHeaders.length()) + '\n');
       for (int i = 0; i < responseHeaders.length(); i++) {
         writer.write(responseHeaders.getFieldName(i) + ": " + responseHeaders.getValue(i) + '\n');
@@ -525,7 +527,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     public Response response(Request request, DiskLruCache.Snapshot snapshot) {
       String contentType = responseHeaders.get("Content-Type");
       String contentLength = responseHeaders.get("Content-Length");
-      return new Response.Builder(request, responseHeaders.getResponseCode())
+      return new Response.Builder(request)
+          .statusLine(statusLine)
           .rawHeaders(responseHeaders)
           .body(new CacheResponseBody(snapshot, contentType, contentLength))
           .handshake(handshake)
