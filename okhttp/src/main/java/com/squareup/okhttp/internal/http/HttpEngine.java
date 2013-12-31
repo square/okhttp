@@ -36,7 +36,6 @@ import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -44,6 +43,9 @@ import javax.net.ssl.SSLSocketFactory;
 import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
+import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 
 /**
  * Handles a single HTTP request/response pair. Each HTTP engine follows this
@@ -67,10 +69,6 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * recycled. By default, this socket connection is held when the last byte of
  * the response is consumed. To release the connection when it is no longer
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
- *
- * <p>Since we permit redirects across protocols (HTTP to HTTPS or vice versa),
- * the implementation type of the connection doesn't necessarily match the
- * implementation type of its HttpEngine.
  */
 public class HttpEngine {
   private static final Response.Body EMPTY_BODY = new Response.Body() {
@@ -87,8 +85,6 @@ public class HttpEngine {
       return EMPTY_INPUT_STREAM;
     }
   };
-
-  public static final int HTTP_CONTINUE = 100;
 
   final Policy policy;
   final OkHttpClient client;
@@ -202,7 +198,6 @@ public class HttpEngine {
    */
   private void initResponseSource() throws IOException {
     responseSource = ResponseSource.NETWORK;
-    if (!policy.getUseCaches()) return;
 
     OkResponseCache responseCache = client.getOkResponseCache();
     if (responseCache == null) return;
@@ -271,7 +266,7 @@ public class HttpEngine {
       }
       SSLSocketFactory sslSocketFactory = null;
       HostnameVerifier hostnameVerifier = null;
-      if (request.url().getProtocol().equalsIgnoreCase("https")) {
+      if (request.isHttps()) {
         sslSocketFactory = client.getSslSocketFactory();
         hostnameVerifier = client.getHostnameVerifier();
       }
@@ -288,14 +283,8 @@ public class HttpEngine {
     } else {
       connection.updateReadTimeout(client.getReadTimeout());
     }
-    connected(connection);
-  }
 
-  /**
-   * Called after a socket connection has been created or retrieved from the
-   * pool. Subclasses use this hook to get a reference to the TLS data.
-   */
-  private void connected(Connection connection) {
+    // Update the policy to tell 'em which proxy we ended up going with.
     policy.setSelectedProxy(connection.getRoute().getProxy());
   }
 
@@ -343,9 +332,7 @@ public class HttpEngine {
   /** Returns the engine's response. */
   // TODO: the returned body will always be null.
   public final Response getResponse() {
-    if (response == null) {
-      throw new IllegalStateException();
-    }
+    if (response == null) throw new IllegalStateException();
     return response;
   }
 
@@ -368,8 +355,6 @@ public class HttpEngine {
   }
 
   private void maybeCache() throws IOException {
-    // Are we caching at all?
-    if (!policy.getUseCaches()) return;
     OkResponseCache responseCache = client.getOkResponseCache();
     if (responseCache == null) return;
 
@@ -457,8 +442,8 @@ public class HttpEngine {
     }
 
     if ((responseCode < HTTP_CONTINUE || responseCode >= 200)
-        && responseCode != HttpURLConnectionImpl.HTTP_NO_CONTENT
-        && responseCode != HttpURLConnectionImpl.HTTP_NOT_MODIFIED) {
+        && responseCode != HTTP_NO_CONTENT
+        && responseCode != HTTP_NOT_MODIFIED) {
       return true;
     }
 
@@ -501,11 +486,6 @@ public class HttpEngine {
 
     if (hasRequestBody() && request.getContentType() == null) {
       result.setContentType("application/x-www-form-urlencoded");
-    }
-
-    long ifModifiedSince = policy.getIfModifiedSince();
-    if (ifModifiedSince != 0) {
-      result.setIfModifiedSince(new Date(ifModifiedSince));
     }
 
     CookieHandler cookieHandler = client.getCookieHandler();
@@ -602,7 +582,7 @@ public class HttpEngine {
     }
 
     if (hasResponseBody()) {
-      maybeCache(); // reentrant. this calls into user code which may call back into this!
+      maybeCache();
     }
 
     initContentStream(transport.getTransferStream(cacheRequest));

@@ -18,15 +18,6 @@ package com.squareup.okhttp.internal.http;
 import java.net.Proxy;
 
 public interface Policy {
-  /** Returns true if HTTP response caches should be used. */
-  boolean getUseCaches();
-
-  /** Returns the If-Modified-Since timestamp, or 0 if none is set. */
-  long getIfModifiedSince();
-
-  /** Returns true if a non-direct proxy is specified. */
-  boolean usingProxy();
-
   /** @see java.net.HttpURLConnection#setChunkedStreamingMode(int) */
   int getChunkLength();
 

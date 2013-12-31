@@ -30,6 +30,7 @@ import java.net.ProtocolException;
 import java.net.Socket;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
 
 public final class HttpTransport implements Transport {
   /**
@@ -165,7 +166,7 @@ public final class HttpTransport implements Transport {
       headersBuilder.readHeaders(in);
       responseBuilder.rawHeaders(headersBuilder.build());
 
-      if (statusLine.code() != HttpEngine.HTTP_CONTINUE) return responseBuilder;
+      if (statusLine.code() != HTTP_CONTINUE) return responseBuilder;
     }
   }
 

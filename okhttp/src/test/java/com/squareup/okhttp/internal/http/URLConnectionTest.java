@@ -75,6 +75,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.squareup.okhttp.OkAuthenticator.Credential;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
@@ -1778,7 +1779,7 @@ public final class URLConnectionTest {
 
   private void test307Redirect(String method) throws Exception {
     MockResponse response1 = new MockResponse()
-        .setResponseCode(HttpURLConnectionImpl.HTTP_TEMP_REDIRECT)
+        .setResponseCode(HTTP_TEMP_REDIRECT)
         .addHeader("Location: /page2");
     if (!method.equals("HEAD")) {
       response1.setBody("This page has moved!");
