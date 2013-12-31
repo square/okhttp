@@ -19,7 +19,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
@@ -336,17 +335,8 @@ public class HttpEngine {
     return response;
   }
 
-  public final int getResponseCode() {
-    if (response == null) {
-      throw new IllegalStateException();
-    }
-    return response.code();
-  }
-
   public final InputStream getResponseBody() {
-    if (response == null) {
-      throw new IllegalStateException();
-    }
+    if (response == null) throw new IllegalStateException();
     return responseBodyIn;
   }
 
@@ -434,13 +424,12 @@ public class HttpEngine {
    * See RFC 2616 section 4.3.
    */
   public final boolean hasResponseBody() {
-    int responseCode = response.code();
-
     // HEAD requests never yield a body regardless of the response headers.
     if (request.method().equals("HEAD")) {
       return false;
     }
 
+    int responseCode = response.code();
     if ((responseCode < HTTP_CONTINUE || responseCode >= 200)
         && responseCode != HTTP_NO_CONTENT
         && responseCode != HTTP_NOT_MODIFIED) {
@@ -471,7 +460,7 @@ public class HttpEngine {
     }
 
     if (request.getHost() == null) {
-      result.setHost(getOriginAddress(request.url()));
+      result.setHost(getHostHeader(request.url()));
     }
 
     if ((connection == null || connection.getHttpMinorVersion() != 0)
@@ -496,26 +485,15 @@ public class HttpEngine {
     request = result.build();
   }
 
-  /**
-   * Returns the TLS handshake created when this engine connected, or null if
-   * no TLS connection was made.
-   */
-  public Handshake getHandshake() {
-    return response.handshake();
-  }
-
   public static String getDefaultUserAgent() {
     String agent = System.getProperty("http.agent");
     return agent != null ? agent : ("Java" + System.getProperty("java.version"));
   }
 
-  public static String getOriginAddress(URL url) {
-    int port = url.getPort();
-    String result = url.getHost();
-    if (port > 0 && port != getDefaultPort(url.getProtocol())) {
-      result = result + ":" + port;
-    }
-    return result;
+  public static String getHostHeader(URL url) {
+    return getEffectivePort(url) != getDefaultPort(url.getProtocol())
+        ? url.getHost() + ":" + url.getPort()
+        : url.getHost();
   }
 
   /**
@@ -524,6 +502,7 @@ public class HttpEngine {
    */
   public final void readResponse() throws IOException {
     if (hasResponse()) {
+      // TODO: this doesn't make much sense.
       response = response.newBuilder().setResponseSource(responseSource).build();
       return;
     }
@@ -599,7 +578,7 @@ public class HttpEngine {
         request.getProxyAuthorization());
   }
 
-  public void receiveHeaders(RawHeaders headers) throws IOException {
+  public void receiveHeaders(Headers headers) throws IOException {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
       cookieHandler.put(request.uri(), headers.toMultimap(null));

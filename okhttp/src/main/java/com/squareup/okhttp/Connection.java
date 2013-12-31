@@ -310,7 +310,7 @@ public final class Connection implements Closeable {
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {
-      out.write(request.rawHeaders().toBytes(requestLine));
+      HttpTransport.writeRequest(out, request.headers(), requestLine);
       Response response = HttpTransport.readResponse(request, in).build();
 
       switch (response.code()) {

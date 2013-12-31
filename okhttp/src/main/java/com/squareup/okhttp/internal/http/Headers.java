@@ -20,13 +20,10 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -48,7 +45,7 @@ import java.util.TreeSet;
  * <p>This class trims whitespace from values. It never returns values with
  * leading or trailing whitespace.
  */
-public final class RawHeaders {
+public final class Headers {
   private static final Comparator<String> FIELD_NAME_COMPARATOR = new Comparator<String>() {
     // @FindBugsSuppressWarnings("ES_COMPARING_PARAMETER_STRING_WITH_EQ")
     @Override public int compare(String a, String b) {
@@ -66,7 +63,7 @@ public final class RawHeaders {
 
   private final List<String> namesAndValues;
 
-  private RawHeaders(Builder builder) {
+  private Headers(Builder builder) {
     this.namesAndValues = Util.immutableList(builder.namesAndValues);
   }
 
@@ -122,7 +119,7 @@ public final class RawHeaders {
   }
 
   /** @param fieldNames a case-insensitive set of HTTP header field names. */
-  public RawHeaders getAll(Set<String> fieldNames) {
+  public Headers getAll(Set<String> fieldNames) {
     Builder result = new Builder();
     for (int i = 0; i < namesAndValues.size(); i += 2) {
       String fieldName = namesAndValues.get(i);
@@ -131,20 +128,6 @@ public final class RawHeaders {
       }
     }
     return result.build();
-  }
-
-  /** Returns bytes of a request header for sending on an HTTP transport. */
-  public byte[] toBytes(String requestLine) throws UnsupportedEncodingException {
-    StringBuilder result = new StringBuilder(256);
-    result.append(requestLine).append("\r\n");
-    for (int i = 0; i < namesAndValues.size(); i += 2) {
-      result.append(namesAndValues.get(i))
-          .append(": ")
-          .append(namesAndValues.get(i + 1))
-          .append("\r\n");
-    }
-    result.append("\r\n");
-    return result.toString().getBytes("ISO-8859-1");
   }
 
   /**
@@ -173,45 +156,6 @@ public final class RawHeaders {
     return Collections.unmodifiableMap(result);
   }
 
-  /**
-   * Returns a list of alternating names and values. Names are all lower case.
-   * No names are repeated. If any name has multiple values, they are
-   * concatenated using "\0" as a delimiter.
-   */
-  public List<String> toNameValueBlock() {
-    Set<String> names = new HashSet<String>();
-    List<String> result = new ArrayList<String>();
-    for (int i = 0; i < namesAndValues.size(); i += 2) {
-      String name = namesAndValues.get(i).toLowerCase(Locale.US);
-      String value = namesAndValues.get(i + 1);
-
-      // Drop headers that are forbidden when layering HTTP over SPDY.
-      if (name.equals("connection")
-          || name.equals("host")
-          || name.equals("keep-alive")
-          || name.equals("proxy-connection")
-          || name.equals("transfer-encoding")) {
-        continue;
-      }
-
-      // If we haven't seen this name before, add the pair to the end of the list...
-      if (names.add(name)) {
-        result.add(name);
-        result.add(value);
-        continue;
-      }
-
-      // ...otherwise concatenate the existing values and this value.
-      for (int j = 0; j < result.size(); j += 2) {
-        if (name.equals(result.get(j))) {
-          result.set(j + 1, result.get(j + 1) + "\0" + value);
-          break;
-        }
-      }
-    }
-    return result;
-  }
-
   public Builder newBuilder() {
     Builder result = new Builder();
     result.namesAndValues.addAll(namesAndValues);
@@ -232,7 +176,7 @@ public final class RawHeaders {
 
     /** Equivalent to {@code build().get(fieldName)}, but potentially faster. */
     public String get(String fieldName) {
-      return RawHeaders.get(namesAndValues, fieldName);
+      return Headers.get(namesAndValues, fieldName);
     }
 
     /**
@@ -300,8 +244,8 @@ public final class RawHeaders {
       return this;
     }
 
-    public RawHeaders build() {
-      return new RawHeaders(this);
+    public Headers build() {
+      return new Headers(this);
     }
   }
 }

@@ -72,14 +72,10 @@ public final class Util {
     return specifiedPort != -1 ? specifiedPort : getDefaultPort(scheme);
   }
 
-  public static int getDefaultPort(String scheme) {
-    if ("http".equalsIgnoreCase(scheme)) {
-      return 80;
-    } else if ("https".equalsIgnoreCase(scheme)) {
-      return 443;
-    } else {
-      return -1;
-    }
+  public static int getDefaultPort(String protocol) {
+    if ("http".equals(protocol)) return 80;
+    if ("https".equals(protocol)) return 443;
+    return -1;
   }
 
   public static void checkOffsetAndCount(int arrayLength, int offset, int count) {

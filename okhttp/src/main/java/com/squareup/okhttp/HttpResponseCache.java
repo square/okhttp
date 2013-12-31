@@ -20,7 +20,7 @@ import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.RawHeaders;
+import com.squareup.okhttp.internal.http.Headers;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -356,10 +356,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
   private static final class Entry {
     private final String url;
-    private final RawHeaders varyHeaders;
+    private final Headers varyHeaders;
     private final String requestMethod;
     private final String statusLine;
-    private final RawHeaders responseHeaders;
+    private final Headers responseHeaders;
     private final Handshake handshake;
 
     /**
@@ -416,7 +416,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         StrictLineReader reader = new StrictLineReader(in, US_ASCII);
         url = reader.readLine();
         requestMethod = reader.readLine();
-        RawHeaders.Builder varyHeadersBuilder = new RawHeaders.Builder();
+        Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = reader.readInt();
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
           varyHeadersBuilder.addLine(reader.readLine());
@@ -424,7 +424,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         varyHeaders = varyHeadersBuilder.build();
 
         statusLine = reader.readLine();
-        RawHeaders.Builder responseHeadersBuilder = new RawHeaders.Builder();
+        Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = reader.readInt();
         for (int i = 0; i < responseHeaderLineCount; i++) {
           responseHeadersBuilder.addLine(reader.readLine());
@@ -450,10 +450,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
     public Entry(Response response) {
       this.url = response.request().urlString();
-      this.varyHeaders = response.request().rawHeaders().getAll(response.getVaryFields());
+      this.varyHeaders = response.request().headers().getAll(response.getVaryFields());
       this.requestMethod = response.request().method();
       this.statusLine = response.statusLine();
-      this.responseHeaders = response.rawHeaders();
+      this.responseHeaders = response.headers();
       this.handshake = response.handshake();
     }
 
@@ -529,7 +529,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       String contentLength = responseHeaders.get("Content-Length");
       return new Response.Builder(request)
           .statusLine(statusLine)
-          .rawHeaders(responseHeaders)
+          .headers(responseHeaders)
           .body(new CacheResponseBody(snapshot, contentType, contentLength))
           .handshake(handshake)
           .build();

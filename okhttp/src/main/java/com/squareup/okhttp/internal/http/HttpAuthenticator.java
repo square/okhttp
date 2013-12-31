@@ -102,7 +102,7 @@ public final class HttpAuthenticator {
     } else {
       throw new IllegalArgumentException(); // TODO: ProtocolException?
     }
-    List<Challenge> challenges = parseChallenges(response.rawHeaders(), responseField);
+    List<Challenge> challenges = parseChallenges(response.headers(), responseField);
     if (challenges.isEmpty()) return null; // Could not find a challenge so end the request cycle.
 
     Request request = response.request();
@@ -119,7 +119,7 @@ public final class HttpAuthenticator {
    * Parse RFC 2617 challenges. This API is only interested in the scheme
    * name and realm.
    */
-  private static List<Challenge> parseChallenges(RawHeaders responseHeaders,
+  private static List<Challenge> parseChallenges(Headers responseHeaders,
       String challengeHeader) {
     // auth-scheme = token
     // auth-param  = token "=" ( token | quoted-string )

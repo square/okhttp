@@ -135,12 +135,11 @@ public final class HttpTransport implements Transport {
    */
   public void writeRequestHeaders() throws IOException {
     httpEngine.writingRequestHeaders();
-    RawHeaders headersToSend = httpEngine.getRequest().getHeaders();
+    Headers headersToSend = httpEngine.getRequest().getHeaders();
     String requestLine = RequestLine.get(httpEngine.getRequest(),
         httpEngine.connection.getRoute().getProxy().type(),
         httpEngine.connection.getHttpMinorVersion());
-    byte[] bytes = headersToSend.toBytes(requestLine);
-    requestOut.write(bytes);
+    writeRequest(requestOut, headersToSend, requestLine);
   }
 
   @Override public Response readResponseHeaders() throws IOException {
@@ -148,8 +147,23 @@ public final class HttpTransport implements Transport {
         .handshake(httpEngine.connection.getHandshake())
         .build();
     httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
-    httpEngine.receiveHeaders(response.rawHeaders());
+    httpEngine.receiveHeaders(response.headers());
     return response;
+  }
+
+  /** Returns bytes of a request header for sending on an HTTP transport. */
+  public static void writeRequest(OutputStream out, Headers headers, String requestLine)
+      throws IOException {
+    StringBuilder result = new StringBuilder(256);
+    result.append(requestLine).append("\r\n");
+    for (int i = 0; i < headers.length(); i ++) {
+      result.append(headers.getFieldName(i))
+          .append(": ")
+          .append(headers.getValue(i))
+          .append("\r\n");
+    }
+    result.append("\r\n");
+    out.write(result.toString().getBytes("ISO-8859-1"));
   }
 
   /** Parses bytes of a response header from an HTTP transport. */
@@ -162,9 +176,9 @@ public final class HttpTransport implements Transport {
       responseBuilder.statusLine(statusLine);
       responseBuilder.header(Response.SELECTED_TRANSPORT, "http/1.1");
 
-      RawHeaders.Builder headersBuilder = new RawHeaders.Builder();
+      Headers.Builder headersBuilder = new Headers.Builder();
       headersBuilder.readHeaders(in);
-      responseBuilder.rawHeaders(headersBuilder.build());
+      responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) return responseBuilder;
     }
@@ -498,7 +512,7 @@ public final class HttpTransport implements Transport {
       }
       if (bytesRemainingInChunk == 0) {
         hasMoreChunks = false;
-        RawHeaders trailers = new RawHeaders.Builder()
+        Headers trailers = new Headers.Builder()
             .readHeaders(transport.socketIn)
             .build();
         httpEngine.receiveHeaders(trailers);

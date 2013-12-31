@@ -27,7 +27,11 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public final class SpdyTransport implements Transport {
   private final HttpEngine httpEngine;
@@ -45,7 +49,7 @@ public final class SpdyTransport implements Transport {
     String version = RequestLine.version(httpEngine.connection.getHttpMinorVersion());
     URL url = request.url();
     builder.addSpdyRequestHeaders(request.method(), RequestLine.requestPath(url), version,
-        HttpEngine.getOriginAddress(url), httpEngine.getRequest().url().getProtocol());
+        HttpEngine.getHostHeader(url), httpEngine.getRequest().url().getProtocol());
 
     if (httpEngine.hasRequestBody()) {
       long fixedContentLength = httpEngine.policy.getFixedContentLength();
@@ -69,7 +73,7 @@ public final class SpdyTransport implements Transport {
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
-    stream = spdyConnection.newStream(httpEngine.getRequest().getHeaders().toNameValueBlock(),
+    stream = spdyConnection.newStream(writeNameValueBlock(httpEngine.getRequest().getHeaders()),
         hasRequestBody, hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
@@ -88,8 +92,47 @@ public final class SpdyTransport implements Transport {
         .handshake(httpEngine.connection.getHandshake())
         .build();
     httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
-    httpEngine.receiveHeaders(response.rawHeaders());
+    httpEngine.receiveHeaders(response.headers());
     return response;
+  }
+
+  /**
+   * Returns a list of alternating names and values containing a SPDY request.
+   * Names are all lower case. No names are repeated. If any name has multiple
+   * values, they are concatenated using "\0" as a delimiter.
+   */
+  public static List<String> writeNameValueBlock(Headers headers) {
+    Set<String> names = new HashSet<String>();
+    List<String> result = new ArrayList<String>();
+    for (int i = 0; i < headers.length(); i++) {
+      String name = headers.getFieldName(i).toLowerCase(Locale.US);
+      String value = headers.getValue(i);
+
+      // Drop headers that are forbidden when layering HTTP over SPDY.
+      if (name.equals("connection")
+          || name.equals("host")
+          || name.equals("keep-alive")
+          || name.equals("proxy-connection")
+          || name.equals("transfer-encoding")) {
+        continue;
+      }
+
+      // If we haven't seen this name before, add the pair to the end of the list...
+      if (names.add(name)) {
+        result.add(name);
+        result.add(value);
+        continue;
+      }
+
+      // ...otherwise concatenate the existing values and this value.
+      for (int j = 0; j < result.size(); j += 2) {
+        if (name.equals(result.get(j))) {
+          result.set(j + 1, result.get(j + 1) + "\0" + value);
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
@@ -101,7 +144,7 @@ public final class SpdyTransport implements Transport {
     String status = null;
     String version = null;
 
-    RawHeaders.Builder headersBuilder = new RawHeaders.Builder();
+    Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(Response.SELECTED_TRANSPORT, "spdy/3");
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
@@ -127,7 +170,7 @@ public final class SpdyTransport implements Transport {
 
     return new Response.Builder(request)
         .statusLine(new StatusLine(version + " " + status))
-        .rawHeaders(headersBuilder.build());
+        .headers(headersBuilder.build());
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
