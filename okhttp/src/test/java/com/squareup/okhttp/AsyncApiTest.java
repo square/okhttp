@@ -57,7 +57,8 @@ public final class AsyncApiTest {
         .addHeader("Content-Type: text/plain"));
     server.play();
 
-    Request request = new Request.Builder(server.getUrl("/"))
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
         .header("User-Agent", "AsyncApiTest")
         .build();
     client.enqueue(request, receiver);
@@ -80,7 +81,9 @@ public final class AsyncApiTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
-    Request request = new Request.Builder(server.getUrl("/")).build();
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
     client.enqueue(request, receiver);
 
     receiver.await(request.url()).assertHandshake();
@@ -90,7 +93,8 @@ public final class AsyncApiTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.play();
 
-    Request request = new Request.Builder(server.getUrl("/"))
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
         .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
         .build();
     client.enqueue(request, receiver);
@@ -112,12 +116,16 @@ public final class AsyncApiTest {
 
     client.setOkResponseCache(cache);
 
-    Request request1 = new Request.Builder(server.getUrl("/")).build();
+    Request request1 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
     client.enqueue(request1, receiver);
     receiver.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
-    Request request2 = new Request.Builder(server.getUrl("/")).build();
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
     client.enqueue(request2, receiver);
     receiver.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));

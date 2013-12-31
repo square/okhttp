@@ -32,15 +32,15 @@ public final class HeadersTest {
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK",
         ":version", "HTTP/1.1");
-    Request request = new Request.Builder("http://square.com/").build();
+    Request request = new Request.Builder().url("http://square.com/").build();
     Response response = SpdyTransport.readNameValueBlock(request, nameValueBlock).build();
     Headers headers = response.headers();
     assertEquals(4, headers.length());
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
     assertEquals("Cookie2", headers.get("set-cookie"));
-    assertEquals("spdy/3", headers.get(Response.SELECTED_TRANSPORT));
-    assertEquals(Response.SELECTED_TRANSPORT, headers.getFieldName(0));
+    assertEquals("spdy/3", headers.get(SyntheticHeaders.SELECTED_TRANSPORT));
+    assertEquals(SyntheticHeaders.SELECTED_TRANSPORT, headers.getFieldName(0));
     assertEquals("spdy/3", headers.getValue(0));
     assertEquals("cache-control", headers.getFieldName(1));
     assertEquals("no-cache, no-store", headers.getValue(1));

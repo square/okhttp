@@ -27,7 +27,6 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
-import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,6 +39,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
+import static com.squareup.okhttp.internal.Util.closeQuietly;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
@@ -155,33 +155,10 @@ public class HttpEngine {
    * writing the request body if it exists.
    */
   public final void sendRequest() throws IOException {
-    if (responseSource != null) {
-      return;
-    }
+    if (responseSource != null) return;
 
     prepareRawRequestHeaders();
-    initResponseSource();
-    OkResponseCache responseCache = client.getOkResponseCache();
-    if (responseCache != null) {
-      responseCache.trackResponse(responseSource);
-    }
-
-    // The raw response source may require the network, but the request
-    // headers may forbid network use. In that case, dispose of the network
-    // response and use a gateway timeout response instead, as specified
-    // by http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.4.
-    if (request.isOnlyIfCached() && responseSource.requiresConnection()) {
-      if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-        Util.closeQuietly(validatingResponse.body());
-      }
-      this.responseSource = ResponseSource.CACHE;
-
-      this.validatingResponse = new Response.Builder(request)
-          .statusLine(new StatusLine("HTTP/1.1 504 Gateway Timeout"))
-          .body(EMPTY_BODY)
-          .build();
-      promoteValidatingResponse();
-    }
+    responseSource = chooseResponseSource();
 
     if (responseSource.requiresConnection()) {
       sendSocketRequest();
@@ -191,38 +168,56 @@ public class HttpEngine {
     }
   }
 
-  /**
-   * Initialize the source for this response. It may be corrected later if the
-   * request headers forbids network use.
-   */
-  private void initResponseSource() throws IOException {
-    responseSource = ResponseSource.NETWORK;
-
+  /** Returns a source that can satisfy the request. */
+  private ResponseSource chooseResponseSource() throws IOException {
     OkResponseCache responseCache = client.getOkResponseCache();
-    if (responseCache == null) return;
+    if (responseCache == null) return ResponseSource.NETWORK; // No cache? Easy decision.
 
     Response candidate = responseCache.get(request);
-    if (candidate == null) return;
 
-    // Drop the cached response if it's missing a required handshake.
-    if (request.isHttps() && candidate.handshake() == null) {
-      Util.closeQuietly(candidate.body());
-      return;
+    ResponseSource result;
+    if (candidate == null) {
+      result = ResponseSource.NETWORK;
+
+    } else if (request.isHttps() && candidate.handshake() == null) {
+      // Drop the cached response if it's missing a required handshake.
+      result = ResponseSource.NETWORK;
+
+    } else {
+      // We've got a lead on a cached response. Ask response strategy to analyze it.
+      long now = System.currentTimeMillis();
+      CacheStrategy cacheStrategy = CacheStrategy.get(now, candidate, request);
+      result = cacheStrategy.source;
+      this.request = cacheStrategy.request;
+
+      if (result == ResponseSource.CACHE || result == ResponseSource.CONDITIONAL_CACHE) {
+        this.validatingResponse = cacheStrategy.response;
+      }
     }
 
-    long now = System.currentTimeMillis();
-    ResponseStrategy responseStrategy = ResponseStrategy.get(now, candidate, request);
-    this.responseSource = responseStrategy.source;
-    this.request = responseStrategy.request;
+    if (candidate != null && result == ResponseSource.NETWORK) {
+      closeQuietly(candidate.body()); // We aren't using the cached response. Close it.
+    }
 
-    if (responseSource == ResponseSource.CACHE) {
-      this.validatingResponse = responseStrategy.response;
+    if (result == ResponseSource.CACHE) {
       promoteValidatingResponse();
-    } else if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-      this.validatingResponse = responseStrategy.response;
-    } else if (responseSource == ResponseSource.NETWORK) {
-      Util.closeQuietly(candidate.body());
+    } else if (request.isOnlyIfCached()) {
+      // We're forbidden from using the network, but the cache is insufficient.
+      if (result == ResponseSource.CONDITIONAL_CACHE) {
+        closeQuietly(validatingResponse.body());
+      }
+
+      result = ResponseSource.NONE;
+      this.validatingResponse = new Response.Builder(request)
+          .statusLine(new StatusLine("HTTP/1.1 504 Gateway Timeout"))
+          .setResponseSource(result)
+          .body(EMPTY_BODY)
+          .build();
+      promoteValidatingResponse();
     }
+
+    responseCache.trackResponse(result);
+    return result;
   }
 
   private Response cacheableResponse() {
@@ -314,9 +309,7 @@ public class HttpEngine {
 
   /** Returns the request body or null if this request doesn't have a body. */
   public final OutputStream getRequestBody() {
-    if (responseSource == null) {
-      throw new IllegalStateException();
-    }
+    if (responseSource == null) throw new IllegalStateException();
     return requestBodyOut;
   }
 
@@ -349,7 +342,7 @@ public class HttpEngine {
     if (responseCache == null) return;
 
     // Should we cache this response for this request?
-    if (!ResponseStrategy.isCacheable(response, request)) {
+    if (!CacheStrategy.isCacheable(response, request)) {
       responseCache.maybeRemove(request);
       return;
     }
@@ -382,7 +375,7 @@ public class HttpEngine {
     if (validatingResponse != null
         && validatingResponse.body() != null
         && responseBodyIn == validatingResponse.body().byteStream()) {
-      Util.closeQuietly(responseBodyIn);
+      closeQuietly(responseBodyIn);
     }
 
     if (!connectionReleased && connection != null) {
@@ -390,7 +383,7 @@ public class HttpEngine {
 
       if (transport == null
           || !transport.makeReusable(streamCanceled, requestBodyOut, responseTransferIn)) {
-        Util.closeQuietly(connection);
+        closeQuietly(connection);
         connection = null;
       } else if (automaticallyReleaseConnectionToPool) {
         client.getConnectionPool().recycle(connection);
@@ -460,7 +453,7 @@ public class HttpEngine {
     }
 
     if (request.getHost() == null) {
-      result.setHost(getHostHeader(request.url()));
+      result.setHost(hostHeader(request.url()));
     }
 
     if ((connection == null || connection.getHttpMinorVersion() != 0)
@@ -490,7 +483,7 @@ public class HttpEngine {
     return agent != null ? agent : ("Java" + System.getProperty("java.version"));
   }
 
-  public static String getHostHeader(URL url) {
+  public static String hostHeader(URL url) {
     return getEffectivePort(url) != getDefaultPort(url.getProtocol())
         ? url.getHost() + ":" + url.getPort()
         : url.getHost();
@@ -501,19 +494,9 @@ public class HttpEngine {
    * headers and starts reading the HTTP response body if it exists.
    */
   public final void readResponse() throws IOException {
-    if (hasResponse()) {
-      // TODO: this doesn't make much sense.
-      response = response.newBuilder().setResponseSource(responseSource).build();
-      return;
-    }
-
-    if (responseSource == null) {
-      throw new IllegalStateException("readResponse() without sendRequest()");
-    }
-
-    if (!responseSource.requiresConnection()) {
-      return;
-    }
+    if (response != null) return;
+    if (responseSource == null) throw new IllegalStateException("call sendRequest() first!");
+    if (!responseSource.requiresConnection()) return;
 
     if (sentRequestMillis == -1) {
       if (request.getContentLength() == -1
@@ -556,7 +539,7 @@ public class HttpEngine {
         }
         return;
       } else {
-        Util.closeQuietly(validatingResponse.body());
+        closeQuietly(validatingResponse.body());
       }
     }
 

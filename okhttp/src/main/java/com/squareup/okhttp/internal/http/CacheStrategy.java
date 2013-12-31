@@ -7,16 +7,19 @@ import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Given a request and cached response, this figures out the next action. It
- * may also update the request to add conditions, or the response to add
- * warnings.
+ * Given a request and cached response, this figures out whether to use the
+ * network, the cache, or both.
+ *
+ * <p>Selecting the next action may have side effects. The request may gain
+ * conditions such as an "If-None-Match" or "If-Modified-Since" header. The
+ * response may gain a warning if it is potentially stale.
  */
-public final class ResponseStrategy {
+public final class CacheStrategy {
   public final Request request;
   public final Response response;
   public final ResponseSource source;
 
-  private ResponseStrategy(
+  private CacheStrategy(
       Request request, Response response, ResponseSource source) {
     this.request = request;
     this.response = response;
@@ -111,17 +114,17 @@ public final class ResponseStrategy {
    * Returns a strategy to satisfy {@code request} using the a cached response
    * {@code response}.
    */
-  public static ResponseStrategy get(
+  public static CacheStrategy get(
       long nowMillis, Response response, Request request) {
     // If this response shouldn't have been stored, it should never be used
     // as a response source. This check should be redundant as long as the
     // persistence store is well-behaved and the rules are constant.
     if (!isCacheable(response, request)) {
-      return new ResponseStrategy(request, response, ResponseSource.NETWORK);
+      return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
     if (request.isNoCache() || request.hasConditions()) {
-      return new ResponseStrategy(request, response, ResponseSource.NETWORK);
+      return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
     long ageMillis = computeAge(response, nowMillis);
@@ -142,7 +145,8 @@ public final class ResponseStrategy {
     }
 
     if (!response.isNoCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
-      Response.Builder builder = response.newBuilder();
+      Response.Builder builder = response.newBuilder()
+          .setResponseSource(ResponseSource.CACHE); // Overwrite any stored response source.
       if (ageMillis + minFreshMillis >= freshMillis) {
         builder.addWarning("110 HttpURLConnection \"Response is stale\"");
       }
@@ -150,7 +154,7 @@ public final class ResponseStrategy {
       if (ageMillis > oneDayMillis && isFreshnessLifetimeHeuristic(response)) {
         builder.addWarning("113 HttpURLConnection \"Heuristic expiration\"");
       }
-      return new ResponseStrategy(request, builder.build(), ResponseSource.CACHE);
+      return new CacheStrategy(request, builder.build(), ResponseSource.CACHE);
     }
 
     Request.Builder conditionalRequestBuilder = request.newBuilder();
@@ -169,6 +173,6 @@ public final class ResponseStrategy {
     ResponseSource responseSource = conditionalRequest.hasConditions()
         ? ResponseSource.CONDITIONAL_CACHE
         : ResponseSource.NETWORK;
-    return new ResponseStrategy(conditionalRequest, response, responseSource);
+    return new CacheStrategy(conditionalRequest, response, responseSource);
   }
 }

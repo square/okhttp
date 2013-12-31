@@ -174,7 +174,7 @@ public final class HttpTransport implements Transport {
 
       Response.Builder responseBuilder = new Response.Builder(request);
       responseBuilder.statusLine(statusLine);
-      responseBuilder.header(Response.SELECTED_TRANSPORT, "http/1.1");
+      responseBuilder.header(SyntheticHeaders.SELECTED_TRANSPORT, "http/1.1");
 
       Headers.Builder headersBuilder = new Headers.Builder();
       headersBuilder.readHeaders(in);

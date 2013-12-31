@@ -204,7 +204,7 @@ public final class HttpResponseCacheTest {
     // exhaust the content stream
     readAscii(conn);
 
-    Response cached = cache.get(new Request.Builder(url).build());
+    Response cached = cache.get(new Request.Builder().url(url).build());
     if (shouldPut) {
       assertNotNull(Integer.toString(responseCode), cached);
       cached.body().close();
@@ -1048,6 +1048,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(1, cache.getRequestCount());
+    assertEquals(0, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
@@ -1060,6 +1063,9 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(1, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
@@ -1072,6 +1078,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
@@ -1082,6 +1091,9 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
+    assertEquals(2, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
   }
 
   @Test public void requestCacheControlNoCache() throws Exception {
@@ -1684,8 +1696,8 @@ public final class HttpResponseCacheTest {
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CACHE.toString() + " 200", source);
+    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
@@ -1701,8 +1713,8 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
 
-    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 200", source);
+    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
@@ -1716,8 +1728,8 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE.toString() + " 304", source);
+    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 304", source);
   }
 
   @Test public void responseSourceHeaderFetched() throws IOException {
@@ -1727,8 +1739,8 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(Response.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.NETWORK.toString() + " 200", source);
+    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    assertEquals(ResponseSource.NETWORK + " 200", source);
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
@@ -1943,6 +1955,8 @@ public final class HttpResponseCacheTest {
     }
     assertEquals(504, connection.getResponseCode());
     assertEquals(-1, connection.getErrorStream().read());
+    assertEquals(ResponseSource.NONE + " 504",
+        connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE));
   }
 
   enum TransferKind {
