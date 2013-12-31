@@ -172,7 +172,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     }
 
     // For the request line property assigned to the null key, just use no proxy and HTTP 1.1.
-    Request request = new Request.Builder(getURL()).method(method, null).build();
+    Request request = new Request.Builder().url(getURL()).method(method, null).build();
     String requestLine = RequestLine.get(request, null, 1);
     return requestHeaders.build().toMultimap(requestLine);
   }
@@ -271,10 +271,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   private HttpEngine newHttpEngine(String method, Connection connection,
       RetryableOutputStream requestBody) throws IOException {
-    Request request = new Request.Builder(getURL())
-        .method(method, null) // No body: that's provided later!
-        .headers(requestHeaders.build())
-        .build();
+    Request.Builder builder = new Request.Builder()
+        .url(getURL())
+        .method(method, null /* No body; that's passed separately. */);
+    Headers headers = requestHeaders.build();
+    for (int i = 0; i < headers.length(); i++) {
+      builder.addHeader(headers.getFieldName(i), headers.getValue(i));
+    }
+    Request request = builder.build();
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
     OkHttpClient engineClient = client;

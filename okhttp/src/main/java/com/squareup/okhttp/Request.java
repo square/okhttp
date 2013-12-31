@@ -118,10 +118,7 @@ public final class Request {
   }
 
   public Builder newBuilder() {
-    return new Builder(url)
-        .method(method, body)
-        .headers(headers)
-        .tag(tag);
+    return new Builder(this);
   }
 
   public boolean isChunked() {
@@ -397,23 +394,27 @@ public final class Request {
 
   public static class Builder {
     private URL url;
-    private String method = "GET";
-    private Headers.Builder headers = new Headers.Builder();
+    private String method;
+    private final Headers.Builder headers;
     private Body body;
     private Object tag;
 
-    public Builder(String url) {
-      url(url);
+    public Builder() {
+      this.method = "GET";
+      this.headers = new Headers.Builder();
     }
 
-    public Builder(URL url) {
-      url(url);
+    private Builder(Request request) {
+      this.url = request.url;
+      this.method = request.method;
+      this.body = request.body;
+      this.tag = request.tag;
+      this.headers = request.headers.newBuilder();
     }
 
     public Builder url(String url) {
       try {
-        this.url = new URL(url);
-        return this;
+        return url(new URL(url));
       } catch (MalformedURLException e) {
         throw new IllegalArgumentException("Malformed URL: " + url);
       }
@@ -440,12 +441,6 @@ public final class Request {
      */
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
-      return this;
-    }
-
-    // TODO: this shouldn't be public.
-    public Builder headers(Headers headers) {
-      this.headers = headers.newBuilder();
       return this;
     }
 
@@ -514,25 +509,6 @@ public final class Request {
       return sb.toString();
     }
 
-    // TODO: this shouldn't be public.
-    /**
-     * @param method like "GET", "POST", "HEAD", etc.
-     * @param path like "/foo/bar.html"
-     * @param version like "HTTP/1.1"
-     * @param host like "www.android.com:1234"
-     * @param scheme like "https"
-     */
-    public Builder addSpdyRequestHeaders(
-        String method, String path, String version, String host, String scheme) {
-      // TODO: populate the statusLine for the client's benefit?
-      headers.set(":method", method);
-      headers.set(":scheme", scheme);
-      headers.set(":path", path);
-      headers.set(":version", version);
-      headers.set(":host", host);
-      return this;
-    }
-
     public Builder get() {
       return method("GET", null);
     }
@@ -569,6 +545,7 @@ public final class Request {
     }
 
     public Request build() {
+      if (url == null) throw new IllegalStateException("url == null");
       return new Request(this);
     }
   }

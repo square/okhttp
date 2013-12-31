@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.ProtocolException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,12 +43,12 @@ public final class SpdyTransport implements Transport {
   }
 
   @Override public Request prepareRequest(Request request) {
-    Request.Builder builder = request.newBuilder();
-
-    String version = RequestLine.version(httpEngine.connection.getHttpMinorVersion());
-    URL url = request.url();
-    builder.addSpdyRequestHeaders(request.method(), RequestLine.requestPath(url), version,
-        HttpEngine.getHostHeader(url), httpEngine.getRequest().url().getProtocol());
+    Request.Builder builder = request.newBuilder()
+        .header(":method", request.method())
+        .header(":scheme", httpEngine.getRequest().url().getProtocol())
+        .header(":path", RequestLine.requestPath(request.url()))
+        .header(":version", RequestLine.version(httpEngine.connection.getHttpMinorVersion()))
+        .header(":host", HttpEngine.hostHeader(request.url()));
 
     if (httpEngine.hasRequestBody()) {
       long fixedContentLength = httpEngine.policy.getFixedContentLength();
@@ -145,7 +144,7 @@ public final class SpdyTransport implements Transport {
     String version = null;
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(Response.SELECTED_TRANSPORT, "spdy/3");
+    headersBuilder.set(SyntheticHeaders.SELECTED_TRANSPORT, "spdy/3");
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
       String values = nameValueBlock.get(i + 1);

@@ -60,7 +60,8 @@ public final class TunnelRequest {
    * the proxy unencrypted.
    */
   Request getRequest() throws IOException {
-    Request.Builder result = new Request.Builder(new URL("https", host, port, "/"));
+    Request.Builder result = new Request.Builder()
+        .url(new URL("https", host, port, "/"));
 
     // Always set Host and User-Agent.
     result.header("Host", port == getDefaultPort("https") ? host : (host + ":" + port));

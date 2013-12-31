@@ -15,11 +15,11 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
 import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
+import com.squareup.okhttp.internal.http.SyntheticHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -47,21 +47,6 @@ import static com.squareup.okhttp.internal.Util.equal;
  * This class is in beta. APIs are subject to change!
  */
 public final class Response {
-  /** HTTP header name for the local time when the request was sent. */
-  private static final String SENT_MILLIS = Platform.get().getPrefix() + "-Sent-Millis";
-
-  /** HTTP header name for the local time when the response was received. */
-  private static final String RECEIVED_MILLIS = Platform.get().getPrefix() + "-Received-Millis";
-
-  /** HTTP synthetic header with the response source. */
-  // TODO: this shouldn't be public.
-  public static final String RESPONSE_SOURCE = Platform.get().getPrefix() + "-Response-Source";
-
-  /** HTTP synthetic header with the selected transport (spdy/3, http/1.1, etc). */
-  // TODO: this shouldn't be public.
-  public static final String SELECTED_TRANSPORT
-      = Platform.get().getPrefix() + "-Selected-Transport";
-
   private final Request request;
   private final StatusLine statusLine;
   private final Handshake handshake;
@@ -561,9 +546,9 @@ public final class Response {
           contentType = value;
         } else if ("Connection".equalsIgnoreCase(fieldName)) {
           connection = value;
-        } else if (SENT_MILLIS.equalsIgnoreCase(fieldName)) {
+        } else if (SyntheticHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
           sentRequestMillis = Long.parseLong(value);
-        } else if (RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
+        } else if (SyntheticHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
           receivedResponseMillis = Long.parseLong(value);
         }
       }
@@ -691,14 +676,14 @@ public final class Response {
 
     // TODO: this shouldn't be public.
     public Builder setLocalTimestamps(long sentRequestMillis, long receivedResponseMillis) {
-      headers.set(SENT_MILLIS, Long.toString(sentRequestMillis));
-      headers.set(RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
+      headers.set(SyntheticHeaders.SENT_MILLIS, Long.toString(sentRequestMillis));
+      headers.set(SyntheticHeaders.RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
       return this;
     }
 
     // TODO: this shouldn't be public.
     public Builder setResponseSource(ResponseSource responseSource) {
-      headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + statusLine.code());
+      headers.set(SyntheticHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
       return this;
     }
 
