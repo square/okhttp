@@ -135,18 +135,38 @@ public final class HttpTransport implements Transport {
   public void writeRequestHeaders() throws IOException {
     httpEngine.writingRequestHeaders();
     RawHeaders headersToSend = httpEngine.getRequest().getHeaders();
-    byte[] bytes = headersToSend.toBytes();
+    String requestLine = RequestLine.get(httpEngine.getRequest(),
+        httpEngine.connection.getRoute().getProxy().type(),
+        httpEngine.connection.getHttpMinorVersion());
+    byte[] bytes = headersToSend.toBytes(requestLine);
     requestOut.write(bytes);
   }
 
   @Override public Response readResponseHeaders() throws IOException {
-    RawHeaders rawHeaders = RawHeaders.readHttpHeaders(socketIn);
-    httpEngine.connection.setHttpMinorVersion(rawHeaders.getHttpMinorVersion());
-    httpEngine.receiveHeaders(rawHeaders);
-    return new Response.Builder(httpEngine.getRequest(), rawHeaders.getResponseCode())
+    Response response = readResponse(httpEngine.getRequest(), socketIn)
         .handshake(httpEngine.connection.getHandshake())
-        .rawHeaders(rawHeaders)
         .build();
+    httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
+    httpEngine.receiveHeaders(response.rawHeaders());
+    return response;
+  }
+
+  /** Parses bytes of a response header from an HTTP transport. */
+  public static Response.Builder readResponse(Request request, InputStream in) throws IOException {
+    while (true) {
+      String statusLineString = Util.readAsciiLine(in);
+      StatusLine statusLine = new StatusLine(statusLineString);
+
+      Response.Builder responseBuilder = new Response.Builder(request);
+      responseBuilder.statusLine(statusLine);
+      responseBuilder.header(Response.SELECTED_TRANSPORT, "http/1.1");
+
+      RawHeaders.Builder headersBuilder = new RawHeaders.Builder();
+      headersBuilder.readHeaders(in);
+      responseBuilder.rawHeaders(headersBuilder.build());
+
+      if (statusLine.code() != HttpEngine.HTTP_CONTINUE) return responseBuilder;
+    }
   }
 
   public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,

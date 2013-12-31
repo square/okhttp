@@ -18,9 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
-import com.squareup.okhttp.internal.http.HttpsEngine;
 import com.squareup.okhttp.internal.http.Policy;
-import com.squareup.okhttp.internal.http.RawHeaders;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -61,10 +59,6 @@ final class Job implements Runnable, Policy {
 
   @Override public boolean getUseCaches() {
     return true;
-  }
-
-  @Override public URL getURL() {
-    return request.url();
   }
 
   @Override public long getIfModifiedSince() {
@@ -146,15 +140,7 @@ final class Job implements Runnable, Policy {
   }
 
   HttpEngine newEngine(Connection connection) throws IOException {
-    String protocol = request.url().getProtocol();
-    RawHeaders requestHeaders = request.rawHeaders();
-    if (protocol.equals("http")) {
-      return new HttpEngine(client, this, request.method(), requestHeaders, connection, null);
-    } else if (protocol.equals("https")) {
-      return new HttpsEngine(client, this, request.method(), requestHeaders, connection, null);
-    } else {
-      throw new AssertionError();
-    }
+    return new HttpEngine(client, this, request, connection, null);
   }
 
   /**
@@ -177,12 +163,8 @@ final class Job implements Runnable, Policy {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        RawHeaders successorRequestHeaders = HttpAuthenticator.processAuthHeader(
-            client.getAuthenticator(), response.code(), response.rawHeaders(), request.rawHeaders(),
-            selectedProxy, this.request.url());
-        return successorRequestHeaders != null
-            ? request.newBuilder().rawHeaders(successorRequestHeaders).build()
-            : null;
+        return HttpAuthenticator.processAuthHeader(
+            client.getAuthenticator(), response, selectedProxy);
 
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:

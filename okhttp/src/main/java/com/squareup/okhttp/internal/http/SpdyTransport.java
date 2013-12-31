@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.util.List;
 
@@ -41,9 +42,9 @@ public final class SpdyTransport implements Transport {
   @Override public Request prepareRequest(Request request) {
     Request.Builder builder = request.newBuilder();
 
-    String version = httpEngine.connection.getHttpMinorVersion() == 1 ? "HTTP/1.1" : "HTTP/1.0";
+    String version = RequestLine.version(httpEngine.connection.getHttpMinorVersion());
     URL url = request.url();
-    builder.addSpdyRequestHeaders(request.method(), HttpEngine.requestPath(url), version,
+    builder.addSpdyRequestHeaders(request.method(), RequestLine.requestPath(url), version,
         HttpEngine.getOriginAddress(url), httpEngine.getRequest().url().getProtocol());
 
     if (httpEngine.hasRequestBody()) {
@@ -83,12 +84,50 @@ public final class SpdyTransport implements Transport {
 
   @Override public Response readResponseHeaders() throws IOException {
     List<String> nameValueBlock = stream.getResponseHeaders();
-    RawHeaders rawHeaders = RawHeaders.fromNameValueBlock(nameValueBlock);
-    httpEngine.receiveHeaders(rawHeaders);
-    return new Response.Builder(httpEngine.getRequest(), rawHeaders.getResponseCode())
+    Response response = readNameValueBlock(httpEngine.getRequest(), nameValueBlock)
         .handshake(httpEngine.connection.getHandshake())
-        .rawHeaders(rawHeaders)
         .build();
+    httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
+    httpEngine.receiveHeaders(response.rawHeaders());
+    return response;
+  }
+
+  /** Returns headers for a name value block containing a SPDY response. */
+  public static Response.Builder readNameValueBlock(Request request, List<String> nameValueBlock)
+      throws IOException {
+    if (nameValueBlock.size() % 2 != 0) {
+      throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
+    }
+    String status = null;
+    String version = null;
+
+    RawHeaders.Builder headersBuilder = new RawHeaders.Builder();
+    headersBuilder.set(Response.SELECTED_TRANSPORT, "spdy/3");
+    for (int i = 0; i < nameValueBlock.size(); i += 2) {
+      String name = nameValueBlock.get(i);
+      String values = nameValueBlock.get(i + 1);
+      for (int start = 0; start < values.length(); ) {
+        int end = values.indexOf('\0', start);
+        if (end == -1) {
+          end = values.length();
+        }
+        String value = values.substring(start, end);
+        if (":status".equals(name)) {
+          status = value;
+        } else if (":version".equals(name)) {
+          version = value;
+        } else {
+          headersBuilder.add(name, value);
+        }
+        start = end + 1;
+      }
+    }
+    if (status == null) throw new ProtocolException("Expected ':status' header not present");
+    if (version == null) throw new ProtocolException("Expected ':version' header not present");
+
+    return new Response.Builder(request)
+        .statusLine(new StatusLine(version + " " + status))
+        .rawHeaders(headersBuilder.build());
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {

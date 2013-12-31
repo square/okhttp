@@ -17,12 +17,10 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -67,41 +65,9 @@ public final class RawHeaders {
   };
 
   private final List<String> namesAndValues;
-  private final String requestLine;
-  private final String statusLine;
-  private final int httpMinorVersion;
-  private final int responseCode;
-  private final String responseMessage;
 
   private RawHeaders(Builder builder) {
     this.namesAndValues = Util.immutableList(builder.namesAndValues);
-    this.requestLine = builder.requestLine;
-    this.statusLine = builder.statusLine;
-    this.httpMinorVersion = builder.httpMinorVersion;
-    this.responseCode = builder.responseCode;
-    this.responseMessage = builder.responseMessage;
-  }
-
-  public String getStatusLine() {
-    return statusLine;
-  }
-
-  /**
-   * Returns the status line's HTTP minor version. This returns 0 for HTTP/1.0
-   * and 1 for HTTP/1.1. This returns 1 if the HTTP version is unknown.
-   */
-  public int getHttpMinorVersion() {
-    return httpMinorVersion != -1 ? httpMinorVersion : 1;
-  }
-
-  /** Returns the HTTP status code or -1 if it is unknown. */
-  public int getResponseCode() {
-    return responseCode;
-  }
-
-  /** Returns the HTTP status message or null if it is unknown. */
-  public String getResponseMessage() {
-    return responseMessage;
   }
 
   /** Returns the number of field values. */
@@ -168,7 +134,7 @@ public final class RawHeaders {
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
-  public byte[] toBytes() throws UnsupportedEncodingException {
+  public byte[] toBytes(String requestLine) throws UnsupportedEncodingException {
     StringBuilder result = new StringBuilder(256);
     result.append(requestLine).append("\r\n");
     for (int i = 0; i < namesAndValues.size(); i += 2) {
@@ -181,23 +147,13 @@ public final class RawHeaders {
     return result.toString().getBytes("ISO-8859-1");
   }
 
-  /** Parses bytes of a response header from an HTTP transport. */
-  public static RawHeaders readHttpHeaders(InputStream in) throws IOException {
-    Builder builder;
-    do {
-      builder = new Builder();
-      builder.set(Response.SELECTED_TRANSPORT, "http/1.1");
-      builder.setStatusLine(Util.readAsciiLine(in));
-      builder.readHeaders(in);
-    } while (builder.responseCode == HttpEngine.HTTP_CONTINUE);
-    return builder.build();
-  }
-
   /**
-   * Returns an immutable map containing each field to its list of values. The
-   * status line is mapped to null.
+   * Returns an immutable map containing each field to its list of values.
+   *
+   * @param valueForNullKey the request line for requests, or the status line
+   *     for responses. If non-null, this value is mapped to the null key.
    */
-  public Map<String, List<String>> toMultimap(boolean response) {
+  public Map<String, List<String>> toMultimap(String valueForNullKey) {
     Map<String, List<String>> result = new TreeMap<String, List<String>>(FIELD_NAME_COMPARATOR);
     for (int i = 0; i < namesAndValues.size(); i += 2) {
       String fieldName = namesAndValues.get(i);
@@ -211,10 +167,8 @@ public final class RawHeaders {
       allValues.add(value);
       result.put(fieldName, Collections.unmodifiableList(allValues));
     }
-    if (response && statusLine != null) {
-      result.put(null, Collections.unmodifiableList(Collections.singletonList(statusLine)));
-    } else if (requestLine != null) {
-      result.put(null, Collections.unmodifiableList(Collections.singletonList(requestLine)));
+    if (valueForNullKey != null) {
+      result.put(null, Collections.unmodifiableList(Collections.singletonList(valueForNullKey)));
     }
     return Collections.unmodifiableMap(result);
   }
@@ -258,49 +212,9 @@ public final class RawHeaders {
     return result;
   }
 
-  /** Returns headers for a name value block containing a SPDY response. */
-  public static RawHeaders fromNameValueBlock(List<String> nameValueBlock) throws IOException {
-    if (nameValueBlock.size() % 2 != 0) {
-      throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
-    }
-    String status = null;
-    String version = null;
-    Builder builder = new Builder();
-    builder.set(Response.SELECTED_TRANSPORT, "spdy/3");
-    for (int i = 0; i < nameValueBlock.size(); i += 2) {
-      String name = nameValueBlock.get(i);
-      String values = nameValueBlock.get(i + 1);
-      for (int start = 0; start < values.length(); ) {
-        int end = values.indexOf('\0', start);
-        if (end == -1) {
-          end = values.length();
-        }
-        String value = values.substring(start, end);
-        if (":status".equals(name)) {
-          status = value;
-        } else if (":version".equals(name)) {
-          version = value;
-        } else {
-          builder.namesAndValues.add(name);
-          builder.namesAndValues.add(value);
-        }
-        start = end + 1;
-      }
-    }
-    if (status == null) throw new ProtocolException("Expected ':status' header not present");
-    if (version == null) throw new ProtocolException("Expected ':version' header not present");
-    builder.setStatusLine(version + " " + status);
-    return builder.build();
-  }
-
   public Builder newBuilder() {
     Builder result = new Builder();
     result.namesAndValues.addAll(namesAndValues);
-    result.requestLine = requestLine;
-    result.statusLine = statusLine;
-    result.httpMinorVersion = httpMinorVersion;
-    result.responseCode = responseCode;
-    result.responseMessage = responseMessage;
     return result;
   }
 
@@ -315,59 +229,10 @@ public final class RawHeaders {
 
   public static class Builder {
     private final List<String> namesAndValues = new ArrayList<String>(20);
-    private String requestLine;
-    private String statusLine;
-    private int httpMinorVersion = 1;
-    private int responseCode = -1;
-    private String responseMessage;
-
-    /** Sets the request line (like "GET / HTTP/1.1"). */
-    public Builder setRequestLine(String requestLine) {
-      this.requestLine = requestLine.trim();
-      return this;
-    }
 
     /** Equivalent to {@code build().get(fieldName)}, but potentially faster. */
     public String get(String fieldName) {
       return RawHeaders.get(namesAndValues, fieldName);
-    }
-
-    /** Equivalent to {@code build().getResponseCode()}, but potentially faster. */
-    public int getResponseCode() {
-      return responseCode;
-    }
-
-    /** Sets the response status line (like "HTTP/1.0 200 OK"). */
-    public Builder setStatusLine(String statusLine) throws IOException {
-      // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
-      // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
-      if (this.responseMessage != null) {
-        throw new IllegalStateException("statusLine is already set");
-      }
-      // We allow empty message without leading white space since some servers
-      // do not send the white space when the message is empty.
-      boolean hasMessage = statusLine.length() > 13;
-      if (!statusLine.startsWith("HTTP/1.")
-          || statusLine.length() < 12
-          || statusLine.charAt(8) != ' '
-          || (hasMessage && statusLine.charAt(12) != ' ')) {
-        throw new ProtocolException("Unexpected status line: " + statusLine);
-      }
-      int httpMinorVersion = statusLine.charAt(7) - '0';
-      if (httpMinorVersion < 0 || httpMinorVersion > 9) {
-        throw new ProtocolException("Unexpected status line: " + statusLine);
-      }
-      int responseCode;
-      try {
-        responseCode = Integer.parseInt(statusLine.substring(9, 12));
-      } catch (NumberFormatException e) {
-        throw new ProtocolException("Unexpected status line: " + statusLine);
-      }
-      this.responseMessage = hasMessage ? statusLine.substring(13) : "";
-      this.responseCode = responseCode;
-      this.statusLine = statusLine;
-      this.httpMinorVersion = httpMinorVersion;
-      return this;
     }
 
     /**

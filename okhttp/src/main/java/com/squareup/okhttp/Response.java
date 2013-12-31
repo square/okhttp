@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.RawHeaders;
+import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -62,7 +63,7 @@ public final class Response {
       = Platform.get().getPrefix() + "-Selected-Transport";
 
   private final Request request;
-  private final int code;
+  private final StatusLine statusLine;
   private final Handshake handshake;
   private final RawHeaders headers;
   private final Body body;
@@ -72,7 +73,7 @@ public final class Response {
 
   private Response(Builder builder) {
     this.request = builder.request;
-    this.code = builder.code;
+    this.statusLine = builder.statusLine;
     this.handshake = builder.handshake;
     this.headers = builder.headers.build();
     this.body = builder.body;
@@ -95,8 +96,20 @@ public final class Response {
     return request;
   }
 
+  public String statusLine() {
+    return statusLine.getStatusLine();
+  }
+
   public int code() {
-    return code;
+    return statusLine.code();
+  }
+
+  public String statusMessage() {
+    return statusLine.message();
+  }
+
+  public int httpMinorVersion() {
+    return statusLine.httpMinorVersion();
   }
 
   /**
@@ -146,7 +159,8 @@ public final class Response {
   }
 
   public Builder newBuilder() {
-    return new Builder(request, code)
+    return new Builder(request)
+        .statusLine(statusLine)
         .handshake(handshake)
         .rawHeaders(headers)
         .body(body)
@@ -265,7 +279,7 @@ public final class Response {
    * network response should be used.
    */
   public boolean validate(Response network) {
-    if (network.headers.getResponseCode() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+    if (network.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
       return true;
     }
 
@@ -288,7 +302,6 @@ public final class Response {
    */
   public Response combine(Response network) throws IOException {
     RawHeaders.Builder result = new RawHeaders.Builder();
-    result.setStatusLine(headers.getStatusLine());
 
     for (int i = 0; i < headers.length(); i++) {
       String fieldName = headers.getFieldName(i);
@@ -604,17 +617,29 @@ public final class Response {
 
   public static class Builder {
     private final Request request;
-    private final int code;
+    private StatusLine statusLine;
     private Handshake handshake;
     private RawHeaders.Builder headers = new RawHeaders.Builder();
     private Body body;
     private Response redirectedBy;
 
-    public Builder(Request request, int code) {
+    public Builder(Request request) {
       if (request == null) throw new IllegalArgumentException("request == null");
-      if (code <= 0) throw new IllegalArgumentException("code <= 0");
       this.request = request;
-      this.code = code;
+    }
+
+    public Builder statusLine(StatusLine statusLine) {
+      if (statusLine == null) throw new IllegalArgumentException("statusLine == null");
+      this.statusLine = statusLine;
+      return this;
+    }
+
+    public Builder statusLine(String statusLine) {
+      try {
+        return statusLine(new StatusLine(statusLine));
+      } catch (IOException e) {
+        throw new IllegalArgumentException(e);
+      }
     }
 
     public Builder handshake(Handshake handshake) {
@@ -677,7 +702,7 @@ public final class Response {
 
     // TODO: this shouldn't be public.
     public Builder setResponseSource(ResponseSource responseSource) {
-      headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + headers.getResponseCode());
+      headers.set(RESPONSE_SOURCE, responseSource.toString() + " " + statusLine.code());
       return this;
     }
 
@@ -688,8 +713,8 @@ public final class Response {
     }
 
     public Response build() {
-      if (request == null) throw new IllegalStateException("Response has no request.");
-      if (code == -1) throw new IllegalStateException("Response has no code.");
+      if (request == null) throw new IllegalStateException("request == null");
+      if (statusLine == null) throw new IllegalStateException("statusLine == null");
       return new Response(this);
     }
   }

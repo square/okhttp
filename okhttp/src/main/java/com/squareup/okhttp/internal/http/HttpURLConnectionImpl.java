@@ -19,6 +19,8 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
@@ -142,8 +144,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
-      RawHeaders rawHeaders = getResponse().getResponse().getHeaders();
-      return fieldName == null ? rawHeaders.getStatusLine() : rawHeaders.get(fieldName);
+      Response response = getResponse().getResponse();
+      return fieldName == null ? response.statusLine() : response.getHeaders().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -159,7 +161,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      return getResponse().getResponse().getHeaders().toMultimap(true);
+      Response response = getResponse().getResponse();
+      return response.getHeaders().toMultimap(response.statusLine());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -170,7 +173,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       throw new IllegalStateException(
           "Cannot access request header fields after connection is set");
     }
-    return requestHeaders.build().toMultimap(false);
+
+    // For the request line property assigned to the null key, just use no proxy and HTTP 1.1.
+    Request request = new Request.Builder(getURL()).method(method, null).build();
+    String requestLine = RequestLine.get(request, null, 1);
+    return requestHeaders.build().toMultimap(requestLine);
   }
 
   @Override public final InputStream getInputStream() throws IOException {
@@ -267,13 +274,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   private HttpEngine newHttpEngine(String method, Connection connection,
       RetryableOutputStream requestBody) throws IOException {
-    if (url.getProtocol().equals("http")) {
-      return new HttpEngine(client, this, method, requestHeaders.build(), connection, requestBody);
-    } else if (url.getProtocol().equals("https")) {
-      return new HttpsEngine(client, this, method, requestHeaders.build(), connection, requestBody);
-    } else {
-      throw new AssertionError();
-    }
+    Request request = new Request.Builder(getURL())
+        .method(method, null) // No body: that's provided later!
+        .rawHeaders(requestHeaders.build())
+        .build();
+    return new HttpEngine(client, this, request, connection, requestBody);
   }
 
   /**
@@ -390,10 +395,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     return !sslFailure && !protocolFailure;
   }
 
-  public HttpEngine getHttpEngine() {
-    return httpEngine;
-  }
-
   enum Retry {
     NONE,
     SAME_CONNECTION,
@@ -417,12 +418,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        RawHeaders successorRequestHeaders = HttpAuthenticator.processAuthHeader(
-            client.getAuthenticator(), getResponseCode(),
-            httpEngine.getResponse().getHeaders(), requestHeaders.build(), selectedProxy,
-            url);
-        if (successorRequestHeaders == null) return Retry.NONE;
-        requestHeaders = successorRequestHeaders.newBuilder();
+        Request successorRequest = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
+            httpEngine.getResponse(), selectedProxy);
+        if (successorRequest == null) return Retry.NONE;
+        requestHeaders = successorRequest.getHeaders().newBuilder();
         return Retry.SAME_CONNECTION;
 
       case HTTP_MULT_CHOICE:
@@ -494,7 +493,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().getResponse().getHeaders().getResponseMessage();
+    return getResponse().getResponse().statusMessage();
   }
 
   @Override public final int getResponseCode() throws IOException {
