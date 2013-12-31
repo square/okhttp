@@ -38,12 +38,14 @@ import java.security.Permission;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLHandshakeException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
  * This implementation uses HttpEngine to send requests and receive responses.
@@ -55,14 +57,9 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * is <strong>not</strong> used to indicate not whether this URLConnection is
  * currently connected. Instead, it indicates whether a connection has ever been
  * attempted. Once a connection has been attempted, certain properties (request
- * header fields, request method, etc.) are immutable. Test the {@code
- * connection} field on this class for null/non-null to determine of an instance
- * is currently connected to a server.
+ * header fields, request method, etc.) are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
-
-  /** Numeric status code, 307: Temporary Redirect. */
-  public static final int HTTP_TEMP_REDIRECT = 307;
 
   /**
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
@@ -278,7 +275,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         .method(method, null) // No body: that's provided later!
         .rawHeaders(requestHeaders.build())
         .build();
-    return new HttpEngine(client, this, request, connection, requestBody);
+
+    // If we're currently not using caches, make sure the engine's client doesn't have one.
+    OkHttpClient engineClient = client;
+    if (engineClient.getOkResponseCache() != null && !getUseCaches()) {
+      engineClient = client.clone().setOkResponseCache(null);
+    }
+
+    return new HttpEngine(engineClient, this, request, connection, requestBody);
   }
 
   /**
@@ -521,6 +525,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       setTransports(newValue, false /* append */);
     } else {
       requestHeaders.set(field, newValue);
+    }
+  }
+
+  @Override public void setIfModifiedSince(long newValue) {
+    super.setIfModifiedSince(newValue);
+    if (ifModifiedSince != 0) {
+      requestHeaders.set("If-Modified-Since", HttpDate.format(new Date(ifModifiedSince)));
+    } else {
+      requestHeaders.removeAll("If-Modified-Since");
     }
   }
 

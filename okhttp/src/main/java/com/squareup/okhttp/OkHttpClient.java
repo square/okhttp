@@ -37,7 +37,7 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
 
 /** Configures and creates HTTP connections. */
-public final class OkHttpClient implements URLStreamHandlerFactory {
+public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private static final List<String> DEFAULT_TRANSPORTS
       = Util.immutableList(Arrays.asList("spdy/3", "http/1.1"));
 
@@ -59,11 +59,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
     dispatcher = new Dispatcher();
-  }
-
-  private OkHttpClient(OkHttpClient copyFrom) {
-    routeDatabase = copyFrom.routeDatabase;
-    dispatcher = copyFrom.dispatcher;
   }
 
   /**
@@ -370,32 +365,45 @@ public final class OkHttpClient implements URLStreamHandlerFactory {
   }
 
   /**
-   * Returns a shallow copy of this OkHttpClient that uses the system-wide default for
-   * each field that hasn't been explicitly configured.
+   * Returns a shallow copy of this OkHttpClient that uses the system-wide
+   * default for each field that hasn't been explicitly configured.
    */
   private OkHttpClient copyWithDefaults() {
-    OkHttpClient result = new OkHttpClient(this);
-    result.proxy = proxy;
-    result.proxySelector = proxySelector != null ? proxySelector : ProxySelector.getDefault();
-    result.cookieHandler = cookieHandler != null ? cookieHandler : CookieHandler.getDefault();
-    result.responseCache = responseCache != null
-        ? responseCache
-        : toOkResponseCacheOrNull(ResponseCache.getDefault());
-    result.sslSocketFactory = sslSocketFactory != null
-        ? sslSocketFactory
-        : HttpsURLConnection.getDefaultSSLSocketFactory();
-    result.hostnameVerifier = hostnameVerifier != null
-        ? hostnameVerifier
-        : OkHostnameVerifier.INSTANCE;
-    result.authenticator = authenticator != null
-        ? authenticator
-        : HttpAuthenticator.SYSTEM_DEFAULT;
-    result.connectionPool = connectionPool != null ? connectionPool : ConnectionPool.getDefault();
-    result.followProtocolRedirects = followProtocolRedirects;
-    result.transports = transports != null ? transports : DEFAULT_TRANSPORTS;
-    result.connectTimeout = connectTimeout;
-    result.readTimeout = readTimeout;
+    OkHttpClient result = clone();
+    if (result.proxySelector == null) {
+      result.proxySelector = ProxySelector.getDefault();
+    }
+    if (result.cookieHandler == null) {
+      result.cookieHandler = CookieHandler.getDefault();
+    }
+    if (result.responseCache == null) {
+      result.responseCache = toOkResponseCacheOrNull(ResponseCache.getDefault());
+    }
+    if (result.sslSocketFactory == null) {
+      result.sslSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+    }
+    if (result.hostnameVerifier == null) {
+      result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
+    }
+    if (result.authenticator == null) {
+      result.authenticator = HttpAuthenticator.SYSTEM_DEFAULT;
+    }
+    if (result.connectionPool == null) {
+      result.connectionPool = ConnectionPool.getDefault();
+    }
+    if (result.transports == null) {
+      result.transports = DEFAULT_TRANSPORTS;
+    }
     return result;
+  }
+
+  /** Returns a shallow copy of this OkHttpClient. */
+  @Override public OkHttpClient clone() {
+    try {
+      return (OkHttpClient) super.clone();
+    } catch (CloneNotSupportedException e) {
+      throw new AssertionError();
+    }
   }
 
   private OkResponseCache toOkResponseCacheOrNull(ResponseCache cache) {

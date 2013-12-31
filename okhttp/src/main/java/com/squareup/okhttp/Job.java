@@ -30,7 +30,7 @@ import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_MOVED
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_MULT_CHOICE;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_PROXY_AUTH;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_SEE_OTHER;
-import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_TEMP_REDIRECT;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_UNAUTHORIZED;
 
 final class Job implements Runnable, Policy {
@@ -55,18 +55,6 @@ final class Job implements Runnable, Policy {
 
   @Override public long getFixedContentLength() {
     return request.body().contentLength();
-  }
-
-  @Override public boolean getUseCaches() {
-    return true;
-  }
-
-  @Override public long getIfModifiedSince() {
-    return 0; // For HttpURLConnection only. We let the cache drive this.
-  }
-
-  @Override public boolean usingProxy() {
-    return false; // We let the connection decide this.
   }
 
   @Override public void setSelectedProxy(Proxy proxy) {
