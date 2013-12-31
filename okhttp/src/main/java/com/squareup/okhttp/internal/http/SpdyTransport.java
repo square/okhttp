@@ -28,7 +28,7 @@ import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -102,8 +102,8 @@ public final class SpdyTransport implements Transport {
    * values, they are concatenated using "\0" as a delimiter.
    */
   public static List<String> writeNameValueBlock(Headers headers) {
-    Set<String> names = new HashSet<String>();
-    List<String> result = new ArrayList<String>();
+    Set<String> names = new LinkedHashSet<String>();
+    List<String> result = new ArrayList<String>(headers.length() * 2);
     for (int i = 0; i < headers.length(); i++) {
       String name = headers.getFieldName(i).toLowerCase(Locale.US);
       String value = headers.getValue(i);
