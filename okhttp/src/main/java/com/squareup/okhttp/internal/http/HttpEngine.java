@@ -25,6 +25,7 @@ import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
@@ -69,11 +70,11 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
-  final Policy policy;
   final OkHttpClient client;
 
   Connection connection;
   RouteSelector routeSelector;
+  private Route route;
 
   private Transport transport;
 
@@ -85,6 +86,14 @@ public class HttpEngine {
    * therefore responsible for also decompressing the transfer stream.
    */
   private boolean transparentGzip;
+
+  /**
+   * True if the request body must be completely buffered before transmission;
+   * false if it can be streamed. Buffering has two advantages: we don't need
+   * the content-length in advance and we can retransmit if necessary. The
+   * upside of streaming is that we can save memory.
+   */
+  public final boolean bufferRequestBody;
 
   private Request request;
   private OutputStream requestBodyOut;
@@ -124,12 +133,13 @@ public class HttpEngine {
    *     redirect. This engine assumes ownership of the connection and must
    *     release it when it is unneeded.
    */
-  public HttpEngine(OkHttpClient client, Policy policy, Request request,
+  public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
     this.client = client;
-    this.policy = policy;
     this.request = request;
+    this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
+    this.route = connection != null ? connection.getRoute() : null;
     this.requestBodyOut = requestBodyOut;
   }
 
@@ -234,8 +244,7 @@ public class HttpEngine {
       connection.updateReadTimeout(client.getReadTimeout());
     }
 
-    // Update the policy to tell 'em which proxy we ended up going with.
-    policy.setSelectedProxy(connection.getRoute().getProxy());
+    route = connection.getRoute();
   }
 
   /**
@@ -289,6 +298,14 @@ public class HttpEngine {
 
   public final Connection getConnection() {
     return connection;
+  }
+
+  /**
+   * Returns the route used to retrieve the response. Null if we haven't
+   * connected yet, or if no connection was necessary.
+   */
+  public Route getRoute() {
+    return route;
   }
 
   private void maybeCache() throws IOException {
