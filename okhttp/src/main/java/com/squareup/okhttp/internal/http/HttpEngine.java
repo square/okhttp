@@ -38,7 +38,6 @@ import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
-import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
 import static com.squareup.okhttp.internal.Util.closeQuietly;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
@@ -70,21 +69,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
-  private static final Response.Body EMPTY_BODY = new Response.Body() {
-    @Override public boolean ready() throws IOException {
-      return true;
-    }
-    @Override public MediaType contentType() {
-      return null;
-    }
-    @Override public long contentLength() {
-      return 0;
-    }
-    @Override public InputStream byteStream() {
-      return EMPTY_INPUT_STREAM;
-    }
-  };
-
   final Policy policy;
   final OkHttpClient client;
 
@@ -155,69 +139,59 @@ public class HttpEngine {
    * writing the request body if it exists.
    */
   public final void sendRequest() throws IOException {
-    if (responseSource != null) return;
+    if (responseSource != null) return; // Already sent.
+    if (transport != null) throw new IllegalStateException();
 
     prepareRawRequestHeaders();
-    responseSource = chooseResponseSource();
+    OkResponseCache responseCache = client.getOkResponseCache();
+
+    Response cacheResponse = responseCache != null
+        ? responseCache.get(request)
+        : null;
+    long now = System.currentTimeMillis();
+    CacheStrategy cacheStrategy = CacheStrategy.get(now, cacheResponse, request);
+    responseSource = cacheStrategy.source;
+    request = cacheStrategy.request;
+
+    if (responseCache != null) {
+      responseCache.trackResponse(responseSource);
+    }
+
+    if (responseSource != ResponseSource.NETWORK) {
+      validatingResponse = cacheStrategy.response;
+    }
+
+    if (cacheResponse != null && !responseSource.usesCache()) {
+      closeQuietly(cacheResponse.body()); // We don't need this cached response. Close it.
+    }
 
     if (responseSource.requiresConnection()) {
-      sendSocketRequest();
-    } else if (connection != null) {
-      client.getConnectionPool().recycle(connection);
-      connection = null;
-    }
-  }
+      // Open a connection unless we inherited one from a redirect.
+      if (connection == null) {
+        connect();
+      }
 
-  /** Returns a source that can satisfy the request. */
-  private ResponseSource chooseResponseSource() throws IOException {
-    OkResponseCache responseCache = client.getOkResponseCache();
-    if (responseCache == null) return ResponseSource.NETWORK; // No cache? Easy decision.
+      transport = (Transport) connection.newTransport(this);
+      request = transport.prepareRequest(request);
 
-    Response candidate = responseCache.get(request);
-
-    ResponseSource result;
-    if (candidate == null) {
-      result = ResponseSource.NETWORK;
-
-    } else if (request.isHttps() && candidate.handshake() == null) {
-      // Drop the cached response if it's missing a required handshake.
-      result = ResponseSource.NETWORK;
+      // Create a request body if we don't have one already. We'll already have
+      // one if we're retrying a failed POST.
+      if (hasRequestBody() && requestBodyOut == null) {
+        requestBodyOut = transport.createRequestBody(request);
+      }
 
     } else {
-      // We've got a lead on a cached response. Ask response strategy to analyze it.
-      long now = System.currentTimeMillis();
-      CacheStrategy cacheStrategy = CacheStrategy.get(now, candidate, request);
-      result = cacheStrategy.source;
-      this.request = cacheStrategy.request;
-
-      if (result == ResponseSource.CACHE || result == ResponseSource.CONDITIONAL_CACHE) {
-        this.validatingResponse = cacheStrategy.response;
-      }
-    }
-
-    if (candidate != null && result == ResponseSource.NETWORK) {
-      closeQuietly(candidate.body()); // We aren't using the cached response. Close it.
-    }
-
-    if (result == ResponseSource.CACHE) {
-      promoteValidatingResponse();
-    } else if (request.isOnlyIfCached()) {
-      // We're forbidden from using the network, but the cache is insufficient.
-      if (result == ResponseSource.CONDITIONAL_CACHE) {
-        closeQuietly(validatingResponse.body());
+      // We're using a cached response. Close the connection we may have inherited from a redirect.
+      if (connection != null) {
+        disconnect();
       }
 
-      result = ResponseSource.NONE;
-      this.validatingResponse = new Response.Builder(request)
-          .statusLine(new StatusLine("HTTP/1.1 504 Gateway Timeout"))
-          .setResponseSource(result)
-          .body(EMPTY_BODY)
-          .build();
-      promoteValidatingResponse();
+      // No need for the network! Promote the cached response immediately.
+      this.response = validatingResponse;
+      if (validatingResponse.body() != null) {
+        initContentStream(validatingResponse.body().byteStream());
+      }
     }
-
-    responseCache.trackResponse(result);
-    return result;
   }
 
   private Response cacheableResponse() {
@@ -229,30 +203,10 @@ public class HttpEngine {
         .build();
   }
 
-  private void sendSocketRequest() throws IOException {
-    if (connection == null) {
-      connect();
-    }
-
-    if (transport != null) {
-      throw new IllegalStateException();
-    }
-
-    transport = (Transport) connection.newTransport(this);
-    request = transport.prepareRequest(request);
-
-    if (hasRequestBody() && requestBodyOut == null) {
-      // Create a request body if we don't have one already. We'll already
-      // have one if we're retrying a failed POST.
-      requestBodyOut = transport.createRequestBody();
-    }
-  }
-
   /** Connect to the origin server either directly or via a proxy. */
-  protected final void connect() throws IOException {
-    if (connection != null) {
-      return;
-    }
+  private void connect() throws IOException {
+    if (connection != null) throw new IllegalStateException();
+
     if (routeSelector == null) {
       String uriHost = request.url().getHost();
       if (uriHost == null || uriHost.length() == 0) {
@@ -269,7 +223,9 @@ public class HttpEngine {
       routeSelector = new RouteSelector(address, request.uri(), client.getProxySelector(),
           client.getConnectionPool(), Dns.DEFAULT, client.getRoutesDatabase());
     }
+
     connection = routeSelector.next(request.method());
+
     if (!connection.isConnected()) {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
       client.getConnectionPool().maybeShare(connection);
@@ -283,23 +239,21 @@ public class HttpEngine {
   }
 
   /**
+   * Recycle the connection to the origin server. It is an error to call this
+   * with a request in flight.
+   */
+  private void disconnect() {
+    client.getConnectionPool().recycle(connection);
+    connection = null;
+  }
+
+  /**
    * Called immediately before the transport transmits HTTP request headers.
    * This is used to observe the sent time should the request be cached.
    */
   public void writingRequestHeaders() {
-    if (sentRequestMillis != -1) {
-      throw new IllegalStateException();
-    }
+    if (sentRequestMillis != -1) throw new IllegalStateException();
     sentRequestMillis = System.currentTimeMillis();
-  }
-
-  private void promoteValidatingResponse() throws IOException {
-    if (this.responseBodyIn != null) throw new IllegalStateException();
-
-    this.response = validatingResponse;
-    if (validatingResponse.body() != null) {
-      initContentStream(validatingResponse.body().byteStream());
-    }
   }
 
   boolean hasRequestBody() {
@@ -360,8 +314,7 @@ public class HttpEngine {
   public final void automaticallyReleaseConnectionToPool() {
     automaticallyReleaseConnectionToPool = true;
     if (connection != null && connectionReleased) {
-      client.getConnectionPool().recycle(connection);
-      connection = null;
+      disconnect();
     }
   }
 
@@ -378,7 +331,7 @@ public class HttpEngine {
       closeQuietly(responseBodyIn);
     }
 
-    if (!connectionReleased && connection != null) {
+    if (connection != null && !connectionReleased) {
       connectionReleased = true;
 
       if (transport == null
@@ -386,8 +339,7 @@ public class HttpEngine {
         closeQuietly(connection);
         connection = null;
       } else if (automaticallyReleaseConnectionToPool) {
-        client.getConnectionPool().recycle(connection);
-        connection = null;
+        disconnect();
       }
     }
   }
@@ -505,7 +457,7 @@ public class HttpEngine {
         int contentLength = ((RetryableOutputStream) requestBodyOut).contentLength();
         request = request.newBuilder().setContentLength(contentLength).build();
       }
-      transport.writeRequestHeaders();
+      transport.writeRequestHeaders(request);
     }
 
     if (requestBodyOut != null) {
@@ -518,10 +470,13 @@ public class HttpEngine {
     transport.flushRequest();
 
     response = transport.readResponseHeaders()
-        .newBuilder()
+        .request(request)
+        .handshake(connection.getHandshake())
         .setLocalTimestamps(sentRequestMillis, System.currentTimeMillis())
         .setResponseSource(responseSource)
         .build();
+    connection.setHttpMinorVersion(response.httpMinorVersion());
+    receiveHeaders(response.headers());
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (validatingResponse.validate(response)) {

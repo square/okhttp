@@ -527,7 +527,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     public Response response(Request request, DiskLruCache.Snapshot snapshot) {
       String contentType = responseHeaders.get("Content-Type");
       String contentLength = responseHeaders.get("Content-Length");
-      return new Response.Builder(request)
+      return new Response.Builder()
+          .request(request)
           .statusLine(statusLine)
           .headers(responseHeaders)
           .body(new CacheResponseBody(snapshot, contentType, contentLength))

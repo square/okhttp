@@ -1,10 +1,15 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
+
+import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
 
 /**
  * Given a request and cached response, this figures out whether to use the
@@ -15,6 +20,30 @@ import java.util.concurrent.TimeUnit;
  * response may gain a warning if it is potentially stale.
  */
 public final class CacheStrategy {
+  private static final Response.Body EMPTY_BODY = new Response.Body() {
+    @Override public boolean ready() throws IOException {
+      return true;
+    }
+    @Override public MediaType contentType() {
+      return null;
+    }
+    @Override public long contentLength() {
+      return 0;
+    }
+    @Override public InputStream byteStream() {
+      return EMPTY_INPUT_STREAM;
+    }
+  };
+
+  private static final StatusLine GATEWAY_TIMEOUT_STATUS_LINE;
+  static {
+    try {
+      GATEWAY_TIMEOUT_STATUS_LINE = new StatusLine("HTTP/1.1 504 Gateway Timeout");
+    } catch (IOException e) {
+      throw new AssertionError();
+    }
+  }
+
   public final Request request;
   public final Response response;
   public final ResponseSource source;
@@ -114,8 +143,35 @@ public final class CacheStrategy {
    * Returns a strategy to satisfy {@code request} using the a cached response
    * {@code response}.
    */
-  public static CacheStrategy get(
-      long nowMillis, Response response, Request request) {
+  public static CacheStrategy get(long nowMillis, Response response, Request request) {
+    CacheStrategy candidate = getCandidate(nowMillis, response, request);
+
+    if (candidate.source != ResponseSource.CACHE && request.isOnlyIfCached()) {
+      // We're forbidden from using the network, but the cache is insufficient.
+      Response noneResponse = new Response.Builder()
+          .request(candidate.request)
+          .statusLine(GATEWAY_TIMEOUT_STATUS_LINE)
+          .setResponseSource(ResponseSource.NONE)
+          .body(EMPTY_BODY)
+          .build();
+      return new CacheStrategy(candidate.request, noneResponse, ResponseSource.NONE);
+    }
+
+    return candidate;
+  }
+
+  /** Returns a strategy to use assuming the request can use the network. */
+  private static CacheStrategy getCandidate(long nowMillis, Response response, Request request) {
+    // No cached response.
+    if (response == null) {
+      return new CacheStrategy(request, response, ResponseSource.NETWORK);
+    }
+
+    // Drop the cached response if it's missing a required handshake.
+    if (request.isHttps() && response.handshake() == null) {
+      return new CacheStrategy(request, response, ResponseSource.NETWORK);
+    }
+
     // If this response shouldn't have been stored, it should never be used
     // as a response source. This check should be redundant as long as the
     // persistence store is well-behaved and the rules are constant.
