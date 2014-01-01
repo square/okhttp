@@ -85,7 +85,7 @@ final class Job implements Runnable {
           requestBuilder.setContentLength(contentLength);
           requestBuilder.removeHeader("Transfer-Encoding");
         } else {
-          requestBuilder.setChunked();
+          requestBuilder.header("Transfer-Encoding", "chunked");
           requestBuilder.removeHeader("Content-Length");
         }
 

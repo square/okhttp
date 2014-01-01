@@ -68,12 +68,12 @@ public final class Headers {
   }
 
   /** Returns the number of field values. */
-  public int length() {
+  public int size() {
     return namesAndValues.size() / 2;
   }
 
   /** Returns the field at {@code position} or null if that is out of range. */
-  public String getFieldName(int index) {
+  public String name(int index) {
     int fieldNameIndex = index * 2;
     if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.size()) {
       return null;
@@ -84,14 +84,14 @@ public final class Headers {
   /** Returns an immutable case-insensitive set of header names. */
   public Set<String> names() {
     TreeSet<String> result = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
-    for (int i = 0; i < length(); i++) {
-      result.add(getFieldName(i));
+    for (int i = 0; i < size(); i++) {
+      result.add(name(i));
     }
     return Collections.unmodifiableSet(result);
   }
 
   /** Returns the value at {@code index} or null if that is out of range. */
-  public String getValue(int index) {
+  public String value(int index) {
     int valueIndex = index * 2 + 1;
     if (valueIndex < 0 || valueIndex >= namesAndValues.size()) {
       return null;
@@ -107,10 +107,10 @@ public final class Headers {
   /** Returns an immutable list of the header values for {@code name}. */
   public List<String> values(String name) {
     List<String> result = null;
-    for (int i = 0; i < length(); i++) {
-      if (name.equalsIgnoreCase(getFieldName(i))) {
+    for (int i = 0; i < size(); i++) {
+      if (name.equalsIgnoreCase(name(i))) {
         if (result == null) result = new ArrayList<String>(2);
-        result.add(getValue(i));
+        result.add(value(i));
       }
     }
     return result != null

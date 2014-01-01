@@ -125,7 +125,7 @@ public final class CacheStrategy {
 
     // Responses to authorized requests aren't cacheable unless they include
     // a 'public', 'must-revalidate' or 's-maxage' directive.
-    if (request.hasAuthorization()
+    if (request.header("Authorization") != null
         && !response.isPublic()
         && !response.isMustRevalidate()
         && response.getSMaxAgeSeconds() == -1) {
@@ -146,7 +146,7 @@ public final class CacheStrategy {
   public static CacheStrategy get(long nowMillis, Response response, Request request) {
     CacheStrategy candidate = getCandidate(nowMillis, response, request);
 
-    if (candidate.source != ResponseSource.CACHE && request.isOnlyIfCached()) {
+    if (candidate.source != ResponseSource.CACHE && request.getOnlyIfCached()) {
       // We're forbidden from using the network, but the cache is insufficient.
       Response noneResponse = new Response.Builder()
           .request(candidate.request)
@@ -179,7 +179,7 @@ public final class CacheStrategy {
       return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
-    if (request.isNoCache() || request.hasConditions()) {
+    if (request.getNoCache() || hasConditions(request)) {
       return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
@@ -204,11 +204,11 @@ public final class CacheStrategy {
       Response.Builder builder = response.newBuilder()
           .setResponseSource(ResponseSource.CACHE); // Overwrite any stored response source.
       if (ageMillis + minFreshMillis >= freshMillis) {
-        builder.addWarning("110 HttpURLConnection \"Response is stale\"");
+        builder.addHeader("Warning", "110 HttpURLConnection \"Response is stale\"");
       }
       long oneDayMillis = 24 * 60 * 60 * 1000L;
       if (ageMillis > oneDayMillis && isFreshnessLifetimeHeuristic(response)) {
-        builder.addWarning("113 HttpURLConnection \"Heuristic expiration\"");
+        builder.addHeader("Warning", "113 HttpURLConnection \"Heuristic expiration\"");
       }
       return new CacheStrategy(request, builder.build(), ResponseSource.CACHE);
     }
@@ -226,9 +226,18 @@ public final class CacheStrategy {
     }
 
     Request conditionalRequest = conditionalRequestBuilder.build();
-    ResponseSource responseSource = conditionalRequest.hasConditions()
+    ResponseSource responseSource = hasConditions(conditionalRequest)
         ? ResponseSource.CONDITIONAL_CACHE
         : ResponseSource.NETWORK;
     return new CacheStrategy(conditionalRequest, response, responseSource);
+  }
+
+  /**
+   * Returns true if the request contains conditions that save the server from
+   * sending a response that the client has locally. When a request is enqueued
+   * with its own conditions, the built-in response cache won't be used.
+   */
+  private static boolean hasConditions(Request request) {
+    return request.header("If-Modified-Since") != null || request.header("If-None-Match") != null;
   }
 }
