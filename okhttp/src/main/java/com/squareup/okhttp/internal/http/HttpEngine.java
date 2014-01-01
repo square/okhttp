@@ -182,7 +182,6 @@ public class HttpEngine {
       }
 
       transport = (Transport) connection.newTransport(this);
-      request = transport.prepareRequest(request);
 
       // Create a request body if we don't have one already. We'll already have
       // one if we're retrying a failed POST.
