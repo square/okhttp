@@ -62,54 +62,44 @@ public final class HttpTransport implements Transport {
   }
 
   public Request prepareRequest(Request request) {
-    if (!httpEngine.hasRequestBody()) return request;
-
-    if (!request.isChunked()
-        && httpEngine.policy.getChunkLength() > 0
-        && httpEngine.connection.getHttpMinorVersion() != 0) {
-      return request.newBuilder().setChunked().build();
-    }
-
-    long fixedContentLength = httpEngine.policy.getFixedContentLength();
-    if (fixedContentLength != -1) {
-      return request.newBuilder().setContentLength(fixedContentLength).build();
-    }
-
     return request;
   }
 
   @Override public OutputStream createRequestBody(Request request) throws IOException {
-    // Stream a request body of unknown length.
-    if (request.isChunked()) {
-      int chunkLength = httpEngine.policy.getChunkLength();
-      if (chunkLength == -1) chunkLength = DEFAULT_CHUNK_LENGTH;
-      writeRequestHeaders(request);
-      return new ChunkedOutputStream(requestOut, chunkLength);
-    }
-
-    // Stream a request body of a known length.
-    long fixedContentLength = httpEngine.policy.getFixedContentLength();
-    if (fixedContentLength != -1) {
-      writeRequestHeaders(request);
-      return new FixedLengthOutputStream(requestOut, fixedContentLength);
-    }
-
     long contentLength = request.getContentLength();
-    if (contentLength > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("Use setFixedLengthStreamingMode() or "
-          + "setChunkedStreamingMode() for requests larger than 2 GiB.");
+
+    if (httpEngine.bufferRequestBody) {
+      if (contentLength > Integer.MAX_VALUE) {
+        throw new IllegalStateException("Use setFixedLengthStreamingMode() or "
+            + "setChunkedStreamingMode() for requests larger than 2 GiB.");
+      }
+
+      if (contentLength != -1) {
+        // Buffer a request body of a known length.
+        writeRequestHeaders(request);
+        return new RetryableOutputStream((int) contentLength);
+      } else {
+        // Buffer a request body of an unknown length. Don't write request
+        // headers until the entire body is ready; otherwise we can't set the
+        // Content-Length header correctly.
+        return new RetryableOutputStream();
+      }
     }
 
-    // Buffer a request body of a known length.
-    if (contentLength != -1) {
+    if (request.isChunked()) {
+      // Stream a request body of unknown length.
       writeRequestHeaders(request);
-      return new RetryableOutputStream((int) contentLength);
+      return new ChunkedOutputStream(requestOut, DEFAULT_CHUNK_LENGTH);
     }
 
-    // Buffer a request body of an unknown length. Don't write request
-    // headers until the entire body is ready; otherwise we can't set the
-    // Content-Length header correctly.
-    return new RetryableOutputStream();
+    if (contentLength != -1) {
+      // Stream a request body of a known length.
+      writeRequestHeaders(request);
+      return new FixedLengthOutputStream(requestOut, contentLength);
+    }
+
+    throw new IllegalStateException(
+        "Cannot stream a request body without chunked encoding or a known content length!");
   }
 
   @Override public void flushRequest() throws IOException {

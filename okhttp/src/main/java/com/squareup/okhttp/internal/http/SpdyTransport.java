@@ -50,18 +50,13 @@ public final class SpdyTransport implements Transport {
         .header(":version", RequestLine.version(httpEngine.connection.getHttpMinorVersion()))
         .header(":host", HttpEngine.hostHeader(request.url()));
 
-    if (httpEngine.hasRequestBody()) {
-      long fixedContentLength = httpEngine.policy.getFixedContentLength();
-      if (fixedContentLength != -1) {
-        builder.setContentLength(fixedContentLength);
-      }
-    }
+    builder.removeHeader("Transfer-Encoding"); // SPDY doesn't use chunked encoding.
 
     return builder.build();
   }
 
   @Override public OutputStream createRequestBody(Request request) throws IOException {
-    // TODO: if we aren't streaming up to the server, we should buffer the whole request
+    // TODO: if bufferRequestBody is set, we must buffer the whole request
     writeRequestHeaders(request);
     return stream.getOutputStream();
   }

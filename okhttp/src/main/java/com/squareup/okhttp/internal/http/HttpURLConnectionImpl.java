@@ -21,6 +21,7 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
@@ -59,7 +60,7 @@ import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
  * attempted. Once a connection has been attempted, certain properties (request
  * header fields, request method, etc.) are immutable.
  */
-public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
+public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /**
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
@@ -76,7 +77,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   private int redirectionCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
-  private Proxy selectedProxy;
+
+  /**
+   * The most recently attempted route. This will be null if we haven't sent a
+   * request yet, or if the response comes from a cache.
+   */
+  private Route route;
 
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
@@ -278,6 +284,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     for (int i = 0; i < headers.length(); i++) {
       builder.addHeader(headers.getFieldName(i), headers.getValue(i));
     }
+
+    boolean bufferRequestBody;
+    if (fixedContentLength != -1) {
+      bufferRequestBody = false;
+      builder.header("Content-Length", Long.toString(fixedContentLength));
+    } else if (chunkLength > 0) {
+      bufferRequestBody = false;
+      builder.header("Transfer-Encoding", "chunked");
+    } else {
+      bufferRequestBody = true;
+    }
+
     Request request = builder.build();
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
@@ -286,7 +304,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       engineClient = client.clone().setOkResponseCache(null);
     }
 
-    return new HttpEngine(engineClient, this, request, connection, requestBody);
+    return new HttpEngine(engineClient, request, bufferRequestBody, connection, requestBody);
   }
 
   /**
@@ -351,6 +369,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   private boolean execute(boolean readResponse) throws IOException {
     try {
       httpEngine.sendRequest();
+      route = httpEngine.getRoute();
       if (readResponse) {
         httpEngine.readResponse();
       }
@@ -474,29 +493,21 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     }
   }
 
-  /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
-  @Override public final long getFixedContentLength() {
-    return fixedContentLength;
-  }
-
-  @Override public final int getChunkLength() {
-    return chunkLength;
-  }
-
+  /**
+   * Returns true if either:
+   * <ul>
+   *   <li>A specific proxy was explicitly configured for this connection.
+   *   <li>The response has already been retrieved, and a proxy was {@link
+   *       java.net.ProxySelector selected} in order to get it.
+   * </ul>
+   *
+   * <p><strong>Warning:</strong> This method may return false before attempting
+   * to connect and true afterwards.
+   */
   @Override public final boolean usingProxy() {
-    if (selectedProxy != null) {
-      return isValidNonDirectProxy(selectedProxy);
-    }
-
-    // This behavior is a bit odd (but is probably justified by the
-    // oddness of the APIs involved). Before a connection is established,
-    // this method will return true only if this connection was explicitly
-    // opened with a Proxy. We don't attempt to query the ProxySelector
-    // at all.
-    return isValidNonDirectProxy(client.getProxy());
-  }
-
-  private static boolean isValidNonDirectProxy(Proxy proxy) {
+    Proxy proxy = route != null
+        ? route.getProxy()
+        : client.getProxy();
     return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }
 
@@ -591,9 +602,5 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
     this.fixedContentLength = contentLength;
     super.fixedContentLength = (int) Math.min(contentLength, Integer.MAX_VALUE);
-  }
-
-  @Override public final void setSelectedProxy(Proxy proxy) {
-    this.selectedProxy = proxy;
   }
 }

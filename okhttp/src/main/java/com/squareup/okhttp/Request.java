@@ -286,7 +286,7 @@ public final class Request {
           hasAuthorization = true;
         } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
           try {
-            contentLength = Integer.parseInt(value);
+            contentLength = Long.parseLong(value);
           } catch (NumberFormatException ignored) {
           }
         } else if ("Transfer-Encoding".equalsIgnoreCase(fieldName)) {
@@ -442,6 +442,10 @@ public final class Request {
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
       return this;
+    }
+
+    public void removeHeader(String name) {
+      headers.removeAll(name);
     }
 
     public Builder setChunked() {

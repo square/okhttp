@@ -17,8 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
-import com.squareup.okhttp.internal.http.HttpTransport;
-import com.squareup.okhttp.internal.http.Policy;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -30,10 +28,10 @@ import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_MOVED
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_MULT_CHOICE;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_PROXY_AUTH;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_SEE_OTHER;
-import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_UNAUTHORIZED;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
-final class Job implements Runnable, Policy {
+final class Job implements Runnable {
   private final Dispatcher dispatcher;
   private final OkHttpClient client;
   private final Response.Receiver responseReceiver;
@@ -47,18 +45,6 @@ final class Job implements Runnable, Policy {
     this.client = client;
     this.request = request;
     this.responseReceiver = responseReceiver;
-  }
-
-  @Override public int getChunkLength() {
-    return request.body().contentLength() == -1 ? HttpTransport.DEFAULT_CHUNK_LENGTH : -1;
-  }
-
-  @Override public long getFixedContentLength() {
-    return request.body().contentLength();
-  }
-
-  @Override public void setSelectedProxy(Proxy proxy) {
-    // Do nothing.
   }
 
   Object tag() {
@@ -90,9 +76,20 @@ final class Job implements Runnable, Policy {
       if (body != null) {
         MediaType contentType = body.contentType();
         if (contentType == null) throw new IllegalStateException("contentType == null");
-        if (request.header("Content-Type") == null) {
-          request = request.newBuilder().header("Content-Type", contentType.toString()).build();
+
+        Request.Builder requestBuilder = request.newBuilder();
+        requestBuilder.header("Content-Type", contentType.toString());
+
+        long contentLength = body.contentLength();
+        if (contentLength != -1) {
+          requestBuilder.setContentLength(contentLength);
+          requestBuilder.removeHeader("Transfer-Encoding");
+        } else {
+          requestBuilder.setChunked();
+          requestBuilder.removeHeader("Content-Length");
         }
+
+        request = requestBuilder.build();
       }
 
       HttpEngine engine = newEngine(connection);
@@ -128,7 +125,7 @@ final class Job implements Runnable, Policy {
   }
 
   HttpEngine newEngine(Connection connection) throws IOException {
-    return new HttpEngine(client, this, request, connection, null);
+    return new HttpEngine(client, request, false, connection, null);
   }
 
   /**
@@ -139,8 +136,8 @@ final class Job implements Runnable, Policy {
    */
   private Request processResponse(HttpEngine engine, Response response) throws IOException {
     Request request = response.request();
-    Proxy selectedProxy = engine.getConnection() != null
-        ? engine.getConnection().getRoute().getProxy()
+    Proxy selectedProxy = engine.getRoute() != null
+        ? engine.getRoute().getProxy()
         : client.getProxy();
     int responseCode = response.code();
 
