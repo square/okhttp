@@ -45,7 +45,7 @@ public final class SpdyTransport implements Transport {
   @Override public Request prepareRequest(Request request) {
     Request.Builder builder = request.newBuilder()
         .header(":method", request.method())
-        .header(":scheme", httpEngine.getRequest().url().getProtocol())
+        .header(":scheme", request.url().getProtocol())
         .header(":path", RequestLine.requestPath(request.url()))
         .header(":version", RequestLine.version(httpEngine.connection.getHttpMinorVersion()))
         .header(":host", HttpEngine.hostHeader(request.url()));
@@ -60,20 +60,20 @@ public final class SpdyTransport implements Transport {
     return builder.build();
   }
 
-  @Override public OutputStream createRequestBody() throws IOException {
+  @Override public OutputStream createRequestBody(Request request) throws IOException {
     // TODO: if we aren't streaming up to the server, we should buffer the whole request
-    writeRequestHeaders();
+    writeRequestHeaders(request);
     return stream.getOutputStream();
   }
 
-  @Override public void writeRequestHeaders() throws IOException {
+  @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
-    stream = spdyConnection.newStream(writeNameValueBlock(httpEngine.getRequest().getHeaders()),
-        hasRequestBody, hasResponseBody);
+    stream = spdyConnection.newStream(
+        writeNameValueBlock(request.getHeaders()), hasRequestBody, hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
 
@@ -85,14 +85,8 @@ public final class SpdyTransport implements Transport {
     stream.getOutputStream().close();
   }
 
-  @Override public Response readResponseHeaders() throws IOException {
-    List<String> nameValueBlock = stream.getResponseHeaders();
-    Response response = readNameValueBlock(httpEngine.getRequest(), nameValueBlock)
-        .handshake(httpEngine.connection.getHandshake())
-        .build();
-    httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
-    httpEngine.receiveHeaders(response.headers());
-    return response;
+  @Override public Response.Builder readResponseHeaders() throws IOException {
+    return readNameValueBlock(stream.getResponseHeaders());
   }
 
   /**
@@ -135,7 +129,7 @@ public final class SpdyTransport implements Transport {
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(Request request, List<String> nameValueBlock)
+  public static Response.Builder readNameValueBlock(List<String> nameValueBlock)
       throws IOException {
     if (nameValueBlock.size() % 2 != 0) {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
@@ -167,7 +161,7 @@ public final class SpdyTransport implements Transport {
     if (status == null) throw new ProtocolException("Expected ':status' header not present");
     if (version == null) throw new ProtocolException("Expected ':version' header not present");
 
-    return new Response.Builder(request)
+    return new Response.Builder()
         .statusLine(new StatusLine(version + " " + status))
         .headers(headersBuilder.build());
   }

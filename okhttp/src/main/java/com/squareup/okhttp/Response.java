@@ -19,8 +19,8 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
 import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
-import com.squareup.okhttp.internal.http.SyntheticHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.internal.http.SyntheticHeaders;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -144,12 +144,7 @@ public final class Response {
   }
 
   public Builder newBuilder() {
-    return new Builder(request)
-        .statusLine(statusLine)
-        .handshake(handshake)
-        .headers(headers)
-        .body(body)
-        .redirectedBy(redirectedBy);
+    return new Builder(this);
   }
 
   /**
@@ -597,16 +592,29 @@ public final class Response {
   }
 
   public static class Builder {
-    private final Request request;
+    private Request request;
     private StatusLine statusLine;
     private Handshake handshake;
-    private Headers.Builder headers = new Headers.Builder();
+    private Headers.Builder headers;
     private Body body;
     private Response redirectedBy;
 
-    public Builder(Request request) {
-      if (request == null) throw new IllegalArgumentException("request == null");
+    public Builder() {
+      headers = new Headers.Builder();
+    }
+
+    private Builder(Response response) {
+      this.request = response.request;
+      this.statusLine = response.statusLine;
+      this.handshake = response.handshake;
+      this.headers = response.headers.newBuilder();
+      this.body = response.body;
+      this.redirectedBy = response.redirectedBy;
+    }
+
+    public Builder request(Request request) {
       this.request = request;
+      return this;
     }
 
     public Builder statusLine(StatusLine statusLine) {

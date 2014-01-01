@@ -78,23 +78,23 @@ public final class HttpTransport implements Transport {
     return request;
   }
 
-  @Override public OutputStream createRequestBody() throws IOException {
+  @Override public OutputStream createRequestBody(Request request) throws IOException {
     // Stream a request body of unknown length.
-    if (httpEngine.getRequest().isChunked()) {
+    if (request.isChunked()) {
       int chunkLength = httpEngine.policy.getChunkLength();
       if (chunkLength == -1) chunkLength = DEFAULT_CHUNK_LENGTH;
-      writeRequestHeaders();
+      writeRequestHeaders(request);
       return new ChunkedOutputStream(requestOut, chunkLength);
     }
 
     // Stream a request body of a known length.
     long fixedContentLength = httpEngine.policy.getFixedContentLength();
     if (fixedContentLength != -1) {
-      writeRequestHeaders();
+      writeRequestHeaders(request);
       return new FixedLengthOutputStream(requestOut, fixedContentLength);
     }
 
-    long contentLength = httpEngine.getRequest().getContentLength();
+    long contentLength = request.getContentLength();
     if (contentLength > Integer.MAX_VALUE) {
       throw new IllegalArgumentException("Use setFixedLengthStreamingMode() or "
           + "setChunkedStreamingMode() for requests larger than 2 GiB.");
@@ -102,7 +102,7 @@ public final class HttpTransport implements Transport {
 
     // Buffer a request body of a known length.
     if (contentLength != -1) {
-      writeRequestHeaders();
+      writeRequestHeaders(request);
       return new RetryableOutputStream((int) contentLength);
     }
 
@@ -133,22 +133,16 @@ public final class HttpTransport implements Transport {
    * This ensures that the {@code Content-Length} header field receives the
    * proper value.
    */
-  public void writeRequestHeaders() throws IOException {
+  public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
-    Headers headersToSend = httpEngine.getRequest().getHeaders();
-    String requestLine = RequestLine.get(httpEngine.getRequest(),
+    String requestLine = RequestLine.get(request,
         httpEngine.connection.getRoute().getProxy().type(),
         httpEngine.connection.getHttpMinorVersion());
-    writeRequest(requestOut, headersToSend, requestLine);
+    writeRequest(requestOut, request.getHeaders(), requestLine);
   }
 
-  @Override public Response readResponseHeaders() throws IOException {
-    Response response = readResponse(httpEngine.getRequest(), socketIn)
-        .handshake(httpEngine.connection.getHandshake())
-        .build();
-    httpEngine.connection.setHttpMinorVersion(response.httpMinorVersion());
-    httpEngine.receiveHeaders(response.headers());
-    return response;
+  @Override public Response.Builder readResponseHeaders() throws IOException {
+    return readResponse(socketIn);
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
@@ -167,14 +161,14 @@ public final class HttpTransport implements Transport {
   }
 
   /** Parses bytes of a response header from an HTTP transport. */
-  public static Response.Builder readResponse(Request request, InputStream in) throws IOException {
+  public static Response.Builder readResponse(InputStream in) throws IOException {
     while (true) {
       String statusLineString = Util.readAsciiLine(in);
       StatusLine statusLine = new StatusLine(statusLineString);
 
-      Response.Builder responseBuilder = new Response.Builder(request);
-      responseBuilder.statusLine(statusLine);
-      responseBuilder.header(SyntheticHeaders.SELECTED_TRANSPORT, "http/1.1");
+      Response.Builder responseBuilder = new Response.Builder()
+          .statusLine(statusLine)
+          .header(SyntheticHeaders.SELECTED_TRANSPORT, "http/1.1");
 
       Headers.Builder headersBuilder = new Headers.Builder();
       headersBuilder.readHeaders(in);

@@ -33,7 +33,7 @@ public final class HeadersTest {
         ":status", "200 OK",
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = SpdyTransport.readNameValueBlock(request, nameValueBlock).build();
+    Response response = SpdyTransport.readNameValueBlock(nameValueBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(4, headers.length());
     assertEquals("HTTP/1.1 200 OK", response.statusLine());

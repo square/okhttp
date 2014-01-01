@@ -41,4 +41,8 @@ public enum ResponseSource {
   public boolean requiresConnection() {
     return this == CONDITIONAL_CACHE || this == NETWORK;
   }
+
+  public boolean usesCache() {
+    return this == CACHE || this == CONDITIONAL_CACHE;
+  }
 }

@@ -311,7 +311,7 @@ public final class Connection implements Closeable {
     String requestLine = tunnelRequest.requestLine();
     while (true) {
       HttpTransport.writeRequest(out, request.headers(), requestLine);
-      Response response = HttpTransport.readResponse(request, in).build();
+      Response response = HttpTransport.readResponse(in).request(request).build();
 
       switch (response.code()) {
         case HTTP_OK:
