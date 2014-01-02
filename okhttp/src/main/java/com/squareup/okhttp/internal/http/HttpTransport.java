@@ -61,10 +61,6 @@ public final class HttpTransport implements Transport {
     this.socketIn = inputStream;
   }
 
-  public Request prepareRequest(Request request) {
-    return request;
-  }
-
   @Override public OutputStream createRequestBody(Request request) throws IOException {
     long contentLength = request.getContentLength();
 

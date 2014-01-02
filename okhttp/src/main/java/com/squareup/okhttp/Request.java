@@ -444,8 +444,9 @@ public final class Request {
       return this;
     }
 
-    public void removeHeader(String name) {
+    public Builder removeHeader(String name) {
       headers.removeAll(name);
+      return this;
     }
 
     public Builder setChunked() {

@@ -53,13 +53,20 @@ public final class HeadersTest {
   }
 
   @Test public void toNameValueBlock() {
-    Headers.Builder builder = new Headers.Builder();
-    builder.add("cache-control", "no-cache, no-store");
-    builder.add("set-cookie", "Cookie1");
-    builder.add("set-cookie", "Cookie2");
-    builder.add(":status", "200 OK");
-    List<String> nameValueBlock = SpdyTransport.writeNameValueBlock(builder.build());
+    Request request = new Request.Builder()
+        .url("http://square.com/")
+        .header("cache-control", "no-cache, no-store")
+        .addHeader("set-cookie", "Cookie1")
+        .addHeader("set-cookie", "Cookie2")
+        .header(":status", "200 OK")
+        .build();
+    List<String> nameValueBlock = SpdyTransport.writeNameValueBlock(request, "HTTP/1.1");
     List<String> expected = Arrays.asList(
+        ":method", "GET",
+        ":path", "/",
+        ":version", "HTTP/1.1",
+        ":host", "square.com",
+        ":scheme", "http",
         "cache-control", "no-cache, no-store",
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK");
@@ -67,9 +74,17 @@ public final class HeadersTest {
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeaders() {
-    Headers.Builder builder = new Headers.Builder();
-    builder.add("Connection", "close");
-    builder.add("Transfer-Encoding", "chunked");
-    assertEquals(Arrays.<String>asList(), SpdyTransport.writeNameValueBlock(builder.build()));
+    Request request = new Request.Builder()
+        .url("http://square.com/")
+        .header("Connection", "close")
+        .header("Transfer-Encoding", "chunked")
+        .build();
+    List<String> expected = Arrays.asList(
+        ":method", "GET",
+        ":path", "/",
+        ":version", "HTTP/1.1",
+        ":host", "square.com",
+        ":scheme", "http");
+    assertEquals(expected, SpdyTransport.writeNameValueBlock(request, "HTTP/1.1"));
   }
 }
