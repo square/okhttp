@@ -27,6 +27,7 @@ public class QueueDispatcher extends Dispatcher {
   protected final BlockingQueue<MockResponse> responseQueue
       = new LinkedBlockingQueue<MockResponse>();
   private MockResponse failFastResponse;
+  private static boolean noResponseRetry = false;
 
   @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
     // To permit interactive/browser testing, ignore requests for favicons.
@@ -34,6 +35,15 @@ public class QueueDispatcher extends Dispatcher {
     if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
       System.out.println("served " + requestLine);
       return new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
+    }
+
+    if (requestLine.equals("GET /NoResponse HTTP/1.1")) {
+      if (noResponseRetry) {
+        noResponseRetry = !noResponseRetry;
+        return new MockResponse().setResponseCode(HttpURLConnection.HTTP_OK);
+      }
+      noResponseRetry = !noResponseRetry;
+      return null;
     }
 
     if (failFastResponse != null && responseQueue.peek() == null) {

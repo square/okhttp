@@ -226,18 +226,13 @@ public final class HttpOverSpdyTest {
     assertEquals(-1, in.read());
   }
 
-  @Test (timeout = 2000) public void readResponseHeaderTimeout throws Exception {
-
+  @Test (timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
     server.play();
 
     HttpURLConnection connection = client.open(server.getUrl("/NoResponse"));
     connection.setReadTimeout(1000);
     InputStream in = connection.getInputStream();
-    try {
-      in.read(); // if Content-Length was accurate, this would return -1 immediately
-      fail();
-    } catch (SocketTimeoutException expected) {
-    }
+    assertEquals(-1, in.read());
   }
 
   @Test public void responsesAreCached() throws IOException {
