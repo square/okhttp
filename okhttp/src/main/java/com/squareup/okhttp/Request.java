@@ -98,15 +98,15 @@ public final class Request {
   }
 
   public int headerCount() {
-    return headers.length();
+    return headers.size();
   }
 
   public String headerName(int index) {
-    return headers.getFieldName(index);
+    return headers.name(index);
   }
 
   public String headerValue(int index) {
-    return headers.getValue(index);
+    return headers.value(index);
   }
 
   public Body body() {
@@ -121,19 +121,11 @@ public final class Request {
     return new Builder(this);
   }
 
-  public boolean isChunked() {
-    return "chunked".equalsIgnoreCase(parsedHeaders().transferEncoding);
-  }
-
-  public boolean hasConnectionClose() {
-    return "close".equalsIgnoreCase(parsedHeaders().connection);
-  }
-
   public Headers getHeaders() {
     return headers;
   }
 
-  public boolean isNoCache() {
+  public boolean getNoCache() {
     return parsedHeaders().noCache;
   }
 
@@ -149,12 +141,8 @@ public final class Request {
     return parsedHeaders().minFreshSeconds;
   }
 
-  public boolean isOnlyIfCached() {
+  public boolean getOnlyIfCached() {
     return parsedHeaders().onlyIfCached;
-  }
-
-  public boolean hasAuthorization() {
-    return parsedHeaders().hasAuthorization;
   }
 
   // TODO: Make non-public. This conflicts with the Body's content length!
@@ -162,24 +150,8 @@ public final class Request {
     return parsedHeaders().contentLength;
   }
 
-  public String getTransferEncoding() {
-    return parsedHeaders().transferEncoding;
-  }
-
   public String getUserAgent() {
     return parsedHeaders().userAgent;
-  }
-
-  public String getHost() {
-    return parsedHeaders().host;
-  }
-
-  public String getConnection() {
-    return parsedHeaders().connection;
-  }
-
-  public String getAcceptEncoding() {
-    return parsedHeaders().acceptEncoding;
   }
 
   // TODO: Make non-public. This conflicts with the Body's content type!
@@ -187,25 +159,8 @@ public final class Request {
     return parsedHeaders().contentType;
   }
 
-  public String getIfModifiedSince() {
-    return parsedHeaders().ifModifiedSince;
-  }
-
-  public String getIfNoneMatch() {
-    return parsedHeaders().ifNoneMatch;
-  }
-
   public String getProxyAuthorization() {
     return parsedHeaders().proxyAuthorization;
-  }
-
-  /**
-   * Returns true if the request contains conditions that save the server from
-   * sending a response that the client has locally. When a request is enqueued
-   * with conditions, built-in response caches won't be used for that request.
-   */
-  public boolean hasConditions() {
-    return parsedHeaders().ifModifiedSince != null || parsedHeaders().ifNoneMatch != null;
   }
 
   private ParsedHeaders parsedHeaders() {
@@ -234,22 +189,9 @@ public final class Request {
      */
     private boolean onlyIfCached;
 
-    /**
-     * True if the request contains an authorization field. Although this isn't
-     * necessarily a shared cache, it follows the spec's strict requirements for
-     * shared caches.
-     */
-    private boolean hasAuthorization;
-
     private long contentLength = -1;
-    private String transferEncoding;
     private String userAgent;
-    private String host;
-    private String connection;
-    private String acceptEncoding;
     private String contentType;
-    private String ifModifiedSince;
-    private String ifNoneMatch;
     private String proxyAuthorization;
 
     public ParsedHeaders(Headers headers) {
@@ -269,36 +211,22 @@ public final class Request {
         }
       };
 
-      for (int i = 0; i < headers.length(); i++) {
-        String fieldName = headers.getFieldName(i);
-        String value = headers.getValue(i);
+      for (int i = 0; i < headers.size(); i++) {
+        String fieldName = headers.name(i);
+        String value = headers.value(i);
         if ("Cache-Control".equalsIgnoreCase(fieldName)) {
           HeaderParser.parseCacheControl(value, handler);
         } else if ("Pragma".equalsIgnoreCase(fieldName)) {
           if ("no-cache".equalsIgnoreCase(value)) {
             noCache = true;
           }
-        } else if ("If-None-Match".equalsIgnoreCase(fieldName)) {
-          ifNoneMatch = value;
-        } else if ("If-Modified-Since".equalsIgnoreCase(fieldName)) {
-          ifModifiedSince = value;
-        } else if ("Authorization".equalsIgnoreCase(fieldName)) {
-          hasAuthorization = true;
         } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
           try {
             contentLength = Long.parseLong(value);
           } catch (NumberFormatException ignored) {
           }
-        } else if ("Transfer-Encoding".equalsIgnoreCase(fieldName)) {
-          transferEncoding = value;
         } else if ("User-Agent".equalsIgnoreCase(fieldName)) {
           userAgent = value;
-        } else if ("Host".equalsIgnoreCase(fieldName)) {
-          host = value;
-        } else if ("Connection".equalsIgnoreCase(fieldName)) {
-          connection = value;
-        } else if ("Accept-Encoding".equalsIgnoreCase(fieldName)) {
-          acceptEncoding = value;
         } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
           contentType = value;
         } else if ("Proxy-Authorization".equalsIgnoreCase(fieldName)) {
@@ -449,11 +377,6 @@ public final class Request {
       return this;
     }
 
-    public Builder setChunked() {
-      headers.set("Transfer-Encoding", "chunked");
-      return this;
-    }
-
     // TODO: conflict's with the body's content type.
     public Builder setContentLength(long contentLength) {
       headers.set("Content-Length", Long.toString(contentLength));
@@ -462,19 +385,6 @@ public final class Request {
 
     public void setUserAgent(String userAgent) {
       headers.set("User-Agent", userAgent);
-    }
-
-    // TODO: this shouldn't be public.
-    public void setHost(String host) {
-      headers.set("Host", host);
-    }
-
-    public void setConnection(String connection) {
-      headers.set("Connection", connection);
-    }
-
-    public void setAcceptEncoding(String acceptEncoding) {
-      headers.set("Accept-Encoding", acceptEncoding);
     }
 
     // TODO: conflict's with the body's content type.

@@ -362,7 +362,7 @@ public class HttpEngine {
 
   private void initContentStream(InputStream transferStream) throws IOException {
     responseTransferIn = transferStream;
-    if (transparentGzip && response.isContentEncodingGzip()) {
+    if (transparentGzip && "gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
       // If the response was transparently gzipped, remove the gzip header field
       // so clients don't double decompress. http://b/3009828
       //
@@ -371,8 +371,8 @@ public class HttpEngine {
       // dangerous because clients can query the content length, but not the
       // content encoding.
       response = response.newBuilder()
-          .stripContentEncoding()
-          .stripContentLength()
+          .removeHeader("Content-Encoding")
+          .removeHeader("Content-Length")
           .build();
       responseBodyIn = new GZIPInputStream(transferStream);
     } else {
@@ -400,7 +400,8 @@ public class HttpEngine {
     // If the Content-Length or Transfer-Encoding headers disagree with the
     // response code, the response is malformed. For best compatibility, we
     // honor the headers.
-    if (response.getContentLength() != -1 || response.isChunked()) {
+    if (response.getContentLength() != -1
+        || "chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
       return true;
     }
 
@@ -420,18 +421,18 @@ public class HttpEngine {
       result.setUserAgent(getDefaultUserAgent());
     }
 
-    if (request.getHost() == null) {
-      result.setHost(hostHeader(request.url()));
+    if (request.header("Host") == null) {
+      result.header("Host", hostHeader(request.url()));
     }
 
     if ((connection == null || connection.getHttpMinorVersion() != 0)
-        && request.getConnection() == null) {
-      result.setConnection("Keep-Alive");
+        && request.header("Connection") == null) {
+      result.header("Connection", "Keep-Alive");
     }
 
-    if (request.getAcceptEncoding() == null) {
+    if (request.header("Accept-Encoding") == null) {
       transparentGzip = true;
-      result.setAcceptEncoding("gzip");
+      result.header("Accept-Encoding", "gzip");
     }
 
     if (hasRequestBody() && request.getContentType() == null) {
@@ -488,7 +489,8 @@ public class HttpEngine {
     response = transport.readResponseHeaders()
         .request(request)
         .handshake(connection.getHandshake())
-        .setLocalTimestamps(sentRequestMillis, System.currentTimeMillis())
+        .header(SyntheticHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
+        .header(SyntheticHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .setResponseSource(responseSource)
         .build();
     connection.setHttpMinorVersion(response.httpMinorVersion());
@@ -497,7 +499,7 @@ public class HttpEngine {
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (validatingResponse.validate(response)) {
         release(false);
-        response = validatingResponse.combine(response);
+        response = combine(validatingResponse, response);
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
@@ -519,6 +521,49 @@ public class HttpEngine {
     }
 
     initContentStream(transport.getTransferStream(cacheRequest));
+  }
+
+  /**
+   * Combines cached headers with a network headers as defined by RFC 2616,
+   * 13.5.3.
+   */
+  private static Response combine(Response cached, Response network) throws IOException {
+    Headers.Builder result = new Headers.Builder();
+
+    for (int i = 0; i < cached.headerCount(); i++) {
+      String fieldName = cached.headerName(i);
+      String value = cached.headerValue(i);
+      if ("Warning".equals(fieldName) && value.startsWith("1")) {
+        continue; // drop 100-level freshness warnings
+      }
+      if (!isEndToEnd(fieldName) || network.header(fieldName) == null) {
+        result.add(fieldName, value);
+      }
+    }
+
+    for (int i = 0; i < network.headerCount(); i++) {
+      String fieldName = network.headerName(i);
+      if (isEndToEnd(fieldName)) {
+        result.add(fieldName, network.headerValue(i));
+      }
+    }
+
+    return cached.newBuilder().headers(result.build()).build();
+  }
+
+  /**
+   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
+   * defined by RFC 2616, 13.5.1.
+   */
+  private static boolean isEndToEnd(String fieldName) {
+    return !"Connection".equalsIgnoreCase(fieldName)
+        && !"Keep-Alive".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
+        && !"TE".equalsIgnoreCase(fieldName)
+        && !"Trailers".equalsIgnoreCase(fieldName)
+        && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
+        && !"Upgrade".equalsIgnoreCase(fieldName);
   }
 
   private TunnelRequest getTunnelConfig() {

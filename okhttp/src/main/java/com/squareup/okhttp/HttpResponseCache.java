@@ -463,15 +463,15 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
       writer.write(url + '\n');
       writer.write(requestMethod + '\n');
-      writer.write(Integer.toString(varyHeaders.length()) + '\n');
-      for (int i = 0; i < varyHeaders.length(); i++) {
-        writer.write(varyHeaders.getFieldName(i) + ": " + varyHeaders.getValue(i) + '\n');
+      writer.write(Integer.toString(varyHeaders.size()) + '\n');
+      for (int i = 0; i < varyHeaders.size(); i++) {
+        writer.write(varyHeaders.name(i) + ": " + varyHeaders.value(i) + '\n');
       }
 
       writer.write(statusLine + '\n');
-      writer.write(Integer.toString(responseHeaders.length()) + '\n');
-      for (int i = 0; i < responseHeaders.length(); i++) {
-        writer.write(responseHeaders.getFieldName(i) + ": " + responseHeaders.getValue(i) + '\n');
+      writer.write(Integer.toString(responseHeaders.size()) + '\n');
+      for (int i = 0; i < responseHeaders.size(); i++) {
+        writer.write(responseHeaders.name(i) + ": " + responseHeaders.value(i) + '\n');
       }
 
       if (isHttps()) {

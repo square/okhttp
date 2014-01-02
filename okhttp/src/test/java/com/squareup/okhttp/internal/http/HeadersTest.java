@@ -35,19 +35,19 @@ public final class HeadersTest {
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response = SpdyTransport.readNameValueBlock(nameValueBlock).request(request).build();
     Headers headers = response.headers();
-    assertEquals(4, headers.length());
+    assertEquals(4, headers.size());
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
     assertEquals("Cookie2", headers.get("set-cookie"));
     assertEquals("spdy/3", headers.get(SyntheticHeaders.SELECTED_TRANSPORT));
-    assertEquals(SyntheticHeaders.SELECTED_TRANSPORT, headers.getFieldName(0));
-    assertEquals("spdy/3", headers.getValue(0));
-    assertEquals("cache-control", headers.getFieldName(1));
-    assertEquals("no-cache, no-store", headers.getValue(1));
-    assertEquals("set-cookie", headers.getFieldName(2));
-    assertEquals("Cookie1", headers.getValue(2));
-    assertEquals("set-cookie", headers.getFieldName(3));
-    assertEquals("Cookie2", headers.getValue(3));
+    assertEquals(SyntheticHeaders.SELECTED_TRANSPORT, headers.name(0));
+    assertEquals("spdy/3", headers.value(0));
+    assertEquals("cache-control", headers.name(1));
+    assertEquals("no-cache, no-store", headers.value(1));
+    assertEquals("set-cookie", headers.name(2));
+    assertEquals("Cookie1", headers.value(2));
+    assertEquals("set-cookie", headers.name(3));
+    assertEquals("Cookie2", headers.value(3));
     assertNull(headers.get(":status"));
     assertNull(headers.get(":version"));
   }

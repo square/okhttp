@@ -134,7 +134,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponse().headers().getValue(position);
+      return getResponse().getResponse().headers().value(position);
     } catch (IOException e) {
       return null;
     }
@@ -156,7 +156,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponse().headers().getFieldName(position);
+      return getResponse().getResponse().headers().name(position);
     } catch (IOException e) {
       return null;
     }
@@ -281,8 +281,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
     Headers headers = requestHeaders.build();
-    for (int i = 0; i < headers.length(); i++) {
-      builder.addHeader(headers.getFieldName(i), headers.getValue(i));
+    for (int i = 0; i < headers.size(); i++) {
+      builder.addHeader(headers.name(i), headers.value(i));
     }
 
     boolean bufferRequestBody;

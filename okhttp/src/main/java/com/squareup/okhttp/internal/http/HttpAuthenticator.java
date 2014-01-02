@@ -127,11 +127,11 @@ public final class HttpAuthenticator {
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
     List<Challenge> result = new ArrayList<Challenge>();
-    for (int h = 0; h < responseHeaders.length(); h++) {
-      if (!challengeHeader.equalsIgnoreCase(responseHeaders.getFieldName(h))) {
+    for (int h = 0; h < responseHeaders.size(); h++) {
+      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
         continue;
       }
-      String value = responseHeaders.getValue(h);
+      String value = responseHeaders.value(h);
       int pos = 0;
       while (pos < value.length()) {
         int tokenStart = pos;

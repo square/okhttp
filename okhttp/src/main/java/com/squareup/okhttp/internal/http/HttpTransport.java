@@ -82,7 +82,7 @@ public final class HttpTransport implements Transport {
       }
     }
 
-    if (request.isChunked()) {
+    if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.
       writeRequestHeaders(request);
       return new ChunkedOutputStream(requestOut, DEFAULT_CHUNK_LENGTH);
@@ -136,10 +136,10 @@ public final class HttpTransport implements Transport {
       throws IOException {
     StringBuilder result = new StringBuilder(256);
     result.append(requestLine).append("\r\n");
-    for (int i = 0; i < headers.length(); i ++) {
-      result.append(headers.getFieldName(i))
+    for (int i = 0; i < headers.size(); i ++) {
+      result.append(headers.name(i))
           .append(": ")
-          .append(headers.getValue(i))
+          .append(headers.value(i))
           .append("\r\n");
     }
     result.append("\r\n");
@@ -176,12 +176,13 @@ public final class HttpTransport implements Transport {
     }
 
     // If the request specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.getRequest().hasConnectionClose()) {
+    if ("close".equalsIgnoreCase(httpEngine.getRequest().header("Connection"))) {
       return false;
     }
 
     // If the response specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.getResponse() != null && httpEngine.getResponse().hasConnectionClose()) {
+    if (httpEngine.getResponse() != null
+        && "close".equalsIgnoreCase(httpEngine.getResponse().header("Connection"))) {
       return false;
     }
 
@@ -229,7 +230,7 @@ public final class HttpTransport implements Transport {
       return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine, 0);
     }
 
-    if (httpEngine.getResponse().isChunked()) {
+    if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
       return new ChunkedInputStream(socketIn, cacheRequest, this);
     }
 
