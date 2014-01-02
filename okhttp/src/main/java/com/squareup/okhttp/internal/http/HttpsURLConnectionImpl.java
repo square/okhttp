@@ -342,6 +342,18 @@ public final class HttpsURLConnectionImpl extends HttpsURLConnection {
     return delegate.client.getSslSocketFactory();
   }
 
+  @Override public void setFixedLengthStreamingMode(long contentLength) {
+    delegate.setFixedLengthStreamingMode(contentLength);
+  }
+
+  @Override public long getContentLengthLong() {
+    return delegate.getContentLengthLong();
+  }
+
+  @Override public long getHeaderFieldLong(String field, long defaultValue) {
+    return delegate.getHeaderFieldLong(field, defaultValue);
+  }
+
   private final class HttpUrlConnectionDelegate extends HttpURLConnectionImpl {
     private HttpUrlConnectionDelegate(URL url, OkHttpClient client) {
       super(url, client);
