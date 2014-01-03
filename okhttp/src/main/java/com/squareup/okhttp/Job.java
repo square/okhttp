@@ -101,25 +101,23 @@ final class Job implements Runnable {
 
       engine.readResponse();
 
-      Response engineResponse = engine.getResponse();
-      Response response = engineResponse.newBuilder()
-          .body(new Dispatcher.RealResponseBody(engineResponse, engine.getResponseBody()))
-          .redirectedBy(redirectedBy)
-          .build();
-
+      Response response = engine.getResponse();
       Request redirect = processResponse(engine, response);
 
       if (redirect == null) {
         engine.automaticallyReleaseConnectionToPool();
-        return response;
+        return response.newBuilder()
+            .body(new Dispatcher.RealResponseBody(response, engine.getResponseBody()))
+            .redirectedBy(redirectedBy)
+            .build();
       }
 
       // TODO: fail if too many redirects
       // TODO: fail if not following redirects
-      // TODO: release engine
+      engine.release(false);
 
       connection = sameConnection(request, redirect) ? engine.getConnection() : null;
-      redirectedBy = response;
+      redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = redirect;
     }
   }
