@@ -23,6 +23,8 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.SocketPolicy;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -227,6 +229,8 @@ public final class HttpOverSpdyTest {
   }
 
   @Test (timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    server.enqueue(new MockResponse());
     server.play();
 
     HttpURLConnection connection = client.open(server.getUrl("/NoResponse"));
