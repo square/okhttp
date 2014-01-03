@@ -71,6 +71,26 @@ public final class AsyncApiTest {
     assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
   }
 
+  @Test public void connectionPooling() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.enqueue(new MockResponse().setBody("ghi"));
+    server.play();
+
+    client.enqueue(new Request.Builder().url(server.getUrl("/a")).build(), receiver);
+    receiver.await(server.getUrl("/a")).assertBody("abc");
+
+    client.enqueue(new Request.Builder().url(server.getUrl("/b")).build(), receiver);
+    receiver.await(server.getUrl("/b")).assertBody("def");
+
+    client.enqueue(new Request.Builder().url(server.getUrl("/c")).build(), receiver);
+    receiver.await(server.getUrl("/c")).assertBody("ghi");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+    assertEquals(2, server.takeRequest().getSequenceNumber());
+  }
+
   @Test public void tls() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
@@ -129,5 +149,33 @@ public final class AsyncApiTest {
     client.enqueue(request2, receiver);
     receiver.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+  }
+
+  @Test public void redirect() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location: /b")
+        .addHeader("Test", "Redirect from /a to /b")
+        .setBody("/a has moved!"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(302)
+        .addHeader("Location: /c")
+        .addHeader("Test", "Redirect from /b to /c")
+        .setBody("/b has moved!"));
+    server.enqueue(new MockResponse().setBody("C"));
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/a")).build();
+    client.enqueue(request, receiver);
+
+    receiver.await(server.getUrl("/c"))
+        .assertCode(200)
+        .assertBody("C")
+        .redirectedBy()
+        .assertCode(302)
+        .assertContainsHeaders("Test: Redirect from /b to /c")
+        .redirectedBy()
+        .assertCode(301)
+        .assertContainsHeaders("Test: Redirect from /a to /b");
   }
 }

@@ -70,4 +70,15 @@ public class RecordedResponse {
     assertEquals(0, handshake.localCertificates().size());
     return this;
   }
+
+  /**
+   * Asserts that the current response was redirected and returns a new recorded
+   * response for the original request.
+   */
+  public RecordedResponse redirectedBy() {
+    Response redirectedBy = response.redirectedBy();
+    assertNotNull(redirectedBy);
+    assertNull(redirectedBy.body());
+    return new RecordedResponse(redirectedBy.request(), redirectedBy, null, null);
+  }
 }
