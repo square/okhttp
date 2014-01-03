@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.AbstractOutputStream;
@@ -62,7 +63,7 @@ public final class HttpTransport implements Transport {
   }
 
   @Override public OutputStream createRequestBody(Request request) throws IOException {
-    long contentLength = request.getContentLength();
+    long contentLength = OkHeaders.contentLength(request);
 
     if (httpEngine.bufferRequestBody) {
       if (contentLength > Integer.MAX_VALUE) {
@@ -154,10 +155,10 @@ public final class HttpTransport implements Transport {
 
       Response.Builder responseBuilder = new Response.Builder()
           .statusLine(statusLine)
-          .header(SyntheticHeaders.SELECTED_TRANSPORT, "http/1.1");
+          .header(OkHeaders.SELECTED_TRANSPORT, "http/1.1");
 
       Headers.Builder headersBuilder = new Headers.Builder();
-      headersBuilder.readHeaders(in);
+      OkHeaders.readHeaders(headersBuilder, in);
       responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) return responseBuilder;
@@ -234,9 +235,9 @@ public final class HttpTransport implements Transport {
       return new ChunkedInputStream(socketIn, cacheRequest, this);
     }
 
-    if (httpEngine.getResponse().getContentLength() != -1) {
-      return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine,
-          httpEngine.getResponse().getContentLength());
+    long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
+    if (contentLength != -1) {
+      return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine, contentLength);
     }
 
     // Wrap the input stream from the connection (rather than just returning
@@ -443,14 +444,12 @@ public final class HttpTransport implements Transport {
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private static class ChunkedInputStream extends AbstractHttpInputStream {
     private static final int NO_CHUNK_YET = -1;
-    private final HttpTransport transport;
     private int bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
 
     ChunkedInputStream(InputStream is, CacheRequest cacheRequest, HttpTransport transport)
         throws IOException {
       super(is, transport.httpEngine, cacheRequest);
-      this.transport = transport;
     }
 
     @Override public int read(byte[] buffer, int offset, int count) throws IOException {
@@ -493,10 +492,9 @@ public final class HttpTransport implements Transport {
       }
       if (bytesRemainingInChunk == 0) {
         hasMoreChunks = false;
-        Headers trailers = new Headers.Builder()
-            .readHeaders(transport.socketIn)
-            .build();
-        httpEngine.receiveHeaders(trailers);
+        Headers.Builder trailersBuilder = new Headers.Builder();
+        OkHeaders.readHeaders(trailersBuilder, in);
+        httpEngine.receiveHeaders(trailersBuilder.build());
         endOfInput();
       }
     }

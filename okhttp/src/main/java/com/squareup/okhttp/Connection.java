@@ -38,9 +38,9 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
 /**
- * Holds the sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection,
- * which may be used for multiple HTTP request/response exchanges. Connections
- * may be direct to the origin server or via a proxy.
+ * The sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection. May be
+ * used for multiple HTTP request/response exchanges. Connections may be direct
+ * to the origin server or via a proxy.
  *
  * <p>Typically instances of this class are created, connected and exercised
  * automatically by the HTTP client. Applications may use this class to monitor
@@ -53,10 +53,10 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * There are tradeoffs when selecting which options to include when negotiating
  * a secure connection to a remote host. Newer TLS options are quite useful:
  * <ul>
- * <li>Server Name Indication (SNI) enables one IP address to negotiate secure
- * connections for multiple domain names.
- * <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
- * for both HTTP and SPDY transports.
+ *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
+ *       connections for multiple domain names.
+ *   <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
+ *       for both HTTP and SPDY transports.
  * </ul>
  * Unfortunately, older HTTPS servers refuse to connect when such options are
  * presented. Rather than avoiding these options entirely, this class allows a
@@ -223,9 +223,7 @@ public final class Connection implements Closeable {
   }
 
   public void resetIdleStartTime() {
-    if (spdyConnection != null) {
-      throw new IllegalStateException("spdyConnection != null");
-    }
+    if (spdyConnection != null) throw new IllegalStateException("spdyConnection != null");
     this.idleStartTimeNs = System.nanoTime();
   }
 

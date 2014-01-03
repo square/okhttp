@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
@@ -78,7 +79,8 @@ public final class SpdyTransport implements Transport {
    * values, they are concatenated using "\0" as a delimiter.
    */
   public static List<String> writeNameValueBlock(Request request, String version) {
-    List<String> result = new ArrayList<String>(request.headerCount() + 10);
+    Headers headers = request.headers();
+    List<String> result = new ArrayList<String>(headers.size() + 10);
     result.add(":method");
     result.add(request.method());
     result.add(":path");
@@ -91,9 +93,9 @@ public final class SpdyTransport implements Transport {
     result.add(request.url().getProtocol());
 
     Set<String> names = new LinkedHashSet<String>();
-    for (int i = 0; i < request.headerCount(); i++) {
-      String name = request.headerName(i).toLowerCase(Locale.US);
-      String value = request.headerValue(i);
+    for (int i = 0; i < headers.size(); i++) {
+      String name = headers.name(i).toLowerCase(Locale.US);
+      String value = headers.value(i);
 
       // Drop headers that are forbidden when layering HTTP over SPDY.
       if (name.equals("connection")
@@ -141,7 +143,7 @@ public final class SpdyTransport implements Transport {
     String version = null;
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(SyntheticHeaders.SELECTED_TRANSPORT, "spdy/3");
+    headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, "spdy/3");
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
       String values = nameValueBlock.get(i + 1);

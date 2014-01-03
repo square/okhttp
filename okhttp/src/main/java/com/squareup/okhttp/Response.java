@@ -17,10 +17,9 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
-import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
-import com.squareup.okhttp.internal.http.SyntheticHeaders;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -105,6 +104,10 @@ public final class Response {
     return handshake;
   }
 
+  public List<String> headers(String name) {
+    return headers.values(name);
+  }
+
   public String header(String name) {
     return header(name, null);
   }
@@ -114,29 +117,8 @@ public final class Response {
     return result != null ? result : defaultValue;
   }
 
-  public List<String> headers(String name) {
-    return headers.values(name);
-  }
-
-  public Set<String> headerNames() {
-    return headers.names();
-  }
-
-  public int headerCount() {
-    return headers.size();
-  }
-
-  public String headerName(int index) {
-    return headers.name(index);
-  }
-
-  // TODO: this shouldn't be public?
   public Headers headers() {
     return headers;
-  }
-
-  public String headerValue(int index) {
-    return headers.value(index);
   }
 
   public Body body() {
@@ -199,16 +181,6 @@ public final class Response {
 
   public Set<String> getVaryFields() {
     return parsedHeaders().varyFields;
-  }
-
-  // TODO: this shouldn't be public.
-  public long getContentLength() {
-    return parsedHeaders().contentLength;
-  }
-
-  // TODO: this shouldn't be public.
-  public String getContentType() {
-    return parsedHeaders().contentType;
   }
 
   /**
@@ -471,9 +443,9 @@ public final class Response {
           }
         } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
           contentType = value;
-        } else if (SyntheticHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
+        } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
           sentRequestMillis = Long.parseLong(value);
-        } else if (SyntheticHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
+        } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
           receivedResponseMillis = Long.parseLong(value);
         }
       }
@@ -589,7 +561,7 @@ public final class Response {
       return this;
     }
 
-    // TODO: this shouldn't be public?
+    /** Removes all headers on this builder and adds {@code headers}. */
     public Builder headers(Headers headers) {
       this.headers = headers.newBuilder();
       return this;
@@ -602,8 +574,7 @@ public final class Response {
 
     // TODO: this shouldn't be public.
     public Builder setResponseSource(ResponseSource responseSource) {
-      headers.set(SyntheticHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
-      return this;
+      return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
     }
 
     public Builder redirectedBy(Response redirectedBy) {

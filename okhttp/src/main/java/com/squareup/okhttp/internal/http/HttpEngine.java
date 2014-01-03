@@ -19,7 +19,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Request;
@@ -35,6 +35,8 @@ import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -206,10 +208,7 @@ public class HttpEngine {
   private Response cacheableResponse() {
     // Use an unreadable response body when offering the response to the cache.
     // The cache isn't allowed to consume the response body bytes!
-    return response.newBuilder()
-        .body(new UnreadableResponseBody(response.getContentType(),
-            response.getContentLength()))
-        .build();
+    return response.newBuilder().body(null).build();
   }
 
   /** Connect to the origin server either directly or via a proxy. */
@@ -400,7 +399,7 @@ public class HttpEngine {
     // If the Content-Length or Transfer-Encoding headers disagree with the
     // response code, the response is malformed. For best compatibility, we
     // honor the headers.
-    if (response.getContentLength() != -1
+    if (OkHeaders.contentLength(response) != -1
         || "chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
       return true;
     }
@@ -435,13 +434,15 @@ public class HttpEngine {
       result.header("Accept-Encoding", "gzip");
     }
 
-    if (hasRequestBody() && request.getContentType() == null) {
-      result.setContentType("application/x-www-form-urlencoded");
+    if (hasRequestBody() && request.header("Content-Type") == null) {
+      result.header("Content-Type", "application/x-www-form-urlencoded");
     }
 
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      result.addCookies(cookieHandler.get(request.uri(), request.getHeaders().toMultimap(null)));
+      Map<String, List<String>> cookies = cookieHandler.get(
+          request.uri(), OkHeaders.toMultimap(request.getHeaders(), null));
+      OkHeaders.addCookies(result, cookies);
     }
 
     request = result.build();
@@ -468,11 +469,13 @@ public class HttpEngine {
     if (!responseSource.requiresConnection()) return;
 
     if (sentRequestMillis == -1) {
-      if (request.getContentLength() == -1
+      if (OkHeaders.contentLength(request) == -1
           && requestBodyOut instanceof RetryableOutputStream) {
         // We might not learn the Content-Length until the request body has been buffered.
-        int contentLength = ((RetryableOutputStream) requestBodyOut).contentLength();
-        request = request.newBuilder().setContentLength(contentLength).build();
+        long contentLength = ((RetryableOutputStream) requestBodyOut).contentLength();
+        request = request.newBuilder()
+            .header("Content-Length", Long.toString(contentLength))
+            .build();
       }
       transport.writeRequestHeaders(request);
     }
@@ -489,8 +492,8 @@ public class HttpEngine {
     response = transport.readResponseHeaders()
         .request(request)
         .handshake(connection.getHandshake())
-        .header(SyntheticHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
-        .header(SyntheticHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
+        .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
+        .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .setResponseSource(responseSource)
         .build();
     connection.setHttpMinorVersion(response.httpMinorVersion());
@@ -530,9 +533,10 @@ public class HttpEngine {
   private static Response combine(Response cached, Response network) throws IOException {
     Headers.Builder result = new Headers.Builder();
 
-    for (int i = 0; i < cached.headerCount(); i++) {
-      String fieldName = cached.headerName(i);
-      String value = cached.headerValue(i);
+    Headers cachedHeaders = cached.headers();
+    for (int i = 0; i < cachedHeaders.size(); i++) {
+      String fieldName = cachedHeaders.name(i);
+      String value = cachedHeaders.value(i);
       if ("Warning".equals(fieldName) && value.startsWith("1")) {
         continue; // drop 100-level freshness warnings
       }
@@ -541,10 +545,11 @@ public class HttpEngine {
       }
     }
 
-    for (int i = 0; i < network.headerCount(); i++) {
-      String fieldName = network.headerName(i);
+    Headers networkHeaders = network.headers();
+    for (int i = 0; i < networkHeaders.size(); i++) {
+      String fieldName = networkHeaders.name(i);
       if (isEndToEnd(fieldName)) {
-        result.add(fieldName, network.headerValue(i));
+        result.add(fieldName, networkHeaders.value(i));
       }
     }
 
@@ -580,33 +585,7 @@ public class HttpEngine {
   public void receiveHeaders(Headers headers) throws IOException {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      cookieHandler.put(request.uri(), headers.toMultimap(null));
-    }
-  }
-
-  static class UnreadableResponseBody extends Response.Body {
-    private final String contentType;
-    private final long contentLength;
-
-    public UnreadableResponseBody(String contentType, long contentLength) {
-      this.contentType = contentType;
-      this.contentLength = contentLength;
-    }
-
-    @Override public boolean ready() throws IOException {
-      throw new IllegalStateException("It is an error to read this response body at this time.");
-    }
-
-    @Override public MediaType contentType() {
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return contentLength;
-    }
-
-    @Override public InputStream byteStream() {
-      throw new IllegalStateException("It is an error to read this response body at this time.");
+      cookieHandler.put(request.uri(), OkHeaders.toMultimap(headers, null));
     }
   }
 }

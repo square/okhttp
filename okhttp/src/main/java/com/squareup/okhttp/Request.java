@@ -18,7 +18,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HeaderParser;
-import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpDate;
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,8 +31,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
@@ -81,32 +78,16 @@ public final class Request {
     return method;
   }
 
+  public Headers headers() {
+    return headers;
+  }
+
   public String header(String name) {
     return headers.get(name);
   }
 
   public List<String> headers(String name) {
     return headers.values(name);
-  }
-
-  public Set<String> headerNames() {
-    return headers.names();
-  }
-
-  Headers headers() {
-    return headers;
-  }
-
-  public int headerCount() {
-    return headers.size();
-  }
-
-  public String headerName(int index) {
-    return headers.name(index);
-  }
-
-  public String headerValue(int index) {
-    return headers.value(index);
   }
 
   public Body body() {
@@ -145,18 +126,8 @@ public final class Request {
     return parsedHeaders().onlyIfCached;
   }
 
-  // TODO: Make non-public. This conflicts with the Body's content length!
-  public long getContentLength() {
-    return parsedHeaders().contentLength;
-  }
-
   public String getUserAgent() {
     return parsedHeaders().userAgent;
-  }
-
-  // TODO: Make non-public. This conflicts with the Body's content type!
-  public String getContentType() {
-    return parsedHeaders().contentType;
   }
 
   public String getProxyAuthorization() {
@@ -189,9 +160,7 @@ public final class Request {
      */
     private boolean onlyIfCached;
 
-    private long contentLength = -1;
     private String userAgent;
-    private String contentType;
     private String proxyAuthorization;
 
     public ParsedHeaders(Headers headers) {
@@ -220,15 +189,8 @@ public final class Request {
           if ("no-cache".equalsIgnoreCase(value)) {
             noCache = true;
           }
-        } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
-          try {
-            contentLength = Long.parseLong(value);
-          } catch (NumberFormatException ignored) {
-          }
         } else if ("User-Agent".equalsIgnoreCase(fieldName)) {
           userAgent = value;
-        } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
-          contentType = value;
         } else if ("Proxy-Authorization".equalsIgnoreCase(fieldName)) {
           proxyAuthorization = value;
         }
@@ -323,7 +285,7 @@ public final class Request {
   public static class Builder {
     private URL url;
     private String method;
-    private final Headers.Builder headers;
+    private Headers.Builder headers;
     private Body body;
     private Object tag;
 
@@ -377,51 +339,22 @@ public final class Request {
       return this;
     }
 
-    // TODO: conflict's with the body's content type.
-    public Builder setContentLength(long contentLength) {
-      headers.set("Content-Length", Long.toString(contentLength));
+    /** Removes all headers on this builder and adds {@code headers}. */
+    public Builder headers(Headers headers) {
+      this.headers = headers.newBuilder();
       return this;
     }
 
-    public void setUserAgent(String userAgent) {
-      headers.set("User-Agent", userAgent);
+    public Builder setUserAgent(String userAgent) {
+      return header("User-Agent", userAgent);
     }
 
-    // TODO: conflict's with the body's content type.
-    public void setContentType(String contentType) {
-      headers.set("Content-Type", contentType);
+    public Builder setIfModifiedSince(Date date) {
+      return header("If-Modified-Since", HttpDate.format(date));
     }
 
-    public void setIfModifiedSince(Date date) {
-      headers.set("If-Modified-Since", HttpDate.format(date));
-    }
-
-    public void setIfNoneMatch(String ifNoneMatch) {
-      headers.set("If-None-Match", ifNoneMatch);
-    }
-
-    public void addCookies(Map<String, List<String>> cookieHeaders) {
-      for (Map.Entry<String, List<String>> entry : cookieHeaders.entrySet()) {
-        String key = entry.getKey();
-        if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
-            && !entry.getValue().isEmpty()) {
-          headers.add(key, buildCookieHeader(entry.getValue()));
-        }
-      }
-    }
-
-    /**
-     * Send all cookies in one big header, as recommended by
-     * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
-     */
-    private String buildCookieHeader(List<String> cookies) {
-      if (cookies.size() == 1) return cookies.get(0);
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < cookies.size(); i++) {
-        if (i > 0) sb.append("; ");
-        sb.append(cookies.get(i));
-      }
-      return sb.toString();
+    public Builder setIfNoneMatch(String ifNoneMatch) {
+      return header("If-None-Match", ifNoneMatch);
     }
 
     public Builder get() {

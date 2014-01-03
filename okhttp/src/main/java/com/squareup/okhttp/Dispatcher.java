@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -54,32 +52,5 @@ final class Dispatcher {
   synchronized void finished(Job job) {
     List<Job> jobs = enqueuedJobs.get(job.tag());
     if (jobs != null) jobs.remove(job);
-  }
-
-  static class RealResponseBody extends Response.Body {
-    private final Response response;
-    private final InputStream in;
-
-    RealResponseBody(Response response, InputStream in) {
-      this.response = response;
-      this.in = in;
-    }
-
-    @Override public boolean ready() throws IOException {
-      return true;
-    }
-
-    @Override public MediaType contentType() {
-      String contentType = response.getContentType();
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return response.getContentLength();
-    }
-
-    @Override public InputStream byteStream() {
-      return in;
-    }
   }
 }
