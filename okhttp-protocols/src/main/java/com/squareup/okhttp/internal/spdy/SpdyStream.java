@@ -336,7 +336,8 @@ public final class SpdyStream {
     //         ^       ^
     //       limit    pos
 
-    private final byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
+    private final byte[] buffer = SpdyStream.this.connection.bufferPool.
+            getBuf(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
 
     /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
     private int pos = -1;
@@ -516,6 +517,7 @@ public final class SpdyStream {
       synchronized (SpdyStream.this) {
         closed = true;
         SpdyStream.this.notifyAll();
+        SpdyStream.this.connection.bufferPool.returnBuf(buffer);
       }
       cancelStreamIfNecessary();
     }
@@ -554,7 +556,7 @@ public final class SpdyStream {
    * is not thread safe.
    */
   private final class SpdyDataOutputStream extends OutputStream {
-    private final byte[] buffer = new byte[8192];
+    private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(8192);
     private int pos = 0;
 
     /** True if the caller has closed this stream. */
@@ -610,6 +612,7 @@ public final class SpdyStream {
           return;
         }
         closed = true;
+        SpdyStream.this.connection.bufferPool.returnBuf(buffer);
       }
       if (!out.finished) {
         writeFrame(true);
