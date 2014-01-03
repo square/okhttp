@@ -47,8 +47,9 @@ public class RecordedResponse {
 
   public RecordedResponse assertContainsHeaders(String... expectedHeaders) {
     List<String> actualHeaders = new ArrayList<String>();
-    for (int i = 0; i < response.headerCount(); i++) {
-      actualHeaders.add(response.headerName(i) + ": " + response.headerValue(i));
+    Headers headers = response.headers();
+    for (int i = 0; i < headers.size(); i++) {
+      actualHeaders.add(headers.name(i) + ": " + headers.value(i));
     }
     if (!actualHeaders.containsAll(Arrays.asList(expectedHeaders))) {
       fail("Expected: " + actualHeaders + "\nto contain: " + Arrays.toString(expectedHeaders));

@@ -17,7 +17,9 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
@@ -82,7 +84,7 @@ final class Job implements Runnable {
 
         long contentLength = body.contentLength();
         if (contentLength != -1) {
-          requestBuilder.setContentLength(contentLength);
+          requestBuilder.header("Content-Length", Long.toString(contentLength));
           requestBuilder.removeHeader("Transfer-Encoding");
         } else {
           requestBuilder.header("Transfer-Encoding", "chunked");
@@ -107,7 +109,7 @@ final class Job implements Runnable {
       if (redirect == null) {
         engine.automaticallyReleaseConnectionToPool();
         return response.newBuilder()
-            .body(new Dispatcher.RealResponseBody(response, engine.getResponseBody()))
+            .body(new RealResponseBody(response, engine.getResponseBody()))
             .redirectedBy(redirectedBy)
             .build();
       }
@@ -182,5 +184,32 @@ final class Job implements Runnable {
     return a.url().getHost().equals(b.url().getHost())
         && getEffectivePort(a.url()) == getEffectivePort(b.url())
         && a.url().getProtocol().equals(b.url().getProtocol());
+  }
+
+  static class RealResponseBody extends Response.Body {
+    private final Response response;
+    private final InputStream in;
+
+    RealResponseBody(Response response, InputStream in) {
+      this.response = response;
+      this.in = in;
+    }
+
+    @Override public boolean ready() throws IOException {
+      return true;
+    }
+
+    @Override public MediaType contentType() {
+      String contentType = response.header("Content-Type");
+      return contentType != null ? MediaType.parse(contentType) : null;
+    }
+
+    @Override public long contentLength() {
+      return OkHeaders.contentLength(response);
+    }
+
+    @Override public InputStream byteStream() {
+      return in;
+    }
   }
 }

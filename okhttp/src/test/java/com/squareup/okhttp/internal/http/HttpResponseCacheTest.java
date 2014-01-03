@@ -233,14 +233,10 @@ public final class HttpResponseCacheTest {
       @Override public CacheRequest put(Response response) throws IOException {
         assertEquals(server.getUrl("/"), response.request().url());
         assertEquals(200, response.code());
-        assertEquals(body.length(), response.body().contentLength());
-        assertEquals("text/plain", response.body().contentType().toString());
+        assertNull(response.body());
+        assertEquals("5", response.header("Content-Length"));
+        assertEquals("text/plain", response.header("Content-Type"));
         assertEquals("ijk", response.header("fgh"));
-        try {
-          response.body().byteStream(); // the RI doesn't forbid this, but it should
-          fail();
-        } catch (IllegalStateException expected) {
-        }
         cacheCount.incrementAndGet();
         return null;
       }
@@ -1696,7 +1692,7 @@ public final class HttpResponseCacheTest {
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CACHE + " 200", source);
   }
 
@@ -1713,7 +1709,7 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
 
-    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CONDITIONAL_CACHE + " 200", source);
   }
 
@@ -1728,7 +1724,7 @@ public final class HttpResponseCacheTest {
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
     assertEquals(ResponseSource.CONDITIONAL_CACHE + " 304", source);
   }
 
@@ -1739,7 +1735,7 @@ public final class HttpResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
 
-    String source = connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE);
+    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
     assertEquals(ResponseSource.NETWORK + " 200", source);
   }
 
@@ -1956,7 +1952,7 @@ public final class HttpResponseCacheTest {
     assertEquals(504, connection.getResponseCode());
     assertEquals(-1, connection.getErrorStream().read());
     assertEquals(ResponseSource.NONE + " 504",
-        connection.getHeaderField(SyntheticHeaders.RESPONSE_SOURCE));
+        connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
   }
 
   enum TransferKind {

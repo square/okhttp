@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkAuthenticator.Challenge;
 import com.squareup.okhttp.Request;

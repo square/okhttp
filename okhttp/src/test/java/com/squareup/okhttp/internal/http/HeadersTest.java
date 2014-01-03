@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
@@ -39,8 +40,8 @@ public final class HeadersTest {
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
     assertEquals("Cookie2", headers.get("set-cookie"));
-    assertEquals("spdy/3", headers.get(SyntheticHeaders.SELECTED_TRANSPORT));
-    assertEquals(SyntheticHeaders.SELECTED_TRANSPORT, headers.name(0));
+    assertEquals("spdy/3", headers.get(OkHeaders.SELECTED_TRANSPORT));
+    assertEquals(OkHeaders.SELECTED_TRANSPORT, headers.name(0));
     assertEquals("spdy/3", headers.value(0));
     assertEquals("cache-control", headers.name(1));
     assertEquals("no-cache, no-store", headers.value(1));

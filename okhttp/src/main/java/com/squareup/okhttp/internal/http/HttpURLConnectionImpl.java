@@ -18,6 +18,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -165,7 +166,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
       Response response = getResponse().getResponse();
-      return response.headers().toMultimap(response.statusLine());
+      return OkHeaders.toMultimap(response.headers(), response.statusLine());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -180,7 +181,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     // For the request line property assigned to the null key, just use no proxy and HTTP 1.1.
     Request request = new Request.Builder().url(getURL()).method(method, null).build();
     String requestLine = RequestLine.get(request, null, 1);
-    return requestHeaders.build().toMultimap(requestLine);
+    return OkHeaders.toMultimap(requestHeaders.build(), requestLine);
   }
 
   @Override public final InputStream getInputStream() throws IOException {
