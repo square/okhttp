@@ -123,20 +123,20 @@ public final class Response {
   }
 
   public int headerCount() {
-    return headers.length();
+    return headers.size();
   }
 
   public String headerName(int index) {
-    return headers.getFieldName(index);
+    return headers.name(index);
   }
 
-  // TODO: this shouldn't be public.
+  // TODO: this shouldn't be public?
   public Headers headers() {
     return headers;
   }
 
   public String headerValue(int index) {
-    return headers.getValue(index);
+    return headers.value(index);
   }
 
   public Body body() {
@@ -155,18 +155,6 @@ public final class Response {
    */
   public Response redirectedBy() {
     return redirectedBy;
-  }
-
-  public boolean isContentEncodingGzip() {
-    return "gzip".equalsIgnoreCase(parsedHeaders().contentEncoding);
-  }
-
-  public boolean isChunked() {
-    return "chunked".equalsIgnoreCase(parsedHeaders().transferEncoding);
-  }
-
-  public boolean hasConnectionClose() {
-    return "close".equalsIgnoreCase(parsedHeaders().connection);
   }
 
   public Date getServedDate() {
@@ -213,10 +201,6 @@ public final class Response {
     return parsedHeaders().varyFields;
   }
 
-  public String getContentEncoding() {
-    return parsedHeaders().contentEncoding;
-  }
-
   // TODO: this shouldn't be public.
   public long getContentLength() {
     return parsedHeaders().contentLength;
@@ -225,10 +209,6 @@ public final class Response {
   // TODO: this shouldn't be public.
   public String getContentType() {
     return parsedHeaders().contentType;
-  }
-
-  public String getConnection() {
-    return parsedHeaders().connection;
   }
 
   /**
@@ -272,59 +252,18 @@ public final class Response {
     return false;
   }
 
-  /**
-   * Combines this cached header with a network header as defined by RFC 2616,
-   * 13.5.3.
-   */
-  public Response combine(Response network) throws IOException {
-    Headers.Builder result = new Headers.Builder();
-
-    for (int i = 0; i < headers.length(); i++) {
-      String fieldName = headers.getFieldName(i);
-      String value = headers.getValue(i);
-      if ("Warning".equals(fieldName) && value.startsWith("1")) {
-        continue; // drop 100-level freshness warnings
-      }
-      if (!isEndToEnd(fieldName) || network.headers.get(fieldName) == null) {
-        result.add(fieldName, value);
-      }
-    }
-
-    for (int i = 0; i < network.headers.length(); i++) {
-      String fieldName = network.headers.getFieldName(i);
-      if (isEndToEnd(fieldName)) {
-        result.add(fieldName, network.headers.getValue(i));
-      }
-    }
-
-    return newBuilder().headers(result.build()).build();
-  }
-
-  /**
-   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
-   * defined by RFC 2616, 13.5.1.
-   */
-  private static boolean isEndToEnd(String fieldName) {
-    return !"Connection".equalsIgnoreCase(fieldName)
-        && !"Keep-Alive".equalsIgnoreCase(fieldName)
-        && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
-        && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
-        && !"TE".equalsIgnoreCase(fieldName)
-        && !"Trailers".equalsIgnoreCase(fieldName)
-        && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
-        && !"Upgrade".equalsIgnoreCase(fieldName);
-  }
-
+  // TODO: should not be public?
   public long getReceivedResponseMillis() {
     return parsedHeaders().receivedResponseMillis;
   }
 
-  public long getAgeSeconds() {
-    return parsedHeaders().ageSeconds;
-  }
-
+  // TODO: should not be public?
   public long getSentRequestMillis() {
     return parsedHeaders.sentRequestMillis;
+  }
+
+  public long getAgeSeconds() {
+    return parsedHeaders().ageSeconds;
   }
 
   public abstract static class Body implements Closeable {
@@ -476,10 +415,7 @@ public final class Response {
     /** Case-insensitive set of field names. */
     private Set<String> varyFields = Collections.emptySet();
 
-    private String contentEncoding;
-    private String transferEncoding;
     private long contentLength = -1;
-    private String connection;
     private String contentType;
 
     private ParsedHeaders(Headers headers) {
@@ -501,9 +437,9 @@ public final class Response {
         }
       };
 
-      for (int i = 0; i < headers.length(); i++) {
-        String fieldName = headers.getFieldName(i);
-        String value = headers.getValue(i);
+      for (int i = 0; i < headers.size(); i++) {
+        String fieldName = headers.name(i);
+        String value = headers.value(i);
         if ("Cache-Control".equalsIgnoreCase(fieldName)) {
           HeaderParser.parseCacheControl(value, handler);
         } else if ("Date".equalsIgnoreCase(fieldName)) {
@@ -528,10 +464,6 @@ public final class Response {
           for (String varyField : value.split(",")) {
             varyFields.add(varyField.trim());
           }
-        } else if ("Content-Encoding".equalsIgnoreCase(fieldName)) {
-          contentEncoding = value;
-        } else if ("Transfer-Encoding".equalsIgnoreCase(fieldName)) {
-          transferEncoding = value;
         } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
           try {
             contentLength = Long.parseLong(value);
@@ -539,8 +471,6 @@ public final class Response {
           }
         } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
           contentType = value;
-        } else if ("Connection".equalsIgnoreCase(fieldName)) {
-          connection = value;
         } else if (SyntheticHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
           sentRequestMillis = Long.parseLong(value);
         } else if (SyntheticHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
@@ -654,7 +584,12 @@ public final class Response {
       return this;
     }
 
-    // TODO: this shouldn't be public.
+    public Builder removeHeader(String name) {
+      headers.removeAll(name);
+      return this;
+    }
+
+    // TODO: this shouldn't be public?
     public Builder headers(Headers headers) {
       this.headers = headers.newBuilder();
       return this;
@@ -665,39 +600,14 @@ public final class Response {
       return this;
     }
 
-    public Builder redirectedBy(Response redirectedBy) {
-      this.redirectedBy = redirectedBy;
-      return this;
-    }
-
-    // TODO: this shouldn't be public.
-    public Builder stripContentEncoding() {
-      headers.removeAll("Content-Encoding");
-      return this;
-    }
-
-    // TODO: this shouldn't be public.
-    public Builder stripContentLength() {
-      headers.removeAll("Content-Length");
-      return this;
-    }
-
-    // TODO: this shouldn't be public.
-    public Builder setLocalTimestamps(long sentRequestMillis, long receivedResponseMillis) {
-      headers.set(SyntheticHeaders.SENT_MILLIS, Long.toString(sentRequestMillis));
-      headers.set(SyntheticHeaders.RECEIVED_MILLIS, Long.toString(receivedResponseMillis));
-      return this;
-    }
-
     // TODO: this shouldn't be public.
     public Builder setResponseSource(ResponseSource responseSource) {
       headers.set(SyntheticHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
       return this;
     }
 
-    // TODO: this shouldn't be public.
-    public Builder addWarning(String message) {
-      headers.add("Warning", message);
+    public Builder redirectedBy(Response redirectedBy) {
+      this.redirectedBy = redirectedBy;
       return this;
     }
 

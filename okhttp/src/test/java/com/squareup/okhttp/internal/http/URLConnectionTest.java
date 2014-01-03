@@ -613,6 +613,7 @@ public final class URLConnectionTest {
     URL url = new URL("http://android.com/foo");
     HttpURLConnection connection = proxyConfig.connect(server, client, url);
     assertContent("this response comes via a proxy", connection);
+    assertTrue(connection.usingProxy());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET http://android.com/foo HTTP/1.1", request.getRequestLine());
@@ -1129,26 +1130,21 @@ public final class URLConnectionTest {
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection is pooled!
   }
 
-  /**
-   * Obnoxiously test that the chunk sizes transmitted exactly equal the
-   * requested data+chunk header size. Although setChunkedStreamingMode()
-   * isn't specific about whether the size applies to the data or the
-   * complete chunk, the RI interprets it as a complete chunk.
-   */
   @Test public void setChunkedStreamingMode() throws IOException, InterruptedException {
     server.enqueue(new MockResponse());
     server.play();
 
+    String body = "ABCDEFGHIJKLMNOPQ";
     HttpURLConnection urlConnection = client.open(server.getUrl("/"));
-    urlConnection.setChunkedStreamingMode(8);
+    urlConnection.setChunkedStreamingMode(0); // OkHttp does not honor specific chunk sizes.
     urlConnection.setDoOutput(true);
     OutputStream outputStream = urlConnection.getOutputStream();
-    outputStream.write("ABCDEFGHIJKLMNOPQ".getBytes("US-ASCII"));
+    outputStream.write(body.getBytes("US-ASCII"));
     assertEquals(200, urlConnection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("ABCDEFGHIJKLMNOPQ", new String(request.getBody(), "US-ASCII"));
-    assertEquals(Arrays.asList(3, 3, 3, 3, 3, 2), request.getChunkSizes());
+    assertEquals(body, new String(request.getBody(), "US-ASCII"));
+    assertEquals(Arrays.asList(body.length()), request.getChunkSizes());
   }
 
   @Test public void authenticateWithFixedLengthStreaming() throws Exception {

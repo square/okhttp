@@ -42,26 +42,8 @@ public final class SpdyTransport implements Transport {
     this.spdyConnection = spdyConnection;
   }
 
-  @Override public Request prepareRequest(Request request) {
-    Request.Builder builder = request.newBuilder()
-        .header(":method", request.method())
-        .header(":scheme", request.url().getProtocol())
-        .header(":path", RequestLine.requestPath(request.url()))
-        .header(":version", RequestLine.version(httpEngine.connection.getHttpMinorVersion()))
-        .header(":host", HttpEngine.hostHeader(request.url()));
-
-    if (httpEngine.hasRequestBody()) {
-      long fixedContentLength = httpEngine.policy.getFixedContentLength();
-      if (fixedContentLength != -1) {
-        builder.setContentLength(fixedContentLength);
-      }
-    }
-
-    return builder.build();
-  }
-
   @Override public OutputStream createRequestBody(Request request) throws IOException {
-    // TODO: if we aren't streaming up to the server, we should buffer the whole request
+    // TODO: if bufferRequestBody is set, we must buffer the whole request
     writeRequestHeaders(request);
     return stream.getOutputStream();
   }
@@ -72,8 +54,9 @@ public final class SpdyTransport implements Transport {
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
+    String version = RequestLine.version(httpEngine.connection.getHttpMinorVersion());
     stream = spdyConnection.newStream(
-        writeNameValueBlock(request.getHeaders()), hasRequestBody, hasResponseBody);
+        writeNameValueBlock(request, version), hasRequestBody, hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
 
@@ -94,12 +77,23 @@ public final class SpdyTransport implements Transport {
    * Names are all lower case. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<String> writeNameValueBlock(Headers headers) {
+  public static List<String> writeNameValueBlock(Request request, String version) {
+    List<String> result = new ArrayList<String>(request.headerCount() + 10);
+    result.add(":method");
+    result.add(request.method());
+    result.add(":path");
+    result.add(RequestLine.requestPath(request.url()));
+    result.add(":version");
+    result.add(version);
+    result.add(":host");
+    result.add(HttpEngine.hostHeader(request.url()));
+    result.add(":scheme");
+    result.add(request.url().getProtocol());
+
     Set<String> names = new LinkedHashSet<String>();
-    List<String> result = new ArrayList<String>(headers.length() * 2);
-    for (int i = 0; i < headers.length(); i++) {
-      String name = headers.getFieldName(i).toLowerCase(Locale.US);
-      String value = headers.getValue(i);
+    for (int i = 0; i < request.headerCount(); i++) {
+      String name = request.headerName(i).toLowerCase(Locale.US);
+      String value = request.headerValue(i);
 
       // Drop headers that are forbidden when layering HTTP over SPDY.
       if (name.equals("connection")
@@ -107,6 +101,15 @@ public final class SpdyTransport implements Transport {
           || name.equals("keep-alive")
           || name.equals("proxy-connection")
           || name.equals("transfer-encoding")) {
+        continue;
+      }
+
+      // They shouldn't be set, but if they are, drop them. We've already written them!
+      if (name.equals(":method")
+          || name.equals(":path")
+          || name.equals(":version")
+          || name.equals(":host")
+          || name.equals(":scheme")) {
         continue;
       }
 

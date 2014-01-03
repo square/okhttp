@@ -25,13 +25,6 @@ import java.net.CacheRequest;
 
 interface Transport {
   /**
-   * Returns a request equivalent to {@code request} but with transport-specific
-   * changes. For example, this may set a Transfer-Encoding header if it is
-   * required but not present for the current transport.
-   */
-  Request prepareRequest(Request request);
-
-  /**
    * Returns an output stream where the request body can be written. The
    * returned stream will of one of two types:
    * <ul>

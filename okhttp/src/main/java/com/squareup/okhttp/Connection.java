@@ -92,9 +92,8 @@ public final class Connection implements Closeable {
 
   public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
       throws IOException {
-    if (connected) {
-      throw new IllegalStateException("already connected");
-    }
+    if (connected) throw new IllegalStateException("already connected");
+
     connected = true;
     socket = (route.proxy.type() != Proxy.Type.HTTP) ? new Socket(route.proxy) : new Socket();
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
@@ -268,10 +267,6 @@ public final class Connection implements Closeable {
    */
   public boolean isSpdy() {
     return spdyConnection != null;
-  }
-
-  public SpdyConnection getSpdyConnection() {
-    return spdyConnection;
   }
 
   /**

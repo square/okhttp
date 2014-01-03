@@ -25,6 +25,7 @@ import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
@@ -69,11 +70,11 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
-  final Policy policy;
   final OkHttpClient client;
 
   Connection connection;
   RouteSelector routeSelector;
+  private Route route;
 
   private Transport transport;
 
@@ -85,6 +86,14 @@ public class HttpEngine {
    * therefore responsible for also decompressing the transfer stream.
    */
   private boolean transparentGzip;
+
+  /**
+   * True if the request body must be completely buffered before transmission;
+   * false if it can be streamed. Buffering has two advantages: we don't need
+   * the content-length in advance and we can retransmit if necessary. The
+   * upside of streaming is that we can save memory.
+   */
+  public final boolean bufferRequestBody;
 
   private Request request;
   private OutputStream requestBodyOut;
@@ -124,12 +133,13 @@ public class HttpEngine {
    *     redirect. This engine assumes ownership of the connection and must
    *     release it when it is unneeded.
    */
-  public HttpEngine(OkHttpClient client, Policy policy, Request request,
+  public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
     this.client = client;
-    this.policy = policy;
     this.request = request;
+    this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
+    this.route = connection != null ? connection.getRoute() : null;
     this.requestBodyOut = requestBodyOut;
   }
 
@@ -172,7 +182,6 @@ public class HttpEngine {
       }
 
       transport = (Transport) connection.newTransport(this);
-      request = transport.prepareRequest(request);
 
       // Create a request body if we don't have one already. We'll already have
       // one if we're retrying a failed POST.
@@ -234,8 +243,7 @@ public class HttpEngine {
       connection.updateReadTimeout(client.getReadTimeout());
     }
 
-    // Update the policy to tell 'em which proxy we ended up going with.
-    policy.setSelectedProxy(connection.getRoute().getProxy());
+    route = connection.getRoute();
   }
 
   /**
@@ -289,6 +297,14 @@ public class HttpEngine {
 
   public final Connection getConnection() {
     return connection;
+  }
+
+  /**
+   * Returns the route used to retrieve the response. Null if we haven't
+   * connected yet, or if no connection was necessary.
+   */
+  public Route getRoute() {
+    return route;
   }
 
   private void maybeCache() throws IOException {
@@ -346,7 +362,7 @@ public class HttpEngine {
 
   private void initContentStream(InputStream transferStream) throws IOException {
     responseTransferIn = transferStream;
-    if (transparentGzip && response.isContentEncodingGzip()) {
+    if (transparentGzip && "gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
       // If the response was transparently gzipped, remove the gzip header field
       // so clients don't double decompress. http://b/3009828
       //
@@ -355,8 +371,8 @@ public class HttpEngine {
       // dangerous because clients can query the content length, but not the
       // content encoding.
       response = response.newBuilder()
-          .stripContentEncoding()
-          .stripContentLength()
+          .removeHeader("Content-Encoding")
+          .removeHeader("Content-Length")
           .build();
       responseBodyIn = new GZIPInputStream(transferStream);
     } else {
@@ -384,7 +400,8 @@ public class HttpEngine {
     // If the Content-Length or Transfer-Encoding headers disagree with the
     // response code, the response is malformed. For best compatibility, we
     // honor the headers.
-    if (response.getContentLength() != -1 || response.isChunked()) {
+    if (response.getContentLength() != -1
+        || "chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
       return true;
     }
 
@@ -404,18 +421,18 @@ public class HttpEngine {
       result.setUserAgent(getDefaultUserAgent());
     }
 
-    if (request.getHost() == null) {
-      result.setHost(hostHeader(request.url()));
+    if (request.header("Host") == null) {
+      result.header("Host", hostHeader(request.url()));
     }
 
     if ((connection == null || connection.getHttpMinorVersion() != 0)
-        && request.getConnection() == null) {
-      result.setConnection("Keep-Alive");
+        && request.header("Connection") == null) {
+      result.header("Connection", "Keep-Alive");
     }
 
-    if (request.getAcceptEncoding() == null) {
+    if (request.header("Accept-Encoding") == null) {
       transparentGzip = true;
-      result.setAcceptEncoding("gzip");
+      result.header("Accept-Encoding", "gzip");
     }
 
     if (hasRequestBody() && request.getContentType() == null) {
@@ -472,7 +489,8 @@ public class HttpEngine {
     response = transport.readResponseHeaders()
         .request(request)
         .handshake(connection.getHandshake())
-        .setLocalTimestamps(sentRequestMillis, System.currentTimeMillis())
+        .header(SyntheticHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
+        .header(SyntheticHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .setResponseSource(responseSource)
         .build();
     connection.setHttpMinorVersion(response.httpMinorVersion());
@@ -481,7 +499,7 @@ public class HttpEngine {
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (validatingResponse.validate(response)) {
         release(false);
-        response = validatingResponse.combine(response);
+        response = combine(validatingResponse, response);
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
@@ -503,6 +521,49 @@ public class HttpEngine {
     }
 
     initContentStream(transport.getTransferStream(cacheRequest));
+  }
+
+  /**
+   * Combines cached headers with a network headers as defined by RFC 2616,
+   * 13.5.3.
+   */
+  private static Response combine(Response cached, Response network) throws IOException {
+    Headers.Builder result = new Headers.Builder();
+
+    for (int i = 0; i < cached.headerCount(); i++) {
+      String fieldName = cached.headerName(i);
+      String value = cached.headerValue(i);
+      if ("Warning".equals(fieldName) && value.startsWith("1")) {
+        continue; // drop 100-level freshness warnings
+      }
+      if (!isEndToEnd(fieldName) || network.header(fieldName) == null) {
+        result.add(fieldName, value);
+      }
+    }
+
+    for (int i = 0; i < network.headerCount(); i++) {
+      String fieldName = network.headerName(i);
+      if (isEndToEnd(fieldName)) {
+        result.add(fieldName, network.headerValue(i));
+      }
+    }
+
+    return cached.newBuilder().headers(result.build()).build();
+  }
+
+  /**
+   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
+   * defined by RFC 2616, 13.5.1.
+   */
+  private static boolean isEndToEnd(String fieldName) {
+    return !"Connection".equalsIgnoreCase(fieldName)
+        && !"Keep-Alive".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
+        && !"TE".equalsIgnoreCase(fieldName)
+        && !"Trailers".equalsIgnoreCase(fieldName)
+        && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
+        && !"Upgrade".equalsIgnoreCase(fieldName);
   }
 
   private TunnelRequest getTunnelConfig() {
