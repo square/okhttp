@@ -40,6 +40,7 @@ public class QueueDispatcher extends Dispatcher {
       // Fail fast if there's no response queued up.
       return failFastResponse;
     }
+
     return responseQueue.take();
   }
 
