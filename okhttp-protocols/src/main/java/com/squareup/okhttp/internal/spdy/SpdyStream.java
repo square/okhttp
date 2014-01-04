@@ -62,7 +62,8 @@ public final class SpdyStream {
    * near-simultaneously) then this is the first reason known to this peer.
    */
   private ErrorCode errorCode = null;
-
+  private byte[] readbuffer;
+  private int bufferLockId = -1;
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
       int priority, List<String> requestHeaders, Settings settings) {
     if (connection == null) throw new NullPointerException("connection == null");
@@ -73,6 +74,26 @@ public final class SpdyStream {
     this.out.finished = outFinished;
     this.priority = priority;
     this.requestHeaders = requestHeaders;
+
+    int i = id % this.connection.BUFFERSIZE;
+    while (this.in.bufferOffset == -1) {
+      if (this.connection.freeBufferSize == 0) {
+        this.readbuffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
+        this.in.bufferOffset = 0;
+      } else {
+        synchronized (this.connection.lock) {
+          if (this.connection.lock[i]) {
+            i = (i == this.connection.BUFFERSIZE - 1) ? 0 : i + 1;
+          } else {
+            this.readbuffer = connection.buffer;
+            this.connection.lock[i] = true;
+            this.connection.freeBufferSize--;
+            this.in.bufferOffset = i * Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+            this.bufferLockId = i;
+          }
+        }
+      }
+    }
 
     setSettings(settings);
   }
@@ -231,11 +252,26 @@ public final class SpdyStream {
       if (in.finished && out.finished) {
         return false;
       }
+      releaseLock();
       this.errorCode = errorCode;
       notifyAll();
     }
     connection.removeStream(id);
     return true;
+  }
+
+  private void releaseLock() {
+    if (bufferLockId == -1) {
+      return;
+    } else
+        synchronized (this.connection.lock) {
+          if (in.bufferOffset != -1) {
+            this.connection.lock[bufferLockId] = false;
+            bufferLockId = -1;
+            this.connection.freeBufferSize++;
+            in.bufferOffset = -1;
+          }
+        }
   }
 
   void receiveHeaders(List<String> headers, HeadersMode headersMode) {
@@ -336,7 +372,9 @@ public final class SpdyStream {
     //         ^       ^
     //       limit    pos
 
-    private final byte[] buffer = new byte[Settings.DEFAULT_INITIAL_WINDOW_SIZE];
+    /** The offset of the buffer in SpdyConnection. */
+    private int bufferOffset = -1;
+    private int bufferLen = Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 
     /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
     private int pos = -1;
@@ -368,13 +406,21 @@ public final class SpdyStream {
         } else if (limit > pos) {
           return limit - pos;
         } else {
-          return limit + (buffer.length - pos);
+          return limit + (bufferLen - pos);
         }
       }
     }
 
     @Override public int read() throws IOException {
-      return Util.readSingleByte(this);
+      int returns = 0;
+      try {
+        returns = Util.readSingleByte(this);
+        return returns;
+      } finally {
+        if (returns == -1) {
+          releaseLock();
+        }
+      }
     }
 
     @Override public int read(byte[] b, int offset, int count) throws IOException {
@@ -384,18 +430,20 @@ public final class SpdyStream {
         checkNotClosed();
 
         if (pos == -1) {
+          //The end of the stream, release the lock.
+          releaseLock();
           return -1;
         }
 
         int copied = 0;
 
-        // drain from [pos..buffer.length)
+        // drain from [pos..bufferLen)
         if (limit <= pos) {
-          int bytesToCopy = Math.min(count, buffer.length - pos);
-          System.arraycopy(buffer, pos, b, offset, bytesToCopy);
+          int bytesToCopy = Math.min(count, bufferLen - pos);
+          System.arraycopy(SpdyStream.this.readbuffer, pos + bufferOffset, b, offset, bytesToCopy);
           pos += bytesToCopy;
           copied += bytesToCopy;
-          if (pos == buffer.length) {
+          if (pos == bufferLen) {
             pos = 0;
           }
         }
@@ -403,7 +451,8 @@ public final class SpdyStream {
         // drain from [pos..limit)
         if (copied < count) {
           int bytesToCopy = Math.min(limit - pos, count - copied);
-          System.arraycopy(buffer, pos, b, offset + copied, bytesToCopy);
+          System.arraycopy(SpdyStream.this.readbuffer, pos + bufferOffset, b,
+            offset + copied, bytesToCopy);
           pos += bytesToCopy;
           copied += bytesToCopy;
         }
@@ -469,7 +518,7 @@ public final class SpdyStream {
         pos = this.pos;
         firstNewByte = this.limit;
         limit = this.limit;
-        flowControlError = byteCount > buffer.length - available();
+        flowControlError = byteCount > bufferLen - available();
       }
 
       // If the peer sends more data than we can handle, discard it and close the connection.
@@ -489,16 +538,16 @@ public final class SpdyStream {
       // won't overwrite unread data. Then fill [limit..pos). We can't hold a lock, otherwise
       // writes will be blocked until reads complete.
       if (pos < limit) {
-        int firstCopyCount = Math.min(byteCount, buffer.length - limit);
-        Util.readFully(in, buffer, limit, firstCopyCount);
+        int firstCopyCount = Math.min(byteCount, bufferLen - limit);
+        Util.readFully(in, SpdyStream.this.readbuffer, limit + bufferOffset, firstCopyCount);
         limit += firstCopyCount;
         byteCount -= firstCopyCount;
-        if (limit == buffer.length) {
+        if (limit == bufferLen) {
           limit = 0;
         }
       }
       if (byteCount > 0) {
-        Util.readFully(in, buffer, limit, byteCount);
+        Util.readFully(in, SpdyStream.this.readbuffer, limit + bufferOffset, byteCount);
         limit += byteCount;
       }
 
@@ -515,6 +564,7 @@ public final class SpdyStream {
     @Override public void close() throws IOException {
       synchronized (SpdyStream.this) {
         closed = true;
+        releaseLock();
         SpdyStream.this.notifyAll();
       }
       cancelStreamIfNecessary();
