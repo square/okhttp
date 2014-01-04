@@ -229,13 +229,12 @@ public final class HttpOverSpdyTest {
 
   @Test (timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse().setBody("A"));
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/NoResponse"));
+    HttpURLConnection connection = client.open(server.getUrl("/"));
     connection.setReadTimeout(1000);
-    InputStream in = connection.getInputStream();
-    assertEquals(-1, in.read());
+    assertContent("A", connection, Integer.MAX_VALUE);
   }
 
   @Test public void responsesAreCached() throws IOException {
