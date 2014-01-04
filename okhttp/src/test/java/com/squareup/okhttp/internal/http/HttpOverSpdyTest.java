@@ -23,6 +23,8 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.SocketPolicy;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -224,6 +226,16 @@ public final class HttpOverSpdyTest {
     assertEquals("ABC", readAscii(in, 3));
     assertEquals(-1, in.read());
     assertEquals(-1, in.read());
+  }
+
+  @Test(timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection.setReadTimeout(1000);
+    assertContent("A", connection, Integer.MAX_VALUE);
   }
 
   @Test public void responsesAreCached() throws IOException {
