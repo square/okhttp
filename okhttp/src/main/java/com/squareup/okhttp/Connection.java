@@ -70,7 +70,7 @@ public final class Connection implements Closeable {
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
   };
 
-  private static final byte[] SPDY_AND_HTTP = new byte[] {
+  private static final byte[] SPDY3_AND_HTTP11 = new byte[] {
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
   };
@@ -157,7 +157,7 @@ public final class Connection implements Closeable {
       } else if (route.address.transports.contains("HTTP-draft-09/2.0")) {
         platform.setNpnProtocols(sslSocket, HTTP2_AND_HTTP);
       } else {
-        platform.setNpnProtocols(sslSocket, SPDY_AND_HTTP);
+        platform.setNpnProtocols(sslSocket, SPDY3_AND_HTTP11);
       }
     }
 
