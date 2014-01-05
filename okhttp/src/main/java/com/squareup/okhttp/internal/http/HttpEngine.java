@@ -38,6 +38,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -235,7 +236,8 @@ public class HttpEngine {
     connection = routeSelector.next(request.method());
 
     if (!connection.isConnected()) {
-      connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
+      connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig(),
+              client.forceSpdyAddresses);
       client.getConnectionPool().maybeShare(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     } else {

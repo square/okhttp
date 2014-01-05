@@ -25,7 +25,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
+
 import javax.net.ssl.SSLContext;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,19 +77,19 @@ public final class ConnectionPoolTest {
     Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true);
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, true);
     httpA = new Connection(httpRoute);
-    httpA.connect(100, 100, null);
+    httpA.connect(100, 100, null, null);
     httpB = new Connection(httpRoute);
-    httpB.connect(100, 100, null);
+    httpB.connect(100, 100, null, null);
     httpC = new Connection(httpRoute);
-    httpC.connect(100, 100, null);
+    httpC.connect(100, 100, null, null);
     httpD = new Connection(httpRoute);
-    httpD.connect(100, 100, null);
+    httpD.connect(100, 100, null, null);
     httpE = new Connection(httpRoute);
-    httpE.connect(100, 100, null);
+    httpE.connect(100, 100, null, null);
     spdyA = new Connection(spdyRoute);
-    spdyA.connect(100, 100, null);
+    spdyA.connect(100, 100, null, null);
     spdyB = new Connection(spdyRoute);
-    spdyB.connect(100, 100, null);
+    spdyB.connect(100, 100, null, null);
   }
 
   @After public void tearDown() throws Exception {
@@ -109,7 +111,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
-    connection.connect(100, 100, null);
+    connection.connect(100, 100, null, null);
     assertEquals(0, pool.getConnectionCount());
     pool.recycle(connection);
     assertEquals(1, pool.getConnectionCount());
