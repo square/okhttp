@@ -38,6 +38,8 @@ final class Job implements Runnable {
   private final OkHttpClient client;
   private final Response.Receiver responseReceiver;
 
+  volatile boolean canceled;
+
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
 
@@ -49,6 +51,14 @@ final class Job implements Runnable {
     this.responseReceiver = responseReceiver;
   }
 
+  String host() {
+    return request.url().getHost();
+  }
+
+  Request request() {
+    return request;
+  }
+
   Object tag() {
     return request.tag();
   }
@@ -56,7 +66,9 @@ final class Job implements Runnable {
   @Override public void run() {
     try {
       Response response = execute();
-      responseReceiver.onResponse(response);
+      if (response != null && !canceled) {
+        responseReceiver.onResponse(response);
+      }
     } catch (IOException e) {
       responseReceiver.onFailure(new Failure.Builder()
           .request(request)
@@ -64,16 +76,22 @@ final class Job implements Runnable {
           .build());
     } finally {
       // TODO: close the response body
-      // TODO: release the HTTP engine (potentially multiple!)
+      // TODO: release the HTTP engine
       dispatcher.finished(this);
     }
   }
 
+  /**
+   * Performs the request and returns the response. May return null if this job
+   * was canceled.
+   */
   private Response execute() throws IOException {
     Connection connection = null;
     Response redirectedBy = null;
 
     while (true) {
+      if (canceled) return null;
+
       Request.Body body = request.body();
       if (body != null) {
         MediaType contentType = body.contentType();
@@ -94,7 +112,7 @@ final class Job implements Runnable {
         request = requestBuilder.build();
       }
 
-      HttpEngine engine = newEngine(connection);
+      HttpEngine engine = new HttpEngine(client, request, false, connection, null);
       engine.sendRequest();
 
       if (body != null) {
@@ -122,10 +140,6 @@ final class Job implements Runnable {
       redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = redirect;
     }
-  }
-
-  HttpEngine newEngine(Connection connection) throws IOException {
-    return new HttpEngine(client, request, false, connection, null);
   }
 
   /**

@@ -42,7 +42,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       = Util.immutableList(Arrays.asList("HTTP-draft-09/2.0", "spdy/3", "http/1.1"));
 
   private final RouteDatabase routeDatabase;
-  private final Dispatcher dispatcher;
+  private Dispatcher dispatcher;
   private Proxy proxy;
   private List<String> transports;
   private ProxySelector proxySelector;
@@ -282,6 +282,20 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
+   * Sets the dispatcher used to set policy and execute asynchronous requests.
+   * Must not be null.
+   */
+  public OkHttpClient setDispatcher(Dispatcher dispatcher) {
+    if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
+    this.dispatcher = dispatcher;
+    return this;
+  }
+
+  public Dispatcher getDispatcher() {
+    return dispatcher;
+  }
+
+  /**
    * Configure the transports used by this client to communicate with remote
    * servers. By default this client will prefer the most efficient transport
    * available, falling back to more ubiquitous transports. Applications should
@@ -334,9 +348,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * This method is in beta. APIs are subject to change!
    */
   public void enqueue(Request request, Response.Receiver responseReceiver) {
-    // Copy this client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is dispatched.
-    dispatcher.enqueue(copyWithDefaults(), request, responseReceiver);
+    dispatcher.enqueue(this, request, responseReceiver);
   }
 
   /**
@@ -368,7 +380,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * Returns a shallow copy of this OkHttpClient that uses the system-wide
    * default for each field that hasn't been explicitly configured.
    */
-  private OkHttpClient copyWithDefaults() {
+  OkHttpClient copyWithDefaults() {
     OkHttpClient result = clone();
     if (result.proxySelector == null) {
       result.proxySelector = ProxySelector.getDefault();
