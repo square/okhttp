@@ -74,11 +74,11 @@ public final class MockWebServer {
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
   };
+  private static final byte[] HTTP_20_DRAFT_09 = new byte[] {
+      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0'
+  };
   private static final byte[] SPDY3 = new byte[] {
       's', 'p', 'd', 'y', '/', '3'
-  };
-  private static final byte[] HTTP_20_DRAFT_06 = new byte[] {
-      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '6', '/', '2', '.', '0'
   };
   private static final byte[] HTTP_11 = new byte[] {
       'h', 't', 't', 'p', '/', '1', '.', '1'
@@ -326,8 +326,8 @@ public final class MockWebServer {
             byte[] selectedProtocol = Platform.get().getNpnSelectedProtocol(sslSocket);
             if (selectedProtocol == null || Arrays.equals(selectedProtocol, HTTP_11)) {
               transport = Transport.HTTP_11;
-            } else if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_06)) {
-              transport = Transport.HTTP_20_DRAFT_06;
+            } else if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_09)) {
+              transport = Transport.HTTP_20_DRAFT_09;
             } else if (Arrays.equals(selectedProtocol, SPDY3)) {
               transport = Transport.SPDY_3;
             } else {
@@ -340,14 +340,14 @@ public final class MockWebServer {
           socket = raw;
         }
 
-        if (transport == Transport.SPDY_3 || transport == Transport.HTTP_20_DRAFT_06) {
+        if (transport == Transport.HTTP_20_DRAFT_09 || transport == Transport.SPDY_3) {
           SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, transport);
           SpdyConnection.Builder builder = new SpdyConnection.Builder(false, socket)
               .handler(spdySocketHandler);
-          if (transport == Transport.SPDY_3) {
-            builder.spdy3();
+          if (transport == Transport.HTTP_20_DRAFT_09) {
+            builder.http20Draft09();
           } else {
-            builder.http20Draft06();
+            builder.spdy3();
           }
           SpdyConnection spdyConnection = builder.build();
           openSpdyConnections.put(spdyConnection, Boolean.TRUE);
@@ -721,6 +721,6 @@ public final class MockWebServer {
   }
 
   enum Transport {
-    HTTP_11, SPDY_3, HTTP_20_DRAFT_06
+    HTTP_11, SPDY_3, HTTP_20_DRAFT_09
   }
 }

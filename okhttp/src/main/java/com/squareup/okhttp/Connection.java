@@ -64,9 +64,24 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * should the attempt fail.
  */
 public final class Connection implements Closeable {
-  private static final byte[] NPN_PROTOCOLS = new byte[] {
+  private static final byte[] ALL_PROTOCOLS = new byte[] {
+      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0',
       6, 's', 'p', 'd', 'y', '/', '3',
       8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
+
+  private static final byte[] SPDY_AND_HTTP = new byte[] {
+      6, 's', 'p', 'd', 'y', '/', '3',
+      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
+
+  private static final byte[] HTTP2_AND_HTTP = new byte[] {
+      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0',
+      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+  };
+
+  private static final byte[] HTTP_20_DRAFT_09 = new byte[] {
+      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0'
   };
   private static final byte[] SPDY3 = new byte[] {
       's', 'p', 'd', 'y', '/', '3'
@@ -130,9 +145,20 @@ public final class Connection implements Closeable {
       platform.supportTlsIntolerantServer(sslSocket);
     }
 
-    boolean useNpn = route.modernTls && route.address.transports.contains("spdy/3");
+    boolean useNpn = route.modernTls && (
+        route.address.transports.contains("HTTP-draft-09/2.0")
+     || route.address.transports.contains("spdy/3")
+    );
+
     if (useNpn) {
-      platform.setNpnProtocols(sslSocket, NPN_PROTOCOLS);
+      if (route.address.transports.contains("HTTP-draft-09/2.0")
+       && route.address.transports.contains("spdy/3")) {
+        platform.setNpnProtocols(sslSocket, ALL_PROTOCOLS);
+      } else if (route.address.transports.contains("HTTP-draft-09/2.0")) {
+        platform.setNpnProtocols(sslSocket, HTTP2_AND_HTTP);
+      } else {
+        platform.setNpnProtocols(sslSocket, SPDY_AND_HTTP);
+      }
     }
 
     // Force handshake. This can throw!
@@ -150,10 +176,13 @@ public final class Connection implements Closeable {
 
     byte[] selectedProtocol;
     if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      if (Arrays.equals(selectedProtocol, SPDY3)) {
+      if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_09)
+       || Arrays.equals(selectedProtocol, SPDY3)) {
+        SpdyConnection.Builder builder =
+            new SpdyConnection.Builder(route.address.getUriHost(), true, in, out);
+        if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_09)) builder.http20Draft09();
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
-            .build();
+        spdyConnection = builder.build();
         spdyConnection.sendConnectionHeader();
       } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
         throw new IOException(
