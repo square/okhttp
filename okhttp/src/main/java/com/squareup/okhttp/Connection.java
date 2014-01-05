@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.Closeable;
@@ -32,6 +33,8 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
+import java.util.Set;
+
 import javax.net.ssl.SSLSocket;
 
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -90,7 +93,8 @@ public final class Connection implements Closeable {
     this.route = route;
   }
 
-  public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
+  public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest,
+          Set<String> forceSpdyAddresses)
       throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
@@ -102,7 +106,7 @@ public final class Connection implements Closeable {
     out = socket.getOutputStream();
 
     if (route.address.sslSocketFactory != null) {
-      upgradeToTls(tunnelRequest);
+      upgradeToTls(tunnelRequest, forceSpdyAddresses);
     } else {
       streamWrapper();
     }
@@ -112,7 +116,8 @@ public final class Connection implements Closeable {
    * Create an {@code SSLSocket} and perform the TLS handshake and certificate
    * validation.
    */
-  private void upgradeToTls(TunnelRequest tunnelRequest) throws IOException {
+  private void upgradeToTls(TunnelRequest tunnelRequest, Set<String> forceSpdyAddresses)
+          throws IOException {
     Platform platform = Platform.get();
 
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
@@ -149,7 +154,8 @@ public final class Connection implements Closeable {
     streamWrapper();
 
     byte[] selectedProtocol;
-    if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
+    if (useNpn && (selectedProtocol = getNpnSelectedProtocol(platform, sslSocket,
+            forceSpdyAddresses)) != null) {
       if (Arrays.equals(selectedProtocol, SPDY3)) {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
         spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
@@ -160,6 +166,19 @@ public final class Connection implements Closeable {
             "Unexpected NPN transport " + new String(selectedProtocol, "ISO-8859-1"));
       }
     }
+  }
+
+  private byte[] getNpnSelectedProtocol(Platform platform, SSLSocket sslSocket,
+          Set<String> forceSpdyAddresses) {
+
+    if (forceSpdyAddresses != null) {
+      String hostPort = route.address.uriHost + ":" + route.address.uriPort;
+      if (forceSpdyAddresses.contains(hostPort)) {
+        return SPDY3;
+      }
+    }
+
+    return platform.getNpnSelectedProtocol(sslSocket);
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */

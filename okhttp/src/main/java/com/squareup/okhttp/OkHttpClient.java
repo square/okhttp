@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -30,11 +31,17 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSocketFactory;
+
+import static com.squareup.okhttp.internal.Util.getDefaultPort;
+
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
@@ -55,6 +62,8 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private boolean followProtocolRedirects = true;
   private int connectTimeout;
   private int readTimeout;
+
+  public Set<String> forceSpdyAddresses = null;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -394,6 +403,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     if (result.transports == null) {
       result.transports = DEFAULT_TRANSPORTS;
     }
+    result.forceSpdyAddresses = forceSpdyAddresses;
     return result;
   }
 
@@ -438,5 +448,20 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
         throw new AssertionError();
       }
     };
+  }
+
+  public void setSpdyAddress(URL url) {
+    if (forceSpdyAddresses == null) {
+      forceSpdyAddresses = new HashSet<String>();
+    }
+
+    String hostPort = url.getHost() + ":";
+    if (url.getPort() != -1) {
+      hostPort += url.getPort();
+    } else {
+      hostPort += getDefaultPort(url.getProtocol());
+    }
+
+    forceSpdyAddresses.add(hostPort);
   }
 }
