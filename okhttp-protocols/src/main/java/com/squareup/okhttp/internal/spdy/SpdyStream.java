@@ -116,9 +116,23 @@ public final class SpdyStream {
    * have not been received yet.
    */
   public synchronized List<String> getResponseHeaders() throws IOException {
+    long remaining = 0;
+    long start = 0;
+    if (readTimeoutMillis != 0) {
+      start = (System.nanoTime() / 1000000);
+      remaining = readTimeoutMillis;
+    }
     try {
       while (responseHeaders == null && errorCode == null) {
-        wait();
+        if (readTimeoutMillis == 0) { // No timeout configured.
+          wait();
+        } else if (remaining > 0) {
+          wait(remaining);
+          remaining = start + readTimeoutMillis - (System.nanoTime() / 1000000);
+        } else {
+          throw new SocketTimeoutException("Read response header timeout. readTimeoutMillis: "
+                            + readTimeoutMillis);
+        }
       }
       if (responseHeaders != null) {
         return responseHeaders;
