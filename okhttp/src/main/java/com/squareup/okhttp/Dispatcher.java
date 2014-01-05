@@ -15,42 +15,148 @@
  */
 package com.squareup.okhttp;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.squareup.okhttp.internal.Util;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-final class Dispatcher {
-  // TODO: thread pool size should be configurable; possibly configurable per host.
-  private final ThreadPoolExecutor executorService = new ThreadPoolExecutor(
-      8, 8, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-  private final Map<Object, List<Job>> enqueuedJobs = new LinkedHashMap<Object, List<Job>>();
+/**
+ * Policy on when async requests are executed.
+ *
+ * <p>Each dispatcher uses an {@link Executor} to run jobs internally. If you
+ * supply your own executor, it should be able to run {@link #getMaxRequests the
+ * configured maximum} number of jobs concurrently.
+ */
+public final class Dispatcher {
+  private int maxRequests = 64;
+  private int maxRequestsPerHost = 5;
 
-  public synchronized void enqueue(
-      OkHttpClient client, Request request, Response.Receiver responseReceiver) {
-    Job job = new Job(this, client, request, responseReceiver);
-    List<Job> jobsForTag = enqueuedJobs.get(request.tag());
-    if (jobsForTag == null) {
-      jobsForTag = new ArrayList<Job>(2);
-      enqueuedJobs.put(request.tag(), jobsForTag);
-    }
-    jobsForTag.add(job);
-    executorService.execute(job);
+  /** Executes jobs. Created lazily. */
+  private Executor executor;
+
+  /** Ready jobs in the order they'll be run. */
+  private final Deque<Job> readyJobs = new ArrayDeque<Job>();
+
+  /** Running jobs. Includes canceled jobs that haven't finished yet. */
+  private final Deque<Job> runningJobs = new ArrayDeque<Job>();
+
+  public Dispatcher(Executor executor) {
+    this.executor = executor;
   }
 
+  public Dispatcher() {
+  }
+
+  public synchronized Executor getExecutor() {
+    if (executor == null) {
+      // TODO: name these threads, either here or in the job.
+      executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+          new LinkedBlockingQueue<Runnable>());
+    }
+    return executor;
+  }
+
+  /**
+   * Set the maximum number of requests to execute concurrently. Above this
+   * requests queue in memory, waiting for the running jobs to complete.
+   *
+   * <p>If more than {@code maxRequests} requests are in flight when this is
+   * invoked, those requests will remain in flight.
+   */
+  public synchronized void setMaxRequests(int maxRequests) {
+    if (maxRequests < 1) {
+      throw new IllegalArgumentException("max < 1: " + maxRequests);
+    }
+    this.maxRequests = maxRequests;
+    promoteJobs();
+  }
+
+  public synchronized int getMaxRequests() {
+    return maxRequests;
+  }
+
+  /**
+   * Set the maximum number of requests for each host to execute concurrently.
+   * This limits requests by the URL's host name. Note that concurrent requests
+   * to a single IP address may still exceed this limit: multiple hostnames may
+   * share an IP address or be routed through the same HTTP proxy.
+   *
+   * <p>If more than {@code maxRequestsPerHost} requests are in flight when this
+   * is invoked, those requests will remain in flight.
+   */
+  public synchronized void setMaxRequestsPerHost(int maxRequestsPerHost) {
+    if (maxRequestsPerHost < 1) {
+      throw new IllegalArgumentException("max < 1: " + maxRequestsPerHost);
+    }
+    this.maxRequestsPerHost = maxRequestsPerHost;
+    promoteJobs();
+  }
+
+  public synchronized int getMaxRequestsPerHost() {
+    return maxRequestsPerHost;
+  }
+
+  synchronized void enqueue(OkHttpClient client, Request request, Response.Receiver receiver) {
+    // Copy the client. Otherwise changes (socket factory, redirect policy,
+    // etc.) may incorrectly be reflected in the request when it is executed.
+    client = client.copyWithDefaults();
+    Job job = new Job(this, client, request, receiver);
+
+    if (runningJobs.size() < maxRequests && runningJobsForHost(job) < maxRequestsPerHost) {
+      runningJobs.add(job);
+      getExecutor().execute(job);
+    } else {
+      readyJobs.add(job);
+    }
+  }
+
+  /**
+   * Cancel all jobs with the tag {@code tag}. If a canceled job is running it
+   * may continue running until it reaches a safe point to finish.
+   */
   public synchronized void cancel(Object tag) {
-    List<Job> jobs = enqueuedJobs.remove(tag);
-    if (jobs == null) return;
-    for (Job job : jobs) {
-      executorService.remove(job);
+    for (Iterator<Job> i = readyJobs.iterator(); i.hasNext(); ) {
+      if (Util.equal(tag, i.next().tag())) i.remove();
+    }
+
+    for (Job job : runningJobs) {
+      if (Util.equal(tag, job.tag())) job.canceled = true;
     }
   }
 
+  /** Used by {@code Job#run} to signal completion. */
   synchronized void finished(Job job) {
-    List<Job> jobs = enqueuedJobs.get(job.tag());
-    if (jobs != null) jobs.remove(job);
+    if (!runningJobs.remove(job)) throw new AssertionError("Job wasn't running!");
+    promoteJobs();
+  }
+
+  private void promoteJobs() {
+    if (runningJobs.size() >= maxRequests) return; // Already running max capacity.
+    if (readyJobs.isEmpty()) return; // No ready jobs to promote.
+
+    for (Iterator<Job> i = readyJobs.iterator(); i.hasNext(); ) {
+      Job job = i.next();
+
+      if (runningJobsForHost(job) < maxRequestsPerHost) {
+        i.remove();
+        runningJobs.add(job);
+        getExecutor().execute(job);
+      }
+
+      if (runningJobs.size() >= maxRequests) return; // Reached max capacity.
+    }
+  }
+
+  /** Returns the number of running jobs that share a host with {@code job}. */
+  private int runningJobsForHost(Job job) {
+    int result = 0;
+    for (Job j : runningJobs) {
+      if (j.host().equals(job.host())) result++;
+    }
+    return result;
   }
 }
