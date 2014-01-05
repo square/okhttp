@@ -53,8 +53,8 @@ public final class SpdyStream {
   /** Headers sent in the stream reply. Null if reply is either not sent or not sent yet. */
   private List<String> responseHeaders;
 
-  private final SpdyDataInputStream in = new SpdyDataInputStream();
-  private final SpdyDataOutputStream out = new SpdyDataOutputStream();
+  private final SpdyDataInputStream in;
+  private final SpdyDataOutputStream out;
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple
@@ -69,6 +69,8 @@ public final class SpdyStream {
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
+    this.in = new SpdyDataInputStream();
+    this.out = new SpdyDataOutputStream();
     this.in.finished = inFinished;
     this.out.finished = outFinished;
     this.priority = priority;
@@ -350,8 +352,8 @@ public final class SpdyStream {
     //         ^       ^
     //       limit    pos
 
-    private final byte[] buffer = SpdyStream.this.connection.bufferPool.
-            getBuf(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+    private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(
+        Settings.DEFAULT_INITIAL_WINDOW_SIZE);
 
     /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
     private int pos = -1;
