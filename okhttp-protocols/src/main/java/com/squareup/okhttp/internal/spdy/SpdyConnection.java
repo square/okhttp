@@ -87,6 +87,8 @@ public final class SpdyConnection implements Closeable {
   /** Lazily-created settings for the peer. */
   Settings settings;
 
+  ByteArrayPool bufferPool = new ByteArrayPool(8 * Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+
   private SpdyConnection(Builder builder) {
     variant = builder.variant;
     client = builder.client;
