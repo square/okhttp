@@ -56,7 +56,16 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP features. */
-public final class HttpOverSpdyTest {
+public abstract class HttpOverSpdyTest {
+
+  /** Transport to test, for example {@code spdy/3} */
+  private final String transport;
+  protected String hostHeader = ":host";
+
+  protected HttpOverSpdyTest(String transport){
+    this.transport = transport;
+  }
+
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
     public boolean verify(String hostname, SSLSession session) {
       return true;
@@ -71,10 +80,11 @@ public final class HttpOverSpdyTest {
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
+    client.setTransports(Arrays.asList(transport, "http/1.1"));
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");
-    File cacheDir = new File(systemTmpDir, "HttpCache-" + UUID.randomUUID());
+    File cacheDir = new File(systemTmpDir, "HttpCache-" + transport + "-" + UUID.randomUUID());
     cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
   }
 
@@ -96,7 +106,7 @@ public final class HttpOverSpdyTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), ":host: " + hostName + ":" + server.getPort());
+    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
   }
 
   @Test public void emptyResponse() throws IOException {

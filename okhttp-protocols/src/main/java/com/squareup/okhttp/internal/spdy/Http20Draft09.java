@@ -25,12 +25,13 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
- * Read and write http/2 v06 frames.
- * http://tools.ietf.org/html/draft-ietf-httpbis-http2-06
+ * Read and write http/2 v09 frames.
+ * http://tools.ietf.org/html/draft-ietf-httpbis-http2-09
  */
-final class Http20Draft06 implements Variant {
+public final class Http20Draft09 implements Variant {
   private static final byte[] CONNECTION_HEADER;
   static {
     try {
@@ -52,10 +53,11 @@ final class Http20Draft06 implements Variant {
   static final int TYPE_CONTINUATION = 0xa;
 
   static final int FLAG_END_STREAM = 0x1;
+
   /** Used for headers, push-promise and continuation. */
   static final int FLAG_END_HEADERS = 0x4;
   static final int FLAG_PRIORITY = 0x8;
-  static final int FLAG_PONG = 0x1;
+  static final int FLAG_ACK = 0x1;
   static final int FLAG_END_FLOW_CONTROL = 0x1;
 
   @Override public FrameReader newReader(InputStream in, boolean client) {
@@ -69,12 +71,14 @@ final class Http20Draft06 implements Variant {
   static final class Reader implements FrameReader {
     private final DataInputStream in;
     private final boolean client;
-    private final Hpack.Reader hpackReader;
+
+    // Visible for testing.
+    final HpackDraft05.Reader hpackReader;
 
     Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
       this.client = client;
-      this.hpackReader = new Hpack.Reader(this.in, client);
+      this.hpackReader = new HpackDraft05.Reader(this.in);
     }
 
     @Override public void readConnectionHeader() throws IOException {
@@ -96,7 +100,8 @@ final class Http20Draft06 implements Variant {
       }
       int w2 = in.readInt();
 
-      int length = (w1 & 0xffff0000) >> 16;
+      // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
+      int length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
       int type = (w1 & 0xff00) >> 8;
       int flags = w1 & 0xff;
       // boolean r = (w2 & 0x80000000) != 0; // Reserved.
@@ -155,6 +160,10 @@ final class Http20Draft06 implements Variant {
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
           List<String> namesAndValues = hpackReader.getAndReset();
+          // TODO: throw malformed if any present:
+          // Connection, Keep-Alive, Proxy-Connection, TE, Transfer-Encoding, Encoding, Upgrade.
+          // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
+          // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
           int priority = -1; // TODO: priority
           handler.headers(false, inFinished, streamId, -1, priority, namesAndValues,
               HeadersMode.HTTP_20_HEADERS);
@@ -165,12 +174,10 @@ final class Http20Draft06 implements Variant {
         int w1 = in.readInt();
         int w2 = in.readInt();
 
-        length = (w1 & 0xffff0000) >> 16;
+        // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
+        length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
         int newType = (w1 & 0xff00) >> 8;
         flags = w1 & 0xff;
-
-        // TODO: remove in draft 8: CONTINUATION no longer sets END_STREAM
-        inFinished = (flags & FLAG_END_STREAM) != 0;
 
         // boolean u = (w2 & 0x80000000) != 0; // Unused.
         int newStreamId = (w2 & 0x7fffffff);
@@ -184,6 +191,7 @@ final class Http20Draft06 implements Variant {
 
     private void readData(Handler handler, int flags, int length, int streamId) throws IOException {
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
+      // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
       handler.data(inFinished, streamId, in, length);
     }
 
@@ -211,6 +219,13 @@ final class Http20Draft06 implements Variant {
 
     private void readSettings(Handler handler, int flags, int length, int streamId)
         throws IOException {
+      if ((flags & FLAG_ACK) != 0) {
+        if (length != 0) throw ioException("FRAME_SIZE_ERROR ack frame should be empty!");
+        // TODO: signal apply changes
+        // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5.3
+        return;
+      }
+
       if (length % 8 != 0) throw ioException("TYPE_SETTINGS length %% 8 != 0: %s", length);
       if (streamId != 0) throw ioException("TYPE_SETTINGS streamId != 0");
       Settings settings = new Settings();
@@ -233,7 +248,7 @@ final class Http20Draft06 implements Variant {
       if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
       int payload1 = in.readInt();
       int payload2 = in.readInt();
-      boolean reply = (flags & FLAG_PONG) != 0;
+      boolean reply = (flags & FLAG_ACK) != 0;
       handler.ping(reply, payload1, payload2);
     }
 
@@ -262,10 +277,6 @@ final class Http20Draft06 implements Variant {
       handler.windowUpdate(streamId, windowSizeIncrement, endFlowControl);
     }
 
-    private static IOException ioException(String message, Object... args) throws IOException {
-      throw new IOException(String.format(message, args));
-    }
-
     @Override public void close() throws IOException {
       in.close();
     }
@@ -275,13 +286,13 @@ final class Http20Draft06 implements Variant {
     private final DataOutputStream out;
     private final boolean client;
     private final ByteArrayOutputStream hpackBuffer;
-    private final Hpack.Writer hpackWriter;
+    private final HpackDraft05.Writer hpackWriter;
 
     Writer(OutputStream out, boolean client) {
       this.out = new DataOutputStream(out);
       this.client = client;
       this.hpackBuffer = new ByteArrayOutputStream();
-      this.hpackWriter = new Hpack.Writer(hpackBuffer);
+      this.hpackWriter = new HpackDraft05.Writer(hpackBuffer);
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -313,14 +324,23 @@ final class Http20Draft06 implements Variant {
     private void headers(boolean outFinished, int streamId, int priority,
         List<String> nameValueBlock) throws IOException {
       hpackBuffer.reset();
+      for (int i = 0, size = nameValueBlock.size(); i < size; i += 2) {
+        String headerName = nameValueBlock.get(i).toLowerCase(Locale.US);
+        // our SpdyTransport.writeNameValueBlock hard-codes :host
+        if (":host".equals(headerName)) headerName = ":authority";
+        nameValueBlock.set(i, headerName);
+      }
+      // TODO: throw malformed if any present:
+      // Connection, Keep-Alive, Proxy-Connection, TE, Transfer-Encoding, Encoding, Upgrade.
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;
       // TODO: implement CONTINUATION
       int length = hpackBuffer.size();
+      checkFrameSize(length);
       int flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
       if (priority != -1) flags |= FLAG_PRIORITY;
-      out.writeInt((length & 0xffff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
       if (priority != -1) out.writeInt(priority & 0x7fffffff);
       hpackBuffer.writeTo(out);
@@ -328,7 +348,14 @@ final class Http20Draft06 implements Variant {
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
         throws IOException {
-      throw new UnsupportedOperationException("TODO");
+      if (errorCode.spdyRstCode == -1) throw new IllegalArgumentException();
+      int flags = 0;
+      int type = TYPE_RST_STREAM;
+      int length = 4;
+      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt(streamId & 0x7fffffff);
+      out.writeInt(errorCode.spdyRstCode);
+      out.flush();
     }
 
     @Override public void data(boolean outFinished, int streamId, byte[] data) throws IOException {
@@ -340,7 +367,8 @@ final class Http20Draft06 implements Variant {
       int type = TYPE_DATA;
       int flags = 0;
       if (outFinished) flags |= FLAG_END_STREAM;
-      out.writeInt((byteCount & 0xffff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      checkFrameSize(byteCount);
+      out.writeInt((byteCount & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
       out.write(data, offset, byteCount);
     }
@@ -350,7 +378,7 @@ final class Http20Draft06 implements Variant {
       int length = settings.size() * 8;
       int flags = 0;
       int streamId = 0;
-      out.writeInt((length & 0xffff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
       for (int i = 0; i < Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
@@ -381,5 +409,13 @@ final class Http20Draft06 implements Variant {
     @Override public void close() throws IOException {
       out.close();
     }
+  }
+
+  private static void checkFrameSize(int bytes) throws IOException {
+    if (bytes > 16383) throw ioException("FRAME_SIZE_ERROR max size is 16383: %s", bytes);
+  }
+
+  private static IOException ioException(String message, Object... args) throws IOException {
+    throw new IOException(String.format(message, args));
   }
 }

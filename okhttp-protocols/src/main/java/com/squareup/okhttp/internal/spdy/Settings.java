@@ -17,10 +17,14 @@ package com.squareup.okhttp.internal.spdy;
 
 final class Settings {
   /**
-   * From the spdy/3 spec, the default initial window size for all streams is
-   * 64 KiB. (Chrome 25 uses 10 MiB).
+   * spdy/3: The default initial window size for all streams is 64 KiB. (Chrome
+   * 25 uses 10 MiB).
    */
   static final int DEFAULT_INITIAL_WINDOW_SIZE = 64 * 1024;
+  /** http/2: The default header compression table size is 4 KiB. */
+  static final int DEFAULT_HEADER_TABLE_SIZE = 4096;
+  /** http/2: The default is to enable PUSH_PROMISE frames. */
+  static final int DEFAULT_ENABLE_PUSH = 1;
 
   /** Peer request to clear durable settings. */
   static final int FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x1;
@@ -30,24 +34,28 @@ final class Settings {
   /** Sent by clients only. The client is reminding the server of a persisted value. */
   static final int PERSISTED = 0x2;
 
-  /** Sender's estimate of max incoming kbps. */
+  /** spdy/3: Sender's estimate of max incoming kbps. */
   static final int UPLOAD_BANDWIDTH = 1;
-  /** Sender's estimate of max outgoing kbps. */
+  /** http/2: Size in bytes of the table used to decode the sender's header blocks. */
+  static final int HEADER_TABLE_SIZE = 1;
+  /** spdy/3: Sender's estimate of max outgoing kbps. */
   static final int DOWNLOAD_BANDWIDTH = 2;
-  /** Sender's estimate of milliseconds between sending a request and receiving a response. */
+  /** http/2: An endpoint must not send a PUSH_PROMISE frame this is 0. */
+  static final int ENABLE_PUSH = 2;
+  /** spdy/3: Sender's estimate of millis between sending a request and receiving a response. */
   static final int ROUND_TRIP_TIME = 3;
   /** Sender's maximum number of concurrent streams. */
   static final int MAX_CONCURRENT_STREAMS = 4;
-  /** Current CWND in Packets. */
+  /** spdy/3: Current CWND in Packets. */
   static final int CURRENT_CWND = 5;
-  /** Retransmission rate. Percentage */
+  /** spdy/3: Retransmission rate. Percentage */
   static final int DOWNLOAD_RETRANS_RATE = 6;
   /** Window size in bytes. */
   static final int INITIAL_WINDOW_SIZE = 7;
-  /** Window size in bytes. */
+  /** spdy/3: Window size in bytes. */
   static final int CLIENT_CERTIFICATE_VECTOR_SIZE = 8;
   /** Flow control options. */
-  static final int FLOW_CONTROL_OPTIONS = 9;
+  static final int FLOW_CONTROL_OPTIONS = 10;
 
   /** Total number of settings. */
   static final int COUNT = 10;
@@ -112,47 +120,69 @@ final class Settings {
     return Integer.bitCount(set);
   }
 
+  /** spdy/3 only. */
   int getUploadBandwidth(int defaultValue) {
     int bit = 1 << UPLOAD_BANDWIDTH;
     return (bit & set) != 0 ? values[UPLOAD_BANDWIDTH] : defaultValue;
   }
 
+  /** http/2 only. */
+  // TODO: honor this setting in http/2.
+  int getHeaderTableSize() {
+    int bit = 1 << HEADER_TABLE_SIZE;
+    return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : DEFAULT_HEADER_TABLE_SIZE;
+  }
+
+  /** spdy/3 only. */
   int getDownloadBandwidth(int defaultValue) {
     int bit = 1 << DOWNLOAD_BANDWIDTH;
     return (bit & set) != 0 ? values[DOWNLOAD_BANDWIDTH] : defaultValue;
   }
 
+  /** http/2 only. */
+  // TODO: honor this setting in http/2.
+  boolean getEnablePush() {
+    int bit = 1 << ENABLE_PUSH;
+    return ((bit & set) != 0 ? values[ENABLE_PUSH] : DEFAULT_ENABLE_PUSH) == 1;
+  }
+
+  /** spdy/3 only. */
   int getRoundTripTime(int defaultValue) {
     int bit = 1 << ROUND_TRIP_TIME;
     return (bit & set) != 0 ? values[ROUND_TRIP_TIME] : defaultValue;
   }
 
+  // TODO: honor this setting in spdy/3 and http/2.
   int getMaxConcurrentStreams(int defaultValue) {
     int bit = 1 << MAX_CONCURRENT_STREAMS;
     return (bit & set) != 0 ? values[MAX_CONCURRENT_STREAMS] : defaultValue;
   }
 
+  /** spdy/3 only. */
   int getCurrentCwnd(int defaultValue) {
     int bit = 1 << CURRENT_CWND;
     return (bit & set) != 0 ? values[CURRENT_CWND] : defaultValue;
   }
 
+  /** spdy/3 only. */
   int getDownloadRetransRate(int defaultValue) {
     int bit = 1 << DOWNLOAD_RETRANS_RATE;
     return (bit & set) != 0 ? values[DOWNLOAD_RETRANS_RATE] : defaultValue;
   }
 
+  // TODO: honor this setting in http/2.
   int getInitialWindowSize(int defaultValue) {
     int bit = 1 << INITIAL_WINDOW_SIZE;
     return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : defaultValue;
   }
 
+  /** spdy/3 only. */
   int getClientCertificateVectorSize(int defaultValue) {
     int bit = 1 << CLIENT_CERTIFICATE_VECTOR_SIZE;
     return (bit & set) != 0 ? values[CLIENT_CERTIFICATE_VECTOR_SIZE] : defaultValue;
   }
 
-  // TODO: honor this setting.
+  // TODO: honor this setting in spdy/3 and http/2.
   boolean isFlowControlDisabled() {
     int bit = 1 << FLOW_CONTROL_OPTIONS;
     int value = (bit & set) != 0 ? values[FLOW_CONTROL_OPTIONS] : 0;
@@ -160,7 +190,7 @@ final class Settings {
   }
 
   /**
-   * Returns true if this user agent should use this setting in future SPDY
+   * Returns true if this user agent should use this setting in future spdy/3
    * connections to the same host.
    */
   boolean persistValue(int id) {

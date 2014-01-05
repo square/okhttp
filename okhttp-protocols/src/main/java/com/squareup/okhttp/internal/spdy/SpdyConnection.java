@@ -59,7 +59,7 @@ public final class SpdyConnection implements Closeable {
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.daemonThreadFactory("OkHttp SpdyConnection"));
 
-  /** The protocol variant, like SPDY/3 or HTTP-draft-06/2.0. */
+  /** The protocol variant, like SPDY/3 or HTTP-draft-09/2.0. */
   final Variant variant;
 
   /** True if this peer initiated the connection. */
@@ -153,7 +153,7 @@ public final class SpdyConnection implements Closeable {
     boolean outFinished = !out;
     boolean inFinished = !in;
     int associatedStreamId = 0;  // TODO: permit the caller to specify an associated stream?
-    int priority = 0; // TODO: permit the caller to specify a priority?
+    int priority = -1; // TODO: permit the caller to specify a priority?
     int slot = 0; // TODO: permit the caller to specify a slot?
     SpdyStream stream;
     int streamId;
@@ -418,8 +418,8 @@ public final class SpdyConnection implements Closeable {
       return this;
     }
 
-    public Builder http20Draft06() {
-      this.variant = Variant.HTTP_20_DRAFT_06;
+    public Builder http20Draft09() {
+      this.variant = Variant.HTTP_20_DRAFT_09;
       return this;
     }
 
