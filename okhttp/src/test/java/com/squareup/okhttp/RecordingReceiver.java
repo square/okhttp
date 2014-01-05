@@ -86,4 +86,12 @@ public class RecordingReceiver implements Response.Receiver {
 
     throw new AssertionError("Timed out waiting for response to " + url);
   }
+
+  public synchronized void assertNoResponse(URL url) throws Exception {
+    for (RecordedResponse recordedResponse : responses) {
+      if (recordedResponse.request.url().equals(url)) {
+        throw new AssertionError("Expected no response for " + url);
+      }
+    }
+  }
 }

@@ -17,12 +17,16 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
 import org.junit.Before;
@@ -177,5 +181,60 @@ public final class AsyncApiTest {
         .redirectedBy()
         .assertCode(301)
         .assertContainsHeaders("Test: Redirect from /a to /b");
+  }
+
+  @Test public void canceledBeforeResponseReadIsNeverDelivered() throws Exception {
+    client.getDispatcher().setMaxRequests(1); // Force requests to be executed serially.
+    server.setDispatcher(new Dispatcher() {
+      char nextResponse = 'A';
+      @Override public MockResponse dispatch(RecordedRequest request) {
+        client.cancel("request A");
+        return new MockResponse().setBody(Character.toString(nextResponse++));
+      }
+    });
+    server.play();
+
+    // Canceling a request after the server has received a request but before
+    // it has delivered the response. That request will never be received to the
+    // client.
+    Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
+    client.enqueue(requestA, receiver);
+    assertEquals("/a", server.takeRequest().getPath());
+
+    // We then make a second request (not canceled) to make sure the receiver
+    // has nothing left to wait for.
+    Request requestB = new Request.Builder().url(server.getUrl("/b")).tag("request B").build();
+    client.enqueue(requestB, receiver);
+    assertEquals("/b", server.takeRequest().getPath());
+    receiver.await(requestB.url()).assertBody("B");
+
+    // At this point we know the receiver is ready: if it hasn't received 'A'
+    // yet it never will.
+    receiver.assertNoResponse(requestA.url());
+  }
+
+  @Test public void canceledAfterResponseIsDeliveredDoesNothing() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicReference<String> bodyRef = new AtomicReference<String>();
+
+    Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
+    client.enqueue(request, new Response.Receiver() {
+      @Override public void onFailure(Failure failure) {
+        throw new AssertionError();
+      }
+
+      @Override public boolean onResponse(Response response) throws IOException {
+        client.cancel("request A");
+        bodyRef.set(response.body().string());
+        latch.countDown();
+        return true;
+      }
+    });
+
+    latch.await();
+    assertEquals("A", bodyRef.get());
   }
 }
