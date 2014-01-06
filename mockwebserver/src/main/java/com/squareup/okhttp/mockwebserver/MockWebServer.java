@@ -516,7 +516,9 @@ public final class MockWebServer {
 
   private void writeResponse(OutputStream out, MockResponse response) throws IOException {
     out.write((response.getStatus() + "\r\n").getBytes(Util.US_ASCII));
-    for (String header : response.getHeaders()) {
+    List<String> headers = response.getHeaders();
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String header = headers.get(i);
       out.write((header + "\r\n").getBytes(Util.US_ASCII));
     }
     out.write(("\r\n").getBytes(Util.US_ASCII));
@@ -661,9 +663,9 @@ public final class MockWebServer {
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = "<:version omitted>";
-      for (Iterator<String> i = spdyHeaders.iterator(); i.hasNext(); ) {
-        String name = i.next();
-        String value = i.next();
+      for (int i = 0, size = spdyHeaders.size(); i < size; i += 2) {
+        String name = spdyHeaders.get(i);
+        String value = spdyHeaders.get(i + 1);
         if (":method".equals(name)) {
           method = value;
         } else if (":path".equals(name)) {
@@ -703,7 +705,9 @@ public final class MockWebServer {
       // TODO: no ":version" header for HTTP/2.0, only SPDY.
       spdyHeaders.add(":version");
       spdyHeaders.add(statusParts[0]);
-      for (String header : response.getHeaders()) {
+      List<String> headers = response.getHeaders();
+      for (int i = 0, size = headers.size(); i < size; i++) {
+        String header = headers.get(i);
         String[] headerParts = header.split(":", 2);
         if (headerParts.length != 2) {
           throw new AssertionError("Unexpected header: " + header);
