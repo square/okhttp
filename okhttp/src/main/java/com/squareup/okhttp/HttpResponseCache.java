@@ -507,8 +507,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     private void writeCertArray(Writer writer, List<Certificate> certificates) throws IOException {
       try {
         writer.write(Integer.toString(certificates.size()) + '\n');
-        for (Certificate certificate : certificates) {
-          byte[] bytes = certificate.getEncoded();
+        for (int i = 0, size = certificates.size(); i < size; i++) {
+          byte[] bytes = certificates.get(i).getEncoded();
           String line = Base64.encode(bytes);
           writer.write(line + '\n');
         }

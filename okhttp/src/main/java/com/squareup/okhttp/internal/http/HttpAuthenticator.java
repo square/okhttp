@@ -41,7 +41,8 @@ public final class HttpAuthenticator {
   public static final OkAuthenticator SYSTEM_DEFAULT = new OkAuthenticator() {
     @Override public Credential authenticate(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
-      for (Challenge challenge : challenges) {
+      for (int i = 0, size = challenges.size(); i < size; i++) {
+        Challenge challenge = challenges.get(i);
         if (!"Basic".equalsIgnoreCase(challenge.getScheme())) {
           continue;
         }
@@ -58,7 +59,8 @@ public final class HttpAuthenticator {
 
     @Override public Credential authenticateProxy(
         Proxy proxy, URL url, List<Challenge> challenges) throws IOException {
-      for (Challenge challenge : challenges) {
+      for (int i = 0, size = challenges.size(); i < size; i++) {
+        Challenge challenge = challenges.get(i);
         if (!"Basic".equalsIgnoreCase(challenge.getScheme())) {
           continue;
         }

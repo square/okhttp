@@ -168,8 +168,8 @@ final class HpackDraft05 {
 
     private void clearReferenceSet() {
       staticReferenceSet.clear();
-      for (HeaderEntry entry : headerTable) {
-        entry.referenced = false;
+      for (int i = 0, size = headerTable.size(); i < size; i++) {
+        headerTable.get(i).referenced = false;
       }
     }
 

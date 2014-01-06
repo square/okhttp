@@ -390,7 +390,8 @@ final class Spdy3 implements Variant {
       nameValueBlockBuffer.reset();
       int numberOfPairs = nameValueBlock.size() / 2;
       nameValueBlockOut.writeInt(numberOfPairs);
-      for (String s : nameValueBlock) {
+      for (int i = 0, size = nameValueBlock.size(); i < size; i++) {
+        String s = nameValueBlock.get(i);
         nameValueBlockOut.writeInt(s.length());
         nameValueBlockOut.write(s.getBytes("UTF-8"));
       }

@@ -267,8 +267,8 @@ public class ConnectionPool {
       this.connections.clear();
     }
 
-    for (Connection connection : connections) {
-      Util.closeQuietly(connection);
+    for (int i = 0, size = connections.size(); i < size; i++) {
+      Util.closeQuietly(connections.get(i));
     }
   }
 }
