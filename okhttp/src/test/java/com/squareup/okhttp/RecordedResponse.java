@@ -82,4 +82,9 @@ public class RecordedResponse {
     assertNull(redirectedBy.body());
     return new RecordedResponse(redirectedBy.request(), redirectedBy, null, null);
   }
+
+  public void assertFailure(String message) {
+    assertNotNull(failure);
+    assertEquals(message, failure.exception().getMessage());
+  }
 }

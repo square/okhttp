@@ -23,6 +23,7 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -181,6 +182,59 @@ public final class AsyncApiTest {
         .redirectedBy()
         .assertCode(301)
         .assertContainsHeaders("Test: Redirect from /a to /b");
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reused.
+    assertEquals(2, server.takeRequest().getSequenceNumber()); // Connection reused again!
+  }
+
+  @Test public void redirectWithRedirectsDisabled() throws Exception {
+    client.setFollowProtocolRedirects(false);
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location: /b")
+        .addHeader("Test", "Redirect from /a to /b")
+        .setBody("/a has moved!"));
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/a")).build();
+    client.enqueue(request, receiver);
+
+    receiver.await(server.getUrl("/a"))
+        .assertCode(301)
+        .assertBody("/a has moved!")
+        .assertContainsHeaders("Location: /b");
+  }
+
+  @Test public void follow20Redirects() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse()
+          .setResponseCode(301)
+          .addHeader("Location: /" + (i + 1))
+          .setBody("Redirecting to /" + (i + 1)));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/0")).build();
+    client.enqueue(request, receiver);
+    receiver.await(server.getUrl("/20"))
+        .assertCode(200)
+        .assertBody("Success!");
+  }
+
+  @Test public void doesNotFollow21Redirects() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse()
+          .setResponseCode(301)
+          .addHeader("Location: /" + (i + 1))
+          .setBody("Redirecting to /" + (i + 1)));
+    }
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/0")).build();
+    client.enqueue(request, receiver);
+    receiver.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
   }
 
   @Test public void canceledBeforeResponseReadIsNeverDelivered() throws Exception {
@@ -236,5 +290,32 @@ public final class AsyncApiTest {
 
     latch.await();
     assertEquals("A", bodyRef.get());
+  }
+
+  @Test public void connectionReuseWhenResponseBodyConsumed() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/a")).build();
+    client.enqueue(request, new Response.Receiver() {
+      @Override public void onFailure(Failure failure) {
+        throw new AssertionError();
+      }
+      @Override public boolean onResponse(Response response) throws IOException {
+        InputStream bytes = response.body().byteStream();
+        assertEquals('a', bytes.read());
+        assertEquals('b', bytes.read());
+        assertEquals('c', bytes.read());
+
+        // This request will share a connection with 'A' cause it's all done.
+        client.enqueue(new Request.Builder().url(server.getUrl("/b")).build(), receiver);
+        return true;
+      }
+    });
+
+    receiver.await(server.getUrl("/b")).assertCode(200).assertBody("def");
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reuse!
   }
 }
