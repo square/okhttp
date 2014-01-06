@@ -104,6 +104,15 @@ public final class SpdyConnection implements Closeable {
   }
 
   /**
+   * The protocol name, like {@code spdy/3} or {@code HTTP-draft-09/2.0}.
+   *
+   * @see com.squareup.okhttp.internal.spdy.Variant#getProtocol()
+   */
+  public String getProtocol() {
+     return variant.getProtocol();
+  }
+
+  /**
    * Returns the number of {@link SpdyStream#isOpen() open streams} on this
    * connection.
    */

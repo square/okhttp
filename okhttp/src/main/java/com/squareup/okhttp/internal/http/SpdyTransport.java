@@ -57,7 +57,8 @@ public final class SpdyTransport implements Transport {
     boolean hasResponseBody = true;
     String version = RequestLine.version(httpEngine.connection.getHttpMinorVersion());
     stream = spdyConnection.newStream(
-        writeNameValueBlock(request, version), hasRequestBody, hasResponseBody);
+        writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
+        hasResponseBody);
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
 
@@ -70,7 +71,7 @@ public final class SpdyTransport implements Transport {
   }
 
   @Override public Response.Builder readResponseHeaders() throws IOException {
-    return readNameValueBlock(stream.getResponseHeaders());
+    return readNameValueBlock(stream.getResponseHeaders(), spdyConnection.getProtocol());
   }
 
   /**
@@ -78,7 +79,7 @@ public final class SpdyTransport implements Transport {
    * Names are all lower case. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<String> writeNameValueBlock(Request request, String version) {
+  public static List<String> writeNameValueBlock(Request request, String protocol, String version) {
     Headers headers = request.headers();
     List<String> result = new ArrayList<String>(headers.size() + 10);
     result.add(":method");
@@ -87,7 +88,13 @@ public final class SpdyTransport implements Transport {
     result.add(RequestLine.requestPath(request.url()));
     result.add(":version");
     result.add(version);
-    result.add(":host");
+    if (protocol.equals("spdy/3")) {
+      result.add(":host");
+    } else if (protocol.equals("HTTP-draft-09/2.0")) {
+      result.add(":authority");
+    } else {
+      throw new AssertionError();
+    }
     result.add(HttpEngine.hostHeader(request.url()));
     result.add(":scheme");
     result.add(request.url().getProtocol());
@@ -98,19 +105,14 @@ public final class SpdyTransport implements Transport {
       String value = headers.value(i);
 
       // Drop headers that are forbidden when layering HTTP over SPDY.
-      if (name.equals("connection")
-          || name.equals("host")
-          || name.equals("keep-alive")
-          || name.equals("proxy-connection")
-          || name.equals("transfer-encoding")) {
-        continue;
-      }
+      if (isProhibitedHeader(protocol, name)) continue;
 
       // They shouldn't be set, but if they are, drop them. We've already written them!
       if (name.equals(":method")
           || name.equals(":path")
           || name.equals(":version")
           || name.equals(":host")
+          || name.equals(":authority")
           || name.equals(":scheme")) {
         continue;
       }
@@ -134,7 +136,7 @@ public final class SpdyTransport implements Transport {
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(List<String> nameValueBlock)
+  public static Response.Builder readNameValueBlock(List<String> nameValueBlock, String protocol)
       throws IOException {
     if (nameValueBlock.size() % 2 != 0) {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
@@ -143,7 +145,7 @@ public final class SpdyTransport implements Transport {
     String version = null;
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, "spdy/3");
+    headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol);
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i);
       String values = nameValueBlock.get(i + 1);
@@ -157,7 +159,7 @@ public final class SpdyTransport implements Transport {
           status = value;
         } else if (":version".equals(name)) {
           version = value;
-        } else {
+        } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
           headersBuilder.add(name, value);
         }
         start = end + 1;
@@ -189,5 +191,35 @@ public final class SpdyTransport implements Transport {
       }
     }
     return true;
+  }
+
+  /** When true, this header should not be emitted or consumed. */
+  private static boolean isProhibitedHeader(String protocol, String name) {
+    boolean prohibited = false;
+    if (protocol.equals("spdy/3")) {
+      // http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3#TOC-3.2.1-Request
+      if (name.equals("connection")
+          || name.equals("host")
+          || name.equals("keep-alive")
+          || name.equals("proxy-connection")
+          || name.equals("transfer-encoding")) {
+        prohibited = true;
+      }
+    } else if (protocol.equals("HTTP-draft-09/2.0")) {
+      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
+      if (name.equals("connection")
+          || name.equals("host")
+          || name.equals("keep-alive")
+          || name.equals("proxy-connection")
+          || name.equals("te")
+          || name.equals("transfer-encoding")
+          || name.equals("encoding")
+          || name.equals("upgrade")) {
+        prohibited = true;
+      }
+    } else {
+      throw new AssertionError();
+    }
+    return prohibited;
   }
 }
