@@ -67,7 +67,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
-  private static final int MAX_REDIRECTS = 20;
+  public static final int MAX_REDIRECTS = 20;
 
   final OkHttpClient client;
 

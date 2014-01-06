@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +38,7 @@ final class Job implements Runnable {
   private final Dispatcher dispatcher;
   private final OkHttpClient client;
   private final Response.Receiver responseReceiver;
+  private int redirectionCount;
 
   volatile boolean canceled;
 
@@ -132,11 +134,12 @@ final class Job implements Runnable {
             .build();
       }
 
-      // TODO: fail if too many redirects
-      // TODO: fail if not following redirects
-      engine.release(false);
+      if (!sameConnection(request, redirect)) {
+        engine.automaticallyReleaseConnectionToPool();
+      }
 
-      connection = sameConnection(request, redirect) ? engine.getConnection() : null;
+      engine.release(false);
+      connection = engine.getConnection();
       redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = redirect;
     }
@@ -170,6 +173,14 @@ final class Job implements Runnable {
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
       case HTTP_TEMP_REDIRECT:
+        if (!client.getFollowProtocolRedirects()) {
+          return null; // This client has is configured to not follow redirects.
+        }
+
+        if (++redirectionCount > HttpURLConnectionImpl.MAX_REDIRECTS) {
+          throw new ProtocolException("Too many redirects: " + redirectionCount);
+        }
+
         String method = request.method();
         if (responseCode == HTTP_TEMP_REDIRECT && !method.equals("GET") && !method.equals("HEAD")) {
           // "If the 307 status code is received in response to a request other than GET or HEAD,
