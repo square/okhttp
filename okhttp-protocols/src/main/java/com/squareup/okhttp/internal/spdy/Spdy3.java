@@ -29,6 +29,11 @@ import java.util.List;
 import java.util.zip.Deflater;
 
 final class Spdy3 implements Variant {
+
+  @Override public String getProtocol() {
+    return "spdy/3";
+  }
+
   static final int TYPE_DATA = 0x0;
   static final int TYPE_SYN_STREAM = 0x1;
   static final int TYPE_SYN_REPLY = 0x2;

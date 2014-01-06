@@ -23,6 +23,9 @@ interface Variant {
   Variant SPDY3 = new Spdy3();
   Variant HTTP_20_DRAFT_09 = new Http20Draft09();
 
+  /** The protocol name, like {@code spdy/3} or {@code HTTP-draft-09/2.0}. */
+  String getProtocol();
+
   /**
    * @param client true if this is the HTTP client's reader, reading frames from
    *     a peer SPDY or HTTP/2 server.

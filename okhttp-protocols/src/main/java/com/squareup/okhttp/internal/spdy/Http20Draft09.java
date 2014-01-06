@@ -31,6 +31,11 @@ import java.util.List;
  * http://tools.ietf.org/html/draft-ietf-httpbis-http2-09
  */
 public final class Http20Draft09 implements Variant {
+
+  @Override public String getProtocol() {
+    return "HTTP-draft-09/2.0";
+  }
+
   private static final byte[] CONNECTION_HEADER;
   static {
     try {
@@ -158,7 +163,6 @@ public final class Http20Draft09 implements Variant {
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
-          // not filtering out illegal headers on read.
           List<String> nameValueBlock = hpackReader.getAndReset();
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
@@ -322,20 +326,6 @@ public final class Http20Draft09 implements Variant {
     private void headers(boolean outFinished, int streamId, int priority,
         List<String> nameValueBlock) throws IOException {
       hpackBuffer.reset();
-      for (int i = 0, size = nameValueBlock.size(); i < size; i += 2) {
-        String name = nameValueBlock.get(i);
-        // our SpdyTransport.writeNameValueBlock hard-codes :host
-        // TODO: is :authority literally the same value as :host?
-        // https://github.com/http2/http2-spec/issues/334
-        if (":host".equals(name)) {
-          nameValueBlock.set(i, ":authority");
-        } else if (shouldDropHeader(name)) {
-          //TODO: Avoid creating headers like these.
-          nameValueBlock.remove(i);
-          nameValueBlock.remove(i);
-          i -= 2;
-        }
-      }
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;
       // TODO: implement CONTINUATION
@@ -422,20 +412,5 @@ public final class Http20Draft09 implements Variant {
 
   private static IOException ioException(String message, Object... args) throws IOException {
     throw new IOException(String.format(message, args));
-  }
-
-  /**
-   * Leniently drop as opposed to throwing malformed.
-   * http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-   */
-  private static boolean shouldDropHeader(String name) {
-    return name.equals("connection")
-        || name.equals("host") // host is not supported in http/2
-        || name.equals("keep-alive")
-        || name.equals("proxy-connection")
-        || name.equals("te")
-        || name.equals("transfer-encoding")
-        || name.equals("encoding")
-        || name.equals("upgrade");
   }
 }
