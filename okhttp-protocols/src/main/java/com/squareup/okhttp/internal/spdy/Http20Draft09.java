@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Read and write http/2 v09 frames.
@@ -159,13 +158,12 @@ public final class Http20Draft09 implements Variant {
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
-          List<String> namesAndValues = hpackReader.getAndReset();
-          // TODO: throw malformed if any present:
-          // Connection, Keep-Alive, Proxy-Connection, TE, Transfer-Encoding, Encoding, Upgrade.
+          // not filtering out illegal headers on read.
+          List<String> nameValueBlock = hpackReader.getAndReset();
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
           int priority = -1; // TODO: priority
-          handler.headers(false, inFinished, streamId, -1, priority, namesAndValues,
+          handler.headers(false, inFinished, streamId, -1, priority, nameValueBlock,
               HeadersMode.HTTP_20_HEADERS);
           return;
         }
@@ -325,13 +323,19 @@ public final class Http20Draft09 implements Variant {
         List<String> nameValueBlock) throws IOException {
       hpackBuffer.reset();
       for (int i = 0, size = nameValueBlock.size(); i < size; i += 2) {
-        String headerName = nameValueBlock.get(i).toLowerCase(Locale.US);
+        String name = nameValueBlock.get(i);
         // our SpdyTransport.writeNameValueBlock hard-codes :host
-        if (":host".equals(headerName)) headerName = ":authority";
-        nameValueBlock.set(i, headerName);
+        // TODO: is :authority literally the same value as :host?
+        // https://github.com/http2/http2-spec/issues/334
+        if (":host".equals(name)) {
+          nameValueBlock.set(i, ":authority");
+        } else if (shouldDropHeader(name)) {
+          //TODO: Avoid creating headers like these.
+          nameValueBlock.remove(i);
+          nameValueBlock.remove(i);
+          i -= 2;
+        }
       }
-      // TODO: throw malformed if any present:
-      // Connection, Keep-Alive, Proxy-Connection, TE, Transfer-Encoding, Encoding, Upgrade.
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;
       // TODO: implement CONTINUATION
@@ -354,7 +358,7 @@ public final class Http20Draft09 implements Variant {
       int length = 4;
       out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
-      out.writeInt(errorCode.spdyRstCode);
+      out.writeInt(errorCode.httpCode);
       out.flush();
     }
 
@@ -367,6 +371,7 @@ public final class Http20Draft09 implements Variant {
       int type = TYPE_DATA;
       int flags = 0;
       if (outFinished) flags |= FLAG_END_STREAM;
+      // TODO: Implement looping strategy.
       checkFrameSize(byteCount);
       out.writeInt((byteCount & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
@@ -417,5 +422,20 @@ public final class Http20Draft09 implements Variant {
 
   private static IOException ioException(String message, Object... args) throws IOException {
     throw new IOException(String.format(message, args));
+  }
+
+  /**
+   * Leniently drop as opposed to throwing malformed.
+   * http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
+   */
+  private static boolean shouldDropHeader(String name) {
+    return name.equals("connection")
+        || name.equals("host") // host is not supported in http/2
+        || name.equals("keep-alive")
+        || name.equals("proxy-connection")
+        || name.equals("te")
+        || name.equals("transfer-encoding")
+        || name.equals("encoding")
+        || name.equals("upgrade");
   }
 }

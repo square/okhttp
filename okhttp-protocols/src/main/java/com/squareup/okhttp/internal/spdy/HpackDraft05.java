@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
-import java.util.ListIterator;
 
 /**
  * Read and write HPACK v05.
@@ -45,7 +44,6 @@ final class HpackDraft05 {
     }
   }
 
-  static final int PREFIX_5_BITS = 0x1f;
   static final int PREFIX_6_BITS = 0x3f;
   static final int PREFIX_7_BITS = 0x7f;
   static final int PREFIX_8_BITS = 0xff;
@@ -133,16 +131,6 @@ final class HpackDraft05 {
       this.in = in;
     }
 
-    // Visible for testing.
-    void reset() {
-      bytesLeft = 0;
-      headerTableSize = 0;
-      maxHeaderTableSize = 4096;
-      staticReferenceSet.clear();
-      headerTable.clear();
-      emittedHeaders.clear();
-    }
-
     /**
      * Read {@code byteCount} bytes of headers from the source stream into the
      * set of emitted headers.
@@ -157,7 +145,7 @@ final class HpackDraft05 {
         if ((b & 0x80) != 0) {
           int index = readInt(b, PREFIX_7_BITS);
           if (index == 0) {
-            emptyReferenceSet();
+            clearReferenceSet();
           } else {
             readIndexedHeader(index - 1);
           }
@@ -172,12 +160,13 @@ final class HpackDraft05 {
           int index = readInt(b, PREFIX_6_BITS);
           readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
         } else {
-          throw new AssertionError();
+          // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
+          throw new AssertionError("unhandled byte: " + Integer.toBinaryString(b));
         }
       }
     }
 
-    private void emptyReferenceSet() {
+    private void clearReferenceSet() {
       staticReferenceSet.clear();
       for (HeaderEntry entry : headerTable) {
         entry.referenced = false;
@@ -189,9 +178,8 @@ final class HpackDraft05 {
           i = staticReferenceSet.nextSetBit(i + 1)) {
         STATIC_HEADER_TABLE.get(i).addTo(emittedHeaders);
       }
-      for (ListIterator<HeaderEntry> li = headerTable.listIterator(headerTable.size());
-          li.hasPrevious(); ) {
-        li.previous().addTo(emittedHeaders);
+      for (int i = headerTable.size() - 1; i != -1; i--) {
+        headerTable.get(i).addTo(emittedHeaders);
       }
     }
 
@@ -217,6 +205,9 @@ final class HpackDraft05 {
         HeaderEntry existing = headerTable.get(index);
         existing.referenced = true;
         insertIntoHeaderTable(index, existing);
+      } else {
+        // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
+        throw new AssertionError("invalid index " + index);
       }
     }
 

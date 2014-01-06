@@ -40,7 +40,7 @@ final class Settings {
   static final int HEADER_TABLE_SIZE = 1;
   /** spdy/3: Sender's estimate of max outgoing kbps. */
   static final int DOWNLOAD_BANDWIDTH = 2;
-  /** http/2: An endpoint must not send a PUSH_PROMISE frame this is 0. */
+  /** http/2: An endpoint must not send a PUSH_PROMISE frame when this is 0. */
   static final int ENABLE_PUSH = 2;
   /** spdy/3: Sender's estimate of millis between sending a request and receiving a response. */
   static final int ROUND_TRIP_TIME = 3;
