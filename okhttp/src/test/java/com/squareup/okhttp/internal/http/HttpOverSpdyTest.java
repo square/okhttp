@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
@@ -26,6 +27,7 @@ import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,12 +43,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -181,6 +190,20 @@ public abstract class HttpOverSpdyTest {
     assertEquals("GHI", readAscii(connection2.getInputStream(), 3));
     assertEquals("DEF", readAscii(connection1.getInputStream(), 3));
     assertEquals("JKL", readAscii(connection2.getInputStream(), 3));
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test @Ignore public void synchronousSpdyRequest() throws Exception {
+    server.enqueue(new MockResponse().setBody("A"));
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    ExecutorService executor = Executors.newCachedThreadPool();
+    CountDownLatch countDownLatch = new CountDownLatch(2);
+    executor.execute(new SpdyRequest("/r1", countDownLatch));
+    executor.execute(new SpdyRequest("/r2", countDownLatch));
+    countDownLatch.await();
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
@@ -342,5 +365,25 @@ public abstract class HttpOverSpdyTest {
     gzippedOut.write(bytes);
     gzippedOut.close();
     return bytesOut.toByteArray();
+  }
+
+  class SpdyRequest implements Runnable {
+    String path;
+    CountDownLatch countDownLatch;
+    public SpdyRequest(String path, CountDownLatch countDownLatch) {
+      this.path = path;
+      this.countDownLatch = countDownLatch;
+    }
+
+    @Override public void run() {
+      try {
+        HttpURLConnection conn = null;
+        conn = (HttpURLConnection) client.open(server.getUrl(path));
+        assertEquals("A", readAscii(conn.getInputStream(), 1));
+        countDownLatch.countDown();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }
