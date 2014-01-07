@@ -14,6 +14,10 @@ import java.util.List;
  */
 final class HpackDraft05 {
 
+  interface Callback {
+    void onHeader(ByteString name, ByteString value);
+  }
+
   // Visible for testing.
   static class HeaderEntry {
     final ByteString name;
@@ -34,13 +38,6 @@ final class HpackDraft05 {
       this.name = name;
       this.value = value;
       this.size = size;
-    }
-
-    /** Adds name and value, if this entry is referenced. */
-    void addTo(List<ByteString> out) {
-      if (!referenced) return;
-      out.add(name);
-      out.add(value);
     }
 
     @Override public HeaderEntry clone() {
@@ -122,7 +119,6 @@ final class HpackDraft05 {
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
   static class Reader {
     private final DataInputStream in;
-    private final List<ByteString> emittedHeaders = new ArrayList<ByteString>();
     private long bytesLeft = 0;
 
     // Visible for testing.
@@ -137,9 +133,9 @@ final class HpackDraft05 {
 
     /**
      * Read {@code byteCount} bytes of headers from the source stream into the
-     * set of emitted headers.
+     * set of emitted header {@code callback}.
      */
-    public void readHeaders(int byteCount) throws IOException {
+    public void readHeaders(int byteCount, Callback callback) throws IOException {
       bytesLeft += byteCount;
       // TODO: limit to 'byteCount' bytes?
 
@@ -151,18 +147,18 @@ final class HpackDraft05 {
           if (index == 0) {
             clearReferenceSet();
           } else {
-            readIndexedHeader(index - 1);
+            readIndexedHeader(index - 1, callback);
           }
         } else if (b == 0x40) {
-          readLiteralHeaderWithoutIndexingNewName();
+          readLiteralHeaderWithoutIndexingNewName(callback);
         } else if ((b & 0xe0) == 0x40) {
           int index = readInt(b, PREFIX_6_BITS);
-          readLiteralHeaderWithoutIndexingIndexedName(index - 1);
+          readLiteralHeaderWithoutIndexingIndexedName(index - 1, callback);
         } else if (b == 0) {
-          readLiteralHeaderWithIncrementalIndexingNewName();
+          readLiteralHeaderWithIncrementalIndexingNewName(callback);
         } else if ((b & 0xc0) == 0) {
           int index = readInt(b, PREFIX_6_BITS);
-          readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
+          readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1, callback);
         } else {
           // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
           throw new AssertionError("unhandled byte: " + Integer.toBinaryString(b));
@@ -177,71 +173,62 @@ final class HpackDraft05 {
       }
     }
 
-    public void emitReferenceSet() {
+    public void emitReferenceSet(Callback callback) {
       for (int i = staticReferenceSet.nextSetBit(0); i != -1;
           i = staticReferenceSet.nextSetBit(i + 1)) {
-        STATIC_HEADER_TABLE[i].addTo(emittedHeaders);
+        HeaderEntry header = STATIC_HEADER_TABLE[i];
+        callback.onHeader(header.name, header.value);
       }
       for (int i = headerTable.size() - 1; i != -1; i--) {
-        headerTable.get(i).addTo(emittedHeaders);
+        HeaderEntry header = headerTable.get(i);
+        if (header.referenced) callback.onHeader(header.name, header.value);
       }
     }
 
-    /**
-     * Returns all headers emitted since they were last cleared, then clears the
-     * emitted headers.
-     */
-    public List<ByteString> getAndReset() {
-      List<ByteString> result = new ArrayList<ByteString>(emittedHeaders);
-      emittedHeaders.clear();
-      return result;
-    }
-
-    private void readIndexedHeader(int index) {
+    private void readIndexedHeader(int index, Callback callback) {
       if (isStaticHeader(index)) {
         if (maxHeaderTableSize == 0) {
           staticReferenceSet.set(index - headerTable.size());
         } else {
           HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerTable.size()];
-          insertIntoHeaderTable(-1, staticEntry.clone());
+          insertIntoHeaderTable(-1, staticEntry.clone(), callback);
         }
       } else if (!headerTable.get(index).referenced) {
         HeaderEntry existing = headerTable.get(index);
         existing.referenced = true;
-        insertIntoHeaderTable(index, existing);
+        insertIntoHeaderTable(index, existing, callback);
       } else {
         // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
         throw new AssertionError("invalid index " + index);
       }
     }
 
-    private void readLiteralHeaderWithoutIndexingIndexedName(int index)
+    private void readLiteralHeaderWithoutIndexingIndexedName(int index, Callback callback)
         throws IOException {
       ByteString name = getName(index);
       ByteString value = readString();
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
+      callback.onHeader(name, value);
     }
 
-    private void readLiteralHeaderWithoutIndexingNewName()
+    private void readLiteralHeaderWithoutIndexingNewName(Callback callback)
         throws IOException {
       ByteString name = readString();
       ByteString value = readString();
-      emittedHeaders.add(name);
-      emittedHeaders.add(value);
+      callback.onHeader(name, value);
     }
 
-    private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
-        throws IOException {
+    private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex,
+        Callback callback) throws IOException {
       ByteString name = getName(nameIndex);
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value), callback);
     }
 
-    private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
+    private void readLiteralHeaderWithIncrementalIndexingNewName(Callback callback)
+        throws IOException {
       ByteString name = readString();
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value), callback);
     }
 
     private ByteString getName(int index) {
@@ -257,7 +244,7 @@ final class HpackDraft05 {
     }
 
     /** index == -1 when new. */
-    private void insertIntoHeaderTable(int index, HeaderEntry entry) {
+    private void insertIntoHeaderTable(int index, HeaderEntry entry, Callback callback) {
       int delta = entry.size;
       if (index != -1) { // Index -1 == new header.
         delta -= headerTable.get(index).size;
@@ -269,7 +256,7 @@ final class HpackDraft05 {
         headerTable.clear();
         headerTableSize = 0;
         // emit the large header to the callback.
-        entry.addTo(emittedHeaders);
+        callback.onHeader(entry.name, entry.value);
         return;
       }
 
@@ -325,10 +312,8 @@ final class HpackDraft05 {
     public ByteString readString() throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
-      byte[] encoded = new byte[length];
       bytesLeft -= length;
-      in.readFully(encoded);
-      return ByteString.of(encoded);
+      return ByteString.read(in, length);
     }
   }
 

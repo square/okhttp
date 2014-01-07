@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -159,16 +160,18 @@ public final class Http20Draft09 implements Variant {
 
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
 
+      NameValueBlockCallback callback = new NameValueBlockCallback();
+
       while (true) {
-        hpackReader.readHeaders(length);
+        hpackReader.readHeaders(length, callback);
 
         if ((flags & FLAG_END_HEADERS) != 0) {
-          hpackReader.emitReferenceSet();
-          List<ByteString> nameValueBlock = hpackReader.getAndReset();
+          hpackReader.emitReferenceSet(callback);
+          int priority = -1; // TODO: priority
+          // TODO: update Headers to work with ByteString?
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-          int priority = -1; // TODO: priority
-          handler.headers(false, inFinished, streamId, -1, priority, nameValueBlock,
+          handler.headers(false, inFinished, streamId, -1, priority, callback.nameValueBlock,
               HeadersMode.HTTP_20_HEADERS);
           return;
         }
@@ -414,5 +417,14 @@ public final class Http20Draft09 implements Variant {
 
   private static IOException ioException(String message, Object... args) throws IOException {
     throw new IOException(String.format(message, args));
+  }
+
+  static class NameValueBlockCallback implements HpackDraft05.Callback {
+    final List<ByteString> nameValueBlock = new ArrayList<ByteString>();
+
+    @Override public void onHeader(ByteString name, ByteString value) {
+      nameValueBlock.add(name);
+      nameValueBlock.add(value);
+    }
   }
 }

@@ -48,13 +48,12 @@ public class HpackDraft05Test {
     final List<ByteString> sentHeaders = byteStringList("foo", new String(tooLarge));
 
     ByteArrayOutputStream out = literalHeaders(sentHeaders);
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
+
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
 
     assertEquals(0, hpackReader.headerTable.size());
 
-    assertEquals(sentHeaders, hpackReader.getAndReset());
+    assertEquals(sentHeaders, nameValueBlock);
   }
 
   /**
@@ -70,9 +69,7 @@ public class HpackDraft05Test {
     out.write(0x0d); // Literal value (len = 13)
     out.write("custom-header".getBytes(), 0, 13);
 
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
 
     assertEquals(1, hpackReader.headerTable.size());
     assertEquals(55, hpackReader.headerTableSize);
@@ -80,7 +77,7 @@ public class HpackDraft05Test {
     HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
     checkEntry(entry, "custom-key", "custom-header", 55, true);
 
-    assertEquals(byteStringList("custom-key", "custom-header"), hpackReader.getAndReset());
+    assertEquals(byteStringList("custom-key", "custom-header"), nameValueBlock);
   }
 
   /**
@@ -94,13 +91,17 @@ public class HpackDraft05Test {
     out.write(0x0c); // Literal value (len = 12)
     out.write("/sample/path".getBytes(), 0, 12);
 
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
 
     assertEquals(0, hpackReader.headerTable.size());
 
-    assertEquals(byteStringList(":path", "/sample/path"), hpackReader.getAndReset());
+    assertEquals(byteStringList(":path", "/sample/path"), nameValueBlock);
+  }
+
+  private List<ByteString> readHeaderFrame(ByteArrayOutputStream out) throws IOException {
+    Http20Draft09.NameValueBlockCallback callback = new Http20Draft09.NameValueBlockCallback();
+    readHeaderFrame(out.toByteArray(), callback);
+    return callback.nameValueBlock;
   }
 
   /**
@@ -112,9 +113,7 @@ public class HpackDraft05Test {
     out.write(0x82); // == Indexed - Add ==
                      // idx = 2 -> :method: GET
 
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
 
     assertEquals(1, hpackReader.headerTable.size());
     assertEquals(42, hpackReader.headerTableSize);
@@ -122,7 +121,7 @@ public class HpackDraft05Test {
     HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
     checkEntry(entry, ":method", "GET", 42, true);
 
-    assertEquals(byteStringList(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(byteStringList(":method", "GET"), nameValueBlock);
   }
 
   /**
@@ -134,15 +133,13 @@ public class HpackDraft05Test {
     out.write(0x82); // == Indexed - Add ==
                      // idx = 2 -> :method: GET
 
-    bytesIn.set(out.toByteArray());
     hpackReader.maxHeaderTableSize = 0; // SETTINGS_HEADER_TABLE_SIZE == 0
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
 
     // Not buffered in header table.
     assertEquals(0, hpackReader.headerTable.size());
 
-    assertEquals(byteStringList(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(byteStringList(":method", "GET"), nameValueBlock);
   }
 
   /**
@@ -150,22 +147,16 @@ public class HpackDraft05Test {
    */
   @Test public void decodeRequestExamplesWithoutHuffman() throws IOException {
     ByteArrayOutputStream out = firstRequestWithoutHuffman();
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
-    checkFirstRequestWithoutHuffman();
+    List<ByteString> nameValueBlock = readHeaderFrame(out);
+    checkFirstRequestWithoutHuffman(nameValueBlock);
 
     out = secondRequestWithoutHuffman();
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
-    checkSecondRequestWithoutHuffman();
+    nameValueBlock = readHeaderFrame(out);
+    checkSecondRequestWithoutHuffman(nameValueBlock);
 
     out = thirdRequestWithoutHuffman();
-    bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
-    hpackReader.emitReferenceSet();
-    checkThirdRequestWithoutHuffman();
+    nameValueBlock = readHeaderFrame(out);
+    checkThirdRequestWithoutHuffman(nameValueBlock);
   }
 
   private ByteArrayOutputStream firstRequestWithoutHuffman() {
@@ -185,7 +176,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkFirstRequestWithoutHuffman() {
+  private void checkFirstRequestWithoutHuffman(List<ByteString> nameValueBlock) {
     assertEquals(4, hpackReader.headerTable.size());
 
     // [  1] (s =  57) :authority: www.example.com
@@ -212,7 +203,7 @@ public class HpackDraft05Test {
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
-        ":authority", "www.example.com"), hpackReader.getAndReset());
+        ":authority", "www.example.com"), nameValueBlock);
   }
 
   private ByteArrayOutputStream secondRequestWithoutHuffman() {
@@ -226,7 +217,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkSecondRequestWithoutHuffman() {
+  private void checkSecondRequestWithoutHuffman(List<ByteString> nameValueBlock) {
     assertEquals(5, hpackReader.headerTable.size());
 
     // [  1] (s =  53) cache-control: no-cache
@@ -258,7 +249,7 @@ public class HpackDraft05Test {
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"), hpackReader.getAndReset());
+        "cache-control", "no-cache"), nameValueBlock);
   }
 
   private ByteArrayOutputStream thirdRequestWithoutHuffman() {
@@ -282,7 +273,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkThirdRequestWithoutHuffman() {
+  private void checkThirdRequestWithoutHuffman(List<ByteString> nameValueBlock) {
     assertEquals(8, hpackReader.headerTable.size());
 
     // [  1] (s =  54) custom-key: custom-value
@@ -327,7 +318,7 @@ public class HpackDraft05Test {
         ":authority", "www.example.com",
         ":scheme", "https",
         ":path", "/index.html",
-        "custom-key", "custom-value"), hpackReader.getAndReset());
+        "custom-key", "custom-value"), nameValueBlock);
   }
 
   private ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
@@ -398,10 +389,16 @@ public class HpackDraft05Test {
     hpackWriter.writeHeaders(sentHeaders);
     ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
     HpackDraft05.Reader reader = new HpackDraft05.Reader(new DataInputStream(bytesIn));
-    reader.readHeaders(bytesOut.size());
-    reader.emitReferenceSet();
-    List<ByteString> receivedHeaders = reader.getAndReset();
-    assertEquals(sentHeaders, receivedHeaders);
+    Http20Draft09.NameValueBlockCallback callback = new Http20Draft09.NameValueBlockCallback();
+    reader.readHeaders(bytesOut.size(), callback);
+    reader.emitReferenceSet(callback);
+    assertEquals(sentHeaders, callback.nameValueBlock);
+  }
+
+  private void readHeaderFrame(byte[] frame, HpackDraft05.Callback callback) throws IOException {
+    bytesIn.set(frame);
+    hpackReader.readHeaders(frame.length, callback);
+    hpackReader.emitReferenceSet(callback);
   }
 
   private DataInputStream byteStream(int... bytes) {
