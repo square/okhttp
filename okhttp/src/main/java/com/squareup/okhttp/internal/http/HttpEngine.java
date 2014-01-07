@@ -294,8 +294,8 @@ public class HttpEngine {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
       client.getConnectionPool().maybeShare(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
-    } else {
-      connection.updateReadTimeout(client.getReadTimeout());
+    } else if (!connection.isSpdy()) {
+        connection.updateReadTimeout(client.getReadTimeout());
     }
     connected(connection);
     if (connection.getRoute().getProxy() != client.getProxy()) {
