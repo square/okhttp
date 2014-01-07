@@ -19,21 +19,23 @@ final class HpackDraft05 {
     final ByteString name;
     final ByteString value;
     final int size;
-    // read when in headerTable
+    // Static entries can be shared safely, as long as {@code referenced} is not mutated.
+    final boolean isStatic;
+    // Only read when in headerTable.
+    // Mutable to avoid needing another BitSet for referenced header indexes.  Using a BitSet for
+    // reference entries sounds good, except that entries are added at index zero.  This implies
+    // shifting the BitSet, which would be expensive to implement.
     boolean referenced = true;
 
-    HeaderEntry(ByteString name, ByteString value) {
-      this(name, value, 32 + name.size() + value.size());
+    HeaderEntry(ByteString name, ByteString value, boolean isStatic) {
+      this(name, value, 32 + name.size() + value.size(), isStatic);
     }
 
-    HeaderEntry(String name, String value) {
-      this(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value));
-    }
-
-    private HeaderEntry(ByteString name, ByteString value, int size) {
+    private HeaderEntry(ByteString name, ByteString value, int size, boolean isStatic) {
       this.name = name;
       this.value = value;
       this.size = size;
+      this.isStatic = isStatic;
     }
 
     /** Adds name and value, if this entry is referenced. */
@@ -43,8 +45,9 @@ final class HpackDraft05 {
       out.add(value);
     }
 
+    /** Copies this header entry and designates it as not a static entry. */
     @Override public HeaderEntry clone() {
-      return new HeaderEntry(name, value, size);
+      return new HeaderEntry(name, value, size, false);
     }
   }
 
@@ -53,66 +56,66 @@ final class HpackDraft05 {
   private static final int PREFIX_8_BITS = 0xff;
 
   private static final HeaderEntry[] STATIC_HEADER_TABLE = new HeaderEntry[] {
-      new HeaderEntry(":authority", ""),
-      new HeaderEntry(":method", "GET"),
-      new HeaderEntry(":method", "POST"),
-      new HeaderEntry(":path", "/"),
-      new HeaderEntry(":path", "/index.html"),
-      new HeaderEntry(":scheme", "http"),
-      new HeaderEntry(":scheme", "https"),
-      new HeaderEntry(":status", "200"),
-      new HeaderEntry(":status", "500"),
-      new HeaderEntry(":status", "404"),
-      new HeaderEntry(":status", "403"),
-      new HeaderEntry(":status", "400"),
-      new HeaderEntry(":status", "401"),
-      new HeaderEntry("accept-charset", ""),
-      new HeaderEntry("accept-encoding", ""),
-      new HeaderEntry("accept-language", ""),
-      new HeaderEntry("accept-ranges", ""),
-      new HeaderEntry("accept", ""),
-      new HeaderEntry("access-control-allow-origin", ""),
-      new HeaderEntry("age", ""),
-      new HeaderEntry("allow", ""),
-      new HeaderEntry("authorization", ""),
-      new HeaderEntry("cache-control", ""),
-      new HeaderEntry("content-disposition", ""),
-      new HeaderEntry("content-encoding", ""),
-      new HeaderEntry("content-language", ""),
-      new HeaderEntry("content-length", ""),
-      new HeaderEntry("content-location", ""),
-      new HeaderEntry("content-range", ""),
-      new HeaderEntry("content-type", ""),
-      new HeaderEntry("cookie", ""),
-      new HeaderEntry("date", ""),
-      new HeaderEntry("etag", ""),
-      new HeaderEntry("expect", ""),
-      new HeaderEntry("expires", ""),
-      new HeaderEntry("from", ""),
-      new HeaderEntry("host", ""),
-      new HeaderEntry("if-match", ""),
-      new HeaderEntry("if-modified-since", ""),
-      new HeaderEntry("if-none-match", ""),
-      new HeaderEntry("if-range", ""),
-      new HeaderEntry("if-unmodified-since", ""),
-      new HeaderEntry("last-modified", ""),
-      new HeaderEntry("link", ""),
-      new HeaderEntry("location", ""),
-      new HeaderEntry("max-forwards", ""),
-      new HeaderEntry("proxy-authenticate", ""),
-      new HeaderEntry("proxy-authorization", ""),
-      new HeaderEntry("range", ""),
-      new HeaderEntry("referer", ""),
-      new HeaderEntry("refresh", ""),
-      new HeaderEntry("retry-after", ""),
-      new HeaderEntry("server", ""),
-      new HeaderEntry("set-cookie", ""),
-      new HeaderEntry("strict-transport-security", ""),
-      new HeaderEntry("transfer-encoding", ""),
-      new HeaderEntry("user-agent", ""),
-      new HeaderEntry("vary", ""),
-      new HeaderEntry("via", ""),
-      new HeaderEntry("www-authenticate", "")
+      staticEntry(":authority", ""),
+      staticEntry(":method", "GET"),
+      staticEntry(":method", "POST"),
+      staticEntry(":path", "/"),
+      staticEntry(":path", "/index.html"),
+      staticEntry(":scheme", "http"),
+      staticEntry(":scheme", "https"),
+      staticEntry(":status", "200"),
+      staticEntry(":status", "500"),
+      staticEntry(":status", "404"),
+      staticEntry(":status", "403"),
+      staticEntry(":status", "400"),
+      staticEntry(":status", "401"),
+      staticEntry("accept-charset", ""),
+      staticEntry("accept-encoding", ""),
+      staticEntry("accept-language", ""),
+      staticEntry("accept-ranges", ""),
+      staticEntry("accept", ""),
+      staticEntry("access-control-allow-origin", ""),
+      staticEntry("age", ""),
+      staticEntry("allow", ""),
+      staticEntry("authorization", ""),
+      staticEntry("cache-control", ""),
+      staticEntry("content-disposition", ""),
+      staticEntry("content-encoding", ""),
+      staticEntry("content-language", ""),
+      staticEntry("content-length", ""),
+      staticEntry("content-location", ""),
+      staticEntry("content-range", ""),
+      staticEntry("content-type", ""),
+      staticEntry("cookie", ""),
+      staticEntry("date", ""),
+      staticEntry("etag", ""),
+      staticEntry("expect", ""),
+      staticEntry("expires", ""),
+      staticEntry("from", ""),
+      staticEntry("host", ""),
+      staticEntry("if-match", ""),
+      staticEntry("if-modified-since", ""),
+      staticEntry("if-none-match", ""),
+      staticEntry("if-range", ""),
+      staticEntry("if-unmodified-since", ""),
+      staticEntry("last-modified", ""),
+      staticEntry("link", ""),
+      staticEntry("location", ""),
+      staticEntry("max-forwards", ""),
+      staticEntry("proxy-authenticate", ""),
+      staticEntry("proxy-authorization", ""),
+      staticEntry("range", ""),
+      staticEntry("referer", ""),
+      staticEntry("refresh", ""),
+      staticEntry("retry-after", ""),
+      staticEntry("server", ""),
+      staticEntry("set-cookie", ""),
+      staticEntry("strict-transport-security", ""),
+      staticEntry("transfer-encoding", ""),
+      staticEntry("user-agent", ""),
+      staticEntry("vary", ""),
+      staticEntry("via", ""),
+      staticEntry("www-authenticate", "")
   };
 
   private HpackDraft05() {
@@ -173,7 +176,14 @@ final class HpackDraft05 {
     private void clearReferenceSet() {
       staticReferenceSet.clear();
       for (int i = 0, size = headerTable.size(); i < size; i++) {
-        headerTable.get(i).referenced = false;
+        HeaderEntry entry = headerTable.get(i);
+        if (entry.isStatic) { // lazy clone static entries on mutation.
+          entry = entry.clone();
+          entry.referenced = false;
+          headerTable.set(i, entry);
+        } else {
+          entry.referenced = false;
+        }
       }
     }
 
@@ -203,8 +213,8 @@ final class HpackDraft05 {
           staticReferenceSet.set(index - headerTable.size());
         } else {
           HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerTable.size()];
-          insertIntoHeaderTable(-1, staticEntry.clone());
-        }
+          insertIntoHeaderTable(-1, staticEntry);
+       }
       } else if (!headerTable.get(index).referenced) {
         HeaderEntry existing = headerTable.get(index);
         existing.referenced = true;
@@ -235,13 +245,13 @@ final class HpackDraft05 {
         throws IOException {
       ByteString name = getName(nameIndex);
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value, false));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
       ByteString name = readString();
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value, false));
     }
 
     private ByteString getName(int index) {
@@ -372,5 +382,9 @@ final class HpackDraft05 {
       writeInt(data.size(), PREFIX_8_BITS, 0);
       data.write(out);
     }
+  }
+
+  private static HeaderEntry staticEntry(String name, String value) {
+    return new HeaderEntry(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value), true);
   }
 }
