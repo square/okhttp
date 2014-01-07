@@ -33,7 +33,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.jetty.npn.NextProtoNego;
 
-import static com.squareup.okhttp.internal.Util.asByteStringList;
+import static com.squareup.okhttp.internal.Util.byteStringList;
 
 /** A basic SPDY server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
@@ -109,7 +109,7 @@ public final class SpdyServer implements IncomingStreamHandler {
 
   private void send404(SpdyStream stream, String path) throws IOException {
     List<ByteString> responseHeaders =
-        asByteStringList(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
+        byteStringList(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
     String text = "Not found: " + path;
@@ -119,7 +119,7 @@ public final class SpdyServer implements IncomingStreamHandler {
 
   private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
     List<ByteString> responseHeaders =
-        asByteStringList(":status", "200", ":version", "HTTP/1.1", "content-type",
+        byteStringList(":status", "200", ":version", "HTTP/1.1", "content-type",
             "text/html; charset=UTF-8");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
@@ -133,8 +133,9 @@ public final class SpdyServer implements IncomingStreamHandler {
   private void serveFile(SpdyStream stream, File file) throws IOException {
     InputStream in = new FileInputStream(file);
     byte[] buffer = new byte[8192];
-    stream.reply(asByteStringList(":status", "200", ":version", "HTTP/1.1", "content-type",
-        contentType(file)), true);
+    stream.reply(
+        byteStringList(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
+        true);
     OutputStream out = stream.getOutputStream();
     int count;
     while ((count = in.read(buffer)) != -1) {

@@ -35,6 +35,14 @@ import java.util.Locale;
 import java.util.Set;
 
 public final class SpdyTransport implements Transport {
+  private static final ByteString HEADER_METHOD = ByteString.encodeUtf8(":method");
+  private static final ByteString HEADER_PATH = ByteString.encodeUtf8(":path");
+  private static final ByteString HEADER_VERSION = ByteString.encodeUtf8(":version");
+  private static final ByteString HEADER_HOST = ByteString.encodeUtf8(":host");
+  private static final ByteString HEADER_AUTHORITY = ByteString.encodeUtf8(":authority");
+  private static final ByteString HEADER_SCHEME = ByteString.encodeUtf8(":scheme");
+  private static final ByteString NULL = ByteString.of((byte) 0x00);
+
   private final HttpEngine httpEngine;
   private final SpdyConnection spdyConnection;
   private SpdyStream stream;
@@ -85,21 +93,21 @@ public final class SpdyTransport implements Transport {
     Headers headers = request.headers();
     // TODO: make the known header names constants.
     List<ByteString> result = new ArrayList<ByteString>(headers.size() + 10);
-    result.add(ByteString.encodeUtf8(":method"));
+    result.add(HEADER_METHOD);
     result.add(ByteString.encodeUtf8(request.method()));
-    result.add(ByteString.encodeUtf8(":path"));
+    result.add(HEADER_PATH);
     result.add(ByteString.encodeUtf8(RequestLine.requestPath(request.url())));
-    result.add(ByteString.encodeUtf8(":version"));
+    result.add(HEADER_VERSION);
     result.add(ByteString.encodeUtf8(version));
     if (protocol.equals("spdy/3")) {
-      result.add(ByteString.encodeUtf8(":host"));
+      result.add(HEADER_HOST);
     } else if (protocol.equals("HTTP-draft-09/2.0")) {
-      result.add(ByteString.encodeUtf8(":authority"));
+      result.add(HEADER_AUTHORITY);
     } else {
       throw new AssertionError();
     }
     result.add(ByteString.encodeUtf8(HttpEngine.hostHeader(request.url())));
-    result.add(ByteString.encodeUtf8(":scheme"));
+    result.add(HEADER_SCHEME);
     result.add(ByteString.encodeUtf8(request.url().getProtocol()));
 
     Set<ByteString> names = new LinkedHashSet<ByteString>();
@@ -119,18 +127,19 @@ public final class SpdyTransport implements Transport {
           || name.equals(":scheme")) {
         continue;
       }
+      ByteString valueBytes = ByteString.encodeUtf8(value);
 
       // If we haven't seen this name before, add the pair to the end of the list...
       if (names.add(ByteString.encodeUtf8(name))) {
         result.add(ByteString.encodeUtf8(name));
-        result.add(ByteString.encodeUtf8(value));
+        result.add(valueBytes);
         continue;
       }
 
       // ...otherwise concatenate the existing values and this value.
       for (int j = 0; j < result.size(); j += 2) {
         if (result.get(j).utf8Equals(name)) {
-          result.set(j + 1, ByteString.encodeUtf8(result.get(j + 1).utf8() + "\0" + value));
+          result.set(j + 1, ByteString.concat(result.get(j + 1), NULL, valueBytes));
           break;
         }
       }
