@@ -17,6 +17,7 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
@@ -658,14 +659,14 @@ public final class MockWebServer {
     }
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
-      List<String> spdyHeaders = stream.getRequestHeaders();
+      List<ByteString> spdyHeaders = stream.getRequestHeaders();
       List<String> httpHeaders = new ArrayList<String>();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = "<:version omitted>";
       for (int i = 0, size = spdyHeaders.size(); i < size; i += 2) {
-        String name = spdyHeaders.get(i);
-        String value = spdyHeaders.get(i + 1);
+        String name = spdyHeaders.get(i).utf8();
+        String value = spdyHeaders.get(i + 1).utf8();
         if (":method".equals(name)) {
           method = value;
         } else if (":path".equals(name)) {
@@ -695,16 +696,17 @@ public final class MockWebServer {
       if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
         return;
       }
-      List<String> spdyHeaders = new ArrayList<String>();
+      List<ByteString> spdyHeaders = new ArrayList<ByteString>();
       String[] statusParts = response.getStatus().split(" ", 2);
       if (statusParts.length != 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
-      spdyHeaders.add(":status");
-      spdyHeaders.add(statusParts[1]);
+      // TODO: constants for well-known header names.
+      spdyHeaders.add(ByteString.encodeUtf8(":status"));
+      spdyHeaders.add(ByteString.encodeUtf8(statusParts[1]));
       // TODO: no ":version" header for HTTP/2.0, only SPDY.
-      spdyHeaders.add(":version");
-      spdyHeaders.add(statusParts[0]);
+      spdyHeaders.add(ByteString.encodeUtf8(":version"));
+      spdyHeaders.add(ByteString.encodeUtf8(statusParts[0]));
       List<String> headers = response.getHeaders();
       for (int i = 0, size = headers.size(); i < size; i++) {
         String header = headers.get(i);
@@ -712,8 +714,8 @@ public final class MockWebServer {
         if (headerParts.length != 2) {
           throw new AssertionError("Unexpected header: " + header);
         }
-        spdyHeaders.add(headerParts[0].toLowerCase(Locale.US).trim());
-        spdyHeaders.add(headerParts[1].trim());
+        spdyHeaders.add(ByteString.encodeUtf8(headerParts[0].toLowerCase(Locale.US).trim()));
+        spdyHeaders.add(ByteString.encodeUtf8(headerParts[1].trim()));
       }
       byte[] body = response.getBody();
       stream.reply(spdyHeaders, body.length > 0);

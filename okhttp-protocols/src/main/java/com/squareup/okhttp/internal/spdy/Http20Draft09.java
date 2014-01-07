@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -163,7 +164,7 @@ public final class Http20Draft09 implements Variant {
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
-          List<String> nameValueBlock = hpackReader.getAndReset();
+          List<ByteString> nameValueBlock = hpackReader.getAndReset();
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
           int priority = -1; // TODO: priority
@@ -306,25 +307,26 @@ public final class Http20Draft09 implements Variant {
       out.write(CONNECTION_HEADER);
     }
 
-    @Override public synchronized void synStream(boolean outFinished, boolean inFinished,
-        int streamId, int associatedStreamId, int priority, int slot, List<String> nameValueBlock)
+    @Override
+    public synchronized void synStream(boolean outFinished, boolean inFinished, int streamId,
+        int associatedStreamId, int priority, int slot, List<ByteString> nameValueBlock)
         throws IOException {
       if (inFinished) throw new UnsupportedOperationException();
       headers(outFinished, streamId, priority, nameValueBlock);
     }
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
-        List<String> nameValueBlock) throws IOException {
+        List<ByteString> nameValueBlock) throws IOException {
       headers(outFinished, streamId, -1, nameValueBlock);
     }
 
-    @Override public synchronized void headers(int streamId, List<String> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<ByteString> nameValueBlock)
         throws IOException {
       headers(false, streamId, -1, nameValueBlock);
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
-        List<String> nameValueBlock) throws IOException {
+        List<ByteString> nameValueBlock) throws IOException {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;

@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -79,27 +80,29 @@ public final class SpdyTransport implements Transport {
    * Names are all lower case. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<String> writeNameValueBlock(Request request, String protocol, String version) {
+  public static List<ByteString> writeNameValueBlock(Request request, String protocol,
+      String version) {
     Headers headers = request.headers();
-    List<String> result = new ArrayList<String>(headers.size() + 10);
-    result.add(":method");
-    result.add(request.method());
-    result.add(":path");
-    result.add(RequestLine.requestPath(request.url()));
-    result.add(":version");
-    result.add(version);
+    // TODO: make the known header names constants.
+    List<ByteString> result = new ArrayList<ByteString>(headers.size() + 10);
+    result.add(ByteString.encodeUtf8(":method"));
+    result.add(ByteString.encodeUtf8(request.method()));
+    result.add(ByteString.encodeUtf8(":path"));
+    result.add(ByteString.encodeUtf8(RequestLine.requestPath(request.url())));
+    result.add(ByteString.encodeUtf8(":version"));
+    result.add(ByteString.encodeUtf8(version));
     if (protocol.equals("spdy/3")) {
-      result.add(":host");
+      result.add(ByteString.encodeUtf8(":host"));
     } else if (protocol.equals("HTTP-draft-09/2.0")) {
-      result.add(":authority");
+      result.add(ByteString.encodeUtf8(":authority"));
     } else {
       throw new AssertionError();
     }
-    result.add(HttpEngine.hostHeader(request.url()));
-    result.add(":scheme");
-    result.add(request.url().getProtocol());
+    result.add(ByteString.encodeUtf8(HttpEngine.hostHeader(request.url())));
+    result.add(ByteString.encodeUtf8(":scheme"));
+    result.add(ByteString.encodeUtf8(request.url().getProtocol()));
 
-    Set<String> names = new LinkedHashSet<String>();
+    Set<ByteString> names = new LinkedHashSet<ByteString>();
     for (int i = 0; i < headers.size(); i++) {
       String name = headers.name(i).toLowerCase(Locale.US);
       String value = headers.value(i);
@@ -118,16 +121,16 @@ public final class SpdyTransport implements Transport {
       }
 
       // If we haven't seen this name before, add the pair to the end of the list...
-      if (names.add(name)) {
-        result.add(name);
-        result.add(value);
+      if (names.add(ByteString.encodeUtf8(name))) {
+        result.add(ByteString.encodeUtf8(name));
+        result.add(ByteString.encodeUtf8(value));
         continue;
       }
 
       // ...otherwise concatenate the existing values and this value.
       for (int j = 0; j < result.size(); j += 2) {
-        if (name.equals(result.get(j))) {
-          result.set(j + 1, result.get(j + 1) + "\0" + value);
+        if (result.get(j).utf8Equals(name)) {
+          result.set(j + 1, ByteString.encodeUtf8(result.get(j + 1).utf8() + "\0" + value));
           break;
         }
       }
@@ -136,8 +139,8 @@ public final class SpdyTransport implements Transport {
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(List<String> nameValueBlock, String protocol)
-      throws IOException {
+  public static Response.Builder readNameValueBlock(List<ByteString> nameValueBlock,
+      String protocol) throws IOException {
     if (nameValueBlock.size() % 2 != 0) {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
     }
@@ -147,8 +150,8 @@ public final class SpdyTransport implements Transport {
     Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol);
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
-      String name = nameValueBlock.get(i);
-      String values = nameValueBlock.get(i + 1);
+      String name = nameValueBlock.get(i).utf8();
+      String values = nameValueBlock.get(i + 1).utf8();
       for (int start = 0; start < values.length(); ) {
         int end = values.indexOf('\0', start);
         if (end == -1) {

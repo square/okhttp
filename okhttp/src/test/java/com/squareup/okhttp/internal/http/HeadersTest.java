@@ -18,20 +18,22 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.Util.asByteStringList;
 import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 
 public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
-    List<String> nameValueBlock = Arrays.asList(
-        "cache-control", "no-cache, no-store",
-        "set-cookie", "Cookie1\u0000Cookie2",
-        ":status", "200 OK",
+    List<ByteString> nameValueBlock = asByteStringList( //
+        "cache-control", "no-cache, no-store", //
+        "set-cookie", "Cookie1\u0000Cookie2", //
+        ":status", "200 OK", //
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
@@ -55,9 +57,9 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersSpdy3() throws IOException {
-    List<String> nameValueBlock = Arrays.asList(
-        ":status", "200 OK",
-        ":version", "HTTP/1.1",
+    List<ByteString> nameValueBlock = asByteStringList( //
+        ":status", "200 OK", //
+        ":version", "HTTP/1.1", //
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
@@ -69,9 +71,9 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<String> nameValueBlock = Arrays.asList(
-        ":status", "200 OK",
-        ":version", "HTTP/1.1",
+    List<ByteString> nameValueBlock = asByteStringList( //
+        ":status", "200 OK", //
+        ":version", "HTTP/1.1", //
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
@@ -90,15 +92,15 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<String> nameValueBlock = SpdyTransport.writeNameValueBlock(request, "spdy/3", "HTTP/1.1");
-    List<String> expected = Arrays.asList(
-        ":method", "GET",
-        ":path", "/",
-        ":version", "HTTP/1.1",
-        ":host", "square.com",
-        ":scheme", "http",
-        "cache-control", "no-cache, no-store",
-        "set-cookie", "Cookie1\u0000Cookie2",
+    List<ByteString> nameValueBlock = SpdyTransport.writeNameValueBlock(request, "spdy/3", "HTTP/1.1");
+    List<ByteString> expected = asByteStringList( //
+        ":method", "GET", //
+        ":path", "/", //
+        ":version", "HTTP/1.1", //
+        ":host", "square.com", //
+        ":scheme", "http", //
+        "cache-control", "no-cache, no-store", //
+        "set-cookie", "Cookie1\u0000Cookie2", //
         ":status", "200 OK");
     assertEquals(expected, nameValueBlock);
   }
@@ -109,11 +111,11 @@ public final class HeadersTest {
         .header("Connection", "close")
         .header("Transfer-Encoding", "chunked")
         .build();
-    List<String> expected = Arrays.asList(
-        ":method", "GET",
-        ":path", "/",
-        ":version", "HTTP/1.1",
-        ":host", "square.com",
+    List<ByteString> expected = asByteStringList( //
+        ":method", "GET", //
+        ":path", "/", //
+        ":version", "HTTP/1.1", //
+        ":host", "square.com", //
         ":scheme", "http");
     assertEquals(expected, SpdyTransport.writeNameValueBlock(request, "spdy/3", "HTTP/1.1"));
   }
@@ -124,11 +126,11 @@ public final class HeadersTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
         .build();
-    List<String> expected = Arrays.asList(
-        ":method", "GET",
-        ":path", "/",
-        ":version", "HTTP/1.1",
-        ":authority", "square.com",
+    List<ByteString> expected = asByteStringList( //
+        ":method", "GET", //
+        ":path", "/", //
+        ":version", "HTTP/1.1", //
+        ":authority", "square.com", //
         ":scheme", "http");
     assertEquals(expected,
         SpdyTransport.writeNameValueBlock(request, "HTTP-draft-09/2.0", "HTTP/1.1"));

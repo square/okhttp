@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -185,7 +186,7 @@ public final class MockSpdyPeer implements Closeable {
     public int priority;
     public ErrorCode errorCode;
     public int deltaWindowSize;
-    public List<String> nameValueBlock;
+    public List<ByteString> nameValueBlock;
     public byte[] data;
     public Settings settings;
     public HeadersMode headersMode;
@@ -203,7 +204,7 @@ public final class MockSpdyPeer implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<String> nameValueBlock,
+        int associatedStreamId, int priority, List<ByteString> nameValueBlock,
         HeadersMode headersMode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_HEADERS;

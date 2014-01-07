@@ -66,7 +66,9 @@ public final class ByteString {
    * or {@link #EMPTY} if {@code s} is zero length.
    */
   public static ByteString encodeUtf8(String s) {
-    return new ByteString(s.getBytes(Util.UTF_8));
+    ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
+    byteString.utf8 = s;
+    return byteString;
   }
 
   /** Constructs a new {@code String} by decoding the bytes as UTF-8. */

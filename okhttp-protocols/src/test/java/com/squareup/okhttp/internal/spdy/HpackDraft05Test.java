@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -25,6 +26,7 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.Util.asByteStringList;
 import static org.junit.Assert.assertEquals;
 
 public class HpackDraft05Test {
@@ -43,7 +45,7 @@ public class HpackDraft05Test {
   @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
     char[] tooLarge = new char[4096];
     Arrays.fill(tooLarge, 'a');
-    final List<String> sentHeaders = Arrays.asList("foo", new String(tooLarge));
+    final List<ByteString> sentHeaders = asByteStringList("foo", new String(tooLarge));
 
     ByteArrayOutputStream out = literalHeaders(sentHeaders);
     bytesIn.set(out.toByteArray());
@@ -78,7 +80,7 @@ public class HpackDraft05Test {
     HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
     checkEntry(entry, "custom-key", "custom-header", 55, true);
 
-    assertEquals(Arrays.asList("custom-key", "custom-header"), hpackReader.getAndReset());
+    assertEquals(asByteStringList("custom-key", "custom-header"), hpackReader.getAndReset());
   }
 
   /**
@@ -98,7 +100,7 @@ public class HpackDraft05Test {
 
     assertEquals(0, hpackReader.headerTable.size());
 
-    assertEquals(Arrays.asList(":path", "/sample/path"), hpackReader.getAndReset());
+    assertEquals(asByteStringList(":path", "/sample/path"), hpackReader.getAndReset());
   }
 
   /**
@@ -120,7 +122,7 @@ public class HpackDraft05Test {
     HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
     checkEntry(entry, ":method", "GET", 42, true);
 
-    assertEquals(Arrays.asList(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(asByteStringList(":method", "GET"), hpackReader.getAndReset());
   }
 
   /**
@@ -140,7 +142,7 @@ public class HpackDraft05Test {
     // Not buffered in header table.
     assertEquals(0, hpackReader.headerTable.size());
 
-    assertEquals(Arrays.asList(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(asByteStringList(":method", "GET"), hpackReader.getAndReset());
   }
 
   /**
@@ -206,7 +208,7 @@ public class HpackDraft05Test {
     assertEquals(180, hpackReader.headerTableSize);
 
     // Decoded header set:
-    assertEquals(Arrays.asList( //
+    assertEquals(asByteStringList( //
         ":method", "GET", //
         ":scheme", "http", //
         ":path", "/", //
@@ -251,7 +253,7 @@ public class HpackDraft05Test {
     assertEquals(233, hpackReader.headerTableSize);
 
     // Decoded header set:
-    assertEquals(Arrays.asList( //
+    assertEquals(asByteStringList( //
         ":method", "GET", //
         ":scheme", "http", //
         ":path", "/", //
@@ -320,7 +322,7 @@ public class HpackDraft05Test {
 
     // Decoded header set:
     // TODO: order is not correct per docs, but then again, the spec doesn't require ordering.
-    assertEquals(Arrays.asList( //
+    assertEquals(asByteStringList( //
         ":method", "GET", //
         ":authority", "www.example.com", //
         ":scheme", "https", //
@@ -380,25 +382,25 @@ public class HpackDraft05Test {
   }
 
   @Test public void headerName() throws IOException {
-    hpackWriter.writeString("foo");
+    hpackWriter.writeByteString(ByteString.encodeUtf8("foo"));
     assertBytes(3, 'f', 'o', 'o');
-    assertEquals("foo", new HpackDraft05.Reader(byteStream(3, 'f', 'o', 'o')).readString());
+    assertEquals("foo", new HpackDraft05.Reader(byteStream(3, 'f', 'o', 'o')).readString().utf8());
   }
 
   @Test public void emptyHeaderName() throws IOException {
-    hpackWriter.writeString("");
+    hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals("", new HpackDraft05.Reader(byteStream(0)).readString());
+    assertEquals("", new HpackDraft05.Reader(byteStream(0)).readString().utf8());
   }
 
   @Test public void headersRoundTrip() throws IOException {
-    List<String> sentHeaders = Arrays.asList("name", "value");
+    List<ByteString> sentHeaders = asByteStringList("name", "value");
     hpackWriter.writeHeaders(sentHeaders);
     ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
     HpackDraft05.Reader reader = new HpackDraft05.Reader(new DataInputStream(bytesIn));
     reader.readHeaders(bytesOut.size());
     reader.emitReferenceSet();
-    List<String> receivedHeaders = reader.getAndReset();
+    List<ByteString> receivedHeaders = reader.getAndReset();
     assertEquals(sentHeaders, receivedHeaders);
   }
 
@@ -407,7 +409,7 @@ public class HpackDraft05Test {
     return new DataInputStream(new ByteArrayInputStream(data));
   }
 
-  private ByteArrayOutputStream literalHeaders(List<String> sentHeaders) throws IOException {
+  private ByteArrayOutputStream literalHeaders(List<ByteString> sentHeaders) throws IOException {
     ByteArrayOutputStream headerBytes = new ByteArrayOutputStream();
     new HpackDraft05.Writer(new DataOutputStream(headerBytes)).writeHeaders(sentHeaders);
     return headerBytes;
@@ -415,8 +417,8 @@ public class HpackDraft05Test {
 
   private void checkEntry(HpackDraft05.HeaderEntry entry, String name, String value, int size,
       boolean referenced) {
-    assertEquals(name, entry.name);
-    assertEquals(value, entry.value);
+    assertEquals(name, entry.name.utf8());
+    assertEquals(value, entry.value.utf8());
     assertEquals(size, entry.size);
     assertEquals(referenced, entry.referenced);
   }

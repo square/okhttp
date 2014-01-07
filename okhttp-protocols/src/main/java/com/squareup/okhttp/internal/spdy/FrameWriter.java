@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
@@ -28,9 +29,10 @@ public interface FrameWriter extends Closeable {
   /** SPDY/3 only. */
   void flush() throws IOException;
   void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      int priority, int slot, List<String> nameValueBlock) throws IOException;
-  void synReply(boolean outFinished, int streamId, List<String> nameValueBlock) throws IOException;
-  void headers(int streamId, List<String> nameValueBlock) throws IOException;
+      int priority, int slot, List<ByteString> nameValueBlock) throws IOException;
+  void synReply(boolean outFinished, int streamId, List<ByteString> nameValueBlock)
+      throws IOException;
+  void headers(int streamId, List<ByteString> nameValueBlock) throws IOException;
   void rstStream(int streamId, ErrorCode errorCode) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
