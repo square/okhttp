@@ -23,7 +23,7 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.asByteStringList;
+import static com.squareup.okhttp.internal.Util.byteStringList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +32,7 @@ public class Http20Draft09Test {
   static final int expectedStreamId = 15;
 
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
-    final List<ByteString> sentHeaders = asByteStringList("name", "value");
+    final List<ByteString> sentHeaders = byteStringList("name", "value");
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
@@ -74,7 +74,7 @@ public class Http20Draft09Test {
 
     // Write the first headers frame.
     {
-      byte[] headerBytes = literalHeaders(asByteStringList("foo", "bar"));
+      byte[] headerBytes = literalHeaders(byteStringList("foo", "bar"));
       dataOut.writeShort(headerBytes.length);
       dataOut.write(Http20Draft09.TYPE_HEADERS);
       dataOut.write(0); // no flags
@@ -84,7 +84,7 @@ public class Http20Draft09Test {
 
     // Write the continuation frame, specifying no more frames are expected.
     {
-      byte[] headerBytes = literalHeaders(asByteStringList("baz", "qux"));
+      byte[] headerBytes = literalHeaders(byteStringList("baz", "qux"));
       dataOut.writeShort(headerBytes.length);
       dataOut.write(Http20Draft09.TYPE_CONTINUATION);
       dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
@@ -106,7 +106,7 @@ public class Http20Draft09Test {
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(-1, priority);
-        assertEquals(asByteStringList("foo", "bar", "baz", "qux"), nameValueBlock);
+        assertEquals(byteStringList("foo", "bar", "baz", "qux"), nameValueBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });

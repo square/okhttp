@@ -104,6 +104,20 @@ public final class ByteString {
     return new ByteString(result);
   }
 
+  public static ByteString concat(ByteString... byteStrings) {
+    int size = 0;
+    for (ByteString byteString : byteStrings) {
+      size += byteString.size();
+    }
+    byte[] result = new byte[size];
+    int pos = 0;
+    for (ByteString byteString : byteStrings) {
+      System.arraycopy(byteString.data, 0, result, pos, byteString.size());
+      pos += byteString.size();
+    }
+    return ByteString.of(result);
+  }
+
   private ByteString(byte[] data) {
     this.data = data; // Trusted internal constructor doesn't clone data.
   }

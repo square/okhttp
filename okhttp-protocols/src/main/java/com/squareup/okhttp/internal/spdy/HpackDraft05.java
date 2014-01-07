@@ -5,7 +5,6 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
@@ -16,20 +15,25 @@ import java.util.List;
 final class HpackDraft05 {
 
   // Visible for testing.
-  static class HeaderEntry implements Cloneable {
+  static class HeaderEntry {
     final ByteString name;
     final ByteString value;
     final int size;
+    // read when in headerTable
     boolean referenced = true;
 
     HeaderEntry(ByteString name, ByteString value) {
-      this.name = name;
-      this.value = value;
-      this.size = 32 + name.size() + value.size();
+      this(name, value, 32 + name.size() + value.size());
     }
 
-    public HeaderEntry(String name, String value) {
+    HeaderEntry(String name, String value) {
       this(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value));
+    }
+
+    private HeaderEntry(ByteString name, ByteString value, int size) {
+      this.name = name;
+      this.value = value;
+      this.size = size;
     }
 
     /** Adds name and value, if this entry is referenced. */
@@ -40,19 +44,15 @@ final class HpackDraft05 {
     }
 
     @Override public HeaderEntry clone() {
-      try {
-        return (HeaderEntry) super.clone();
-      } catch (CloneNotSupportedException e) {
-        throw new AssertionError();
-      }
+      return new HeaderEntry(name, value, size);
     }
   }
 
-  static final int PREFIX_6_BITS = 0x3f;
-  static final int PREFIX_7_BITS = 0x7f;
-  static final int PREFIX_8_BITS = 0xff;
+  private static final int PREFIX_6_BITS = 0x3f;
+  private static final int PREFIX_7_BITS = 0x7f;
+  private static final int PREFIX_8_BITS = 0xff;
 
-  static final List<HeaderEntry> STATIC_HEADER_TABLE = Arrays.asList(
+  private static final HeaderEntry[] STATIC_HEADER_TABLE = new HeaderEntry[] {
       new HeaderEntry(":authority", ""),
       new HeaderEntry(":method", "GET"),
       new HeaderEntry(":method", "POST"),
@@ -113,7 +113,7 @@ final class HpackDraft05 {
       new HeaderEntry("vary", ""),
       new HeaderEntry("via", ""),
       new HeaderEntry("www-authenticate", "")
-  );
+  };
 
   private HpackDraft05() {
   }
@@ -126,7 +126,7 @@ final class HpackDraft05 {
     private long bytesLeft = 0;
 
     // Visible for testing.
-    final List<HeaderEntry> headerTable = new ArrayList<HeaderEntry>(); // TODO: default capacity?
+    final List<HeaderEntry> headerTable = new ArrayList<HeaderEntry>(5); // average of 5 headers
     final BitSet staticReferenceSet = new BitSet();
     long headerTableSize = 0;
     long maxHeaderTableSize = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
@@ -180,7 +180,7 @@ final class HpackDraft05 {
     public void emitReferenceSet() {
       for (int i = staticReferenceSet.nextSetBit(0); i != -1;
           i = staticReferenceSet.nextSetBit(i + 1)) {
-        STATIC_HEADER_TABLE.get(i).addTo(emittedHeaders);
+        STATIC_HEADER_TABLE[i].addTo(emittedHeaders);
       }
       for (int i = headerTable.size() - 1; i != -1; i--) {
         headerTable.get(i).addTo(emittedHeaders);
@@ -202,7 +202,7 @@ final class HpackDraft05 {
         if (maxHeaderTableSize == 0) {
           staticReferenceSet.set(index - headerTable.size());
         } else {
-          HeaderEntry staticEntry = STATIC_HEADER_TABLE.get(index - headerTable.size());
+          HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerTable.size()];
           insertIntoHeaderTable(-1, staticEntry.clone());
         }
       } else if (!headerTable.get(index).referenced) {
@@ -246,7 +246,7 @@ final class HpackDraft05 {
 
     private ByteString getName(int index) {
       if (isStaticHeader(index)) {
-        return STATIC_HEADER_TABLE.get(index - headerTable.size()).name;
+        return STATIC_HEADER_TABLE[index - headerTable.size()].name;
       } else {
         return headerTable.get(index).name;
       }

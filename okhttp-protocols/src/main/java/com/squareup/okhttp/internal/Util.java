@@ -393,11 +393,11 @@ public final class Util {
     };
   }
 
-  public static List<ByteString> asByteStringList(String... strings) {
-    List<ByteString> out = new ArrayList<ByteString>(strings.length);
+  public static List<ByteString> byteStringList(String... strings) {
+    List<ByteString> result = new ArrayList<ByteString>(strings.length);
     for (String string : strings) {
-      out.add(ByteString.encodeUtf8(string));
+      result.add(ByteString.encodeUtf8(string));
     }
-    return out;
+    return result;
   }
 }

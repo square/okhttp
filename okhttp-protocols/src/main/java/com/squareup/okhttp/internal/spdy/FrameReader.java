@@ -29,6 +29,7 @@ public interface FrameReader extends Closeable {
 
   public interface Handler {
     void data(boolean inFinished, int streamId, InputStream in, int length) throws IOException;
+
     /**
      * Create or update incoming headers, creating the corresponding streams
      * if necessary. Frames that trigger this are SPDY SYN_STREAM, HEADERS, and
@@ -38,10 +39,9 @@ public interface FrameReader extends Closeable {
      * @param inFinished true if the sender will not send further frames.
      * @param streamId the stream owning these headers.
      * @param associatedStreamId the stream that triggered the sender to create
-*     this stream.
+     * this stream.
      * @param priority or -1 for no priority. For SPDY, priorities range from 0
-*     (highest) thru 7 (lowest). For HTTP/2.0, priorities range from 0
-     * @param nameValueBlock
+     * (highest) thru 7 (lowest). For HTTP/2.0, priorities range from 0
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
         int priority, List<ByteString> nameValueBlock, HeadersMode headersMode);

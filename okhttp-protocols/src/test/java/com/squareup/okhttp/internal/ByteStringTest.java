@@ -72,6 +72,16 @@ public class ByteStringTest {
     assertByteArraysEquals(new byte[] { 0x62, 0x63 }, out.toByteArray());
   }
 
+  @Test public void concat() {
+    assertEquals(ByteString.of(), ByteString.concat());
+    assertEquals(ByteString.of(), ByteString.concat(ByteString.EMPTY));
+    assertEquals(ByteString.of(), ByteString.concat(ByteString.EMPTY, ByteString.EMPTY));
+    ByteString foo = ByteString.encodeUtf8("foo");
+    ByteString bar = ByteString.encodeUtf8("bar");
+    assertEquals(foo, ByteString.concat(foo));
+    assertEquals(ByteString.encodeUtf8("foobar"), ByteString.concat(foo, bar));
+  }
+
   private static void assertByteArraysEquals(byte[] a, byte[] b) {
     assertEquals(Arrays.toString(a), Arrays.toString(b));
   }

@@ -561,7 +561,7 @@ public final class DiskLruCache implements Closeable {
    */
   private boolean journalRebuildRequired() {
     final int redundantOpCompactThreshold = 2000;
-    return redundantOpCount >= redundantOpCompactThreshold //
+    return redundantOpCount >= redundantOpCompactThreshold
         && redundantOpCount >= lruEntries.size();
   }
 
