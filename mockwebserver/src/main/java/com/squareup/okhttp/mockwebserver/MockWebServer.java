@@ -70,11 +70,6 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
  * replays them upon request in sequence.
  */
 public final class MockWebServer {
-  private static final byte[] NPN_PROTOCOLS = {
-      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '6', '/', '2', '.', '0',
-      6, 's', 'p', 'd', 'y', '/', '3',
-      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
   private static final byte[] HTTP_20_DRAFT_09 = new byte[] {
       'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0'
   };
@@ -84,6 +79,20 @@ public final class MockWebServer {
   private static final byte[] HTTP_11 = new byte[] {
       'h', 't', 't', 'p', '/', '1', '.', '1'
   };
+  private static final byte[] NPN_PROTOCOLS = joinNpnProtocols(HTTP_20_DRAFT_09, SPDY3, HTTP_11);
+
+  private static byte[] joinNpnProtocols(byte[]... protocols) {
+    try {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      for (byte[] protocol : protocols) {
+        baos.write(protocol.length);
+        baos.write(protocol);
+      }
+      return baos.toByteArray();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
 
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
