@@ -1,5 +1,6 @@
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,20 +17,23 @@ final class HpackDraft05 {
 
   // Visible for testing.
   static class HeaderEntry implements Cloneable {
-    final String name;
-    final String value;
+    final ByteString name;
+    final ByteString value;
     final int size;
     boolean referenced = true;
 
-    HeaderEntry(String name, String value) {
+    HeaderEntry(ByteString name, ByteString value) {
       this.name = name;
       this.value = value;
-      // TODO: This needs to be the size in bytes, not the length in chars.
-      this.size = 32 + name.length() + value.length();
+      this.size = 32 + name.size() + value.size();
+    }
+
+    public HeaderEntry(String name, String value) {
+      this(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value));
     }
 
     /** Adds name and value, if this entry is referenced. */
-    void addTo(List<String> out) {
+    void addTo(List<ByteString> out) {
       if (!referenced) return;
       out.add(name);
       out.add(value);
@@ -118,7 +122,7 @@ final class HpackDraft05 {
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
   static class Reader {
     private final DataInputStream in;
-    private final List<String> emittedHeaders = new ArrayList<String>();
+    private final List<ByteString> emittedHeaders = new ArrayList<ByteString>();
     private long bytesLeft = 0;
 
     // Visible for testing.
@@ -187,8 +191,8 @@ final class HpackDraft05 {
      * Returns all headers emitted since they were last cleared, then clears the
      * emitted headers.
      */
-    public List<String> getAndReset() {
-      List<String> result = new ArrayList<String>(emittedHeaders);
+    public List<ByteString> getAndReset() {
+      List<ByteString> result = new ArrayList<ByteString>(emittedHeaders);
       emittedHeaders.clear();
       return result;
     }
@@ -213,34 +217,34 @@ final class HpackDraft05 {
 
     private void readLiteralHeaderWithoutIndexingIndexedName(int index)
         throws IOException {
-      String name = getName(index);
-      String value = readString();
+      ByteString name = getName(index);
+      ByteString value = readString();
       emittedHeaders.add(name);
       emittedHeaders.add(value);
     }
 
     private void readLiteralHeaderWithoutIndexingNewName()
         throws IOException {
-      String name = readString();
-      String value = readString();
+      ByteString name = readString();
+      ByteString value = readString();
       emittedHeaders.add(name);
       emittedHeaders.add(value);
     }
 
     private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
         throws IOException {
-      String name = getName(nameIndex);
-      String value = readString();
+      ByteString name = getName(nameIndex);
+      ByteString value = readString();
       insertIntoHeaderTable(-1, new HeaderEntry(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
-      String name = readString();
-      String value = readString();
+      ByteString name = readString();
+      ByteString value = readString();
       insertIntoHeaderTable(-1, new HeaderEntry(name, value));
     }
 
-    private String getName(int index) {
+    private ByteString getName(int index) {
       if (isStaticHeader(index)) {
         return STATIC_HEADER_TABLE.get(index - headerTable.size()).name;
       } else {
@@ -318,13 +322,13 @@ final class HpackDraft05 {
      * Reads a UTF-8 encoded string. Since ASCII is a subset of UTF-8, this method
      * may be used to read strings that are known to be ASCII-only.
      */
-    public String readString() throws IOException {
+    public ByteString readString() throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
       byte[] encoded = new byte[length];
       bytesLeft -= length;
       in.readFully(encoded);
-      return new String(encoded, "UTF-8");
+      return ByteString.of(encoded);
     }
   }
 
@@ -335,12 +339,12 @@ final class HpackDraft05 {
       this.out = out;
     }
 
-    public void writeHeaders(List<String> nameValueBlock) throws IOException {
+    public void writeHeaders(List<ByteString> nameValueBlock) throws IOException {
       // TODO: implement a compression strategy.
       for (int i = 0, size = nameValueBlock.size(); i < size; i += 2) {
         out.write(0x40); // Literal Header without Indexing - New Name.
-        writeString(nameValueBlock.get(i));
-        writeString(nameValueBlock.get(i + 1));
+        writeByteString(nameValueBlock.get(i));
+        writeByteString(nameValueBlock.get(i + 1));
       }
     }
 
@@ -364,14 +368,9 @@ final class HpackDraft05 {
       out.write(value);
     }
 
-    /**
-     * Writes a UTF-8 encoded string. Since ASCII is a subset of UTF-8, this
-     * method can be used to write strings that are known to be ASCII-only.
-     */
-    public void writeString(String headerName) throws IOException {
-      byte[] bytes = headerName.getBytes("UTF-8");
-      writeInt(bytes.length, PREFIX_8_BITS, 0);
-      out.write(bytes);
+    public void writeByteString(ByteString data) throws IOException {
+      writeInt(data.size(), PREFIX_8_BITS, 0);
+      data.write(out);
     }
   }
 }

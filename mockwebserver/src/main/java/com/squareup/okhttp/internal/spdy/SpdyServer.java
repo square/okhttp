@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,6 +32,8 @@ import java.util.List;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.jetty.npn.NextProtoNego;
+
+import static com.squareup.okhttp.internal.Util.asByteStringList;
 
 /** A basic SPDY server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
@@ -78,12 +81,12 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   @Override public void receive(final SpdyStream stream) throws IOException {
-    List<String> requestHeaders = stream.getRequestHeaders();
+    List<ByteString> requestHeaders = stream.getRequestHeaders();
     String path = null;
     for (int i = 0; i < requestHeaders.size(); i += 2) {
-      String s = requestHeaders.get(i);
-      if (":path".equals(s)) {
-        path = requestHeaders.get(i + 1);
+      ByteString s = requestHeaders.get(i);
+      if (s.utf8Equals(":path")) {
+        path = requestHeaders.get(i + 1).utf8();
         break;
       }
     }
@@ -105,8 +108,8 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void send404(SpdyStream stream, String path) throws IOException {
-    List<String> responseHeaders =
-        Arrays.asList(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
+    List<ByteString> responseHeaders =
+        asByteStringList(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
     String text = "Not found: " + path;
@@ -115,8 +118,8 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
-    List<String> responseHeaders =
-        Arrays.asList(":status", "200", ":version", "HTTP/1.1", "content-type",
+    List<ByteString> responseHeaders =
+        asByteStringList(":status", "200", ":version", "HTTP/1.1", "content-type",
             "text/html; charset=UTF-8");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
@@ -130,9 +133,8 @@ public final class SpdyServer implements IncomingStreamHandler {
   private void serveFile(SpdyStream stream, File file) throws IOException {
     InputStream in = new FileInputStream(file);
     byte[] buffer = new byte[8192];
-    stream.reply(
-        Arrays.asList(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
-        true);
+    stream.reply(asByteStringList(":status", "200", ":version", "HTTP/1.1", "content-type",
+        contentType(file)), true);
     OutputStream out = stream.getOutputStream();
     int count;
     while ((count = in.read(buffer)) != -1) {

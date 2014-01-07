@@ -1,5 +1,6 @@
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.DataInputStream;
@@ -71,7 +72,7 @@ class NameValueBlockReader implements Closeable {
     }
   }
 
-  public List<String> readNameValueBlock(int length) throws IOException {
+  public List<ByteString> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
     try {
       int numberOfPairs = nameValueBlockIn.readInt();
@@ -81,11 +82,11 @@ class NameValueBlockReader implements Closeable {
       if (numberOfPairs > 1024) {
         throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
       }
-      List<String> entries = new ArrayList<String>(numberOfPairs * 2);
+      List<ByteString> entries = new ArrayList<ByteString>(numberOfPairs * 2);
       for (int i = 0; i < numberOfPairs; i++) {
-        String name = readString();
-        String values = readString();
-        if (name.length() == 0) throw new IOException("name.length == 0");
+        ByteString name = readString();
+        ByteString values = readString();
+        if (name.size() == 0) throw new IOException("name.size == 0");
         entries.add(name);
         entries.add(values);
       }
@@ -110,11 +111,11 @@ class NameValueBlockReader implements Closeable {
     }
   }
 
-  private String readString() throws DataFormatException, IOException {
+  private ByteString readString() throws DataFormatException, IOException {
     int length = nameValueBlockIn.readInt();
     byte[] bytes = new byte[length];
     Util.readFully(nameValueBlockIn, bytes);
-    return new String(bytes, 0, length, "UTF-8");
+    return ByteString.of(bytes);
   }
 
   @Override public void close() throws IOException {

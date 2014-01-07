@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,10 +49,10 @@ public final class SpdyStream {
   private int writeWindowSize;
 
   /** Headers sent by the stream initiator. Immutable and non null. */
-  private final List<String> requestHeaders;
+  private final List<ByteString> requestHeaders;
 
   /** Headers sent in the stream reply. Null if reply is either not sent or not sent yet. */
-  private List<String> responseHeaders;
+  private List<ByteString> responseHeaders;
 
   private final SpdyDataInputStream in;
   private final SpdyDataOutputStream out;
@@ -64,7 +65,7 @@ public final class SpdyStream {
   private ErrorCode errorCode = null;
 
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      int priority, List<String> requestHeaders, Settings settings) {
+      int priority, List<ByteString> requestHeaders, Settings settings) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
@@ -109,7 +110,7 @@ public final class SpdyStream {
     return connection;
   }
 
-  public List<String> getRequestHeaders() {
+  public List<ByteString> getRequestHeaders() {
     return requestHeaders;
   }
 
@@ -117,7 +118,7 @@ public final class SpdyStream {
    * Returns the stream's response headers, blocking if necessary if they
    * have not been received yet.
    */
-  public synchronized List<String> getResponseHeaders() throws IOException {
+  public synchronized List<ByteString> getResponseHeaders() throws IOException {
     long remaining = 0;
     long start = 0;
     if (readTimeoutMillis != 0) {
@@ -161,7 +162,7 @@ public final class SpdyStream {
    * @param out true to create an output stream that we can use to send data
    * to the remote peer. Corresponds to {@code FLAG_FIN}.
    */
-  public void reply(List<String> responseHeaders, boolean out) throws IOException {
+  public void reply(List<ByteString> responseHeaders, boolean out) throws IOException {
     assert (!Thread.holdsLock(SpdyStream.this));
     boolean outFinished = false;
     synchronized (this) {
@@ -254,7 +255,7 @@ public final class SpdyStream {
     return true;
   }
 
-  void receiveHeaders(List<String> headers, HeadersMode headersMode) {
+  void receiveHeaders(List<ByteString> headers, HeadersMode headersMode) {
     assert (!Thread.holdsLock(SpdyStream.this));
     ErrorCode errorCode = null;
     boolean open = true;
@@ -271,7 +272,7 @@ public final class SpdyStream {
         if (headersMode.failIfHeadersPresent()) {
           errorCode = ErrorCode.STREAM_IN_USE;
         } else {
-          List<String> newHeaders = new ArrayList<String>();
+          List<ByteString> newHeaders = new ArrayList<ByteString>();
           newHeaders.addAll(responseHeaders);
           newHeaders.addAll(headers);
           this.responseHeaders = newHeaders;
