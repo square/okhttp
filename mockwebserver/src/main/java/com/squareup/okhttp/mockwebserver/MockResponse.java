@@ -40,6 +40,7 @@ public final class MockResponse implements Cloneable {
   private int bytesPerSecond = Integer.MAX_VALUE;
   private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
+  private int bodyDelayTimeMs = 0;
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
     setBody(new byte[0]);
@@ -215,6 +216,18 @@ public final class MockResponse implements Cloneable {
   public MockResponse setBytesPerSecond(int bytesPerSecond) {
     this.bytesPerSecond = bytesPerSecond;
     return this;
+  }
+  /**
+   * Set the delayed time of the response body to {@code delay}. This applies to the
+   * response body only; response headers are not affected.
+   */
+  public MockResponse setBodyDelayTimeMs(int delay) {
+    bodyDelayTimeMs = delay;
+    return this;
+  }
+
+  public int getBodyDelayTimeMs() {
+    return bodyDelayTimeMs;
   }
 
   @Override public String toString() {
