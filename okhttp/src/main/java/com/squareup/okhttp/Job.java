@@ -44,6 +44,7 @@ final class Job implements Runnable {
 
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
+  private HttpEngine engine;
 
   public Job(Dispatcher dispatcher, OkHttpClient client, Request request,
       Response.Receiver responseReceiver) {
@@ -66,6 +67,8 @@ final class Job implements Runnable {
   }
 
   @Override public void run() {
+    String oldName = Thread.currentThread().getName();
+    Thread.currentThread().setName("OkHttp " + request.urlString());
     try {
       Response response = execute();
       if (response != null && !canceled) {
@@ -77,8 +80,8 @@ final class Job implements Runnable {
           .exception(e)
           .build());
     } finally {
-      // TODO: close the response body
-      // TODO: release the HTTP engine
+      engine.release(true); // Release the connection if it isn't already released.
+      Thread.currentThread().setName(oldName);
       dispatcher.finished(this);
     }
   }
@@ -114,7 +117,7 @@ final class Job implements Runnable {
         request = requestBuilder.build();
       }
 
-      HttpEngine engine = new HttpEngine(client, request, false, connection, null);
+      engine = new HttpEngine(client, request, false, connection, null);
       engine.sendRequest();
 
       if (body != null) {
