@@ -17,8 +17,8 @@
 
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Util;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -43,10 +43,10 @@ import java.util.TreeSet;
  * instances.
  */
 public final class Headers {
-  private final List<String> namesAndValues;
+  private final String[] namesAndValues;
 
   private Headers(Builder builder) {
-    this.namesAndValues = Util.immutableList(builder.namesAndValues);
+    this.namesAndValues = builder.namesAndValues.toArray(new String[builder.namesAndValues.size()]);
   }
 
   /** Returns the last value corresponding to the specified field, or null. */
@@ -56,25 +56,25 @@ public final class Headers {
 
   /** Returns the number of field values. */
   public int size() {
-    return namesAndValues.size() / 2;
+    return namesAndValues.length / 2;
   }
 
   /** Returns the field at {@code position} or null if that is out of range. */
   public String name(int index) {
     int fieldNameIndex = index * 2;
-    if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.size()) {
+    if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.length) {
       return null;
     }
-    return namesAndValues.get(fieldNameIndex);
+    return namesAndValues[fieldNameIndex];
   }
 
   /** Returns the value at {@code index} or null if that is out of range. */
   public String value(int index) {
     int valueIndex = index * 2 + 1;
-    if (valueIndex < 0 || valueIndex >= namesAndValues.size()) {
+    if (valueIndex < 0 || valueIndex >= namesAndValues.length) {
       return null;
     }
-    return namesAndValues.get(valueIndex);
+    return namesAndValues[valueIndex];
   }
 
   /** Returns an immutable case-insensitive set of header names. */
@@ -104,10 +104,10 @@ public final class Headers {
   // TODO: it is very weird to request a case-insensitive set as a parameter.
   public Headers getAll(Set<String> fieldNames) {
     Builder result = new Builder();
-    for (int i = 0; i < namesAndValues.size(); i += 2) {
-      String fieldName = namesAndValues.get(i);
+    for (int i = 0; i < namesAndValues.length; i += 2) {
+      String fieldName = namesAndValues[i];
       if (fieldNames.contains(fieldName)) {
-        result.add(fieldName, namesAndValues.get(i + 1));
+        result.add(fieldName, namesAndValues[i + 1]);
       }
     }
     return result.build();
@@ -115,14 +115,14 @@ public final class Headers {
 
   public Builder newBuilder() {
     Builder result = new Builder();
-    result.namesAndValues.addAll(namesAndValues);
+    result.namesAndValues.addAll(Arrays.asList(namesAndValues));
     return result;
   }
 
-  private static String get(List<String> namesAndValues, String fieldName) {
-    for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
-      if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-        return namesAndValues.get(i + 1);
+  private static String get(String[] namesAndValues, String fieldName) {
+    for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
+      if (fieldName.equalsIgnoreCase(namesAndValues[i])) {
+        return namesAndValues[i + 1];
       }
     }
     return null;
@@ -187,7 +187,12 @@ public final class Headers {
 
     /** Equivalent to {@code build().get(fieldName)}, but potentially faster. */
     public String get(String fieldName) {
-      return Headers.get(namesAndValues, fieldName);
+      for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
+        if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+          return namesAndValues.get(i + 1);
+        }
+      }
+      return null;
     }
 
     public Headers build() {
