@@ -150,7 +150,7 @@ public final class Http20Draft09 implements Variant {
           return true;
       }
 
-      throw new UnsupportedOperationException("TODO");
+      throw new UnsupportedOperationException(Integer.toBinaryString(type));
     }
 
     private void readHeaders(Handler handler, int flags, int length, int streamId)

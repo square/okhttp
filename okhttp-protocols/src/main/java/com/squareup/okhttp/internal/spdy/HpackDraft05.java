@@ -5,12 +5,19 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * Read and write HPACK v05.
+ *
  * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05
+ *
+ * This implementation uses an array for the header table with a bitset for
+ * references.  Dynamic entries are added to the array, starting in the last
+ * position moving forward.  When the array fills, it is doubled, up to the
+ * supported maximum of 64 headers.  HTTP requests or responses that require
+ * more than 64 headers are hence not currently supported.
  */
 final class HpackDraft05 {
 
@@ -19,35 +26,19 @@ final class HpackDraft05 {
     final ByteString name;
     final ByteString value;
     final int size;
-    // Static entries can be shared safely, as long as {@code referenced} is not mutated.
-    final boolean isStatic;
-    // Only read when in headerTable.
-    // Mutable to avoid needing another BitSet for referenced header indexes.  Using a BitSet for
-    // reference entries sounds good, except that entries are added at index zero.  This implies
-    // shifting the BitSet, which would be expensive to implement.
-    boolean referenced = true;
 
-    HeaderEntry(ByteString name, ByteString value, boolean isStatic) {
-      this(name, value, 32 + name.size() + value.size(), isStatic);
+    HeaderEntry(String name, String value) {
+      this(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value));
     }
 
-    private HeaderEntry(ByteString name, ByteString value, int size, boolean isStatic) {
+    HeaderEntry(ByteString name, ByteString value) {
+      this(name, value, 32 + name.size() + value.size());
+    }
+
+    private HeaderEntry(ByteString name, ByteString value, int size) {
       this.name = name;
       this.value = value;
       this.size = size;
-      this.isStatic = isStatic;
-    }
-
-    /** Adds name and value, if this entry is referenced. */
-    void addTo(List<ByteString> out) {
-      if (!referenced) return;
-      out.add(name);
-      out.add(value);
-    }
-
-    /** Copies this header entry and designates it as not a static entry. */
-    @Override public HeaderEntry clone() {
-      return new HeaderEntry(name, value, size, false);
     }
   }
 
@@ -56,66 +47,66 @@ final class HpackDraft05 {
   private static final int PREFIX_8_BITS = 0xff;
 
   private static final HeaderEntry[] STATIC_HEADER_TABLE = new HeaderEntry[] {
-      staticEntry(":authority", ""),
-      staticEntry(":method", "GET"),
-      staticEntry(":method", "POST"),
-      staticEntry(":path", "/"),
-      staticEntry(":path", "/index.html"),
-      staticEntry(":scheme", "http"),
-      staticEntry(":scheme", "https"),
-      staticEntry(":status", "200"),
-      staticEntry(":status", "500"),
-      staticEntry(":status", "404"),
-      staticEntry(":status", "403"),
-      staticEntry(":status", "400"),
-      staticEntry(":status", "401"),
-      staticEntry("accept-charset", ""),
-      staticEntry("accept-encoding", ""),
-      staticEntry("accept-language", ""),
-      staticEntry("accept-ranges", ""),
-      staticEntry("accept", ""),
-      staticEntry("access-control-allow-origin", ""),
-      staticEntry("age", ""),
-      staticEntry("allow", ""),
-      staticEntry("authorization", ""),
-      staticEntry("cache-control", ""),
-      staticEntry("content-disposition", ""),
-      staticEntry("content-encoding", ""),
-      staticEntry("content-language", ""),
-      staticEntry("content-length", ""),
-      staticEntry("content-location", ""),
-      staticEntry("content-range", ""),
-      staticEntry("content-type", ""),
-      staticEntry("cookie", ""),
-      staticEntry("date", ""),
-      staticEntry("etag", ""),
-      staticEntry("expect", ""),
-      staticEntry("expires", ""),
-      staticEntry("from", ""),
-      staticEntry("host", ""),
-      staticEntry("if-match", ""),
-      staticEntry("if-modified-since", ""),
-      staticEntry("if-none-match", ""),
-      staticEntry("if-range", ""),
-      staticEntry("if-unmodified-since", ""),
-      staticEntry("last-modified", ""),
-      staticEntry("link", ""),
-      staticEntry("location", ""),
-      staticEntry("max-forwards", ""),
-      staticEntry("proxy-authenticate", ""),
-      staticEntry("proxy-authorization", ""),
-      staticEntry("range", ""),
-      staticEntry("referer", ""),
-      staticEntry("refresh", ""),
-      staticEntry("retry-after", ""),
-      staticEntry("server", ""),
-      staticEntry("set-cookie", ""),
-      staticEntry("strict-transport-security", ""),
-      staticEntry("transfer-encoding", ""),
-      staticEntry("user-agent", ""),
-      staticEntry("vary", ""),
-      staticEntry("via", ""),
-      staticEntry("www-authenticate", "")
+      new HeaderEntry(":authority", ""),
+      new HeaderEntry(":method", "GET"),
+      new HeaderEntry(":method", "POST"),
+      new HeaderEntry(":path", "/"),
+      new HeaderEntry(":path", "/index.html"),
+      new HeaderEntry(":scheme", "http"),
+      new HeaderEntry(":scheme", "https"),
+      new HeaderEntry(":status", "200"),
+      new HeaderEntry(":status", "500"),
+      new HeaderEntry(":status", "404"),
+      new HeaderEntry(":status", "403"),
+      new HeaderEntry(":status", "400"),
+      new HeaderEntry(":status", "401"),
+      new HeaderEntry("accept-charset", ""),
+      new HeaderEntry("accept-encoding", ""),
+      new HeaderEntry("accept-language", ""),
+      new HeaderEntry("accept-ranges", ""),
+      new HeaderEntry("accept", ""),
+      new HeaderEntry("access-control-allow-origin", ""),
+      new HeaderEntry("age", ""),
+      new HeaderEntry("allow", ""),
+      new HeaderEntry("authorization", ""),
+      new HeaderEntry("cache-control", ""),
+      new HeaderEntry("content-disposition", ""),
+      new HeaderEntry("content-encoding", ""),
+      new HeaderEntry("content-language", ""),
+      new HeaderEntry("content-length", ""),
+      new HeaderEntry("content-location", ""),
+      new HeaderEntry("content-range", ""),
+      new HeaderEntry("content-type", ""),
+      new HeaderEntry("cookie", ""),
+      new HeaderEntry("date", ""),
+      new HeaderEntry("etag", ""),
+      new HeaderEntry("expect", ""),
+      new HeaderEntry("expires", ""),
+      new HeaderEntry("from", ""),
+      new HeaderEntry("host", ""),
+      new HeaderEntry("if-match", ""),
+      new HeaderEntry("if-modified-since", ""),
+      new HeaderEntry("if-none-match", ""),
+      new HeaderEntry("if-range", ""),
+      new HeaderEntry("if-unmodified-since", ""),
+      new HeaderEntry("last-modified", ""),
+      new HeaderEntry("link", ""),
+      new HeaderEntry("location", ""),
+      new HeaderEntry("max-forwards", ""),
+      new HeaderEntry("proxy-authenticate", ""),
+      new HeaderEntry("proxy-authorization", ""),
+      new HeaderEntry("range", ""),
+      new HeaderEntry("referer", ""),
+      new HeaderEntry("refresh", ""),
+      new HeaderEntry("retry-after", ""),
+      new HeaderEntry("server", ""),
+      new HeaderEntry("set-cookie", ""),
+      new HeaderEntry("strict-transport-security", ""),
+      new HeaderEntry("transfer-encoding", ""),
+      new HeaderEntry("user-agent", ""),
+      new HeaderEntry("vary", ""),
+      new HeaderEntry("via", ""),
+      new HeaderEntry("www-authenticate", "")
   };
 
   private HpackDraft05() {
@@ -129,10 +120,25 @@ final class HpackDraft05 {
     private long bytesLeft = 0;
 
     // Visible for testing.
-    final List<HeaderEntry> headerTable = new ArrayList<HeaderEntry>(5); // average of 5 headers
-    final BitSet staticReferenceSet = new BitSet();
-    long headerTableSize = 0;
-    long maxHeaderTableSize = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
+    HeaderEntry[] headerTable = new HeaderEntry[8]; // must be less than 64
+    // Array is populated back to front, so new entries always have lowest index.
+    int nextHeaderIndex = headerTable.length - 1;
+    int headerCount = 0;
+
+    /**
+     * Set bit positions indicate {@code headerTable[pos]} should be emitted.
+     */
+    // Using a long since the reference table < 64 entries.
+    long referencedHeaders = 0x0000000000000000L;
+
+    /**
+     * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
+     * emitted.
+     */
+    // Using a long since the static table < 64 entries.
+    long referencedStaticHeaders = 0x0000000000000000L;
+    int headerTableByteCount = 0;
+    int maxHeaderTableByteCount = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
 
     Reader(DataInputStream in) {
       this.in = in;
@@ -149,51 +155,47 @@ final class HpackDraft05 {
       while (bytesLeft > 0) {
         int b = readByte();
 
-        if ((b & 0x80) != 0) {
+        if (b == 0x80) { // 10000000
+          clearReferenceSet();
+        } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
           int index = readInt(b, PREFIX_7_BITS);
-          if (index == 0) {
-            clearReferenceSet();
+          readIndexedHeader(index - 1);
+        } else { // 0NNNNNNN
+          if (b == 0x40) { // 01000000
+            readLiteralHeaderWithoutIndexingNewName();
+          } else if ((b & 0xe0) == 0x40) {  // 01NNNNNN
+            int index = readInt(b, PREFIX_6_BITS);
+            readLiteralHeaderWithoutIndexingIndexedName(index - 1);
+          } else if (b == 0) { // 00000000
+            readLiteralHeaderWithIncrementalIndexingNewName();
+          } else if ((b & 0xc0) == 0) { // 00NNNNNN
+            int index = readInt(b, PREFIX_6_BITS);
+            readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
           } else {
-            readIndexedHeader(index - 1);
+            // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
+            throw new AssertionError("unhandled byte: " + Integer.toBinaryString(b));
           }
-        } else if (b == 0x40) {
-          readLiteralHeaderWithoutIndexingNewName();
-        } else if ((b & 0xe0) == 0x40) {
-          int index = readInt(b, PREFIX_6_BITS);
-          readLiteralHeaderWithoutIndexingIndexedName(index - 1);
-        } else if (b == 0) {
-          readLiteralHeaderWithIncrementalIndexingNewName();
-        } else if ((b & 0xc0) == 0) {
-          int index = readInt(b, PREFIX_6_BITS);
-          readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
-        } else {
-          // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
-          throw new AssertionError("unhandled byte: " + Integer.toBinaryString(b));
         }
       }
     }
 
     private void clearReferenceSet() {
-      staticReferenceSet.clear();
-      for (int i = 0, size = headerTable.size(); i < size; i++) {
-        HeaderEntry entry = headerTable.get(i);
-        if (entry.isStatic) { // lazy clone static entries on mutation.
-          entry = entry.clone();
-          entry.referenced = false;
-          headerTable.set(i, entry);
-        } else {
-          entry.referenced = false;
-        }
-      }
+      referencedStaticHeaders = 0x0000000000000000L;
+      referencedHeaders = 0x0000000000000000L;
     }
 
     public void emitReferenceSet() {
-      for (int i = staticReferenceSet.nextSetBit(0); i != -1;
-          i = staticReferenceSet.nextSetBit(i + 1)) {
-        STATIC_HEADER_TABLE[i].addTo(emittedHeaders);
+      for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
+        if (bitPositionSet(referencedStaticHeaders, i)) {
+          emittedHeaders.add(STATIC_HEADER_TABLE[i].name);
+          emittedHeaders.add(STATIC_HEADER_TABLE[i].value);
+        }
       }
-      for (int i = headerTable.size() - 1; i != -1; i--) {
-        headerTable.get(i).addTo(emittedHeaders);
+      for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
+        if (bitPositionSet(referencedHeaders, i)) {
+          emittedHeaders.add(headerTable[i].name);
+          emittedHeaders.add(headerTable[i].value);
+        }
       }
     }
 
@@ -208,33 +210,36 @@ final class HpackDraft05 {
     }
 
     private void readIndexedHeader(int index) {
+
       if (isStaticHeader(index)) {
-        if (maxHeaderTableSize == 0) {
-          staticReferenceSet.set(index - headerTable.size());
+        if (maxHeaderTableByteCount == 0) {
+          // Set bit designating this static entry is referenced.
+          referencedStaticHeaders |= (1L << (index - headerCount));
         } else {
-          HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerTable.size()];
+          HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
-       }
-      } else if (!headerTable.get(index).referenced) {
-        HeaderEntry existing = headerTable.get(index);
-        existing.referenced = true;
-        insertIntoHeaderTable(index, existing);
+        }
+      } else if (!bitPositionSet(referencedHeaders, headerTableIndex(index))) {
+        referencedHeaders |= (1L << headerTableIndex(index));
       } else {
         // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
         throw new AssertionError("invalid index " + index);
       }
     }
 
-    private void readLiteralHeaderWithoutIndexingIndexedName(int index)
-        throws IOException {
+    // referencedHeaders is relative to nextHeaderIndex + 1.
+    private int headerTableIndex(int index) {
+      return nextHeaderIndex + 1 + index;
+    }
+
+    private void readLiteralHeaderWithoutIndexingIndexedName(int index) throws IOException {
       ByteString name = getName(index);
       ByteString value = readString();
       emittedHeaders.add(name);
       emittedHeaders.add(value);
     }
 
-    private void readLiteralHeaderWithoutIndexingNewName()
-        throws IOException {
+    private void readLiteralHeaderWithoutIndexingNewName() throws IOException {
       ByteString name = readString();
       ByteString value = readString();
       emittedHeaders.add(name);
@@ -245,60 +250,89 @@ final class HpackDraft05 {
         throws IOException {
       ByteString name = getName(nameIndex);
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value, false));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
       ByteString name = readString();
       ByteString value = readString();
-      insertIntoHeaderTable(-1, new HeaderEntry(name, value, false));
+      insertIntoHeaderTable(-1, new HeaderEntry(name, value));
     }
 
     private ByteString getName(int index) {
       if (isStaticHeader(index)) {
-        return STATIC_HEADER_TABLE[index - headerTable.size()].name;
+        return STATIC_HEADER_TABLE[index - headerCount].name;
       } else {
-        return headerTable.get(index).name;
+        return headerTable[headerTableIndex(index)].name;
       }
     }
 
     private boolean isStaticHeader(int index) {
-      return index >= headerTable.size();
+      return index >= headerCount;
     }
 
     /** index == -1 when new. */
     private void insertIntoHeaderTable(int index, HeaderEntry entry) {
       int delta = entry.size;
       if (index != -1) { // Index -1 == new header.
-        delta -= headerTable.get(index).size;
+        delta -= headerTable[headerTableIndex(index)].size;
       }
 
       // if the new or replacement header is too big, drop all entries.
-      if (delta > maxHeaderTableSize) {
-        staticReferenceSet.clear();
-        headerTable.clear();
-        headerTableSize = 0;
+      if (delta > maxHeaderTableByteCount) {
+        referencedStaticHeaders = 0x0000000000000000L;
+        referencedHeaders = 0x0000000000000000L;
+        Arrays.fill(headerTable, null);
+        nextHeaderIndex = headerTable.length - 1;
+        headerCount = 0;
+        headerTableByteCount = 0;
         // emit the large header to the callback.
-        entry.addTo(emittedHeaders);
+        emittedHeaders.add(entry.name);
+        emittedHeaders.add(entry.value);
         return;
       }
 
       // Evict headers to the required length.
-      while (headerTableSize + delta > maxHeaderTableSize) {
-        remove(headerTable.size() - 1);
+      int bytesToRecover = (headerTableByteCount + delta) - maxHeaderTableByteCount;
+      int entriesToEvict = 0;
+      if (bytesToRecover > 0) {
+        // determine how many headers need to be evicted.
+        for (int j = headerTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
+          bytesToRecover -= headerTable[j].size;
+          headerTableByteCount -= headerTable[j].size;
+          headerCount--;
+          entriesToEvict++;
+        }
+        // shift elements over
+        referencedHeaders = referencedHeaders << entriesToEvict;
+        System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
+            nextHeaderIndex + 1 + entriesToEvict, headerCount);
+        nextHeaderIndex += entriesToEvict;
       }
 
       if (index == -1) {
-        headerTable.add(0, entry);
+        if (headerCount + 1 > headerTable.length) {
+          if (headerTable.length == 64) {
+            // We would need to switch off long to bitset to support > 64 headers.
+            throw new UnsupportedOperationException(
+                "Header tables with count > 64 not yet supported!");
+          }
+          HeaderEntry[] doubled = new HeaderEntry[headerTable.length * 2];
+          System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
+          referencedHeaders = referencedHeaders << headerTable.length;
+          nextHeaderIndex = headerTable.length - 1;
+          headerTable = doubled;
+        }
+        index = nextHeaderIndex--;
+        referencedHeaders |= (1L << index);
+        headerTable[index] = entry;
+        headerCount++;
       } else { // Replace value at same position.
-        headerTable.set(index, entry);
+        index += headerTableIndex(index) + entriesToEvict;
+        referencedHeaders |= (1L << index);
+        headerTable[index] = entry;
       }
-
-      headerTableSize += delta;
-    }
-
-    private void remove(int index) {
-      headerTableSize -= headerTable.remove(index).size;
+      headerTableByteCount += delta;
     }
 
     private int readByte() throws IOException {
@@ -335,11 +369,17 @@ final class HpackDraft05 {
     public ByteString readString() throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
-      byte[] encoded = new byte[length];
+      if ((length & 0x80) == 0x80) { // 1NNNNNNN
+        length &= ~0x80;
+        // TODO: actually decode huffman!
+      }
       bytesLeft -= length;
-      in.readFully(encoded);
-      return ByteString.of(encoded);
+      return ByteString.read(in, length);
     }
+  }
+
+  static boolean bitPositionSet(long referenceBitSet, int i) {
+    return ((referenceBitSet >> i) & 1L) == 1;
   }
 
   static class Writer {
@@ -382,9 +422,5 @@ final class HpackDraft05 {
       writeInt(data.size(), PREFIX_8_BITS, 0);
       data.write(out);
     }
-  }
-
-  private static HeaderEntry staticEntry(String name, String value) {
-    return new HeaderEntry(ByteString.encodeUtf8(name), ByteString.encodeUtf8(value), true);
   }
 }
