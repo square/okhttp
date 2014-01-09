@@ -154,7 +154,7 @@ public final class SpdyTransport implements Transport {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
     }
     String status = null;
-    String version = null;
+    String version = "HTTP/1.1"; // TODO: why are we expecting :version?
 
     Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol);
