@@ -109,7 +109,6 @@ public final class Connection implements Closeable {
       throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
-    connected = true;
     socket = (route.proxy.type() != Proxy.Type.HTTP) ? new Socket(route.proxy) : new Socket();
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
     socket.setSoTimeout(readTimeout);
@@ -121,6 +120,7 @@ public final class Connection implements Closeable {
     } else {
       streamWrapper();
     }
+    connected = true;
   }
 
   /**
