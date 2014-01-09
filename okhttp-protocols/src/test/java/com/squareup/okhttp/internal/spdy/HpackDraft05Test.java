@@ -27,7 +27,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.byteStringList;
+import static com.squareup.okhttp.internal.spdy.HpackDraft05.bitPositionSet;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class HpackDraft05Test {
 
@@ -43,18 +47,137 @@ public class HpackDraft05Test {
    * Ensure the larger header content is not lost.
    */
   @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
-    char[] tooLarge = new char[4096];
-    Arrays.fill(tooLarge, 'a');
-    final List<ByteString> sentHeaders = byteStringList("foo", new String(tooLarge));
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    ByteArrayOutputStream out = literalHeaders(sentHeaders);
+    out.write(0x00); // Literal indexed
+    out.write(0x0a); // Literal name (len = 10)
+    out.write("custom-key".getBytes(), 0, 10);
+
+    out.write(0x0d); // Literal value (len = 13)
+    out.write("custom-header".getBytes(), 0, 13);
+
+    bytesIn.set(out.toByteArray());
+    hpackReader.maxHeaderTableByteCount = 1;
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+
+    assertEquals(0, hpackReader.headerCount);
+
+    assertEquals(byteStringList("custom-key", "custom-header"), hpackReader.getAndReset());
+  }
+
+  /** Oldest entries are evicted to support newer ones. */
+  @Test public void testEviction() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x00); // Literal indexed
+    out.write(0x0a); // Literal name (len = 10)
+    out.write("custom-foo".getBytes(), 0, 10);
+
+    out.write(0x0d); // Literal value (len = 13)
+    out.write("custom-header".getBytes(), 0, 13);
+
+    out.write(0x00); // Literal indexed
+    out.write(0x0a); // Literal name (len = 10)
+    out.write("custom-bar".getBytes(), 0, 10);
+
+    out.write(0x0d); // Literal value (len = 13)
+    out.write("custom-header".getBytes(), 0, 13);
+
+    out.write(0x00); // Literal indexed
+    out.write(0x0a); // Literal name (len = 10)
+    out.write("custom-baz".getBytes(), 0, 10);
+
+    out.write(0x0d); // Literal value (len = 13)
+    out.write("custom-header".getBytes(), 0, 13);
+
+    bytesIn.set(out.toByteArray());
+    hpackReader.maxHeaderTableByteCount = 110;
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+
+    assertEquals(2, hpackReader.headerCount);
+
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, "custom-bar", "custom-header", 55);
+    assertHeaderReferenced(headerTableLength() - 1);
+
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, "custom-baz", "custom-header", 55);
+    assertHeaderReferenced(headerTableLength() - 2);
+
+    // foo isn't here as it is no longer in the table.
+    // TODO: emit before eviction?
+    assertEquals(byteStringList("custom-bar", "custom-header", "custom-baz", "custom-header"),
+        hpackReader.getAndReset());
+  }
+
+  /** Header table backing array is initially 8 long, let's ensure it grows. */
+  @Test public void dynamicallyGrowsUpTo64Entries() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    for (int i = 0; i < 64; i++) {
+      out.write(0x00); // Literal indexed
+      out.write(0x0a); // Literal name (len = 10)
+      out.write("custom-foo".getBytes(), 0, 10);
+
+      out.write(0x0d); // Literal value (len = 13)
+      out.write("custom-header".getBytes(), 0, 13);
+    }
+
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
-    assertEquals(0, hpackReader.headerTable.size());
+    assertEquals(64, hpackReader.headerCount);
+  }
 
-    assertEquals(sentHeaders, hpackReader.getAndReset());
+  @Test public void greaterThan64HeadersNotYetSupported() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    for (int i = 0; i < 65; i++) {
+      out.write(0x00); // Literal indexed
+      out.write(0x0a); // Literal name (len = 10)
+      out.write("custom-foo".getBytes(), 0, 10);
+
+      out.write(0x0d); // Literal value (len = 13)
+      out.write("custom-header".getBytes(), 0, 13);
+    }
+
+    bytesIn.set(out.toByteArray());
+    try {
+      hpackReader.readHeaders(out.size());
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
+  }
+
+  /** Huffman headers are accepted, but come out as garbage for now. */
+  @Test public void huffmanDecodingNotYetSupported() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x04); // == Literal indexed ==
+                     // Indexed name (idx = 4) -> :path
+    out.write(0x8b); // Literal value Huffman encoded 11 bytes
+                     // decodes to www.example.com which is length 15
+    byte[] huffmanBytes = new byte[] {
+        (byte) 0xdb, (byte) 0x6d, (byte) 0x88, (byte) 0x3e,
+        (byte) 0x68, (byte) 0xd1, (byte) 0xcb, (byte) 0x12,
+        (byte) 0x25, (byte) 0xba, (byte) 0x7f};
+    out.write(huffmanBytes, 0, huffmanBytes.length);
+
+    bytesIn.set(out.toByteArray());
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+
+    assertEquals(1, hpackReader.headerCount);
+    // this will change when we decode huffman
+    assertEquals(48, hpackReader.headerTableByteCount);
+
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
+    // TODO: huffman bytes are not what we want!
+    checkEntry(entry, ":path", new String(huffmanBytes, "UTF-8"), 48);
+    assertHeaderReferenced(headerTableLength() - 1);
   }
 
   /**
@@ -74,11 +197,12 @@ public class HpackDraft05Test {
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
-    assertEquals(1, hpackReader.headerTable.size());
-    assertEquals(55, hpackReader.headerTableSize);
+    assertEquals(1, hpackReader.headerCount);
+    assertEquals(55, hpackReader.headerTableByteCount);
 
-    HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
-    checkEntry(entry, "custom-key", "custom-header", 55, true);
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, "custom-key", "custom-header", 55);
+    assertHeaderReferenced(headerTableLength() - 1);
 
     assertEquals(byteStringList("custom-key", "custom-header"), hpackReader.getAndReset());
   }
@@ -98,7 +222,7 @@ public class HpackDraft05Test {
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
-    assertEquals(0, hpackReader.headerTable.size());
+    assertEquals(0, hpackReader.headerCount);
 
     assertEquals(byteStringList(":path", "/sample/path"), hpackReader.getAndReset());
   }
@@ -116,11 +240,12 @@ public class HpackDraft05Test {
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
-    assertEquals(1, hpackReader.headerTable.size());
-    assertEquals(42, hpackReader.headerTableSize);
+    assertEquals(1, hpackReader.headerCount);
+    assertEquals(42, hpackReader.headerTableByteCount);
 
-    HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
-    checkEntry(entry, ":method", "GET", 42, true);
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
 
     assertEquals(byteStringList(":method", "GET"), hpackReader.getAndReset());
   }
@@ -135,12 +260,12 @@ public class HpackDraft05Test {
                      // idx = 2 -> :method: GET
 
     bytesIn.set(out.toByteArray());
-    hpackReader.maxHeaderTableSize = 0; // SETTINGS_HEADER_TABLE_SIZE == 0
+    hpackReader.maxHeaderTableByteCount = 0; // SETTINGS_HEADER_TABLE_SIZE == 0
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
     // Not buffered in header table.
-    assertEquals(0, hpackReader.headerTable.size());
+    assertEquals(0, hpackReader.headerCount);
 
     assertEquals(byteStringList(":method", "GET"), hpackReader.getAndReset());
   }
@@ -186,26 +311,30 @@ public class HpackDraft05Test {
   }
 
   private void checkFirstRequestWithoutHuffman() {
-    assertEquals(4, hpackReader.headerTable.size());
+    assertEquals(4, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
-    checkEntry(entry, ":authority", "www.example.com", 57, true);
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
 
     // [  2] (s =  38) :path: /
-    entry = hpackReader.headerTable.get(1);
-    checkEntry(entry, ":path", "/", 38, true);
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderReferenced(headerTableLength() - 3);
 
     // [  3] (s =  43) :scheme: http
-    entry = hpackReader.headerTable.get(2);
-    checkEntry(entry, ":scheme", "http", 43, true);
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderReferenced(headerTableLength() - 2);
 
     // [  4] (s =  42) :method: GET
-    entry = hpackReader.headerTable.get(3);
-    checkEntry(entry, ":method", "GET", 42, true);
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
 
     // Table size: 180
-    assertEquals(180, hpackReader.headerTableSize);
+    assertEquals(180, hpackReader.headerTableByteCount);
 
     // Decoded header set:
     assertEquals(byteStringList(
@@ -227,30 +356,35 @@ public class HpackDraft05Test {
   }
 
   private void checkSecondRequestWithoutHuffman() {
-    assertEquals(5, hpackReader.headerTable.size());
+    assertEquals(5, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
-    checkEntry(entry, "cache-control", "no-cache", 53, true);
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 5];
+    checkEntry(entry, "cache-control", "no-cache", 53);
+    assertHeaderReferenced(headerTableLength() - 5);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable.get(1);
-    checkEntry(entry, ":authority", "www.example.com", 57, true);
+    entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
 
     // [  3] (s =  38) :path: /
-    entry = hpackReader.headerTable.get(2);
-    checkEntry(entry, ":path", "/", 38, true);
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderReferenced(headerTableLength() - 3);
 
     // [  4] (s =  43) :scheme: http
-    entry = hpackReader.headerTable.get(3);
-    checkEntry(entry, ":scheme", "http", 43, true);
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderReferenced(headerTableLength() - 2);
 
     // [  5] (s =  42) :method: GET
-    entry = hpackReader.headerTable.get(4);
-    checkEntry(entry, ":method", "GET", 42, true);
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
 
     // Table size: 233
-    assertEquals(233, hpackReader.headerTableSize);
+    assertEquals(233, hpackReader.headerTableByteCount);
 
     // Decoded header set:
     assertEquals(byteStringList(
@@ -283,42 +417,50 @@ public class HpackDraft05Test {
   }
 
   private void checkThirdRequestWithoutHuffman() {
-    assertEquals(8, hpackReader.headerTable.size());
+    assertEquals(8, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    HpackDraft05.HeaderEntry entry = hpackReader.headerTable.get(0);
-    checkEntry(entry, "custom-key", "custom-value", 54, true);
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 8];
+    checkEntry(entry, "custom-key", "custom-value", 54);
+    assertHeaderReferenced(headerTableLength() - 8);
 
     // [  2] (s =  48) :path: /index.html
-    entry = hpackReader.headerTable.get(1);
-    checkEntry(entry, ":path", "/index.html", 48, true);
+    entry = hpackReader.headerTable[headerTableLength() - 7];
+    checkEntry(entry, ":path", "/index.html", 48);
+    assertHeaderReferenced(headerTableLength() - 7);
 
     // [  3] (s =  44) :scheme: https
-    entry = hpackReader.headerTable.get(2);
-    checkEntry(entry, ":scheme", "https", 44, true);
+    entry = hpackReader.headerTable[headerTableLength() - 6];
+    checkEntry(entry, ":scheme", "https", 44);
+    assertHeaderReferenced(headerTableLength() - 6);
 
     // [  4] (s =  53) cache-control: no-cache
-    entry = hpackReader.headerTable.get(3);
-    checkEntry(entry, "cache-control", "no-cache", 53, false);
+    entry = hpackReader.headerTable[headerTableLength() - 5];
+    checkEntry(entry, "cache-control", "no-cache", 53);
+    assertHeaderNotReferenced(headerTableLength() - 5);
 
     // [  5] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable.get(4);
-    checkEntry(entry, ":authority", "www.example.com", 57, true);
+    entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
 
     // [  6] (s =  38) :path: /
-    entry = hpackReader.headerTable.get(5);
-    checkEntry(entry, ":path", "/", 38, false);
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderNotReferenced(headerTableLength() - 3);
 
     // [  7] (s =  43) :scheme: http
-    entry = hpackReader.headerTable.get(6);
-    checkEntry(entry, ":scheme", "http", 43, false);
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderNotReferenced(headerTableLength() - 2);
 
     // [  8] (s =  42) :method: GET
-    entry = hpackReader.headerTable.get(7);
-    checkEntry(entry, ":method", "GET", 42, true);
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
 
     // Table size: 379
-    assertEquals(379, hpackReader.headerTableSize);
+    assertEquals(379, hpackReader.headerTableByteCount);
 
     // Decoded header set:
     // TODO: order is not correct per docs, but then again, the spec doesn't require ordering.
@@ -331,7 +473,8 @@ public class HpackDraft05Test {
   }
 
   private ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final HpackDraft05.Writer hpackWriter = new HpackDraft05.Writer(new DataOutputStream(bytesOut));
+  private final HpackDraft05.Writer hpackWriter =
+      new HpackDraft05.Writer(new DataOutputStream(bytesOut));
 
   @Test public void readSingleByteInt() throws IOException {
     assertEquals(10, new HpackDraft05.Reader(byteStream()).readInt(10, 31));
@@ -415,12 +558,10 @@ public class HpackDraft05Test {
     return headerBytes;
   }
 
-  private void checkEntry(HpackDraft05.HeaderEntry entry, String name, String value, int size,
-      boolean referenced) {
+  private void checkEntry(HpackDraft05.HeaderEntry entry, String name, String value, int size) {
     assertEquals(name, entry.name.utf8());
     assertEquals(value, entry.value.utf8());
     assertEquals(size, entry.size);
-    assertEquals(referenced, entry.referenced);
   }
 
   private void assertBytes(int... bytes) {
@@ -436,6 +577,18 @@ public class HpackDraft05Test {
       data[i] = (byte) bytes[i];
     }
     return data;
+  }
+
+  private void assertHeaderReferenced(int index) {
+    assertTrue(bitPositionSet(hpackReader.referencedHeaders, index));
+  }
+
+  private void assertHeaderNotReferenced(int index) {
+    assertFalse(bitPositionSet(hpackReader.referencedHeaders, index));
+  }
+
+  private int headerTableLength() {
+    return hpackReader.headerTable.length;
   }
 
   private static class MutableByteArrayInputStream extends ByteArrayInputStream {
