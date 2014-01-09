@@ -729,6 +729,13 @@ public final class MockWebServer {
       byte[] body = response.getBody();
       stream.reply(spdyHeaders, body.length > 0);
       if (body.length > 0) {
+        if (response.getBodyDelayTimeMs() != 0) {
+          try {
+            Thread.sleep(response.getBodyDelayTimeMs());
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+        }
         stream.getOutputStream().write(body);
         stream.getOutputStream().close();
       }
