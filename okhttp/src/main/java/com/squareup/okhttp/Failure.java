@@ -17,9 +17,6 @@ package com.squareup.okhttp;
 
 /**
  * A failure attempting to retrieve an HTTP response.
- *
- * <h3>Warning: Experimental OkHttp 2.0 API</h3>
- * This class is in beta. APIs are subject to change!
  */
 public final class Failure {
   private final Request request;

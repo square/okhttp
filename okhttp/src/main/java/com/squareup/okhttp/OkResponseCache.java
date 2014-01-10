@@ -21,9 +21,6 @@ import java.net.CacheRequest;
 /**
  * An extended response cache API. Unlike {@link java.net.ResponseCache}, this
  * interface supports conditional caching and statistics.
- *
- * <h3>Warning: Experimental OkHttp 2.0 API</h3>
- * This class is in beta. APIs are subject to change!
  */
 public interface OkResponseCache {
   Response get(Request request) throws IOException;
