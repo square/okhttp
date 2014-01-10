@@ -53,7 +53,6 @@ public final class Dispatcher {
 
   public synchronized Executor getExecutor() {
     if (executor == null) {
-      // TODO: name these threads, either here or in the job.
       executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>());
     }

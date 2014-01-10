@@ -342,10 +342,14 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Schedules {@code request} to be executed.
+   * Schedules {@code request} to be executed at some point in the future. The
+   * {@link #getDispatcher dispatcher} defines when the request will run:
+   * usually immediately unless there are several other requests currently being
+   * executed.
    *
-   * <h3>Warning: Experimental OkHttp 2.0 API</h3>
-   * This method is in beta. APIs are subject to change!
+   * <p>This client will later call back {@code responseReceiver} with either an
+   * HTTP response or a failure exception. If you {@link #cancel} a request
+   * before it completes the receiver will not be called back.
    */
   public void enqueue(Request request, Response.Receiver responseReceiver) {
     dispatcher.enqueue(this, request, responseReceiver);
@@ -353,10 +357,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   /**
    * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
-   * in flight might not be canceled.
-   *
-   * <h3>Warning: Experimental OkHttp 2.0 API</h3>
-   * This method is in beta. APIs are subject to change!
+   * complete cannot be canceled.
    */
   public void cancel(Object tag) {
     dispatcher.cancel(tag);

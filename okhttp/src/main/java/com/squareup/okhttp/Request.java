@@ -35,9 +35,6 @@ import java.util.List;
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
  * is null or itself immutable.
- *
- * <h3>Warning: Experimental OkHttp 2.0 API</h3>
- * This class is in beta. APIs are subject to change!
  */
 public final class Request {
   private final URL url;

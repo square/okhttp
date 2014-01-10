@@ -41,9 +41,6 @@ import static com.squareup.okhttp.internal.Util.equal;
  * An HTTP response. Instances of this class are not immutable: the response
  * body is a one-shot value that may be consumed only once. All other properties
  * are immutable.
- *
- * <h3>Warning: Experimental OkHttp 2.0 API</h3>
- * This class is in beta. APIs are subject to change!
  */
 public final class Response {
   private final Request request;
