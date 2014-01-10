@@ -1,6 +1,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.internal.Util;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -115,6 +116,8 @@ final class HpackDraft05 {
   // TODO: huffman encoding!
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
   static class Reader {
+    private final Huffman.Codec huffmanCodec;
+
     private final DataInputStream in;
     private final List<ByteString> emittedHeaders = new ArrayList<ByteString>();
     private long bytesLeft = 0;
@@ -140,7 +143,8 @@ final class HpackDraft05 {
     int headerTableByteCount = 0;
     int maxHeaderTableByteCount = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
 
-    Reader(DataInputStream in) {
+    Reader(boolean client, DataInputStream in) {
+      this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.in = in;
     }
 
@@ -371,7 +375,10 @@ final class HpackDraft05 {
       int length = readInt(firstByte, PREFIX_8_BITS);
       if ((length & 0x80) == 0x80) { // 1NNNNNNN
         length &= ~0x80;
-        // TODO: actually decode huffman!
+        byte[] buff = new byte[length];
+        Util.readFully(in, buff);
+        bytesLeft -= length;
+        return ByteString.of(huffmanCodec.decode(buff));
       }
       bytesLeft -= length;
       return ByteString.read(in, length);
