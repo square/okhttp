@@ -1,5 +1,6 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.CacheControl;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -7,9 +8,9 @@ import com.squareup.okhttp.ResponseSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.concurrent.TimeUnit;
 
 import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * Given a request and cached response, this figures out whether to use the
@@ -64,7 +65,7 @@ public final class CacheStrategy {
         ? Math.max(0, response.getReceivedResponseMillis() - response.getServedDate().getTime())
         : 0;
     long receivedAge = response.getAgeSeconds() != -1
-        ? Math.max(apparentReceivedAge, TimeUnit.SECONDS.toMillis(response.getAgeSeconds()))
+        ? Math.max(apparentReceivedAge, SECONDS.toMillis(response.getAgeSeconds()))
         : apparentReceivedAge;
     long responseDuration = response.getReceivedResponseMillis() - response.getSentRequestMillis();
     long residentDuration = nowMillis - response.getReceivedResponseMillis();
@@ -76,8 +77,9 @@ public final class CacheStrategy {
    * starting from the served date.
    */
   private static long computeFreshnessLifetime(Response response) {
-    if (response.getMaxAgeSeconds() != -1) {
-      return TimeUnit.SECONDS.toMillis(response.getMaxAgeSeconds());
+    CacheControl responseCaching = response.cacheControl();
+    if (responseCaching.maxAgeSeconds() != -1) {
+      return SECONDS.toMillis(responseCaching.maxAgeSeconds());
     } else if (response.getExpires() != null) {
       long servedMillis = response.getServedDate() != null
           ? response.getServedDate().getTime()
@@ -104,7 +106,8 @@ public final class CacheStrategy {
    * to attach a warning.
    */
   private static boolean isFreshnessLifetimeHeuristic(Response response) {
-    return response.getMaxAgeSeconds() == -1 && response.getExpires() == null;
+    return response.cacheControl().maxAgeSeconds() == -1
+        && response.getExpires() == null;
   }
 
   /**
@@ -125,14 +128,15 @@ public final class CacheStrategy {
 
     // Responses to authorized requests aren't cacheable unless they include
     // a 'public', 'must-revalidate' or 's-maxage' directive.
+    CacheControl responseCaching = response.cacheControl();
     if (request.header("Authorization") != null
-        && !response.isPublic()
-        && !response.isMustRevalidate()
-        && response.getSMaxAgeSeconds() == -1) {
+        && !responseCaching.isPublic()
+        && !responseCaching.mustRevalidate()
+        && responseCaching.sMaxAgeSeconds() == -1) {
       return false;
     }
 
-    if (response.isNoStore()) {
+    if (responseCaching.noStore()) {
       return false;
     }
 
@@ -146,7 +150,7 @@ public final class CacheStrategy {
   public static CacheStrategy get(long nowMillis, Response response, Request request) {
     CacheStrategy candidate = getCandidate(nowMillis, response, request);
 
-    if (candidate.source != ResponseSource.CACHE && request.getOnlyIfCached()) {
+    if (candidate.source != ResponseSource.CACHE && request.cacheControl().onlyIfCached()) {
       // We're forbidden from using the network, but the cache is insufficient.
       Response noneResponse = new Response.Builder()
           .request(candidate.request)
@@ -179,28 +183,30 @@ public final class CacheStrategy {
       return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
-    if (request.getNoCache() || hasConditions(request)) {
+    CacheControl requestCaching = request.cacheControl();
+    if (requestCaching.noCache() || hasConditions(request)) {
       return new CacheStrategy(request, response, ResponseSource.NETWORK);
     }
 
     long ageMillis = computeAge(response, nowMillis);
     long freshMillis = computeFreshnessLifetime(response);
 
-    if (request.getMaxAgeSeconds() != -1) {
-      freshMillis = Math.min(freshMillis, TimeUnit.SECONDS.toMillis(request.getMaxAgeSeconds()));
+    if (requestCaching.maxAgeSeconds() != -1) {
+      freshMillis = Math.min(freshMillis, SECONDS.toMillis(requestCaching.maxAgeSeconds()));
     }
 
     long minFreshMillis = 0;
-    if (request.getMinFreshSeconds() != -1) {
-      minFreshMillis = TimeUnit.SECONDS.toMillis(request.getMinFreshSeconds());
+    if (requestCaching.minFreshSeconds() != -1) {
+      minFreshMillis = SECONDS.toMillis(requestCaching.minFreshSeconds());
     }
 
     long maxStaleMillis = 0;
-    if (!response.isMustRevalidate() && request.getMaxStaleSeconds() != -1) {
-      maxStaleMillis = TimeUnit.SECONDS.toMillis(request.getMaxStaleSeconds());
+    CacheControl responseCaching = response.cacheControl();
+    if (!responseCaching.mustRevalidate() && requestCaching.maxStaleSeconds() != -1) {
+      maxStaleMillis = SECONDS.toMillis(requestCaching.maxStaleSeconds());
     }
 
-    if (!response.isNoCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
+    if (!responseCaching.noCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
       Response.Builder builder = response.newBuilder()
           .setResponseSource(ResponseSource.CACHE); // Overwrite any stored response source.
       if (ageMillis + minFreshMillis >= freshMillis) {

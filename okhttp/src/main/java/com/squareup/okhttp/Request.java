@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HeaderParser;
 import com.squareup.okhttp.internal.http.HttpDate;
 import java.io.File;
 import java.io.FileInputStream;
@@ -45,6 +44,7 @@ public final class Request {
 
   private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
   private volatile URI uri; // Lazily initialized.
+  private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Request(Builder builder) {
     this.url = builder.url;
@@ -103,26 +103,6 @@ public final class Request {
     return headers;
   }
 
-  public boolean getNoCache() {
-    return parsedHeaders().noCache;
-  }
-
-  public int getMaxAgeSeconds() {
-    return parsedHeaders().maxAgeSeconds;
-  }
-
-  public int getMaxStaleSeconds() {
-    return parsedHeaders().maxStaleSeconds;
-  }
-
-  public int getMinFreshSeconds() {
-    return parsedHeaders().minFreshSeconds;
-  }
-
-  public boolean getOnlyIfCached() {
-    return parsedHeaders().onlyIfCached;
-  }
-
   public String getUserAgent() {
     return parsedHeaders().userAgent;
   }
@@ -136,57 +116,29 @@ public final class Request {
     return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
   }
 
+  /**
+   * Returns the cache control directives for this response. This is never null,
+   * even if this response contains no {@code Cache-Control} header.
+   */
+  public CacheControl cacheControl() {
+    CacheControl result = cacheControl;
+    return result != null ? result : (cacheControl = CacheControl.parse(headers));
+  }
+
   public boolean isHttps() {
     return url().getProtocol().equals("https");
   }
 
   /** Parsed request headers, computed on-demand and cached. */
   private static class ParsedHeaders {
-    /** Don't use a cache to satisfy this request. */
-    private boolean noCache;
-    private int maxAgeSeconds = -1;
-    private int maxStaleSeconds = -1;
-    private int minFreshSeconds = -1;
-
-    /**
-     * This field's name "only-if-cached" is misleading. It actually means "do
-     * not use the network". It is set by a client who only wants to make a
-     * request if it can be fully satisfied by the cache. Cached responses that
-     * would require validation (ie. conditional gets) are not permitted if this
-     * header is set.
-     */
-    private boolean onlyIfCached;
-
     private String userAgent;
     private String proxyAuthorization;
 
     public ParsedHeaders(Headers headers) {
-      HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
-        @Override public void handle(String directive, String parameter) {
-          if ("no-cache".equalsIgnoreCase(directive)) {
-            noCache = true;
-          } else if ("max-age".equalsIgnoreCase(directive)) {
-            maxAgeSeconds = HeaderParser.parseSeconds(parameter);
-          } else if ("max-stale".equalsIgnoreCase(directive)) {
-            maxStaleSeconds = HeaderParser.parseSeconds(parameter);
-          } else if ("min-fresh".equalsIgnoreCase(directive)) {
-            minFreshSeconds = HeaderParser.parseSeconds(parameter);
-          } else if ("only-if-cached".equalsIgnoreCase(directive)) {
-            onlyIfCached = true;
-          }
-        }
-      };
-
       for (int i = 0; i < headers.size(); i++) {
         String fieldName = headers.name(i);
         String value = headers.value(i);
-        if ("Cache-Control".equalsIgnoreCase(fieldName)) {
-          HeaderParser.parseCacheControl(value, handler);
-        } else if ("Pragma".equalsIgnoreCase(fieldName)) {
-          if ("no-cache".equalsIgnoreCase(value)) {
-            noCache = true;
-          }
-        } else if ("User-Agent".equalsIgnoreCase(fieldName)) {
+        if ("User-Agent".equalsIgnoreCase(fieldName)) {
           userAgent = value;
         } else if ("Proxy-Authorization".equalsIgnoreCase(fieldName)) {
           proxyAuthorization = value;

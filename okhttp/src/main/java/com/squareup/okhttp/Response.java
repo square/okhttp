@@ -51,6 +51,7 @@ public final class Response {
   private final Response redirectedBy;
 
   private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
+  private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Response(Builder builder) {
     this.request = builder.request;
@@ -146,30 +147,6 @@ public final class Response {
 
   public Date getExpires() {
     return parsedHeaders().expires;
-  }
-
-  public boolean isNoCache() {
-    return parsedHeaders().noCache;
-  }
-
-  public boolean isNoStore() {
-    return parsedHeaders().noStore;
-  }
-
-  public int getMaxAgeSeconds() {
-    return parsedHeaders().maxAgeSeconds;
-  }
-
-  public int getSMaxAgeSeconds() {
-    return parsedHeaders().sMaxAgeSeconds;
-  }
-
-  public boolean isPublic() {
-    return parsedHeaders().isPublic;
-  }
-
-  public boolean isMustRevalidate() {
-    return parsedHeaders().mustRevalidate;
   }
 
   public String getEtag() {
@@ -319,6 +296,15 @@ public final class Response {
     return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
   }
 
+  /**
+   * Returns the cache control directives for this response. This is never null,
+   * even if this response contains no {@code Cache-Control} header.
+   */
+  public CacheControl cacheControl() {
+    CacheControl result = cacheControl;
+    return result != null ? result : (cacheControl = CacheControl.parse(headers));
+  }
+
   /** Parsed response headers, computed on-demand and cached. */
   private static class ParsedHeaders {
     /** The server's time when this response was served, if known. */
@@ -345,73 +331,17 @@ public final class Response {
      */
     long receivedResponseMillis;
 
-    /**
-     * In the response, this field's name "no-cache" is misleading. It doesn't
-     * prevent us from caching the response; it only means we have to validate
-     * the response with the origin server before returning it. We can do this
-     * with a conditional get.
-     */
-    boolean noCache;
-
-    /** If true, this response should not be cached. */
-    boolean noStore;
-
-    /**
-     * The duration past the response's served date that it can be served
-     * without validation.
-     */
-    int maxAgeSeconds = -1;
-
-    /**
-     * The "s-maxage" directive is the max age for shared caches. Not to be
-     * confused with "max-age" for non-shared caches, As in Firefox and Chrome,
-     * this directive is not honored by this cache.
-     */
-    int sMaxAgeSeconds = -1;
-
-    /**
-     * This request header field's name "only-if-cached" is misleading. It
-     * actually means "do not use the network". It is set by a client who only
-     * wants to make a request if it can be fully satisfied by the cache.
-     * Cached responses that would require validation (ie. conditional gets) are
-     * not permitted if this header is set.
-     */
-    boolean isPublic;
-    boolean mustRevalidate;
     String etag;
     int ageSeconds = -1;
 
     /** Case-insensitive set of field names. */
     private Set<String> varyFields = Collections.emptySet();
 
-    private long contentLength = -1;
-    private String contentType;
-
     private ParsedHeaders(Headers headers) {
-      HeaderParser.CacheControlHandler handler = new HeaderParser.CacheControlHandler() {
-        @Override public void handle(String directive, String parameter) {
-          if ("no-cache".equalsIgnoreCase(directive)) {
-            noCache = true;
-          } else if ("no-store".equalsIgnoreCase(directive)) {
-            noStore = true;
-          } else if ("max-age".equalsIgnoreCase(directive)) {
-            maxAgeSeconds = HeaderParser.parseSeconds(parameter);
-          } else if ("s-maxage".equalsIgnoreCase(directive)) {
-            sMaxAgeSeconds = HeaderParser.parseSeconds(parameter);
-          } else if ("public".equalsIgnoreCase(directive)) {
-            isPublic = true;
-          } else if ("must-revalidate".equalsIgnoreCase(directive)) {
-            mustRevalidate = true;
-          }
-        }
-      };
-
       for (int i = 0; i < headers.size(); i++) {
         String fieldName = headers.name(i);
         String value = headers.value(i);
-        if ("Cache-Control".equalsIgnoreCase(fieldName)) {
-          HeaderParser.parseCacheControl(value, handler);
-        } else if ("Date".equalsIgnoreCase(fieldName)) {
+        if ("Date".equalsIgnoreCase(fieldName)) {
           servedDate = HttpDate.parse(value);
         } else if ("Expires".equalsIgnoreCase(fieldName)) {
           expires = HttpDate.parse(value);
@@ -419,10 +349,6 @@ public final class Response {
           lastModified = HttpDate.parse(value);
         } else if ("ETag".equalsIgnoreCase(fieldName)) {
           etag = value;
-        } else if ("Pragma".equalsIgnoreCase(fieldName)) {
-          if ("no-cache".equalsIgnoreCase(value)) {
-            noCache = true;
-          }
         } else if ("Age".equalsIgnoreCase(fieldName)) {
           ageSeconds = HeaderParser.parseSeconds(value);
         } else if ("Vary".equalsIgnoreCase(fieldName)) {
@@ -433,13 +359,6 @@ public final class Response {
           for (String varyField : value.split(",")) {
             varyFields.add(varyField.trim());
           }
-        } else if ("Content-Length".equalsIgnoreCase(fieldName)) {
-          try {
-            contentLength = Long.parseLong(value);
-          } catch (NumberFormatException ignored) {
-          }
-        } else if ("Content-Type".equalsIgnoreCase(fieldName)) {
-          contentType = value;
         } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
           sentRequestMillis = Long.parseLong(value);
         } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
