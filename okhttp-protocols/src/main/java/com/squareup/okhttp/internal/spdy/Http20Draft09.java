@@ -83,7 +83,7 @@ public final class Http20Draft09 implements Variant {
     Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
       this.client = client;
-      this.hpackReader = new HpackDraft05.Reader(this.in);
+      this.hpackReader = new HpackDraft05.Reader(client, this.in);
     }
 
     @Override public void readConnectionHeader() throws IOException {

@@ -39,7 +39,7 @@ public class HpackDraft05Test {
   private HpackDraft05.Reader hpackReader;
 
   @Before public void resetReader() {
-    hpackReader = new HpackDraft05.Reader(new DataInputStream(bytesIn));
+    hpackReader = new HpackDraft05.Reader(false, new DataInputStream(bytesIn));
   }
 
   /**
@@ -171,12 +171,10 @@ public class HpackDraft05Test {
     hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
-    // this will change when we decode huffman
-    assertEquals(48, hpackReader.headerTableByteCount);
+    assertEquals(52, hpackReader.headerTableByteCount);
 
     HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
-    // TODO: huffman bytes are not what we want!
-    checkEntry(entry, ":path", new String(huffmanBytes, "UTF-8"), 48);
+    checkEntry(entry, ":path", "www.example.com", 52);
     assertHeaderReferenced(headerTableLength() - 1);
   }
 
@@ -472,17 +470,237 @@ public class HpackDraft05Test {
         "custom-key", "custom-value"), hpackReader.getAndReset());
   }
 
+  /**
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.3
+   */
+  @Test public void decodeRequestExamplesWithHuffman() throws IOException {
+    ByteArrayOutputStream out = firstRequestWithHuffman();
+    bytesIn.set(out.toByteArray());
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+    checkFirstRequestWithHuffman();
+
+    out = secondRequestWithHuffman();
+    bytesIn.set(out.toByteArray());
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+    checkSecondRequestWithHuffman();
+
+    out = thirdRequestWithHuffman();
+    bytesIn.set(out.toByteArray());
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+    checkThirdRequestWithHuffman();
+  }
+
+  private ByteArrayOutputStream firstRequestWithHuffman() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x82); // == Indexed - Add ==
+                     // idx = 2 -> :method: GET
+    out.write(0x87); // == Indexed - Add ==
+                     // idx = 7 -> :scheme: http
+    out.write(0x86); // == Indexed - Add ==
+                     // idx = 6 -> :path: /
+    out.write(0x04); // == Literal indexed ==
+                     // Indexed name (idx = 4) -> :authority
+    out.write(0x8b); // Literal value Huffman encoded 11 bytes
+                     // decodes to www.example.com which is length 15
+    byte[] huffmanBytes = new byte[] {
+        (byte) 0xdb, (byte) 0x6d, (byte) 0x88, (byte) 0x3e,
+        (byte) 0x68, (byte) 0xd1, (byte) 0xcb, (byte) 0x12,
+        (byte) 0x25, (byte) 0xba, (byte) 0x7f};
+    out.write(huffmanBytes, 0, huffmanBytes.length);
+
+    return out;
+  }
+
+  private void checkFirstRequestWithHuffman() {
+    assertEquals(4, hpackReader.headerCount);
+
+    // [  1] (s =  57) :authority: www.example.com
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
+
+    // [  2] (s =  38) :path: /
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderReferenced(headerTableLength() - 3);
+
+    // [  3] (s =  43) :scheme: http
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderReferenced(headerTableLength() - 2);
+
+    // [  4] (s =  42) :method: GET
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
+
+    // Table size: 180
+    assertEquals(180, hpackReader.headerTableByteCount);
+
+    // Decoded header set:
+    assertEquals(byteStringList(
+        ":method", "GET",
+        ":scheme", "http",
+        ":path", "/",
+        ":authority", "www.example.com"), hpackReader.getAndReset());
+  }
+
+  private ByteArrayOutputStream secondRequestWithHuffman() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x1b); // == Literal indexed ==
+                     // Indexed name (idx = 27) -> cache-control
+    out.write(0x86); // Literal value Huffman encoded 6 bytes
+                     // decodes to no-cache which is length 8
+    byte[] huffmanBytes = new byte[] {
+        (byte) 0x63, (byte) 0x65, (byte) 0x4a, (byte) 0x13,
+        (byte) 0x98, (byte) 0xff};
+    out.write(huffmanBytes, 0, huffmanBytes.length);
+
+    return out;
+  }
+
+  private void checkSecondRequestWithHuffman() {
+    assertEquals(5, hpackReader.headerCount);
+
+    // [  1] (s =  53) cache-control: no-cache
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 5];
+    checkEntry(entry, "cache-control", "no-cache", 53);
+    assertHeaderReferenced(headerTableLength() - 5);
+
+    // [  2] (s =  57) :authority: www.example.com
+    entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
+
+    // [  3] (s =  38) :path: /
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderReferenced(headerTableLength() - 3);
+
+    // [  4] (s =  43) :scheme: http
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderReferenced(headerTableLength() - 2);
+
+    // [  5] (s =  42) :method: GET
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
+
+    // Table size: 233
+    assertEquals(233, hpackReader.headerTableByteCount);
+
+    // Decoded header set:
+    assertEquals(byteStringList(
+        ":method", "GET",
+        ":scheme", "http",
+        ":path", "/",
+        ":authority", "www.example.com",
+        "cache-control", "no-cache"), hpackReader.getAndReset());
+  }
+
+  private ByteArrayOutputStream thirdRequestWithHuffman() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    out.write(0x80); // == Empty reference set ==
+    out.write(0x85); // == Indexed - Add ==
+                     // idx = 5 -> :method: GET
+    out.write(0x8c); // == Indexed - Add ==
+                     // idx = 12 -> :scheme: https
+    out.write(0x8b); // == Indexed - Add ==
+                     // idx = 11 -> :path: /index.html
+    out.write(0x84); // == Indexed - Add ==
+                     // idx = 4 -> :authority: www.example.com
+    out.write(0x00); // Literal indexed
+    out.write(0x88); // Literal name Huffman encoded 8 bytes
+                     // decodes to custom-key which is length 10
+    byte[] huffmanBytes = new byte[] {
+        (byte) 0x4e, (byte) 0xb0, (byte) 0x8b, (byte) 0x74,
+        (byte) 0x97, (byte) 0x90, (byte) 0xfa, (byte) 0x7f};
+    out.write(huffmanBytes, 0, huffmanBytes.length);
+    out.write(0x89); // Literal value Huffman encoded 6 bytes
+                     // decodes to custom-value which is length 12
+    huffmanBytes = new byte[] {
+        (byte) 0x4e, (byte) 0xb0, (byte) 0x8b, (byte) 0x74,
+        (byte) 0x97, (byte) 0x9a, (byte) 0x17, (byte) 0xa8,
+        (byte) 0xff};
+    out.write(huffmanBytes, 0, huffmanBytes.length);
+
+    return out;
+  }
+
+  private void checkThirdRequestWithHuffman() {
+    assertEquals(8, hpackReader.headerCount);
+
+    // [  1] (s =  54) custom-key: custom-value
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 8];
+    checkEntry(entry, "custom-key", "custom-value", 54);
+    assertHeaderReferenced(headerTableLength() - 8);
+
+    // [  2] (s =  48) :path: /index.html
+    entry = hpackReader.headerTable[headerTableLength() - 7];
+    checkEntry(entry, ":path", "/index.html", 48);
+    assertHeaderReferenced(headerTableLength() - 7);
+
+    // [  3] (s =  44) :scheme: https
+    entry = hpackReader.headerTable[headerTableLength() - 6];
+    checkEntry(entry, ":scheme", "https", 44);
+    assertHeaderReferenced(headerTableLength() - 6);
+
+    // [  4] (s =  53) cache-control: no-cache
+    entry = hpackReader.headerTable[headerTableLength() - 5];
+    checkEntry(entry, "cache-control", "no-cache", 53);
+    assertHeaderNotReferenced(headerTableLength() - 5);
+
+    // [  5] (s =  57) :authority: www.example.com
+    entry = hpackReader.headerTable[headerTableLength() - 4];
+    checkEntry(entry, ":authority", "www.example.com", 57);
+    assertHeaderReferenced(headerTableLength() - 4);
+
+    // [  6] (s =  38) :path: /
+    entry = hpackReader.headerTable[headerTableLength() - 3];
+    checkEntry(entry, ":path", "/", 38);
+    assertHeaderNotReferenced(headerTableLength() - 3);
+
+    // [  7] (s =  43) :scheme: http
+    entry = hpackReader.headerTable[headerTableLength() - 2];
+    checkEntry(entry, ":scheme", "http", 43);
+    assertHeaderNotReferenced(headerTableLength() - 2);
+
+    // [  8] (s =  42) :method: GET
+    entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderReferenced(headerTableLength() - 1);
+
+    // Table size: 379
+    assertEquals(379, hpackReader.headerTableByteCount);
+
+    // Decoded header set:
+    // TODO: order is not correct per docs, but then again, the spec doesn't require ordering.
+    assertEquals(byteStringList(
+        ":method", "GET",
+        ":authority", "www.example.com",
+        ":scheme", "https",
+        ":path", "/index.html",
+        "custom-key", "custom-value"), hpackReader.getAndReset());
+  }
+
   private ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
   private final HpackDraft05.Writer hpackWriter =
       new HpackDraft05.Writer(new DataOutputStream(bytesOut));
 
   @Test public void readSingleByteInt() throws IOException {
-    assertEquals(10, new HpackDraft05.Reader(byteStream()).readInt(10, 31));
-    assertEquals(10, new HpackDraft05.Reader(byteStream()).readInt(0xe0 | 10, 31));
+    assertEquals(10, new HpackDraft05.Reader(false, byteStream()).readInt(10, 31));
+    assertEquals(10, new HpackDraft05.Reader(false, byteStream()).readInt(0xe0 | 10, 31));
   }
 
   @Test public void readMultibyteInt() throws IOException {
-    assertEquals(1337, new HpackDraft05.Reader(byteStream(154, 10)).readInt(31, 31));
+    assertEquals(1337, new HpackDraft05.Reader(false, byteStream(154, 10)).readInt(31, 31));
   }
 
   @Test public void writeSingleByteInt() throws IOException {
@@ -503,44 +721,44 @@ public class HpackDraft05Test {
     hpackWriter.writeInt(0x7fffffff, 31, 0);
     assertBytes(31, 224, 255, 255, 255, 7);
     assertEquals(0x7fffffff,
-        new HpackDraft05.Reader(byteStream(224, 255, 255, 255, 7)).readInt(31, 31));
+        new HpackDraft05.Reader(false, byteStream(224, 255, 255, 255, 7)).readInt(31, 31));
   }
 
   @Test public void prefixMask() throws IOException {
     hpackWriter.writeInt(31, 31, 0);
     assertBytes(31, 0);
-    assertEquals(31, new HpackDraft05.Reader(byteStream(0)).readInt(31, 31));
+    assertEquals(31, new HpackDraft05.Reader(false, byteStream(0)).readInt(31, 31));
   }
 
   @Test public void prefixMaskMinusOne() throws IOException {
     hpackWriter.writeInt(30, 31, 0);
     assertBytes(30);
-    assertEquals(31, new HpackDraft05.Reader(byteStream(0)).readInt(31, 31));
+    assertEquals(31, new HpackDraft05.Reader(false, byteStream(0)).readInt(31, 31));
   }
 
   @Test public void zero() throws IOException {
     hpackWriter.writeInt(0, 31, 0);
     assertBytes(0);
-    assertEquals(0, new HpackDraft05.Reader(byteStream()).readInt(0, 31));
+    assertEquals(0, new HpackDraft05.Reader(false, byteStream()).readInt(0, 31));
   }
 
   @Test public void headerName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8("foo"));
     assertBytes(3, 'f', 'o', 'o');
-    assertEquals("foo", new HpackDraft05.Reader(byteStream(3, 'f', 'o', 'o')).readString().utf8());
+    assertEquals("foo", new HpackDraft05.Reader(false, byteStream(3, 'f', 'o', 'o')).readString().utf8());
   }
 
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals("", new HpackDraft05.Reader(byteStream(0)).readString().utf8());
+    assertEquals("", new HpackDraft05.Reader(false, byteStream(0)).readString().utf8());
   }
 
   @Test public void headersRoundTrip() throws IOException {
     List<ByteString> sentHeaders = byteStringList("name", "value");
     hpackWriter.writeHeaders(sentHeaders);
     ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
-    HpackDraft05.Reader reader = new HpackDraft05.Reader(new DataInputStream(bytesIn));
+    HpackDraft05.Reader reader = new HpackDraft05.Reader(false, new DataInputStream(bytesIn));
     reader.readHeaders(bytesOut.size());
     reader.emitReferenceSet();
     List<ByteString> receivedHeaders = reader.getAndReset();

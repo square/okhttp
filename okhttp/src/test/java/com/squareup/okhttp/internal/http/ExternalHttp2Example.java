@@ -38,6 +38,7 @@ public final class ExternalHttp2Example {
 
     int responseCode = connection.getResponseCode();
     System.out.println(responseCode);
+    System.out.println(connection.getHeaderFields());
 
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
