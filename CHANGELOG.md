@@ -1,6 +1,23 @@
 Change Log
 ==========
 
+Version 1.3.0 *(2014-01-11)*
+----------------------------
+
+ * New: Support for "PATCH" HTTP method in client and MockWebServer.
+ * Fix: Drop `Content-Length` header when redirected from POST to GET.
+ * Fix: Correctly read cached header entries with malformed header names.
+ * Fix: Do not directly support any authentication schemes other than "Basic".
+ * Fix: Respect read timeouts on recycled connections.
+ * Fix: Transmit multiple cookie values as a single header with delimiter.
+ * Fix: Ensure `null` is never returned from a conenction's `getHeaderFields()`.
+ * Fix: Persist proper `Content-Encoding` header to cache for GZip responses.
+ * Fix: Eliminate rare race condition in SPDY streams that would prevent connection reuse.
+ * Fix: Change HTTP date formats to UTC to conform to RFC2616 section 3.3.
+ * Fix: Support SPDY header blocks with trailing bytes.
+ * Fix: Allow `;` as separator for `Cache-Control` header.
+
+
 Version 1.2.1 *(2013-08-23)*
 ----------------------------
 
