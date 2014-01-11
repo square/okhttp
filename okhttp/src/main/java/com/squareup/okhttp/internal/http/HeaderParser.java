@@ -17,49 +17,6 @@
 package com.squareup.okhttp.internal.http;
 
 public final class HeaderParser {
-
-  public interface CacheControlHandler {
-    void handle(String directive, String parameter);
-  }
-
-  /** Parse a comma-separated list of cache control header values. */
-  public static void parseCacheControl(String value, CacheControlHandler handler) {
-    int pos = 0;
-    while (pos < value.length()) {
-      int tokenStart = pos;
-      pos = skipUntil(value, pos, "=,;");
-      String directive = value.substring(tokenStart, pos).trim();
-
-      if (pos == value.length() || value.charAt(pos) == ',' || value.charAt(pos) == ';') {
-        pos++; // consume ',' or ';' (if necessary)
-        handler.handle(directive, null);
-        continue;
-      }
-
-      pos++; // consume '='
-      pos = skipWhitespace(value, pos);
-
-      String parameter;
-
-      // quoted string
-      if (pos < value.length() && value.charAt(pos) == '\"') {
-        pos++; // consume '"' open quote
-        int parameterStart = pos;
-        pos = skipUntil(value, pos, "\"");
-        parameter = value.substring(parameterStart, pos);
-        pos++; // consume '"' close quote (if necessary)
-
-        // unquoted string
-      } else {
-        int parameterStart = pos;
-        pos = skipUntil(value, pos, ",;");
-        parameter = value.substring(parameterStart, pos).trim();
-      }
-
-      handler.handle(directive, parameter);
-    }
-  }
-
   /**
    * Returns the next index in {@code input} at or after {@code pos} that
    * contains a character from {@code characters}. Returns the input length if
