@@ -23,6 +23,8 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.SocketPolicy;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -236,6 +238,31 @@ public final class HttpOverSpdyTest {
     assertEquals("ABC", readAscii(in, 3));
     assertEquals(-1, in.read());
     assertEquals(-1, in.read());
+  }
+
+  @Test(timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection.setReadTimeout(1000);
+    assertContent("A", connection, Integer.MAX_VALUE);
+  }
+
+  @Test public void spdyConnectionTimeout() throws Exception {
+    MockResponse response = new MockResponse().setBody("A");
+    response.setBodyDelayTimeMs(1000);
+    server.enqueue(response);
+    server.play();
+
+    HttpURLConnection connection1 = client.open(server.getUrl("/"));
+    connection1.setReadTimeout(2000);
+    HttpURLConnection connection2 = client.open(server.getUrl("/"));
+    connection2.setReadTimeout(200);
+    connection1.connect();
+    connection2.connect();
+    assertContent("A", connection1, Integer.MAX_VALUE);
   }
 
   @Test public void responsesAreCached() throws IOException {

@@ -57,5 +57,11 @@ public enum SocketPolicy {
    * Shutdown the socket output after sending the response. For testing bad
    * behavior.
    */
-  SHUTDOWN_OUTPUT_AT_END
+  SHUTDOWN_OUTPUT_AT_END,
+
+  /**
+   * Don't response to the request but keep the socket open. For testing
+   * read response header timeout issue.
+   */
+  NO_RESPONSE
 }

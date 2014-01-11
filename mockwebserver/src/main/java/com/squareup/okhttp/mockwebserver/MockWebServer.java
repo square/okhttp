@@ -690,6 +690,9 @@ public final class MockWebServer {
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
+      if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
+        return;
+      }
       List<String> spdyHeaders = new ArrayList<String>();
       String[] statusParts = response.getStatus().split(" ", 2);
       if (statusParts.length != 2) {
@@ -711,6 +714,13 @@ public final class MockWebServer {
       byte[] body = response.getBody();
       stream.reply(spdyHeaders, body.length > 0);
       if (body.length > 0) {
+        if (response.getBodyDelayTimeMs() != 0) {
+          try {
+            Thread.sleep(response.getBodyDelayTimeMs());
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+        }
         stream.getOutputStream().write(body);
         stream.getOutputStream().close();
       }
