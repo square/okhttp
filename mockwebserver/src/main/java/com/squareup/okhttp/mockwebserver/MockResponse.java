@@ -24,6 +24,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
@@ -37,10 +38,14 @@ public final class MockResponse implements Cloneable {
   /** The response body content, or null if {@code body} is set. */
   private InputStream bodyStream;
 
-  private int bytesPerSecond = Integer.MAX_VALUE;
+  private int throttleBytesPerPeriod = Integer.MAX_VALUE;
+  private long throttlePeriod = 1;
+  private TimeUnit throttleUnit = TimeUnit.SECONDS;
+
   private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
   private int bodyDelayTimeMs = 0;
+
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
     setBody(new byte[0]);
@@ -205,18 +210,30 @@ public final class MockResponse implements Cloneable {
     return this;
   }
 
-  public int getBytesPerSecond() {
-    return bytesPerSecond;
-  }
-
   /**
-   * Set simulated network speed, in bytes per second. This applies to the
-   * response body only; response headers are not throttled.
+   * Throttles the response body writer to sleep for the given period after each
+   * series of {@code bytesPerPeriod} bytes are written. Use this to simulate
+   * network behavior.
    */
-  public MockResponse setBytesPerSecond(int bytesPerSecond) {
-    this.bytesPerSecond = bytesPerSecond;
+  public MockResponse throttleBody(int bytesPerPeriod, long period, TimeUnit unit) {
+    this.throttleBytesPerPeriod = bytesPerPeriod;
+    this.throttlePeriod = period;
+    this.throttleUnit = unit;
     return this;
   }
+
+  public int getThrottleBytesPerPeriod() {
+    return throttleBytesPerPeriod;
+  }
+
+  public long getThrottlePeriod() {
+    return throttlePeriod;
+  }
+
+  public TimeUnit getThrottleUnit() {
+    return throttleUnit;
+  }
+
   /**
    * Set the delayed time of the response body to {@code delay}. This applies to the
    * response body only; response headers are not affected.

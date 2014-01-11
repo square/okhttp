@@ -28,6 +28,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.ByteOrder;
@@ -40,6 +41,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -262,12 +265,6 @@ public final class Util {
     }
   }
 
-  public static void skipAll(InputStream in) throws IOException {
-    do {
-      in.skip(Long.MAX_VALUE);
-    } while (in.read() != -1);
-  }
-
   /**
    * Call {@code in.read()} repeatedly until either the stream is exhausted or
    * {@code byteCount} bytes have been read.
@@ -278,9 +275,16 @@ public final class Util {
    * other threads. A thread-local buffer is also insufficient because some
    * streams may call other streams in their skip() method, also clobbering the
    * buffer.
+   *
+   * <p>This method throws a SocketTimeoutException if {@code timeoutMillis}
+   * elapses before the bytes can be skipped.
+   *
+   * @param timeoutMillis the maximum time to wait, or 0 to wait indefinitely.
    */
-  public static long skipByReading(InputStream in, long byteCount) throws IOException {
+  public static long skipByReading(InputStream in, long byteCount, long timeoutMillis)
+      throws IOException {
     if (byteCount == 0) return 0L;
+    long startNanos = timeoutMillis != 0 ? System.nanoTime() : 0;
 
     // acquire the shared skip buffer.
     byte[] buffer = skipBuffer.getAndSet(null);
@@ -292,12 +296,11 @@ public final class Util {
     while (skipped < byteCount) {
       int toRead = (int) Math.min(byteCount - skipped, buffer.length);
       int read = in.read(buffer, 0, toRead);
-      if (read == -1) {
-        break;
-      }
+      if (read == -1) break;
       skipped += read;
-      if (read < toRead) {
-        break;
+      if (timeoutMillis != 0
+          && NANOSECONDS.toMillis(System.nanoTime() - startNanos) > timeoutMillis) {
+        throw new SocketTimeoutException("Timed out after reading " + skipped + " of " + byteCount);
       }
     }
 
@@ -305,6 +308,10 @@ public final class Util {
     skipBuffer.set(buffer);
 
     return skipped;
+  }
+
+  public static long skipByReading(InputStream in, long byteCount) throws IOException {
+    return skipByReading(in, byteCount, 0);
   }
 
   /**

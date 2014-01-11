@@ -80,6 +80,8 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -1128,6 +1130,33 @@ public final class URLConnectionTest {
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection is pooled!
+  }
+
+  @Test public void streamDiscardingIsTimely() throws Exception {
+    // This response takes at least a full second to serve: 10,000 bytes served 100 bytes at a time.
+    server.enqueue(new MockResponse()
+        .setBody(new byte[10000])
+        .throttleBody(100, 10, MILLISECONDS));
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+
+    long startNanos = System.nanoTime();
+    URLConnection connection1 = client.open(server.getUrl("/"));
+    InputStream in = connection1.getInputStream();
+    in.close();
+    long elapsedNanos = System.nanoTime() - startNanos;
+    long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
+
+    // If we're working correctly, this should be greater than 100ms, but less than double that.
+    // Previously we had a bug where we would download the entire response body as long as no
+    // individual read took longer than 100ms.
+    assertTrue(String.format("Time to close: %sms", elapsedMillis), elapsedMillis < 500);
+
+    // Do another request to confirm that the discarded connection was not pooled.
+    assertContent("A", client.open(server.getUrl("/")));
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // Connection is not pooled.
   }
 
   @Test public void setChunkedStreamingMode() throws IOException, InterruptedException {
