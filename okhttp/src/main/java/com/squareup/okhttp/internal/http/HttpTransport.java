@@ -216,7 +216,7 @@ public final class HttpTransport implements Transport {
       int socketTimeout = socket.getSoTimeout();
       socket.setSoTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
       try {
-        Util.skipAll(responseBodyIn);
+        Util.skipByReading(responseBodyIn, Long.MAX_VALUE, DISCARD_STREAM_TIMEOUT_MILLIS);
         return true;
       } finally {
         socket.setSoTimeout(socketTimeout);

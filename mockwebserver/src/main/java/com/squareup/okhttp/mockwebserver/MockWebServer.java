@@ -536,28 +536,25 @@ public final class MockWebServer {
 
     InputStream in = response.getBodyStream();
     if (in == null) return;
-    int bytesPerSecond = response.getBytesPerSecond();
 
-    // Stream data in MTU-sized increments, with a minimum of one packet per second.
-    byte[] buffer = bytesPerSecond >= 1452 ? new byte[1452] : new byte[bytesPerSecond];
-    long delayMs = bytesPerSecond == Integer.MAX_VALUE
-        ? 0
-        : (1000 * buffer.length) / bytesPerSecond;
+    // Stream data in MTU-sized increments, sleeping every bytesPerPeriod bytes.
+    byte[] buffer = new byte[1452];
+    while (true) {
+      int bytesPerPeriod = response.getThrottleBytesPerPeriod();
+      for (int b = 0; b < bytesPerPeriod; ) {
+        int read = in.read(buffer, 0, Math.min(buffer.length, bytesPerPeriod - b));
+        if (read == -1) return;
 
-    int read;
-    long sinceDelay = 0;
-    while ((read = in.read(buffer)) != -1) {
-      out.write(buffer, 0, read);
-      out.flush();
+        out.write(buffer, 0, read);
+        out.flush();
+        b += read;
+      }
 
-      sinceDelay += read;
-      if (sinceDelay >= buffer.length && delayMs > 0) {
-        sinceDelay %= buffer.length;
-        try {
-          Thread.sleep(delayMs);
-        } catch (InterruptedException e) {
-          throw new AssertionError();
-        }
+      try {
+        long delayMs = response.getThrottleUnit().toMillis(response.getThrottlePeriod());
+        if (delayMs != 0) Thread.sleep(delayMs);
+      } catch (InterruptedException e) {
+        throw new AssertionError();
       }
     }
   }

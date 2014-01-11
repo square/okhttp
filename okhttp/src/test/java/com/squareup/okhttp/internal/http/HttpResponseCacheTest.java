@@ -564,7 +564,7 @@ public final class HttpResponseCacheTest {
 
   private void testClientPrematureDisconnect(TransferKind transferKind) throws IOException {
     // Setting a low transfer speed ensures that stream discarding will time out.
-    MockResponse response = new MockResponse().setBytesPerSecond(6);
+    MockResponse response = new MockResponse().throttleBody(6, 1, TimeUnit.SECONDS);
     transferKind.setBody(response, "ABCDE\nFGHIJKLMNOPQRSTUVWXYZ", 1024);
     server.enqueue(response);
     server.enqueue(new MockResponse().setBody("Request #2"));
