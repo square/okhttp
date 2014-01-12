@@ -16,6 +16,8 @@ Version 1.3.0 *(2014-01-11)*
  * Fix: Change HTTP date formats to UTC to conform to RFC2616 section 3.3.
  * Fix: Support SPDY header blocks with trailing bytes.
  * Fix: Allow `;` as separator for `Cache-Control` header.
+ * Fix: Correct bug where HTTPS POST requests were always automatically buffered.
+ * Fix: Honor read timeout when parsing SPDY headers.
 
 
 Version 1.2.1 *(2013-08-23)*
