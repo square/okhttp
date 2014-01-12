@@ -58,7 +58,7 @@ public final class SpdyConnection implements Closeable {
 
   private static final ExecutorService executor = new ThreadPoolExecutor(0,
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-      Util.daemonThreadFactory("OkHttp SpdyConnection"));
+      Util.threadFactory("OkHttp SpdyConnection", true));
 
   /** The protocol variant, like SPDY/3 or HTTP-draft-09/2.0. */
   final Variant variant;
@@ -101,7 +101,7 @@ public final class SpdyConnection implements Closeable {
 
     hostName = builder.hostName;
 
-    new Thread(new Reader(), "Spdy Reader " + hostName).start();
+    new Thread(new Reader()).start(); // Not a daemon thread.
   }
 
   /**
@@ -201,7 +201,7 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
-    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s stream %d", hostName, streamId) {
+    executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
           writeSynReset(streamId, errorCode);
@@ -216,7 +216,7 @@ public final class SpdyConnection implements Closeable {
   }
 
   void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
-    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s stream %d", hostName, streamId) {
+    executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
           writeWindowUpdate(streamId, deltaWindowSize);
@@ -252,7 +252,7 @@ public final class SpdyConnection implements Closeable {
 
   private void writePingLater(
       final boolean reply, final int payload1, final int payload2, final Ping ping) {
-    executor.submit(new NamedRunnable("OkHttp SPDY Writer %s ping %08x%08x",
+    executor.submit(new NamedRunnable("OkHttp %s ping %08x%08x",
         hostName, payload1, payload2) {
       @Override public void execute() {
         try {
@@ -438,8 +438,12 @@ public final class SpdyConnection implements Closeable {
     }
   }
 
-  private class Reader implements Runnable, FrameReader.Handler {
-    @Override public void run() {
+  private class Reader extends NamedRunnable implements FrameReader.Handler {
+    private Reader() {
+      super("OkHttp %s", hostName);
+    }
+
+    @Override protected void execute() {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
@@ -500,7 +504,7 @@ public final class SpdyConnection implements Closeable {
               inFinished, priority, nameValueBlock, settings);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
-          executor.submit(new NamedRunnable("OkHttp Callback %s stream %d", hostName, streamId) {
+          executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
             @Override public void execute() {
               try {
                 handler.receive(newStream);

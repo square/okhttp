@@ -18,6 +18,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
@@ -240,13 +241,13 @@ public final class MockWebServer {
    */
   public void play(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("play() already called");
-    executor = Executors.newCachedThreadPool();
+    executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     serverSocket = new ServerSocket(port);
     serverSocket.setReuseAddress(true);
 
     this.port = serverSocket.getLocalPort();
-    executor.execute(namedRunnable("MockWebServer-accept-" + port, new Runnable() {
-      public void run() {
+    executor.execute(new NamedRunnable("MockWebServer %s", port) {
+      @Override protected void execute() {
         try {
           acceptConnections();
         } catch (Throwable e) {
@@ -285,7 +286,7 @@ public final class MockWebServer {
           }
         }
       }
-    }));
+    });
   }
 
   public void shutdown() throws IOException {
@@ -295,11 +296,10 @@ public final class MockWebServer {
   }
 
   private void serveConnection(final Socket raw) {
-    String name = "MockWebServer-" + raw.getRemoteSocketAddress();
-    executor.execute(namedRunnable(name, new Runnable() {
+    executor.execute(new NamedRunnable("MockWebServer %s", raw.getRemoteSocketAddress()) {
       int sequenceNumber = 0;
 
-      public void run() {
+      @Override protected void execute() {
         try {
           processConnection();
         } catch (Exception e) {
@@ -420,7 +420,7 @@ public final class MockWebServer {
         sequenceNumber++;
         return true;
       }
-    }));
+    });
   }
 
   private void processHandshakeFailure(Socket raw) throws Exception {
@@ -623,20 +623,6 @@ public final class MockWebServer {
         super.write(oneByte);
       }
     }
-  }
-
-  private static Runnable namedRunnable(final String name, final Runnable runnable) {
-    return new Runnable() {
-      public void run() {
-        String originalName = Thread.currentThread().getName();
-        Thread.currentThread().setName(name);
-        try {
-          runnable.run();
-        } finally {
-          Thread.currentThread().setName(originalName);
-        }
-      }
-    };
   }
 
   /** Processes HTTP requests layered over SPDY/3. */
