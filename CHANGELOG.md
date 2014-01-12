@@ -10,7 +10,7 @@ Version 1.3.0 *(2014-01-11)*
  * Fix: Do not directly support any authentication schemes other than "Basic".
  * Fix: Respect read timeouts on recycled connections.
  * Fix: Transmit multiple cookie values as a single header with delimiter.
- * Fix: Ensure `null` is never returned from a conenction's `getHeaderFields()`.
+ * Fix: Ensure `null` is never returned from a connection's `getHeaderFields()`.
  * Fix: Persist proper `Content-Encoding` header to cache for GZip responses.
  * Fix: Eliminate rare race condition in SPDY streams that would prevent connection reuse.
  * Fix: Change HTTP date formats to UTC to conform to RFC2616 section 3.3.
