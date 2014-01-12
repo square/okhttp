@@ -158,8 +158,8 @@ public final class DiskLruCache implements Closeable {
   private long nextSequenceNumber = 0;
 
   /** This cache uses a single background thread to evict entries. */
-  final ThreadPoolExecutor executorService =
-      new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+  final ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
   private final Callable<Void> cleanupCallable = new Callable<Void>() {
     public Void call() throws Exception {
       synchronized (DiskLruCache.this) {

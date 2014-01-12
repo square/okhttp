@@ -33,8 +33,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static java.util.concurrent.Executors.defaultThreadFactory;
-
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
@@ -44,7 +42,8 @@ public final class MockSpdyPeer implements Closeable {
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
-  private final Executor executor = Executors.newCachedThreadPool(defaultThreadFactory());
+  private final Executor executor = Executors.newCachedThreadPool(
+      Util.threadFactory("MockSpdyPeer", false));
   private ServerSocket serverSocket;
   private Socket socket;
 

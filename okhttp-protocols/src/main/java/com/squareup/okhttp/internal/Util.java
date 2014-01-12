@@ -390,11 +390,11 @@ public final class Util {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 
-  public static ThreadFactory daemonThreadFactory(final String name) {
+  public static ThreadFactory threadFactory(final String name, final boolean daemon) {
     return new ThreadFactory() {
       @Override public Thread newThread(Runnable runnable) {
         Thread result = new Thread(runnable, name);
-        result.setDaemon(true);
+        result.setDaemon(daemon);
         return result;
       }
     };

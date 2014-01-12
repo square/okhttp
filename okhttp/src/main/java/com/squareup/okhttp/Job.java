@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
@@ -34,7 +35,7 @@ import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_SEE_O
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_UNAUTHORIZED;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
-final class Job implements Runnable {
+final class Job extends NamedRunnable {
   private final Dispatcher dispatcher;
   private final OkHttpClient client;
   private final Response.Receiver responseReceiver;
@@ -48,6 +49,7 @@ final class Job implements Runnable {
 
   public Job(Dispatcher dispatcher, OkHttpClient client, Request request,
       Response.Receiver responseReceiver) {
+    super("OkHttp %s", request.urlString());
     this.dispatcher = dispatcher;
     this.client = client;
     this.request = request;
@@ -66,11 +68,9 @@ final class Job implements Runnable {
     return request.tag();
   }
 
-  @Override public void run() {
-    String oldName = Thread.currentThread().getName();
-    Thread.currentThread().setName("OkHttp " + request.urlString());
+  @Override protected void execute() {
     try {
-      Response response = execute();
+      Response response = getResponse();
       if (response != null && !canceled) {
         responseReceiver.onResponse(response);
       }
@@ -81,7 +81,6 @@ final class Job implements Runnable {
           .build());
     } finally {
       engine.release(true); // Release the connection if it isn't already released.
-      Thread.currentThread().setName(oldName);
       dispatcher.finished(this);
     }
   }
@@ -90,7 +89,7 @@ final class Job implements Runnable {
    * Performs the request and returns the response. May return null if this job
    * was canceled.
    */
-  private Response execute() throws IOException {
+  private Response getResponse() throws IOException {
     Connection connection = null;
     Response redirectedBy = null;
 
