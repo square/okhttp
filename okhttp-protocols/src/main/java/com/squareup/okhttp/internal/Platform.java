@@ -41,11 +41,25 @@ import javax.net.ssl.SSLSocket;
 /**
  * Access to Platform-specific features necessary for SPDY and advanced TLS.
  *
- * <h3>SPDY</h3>
- * SPDY requires a TLS extension called NPN (Next Protocol Negotiation) that's
- * available in Android 4.1+ and OpenJDK 7+ (with the npn-boot extension). It
- * also requires a recent version of {@code DeflaterOutputStream} that is
- * public API in Java 7 and callable via reflection in Android 4.1+.
+ * <h3>ALPN and NPN</h3>
+ * This class uses TLS extensions ALPN and NPN to negotiate the upgrade from
+ * HTTP/1.1 (the default protocol to use with TLS on port 443) to either SPDY
+ * or HTTP/2.0.
+ *
+ * <p>NPN (Next Protocol Negotiation) was developed for SPDY. It is widely
+ * available and we support it on both Android (4.1+) and OpenJDK 7 (via the
+ * Jetty NPN-boot library).
+ *
+ * <p>ALPN (Application Layer Protocol Negotiation) is the successor to NPN. It
+ * has some technical advantages over NPN. We support it on Android (4.4+) only.
+ *
+ * <p>On platforms that support both extensions, OkHttp will use both,
+ * preferring ALPN's result. Future versions of OkHttp will drop support NPN.
+ *
+ * <h3>Deflater Sync Flush</h3>
+ * SPDY header compression requires a recent version of {@code
+ * DeflaterOutputStream} that is public API in Java 7 and callable via
+ * reflection in Android 4.1+.
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
@@ -155,14 +169,21 @@ public class Platform {
       // Attempt to find Android 4.1+ APIs.
       Method setNpnProtocols = null;
       Method getNpnSelectedProtocol = null;
+      Method setAlpnProtocols = null;
+      Method getAlpnSelectedProtocol = null;
       try {
         setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
         getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
+        try {
+          setAlpnProtocols = openSslSocketClass.getMethod("setAlpnProtocols", byte[].class);
+          getAlpnSelectedProtocol = openSslSocketClass.getMethod("getAlpnSelectedProtocol");
+        } catch (NoSuchMethodException ignored) {
+        }
       } catch (NoSuchMethodException ignored) {
       }
 
       return new Android(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
-          getNpnSelectedProtocol);
+          getNpnSelectedProtocol, setAlpnProtocols, getAlpnSelectedProtocol);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     } catch (NoSuchMethodException ignored) {
@@ -199,18 +220,25 @@ public class Platform {
     private final Method setUseSessionTickets;
     private final Method setHostname;
 
-    // Non-null on Android 4.1+
+    // Non-null on Android 4.1+.
     private final Method setNpnProtocols;
     private final Method getNpnSelectedProtocol;
 
+    // Non-null on Android 4.4+.
+    private final Method setAlpnProtocols;
+    private final Method getAlpnSelectedProtocol;
+
     private Android(
         Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method setNpnProtocols, Method getNpnSelectedProtocol) {
+        Method setNpnProtocols, Method getNpnSelectedProtocol, Method setAlpnProtocols,
+        Method getAlpnSelectedProtocol) {
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
       this.setNpnProtocols = setNpnProtocols;
       this.getNpnSelectedProtocol = getNpnSelectedProtocol;
+      this.setAlpnProtocols = setAlpnProtocols;
+      this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
     }
 
     @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -243,7 +271,11 @@ public class Platform {
       if (setNpnProtocols == null) return;
       if (!openSslSocketClass.isInstance(socket)) return;
       try {
-        setNpnProtocols.invoke(socket, new Object[] {npnProtocols});
+        Object[] parameters = { npnProtocols };
+        if (setAlpnProtocols != null) {
+          setAlpnProtocols.invoke(socket, parameters);
+        }
+        setNpnProtocols.invoke(socket, parameters);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
       } catch (InvocationTargetException e) {
@@ -255,6 +287,11 @@ public class Platform {
       if (getNpnSelectedProtocol == null) return null;
       if (!openSslSocketClass.isInstance(socket)) return null;
       try {
+        if (getAlpnSelectedProtocol != null) {
+          // Prefer ALPN's result if it is present.
+          byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
+          if (alpnResult != null) return alpnResult;
+        }
         return (byte[]) getNpnSelectedProtocol.invoke(socket);
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
