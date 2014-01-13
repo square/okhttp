@@ -153,14 +153,16 @@ public class Platform {
       setHostname = openSslSocketClass.getMethod("setHostname", String.class);
 
       // Attempt to find Android 4.1+ APIs.
+      Method setNpnProtocols = null;
+      Method getNpnSelectedProtocol = null;
       try {
-        Method setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
-        Method getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
-        return new Android41(openSslSocketClass, setUseSessionTickets, setHostname,
-            setNpnProtocols, getNpnSelectedProtocol);
+        setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
+        getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
       } catch (NoSuchMethodException ignored) {
-        return new Android23(openSslSocketClass, setUseSessionTickets, setHostname);
       }
+
+      return new Android(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
+          getNpnSelectedProtocol);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     } catch (NoSuchMethodException ignored) {
@@ -187,17 +189,28 @@ public class Platform {
     return new Platform();
   }
 
-  /** Android version 2.3 and newer support TLS session tickets and server name indication (SNI). */
-  private static class Android23 extends Platform {
+  /**
+   * Android 2.3 or better. Version 2.3 supports TLS session tickets and server
+   * name indication (SNI). Versions 4.1 supports NPN.
+   */
+  private static class Android extends Platform {
+    // Non-null.
     protected final Class<?> openSslSocketClass;
     private final Method setUseSessionTickets;
     private final Method setHostname;
 
-    private Android23(
-        Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname) {
+    // Non-null on Android 4.1+
+    private final Method setNpnProtocols;
+    private final Method getNpnSelectedProtocol;
+
+    private Android(
+        Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
+        Method setNpnProtocols, Method getNpnSelectedProtocol) {
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
+      this.setNpnProtocols = setNpnProtocols;
+      this.getNpnSelectedProtocol = getNpnSelectedProtocol;
     }
 
     @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -215,36 +228,20 @@ public class Platform {
 
     @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
       super.enableTlsExtensions(socket, uriHost);
-      if (openSslSocketClass.isInstance(socket)) {
-        // This is Android: use reflection on OpenSslSocketImpl.
-        try {
-          setUseSessionTickets.invoke(socket, true);
-          setHostname.invoke(socket, uriHost);
-        } catch (InvocationTargetException e) {
-          throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        }
+      if (!openSslSocketClass.isInstance(socket)) return;
+      try {
+        setUseSessionTickets.invoke(socket, true);
+        setHostname.invoke(socket, uriHost);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
       }
-    }
-  }
-
-  /** Android version 4.1 and newer support NPN. */
-  private static class Android41 extends Android23 {
-    private final Method setNpnProtocols;
-    private final Method getNpnSelectedProtocol;
-
-    private Android41(Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method setNpnProtocols, Method getNpnSelectedProtocol) {
-      super(openSslSocketClass, setUseSessionTickets, setHostname);
-      this.setNpnProtocols = setNpnProtocols;
-      this.getNpnSelectedProtocol = getNpnSelectedProtocol;
     }
 
     @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
-      if (!openSslSocketClass.isInstance(socket)) {
-        return;
-      }
+      if (setNpnProtocols == null) return;
+      if (!openSslSocketClass.isInstance(socket)) return;
       try {
         setNpnProtocols.invoke(socket, new Object[] {npnProtocols});
       } catch (IllegalAccessException e) {
@@ -255,9 +252,8 @@ public class Platform {
     }
 
     @Override public byte[] getNpnSelectedProtocol(SSLSocket socket) {
-      if (!openSslSocketClass.isInstance(socket)) {
-        return null;
-      }
+      if (getNpnSelectedProtocol == null) return null;
+      if (!openSslSocketClass.isInstance(socket)) return null;
       try {
         return (byte[]) getNpnSelectedProtocol.invoke(socket);
       } catch (InvocationTargetException e) {
