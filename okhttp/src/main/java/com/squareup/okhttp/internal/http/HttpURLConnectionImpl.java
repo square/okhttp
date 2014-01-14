@@ -37,14 +37,12 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLHandshakeException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -277,7 +275,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableOutputStream requestBody) throws IOException {
+      RetryableOutputStream requestBody) {
     Request.Builder builder = new Request.Builder()
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
@@ -305,7 +303,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setOkResponseCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, connection, requestBody);
+    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody);
   }
 
   /**
@@ -377,50 +375,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
       return true;
     } catch (IOException e) {
-      if (handleFailure(e)) {
+      HttpEngine retryEngine = httpEngine.recover(e);
+      if (retryEngine != null) {
+        httpEngine = retryEngine;
         return false;
-      } else {
-        throw e;
       }
-    }
-  }
 
-  /**
-   * Report and attempt to recover from {@code e}. Returns true if the HTTP
-   * engine was replaced and the request should be retried. Otherwise the
-   * failure is permanent.
-   */
-  private boolean handleFailure(IOException e) throws IOException {
-    RouteSelector routeSelector = httpEngine.routeSelector;
-    if (routeSelector != null && httpEngine.connection != null) {
-      routeSelector.connectFailed(httpEngine.connection, e);
-    }
-
-    OutputStream requestBody = httpEngine.getRequestBody();
-    boolean canRetryRequestBody = requestBody == null
-        || requestBody instanceof RetryableOutputStream;
-    if (routeSelector == null && httpEngine.connection == null // No connection.
-        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
-        || !isRecoverable(e)
-        || !canRetryRequestBody) {
+      // Give up; recovery is not possible.
       httpEngineFailure = e;
-      return false;
+      throw e;
     }
-
-    httpEngine.release(true);
-    RetryableOutputStream retryableOutputStream = (RetryableOutputStream) requestBody;
-    httpEngine = newHttpEngine(method, null, retryableOutputStream);
-    httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
-    return true;
-  }
-
-  private boolean isRecoverable(IOException e) {
-    // If the problem was a CertificateException from the X509TrustManager,
-    // do not retry, we didn't have an abrupt server initiated exception.
-    boolean sslFailure =
-        e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
-    boolean protocolFailure = e instanceof ProtocolException;
-    return !sslFailure && !protocolFailure;
   }
 
   enum Retry {
@@ -435,8 +399,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * prepare for a follow up request.
    */
   private Retry processResponseHeaders() throws IOException {
-    Proxy selectedProxy = httpEngine.connection != null
-        ? httpEngine.connection.getRoute().getProxy()
+    Connection connection = httpEngine.getConnection();
+    Proxy selectedProxy = connection != null
+        ? connection.getRoute().getProxy()
         : client.getProxy();
     final int responseCode = getResponseCode();
     switch (responseCode) {

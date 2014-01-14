@@ -33,12 +33,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
@@ -74,8 +77,8 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 public class HttpEngine {
   final OkHttpClient client;
 
-  Connection connection;
-  RouteSelector routeSelector;
+  private Connection connection;
+  private RouteSelector routeSelector;
   private Route route;
 
   private Transport transport;
@@ -134,13 +137,17 @@ public class HttpEngine {
    *     immediately prior to this request/response pair, such as a same-host
    *     redirect. This engine assumes ownership of the connection and must
    *     release it when it is unneeded.
+   * @param routeSelector the route selector used for a failed attempt
+   *     immediately preceding this attempt, or null if this request doesn't
+   *     recover from a failure.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      Connection connection, RetryableOutputStream requestBodyOut) throws IOException {
+      Connection connection, RouteSelector routeSelector, RetryableOutputStream requestBodyOut) {
     this.client = client;
     this.request = request;
     this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
+    this.routeSelector = routeSelector;
     this.route = connection != null ? connection.getRoute() : null;
     this.requestBodyOut = requestBodyOut;
   }
@@ -239,7 +246,7 @@ public class HttpEngine {
       client.getConnectionPool().maybeShare(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     } else if (!connection.isSpdy()) {
-        connection.updateReadTimeout(client.getReadTimeout());
+      connection.updateReadTimeout(client.getReadTimeout());
     }
 
     route = connection.getRoute();
@@ -296,6 +303,41 @@ public class HttpEngine {
 
   public final Connection getConnection() {
     return connection;
+  }
+
+  /**
+   * Report and attempt to recover from {@code e}. Returns a new HTTP engine
+   * that should be used for the retry if {@code e} is recoverable, or null if
+   * the failure is permanent.
+   */
+  public HttpEngine recover(IOException e) {
+    if (routeSelector != null && connection != null) {
+      routeSelector.connectFailed(connection, e);
+    }
+
+    boolean canRetryRequestBody = requestBodyOut == null
+        || requestBodyOut instanceof RetryableOutputStream;
+    if (routeSelector == null && connection == null // No connection.
+        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
+        || !isRecoverable(e)
+        || !canRetryRequestBody) {
+      return null;
+    }
+
+    release(true);
+
+    // For failure recovery, use the same route selector with a new connection.
+    return new HttpEngine(client, request, bufferRequestBody, null, routeSelector,
+        (RetryableOutputStream) requestBodyOut);
+  }
+
+  private boolean isRecoverable(IOException e) {
+    // If the problem was a CertificateException from the X509TrustManager,
+    // do not retry, we didn't have an abrupt server initiated exception.
+    boolean sslFailure =
+        e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
+    boolean protocolFailure = e instanceof ProtocolException;
+    return !sslFailure && !protocolFailure;
   }
 
   /**
