@@ -90,40 +90,53 @@ final class Job extends NamedRunnable {
    * was canceled.
    */
   private Response getResponse() throws IOException {
-    Connection connection = null;
     Response redirectedBy = null;
+
+    // Copy body metadata to the appropriate request headers.
+    Request.Body body = request.body();
+    if (body != null) {
+      MediaType contentType = body.contentType();
+      if (contentType == null) throw new IllegalStateException("contentType == null");
+
+      Request.Builder requestBuilder = request.newBuilder();
+      requestBuilder.header("Content-Type", contentType.toString());
+
+      long contentLength = body.contentLength();
+      if (contentLength != -1) {
+        requestBuilder.header("Content-Length", Long.toString(contentLength));
+        requestBuilder.removeHeader("Transfer-Encoding");
+      } else {
+        requestBuilder.header("Transfer-Encoding", "chunked");
+        requestBuilder.removeHeader("Content-Length");
+      }
+
+      request = requestBuilder.build();
+    }
+
+    // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
+    engine = new HttpEngine(client, request, false, null, null, null);
 
     while (true) {
       if (canceled) return null;
 
-      Request.Body body = request.body();
-      if (body != null) {
-        MediaType contentType = body.contentType();
-        if (contentType == null) throw new IllegalStateException("contentType == null");
+      try {
+        engine.sendRequest();
 
-        Request.Builder requestBuilder = request.newBuilder();
-        requestBuilder.header("Content-Type", contentType.toString());
-
-        long contentLength = body.contentLength();
-        if (contentLength != -1) {
-          requestBuilder.header("Content-Length", Long.toString(contentLength));
-          requestBuilder.removeHeader("Transfer-Encoding");
-        } else {
-          requestBuilder.header("Transfer-Encoding", "chunked");
-          requestBuilder.removeHeader("Content-Length");
+        if (body != null) {
+          body.writeTo(engine.getRequestBody());
         }
 
-        request = requestBuilder.build();
+        engine.readResponse();
+      } catch (IOException e) {
+        HttpEngine retryEngine = engine.recover(e);
+        if (retryEngine != null) {
+          engine = retryEngine;
+          continue;
+        }
+
+        // Give up; recovery is not possible.
+        throw e;
       }
-
-      engine = new HttpEngine(client, request, false, connection, null);
-      engine.sendRequest();
-
-      if (body != null) {
-        body.writeTo(engine.getRequestBody());
-      }
-
-      engine.readResponse();
 
       Response response = engine.getResponse();
       Request redirect = processResponse(engine, response);
@@ -141,9 +154,10 @@ final class Job extends NamedRunnable {
       }
 
       engine.release(false);
-      connection = engine.getConnection();
+      Connection connection = engine.getConnection();
       redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = redirect;
+      engine = new HttpEngine(client, request, false, connection, null, null);
     }
   }
 

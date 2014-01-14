@@ -123,8 +123,8 @@ public final class HttpTransport implements Transport {
   public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
     String requestLine = RequestLine.get(request,
-        httpEngine.connection.getRoute().getProxy().type(),
-        httpEngine.connection.getHttpMinorVersion());
+        httpEngine.getConnection().getRoute().getProxy().type(),
+        httpEngine.getConnection().getHttpMinorVersion());
     writeRequest(requestOut, request.getHeaders(), requestLine);
   }
 
@@ -208,7 +208,7 @@ public final class HttpTransport implements Transport {
    * reuse.
    */
   private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
-    Connection connection = httpEngine.connection;
+    Connection connection = httpEngine.getConnection();
     if (connection == null) return false;
     Socket socket = connection.getSocket();
     if (socket == null) return false;
