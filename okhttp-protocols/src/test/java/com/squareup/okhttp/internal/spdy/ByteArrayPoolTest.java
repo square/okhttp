@@ -18,9 +18,9 @@ package com.squareup.okhttp.internal.spdy;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 public class ByteArrayPoolTest {
   @Test public void testReusesBuffer() {
