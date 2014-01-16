@@ -107,7 +107,7 @@ public final class RouteSelectorTest {
     dns.inetAddresses = makeFakeAddresses(255, 1);
     Connection connection = routeSelector.next("GET");
     RouteDatabase routeDatabase = new RouteDatabase();
-    routeDatabase.failed(connection.getRoute(), new IOException());
+    routeDatabase.failed(connection.getRoute());
     routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns, routeDatabase);
     assertConnection(routeSelector.next("GET"), address, NO_PROXY, dns.inetAddresses[0], uriPort,
         false);
@@ -281,6 +281,7 @@ public final class RouteSelectorTest {
     assertFalse(routeSelector.hasNext());
   }
 
+  // https://github.com/square/okhttp/issues/442
   @Test public void nonSslErrorAddsAllTlsModesToFailedRoute() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, hostnameVerifier, authenticator,
         Proxy.NO_PROXY, transports);
@@ -292,6 +293,7 @@ public final class RouteSelectorTest {
     Connection connection = routeSelector.next("GET");
     routeSelector.connectFailed(connection, new IOException("Non SSL exception"));
     assertTrue(routeDatabase.failedRoutesCount() == 2);
+    assertFalse(routeSelector.hasNext());
   }
 
   @Test public void sslErrorAddsOnlyFailedTlsModeToFailedRoute() throws Exception {
@@ -305,6 +307,7 @@ public final class RouteSelectorTest {
     Connection connection = routeSelector.next("GET");
     routeSelector.connectFailed(connection, new SSLHandshakeException("SSL exception"));
     assertTrue(routeDatabase.failedRoutesCount() == 1);
+    assertTrue(routeSelector.hasNext());
   }
 
   @Test public void multipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
@@ -372,7 +375,7 @@ public final class RouteSelectorTest {
     // Check that we do indeed have more than one route.
     assertTrue(regularRoutes.size() > 1);
     // Add first regular route as failed.
-    routeDatabase.failed(regularRoutes.get(0).getRoute(), new SSLHandshakeException("none"));
+    routeDatabase.failed(regularRoutes.get(0).getRoute());
     // Reset selector
     routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns, routeDatabase);
 

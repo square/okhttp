@@ -75,11 +75,6 @@ public class Route {
     return modernTls;
   }
 
-  /** Returns a copy of this route with flipped TLS mode. */
-  Route flipTlsMode() {
-    return new Route(address, proxy, inetSocketAddress, !modernTls);
-  }
-
   @Override public boolean equals(Object obj) {
     if (obj instanceof Route) {
       Route other = (Route) obj;
