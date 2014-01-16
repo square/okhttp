@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -31,8 +32,8 @@ import java.util.zip.Deflater;
 
 final class Spdy3 implements Variant {
 
-  @Override public String getProtocol() {
-    return "spdy/3";
+  @Override public Protocol getProtocol() {
+    return Protocol.SPDY_3;
   }
 
   static final int TYPE_DATA = 0x0;

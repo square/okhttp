@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
@@ -31,7 +32,6 @@ import java.io.OutputStream;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import javax.net.ssl.SSLSocket;
 
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -56,7 +56,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
  *       connections for multiple domain names.
  *   <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
- *       for both HTTP and SPDY transports.
+ *       for both HTTP and SPDY protocols.
  * </ul>
  * Unfortunately, older HTTPS servers refuse to connect when such options are
  * presented. Rather than avoiding these options entirely, this class allows a
@@ -64,31 +64,6 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * should the attempt fail.
  */
 public final class Connection implements Closeable {
-  private static final byte[] ALL_PROTOCOLS = new byte[] {
-      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0',
-      6, 's', 'p', 'd', 'y', '/', '3',
-      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
-
-  private static final byte[] SPDY3_AND_HTTP11 = new byte[] {
-      6, 's', 'p', 'd', 'y', '/', '3',
-      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
-
-  private static final byte[] HTTP2_AND_HTTP = new byte[] {
-      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0',
-      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
-
-  private static final byte[] HTTP_20_DRAFT_09 = new byte[] {
-      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '9', '/', '2', '.', '0'
-  };
-  private static final byte[] SPDY3 = new byte[] {
-      's', 'p', 'd', 'y', '/', '3'
-  };
-  private static final byte[] HTTP_11 = new byte[] {
-      'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
 
   private final Route route;
 
@@ -145,19 +120,19 @@ public final class Connection implements Closeable {
       platform.supportTlsIntolerantServer(sslSocket);
     }
 
-    boolean useNpn = route.modernTls && (
-        route.address.transports.contains("HTTP-draft-09/2.0")
-     || route.address.transports.contains("spdy/3")
+    boolean useNpn = route.modernTls && (// Contains a spdy variant.
+        route.address.protocols.contains(Protocol.HTTP_2)
+     || route.address.protocols.contains(Protocol.SPDY_3)
     );
 
     if (useNpn) {
-      if (route.address.transports.contains("HTTP-draft-09/2.0")
-       && route.address.transports.contains("spdy/3")) {
-        platform.setNpnProtocols(sslSocket, ALL_PROTOCOLS);
-      } else if (route.address.transports.contains("HTTP-draft-09/2.0")) {
-        platform.setNpnProtocols(sslSocket, HTTP2_AND_HTTP);
+      if (route.address.protocols.contains(Protocol.HTTP_2) // Contains both spdy variants.
+          && route.address.protocols.contains(Protocol.SPDY_3)) {
+        platform.setNpnProtocols(sslSocket, Protocol.HTTP2_SPDY3_AND_HTTP);
+      } else if (route.address.protocols.contains(Protocol.HTTP_2)) {
+        platform.setNpnProtocols(sslSocket, Protocol.HTTP2_AND_HTTP_11);
       } else {
-        platform.setNpnProtocols(sslSocket, SPDY3_AND_HTTP11);
+        platform.setNpnProtocols(sslSocket, Protocol.SPDY3_AND_HTTP11);
       }
     }
 
@@ -174,19 +149,14 @@ public final class Connection implements Closeable {
     handshake = Handshake.get(sslSocket.getSession());
     streamWrapper();
 
-    byte[] selectedProtocol;
-    if (useNpn && (selectedProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_09)
-       || Arrays.equals(selectedProtocol, SPDY3)) {
-        SpdyConnection.Builder builder =
-            new SpdyConnection.Builder(route.address.getUriHost(), true, in, out);
-        if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_09)) builder.http20Draft09();
+    ByteString maybeProtocol;
+    if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
+      Protocol selectedProtocol = Protocol.find(maybeProtocol); // Throws IOE on unknown.
+      if (selectedProtocol.spdyVariant) {
         sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = builder.build();
+        spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
+            .protocol(selectedProtocol).build();
         spdyConnection.sendConnectionHeader();
-      } else if (!Arrays.equals(selectedProtocol, HTTP_11)) {
-        throw new IOException(
-            "Unexpected NPN transport " + new String(selectedProtocol, "ISO-8859-1"));
       }
     }
   }

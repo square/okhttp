@@ -15,11 +15,13 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -29,7 +31,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
@@ -38,13 +40,11 @@ import javax.net.ssl.SSLSocketFactory;
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
-  private static final List<String> DEFAULT_TRANSPORTS
-      = Util.immutableList(Arrays.asList("HTTP-draft-09/2.0", "spdy/3", "http/1.1"));
 
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
   private Proxy proxy;
-  private List<String> transports;
+  private List<Protocol> protocols;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
   private OkResponseCache responseCache;
@@ -296,20 +296,39 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Configure the transports used by this client to communicate with remote
+   * @deprecated OkHttp 2 enforces an enumeration of {@link Protocol protocols}
+   * that can be selected. Please switch to {@link #setProtocols(java.util.List)}.
+   */
+  @Deprecated
+  public OkHttpClient setTransports(List<String> transports) {
+    List<Protocol> protocols = new ArrayList<Protocol>(transports.size());
+    for (int i = 0, size = transports.size(); i < size; i++) {
+      try {
+        Protocol protocol = Protocol.find(ByteString.encodeUtf8(transports.get(i)));
+        protocols.add(protocol);
+      } catch (IOException e) {
+        throw new IllegalArgumentException(e);
+      }
+    }
+    return setProtocols(protocols);
+  }
+
+  /**
+   * Configure the protocols used by this client to communicate with remote
    * servers. By default this client will prefer the most efficient transport
-   * available, falling back to more ubiquitous transports. Applications should
+   * available, falling back to more ubiquitous protocols. Applications should
    * only call this method to avoid specific compatibility problems, such as web
    * servers that behave incorrectly when SPDY is enabled.
    *
-   * <p>The following transports are currently supported:
+   * <p>The following protocols are currently supported:
    * <ul>
    *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
    *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3">spdy/3</a>
+   *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-09">HTTP-draft-09/2.0</a>
    * </ul>
    *
    * <p><strong>This is an evolving set.</strong> Future releases may drop
-   * support for transitional transports (like spdy/3), in favor of their
+   * support for transitional protocols (like spdy/3), in favor of their
    * successors (spdy/4 or http/2.0). The http/1.1 transport will never be
    * dropped.
    *
@@ -319,26 +338,39 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * (such as <a href="http://tools.ietf.org/html/draft-friedl-tls-applayerprotoneg-02">ALPN</a>)
    * to negotiate a transport.
    *
-   * @param transports the transports to use, in order of preference. The list
+   * @param protocols the protocols to use, in order of preference. The list
    *     must contain "http/1.1". It must not contain null.
    */
-  public OkHttpClient setTransports(List<String> transports) {
-    transports = Util.immutableList(transports);
-    if (!transports.contains("http/1.1")) {
-      throw new IllegalArgumentException("transports doesn't contain http/1.1: " + transports);
+  public OkHttpClient setProtocols(List<Protocol> protocols) {
+    protocols = Util.immutableList(protocols);
+    if (!protocols.contains(Protocol.HTTP_11)) {
+      throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
     }
-    if (transports.contains(null)) {
-      throw new IllegalArgumentException("transports must not contain null");
+    if (protocols.contains(null)) {
+      throw new IllegalArgumentException("protocols must not contain null");
     }
-    if (transports.contains("")) {
-      throw new IllegalArgumentException("transports contains an empty string");
+    if (protocols.contains(ByteString.EMPTY)) {
+      throw new IllegalArgumentException("protocols contains an empty string");
     }
-    this.transports = transports;
+    this.protocols = Util.immutableList(protocols);
     return this;
   }
 
+  /**
+   * @deprecated OkHttp 2 enforces an enumeration of {@link Protocol protocols}
+   * that can be selected. Please switch to {@link #getProtocols()}.
+   */
+  @Deprecated
   public List<String> getTransports() {
+    List<String> transports = new ArrayList<String>(protocols.size());
+    for (int i = 0, size = protocols.size(); i < size; i++) {
+      transports.add(protocols.get(i).name.utf8());
+    }
     return transports;
+  }
+
+  public List<Protocol> getProtocols() {
+    return protocols;
   }
 
   /**
@@ -404,8 +436,8 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();
     }
-    if (result.transports == null) {
-      result.transports = DEFAULT_TRANSPORTS;
+    if (result.protocols == null) {
+      result.protocols = Protocol.HTTP2_SPDY3_AND_HTTP;
     }
     return result;
   }

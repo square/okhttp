@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
@@ -61,12 +62,12 @@ import static org.junit.Assert.fail;
 /** Test how SPDY interacts with HTTP features. */
 public abstract class HttpOverSpdyTest {
 
-  /** Transport to test, for example {@code spdy/3} */
-  private final String transport;
+  /** Protocol to test, for example {@link com.squareup.okhttp.Protocol#SPDY_3} */
+  private final Protocol protocol;
   protected String hostHeader = ":host";
 
-  protected HttpOverSpdyTest(String transport){
-    this.transport = transport;
+  protected HttpOverSpdyTest(Protocol protocol){
+    this.protocol = protocol;
   }
 
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
@@ -83,11 +84,11 @@ public abstract class HttpOverSpdyTest {
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.setTransports(Arrays.asList(transport, "http/1.1"));
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_11));
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");
-    File cacheDir = new File(systemTmpDir, "HttpCache-" + transport + "-" + UUID.randomUUID());
+    File cacheDir = new File(systemTmpDir, "HttpCache-" + protocol + "-" + UUID.randomUUID());
     cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
   }
 
@@ -386,8 +387,7 @@ public abstract class HttpOverSpdyTest {
 
     @Override public void run() {
       try {
-        HttpURLConnection conn = null;
-        conn = (HttpURLConnection) client.open(server.getUrl(path));
+        HttpURLConnection conn = client.open(server.getUrl(path));
         assertEquals("A", readAscii(conn.getInputStream(), 1));
         countDownLatch.countDown();
       } catch (Exception e) {

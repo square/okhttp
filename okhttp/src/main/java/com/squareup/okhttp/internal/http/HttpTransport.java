@@ -21,6 +21,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.AbstractOutputStream;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -155,7 +156,8 @@ public final class HttpTransport implements Transport {
 
       Response.Builder responseBuilder = new Response.Builder()
           .statusLine(statusLine)
-          .header(OkHeaders.SELECTED_TRANSPORT, "http/1.1");
+          .header(OkHeaders.SELECTED_TRANSPORT, Protocol.HTTP_11.name.utf8())
+          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.name.utf8());
 
       Headers.Builder headersBuilder = new Headers.Builder();
       OkHeaders.readHeaders(headersBuilder, in);

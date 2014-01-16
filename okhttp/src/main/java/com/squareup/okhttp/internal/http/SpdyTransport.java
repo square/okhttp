@@ -20,6 +20,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -41,7 +42,6 @@ public final class SpdyTransport implements Transport {
   private static final ByteString HEADER_HOST = ByteString.encodeUtf8(":host");
   private static final ByteString HEADER_AUTHORITY = ByteString.encodeUtf8(":authority");
   private static final ByteString HEADER_SCHEME = ByteString.encodeUtf8(":scheme");
-  private static final ByteString NULL = ByteString.of((byte) 0x00);
 
   private final HttpEngine httpEngine;
   private final SpdyConnection spdyConnection;
@@ -88,7 +88,7 @@ public final class SpdyTransport implements Transport {
    * Names are all lower case. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<ByteString> writeNameValueBlock(Request request, String protocol,
+  public static List<ByteString> writeNameValueBlock(Request request, Protocol protocol,
       String version) {
     Headers headers = request.headers();
     // TODO: make the known header names constants.
@@ -99,9 +99,9 @@ public final class SpdyTransport implements Transport {
     result.add(ByteString.encodeUtf8(RequestLine.requestPath(request.url())));
     result.add(HEADER_VERSION);
     result.add(ByteString.encodeUtf8(version));
-    if (protocol.equals("spdy/3")) {
+    if (Protocol.SPDY_3 == protocol) {
       result.add(HEADER_HOST);
-    } else if (protocol.equals("HTTP-draft-09/2.0")) {
+    } else if (Protocol.HTTP_2 == protocol) {
       result.add(HEADER_AUTHORITY);
     } else {
       throw new AssertionError();
@@ -127,19 +127,19 @@ public final class SpdyTransport implements Transport {
           || name.equals(":scheme")) {
         continue;
       }
-      ByteString valueBytes = ByteString.encodeUtf8(value);
 
       // If we haven't seen this name before, add the pair to the end of the list...
       if (names.add(ByteString.encodeUtf8(name))) {
         result.add(ByteString.encodeUtf8(name));
-        result.add(valueBytes);
+        result.add(ByteString.encodeUtf8(value));
         continue;
       }
 
       // ...otherwise concatenate the existing values and this value.
       for (int j = 0; j < result.size(); j += 2) {
         if (result.get(j).utf8Equals(name)) {
-          result.set(j + 1, ByteString.concat(result.get(j + 1), NULL, valueBytes));
+          String concatenated = joinOnNull(result.get(j + 1).utf8(), value);
+          result.set(j + 1, ByteString.encodeUtf8(concatenated));
           break;
         }
       }
@@ -147,9 +147,13 @@ public final class SpdyTransport implements Transport {
     return result;
   }
 
+  private static String joinOnNull(String first, String second) {
+    return new StringBuilder(first).append('\0').append(second).toString();
+  }
+
   /** Returns headers for a name value block containing a SPDY response. */
   public static Response.Builder readNameValueBlock(List<ByteString> nameValueBlock,
-      String protocol) throws IOException {
+      Protocol protocol) throws IOException {
     if (nameValueBlock.size() % 2 != 0) {
       throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
     }
@@ -157,7 +161,8 @@ public final class SpdyTransport implements Transport {
     String version = "HTTP/1.1"; // TODO: why are we expecting :version?
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol);
+    headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol.name.utf8());
+    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.name.utf8());
     for (int i = 0; i < nameValueBlock.size(); i += 2) {
       String name = nameValueBlock.get(i).utf8();
       String values = nameValueBlock.get(i + 1).utf8();
@@ -206,9 +211,9 @@ public final class SpdyTransport implements Transport {
   }
 
   /** When true, this header should not be emitted or consumed. */
-  private static boolean isProhibitedHeader(String protocol, String name) {
+  private static boolean isProhibitedHeader(Protocol protocol, String name) {
     boolean prohibited = false;
-    if (protocol.equals("spdy/3")) {
+    if (protocol == Protocol.SPDY_3) {
       // http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3#TOC-3.2.1-Request
       if (name.equals("connection")
           || name.equals("host")
@@ -217,7 +222,7 @@ public final class SpdyTransport implements Transport {
           || name.equals("transfer-encoding")) {
         prohibited = true;
       }
-    } else if (protocol.equals("HTTP-draft-09/2.0")) {
+    } else if (protocol == Protocol.HTTP_2) {
       // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
       if (name.equals("connection")
           || name.equals("host")
@@ -230,7 +235,7 @@ public final class SpdyTransport implements Transport {
         prohibited = true;
       }
     } else {
-      throw new AssertionError();
+      throw new AssertionError(protocol);
     }
     return prohibited;
   }
