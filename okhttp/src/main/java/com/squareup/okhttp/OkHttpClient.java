@@ -39,7 +39,8 @@ import javax.net.ssl.SSLSocketFactory;
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private static final List<String> DEFAULT_TRANSPORTS
-      = Util.immutableList(Arrays.asList("HTTP-draft-09/2.0", "spdy/3", "http/1.1"));
+      = Util.immutableList(Arrays.asList("spdy/3", "http/1.1"));
+      //= Util.immutableList(Arrays.asList("HTTP-draft-09/2.0", "spdy/3", "http/1.1"));
 
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
