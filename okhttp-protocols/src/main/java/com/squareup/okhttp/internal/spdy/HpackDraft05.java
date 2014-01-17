@@ -1,5 +1,6 @@
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.BitArray;
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.DataInputStream;
@@ -16,9 +17,7 @@ import java.util.List;
  *
  * This implementation uses an array for the header table with a bitset for
  * references.  Dynamic entries are added to the array, starting in the last
- * position moving forward.  When the array fills, it is doubled, up to the
- * supported maximum of 64 headers.  HTTP requests or responses that require
- * more than 64 headers are hence not currently supported.
+ * position moving forward.  When the array fills, it is doubled.
  */
 final class HpackDraft05 {
 
@@ -123,7 +122,7 @@ final class HpackDraft05 {
     private long bytesLeft = 0;
 
     // Visible for testing.
-    HeaderEntry[] headerTable = new HeaderEntry[8]; // must be less than 64
+    HeaderEntry[] headerTable = new HeaderEntry[8];
     // Array is populated back to front, so new entries always have lowest index.
     int nextHeaderIndex = headerTable.length - 1;
     int headerCount = 0;
@@ -131,15 +130,14 @@ final class HpackDraft05 {
     /**
      * Set bit positions indicate {@code headerTable[pos]} should be emitted.
      */
-    // Using a long since the reference table < 64 entries.
-    long referencedHeaders = 0x0000000000000000L;
+    // Using a BitArray as it has left-shift operator.
+    BitArray referencedHeaders = new BitArray();
 
     /**
      * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
      * emitted.
      */
-    // Using a long since the static table < 64 entries.
-    long referencedStaticHeaders = 0x0000000000000000L;
+    BitArray referencedStaticHeaders = new BitArray();
     int headerTableByteCount = 0;
     int maxHeaderTableByteCount = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
 
@@ -184,19 +182,19 @@ final class HpackDraft05 {
     }
 
     private void clearReferenceSet() {
-      referencedStaticHeaders = 0x0000000000000000L;
-      referencedHeaders = 0x0000000000000000L;
+      referencedStaticHeaders.clear();
+      referencedHeaders.clear();
     }
 
     public void emitReferenceSet() {
       for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
-        if (bitPositionSet(referencedStaticHeaders, i)) {
+        if (referencedStaticHeaders.get(i)) {
           emittedHeaders.add(STATIC_HEADER_TABLE[i].name);
           emittedHeaders.add(STATIC_HEADER_TABLE[i].value);
         }
       }
       for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
-        if (bitPositionSet(referencedHeaders, i)) {
+        if (referencedHeaders.get(i)) {
           emittedHeaders.add(headerTable[i].name);
           emittedHeaders.add(headerTable[i].value);
         }
@@ -214,17 +212,15 @@ final class HpackDraft05 {
     }
 
     private void readIndexedHeader(int index) {
-
       if (isStaticHeader(index)) {
         if (maxHeaderTableByteCount == 0) {
-          // Set bit designating this static entry is referenced.
-          referencedStaticHeaders |= (1L << (index - headerCount));
+          referencedStaticHeaders.set(index - headerCount);
         } else {
           HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
         }
-      } else if (!bitPositionSet(referencedHeaders, headerTableIndex(index))) {
-        referencedHeaders |= (1L << headerTableIndex(index));
+      } else if (!referencedHeaders.get(headerTableIndex(index))) {
+        referencedHeaders.set(headerTableIndex(index));
       } else {
         // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
         throw new AssertionError("invalid index " + index);
@@ -284,8 +280,7 @@ final class HpackDraft05 {
 
       // if the new or replacement header is too big, drop all entries.
       if (delta > maxHeaderTableByteCount) {
-        referencedStaticHeaders = 0x0000000000000000L;
-        referencedHeaders = 0x0000000000000000L;
+        clearReferenceSet();
         Arrays.fill(headerTable, null);
         nextHeaderIndex = headerTable.length - 1;
         headerCount = 0;
@@ -307,8 +302,7 @@ final class HpackDraft05 {
           headerCount--;
           entriesToEvict++;
         }
-        // shift elements over
-        referencedHeaders = referencedHeaders << entriesToEvict;
+        referencedHeaders.shiftLeft(entriesToEvict);
         System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
         nextHeaderIndex += entriesToEvict;
@@ -316,24 +310,19 @@ final class HpackDraft05 {
 
       if (index == -1) {
         if (headerCount + 1 > headerTable.length) {
-          if (headerTable.length == 64) {
-            // We would need to switch off long to bitset to support > 64 headers.
-            throw new UnsupportedOperationException(
-                "Header tables with count > 64 not yet supported!");
-          }
           HeaderEntry[] doubled = new HeaderEntry[headerTable.length * 2];
           System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
-          referencedHeaders = referencedHeaders << headerTable.length;
+          referencedHeaders.shiftLeft(headerTable.length);
           nextHeaderIndex = headerTable.length - 1;
           headerTable = doubled;
         }
         index = nextHeaderIndex--;
-        referencedHeaders |= (1L << index);
+        referencedHeaders.set(index);
         headerTable[index] = entry;
         headerCount++;
       } else { // Replace value at same position.
         index += headerTableIndex(index) + entriesToEvict;
-        referencedHeaders |= (1L << index);
+        referencedHeaders.set(index);
         headerTable[index] = entry;
       }
       headerTableByteCount += delta;
@@ -383,10 +372,6 @@ final class HpackDraft05 {
       bytesLeft -= length;
       return ByteString.read(in, length);
     }
-  }
-
-  static boolean bitPositionSet(long referenceBitSet, int i) {
-    return ((referenceBitSet >> i) & 1L) == 1;
   }
 
   static class Writer {
