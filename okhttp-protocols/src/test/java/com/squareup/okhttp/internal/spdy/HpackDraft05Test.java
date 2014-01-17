@@ -27,11 +27,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.byteStringList;
-import static com.squareup.okhttp.internal.spdy.HpackDraft05.bitPositionSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class HpackDraft05Test {
 
@@ -113,10 +111,10 @@ public class HpackDraft05Test {
   }
 
   /** Header table backing array is initially 8 long, let's ensure it grows. */
-  @Test public void dynamicallyGrowsUpTo64Entries() throws IOException {
+  @Test public void dynamicallyGrowsBeyond64Entries() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < 256; i++) {
       out.write(0x00); // Literal indexed
       out.write(0x0a); // Literal name (len = 10)
       out.write("custom-foo".getBytes(), 0, 10);
@@ -126,34 +124,16 @@ public class HpackDraft05Test {
     }
 
     bytesIn.set(out.toByteArray());
+    hpackReader.maxHeaderTableByteCount = 16384; // Lots of headers need more room!
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
-    assertEquals(64, hpackReader.headerCount);
+    assertEquals(256, hpackReader.headerCount);
+    assertHeaderReferenced(headerTableLength() - 1);
+    assertHeaderReferenced(headerTableLength() - hpackReader.headerCount);
   }
 
-  @Test public void greaterThan64HeadersNotYetSupported() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-
-    for (int i = 0; i < 65; i++) {
-      out.write(0x00); // Literal indexed
-      out.write(0x0a); // Literal name (len = 10)
-      out.write("custom-foo".getBytes(), 0, 10);
-
-      out.write(0x0d); // Literal value (len = 13)
-      out.write("custom-header".getBytes(), 0, 13);
-    }
-
-    bytesIn.set(out.toByteArray());
-    try {
-      hpackReader.readHeaders(out.size());
-      fail();
-    } catch (UnsupportedOperationException expected) {
-    }
-  }
-
-  /** Huffman headers are accepted, but come out as garbage for now. */
-  @Test public void huffmanDecodingNotYetSupported() throws IOException {
+  @Test public void huffmanDecodingSupported() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     out.write(0x04); // == Literal indexed ==
@@ -798,11 +778,11 @@ public class HpackDraft05Test {
   }
 
   private void assertHeaderReferenced(int index) {
-    assertTrue(bitPositionSet(hpackReader.referencedHeaders, index));
+    assertTrue(hpackReader.referencedHeaders.get(index));
   }
 
   private void assertHeaderNotReferenced(int index) {
-    assertFalse(bitPositionSet(hpackReader.referencedHeaders, index));
+    assertFalse(hpackReader.referencedHeaders.get(index));
   }
 
   private int headerTableLength() {

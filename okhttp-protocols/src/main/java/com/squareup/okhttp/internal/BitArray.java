@@ -21,10 +21,6 @@ import java.util.List;
 
 /** A simple bitset which supports left shifting. */
 public final class BitArray {
-  /** Create a bit array from a bit-packed long. */
-  public static BitArray fromValue(long bitLong) {
-    return new BitArray(bitLong);
-  }
 
   long[] data;
 
@@ -32,12 +28,8 @@ public final class BitArray {
   // offset the outward facing index to support shifts without having to move the underlying bits.
   private int start; // Valid values are [0..63]
 
-  BitArray() {
+  public BitArray() {
     data = new long[1];
-  }
-
-  private BitArray(long bitLong) {
-    data = new long[] { bitLong, 0 };
   }
 
   private void growToSize(int size) {

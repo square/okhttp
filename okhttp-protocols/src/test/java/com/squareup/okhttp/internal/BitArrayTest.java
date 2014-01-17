@@ -20,36 +20,9 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BitArrayTest {
-  @Test public void initializeFromLong() {
-    long bits = 1L | (1L << 3) | (1L << 7);
-    BitArray b = BitArray.fromValue(bits);
-    assertTrue(b.get(0));
-    assertTrue(b.get(3));
-    assertTrue(b.get(7));
-  }
-
-  @Test public void initializedFullFromLong() {
-    long bits = -1;
-    BitArray b = BitArray.fromValue(bits);
-    for (int i = 0; i < 64; i++) {
-      assertTrue(b.get(i));
-    }
-  }
-
-  @Test public void hpackUseCase() {
-    long bits = 1L | (1L << 63);
-    BitArray b = BitArray.fromValue(bits);
-    assertTrue(b.get(0));
-    assertFalse(b.get(1));
-    assertTrue(b.get(63));
-    assertFalse(b.get(64));
-    b.set(64);
-    assertTrue(b.get(64));
-  }
 
   @Test public void setExpandsData() {
     BitArray b = new BitArray();
