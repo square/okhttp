@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,7 +72,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         System.out.println("UNSUPPORTED");
       }
       @Override public List<String> protocols() {
-        return Arrays.asList("spdy/3");
+        return Arrays.asList(Protocol.SPDY_3.name.utf8());
       }
       @Override public void protocolSelected(String protocol) {
         System.out.println("PROTOCOL SELECTED: " + protocol);

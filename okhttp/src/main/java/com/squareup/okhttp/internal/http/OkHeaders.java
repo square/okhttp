@@ -50,9 +50,17 @@ public final class OkHeaders {
   public static final String RESPONSE_SOURCE = PREFIX + "-Response-Source";
 
   /**
-   * Synthetic response header: the selected transport ("spdy/3", "http/1.1", etc).
+   * @deprecated OkHttp 2 enforces an enumeration of {@link com.squareup.okhttp.Protocol protocols}
+   * that can be selected. Please use #SELECTED_PROTOCOL
    */
+  @Deprecated
   public static final String SELECTED_TRANSPORT = PREFIX + "-Selected-Transport";
+
+  /**
+   * Synthetic response header: the selected
+   * {@link com.squareup.okhttp.Protocol protocol} ("spdy/3", "http/1.1", etc).
+   */
+  public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
 
   private OkHeaders() {
   }

@@ -23,7 +23,9 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -502,8 +504,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       return;
     }
 
-    if ("X-Android-Transports".equals(field)) {
-      setTransports(newValue, false /* append */);
+    // TODO: Deprecate use of X-Android-Transports header?
+    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
+      setProtocols(newValue, false /* append */);
     } else {
       requestHeaders.set(field, newValue);
     }
@@ -535,26 +538,33 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       return;
     }
 
-    if ("X-Android-Transports".equals(field)) {
-      setTransports(value, true /* append */);
+    // TODO: Deprecate use of X-Android-Transports header?
+    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
+      setProtocols(value, true /* append */);
     } else {
       requestHeaders.add(field, value);
     }
   }
 
   /*
-   * Splits and validates a comma-separated string of transports.
+   * Splits and validates a comma-separated string of protocols.
    * When append == false, we require that the transport list contains "http/1.1".
+   * Throws {@link IllegalStateException} when one of the protocols isn't
+   * defined in {@link Protocol OkHttp's protocol enumeration}.
    */
-  private void setTransports(String transportsString, boolean append) {
-    List<String> transportsList = new ArrayList<String>();
+  private void setProtocols(String protocolsString, boolean append) {
+    List<Protocol> protocolsList = new ArrayList<Protocol>();
     if (append) {
-      transportsList.addAll(client.getTransports());
+      protocolsList.addAll(client.getProtocols());
     }
-    for (String transport : transportsString.split(",", -1)) {
-      transportsList.add(transport);
+    for (ByteString protocol : Util.byteStringList(protocolsString.split(",", -1))) {
+      try {
+        protocolsList.add(Protocol.find(protocol));
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
     }
-    client.setTransports(transportsList);
+    client.setProtocols(protocolsList);
   }
 
   @Override public void setFixedLengthStreamingMode(int contentLength) {

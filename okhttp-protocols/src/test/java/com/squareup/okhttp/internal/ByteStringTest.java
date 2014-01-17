@@ -66,12 +66,6 @@ public class ByteStringTest {
     assertByteArraysEquals(new byte[] { 0x61, 0x62, 0x63 }, out.toByteArray());
   }
 
-  @Test public void writeWithOffset() throws Exception {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteString.of((byte) 0x61, (byte) 0x62, (byte) 0x63).write(out, 1, 2);
-    assertByteArraysEquals(new byte[] { 0x62, 0x63 }, out.toByteArray());
-  }
-
   @Test public void concat() {
     assertEquals(ByteString.of(), ByteString.concat());
     assertEquals(ByteString.of(), ByteString.concat(ByteString.EMPTY));

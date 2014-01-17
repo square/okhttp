@@ -115,7 +115,7 @@ public final class ByteString {
       System.arraycopy(byteString.data, 0, result, pos, byteString.size());
       pos += byteString.size();
     }
-    return ByteString.of(result);
+    return new ByteString(result);
   }
 
   private ByteString(byte[] data) {
@@ -139,11 +139,6 @@ public final class ByteString {
   /** Writes the contents of this byte string to {@code out}. */
   public void write(OutputStream out) throws IOException {
     out.write(data);
-  }
-
-  /** Writes a subsequence of this byte string to {@code out}. */
-  public void write(OutputStream out, int offset, int count) throws IOException {
-    out.write(data, offset, count);
   }
 
   @Override public boolean equals(Object o) {

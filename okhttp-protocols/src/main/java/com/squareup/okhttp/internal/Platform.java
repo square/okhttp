@@ -16,9 +16,9 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -106,7 +106,7 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public byte[] getNpnSelectedProtocol(SSLSocket socket) {
+  public ByteString getNpnSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
@@ -114,7 +114,7 @@ public class Platform {
    * Sets client-supported protocols on a socket to send to a server. The
    * protocols are only sent if the socket implementation supports NPN.
    */
-  public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+  public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
   }
 
   public void connectSocket(Socket socket, InetSocketAddress address,
@@ -267,11 +267,11 @@ public class Platform {
       }
     }
 
-    @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
       if (setNpnProtocols == null) return;
       if (!openSslSocketClass.isInstance(socket)) return;
       try {
-        Object[] parameters = { npnProtocols };
+        Object[] parameters = { concatLengthPrefixed(npnProtocols) };
         if (setAlpnProtocols != null) {
           setAlpnProtocols.invoke(socket, parameters);
         }
@@ -283,16 +283,16 @@ public class Platform {
       }
     }
 
-    @Override public byte[] getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
       if (getNpnSelectedProtocol == null) return null;
       if (!openSslSocketClass.isInstance(socket)) return null;
       try {
         if (getAlpnSelectedProtocol != null) {
           // Prefer ALPN's result if it is present.
           byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
-          if (alpnResult != null) return alpnResult;
+          if (alpnResult != null) return ByteString.of(alpnResult);
         }
-        return (byte[]) getNpnSelectedProtocol.invoke(socket);
+        return ByteString.of((byte[]) getNpnSelectedProtocol.invoke(socket));
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
@@ -316,20 +316,15 @@ public class Platform {
       this.serverProviderClass = serverProviderClass;
     }
 
-    @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
       try {
-        List<String> strings = new ArrayList<String>();
-        for (int i = 0; i < npnProtocols.length; ) {
-          int length = npnProtocols[i++];
-          strings.add(new String(npnProtocols, i, length, "US-ASCII"));
-          i += length;
+        List<String> names = new ArrayList<String>(npnProtocols.size());
+        for (int i = 0, size = npnProtocols.size(); i < size; i++) {
+          names.add(npnProtocols.get(i).name.utf8());
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] {clientProviderClass, serverProviderClass},
-            new JettyNpnProvider(strings));
+            new Class[] { clientProviderClass, serverProviderClass }, new JettyNpnProvider(names));
         putMethod.invoke(null, socket, provider);
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError(e);
       } catch (InvocationTargetException e) {
         throw new AssertionError(e);
       } catch (IllegalAccessException e) {
@@ -337,7 +332,7 @@ public class Platform {
       }
     }
 
-    @Override public byte[] getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
       try {
         JettyNpnProvider provider =
             (JettyNpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
@@ -347,9 +342,7 @@ public class Platform {
               "NPN callback dropped so SPDY is disabled. " + "Is npn-boot on the boot class path?");
           return null;
         }
-        return provider.unsupported ? null : provider.selected.getBytes("US-ASCII");
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError();
+        return provider.unsupported ? null : ByteString.encodeUtf8(provider.selected);
       } catch (InvocationTargetException e) {
         throw new AssertionError();
       } catch (IllegalAccessException e) {
@@ -399,5 +392,27 @@ public class Platform {
         return method.invoke(this, args);
       }
     }
+  }
+
+  /**
+   * Concatenation of 8-bit, length prefixed protocol names.
+   *
+   * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
+   */
+  static byte[] concatLengthPrefixed(List<Protocol> protocols) {
+    int size = 0;
+    for (Protocol protocol : protocols) {
+      size += protocol.name.size() + 1; // add a byte for 8-bit length prefix.
+    }
+    byte[] result = new byte[size];
+    int pos = 0;
+    for (Protocol protocol : protocols) {
+      int nameSize = protocol.name.size();
+      result[pos++] = (byte) nameSize;
+      // toByteArray allocates an array, but this is only called on new connections.
+      System.arraycopy(protocol.name.toByteArray(), 0, result, pos, nameSize);
+      pos += nameSize;
+    }
+    return result;
   }
 }

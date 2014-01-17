@@ -15,9 +15,11 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Protocol;
+
 public class HttpOverSpdy3Test extends HttpOverSpdyTest {
 
   public HttpOverSpdy3Test() {
-    super("spdy/3");
+    super(Protocol.SPDY_3);
   }
 }

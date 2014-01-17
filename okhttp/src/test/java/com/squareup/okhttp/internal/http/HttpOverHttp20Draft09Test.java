@@ -15,12 +15,12 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Protocol;
+
 public class HttpOverHttp20Draft09Test extends HttpOverSpdyTest {
 
   public HttpOverHttp20Draft09Test() {
-    super("HTTP-draft-09/2.0");
-    // TODO: is this really the whole authority, or just the host/port?
-    // https://github.com/http2/http2-spec/issues/334
+    super(Protocol.HTTP_2);
     this.hostHeader = ":authority";
   }
 }

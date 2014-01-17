@@ -41,22 +41,22 @@ public final class Address {
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
   final OkAuthenticator authenticator;
-  final List<String> transports;
+  final List<Protocol> protocols;
 
   public Address(String uriHost, int uriPort, SSLSocketFactory sslSocketFactory,
       HostnameVerifier hostnameVerifier, OkAuthenticator authenticator, Proxy proxy,
-      List<String> transports) throws UnknownHostException {
+      List<Protocol> protocols) throws UnknownHostException {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
-    if (transports == null) throw new IllegalArgumentException("transports == null");
+    if (protocols == null) throw new IllegalArgumentException("protocols == null");
     this.proxy = proxy;
     this.uriHost = uriHost;
     this.uriPort = uriPort;
     this.sslSocketFactory = sslSocketFactory;
     this.hostnameVerifier = hostnameVerifier;
     this.authenticator = authenticator;
-    this.transports = Util.immutableList(transports);
+    this.protocols = Util.immutableList(protocols);
   }
 
   /** Returns the hostname of the origin server. */
@@ -97,11 +97,12 @@ public final class Address {
   }
 
   /**
-   * Returns the client's transports. This method always returns a non-null list
-   * that contains "http/1.1", possibly among other transports.
+   * Returns the protocols the client supports. This method always returns a
+   * non-null list that contains minimally
+   * {@link Protocol#HTTP_11}.
    */
-  public List<String> getTransports() {
-    return transports;
+  public List<Protocol> getProtocols() {
+    return protocols;
   }
 
   /**
@@ -121,7 +122,7 @@ public final class Address {
           && equal(this.sslSocketFactory, that.sslSocketFactory)
           && equal(this.hostnameVerifier, that.hostnameVerifier)
           && equal(this.authenticator, that.authenticator)
-          && equal(this.transports, that.transports);
+          && equal(this.protocols, that.protocols);
     }
     return false;
   }
@@ -134,7 +135,7 @@ public final class Address {
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
     result = 31 * result + (authenticator != null ? authenticator.hashCode() : 0);
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
-    result = 31 * result + transports.hashCode();
+    result = 31 * result + protocols.hashCode();
     return result;
   }
 }

@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
@@ -60,7 +61,7 @@ public final class SpdyConnection implements Closeable {
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.threadFactory("OkHttp SpdyConnection", true));
 
-  /** The protocol variant, like SPDY/3 or HTTP-draft-09/2.0. */
+  /** The protocol variant, like {@link com.squareup.okhttp.internal.spdy.Spdy3}. */
   final Variant variant;
 
   /** True if this peer initiated the connection. */
@@ -104,12 +105,8 @@ public final class SpdyConnection implements Closeable {
     new Thread(new Reader()).start(); // Not a daemon thread.
   }
 
-  /**
-   * The protocol name, like {@code spdy/3} or {@code HTTP-draft-09/2.0}.
-   *
-   * @see com.squareup.okhttp.internal.spdy.Variant#getProtocol()
-   */
-  public String getProtocol() {
+  /** The protocol as selected using NPN or ALPN. */
+  public Protocol getProtocol() {
      return variant.getProtocol();
   }
 
@@ -423,13 +420,15 @@ public final class SpdyConnection implements Closeable {
       return this;
     }
 
-    public Builder spdy3() {
-      this.variant = Variant.SPDY3;
-      return this;
-    }
-
-    public Builder http20Draft09() {
-      this.variant = Variant.HTTP_20_DRAFT_09;
+    public Builder protocol(Protocol protocol) {
+      // TODO: protocol == variant.getProtocol, so we could map this.
+      if (protocol == Protocol.HTTP_2) {
+        this.variant = Variant.HTTP_20_DRAFT_09;
+      } else if (protocol == Protocol.SPDY_3) {
+        this.variant = Variant.SPDY3;
+      } else {
+        throw new AssertionError(protocol);
+      }
       return this;
     }
 

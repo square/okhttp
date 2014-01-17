@@ -400,10 +400,18 @@ public final class Util {
     };
   }
 
-  public static List<ByteString> byteStringList(String... strings) {
-    List<ByteString> result = new ArrayList<ByteString>(strings.length);
-    for (String string : strings) {
+  public static List<ByteString> byteStringList(String... elements) {
+    List<ByteString> result = new ArrayList<ByteString>(elements.length);
+    for (String string : elements) {
       result.add(ByteString.encodeUtf8(string));
+    }
+    return result;
+  }
+
+  public static List<ByteString> byteStringList(List<String> elements) {
+    List<ByteString> result = new ArrayList<ByteString>(elements.size());
+    for (int i = 0, size = elements.size(); i < size; i++) {
+      result.add(ByteString.encodeUtf8(elements.get(i)));
     }
     return result;
   }

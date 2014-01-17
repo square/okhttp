@@ -405,6 +405,7 @@ final class HpackDraft05 {
       }
     }
 
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.1
     public void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

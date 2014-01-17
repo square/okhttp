@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -2500,24 +2501,24 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
   }
 
-  @Test public void setTransports() throws Exception {
+  @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
-    client.setTransports(Arrays.asList("http/1.1"));
+    client.setProtocols(Arrays.asList(Protocol.HTTP_11));
     assertContent("A", client.open(server.getUrl("/")));
   }
 
-  @Test public void setTransportsWithoutHttp11() throws Exception {
+  @Test public void setProtocolsWithoutHttp11() throws Exception {
     try {
-      client.setTransports(Arrays.asList("spdy/3"));
+      client.setProtocols(Arrays.asList(Protocol.SPDY_3));
       fail();
     } catch (IllegalArgumentException expected) {
     }
   }
 
-  @Test public void setTransportsWithNull() throws Exception {
+  @Test public void setProtocolsWithNull() throws Exception {
     try {
-      client.setTransports(Arrays.asList("http/1.1", null));
+      client.setProtocols(Arrays.asList(Protocol.HTTP_11, null));
       fail();
     } catch (IllegalArgumentException expected) {
     }

@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.Protocol;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -23,8 +24,8 @@ interface Variant {
   Variant SPDY3 = new Spdy3();
   Variant HTTP_20_DRAFT_09 = new Http20Draft09();
 
-  /** The protocol name, like {@code spdy/3} or {@code HTTP-draft-09/2.0}. */
-  String getProtocol();
+  /** The protocol as selected using NPN or ALPN. */
+  Protocol getProtocol();
 
   /**
    * @param client true if this is the HTTP client's reader, reading frames from

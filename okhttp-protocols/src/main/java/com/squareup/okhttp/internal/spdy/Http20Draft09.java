@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -33,8 +34,8 @@ import java.util.List;
  */
 public final class Http20Draft09 implements Variant {
 
-  @Override public String getProtocol() {
-    return "HTTP-draft-09/2.0";
+  @Override public Protocol getProtocol() {
+    return Protocol.HTTP_2;
   }
 
   private static final byte[] CONNECTION_HEADER;
