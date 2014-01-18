@@ -36,7 +36,7 @@ abstract class AbstractHttpInputStream extends InputStream {
   protected final InputStream in;
   protected final HttpEngine httpEngine;
   private final CacheRequest cacheRequest;
-  private final OutputStream cacheBody;
+  protected final OutputStream cacheBody;
   protected boolean closed;
 
   AbstractHttpInputStream(InputStream in, HttpEngine httpEngine, CacheRequest cacheRequest)
