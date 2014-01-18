@@ -17,10 +17,11 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.ByteString;
-import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -34,6 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 public final class SpdyTransport implements Transport {
   private static final ByteString HEADER_METHOD = ByteString.encodeUtf8(":method");
@@ -191,23 +194,12 @@ public final class SpdyTransport implements Transport {
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
-    return new UnknownLengthHttpInputStream(stream.getInputStream(), cacheRequest, httpEngine);
+    return new SpdyInputStream(stream, cacheRequest, httpEngine);
   }
 
   @Override public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
       InputStream responseBodyIn) {
-    if (streamCanceled) {
-      if (stream != null) {
-        stream.closeLater(ErrorCode.CANCEL);
-        return true;
-      } else {
-        // If stream is null, it either means that writeRequestHeaders wasn't called
-        // or that SpdyConnection#newStream threw an IOException. In both cases there's
-        // nothing to do here and this stream can't be reused.
-        return false;
-      }
-    }
-    return true;
+    return true; // SPDY sockets are always reusable.
   }
 
   /** When true, this header should not be emitted or consumed. */
@@ -238,5 +230,69 @@ public final class SpdyTransport implements Transport {
       throw new AssertionError(protocol);
     }
     return prohibited;
+  }
+
+  /** An HTTP message body terminated by the end of the underlying stream. */
+  private static class SpdyInputStream extends AbstractHttpInputStream {
+    private final SpdyStream stream;
+    private boolean inputExhausted;
+
+    SpdyInputStream(SpdyStream stream, CacheRequest cacheRequest, HttpEngine httpEngine)
+        throws IOException {
+      super(stream.getInputStream(), httpEngine, cacheRequest);
+      this.stream = stream;
+    }
+
+    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
+      checkOffsetAndCount(buffer.length, offset, count);
+      checkNotClosed();
+      if (in == null || inputExhausted) {
+        return -1;
+      }
+      int read = in.read(buffer, offset, count);
+      if (read == -1) {
+        inputExhausted = true;
+        endOfInput();
+        return -1;
+      }
+      cacheWrite(buffer, offset, read);
+      return read;
+    }
+
+    @Override public int available() throws IOException {
+      checkNotClosed();
+      return in == null ? 0 : in.available();
+    }
+
+    @Override public void close() throws IOException {
+      if (closed) return;
+
+      if (!inputExhausted && cacheBody != null) {
+        discardStream(); // Could make inputExhausted true!
+      }
+
+      closed = true;
+
+      if (!inputExhausted) {
+        stream.closeLater(ErrorCode.CANCEL);
+        unexpectedEndOfInput();
+      }
+    }
+
+    private boolean discardStream() {
+      try {
+        long socketTimeout = stream.getReadTimeoutMillis();
+        stream.setReadTimeout(socketTimeout);
+        stream.setReadTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
+        try {
+          Util.skipByReading(this, Long.MAX_VALUE, DISCARD_STREAM_TIMEOUT_MILLIS);
+          return true;
+        } finally {
+          stream.setReadTimeout(socketTimeout);
+        }
+      } catch (IOException e) {
+        return false;
+      }
+    }
   }
 }

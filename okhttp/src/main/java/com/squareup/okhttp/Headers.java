@@ -119,6 +119,14 @@ public final class Headers {
     return result;
   }
 
+  @Override public String toString() {
+    StringBuilder result = new StringBuilder();
+    for (int i = 0; i < size(); i++) {
+      result.append(name(i)).append(": ").append(value(i)).append("\n");
+    }
+    return result.toString();
+  }
+
   private static String get(String[] namesAndValues, String fieldName) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
       if (fieldName.equalsIgnoreCase(namesAndValues[i])) {

@@ -25,6 +25,13 @@ import java.net.CacheRequest;
 
 interface Transport {
   /**
+   * The timeout to use while discarding a stream of input data. Since this is
+   * used for connection reuse, this timeout should be significantly less than
+   * the time it takes to establish a new connection.
+   */
+  int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
+
+  /**
    * Returns an output stream where the request body can be written. The
    * returned stream will of one of two types:
    * <ul>

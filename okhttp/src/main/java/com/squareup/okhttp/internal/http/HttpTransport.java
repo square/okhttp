@@ -35,13 +35,6 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
 
 public final class HttpTransport implements Transport {
-  /**
-   * The timeout to use while discarding a stream of input data. Since this is
-   * used for connection reuse, this timeout should be significantly less than
-   * the time it takes to establish a new connection.
-   */
-  private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
-
   public static final int DEFAULT_CHUNK_LENGTH = 1024;
 
   private final HttpEngine httpEngine;

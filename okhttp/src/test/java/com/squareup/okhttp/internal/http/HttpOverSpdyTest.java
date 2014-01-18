@@ -282,7 +282,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responsesAreCached() throws IOException {
-    client.setResponseCache(cache);
+    client.setOkResponseCache(cache);
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
     server.play();
@@ -299,7 +299,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void conditionalCache() throws IOException {
-    client.setResponseCache(cache);
+    client.setOkResponseCache(cache);
 
     server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
@@ -313,6 +313,24 @@ public abstract class HttpOverSpdyTest {
     assertEquals(2, cache.getRequestCount());
     assertEquals(2, cache.getNetworkCount());
     assertEquals(1, cache.getHitCount());
+  }
+
+  @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
+    client.setOkResponseCache(cache);
+
+    server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("ABCD"));
+    server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));
+    server.play();
+
+    URLConnection connection1 = client.open(server.getUrl("/"));
+    InputStream in1 = connection1.getInputStream();
+    assertEquals("AB", readAscii(in1, 2));
+    in1.close();
+
+    URLConnection connection2 = client.open(server.getUrl("/"));
+    InputStream in2 = connection2.getInputStream();
+    assertEquals("ABCD", readAscii(in2, Integer.MAX_VALUE));
+    in2.close();
   }
 
   @Test public void acceptAndTransmitCookies() throws Exception {
