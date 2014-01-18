@@ -356,8 +356,11 @@ public class Platform {
    * without a compile-time dependency on those interfaces.
    */
   private static class JettyNpnProvider implements InvocationHandler {
+    /** This peer's supported protocols. */
     private final List<String> protocols;
+    /** Set when remote peer notifies NPN is unsupported. */
     private boolean unsupported;
+    /** The protocol the client selected. */
     private String selected;
 
     public JettyNpnProvider(List<String> protocols) {
@@ -371,22 +374,27 @@ public class Platform {
         args = Util.EMPTY_STRING_ARRAY;
       }
       if (methodName.equals("supports") && boolean.class == returnType) {
-        return true;
+        return true; // Client supports NPN.
       } else if (methodName.equals("unsupported") && void.class == returnType) {
-        this.unsupported = true;
+        this.unsupported = true; // Remote peer doesn't support NPN.
         return null;
       } else if (methodName.equals("protocols") && args.length == 0) {
-        return protocols;
-      } else if (methodName.equals("selectProtocol")
+        return protocols; // Server advertises these protocols.
+      } else if (methodName.equals("selectProtocol") // Called when client.
           && String.class == returnType
           && args.length == 1
           && (args[0] == null || args[0] instanceof List)) {
-        // TODO: use OpenSSL's algorithm which uses both lists
-        List<?> serverProtocols = (List) args[0];
-        this.selected = protocols.get(0);
-        return selected;
+        List<String> serverProtocols = (List) args[0];
+        // Pick the first protocol the server advertises and client knows.
+        for (int i = 0, size = serverProtocols.size(); i < size; i++) {
+          if (protocols.contains(serverProtocols.get(i))) {
+            return selected = serverProtocols.get(i);
+          }
+        }
+        // On no intersection, try client's first protocol.
+        return selected = protocols.get(0);
       } else if (methodName.equals("protocolSelected") && args.length == 1) {
-        this.selected = (String) args[0];
+        this.selected = (String) args[0]; // Client selected this protocol.
         return null;
       } else {
         return method.invoke(this, args);
