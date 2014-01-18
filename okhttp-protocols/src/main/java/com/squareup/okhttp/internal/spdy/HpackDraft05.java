@@ -119,6 +119,7 @@ final class HpackDraft05 {
 
     private final DataInputStream in;
     private final List<ByteString> emittedHeaders = new ArrayList<ByteString>();
+    private int maxHeaderTableByteCount;
     private long bytesLeft = 0;
 
     // Visible for testing.
@@ -139,11 +140,42 @@ final class HpackDraft05 {
      */
     BitArray referencedStaticHeaders = new BitArray();
     int headerTableByteCount = 0;
-    int maxHeaderTableByteCount = 4096; // TODO: needs to come from SETTINGS_HEADER_TABLE_SIZE.
 
-    Reader(boolean client, DataInputStream in) {
+    Reader(boolean client, int maxHeaderTableByteCount, DataInputStream in) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
+      this.maxHeaderTableByteCount = maxHeaderTableByteCount;
       this.in = in;
+    }
+
+    int maxHeaderTableByteCount() {
+      return maxHeaderTableByteCount;
+    }
+
+    /** Evicts entries as needed. */
+    void maxHeaderTableByteCount(int newMaxHeaderTableByteCount) {
+      if (newMaxHeaderTableByteCount < headerTableByteCount) {
+        evictToRecoverBytes(headerTableByteCount - newMaxHeaderTableByteCount);
+      }
+      this.maxHeaderTableByteCount = newMaxHeaderTableByteCount;
+    }
+
+    /** Returns the count of entries evicted. */
+    private int evictToRecoverBytes(int bytesToRecover) {
+      int entriesToEvict = 0;
+      if (bytesToRecover > 0) {
+        // determine how many headers need to be evicted.
+        for (int j = headerTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
+          bytesToRecover -= headerTable[j].size;
+          headerTableByteCount -= headerTable[j].size;
+          headerCount--;
+          entriesToEvict++;
+        }
+        referencedHeaders.shiftLeft(entriesToEvict);
+        System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
+            nextHeaderIndex + 1 + entriesToEvict, headerCount);
+        nextHeaderIndex += entriesToEvict;
+      }
+      return entriesToEvict;
     }
 
     /**
@@ -293,20 +325,7 @@ final class HpackDraft05 {
 
       // Evict headers to the required length.
       int bytesToRecover = (headerTableByteCount + delta) - maxHeaderTableByteCount;
-      int entriesToEvict = 0;
-      if (bytesToRecover > 0) {
-        // determine how many headers need to be evicted.
-        for (int j = headerTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
-          bytesToRecover -= headerTable[j].size;
-          headerTableByteCount -= headerTable[j].size;
-          headerCount--;
-          entriesToEvict++;
-        }
-        referencedHeaders.shiftLeft(entriesToEvict);
-        System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
-            nextHeaderIndex + 1 + entriesToEvict, headerCount);
-        nextHeaderIndex += entriesToEvict;
-      }
+      int entriesEvicted = evictToRecoverBytes(bytesToRecover);
 
       if (index == -1) {
         if (headerCount + 1 > headerTable.length) {
@@ -321,7 +340,7 @@ final class HpackDraft05 {
         headerTable[index] = entry;
         headerCount++;
       } else { // Replace value at same position.
-        index += headerTableIndex(index) + entriesToEvict;
+        index += headerTableIndex(index) + entriesEvicted;
         referencedHeaders.set(index);
         headerTable[index] = entry;
       }

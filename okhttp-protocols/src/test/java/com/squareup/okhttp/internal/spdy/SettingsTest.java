@@ -38,7 +38,7 @@ public final class SettingsTest {
 
     // WARNING: clash on flags between spdy/3 and http/2!
     assertEquals(-3, settings.getUploadBandwidth(-3));
-    assertEquals(4096, settings.getHeaderTableSize());
+    assertEquals(-1, settings.getHeaderTableSize());
     settings.set(Settings.UPLOAD_BANDWIDTH, 0, 42);
     assertEquals(42, settings.getUploadBandwidth(-3));
     settings.set(Settings.HEADER_TABLE_SIZE, 0, 8096);
@@ -46,11 +46,11 @@ public final class SettingsTest {
 
     // WARNING: clash on flags between spdy/3 and http/2!
     assertEquals(-3, settings.getDownloadBandwidth(-3));
-    assertTrue(settings.getEnablePush());
+    assertEquals(true, settings.getEnablePush(true));
     settings.set(Settings.DOWNLOAD_BANDWIDTH, 0, 53);
     assertEquals(53, settings.getDownloadBandwidth(-3));
     settings.set(Settings.ENABLE_PUSH, 0, 0);
-    assertFalse(settings.getEnablePush());
+    assertEquals(false, settings.getEnablePush(true));
 
     assertEquals(-3, settings.getRoundTripTime(-3));
     settings.set(Settings.ROUND_TRIP_TIME, 0, 64);
@@ -68,9 +68,9 @@ public final class SettingsTest {
     settings.set(Settings.DOWNLOAD_RETRANS_RATE, 0, 97);
     assertEquals(97, settings.getDownloadRetransRate(-3));
 
-    assertEquals(-3, settings.getInitialWindowSize(-3));
+    assertEquals(-1, settings.getInitialWindowSize());
     settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 108);
-    assertEquals(108, settings.getInitialWindowSize(-3));
+    assertEquals(108, settings.getInitialWindowSize());
 
     assertEquals(-3, settings.getClientCertificateVectorSize(-3));
     settings.set(Settings.CLIENT_CERTIFICATE_VECTOR_SIZE, 0, 117);

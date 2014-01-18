@@ -72,9 +72,6 @@ public final class SpdyConnection implements Closeable {
    * run on the callback executor.
    */
   private final IncomingStreamHandler handler;
-  private final FrameReader frameReader;
-  private final FrameWriter frameWriter;
-
   private final Map<Integer, SpdyStream> streams = new HashMap<Integer, SpdyStream>();
   private final String hostName;
   private int lastGoodStreamId;
@@ -86,17 +83,24 @@ public final class SpdyConnection implements Closeable {
   private Map<Integer, Ping> pings;
   private int nextPingId;
 
-  /** Lazily-created settings for the peer. */
-  Settings settings;
+  final Settings okHttpSettings;
+  final Settings peerSettings;
+  final FrameReader frameReader;
+  final FrameWriter frameWriter;
 
-  ByteArrayPool bufferPool = new ByteArrayPool(8 * Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+  final ByteArrayPool bufferPool;
 
   private SpdyConnection(Builder builder) {
     variant = builder.variant;
     client = builder.client;
+    okHttpSettings = variant.defaultOkHttpSettings(client);
+    // TODO: implement stream limit
+    // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
+    peerSettings = variant.initialPeerSettings(client);
+    bufferPool = new ByteArrayPool(peerSettings.getInitialWindowSize() * 8);
     handler = builder.handler;
-    frameReader = variant.newReader(builder.in, client);
-    frameWriter = variant.newWriter(builder.out, client);
+    frameReader = variant.newReader(builder.in, peerSettings, client);
+    frameWriter = variant.newWriter(builder.out, okHttpSettings, client);
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
 
@@ -173,7 +177,7 @@ public final class SpdyConnection implements Closeable {
         streamId = nextStreamId;
         nextStreamId += 2;
         stream = new SpdyStream(
-            streamId, this, outFinished, inFinished, priority, requestHeaders, settings);
+            streamId, this, outFinished, inFinished, priority, requestHeaders, peerSettings);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
@@ -369,7 +373,7 @@ public final class SpdyConnection implements Closeable {
    */
   public void sendConnectionHeader() throws IOException {
     frameWriter.connectionHeader();
-    frameWriter.settings(new Settings());
+    frameWriter.settings(okHttpSettings);
   }
 
   /**
@@ -500,7 +504,7 @@ public final class SpdyConnection implements Closeable {
 
           // Create a stream.
           final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
-              inFinished, priority, nameValueBlock, settings);
+              inFinished, priority, nameValueBlock, peerSettings);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
@@ -538,10 +542,13 @@ public final class SpdyConnection implements Closeable {
     @Override public void settings(boolean clearPrevious, Settings newSettings) {
       SpdyStream[] streamsToNotify = null;
       synchronized (SpdyConnection.this) {
-        if (settings == null || clearPrevious) {
-          settings = newSettings;
+        if (clearPrevious) {
+          peerSettings.clear();
         } else {
-          settings.merge(newSettings);
+          peerSettings.merge(newSettings);
+        }
+        if (SpdyConnection.this.variant.getProtocol() == Protocol.HTTP_2) {
+          ackSettingsLater();
         }
         if (!streams.isEmpty()) {
           streamsToNotify = streams.values().toArray(new SpdyStream[streams.size()]);
@@ -550,16 +557,27 @@ public final class SpdyConnection implements Closeable {
       if (streamsToNotify != null) {
         for (SpdyStream stream : streamsToNotify) {
           // The synchronization here is ugly. We need to synchronize on 'this' to guard
-          // reads to 'settings'. We synchronize on 'stream' to guard the state change.
+          // reads to 'peerSettings'. We synchronize on 'stream' to guard the state change.
           // And we need to acquire the 'stream' lock first, since that may block.
           // TODO: this can block the reader thread until a write completes. That's bad!
           synchronized (stream) {
             synchronized (SpdyConnection.this) {
-              stream.receiveSettings(settings);
+              stream.receiveSettings(peerSettings);
             }
           }
         }
       }
+    }
+
+    private void ackSettingsLater() {
+      executor.submit(new NamedRunnable("OkHttp %s ACK Settings", hostName) {
+        @Override public void execute() {
+          try {
+            frameWriter.ackSettings();
+          } catch (IOException ignored) {
+          }
+        }
+      });
     }
 
     @Override public void noop() {

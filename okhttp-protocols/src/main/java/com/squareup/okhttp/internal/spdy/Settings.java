@@ -15,17 +15,13 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-final class Settings {
-  /**
-   * spdy/3: The default initial window size for all streams is 64 KiB. (Chrome
-   * 25 uses 10 MiB).
-   */
-  static final int DEFAULT_INITIAL_WINDOW_SIZE = 64 * 1024;
-  /** http/2: The default header compression table size is 4 KiB. */
-  static final int DEFAULT_HEADER_TABLE_SIZE = 4096;
-  /** http/2: The default is to enable PUSH_PROMISE frames. */
-  static final int DEFAULT_ENABLE_PUSH = 1;
+import java.util.Arrays;
 
+/**
+ * Settings describe characteristics of the sending peer, which are used by the receiving peer.
+ * Settings are {@link com.squareup.okhttp.internal.spdy.SpdyConnection connection} scoped.
+ */
+final class Settings {
   /** Peer request to clear durable settings. */
   static final int FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x1;
 
@@ -74,6 +70,11 @@ final class Settings {
 
   /** Flag values. */
   private final int[] values = new int[COUNT];
+
+  void clear() {
+    set = persistValue = persisted = 0;
+    Arrays.fill(values, 0);
+  }
 
   void set(int id, int idFlags, int value) {
     if (id >= values.length) {
@@ -126,11 +127,10 @@ final class Settings {
     return (bit & set) != 0 ? values[UPLOAD_BANDWIDTH] : defaultValue;
   }
 
-  /** http/2 only. */
-  // TODO: honor this setting in http/2.
+  /** http/2 only. Returns -1 if unset. */
   int getHeaderTableSize() {
     int bit = 1 << HEADER_TABLE_SIZE;
-    return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : DEFAULT_HEADER_TABLE_SIZE;
+    return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : -1;
   }
 
   /** spdy/3 only. */
@@ -141,9 +141,9 @@ final class Settings {
 
   /** http/2 only. */
   // TODO: honor this setting in http/2.
-  boolean getEnablePush() {
+  boolean getEnablePush(boolean defaultValue) {
     int bit = 1 << ENABLE_PUSH;
-    return ((bit & set) != 0 ? values[ENABLE_PUSH] : DEFAULT_ENABLE_PUSH) == 1;
+    return ((bit & set) != 0 ? values[ENABLE_PUSH] : defaultValue ? 1 : 0) == 1;
   }
 
   /** spdy/3 only. */
@@ -171,9 +171,10 @@ final class Settings {
   }
 
   // TODO: honor this setting in http/2.
-  int getInitialWindowSize(int defaultValue) {
+  /** Returns -1 if unset. */
+  int getInitialWindowSize() {
     int bit = 1 << INITIAL_WINDOW_SIZE;
-    return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : defaultValue;
+    return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : -1;
   }
 
   /** spdy/3 only. */

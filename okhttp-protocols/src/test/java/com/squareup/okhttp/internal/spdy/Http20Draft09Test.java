@@ -47,7 +47,7 @@ public class Http20Draft09Test {
       dataOut.write(headerBytes);
     }
 
-    FrameReader fr = new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+    FrameReader fr = newReader(out);
 
     // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -92,7 +92,7 @@ public class Http20Draft09Test {
       dataOut.write(headerBytes);
     }
 
-    FrameReader fr = new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+    FrameReader fr = newReader(out);
 
     // Reading the above frames should result in a concatenated nameValueBlock.
     fr.nextFrame(new BaseTestHandler() {
@@ -122,7 +122,7 @@ public class Http20Draft09Test {
     dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
     dataOut.writeInt(ErrorCode.COMPRESSION_ERROR.httpCode);
 
-    FrameReader fr = new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), false);
+    FrameReader fr = newReader(out);
 
     // Consume the reset frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -131,6 +131,35 @@ public class Http20Draft09Test {
         assertEquals(ErrorCode.COMPRESSION_ERROR, errorCode);
       }
     });
+  }
+
+  @Test public void readSettingsFrame() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final int reducedTableSizeBytes = 16;
+
+    dataOut.writeShort(8); // 1 setting = 4 bytes for the code and 4 for the value.
+    dataOut.write(Http20Draft09.TYPE_SETTINGS);
+    dataOut.write(0); // No flags
+    dataOut.writeInt(0 & 0x7fffffff); // Settings are always on the connection stream 0.
+    dataOut.writeInt(Settings.HEADER_TABLE_SIZE & 0xffffff);
+    dataOut.writeInt(reducedTableSizeBytes);
+
+    final Http20Draft09.Reader fr = newReader(out);
+
+    // Consume the settings frame.
+    fr.nextFrame(new BaseTestHandler() {
+      @Override public void settings(boolean clearPrevious, Settings settings) {
+        assertFalse(clearPrevious); // No clearPrevious in http/2.
+        assertEquals(reducedTableSizeBytes, settings.getHeaderTableSize());
+      }
+    });
+  }
+
+  private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
+    return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()),
+        Variant.HTTP_20_DRAFT_09.initialPeerSettings(false).getHeaderTableSize(), false);
   }
 
   private byte[] literalHeaders(List<ByteString> sentHeaders) throws IOException {

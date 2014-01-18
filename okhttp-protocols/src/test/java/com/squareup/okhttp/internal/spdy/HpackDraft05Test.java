@@ -37,7 +37,7 @@ public class HpackDraft05Test {
   private HpackDraft05.Reader hpackReader;
 
   @Before public void resetReader() {
-    hpackReader = new HpackDraft05.Reader(false, new DataInputStream(bytesIn));
+    hpackReader = newReader(new DataInputStream(bytesIn));
   }
 
   /**
@@ -55,7 +55,7 @@ public class HpackDraft05Test {
     out.write("custom-header".getBytes(), 0, 13);
 
     bytesIn.set(out.toByteArray());
-    hpackReader.maxHeaderTableByteCount = 1;
+    hpackReader.maxHeaderTableByteCount(1);
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
@@ -90,7 +90,8 @@ public class HpackDraft05Test {
     out.write("custom-header".getBytes(), 0, 13);
 
     bytesIn.set(out.toByteArray());
-    hpackReader.maxHeaderTableByteCount = 110;
+    // Set to only support 110 bytes (enough for 2 headers).
+    hpackReader.maxHeaderTableByteCount(110);
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
@@ -108,6 +109,10 @@ public class HpackDraft05Test {
     // TODO: emit before eviction?
     assertEquals(byteStringList("custom-bar", "custom-header", "custom-baz", "custom-header"),
         hpackReader.getAndReset());
+
+    // Simulate receiving a small settings frame, that implies eviction.
+    hpackReader.maxHeaderTableByteCount(55);
+    assertEquals(1, hpackReader.headerCount);
   }
 
   /** Header table backing array is initially 8 long, let's ensure it grows. */
@@ -124,7 +129,7 @@ public class HpackDraft05Test {
     }
 
     bytesIn.set(out.toByteArray());
-    hpackReader.maxHeaderTableByteCount = 16384; // Lots of headers need more room!
+    hpackReader.maxHeaderTableByteCount(16384); // Lots of headers need more room!
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
@@ -238,7 +243,7 @@ public class HpackDraft05Test {
                      // idx = 2 -> :method: GET
 
     bytesIn.set(out.toByteArray());
-    hpackReader.maxHeaderTableByteCount = 0; // SETTINGS_HEADER_TABLE_SIZE == 0
+    hpackReader.maxHeaderTableByteCount(0); // SETTINGS_HEADER_TABLE_SIZE == 0
     hpackReader.readHeaders(out.size());
     hpackReader.emitReferenceSet();
 
@@ -675,12 +680,12 @@ public class HpackDraft05Test {
       new HpackDraft05.Writer(new DataOutputStream(bytesOut));
 
   @Test public void readSingleByteInt() throws IOException {
-    assertEquals(10, new HpackDraft05.Reader(false, byteStream()).readInt(10, 31));
-    assertEquals(10, new HpackDraft05.Reader(false, byteStream()).readInt(0xe0 | 10, 31));
+    assertEquals(10, newReader(byteStream()).readInt(10, 31));
+    assertEquals(10, newReader(byteStream()).readInt(0xe0 | 10, 31));
   }
 
   @Test public void readMultibyteInt() throws IOException {
-    assertEquals(1337, new HpackDraft05.Reader(false, byteStream(154, 10)).readInt(31, 31));
+    assertEquals(1337, newReader(byteStream(154, 10)).readInt(31, 31));
   }
 
   @Test public void writeSingleByteInt() throws IOException {
@@ -701,59 +706,57 @@ public class HpackDraft05Test {
     hpackWriter.writeInt(0x7fffffff, 31, 0);
     assertBytes(31, 224, 255, 255, 255, 7);
     assertEquals(0x7fffffff,
-        new HpackDraft05.Reader(false, byteStream(224, 255, 255, 255, 7)).readInt(31, 31));
+        newReader(byteStream(224, 255, 255, 255, 7)).readInt(31, 31));
   }
 
   @Test public void prefixMask() throws IOException {
     hpackWriter.writeInt(31, 31, 0);
     assertBytes(31, 0);
-    assertEquals(31, new HpackDraft05.Reader(false, byteStream(0)).readInt(31, 31));
+    assertEquals(31, newReader(byteStream(0)).readInt(31, 31));
   }
 
   @Test public void prefixMaskMinusOne() throws IOException {
     hpackWriter.writeInt(30, 31, 0);
     assertBytes(30);
-    assertEquals(31, new HpackDraft05.Reader(false, byteStream(0)).readInt(31, 31));
+    assertEquals(31, newReader(byteStream(0)).readInt(31, 31));
   }
 
   @Test public void zero() throws IOException {
     hpackWriter.writeInt(0, 31, 0);
     assertBytes(0);
-    assertEquals(0, new HpackDraft05.Reader(false, byteStream()).readInt(0, 31));
+    assertEquals(0, newReader(byteStream()).readInt(0, 31));
   }
 
   @Test public void headerName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8("foo"));
     assertBytes(3, 'f', 'o', 'o');
-    assertEquals("foo", new HpackDraft05.Reader(false, byteStream(3, 'f', 'o', 'o')).readString().utf8());
+    assertEquals("foo", newReader(byteStream(3, 'f', 'o', 'o')).readString().utf8());
   }
 
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals("", new HpackDraft05.Reader(false, byteStream(0)).readString().utf8());
+    assertEquals("", newReader(byteStream(0)).readString().utf8());
   }
 
   @Test public void headersRoundTrip() throws IOException {
     List<ByteString> sentHeaders = byteStringList("name", "value");
     hpackWriter.writeHeaders(sentHeaders);
     ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
-    HpackDraft05.Reader reader = new HpackDraft05.Reader(false, new DataInputStream(bytesIn));
+    HpackDraft05.Reader reader = newReader(new DataInputStream(bytesIn));
     reader.readHeaders(bytesOut.size());
     reader.emitReferenceSet();
     List<ByteString> receivedHeaders = reader.getAndReset();
     assertEquals(sentHeaders, receivedHeaders);
   }
 
+  private HpackDraft05.Reader newReader(DataInputStream input) {
+    return new HpackDraft05.Reader(false, 4096, input);
+  }
+
   private DataInputStream byteStream(int... bytes) {
     byte[] data = intArrayToByteArray(bytes);
     return new DataInputStream(new ByteArrayInputStream(data));
-  }
-
-  private ByteArrayOutputStream literalHeaders(List<ByteString> sentHeaders) throws IOException {
-    ByteArrayOutputStream headerBytes = new ByteArrayOutputStream();
-    new HpackDraft05.Writer(new DataOutputStream(headerBytes)).writeHeaders(sentHeaders);
-    return headerBytes;
   }
 
   private void checkEntry(HpackDraft05.HeaderEntry entry, String name, String value, int size) {
