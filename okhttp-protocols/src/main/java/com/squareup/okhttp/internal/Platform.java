@@ -360,7 +360,7 @@ public class Platform {
     private final List<String> protocols;
     /** Set when remote peer notifies NPN is unsupported. */
     private boolean unsupported;
-    /** When server, this is the protocol the client selected. */
+    /** The protocol the client selected. */
     private String selected;
 
     public JettyNpnProvider(List<String> protocols) {
@@ -388,11 +388,11 @@ public class Platform {
         // Pick the first protocol the server advertises and client knows.
         for (int i = 0, size = serverProtocols.size(); i < size; i++) {
           if (protocols.contains(serverProtocols.get(i))) {
-            return serverProtocols.get(i);
+            return selected = serverProtocols.get(i);
           }
         }
         // On no intersection, try client's first protocol.
-        return protocols.get(0);
+        return selected = protocols.get(0);
       } else if (methodName.equals("protocolSelected") && args.length == 1) {
         this.selected = (String) args[0]; // Client selected this protocol.
         return null;
