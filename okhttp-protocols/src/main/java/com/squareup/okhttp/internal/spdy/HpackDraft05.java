@@ -132,13 +132,14 @@ final class HpackDraft05 {
      * Set bit positions indicate {@code headerTable[pos]} should be emitted.
      */
     // Using a BitArray as it has left-shift operator.
-    BitArray referencedHeaders = new BitArray();
+    BitArray referencedHeaders = new BitArray.FixedCapacity();
 
     /**
      * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
      * emitted.
      */
-    BitArray referencedStaticHeaders = new BitArray();
+    // Using a long since the static table < 64 entries.
+    long referencedStaticHeaders = 0L;;
     int headerTableByteCount = 0;
 
     Reader(boolean client, int maxHeaderTableByteCount, DataInputStream in) {
@@ -214,13 +215,13 @@ final class HpackDraft05 {
     }
 
     private void clearReferenceSet() {
-      referencedStaticHeaders.clear();
+      referencedStaticHeaders = 0L;
       referencedHeaders.clear();
     }
 
     public void emitReferenceSet() {
       for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
-        if (referencedStaticHeaders.get(i)) {
+        if (((referencedStaticHeaders >> i) & 1L) == 1) {
           emittedHeaders.add(STATIC_HEADER_TABLE[i].name);
           emittedHeaders.add(STATIC_HEADER_TABLE[i].value);
         }
@@ -246,7 +247,7 @@ final class HpackDraft05 {
     private void readIndexedHeader(int index) {
       if (isStaticHeader(index)) {
         if (maxHeaderTableByteCount == 0) {
-          referencedStaticHeaders.set(index - headerCount);
+          referencedStaticHeaders |= (1L << (index - headerCount));
         } else {
           HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
@@ -328,6 +329,9 @@ final class HpackDraft05 {
         if (headerCount + 1 > headerTable.length) {
           HeaderEntry[] doubled = new HeaderEntry[headerTable.length * 2];
           System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
+          if (doubled.length == 64) {
+            referencedHeaders = ((BitArray.FixedCapacity) referencedHeaders).toVariableCapacity();
+          }
           referencedHeaders.shiftLeft(headerTable.length);
           nextHeaderIndex = headerTable.length - 1;
           headerTable = doubled;
