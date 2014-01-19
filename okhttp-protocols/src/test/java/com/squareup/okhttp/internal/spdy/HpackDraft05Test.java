@@ -234,6 +234,33 @@ public class HpackDraft05Test {
   }
 
   /**
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-3.2.1
+   */
+  @Test public void toggleIndex() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+    // Static table entries are copied to the top of the reference set.
+    out.write(0x82); // == Indexed - Add ==
+                     // idx = 2 -> :method: GET
+    // Specifying an index to an entry in the reference set removes it.
+    out.write(0x81); // == Indexed - Remove ==
+                     // idx = 1 -> :method: GET
+
+    bytesIn.set(out.toByteArray());
+    hpackReader.readHeaders(out.size());
+    hpackReader.emitReferenceSet();
+
+    assertEquals(1, hpackReader.headerCount);
+    assertEquals(42, hpackReader.headerTableByteCount);
+
+    HpackDraft05.HeaderEntry entry = hpackReader.headerTable[headerTableLength() - 1];
+    checkEntry(entry, ":method", "GET", 42);
+    assertHeaderNotReferenced(headerTableLength() - 1);
+
+    assertTrue(hpackReader.getAndReset().isEmpty());
+  }
+
+  /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.4
    */
   @Test public void decodeIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
