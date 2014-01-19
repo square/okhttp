@@ -251,11 +251,8 @@ final class HpackDraft05 {
           HeaderEntry staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
         }
-      } else if (!referencedHeaders.get(headerTableIndex(index))) {
-        referencedHeaders.set(headerTableIndex(index));
       } else {
-        // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
-        throw new AssertionError("invalid index " + index);
+        referencedHeaders.toggle(headerTableIndex(index));
       }
     }
 

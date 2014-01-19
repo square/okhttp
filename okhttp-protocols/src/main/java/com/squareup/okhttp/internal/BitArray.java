@@ -65,12 +65,12 @@ public final class BitArray {
     data[offset] |= 1L << shiftOf(index);
   }
 
-  public void unset(int index) {
+  public void toggle(int index) {
     if (index < 0) {
       throw new IllegalArgumentException("index < 0: " + index);
     }
     int offset = offsetOf(index);
-    data[offset] &= ~(1L << shiftOf(index));
+    data[offset] ^= 1L << shiftOf(index);
   }
 
   public boolean get(int index) {

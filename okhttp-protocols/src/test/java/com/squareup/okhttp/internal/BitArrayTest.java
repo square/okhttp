@@ -20,6 +20,7 @@ import org.junit.Test;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class BitArrayTest {
@@ -30,11 +31,13 @@ public class BitArrayTest {
     assertEquals(asList(64), b.toIntegerList());
   }
 
-  @Test public void clearBit() {
+  @Test public void toggleBit() {
     BitArray b = new BitArray();
     b.set(100);
-    b.unset(100);
+    b.toggle(100);
     assertTrue(b.toIntegerList().isEmpty());
+    b.toggle(1);
+    assertEquals(asList(1), b.toIntegerList());
   }
 
   @Test public void shiftLeftExpandsData() {
@@ -106,7 +109,7 @@ public class BitArrayTest {
     b = b.shiftLeft(0xB0B);
     assertEquals(bigIntegerToString(b), a.toString());
 
-    a.unset(64280);
+    a.toggle(64280);
     b = b.clearBit(64280);
     assertEquals(bigIntegerToString(b), a.toString());
   }
