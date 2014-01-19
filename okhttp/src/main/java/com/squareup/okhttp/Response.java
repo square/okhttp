@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HeaderParser;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -137,22 +136,7 @@ public final class Response {
     return redirectedBy;
   }
 
-  public Date getServedDate() {
-    return parsedHeaders().servedDate;
-  }
-
-  public Date getLastModified() {
-    return parsedHeaders().lastModified;
-  }
-
-  public Date getExpires() {
-    return parsedHeaders().expires;
-  }
-
-  public String getEtag() {
-    return parsedHeaders().etag;
-  }
-
+  // TODO: move out of public API
   public Set<String> getVaryFields() {
     return parsedHeaders().varyFields;
   }
@@ -161,6 +145,7 @@ public final class Response {
    * Returns true if a Vary header contains an asterisk. Such responses cannot
    * be cached.
    */
+  // TODO: move out of public API
   public boolean hasVaryAll() {
     return parsedHeaders().varyFields.contains("*");
   }
@@ -169,6 +154,7 @@ public final class Response {
    * Returns true if none of the Vary headers on this response have changed
    * between {@code cachedRequest} and {@code newRequest}.
    */
+  // TODO: move out of public API
   public boolean varyMatches(Headers varyHeaders, Request newRequest) {
     for (String field : parsedHeaders().varyFields) {
       if (!equal(varyHeaders.values(field), newRequest.headers(field))) return false;
@@ -180,6 +166,7 @@ public final class Response {
    * Returns true if this cached response should be used; false if the
    * network response should be used.
    */
+  // TODO: move out of public API
   public boolean validate(Response network) {
     if (network.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
       return true;
@@ -196,20 +183,6 @@ public final class Response {
     }
 
     return false;
-  }
-
-  // TODO: should not be public?
-  public long getReceivedResponseMillis() {
-    return parsedHeaders().receivedResponseMillis;
-  }
-
-  // TODO: should not be public?
-  public long getSentRequestMillis() {
-    return parsedHeaders.sentRequestMillis;
-  }
-
-  public long getAgeSeconds() {
-    return parsedHeaders().ageSeconds;
   }
 
   public abstract static class Body implements Closeable {
@@ -307,32 +280,8 @@ public final class Response {
 
   /** Parsed response headers, computed on-demand and cached. */
   private static class ParsedHeaders {
-    /** The server's time when this response was served, if known. */
-    Date servedDate;
-
     /** The last modified date of the response, if known. */
     Date lastModified;
-
-    /**
-     * The expiration date of the response, if known. If both this field and the
-     * max age are set, the max age is preferred.
-     */
-    Date expires;
-
-    /**
-     * Extension header set by HttpURLConnectionImpl specifying the timestamp
-     * when the HTTP request was first initiated.
-     */
-    long sentRequestMillis;
-
-    /**
-     * Extension header set by HttpURLConnectionImpl specifying the timestamp
-     * when the HTTP response was first received.
-     */
-    long receivedResponseMillis;
-
-    String etag;
-    int ageSeconds = -1;
 
     /** Case-insensitive set of field names. */
     private Set<String> varyFields = Collections.emptySet();
@@ -341,16 +290,8 @@ public final class Response {
       for (int i = 0; i < headers.size(); i++) {
         String fieldName = headers.name(i);
         String value = headers.value(i);
-        if ("Date".equalsIgnoreCase(fieldName)) {
-          servedDate = HttpDate.parse(value);
-        } else if ("Expires".equalsIgnoreCase(fieldName)) {
-          expires = HttpDate.parse(value);
-        } else if ("Last-Modified".equalsIgnoreCase(fieldName)) {
+        if ("Last-Modified".equalsIgnoreCase(fieldName)) {
           lastModified = HttpDate.parse(value);
-        } else if ("ETag".equalsIgnoreCase(fieldName)) {
-          etag = value;
-        } else if ("Age".equalsIgnoreCase(fieldName)) {
-          ageSeconds = HeaderParser.parseSeconds(value);
         } else if ("Vary".equalsIgnoreCase(fieldName)) {
           // Replace the immutable empty set with something we can mutate.
           if (varyFields.isEmpty()) {
@@ -359,10 +300,6 @@ public final class Response {
           for (String varyField : value.split(",")) {
             varyFields.add(varyField.trim());
           }
-        } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
-          sentRequestMillis = Long.parseLong(value);
-        } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
-          receivedResponseMillis = Long.parseLong(value);
         }
       }
     }
@@ -488,7 +425,7 @@ public final class Response {
       return this;
     }
 
-    // TODO: this shouldn't be public.
+    // TODO: move out of public API
     public Builder setResponseSource(ResponseSource responseSource) {
       return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
     }
