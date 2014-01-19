@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -400,18 +401,10 @@ public final class Util {
     };
   }
 
-  public static List<ByteString> byteStringList(String... elements) {
-    List<ByteString> result = new ArrayList<ByteString>(elements.length);
-    for (String string : elements) {
-      result.add(ByteString.encodeUtf8(string));
-    }
-    return result;
-  }
-
-  public static List<ByteString> byteStringList(List<String> elements) {
-    List<ByteString> result = new ArrayList<ByteString>(elements.size());
-    for (int i = 0, size = elements.size(); i < size; i++) {
-      result.add(ByteString.encodeUtf8(elements.get(i)));
+  public static List<Header> headerEntries(String... elements) {
+    List<Header> result = new ArrayList<Header>(elements.length / 2);
+    for (int i = 0; i < elements.length; i += 2) {
+      result.add(new Header(elements[i], elements[i + 1]));
     }
     return result;
   }

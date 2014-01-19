@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.ByteString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -30,7 +29,7 @@ class BaseTestHandler implements FrameReader.Handler {
 
   @Override
   public void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      int priority, List<ByteString> nameValueBlock, HeadersMode headersMode) {
+      int priority, List<Header> nameValueBlock, HeadersMode headersMode) {
     fail();
   }
 

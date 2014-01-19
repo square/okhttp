@@ -20,9 +20,9 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
+import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
 import java.io.IOException;
@@ -37,15 +37,15 @@ import java.util.Locale;
 import java.util.Set;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
+import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;
+import static com.squareup.okhttp.internal.spdy.Header.TARGET_HOST;
+import static com.squareup.okhttp.internal.spdy.Header.TARGET_METHOD;
+import static com.squareup.okhttp.internal.spdy.Header.TARGET_PATH;
+import static com.squareup.okhttp.internal.spdy.Header.TARGET_SCHEME;
+import static com.squareup.okhttp.internal.spdy.Header.VERSION;
 
 public final class SpdyTransport implements Transport {
-  private static final ByteString HEADER_METHOD = ByteString.encodeUtf8(":method");
-  private static final ByteString HEADER_PATH = ByteString.encodeUtf8(":path");
-  private static final ByteString HEADER_VERSION = ByteString.encodeUtf8(":version");
-  private static final ByteString HEADER_HOST = ByteString.encodeUtf8(":host");
-  private static final ByteString HEADER_AUTHORITY = ByteString.encodeUtf8(":authority");
-  private static final ByteString HEADER_SCHEME = ByteString.encodeUtf8(":scheme");
-
   private final HttpEngine httpEngine;
   private final SpdyConnection spdyConnection;
   private SpdyStream stream;
@@ -91,29 +91,26 @@ public final class SpdyTransport implements Transport {
    * Names are all lower case. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<ByteString> writeNameValueBlock(Request request, Protocol protocol,
+  public static List<Header> writeNameValueBlock(Request request, Protocol protocol,
       String version) {
     Headers headers = request.headers();
     // TODO: make the known header names constants.
-    List<ByteString> result = new ArrayList<ByteString>(headers.size() + 10);
-    result.add(HEADER_METHOD);
-    result.add(ByteString.encodeUtf8(request.method()));
-    result.add(HEADER_PATH);
-    result.add(ByteString.encodeUtf8(RequestLine.requestPath(request.url())));
-    result.add(HEADER_VERSION);
-    result.add(ByteString.encodeUtf8(version));
+    List<Header> result = new ArrayList<Header>(headers.size() + 10);
+    result.add(new Header(TARGET_METHOD, request.method()));
+    result.add(
+        new Header(TARGET_PATH, RequestLine.requestPath(request.url())));
+    String host = HttpEngine.hostHeader(request.url());
     if (Protocol.SPDY_3 == protocol) {
-      result.add(HEADER_HOST);
+      result.add(new Header(VERSION, version));
+      result.add(new Header(TARGET_HOST, host));
     } else if (Protocol.HTTP_2 == protocol) {
-      result.add(HEADER_AUTHORITY);
+      result.add(new Header(TARGET_AUTHORITY, host));
     } else {
       throw new AssertionError();
     }
-    result.add(ByteString.encodeUtf8(HttpEngine.hostHeader(request.url())));
-    result.add(HEADER_SCHEME);
-    result.add(ByteString.encodeUtf8(request.url().getProtocol()));
+    result.add(new Header(TARGET_SCHEME, request.url().getProtocol()));
 
-    Set<ByteString> names = new LinkedHashSet<ByteString>();
+    Set<String> names = new LinkedHashSet<String>();
     for (int i = 0; i < headers.size(); i++) {
       String name = headers.name(i).toLowerCase(Locale.US);
       String value = headers.value(i);
@@ -122,27 +119,26 @@ public final class SpdyTransport implements Transport {
       if (isProhibitedHeader(protocol, name)) continue;
 
       // They shouldn't be set, but if they are, drop them. We've already written them!
-      if (name.equals(":method")
-          || name.equals(":path")
-          || name.equals(":version")
-          || name.equals(":host")
-          || name.equals(":authority")
-          || name.equals(":scheme")) {
+      if (TARGET_METHOD.utf8Equals(name)
+          || TARGET_PATH.utf8Equals(name)
+          || TARGET_SCHEME.utf8Equals(name)
+          || TARGET_AUTHORITY.utf8Equals(name)
+          || TARGET_HOST.utf8Equals(name)
+          || VERSION.utf8Equals(name)) {
         continue;
       }
 
       // If we haven't seen this name before, add the pair to the end of the list...
-      if (names.add(ByteString.encodeUtf8(name))) {
-        result.add(ByteString.encodeUtf8(name));
-        result.add(ByteString.encodeUtf8(value));
+      if (names.add(name)) {
+        result.add(new Header(name, value));
         continue;
       }
 
       // ...otherwise concatenate the existing values and this value.
-      for (int j = 0; j < result.size(); j += 2) {
-        if (result.get(j).utf8Equals(name)) {
-          String concatenated = joinOnNull(result.get(j + 1).utf8(), value);
-          result.set(j + 1, ByteString.encodeUtf8(concatenated));
+      for (int j = 0; j < result.size(); j++) {
+        if (result.get(j).name.utf8Equals(name)) {
+          String concatenated = joinOnNull(result.get(j).value.utf8(), value);
+          result.set(j, new Header(name, concatenated));
           break;
         }
       }
@@ -155,29 +151,26 @@ public final class SpdyTransport implements Transport {
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(List<ByteString> nameValueBlock,
+  public static Response.Builder readNameValueBlock(List<Header> nameValueBlock,
       Protocol protocol) throws IOException {
-    if (nameValueBlock.size() % 2 != 0) {
-      throw new IllegalArgumentException("Unexpected name value block: " + nameValueBlock);
-    }
     String status = null;
-    String version = "HTTP/1.1"; // TODO: why are we expecting :version?
+    String version = "HTTP/1.1"; // :version present only in spdy/3.
 
     Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol.name.utf8());
     headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.name.utf8());
-    for (int i = 0; i < nameValueBlock.size(); i += 2) {
-      String name = nameValueBlock.get(i).utf8();
-      String values = nameValueBlock.get(i + 1).utf8();
+    for (int i = 0; i < nameValueBlock.size(); i++) {
+      String name = nameValueBlock.get(i).name.utf8();
+      String values = nameValueBlock.get(i).value.utf8();
       for (int start = 0; start < values.length(); ) {
         int end = values.indexOf('\0', start);
         if (end == -1) {
           end = values.length();
         }
         String value = values.substring(start, end);
-        if (":status".equals(name)) {
+        if (RESPONSE_STATUS.utf8Equals(name)) {
           status = value;
-        } else if (":version".equals(name)) {
+        } else if (VERSION.utf8Equals(name)) {
           version = value;
         } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
           headersBuilder.add(name, value);

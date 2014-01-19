@@ -72,7 +72,7 @@ class NameValueBlockReader implements Closeable {
     }
   }
 
-  public List<ByteString> readNameValueBlock(int length) throws IOException {
+  public List<Header> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
     try {
       int numberOfPairs = nameValueBlockIn.readInt();
@@ -82,13 +82,12 @@ class NameValueBlockReader implements Closeable {
       if (numberOfPairs > 1024) {
         throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
       }
-      List<ByteString> entries = new ArrayList<ByteString>(numberOfPairs * 2);
+      List<Header> entries = new ArrayList<Header>(numberOfPairs);
       for (int i = 0; i < numberOfPairs; i++) {
         ByteString name = readString();
         ByteString values = readString();
         if (name.size() == 0) throw new IOException("name.size == 0");
-        entries.add(name);
-        entries.add(values);
+        entries.add(new Header(name, values));
       }
 
       doneReading();

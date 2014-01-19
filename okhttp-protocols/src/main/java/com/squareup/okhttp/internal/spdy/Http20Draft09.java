@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
@@ -186,7 +185,7 @@ public final class Http20Draft09 implements Variant {
 
         if ((flags & FLAG_END_HEADERS) != 0) {
           hpackReader.emitReferenceSet();
-          List<ByteString> nameValueBlock = hpackReader.getAndReset();
+          List<Header> nameValueBlock = hpackReader.getAndReset();
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
           int priority = -1; // TODO: priority
@@ -337,24 +336,24 @@ public final class Http20Draft09 implements Variant {
 
     @Override
     public synchronized void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<ByteString> nameValueBlock)
+        int associatedStreamId, int priority, int slot, List<Header> nameValueBlock)
         throws IOException {
       if (inFinished) throw new UnsupportedOperationException();
       headers(outFinished, streamId, priority, nameValueBlock);
     }
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
-        List<ByteString> nameValueBlock) throws IOException {
+        List<Header> nameValueBlock) throws IOException {
       headers(outFinished, streamId, -1, nameValueBlock);
     }
 
-    @Override public synchronized void headers(int streamId, List<ByteString> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<Header> nameValueBlock)
         throws IOException {
       headers(false, streamId, -1, nameValueBlock);
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
-        List<ByteString> nameValueBlock) throws IOException {
+        List<Header> nameValueBlock) throws IOException {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(nameValueBlock);
       int type = TYPE_HEADERS;

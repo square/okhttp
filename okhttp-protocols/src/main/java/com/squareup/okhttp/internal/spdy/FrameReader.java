@@ -16,7 +16,6 @@
 
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,7 +43,7 @@ public interface FrameReader extends Closeable {
      * (highest) thru 7 (lowest). For HTTP/2.0, priorities range from 0
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-        int priority, List<ByteString> nameValueBlock, HeadersMode headersMode);
+        int priority, List<Header> nameValueBlock, HeadersMode headersMode);
     void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
     void noop();
