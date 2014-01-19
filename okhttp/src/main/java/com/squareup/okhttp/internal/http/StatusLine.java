@@ -18,26 +18,48 @@ public final class StatusLine {
     // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
     // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
 
-    // We allow empty message without leading white space since some servers
-    // do not send the white space when the message is empty.
-    boolean hasMessage = statusLine.length() > 13;
-    if (!statusLine.startsWith("HTTP/1.")
-        || statusLine.length() < 12
-        || statusLine.charAt(8) != ' '
-        || (hasMessage && statusLine.charAt(12) != ' ')) {
+    // Parse protocol like "HTTP/1.1" followed by a space.
+    int codeStart;
+    int httpMinorVersion;
+    if (statusLine.startsWith("HTTP/1.")) {
+      if (statusLine.length() < 9 || statusLine.charAt(8) != ' ') {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+      httpMinorVersion = statusLine.charAt(7) - '0';
+      codeStart = 9;
+      if (httpMinorVersion < 0 || httpMinorVersion > 9) {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+    } else if (statusLine.startsWith("ICY ")) {
+      // Shoutcast uses ICY instead of "HTTP/1.0".
+      httpMinorVersion = 0;
+      codeStart = 4;
+    } else {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-    int httpMinorVersion = statusLine.charAt(7) - '0';
-    if (httpMinorVersion < 0 || httpMinorVersion > 9) {
+
+    // Parse response code like "200". Always 3 digits.
+    if (statusLine.length() < codeStart + 3) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
     int responseCode;
     try {
-      responseCode = Integer.parseInt(statusLine.substring(9, 12));
+      responseCode = Integer.parseInt(statusLine.substring(codeStart, codeStart + 3));
     } catch (NumberFormatException e) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-    this.responseMessage = hasMessage ? statusLine.substring(13) : "";
+
+    // Parse an optional response message like "OK" or "Not Modified". If it
+    // exists, it is separated from the response code by a space.
+    String responseMessage = "";
+    if (statusLine.length() > codeStart + 3) {
+      if (statusLine.charAt(codeStart + 3) != ' ') {
+        throw new ProtocolException("Unexpected status line: " + statusLine);
+      }
+      responseMessage = statusLine.substring(codeStart + 4);
+    }
+
+    this.responseMessage = responseMessage;
     this.responseCode = responseCode;
     this.statusLine = statusLine;
     this.httpMinorVersion = httpMinorVersion;
@@ -64,5 +86,4 @@ public final class StatusLine {
   public String message() {
     return responseMessage;
   }
-
 }

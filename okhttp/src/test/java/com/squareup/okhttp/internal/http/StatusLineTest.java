@@ -16,8 +16,10 @@
 package com.squareup.okhttp.internal.http;
 
 import java.io.IOException;
+import java.net.ProtocolException;
 import org.junit.Test;
 
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 
 public final class StatusLineTest {
@@ -52,5 +54,64 @@ public final class StatusLineTest {
     assertEquals("", statusLine.message());
     assertEquals(version, statusLine.httpMinorVersion());
     assertEquals(code, statusLine.code());
+  }
+
+  // https://github.com/square/okhttp/issues/386
+  @Test public void shoutcast() throws IOException {
+    StatusLine statusLine = new StatusLine("ICY 200 OK");
+    assertEquals("OK", statusLine.message());
+    assertEquals(0, statusLine.httpMinorVersion());
+    assertEquals(200, statusLine.code());
+  }
+
+  @Test public void missingProtocol() throws IOException {
+    assertInvalid("");
+    assertInvalid(" ");
+    assertInvalid("200 OK");
+    assertInvalid(" 200 OK");
+  }
+
+  @Test public void protocolVersions() throws IOException {
+    assertInvalid("HTTP/2.0 200 OK");
+    assertInvalid("HTTP/2.1 200 OK");
+    assertInvalid("HTTP/-.1 200 OK");
+    assertInvalid("HTTP/1.- 200 OK");
+    assertInvalid("HTTP/0.1 200 OK");
+    assertInvalid("HTTP/101 200 OK");
+    assertInvalid("HTTP/1.1_200 OK");
+  }
+
+  @Test public void nonThreeDigitCode() throws IOException {
+    assertInvalid("HTTP/1.1  OK");
+    assertInvalid("HTTP/1.1 2 OK");
+    assertInvalid("HTTP/1.1 20 OK");
+    assertInvalid("HTTP/1.1 2000 OK");
+    assertInvalid("HTTP/1.1 two OK");
+    assertInvalid("HTTP/1.1 2");
+    assertInvalid("HTTP/1.1 2000");
+    assertInvalid("HTTP/1.1 two");
+  }
+
+  @Test public void truncated() throws IOException {
+    assertInvalid("");
+    assertInvalid("H");
+    assertInvalid("HTTP/1");
+    assertInvalid("HTTP/1.");
+    assertInvalid("HTTP/1.1");
+    assertInvalid("HTTP/1.1 ");
+    assertInvalid("HTTP/1.1 2");
+    assertInvalid("HTTP/1.1 20");
+  }
+
+  @Test public void wrongMessageDelimiter() throws IOException {
+    assertInvalid("HTTP/1.1 200_");
+  }
+
+  private void assertInvalid(String statusLine) throws IOException {
+    try {
+      new StatusLine(statusLine);
+      fail();
+    } catch (ProtocolException expected) {
+    }
   }
 }
