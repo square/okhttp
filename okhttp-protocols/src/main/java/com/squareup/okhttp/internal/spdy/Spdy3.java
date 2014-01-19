@@ -36,6 +36,16 @@ final class Spdy3 implements Variant {
     return Protocol.SPDY_3;
   }
 
+  @Override public Settings defaultOkHttpSettings(boolean client) {
+    return initialPeerSettings(client); // no difference in defaults.
+  }
+
+  @Override public Settings initialPeerSettings(boolean client) {
+    Settings settings = new Settings();
+    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
+    return settings;
+  }
+
   static final int TYPE_DATA = 0x0;
   static final int TYPE_SYN_STREAM = 0x1;
   static final int TYPE_SYN_REPLY = 0x2;
@@ -94,11 +104,11 @@ final class Spdy3 implements Variant {
     }
   }
 
-  @Override public FrameReader newReader(InputStream in, boolean client) {
+  @Override public FrameReader newReader(InputStream in, Settings ignored, boolean client) {
     return new Reader(in, client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
+  @Override public FrameWriter newWriter(OutputStream out, Settings ignored, boolean client) {
     return new Writer(out, client);
   }
 
@@ -306,6 +316,10 @@ final class Spdy3 implements Variant {
       nameValueBlockBuffer = new ByteArrayOutputStream();
       nameValueBlockOut = new DataOutputStream(
           Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
+    }
+
+    @Override public void ackSettings() {
+      // Do nothing: no ACK for SPDY/3 settings.
     }
 
     @Override public synchronized void connectionHeader() {

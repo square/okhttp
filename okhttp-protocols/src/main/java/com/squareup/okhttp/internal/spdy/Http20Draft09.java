@@ -38,6 +38,27 @@ public final class Http20Draft09 implements Variant {
     return Protocol.HTTP_2;
   }
 
+  // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5
+  @Override public Settings defaultOkHttpSettings(boolean client) {
+    Settings settings = new Settings();
+    settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
+    if (!client) { // client doesn't send push requests.
+      settings.set(Settings.ENABLE_PUSH, 0, 0); // TODO: support writing push.
+    }
+    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
+    return settings;
+  }
+
+  @Override public Settings initialPeerSettings(boolean client) {
+    Settings settings = new Settings();
+    settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
+    if (client) { // server doesn't read push requests.
+      settings.set(Settings.ENABLE_PUSH, 0, 0); // TODO: support reading push.
+    }
+    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
+    return settings;
+  }
+
   private static final byte[] CONNECTION_HEADER;
   static {
     try {
@@ -66,11 +87,11 @@ public final class Http20Draft09 implements Variant {
   static final int FLAG_ACK = 0x1;
   static final int FLAG_END_FLOW_CONTROL = 0x1;
 
-  @Override public FrameReader newReader(InputStream in, boolean client) {
-    return new Reader(in, client);
+  @Override public FrameReader newReader(InputStream in, Settings peerSettings, boolean client) {
+    return new Reader(in, peerSettings.getHeaderTableSize(), client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
+  @Override public FrameWriter newWriter(OutputStream out, Settings ignored, boolean client) {
     return new Writer(out, client);
   }
 
@@ -81,10 +102,10 @@ public final class Http20Draft09 implements Variant {
     // Visible for testing.
     final HpackDraft05.Reader hpackReader;
 
-    Reader(InputStream in, boolean client) {
+    Reader(InputStream in, int headerTableSize, boolean client) {
       this.in = new DataInputStream(in);
       this.client = client;
-      this.hpackReader = new HpackDraft05.Reader(client, this.in);
+      this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, this.in);
     }
 
     @Override public void readConnectionHeader() throws IOException {
@@ -225,9 +246,6 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       if ((flags & FLAG_ACK) != 0) {
         if (length != 0) throw ioException("FRAME_SIZE_ERROR ack frame should be empty!");
-        // TODO: signal apply changes
-        // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5.3
-        return;
       }
 
       if (length % 8 != 0) throw ioException("TYPE_SETTINGS length %% 8 != 0: %s", length);
@@ -241,6 +259,9 @@ public final class Http20Draft09 implements Variant {
         settings.set(id, 0, value);
       }
       handler.settings(false, settings);
+      if (settings.getHeaderTableSize() >= 0) {
+        hpackReader.maxHeaderTableByteCount(settings.getHeaderTableSize());
+      }
     }
 
     private void readPushPromise(Handler handler, int flags, int length, int streamId) {
@@ -301,6 +322,12 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void flush() throws IOException {
       out.flush();
+    }
+
+    @Override public void ackSettings() throws IOException {
+      // ACK the settings frame.
+      out.writeInt(0 | (TYPE_SETTINGS & 0xff) << 8 | (FLAG_ACK & 0xff));
+      out.writeInt(0);
     }
 
     @Override public synchronized void connectionHeader() throws IOException {

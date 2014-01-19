@@ -37,6 +37,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
   private final boolean client;
+  private final Variant variant;
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
   private final FrameWriter frameWriter;
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
@@ -47,9 +48,10 @@ public final class MockSpdyPeer implements Closeable {
   private ServerSocket serverSocket;
   private Socket socket;
 
-  public MockSpdyPeer(boolean client) {
+  public MockSpdyPeer(Variant variant, boolean client) {
     this.client = client;
-    this.frameWriter = Variant.SPDY3.newWriter(bytesOut, client);
+    this.variant = variant;
+    this.frameWriter = variant.newWriter(bytesOut, variant.defaultOkHttpSettings(client), client);
   }
 
   public void acceptFrame() {
@@ -109,7 +111,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = Variant.SPDY3.newReader(in, client);
+    FrameReader reader = variant.newReader(in, variant.initialPeerSettings(client), client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();
