@@ -18,19 +18,19 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.spdy.Header;
 import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.byteStringList;
+import static com.squareup.okhttp.internal.Util.headerEntries;
 import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
 
 public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
-    List<ByteString> nameValueBlock = byteStringList(
+    List<Header> nameValueBlock = headerEntries(
         "cache-control", "no-cache, no-store",
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK",
@@ -59,7 +59,7 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersSpdy3() throws IOException {
-    List<ByteString> nameValueBlock = byteStringList(
+    List<Header> nameValueBlock = headerEntries(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
@@ -75,7 +75,7 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<ByteString> nameValueBlock = byteStringList(
+    List<Header> nameValueBlock = headerEntries(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
@@ -98,9 +98,9 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<ByteString> nameValueBlock =
+    List<Header> nameValueBlock =
         SpdyTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1");
-    List<ByteString> expected = byteStringList(
+    List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
         ":version", "HTTP/1.1",
@@ -118,7 +118,7 @@ public final class HeadersTest {
         .header("Connection", "close")
         .header("Transfer-Encoding", "chunked")
         .build();
-    List<ByteString> expected = byteStringList(
+    List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
         ":version", "HTTP/1.1",
@@ -133,10 +133,9 @@ public final class HeadersTest {
         .header("Connection", "upgrade")
         .header("Upgrade", "websocket")
         .build();
-    List<ByteString> expected = byteStringList(
+    List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
-        ":version", "HTTP/1.1",
         ":authority", "square.com",
         ":scheme", "http");
     assertEquals(expected,

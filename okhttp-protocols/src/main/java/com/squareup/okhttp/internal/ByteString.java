@@ -61,17 +61,14 @@ public final class ByteString {
     return new ByteString(bytes);
   }
 
-  /**
-   * Returns a new byte string containing the {@code UTF-8} bytes of {@code s},
-   * or {@link #EMPTY} if {@code s} is zero length.
-   */
+  /** Returns a new byte string containing the {@code UTF-8} bytes of {@code s}. */
   public static ByteString encodeUtf8(String s) {
     ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
     byteString.utf8 = s;
     return byteString;
   }
 
-  /** Constructs a new {@code String} by decoding the bytes as UTF-8. */
+  /** Constructs a new {@code String} by decoding the bytes as {@code UTF-8}. */
   public String utf8() {
     String result = utf8;
     // We don't care if we double-allocate in racy code.

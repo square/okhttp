@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.ByteString;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -23,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.byteStringList;
+import static com.squareup.okhttp.internal.Util.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +31,7 @@ public class Http20Draft09Test {
   static final int expectedStreamId = 15;
 
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
-    final List<ByteString> sentHeaders = byteStringList("name", "value");
+    final List<Header> sentHeaders = headerEntries("name", "value");
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
@@ -54,7 +53,7 @@ public class Http20Draft09Test {
 
       @Override
       public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, int priority, List<ByteString> nameValueBlock,
+          int associatedStreamId, int priority, List<Header> nameValueBlock,
           HeadersMode headersMode) {
         assertFalse(outFinished);
         assertTrue(inFinished);
@@ -74,7 +73,7 @@ public class Http20Draft09Test {
 
     // Write the first headers frame.
     {
-      byte[] headerBytes = literalHeaders(byteStringList("foo", "bar"));
+      byte[] headerBytes = literalHeaders(headerEntries("foo", "bar"));
       dataOut.writeShort(headerBytes.length);
       dataOut.write(Http20Draft09.TYPE_HEADERS);
       dataOut.write(0); // no flags
@@ -84,7 +83,7 @@ public class Http20Draft09Test {
 
     // Write the continuation frame, specifying no more frames are expected.
     {
-      byte[] headerBytes = literalHeaders(byteStringList("baz", "qux"));
+      byte[] headerBytes = literalHeaders(headerEntries("baz", "qux"));
       dataOut.writeShort(headerBytes.length);
       dataOut.write(Http20Draft09.TYPE_CONTINUATION);
       dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
@@ -99,14 +98,14 @@ public class Http20Draft09Test {
 
       @Override
       public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, int priority, List<ByteString> nameValueBlock,
+          int associatedStreamId, int priority, List<Header> nameValueBlock,
           HeadersMode headersMode) {
         assertFalse(outFinished);
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(-1, priority);
-        assertEquals(byteStringList("foo", "bar", "baz", "qux"), nameValueBlock);
+        assertEquals(headerEntries("foo", "bar", "baz", "qux"), nameValueBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
@@ -162,7 +161,7 @@ public class Http20Draft09Test {
         Variant.HTTP_20_DRAFT_09.initialPeerSettings(false).getHeaderTableSize(), false);
   }
 
-  private byte[] literalHeaders(List<ByteString> sentHeaders) throws IOException {
+  private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
     ByteArrayOutputStream headerBytes = new ByteArrayOutputStream();
     new HpackDraft05.Writer(new DataOutputStream(headerBytes)).writeHeaders(sentHeaders);
     return headerBytes.toByteArray();

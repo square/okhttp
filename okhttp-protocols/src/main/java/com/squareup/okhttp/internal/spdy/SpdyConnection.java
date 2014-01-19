@@ -16,7 +16,6 @@
 
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
@@ -159,7 +158,7 @@ public final class SpdyConnection implements Closeable {
    * @param in true to create an input stream that the remote peer can use to
    *     send data to us. Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
-  public SpdyStream newStream(List<ByteString> requestHeaders, boolean out, boolean in)
+  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in)
       throws IOException {
     boolean outFinished = !out;
     boolean inFinished = !in;
@@ -191,7 +190,7 @@ public final class SpdyConnection implements Closeable {
     return stream;
   }
 
-  void writeSynReply(int streamId, boolean outFinished, List<ByteString> alternating)
+  void writeSynReply(int streamId, boolean outFinished, List<Header> alternating)
       throws IOException {
     frameWriter.synReply(outFinished, streamId, alternating);
   }
@@ -480,7 +479,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<ByteString> nameValueBlock,
+        int associatedStreamId, int priority, List<Header> nameValueBlock,
         HeadersMode headersMode) {
       SpdyStream stream;
       synchronized (SpdyConnection.this) {

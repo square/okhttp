@@ -557,9 +557,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (append) {
       protocolsList.addAll(client.getProtocols());
     }
-    for (ByteString protocol : Util.byteStringList(protocolsString.split(",", -1))) {
+    for (String protocol : protocolsString.split(",", -1)) {
       try {
-        protocolsList.add(Protocol.find(protocol));
+        protocolsList.add(Protocol.find(ByteString.encodeUtf8(protocol)));
       } catch (IOException e) {
         throw new IllegalStateException(e);
       }
