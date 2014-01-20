@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.squareup.okhttp.internal.Util.asciiLowerCase;
+
 /**
  * Read and write HPACK v05.
  *
@@ -240,26 +242,26 @@ final class HpackDraft05 {
 
     private void readLiteralHeaderWithoutIndexingIndexedName(int index) throws IOException {
       ByteString name = getName(index);
-      ByteString value = readString();
+      ByteString value = readByteString(false);
       emittedHeaders.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithoutIndexingNewName() throws IOException {
-      ByteString name = readString();
-      ByteString value = readString();
+      ByteString name = readByteString(true);
+      ByteString value = readByteString(false);
       emittedHeaders.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
         throws IOException {
       ByteString name = getName(nameIndex);
-      ByteString value = readString();
+      ByteString value = readByteString(false);
       insertIntoHeaderTable(-1, new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
-      ByteString name = readString();
-      ByteString value = readString();
+      ByteString name = readByteString(true);
+      ByteString value = readByteString(false);
       insertIntoHeaderTable(-1, new Header(name, value));
     }
 
@@ -349,10 +351,10 @@ final class HpackDraft05 {
     }
 
     /**
-     * Reads a UTF-8 encoded string. Since ASCII is a subset of UTF-8, this method
-     * may be used to read strings that are known to be ASCII-only.
+     * Reads a potentially Huffman encoded string byte string. When
+     * {@code asciiLowercase} is true, bytes will be converted to lowercase.
      */
-    public ByteString readString() throws IOException {
+    public ByteString readByteString(boolean asciiLowercase) throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
       if ((length & 0x80) == 0x80) { // 1NNNNNNN
@@ -360,10 +362,13 @@ final class HpackDraft05 {
         byte[] buff = new byte[length];
         Util.readFully(in, buff);
         bytesLeft -= length;
-        return ByteString.of(huffmanCodec.decode(buff));
+        buff = huffmanCodec.decode(buff); // TODO: streaming Huffman!
+        if (asciiLowercase) asciiLowerCase(buff);
+        return ByteString.of(buff);
       }
       bytesLeft -= length;
-      return length == 0 ? ByteString.EMPTY : ByteString.read(in, length);
+      return length == 0 ? ByteString.EMPTY
+          : asciiLowercase ? ByteString.readLowerCase(in, length) : ByteString.read(in, length);
     }
   }
 
