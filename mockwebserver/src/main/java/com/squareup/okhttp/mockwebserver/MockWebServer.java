@@ -17,10 +17,10 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;

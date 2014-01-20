@@ -15,9 +15,9 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

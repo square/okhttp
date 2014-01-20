@@ -16,8 +16,8 @@
 
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;

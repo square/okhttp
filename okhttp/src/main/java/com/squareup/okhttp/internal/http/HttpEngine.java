@@ -168,7 +168,7 @@ public class HttpEngine {
         ? responseCache.get(request)
         : null;
     long now = System.currentTimeMillis();
-    CacheStrategy cacheStrategy = CacheStrategy.get(now, cacheResponse, request);
+    CacheStrategy cacheStrategy = new CacheStrategy.Factory(now, request, cacheResponse).get();
     responseSource = cacheStrategy.source;
     request = cacheStrategy.request;
 

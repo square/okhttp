@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpDate;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,7 +27,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -296,14 +294,6 @@ public final class Request {
 
     public Builder setUserAgent(String userAgent) {
       return header("User-Agent", userAgent);
-    }
-
-    public Builder setIfModifiedSince(Date date) {
-      return header("If-Modified-Since", HttpDate.format(date));
-    }
-
-    public Builder setIfNoneMatch(String ifNoneMatch) {
-      return header("If-None-Match", ifNoneMatch);
     }
 
     public Builder get() {
