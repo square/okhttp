@@ -29,6 +29,7 @@ import org.junit.Test;
 import static com.squareup.okhttp.internal.Util.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class HpackDraft05Test {
@@ -757,13 +758,14 @@ public class HpackDraft05Test {
   @Test public void headerName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8("foo"));
     assertBytes(3, 'f', 'o', 'o');
-    assertEquals("foo", newReader(byteStream(3, 'f', 'o', 'o')).readString().utf8());
+    assertEquals("foo", newReader(byteStream(3, 'F', 'o', 'o')).readByteString(true).utf8());
   }
 
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals("", newReader(byteStream(0)).readString().utf8());
+    assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(true));
+    assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
   }
 
   @Test public void headersRoundTrip() throws IOException {

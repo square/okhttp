@@ -74,28 +74,24 @@ class NameValueBlockReader implements Closeable {
 
   public List<Header> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
-    try {
-      int numberOfPairs = nameValueBlockIn.readInt();
-      if (numberOfPairs < 0) {
-        throw new IOException("numberOfPairs < 0: " + numberOfPairs);
-      }
-      if (numberOfPairs > 1024) {
-        throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
-      }
-      List<Header> entries = new ArrayList<Header>(numberOfPairs);
-      for (int i = 0; i < numberOfPairs; i++) {
-        ByteString name = readString();
-        ByteString values = readString();
-        if (name.size() == 0) throw new IOException("name.size == 0");
-        entries.add(new Header(name, values));
-      }
-
-      doneReading();
-
-      return entries;
-    } catch (DataFormatException e) {
-      throw new IOException(e.getMessage());
+    int numberOfPairs = nameValueBlockIn.readInt();
+    if (numberOfPairs < 0) {
+      throw new IOException("numberOfPairs < 0: " + numberOfPairs);
     }
+    if (numberOfPairs > 1024) {
+      throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
+    }
+    List<Header> entries = new ArrayList<Header>(numberOfPairs);
+    for (int i = 0; i < numberOfPairs; i++) {
+      ByteString name = ByteString.readLowerCase(nameValueBlockIn, nameValueBlockIn.readInt());
+      ByteString values = ByteString.read(nameValueBlockIn, nameValueBlockIn.readInt());
+      if (name.size() == 0) throw new IOException("name.size == 0");
+      entries.add(new Header(name, values));
+    }
+
+    doneReading();
+
+    return entries;
   }
 
   private void doneReading() throws IOException {
@@ -108,13 +104,6 @@ class NameValueBlockReader implements Closeable {
     if (compressedLimit != 0) {
       throw new IOException("compressedLimit > 0: " + compressedLimit);
     }
-  }
-
-  private ByteString readString() throws DataFormatException, IOException {
-    int length = nameValueBlockIn.readInt();
-    byte[] bytes = new byte[length];
-    Util.readFully(nameValueBlockIn, bytes);
-    return ByteString.of(bytes);
   }
 
   @Override public void close() throws IOException {

@@ -41,10 +41,17 @@ public class ByteStringTest {
 
   @Test public void utf8() throws Exception {
     ByteString byteString = ByteString.encodeUtf8(bronzeHorseman);
-    assertByteArraysEquals(byteString.toByteArray(), bronzeHorseman.getBytes("UTF-8"));
-    assertTrue(byteString.equals(ByteString.of(bronzeHorseman.getBytes("UTF-8"))));
-    assertTrue(byteString.utf8Equals(bronzeHorseman));
+    assertByteArraysEquals(byteString.toByteArray(), bronzeHorseman.getBytes(Util.UTF_8));
+    assertTrue(byteString.equals(ByteString.of(bronzeHorseman.getBytes(Util.UTF_8))));
     assertEquals(byteString.utf8(), bronzeHorseman);
+  }
+
+  @Test public void equalsAscii() throws Exception {
+    ByteString byteString = ByteString.encodeUtf8("Content-Length");
+    assertTrue(byteString.equalsAscii("Content-Length"));
+    assertFalse(byteString.equalsAscii("content-length"));
+    assertFalse(byteString.equalsAscii(bronzeHorseman));
+    assertFalse(ByteString.encodeUtf8("Content-Length").equalsAscii("content-length"));
   }
 
   @Test public void testHashCode() throws Exception {
@@ -54,10 +61,17 @@ public class ByteStringTest {
   }
 
   @Test public void read() throws Exception {
-    InputStream in = new ByteArrayInputStream("abc".getBytes("UTF-8"));
+    InputStream in = new ByteArrayInputStream("abc".getBytes(Util.UTF_8));
     assertEquals(ByteString.of((byte) 0x61, (byte) 0x62), ByteString.read(in, 2));
     assertEquals(ByteString.of((byte) 0x63), ByteString.read(in, 1));
     assertEquals(ByteString.of(), ByteString.read(in, 0));
+  }
+
+  @Test public void readLowerCase() throws Exception {
+    InputStream in = new ByteArrayInputStream("ABC".getBytes(Util.UTF_8));
+    assertEquals(ByteString.of((byte) 0x61, (byte) 0x62), ByteString.readLowerCase(in, 2));
+    assertEquals(ByteString.of((byte) 0x63), ByteString.readLowerCase(in, 1));
+    assertEquals(ByteString.of(), ByteString.readLowerCase(in, 0));
   }
 
   @Test public void write() throws Exception {

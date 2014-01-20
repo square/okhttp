@@ -622,16 +622,16 @@ public final class MockWebServer {
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
       for (int i = 0, size = spdyHeaders.size(); i < size; i++) {
-        String name = spdyHeaders.get(i).name.utf8();
+        ByteString name = spdyHeaders.get(i).name;
         String value = spdyHeaders.get(i).value.utf8();
-        if (":method".equals(name)) {
+        if (name.equals(Header.TARGET_METHOD)) {
           method = value;
-        } else if (":path".equals(name)) {
+        } else if (name.equals(Header.TARGET_PATH)) {
           path = value;
-        } else if (":version".equals(name)) {
+        } else if (name.equals(Header.VERSION)) {
           version = value;
         } else {
-          httpHeaders.add(name + ": " + value);
+          httpHeaders.add(name.utf8() + ": " + value);
         }
       }
 
@@ -670,8 +670,7 @@ public final class MockWebServer {
         if (headerParts.length != 2) {
           throw new AssertionError("Unexpected header: " + header);
         }
-        spdyHeaders.add(new Header(headerParts[0].toLowerCase(Locale.US).trim(),
-            headerParts[1].trim()));
+        spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
       byte[] body = response.getBody();
       stream.reply(spdyHeaders, body.length > 0);
