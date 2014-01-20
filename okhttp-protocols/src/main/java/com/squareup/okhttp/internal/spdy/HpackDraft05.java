@@ -92,7 +92,6 @@ final class HpackDraft05 {
   private HpackDraft05() {
   }
 
-  // TODO: huffman encoding!
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
   static class Reader {
     private final Huffman.Codec huffmanCodec;
@@ -132,12 +131,28 @@ final class HpackDraft05 {
       return maxHeaderTableByteCount;
     }
 
-    /** Evicts entries as needed. */
+    /**
+     * Called by the reader when the peer sent a new header table size setting.
+     *
+     * Evicts entries or clears the table as needed.
+     */
     void maxHeaderTableByteCount(int newMaxHeaderTableByteCount) {
-      if (newMaxHeaderTableByteCount < headerTableByteCount) {
-        evictToRecoverBytes(headerTableByteCount - newMaxHeaderTableByteCount);
-      }
       this.maxHeaderTableByteCount = newMaxHeaderTableByteCount;
+      if (maxHeaderTableByteCount < headerTableByteCount) {
+        if (maxHeaderTableByteCount == 0) {
+          clearHeaderTable();
+        } else {
+          evictToRecoverBytes(headerTableByteCount - maxHeaderTableByteCount);
+        }
+      }
+    }
+
+    private void clearHeaderTable() {
+      clearReferenceSet();
+      Arrays.fill(headerTable, null);
+      nextHeaderIndex = headerTable.length - 1;
+      headerCount = 0;
+      headerTableByteCount = 0;
     }
 
     /** Returns the count of entries evicted. */
@@ -286,11 +301,7 @@ final class HpackDraft05 {
 
       // if the new or replacement header is too big, drop all entries.
       if (delta > maxHeaderTableByteCount) {
-        clearReferenceSet();
-        Arrays.fill(headerTable, null);
-        nextHeaderIndex = headerTable.length - 1;
-        headerCount = 0;
-        headerTableByteCount = 0;
+        clearHeaderTable();
         // emit the large header to the callback.
         emittedHeaders.add(entry);
         return;
