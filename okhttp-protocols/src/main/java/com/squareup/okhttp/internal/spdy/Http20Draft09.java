@@ -323,7 +323,7 @@ public final class Http20Draft09 implements Variant {
       out.flush();
     }
 
-    @Override public void ackSettings() throws IOException {
+    @Override public synchronized void ackSettings() throws IOException {
       // ACK the settings frame.
       out.writeInt(0 | (TYPE_SETTINGS & 0xff) << 8 | (FLAG_ACK & 0xff));
       out.writeInt(0);
