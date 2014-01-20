@@ -138,12 +138,14 @@ public class Http20Draft09Test {
 
     final int reducedTableSizeBytes = 16;
 
-    dataOut.writeShort(8); // 1 setting = 4 bytes for the code and 4 for the value.
+    dataOut.writeShort(16); // 2 settings * 4 bytes for the code and 4 for the value.
     dataOut.write(Http20Draft09.TYPE_SETTINGS);
     dataOut.write(0); // No flags
     dataOut.writeInt(0 & 0x7fffffff); // Settings are always on the connection stream 0.
     dataOut.writeInt(Settings.HEADER_TABLE_SIZE & 0xffffff);
     dataOut.writeInt(reducedTableSizeBytes);
+    dataOut.writeInt(Settings.ENABLE_PUSH & 0xffffff);
+    dataOut.writeInt(0);
 
     final Http20Draft09.Reader fr = newReader(out);
 
@@ -152,6 +154,7 @@ public class Http20Draft09Test {
       @Override public void settings(boolean clearPrevious, Settings settings) {
         assertFalse(clearPrevious); // No clearPrevious in http/2.
         assertEquals(reducedTableSizeBytes, settings.getHeaderTableSize());
+        assertEquals(false, settings.getEnablePush(true));
       }
     });
   }

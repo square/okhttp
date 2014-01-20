@@ -133,7 +133,7 @@ final class HpackDraft05 {
 
     /**
      * Called by the reader when the peer sent a new header table size setting.
-     *
+     * <p/>
      * Evicts entries or clears the table as needed.
      */
     void maxHeaderTableByteCount(int newMaxHeaderTableByteCount) {
