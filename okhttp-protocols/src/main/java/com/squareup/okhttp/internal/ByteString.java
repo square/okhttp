@@ -67,11 +67,11 @@ public final class ByteString {
    * by this byte string.
    */
   public boolean equalsAscii(String ascii) {
-    if (ascii == this.utf8) {
-      return true;
-    }
     if (ascii == null || data.length != ascii.length()) {
       return false;
+    }
+    if (ascii == this.utf8) {
+      return true;
     }
     for (int i = 0; i < data.length; i++) {
       if (data[i] != ascii.charAt(i)) return false;
