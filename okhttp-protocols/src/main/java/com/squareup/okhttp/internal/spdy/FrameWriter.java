@@ -58,7 +58,19 @@ public interface FrameWriter extends Closeable {
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;
   void noop() throws IOException;
-  void ping(boolean reply, int payload1, int payload2) throws IOException;
+
+  /**
+   *  Send a connection-level ping to the peer.  {@code ack} indicates this is
+   *  a reply.  Payload parameters are different between SPDY/3 and HTTP/2.
+   *  <p/>
+   *  In SPDY/3, only the first {@code payload1} parameter is sent.  If the
+   *  sender is a client, it is an unsigned odd number.  Likewise, a server
+   *  will send an even number.
+   *  <p/>
+   *  In HTTP/2, both {@code payload1} and {@code payload2} parameters are
+   *  sent.  The data is opaque binary, and there are no rules on the content.
+   */
+  void ping(boolean ack, int payload1, int payload2) throws IOException;
   void goAway(int lastGoodStreamId, ErrorCode errorCode) throws IOException;
   void windowUpdate(int streamId, int deltaWindowSize) throws IOException;
 }
