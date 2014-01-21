@@ -176,7 +176,8 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       if (streamId == 0) throw ioException("TYPE_HEADERS streamId == 0");
 
-      boolean inFinished = (flags & FLAG_END_STREAM) != 0;
+      boolean endStream = (flags & FLAG_END_STREAM) != 0;
+      int priority = ((flags & FLAG_PRIORITY) != 0) ? in.readInt() & 0x7fffffff : -1;
 
       while (true) {
         hpackReader.readHeaders(length);
@@ -186,8 +187,7 @@ public final class Http20Draft09 implements Variant {
           List<Header> nameValueBlock = hpackReader.getAndReset();
           // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
           // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-          int priority = -1; // TODO: priority
-          handler.headers(false, inFinished, streamId, -1, priority, nameValueBlock,
+          handler.headers(false, endStream, streamId, -1, priority, nameValueBlock,
               HeadersMode.HTTP_20_HEADERS);
           return;
         }

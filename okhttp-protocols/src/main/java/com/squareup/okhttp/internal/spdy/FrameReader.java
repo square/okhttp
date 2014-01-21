@@ -41,6 +41,7 @@ public interface FrameReader extends Closeable {
      * this stream.
      * @param priority or -1 for no priority. For SPDY, priorities range from 0
      * (highest) thru 7 (lowest). For HTTP/2.0, priorities range from 0
+     * (highest) thru 2^31-1 (lowest), defaulting to 2^30.
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
         int priority, List<Header> nameValueBlock, HeadersMode headersMode);

@@ -66,6 +66,42 @@ public class Http20Draft09Test {
     });
   }
 
+  @Test public void headersWithPriority() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final List<Header> sentHeaders = headerEntries("name", "value");
+
+    { // Write the headers frame, specifying priority flag and value.
+      byte[] headerBytes = literalHeaders(sentHeaders);
+      dataOut.writeShort(headerBytes.length);
+      dataOut.write(Http20Draft09.TYPE_HEADERS);
+      dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
+      dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
+      dataOut.writeInt(0); // Highest priority is 0.
+      dataOut.write(headerBytes);
+    }
+
+    FrameReader fr = newReader(out);
+
+    // Consume the headers frame.
+    fr.nextFrame(new BaseTestHandler() {
+
+      @Override
+      public void headers(boolean outFinished, boolean inFinished, int streamId,
+          int associatedStreamId, int priority, List<Header> nameValueBlock,
+          HeadersMode headersMode) {
+        assertFalse(outFinished);
+        assertFalse(inFinished);
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(-1, associatedStreamId);
+        assertEquals(0, priority);
+        assertEquals(sentHeaders, nameValueBlock);
+        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
+      }
+    });
+  }
+
   @Test public void headersFrameThenContinuation() throws IOException {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
