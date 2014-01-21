@@ -322,6 +322,12 @@ final class Spdy3 implements Variant {
       // Do nothing: no ACK for SPDY/3 settings.
     }
 
+    @Override
+    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+        throws IOException {
+      // Do nothing: no push promise for SPDY/3.
+    }
+
     @Override public synchronized void connectionHeader() {
       // Do nothing: no connection header for SPDY/3.
     }

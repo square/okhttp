@@ -262,5 +262,13 @@ public final class MockSpdyPeer implements Closeable {
     @Override public void priority(int streamId, int priority) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+      this.type = Http20Draft09.TYPE_PUSH_PROMISE;
+      this.streamId = streamId;
+      this.associatedStreamId = associatedStreamId;
+      this.headerBlock = headerBlock;
+    }
   }
 }

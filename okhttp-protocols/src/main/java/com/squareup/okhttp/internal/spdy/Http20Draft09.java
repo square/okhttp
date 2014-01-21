@@ -24,7 +24,6 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,11 +39,7 @@ public final class Http20Draft09 implements Variant {
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5
   @Override public Settings defaultOkHttpSettings(boolean client) {
-    Settings settings = initialPeerSettings(client);
-    if (client) { // TODO: we don't yet support reading push.
-      settings.set(Settings.ENABLE_PUSH, 0, 0);
-    }
-    return settings;
+    return initialPeerSettings(client);
   }
 
   @Override public Settings initialPeerSettings(boolean client) {
@@ -57,14 +52,8 @@ public final class Http20Draft09 implements Variant {
     return settings;
   }
 
-  private static final byte[] CONNECTION_HEADER;
-  static {
-    try {
-      CONNECTION_HEADER = "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes("UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      throw new AssertionError();
-    }
-  }
+  private static final byte[] CONNECTION_HEADER =
+      "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes(Util.UTF_8);
 
   static final int TYPE_DATA = 0x0;
   static final int TYPE_HEADERS = 0x1;
@@ -79,8 +68,9 @@ public final class Http20Draft09 implements Variant {
 
   static final int FLAG_END_STREAM = 0x1;
 
-  /** Used for headers, push-promise and continuation. */
+  /** Used for headers and continuation. */
   static final int FLAG_END_HEADERS = 0x4;
+  static final int FLAG_END_PUSH_PROMISE = 0x4;
   static final int FLAG_PRIORITY = 0x8;
   static final int FLAG_ACK = 0x1;
   static final int FLAG_END_FLOW_CONTROL = 0x1;
@@ -252,8 +242,17 @@ public final class Http20Draft09 implements Variant {
       }
     }
 
-    private void readPushPromise(Handler handler, int flags, int length, int streamId) {
-      // TODO:
+    private void readPushPromise(Handler handler, int flags, int length, int streamId)
+        throws IOException {
+      if (streamId == 0) {
+        throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
+      }
+      boolean endHeaders = (flags & FLAG_END_PUSH_PROMISE) != 0;
+
+      int promisedStreamId = in.readInt() & 0x7fffffff;
+      List<Header> headerBlock = readHeaderBlock(length, endHeaders, streamId);
+
+      handler.pushPromise(streamId, promisedStreamId, headerBlock);
     }
 
     private void readPing(Handler handler, int flags, int length, int streamId) throws IOException {
@@ -339,6 +338,22 @@ public final class Http20Draft09 implements Variant {
     @Override public synchronized void headers(int streamId, List<Header> headerBlock)
         throws IOException {
       headers(false, streamId, -1, headerBlock);
+    }
+
+    @Override
+    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+        throws IOException {
+      hpackBuffer.reset();
+      hpackWriter.writeHeaders(requestHeaders);
+      int type = TYPE_PUSH_PROMISE;
+      // TODO: implement CONTINUATION
+      int length = hpackBuffer.size();
+      checkFrameSize(length);
+      int flags = FLAG_END_HEADERS;
+      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt(streamId & 0x7fffffff);
+      out.writeInt(promisedStreamId & 0x7fffffff);
+      hpackBuffer.writeTo(out);
     }
 
     private void headers(boolean outFinished, int streamId, int priority,

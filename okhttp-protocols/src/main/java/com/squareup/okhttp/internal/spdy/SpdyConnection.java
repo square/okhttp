@@ -630,5 +630,23 @@ public final class SpdyConnection implements Closeable {
     @Override public void priority(int streamId, int priority) {
       // TODO: honor priority.
     }
+
+    @Override
+    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+        throws IOException {
+      // TODO: Wire up properly and only cancel when local settings disable push.
+      cancelStreamLater(promisedStreamId);
+    }
+
+    private void cancelStreamLater(final int streamId) {
+      executor.submit(new NamedRunnable("OkHttp %s Cancelling Stream %s", hostName, streamId) {
+        @Override public void execute() {
+          try {
+            frameWriter.rstStream(streamId, ErrorCode.CANCEL);
+          } catch (IOException ignored) {
+          }
+        }
+      });
+    }
   }
 }

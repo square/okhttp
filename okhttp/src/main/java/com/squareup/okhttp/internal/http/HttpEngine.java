@@ -333,7 +333,7 @@ public class HttpEngine {
 
   private boolean isRecoverable(IOException e) {
     // If the problem was a CertificateException from the X509TrustManager,
-    // do not retry, we didn't have an abrupt server initiated exception.
+    // do not retry, we didn't have an abrupt server-initiated exception.
     boolean sslFailure =
         e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
     boolean protocolFailure = e instanceof ProtocolException;
