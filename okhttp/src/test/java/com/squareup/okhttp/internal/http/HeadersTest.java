@@ -30,14 +30,14 @@ import static org.junit.Assert.assertEquals;
 
 public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
-    List<Header> nameValueBlock = headerEntries(
+    List<Header> headerBlock = headerEntries(
         "cache-control", "no-cache, no-store",
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK",
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
-        SpdyTransport.readNameValueBlock(nameValueBlock, Protocol.SPDY_3).request(request).build();
+        SpdyTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
     Headers headers = response.headers();
     assertEquals(5, headers.size());
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
@@ -59,13 +59,13 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersSpdy3() throws IOException {
-    List<Header> nameValueBlock = headerEntries(
+    List<Header> headerBlock = headerEntries(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
-        SpdyTransport.readNameValueBlock(nameValueBlock, Protocol.SPDY_3).request(request).build();
+        SpdyTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
     Headers headers = response.headers();
     assertEquals(2, headers.size());
     assertEquals(OkHeaders.SELECTED_TRANSPORT, headers.name(0));
@@ -75,12 +75,12 @@ public final class HeadersTest {
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
-    List<Header> nameValueBlock = headerEntries(
+    List<Header> headerBlock = headerEntries(
         ":status", "200 OK",
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = SpdyTransport.readNameValueBlock(nameValueBlock, Protocol.HTTP_2)
+    Response response = SpdyTransport.readNameValueBlock(headerBlock, Protocol.HTTP_2)
         .request(request).build();
     Headers headers = response.headers();
     assertEquals(2, headers.size());
@@ -98,7 +98,7 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<Header> nameValueBlock =
+    List<Header> headerBlock =
         SpdyTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1");
     List<Header> expected = headerEntries(
         ":method", "GET",
@@ -109,7 +109,7 @@ public final class HeadersTest {
         "cache-control", "no-cache, no-store",
         "set-cookie", "Cookie1\u0000Cookie2",
         ":status", "200 OK");
-    assertEquals(expected, nameValueBlock);
+    assertEquals(expected, headerBlock);
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeadersSpdy3() {

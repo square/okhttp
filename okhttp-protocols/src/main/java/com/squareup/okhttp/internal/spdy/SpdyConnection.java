@@ -482,7 +482,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<Header> nameValueBlock,
+        int associatedStreamId, int priority, List<Header> headerBlock,
         HeadersMode headersMode) {
       SpdyStream stream;
       synchronized (SpdyConnection.this) {
@@ -506,7 +506,7 @@ public final class SpdyConnection implements Closeable {
 
           // Create a stream.
           final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
-              inFinished, priority, nameValueBlock, peerSettings);
+              inFinished, priority, headerBlock, peerSettings);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
@@ -530,7 +530,7 @@ public final class SpdyConnection implements Closeable {
       }
 
       // Update an existing stream.
-      stream.receiveHeaders(nameValueBlock, headersMode);
+      stream.receiveHeaders(headerBlock, headersMode);
       if (inFinished) stream.receiveFin();
     }
 

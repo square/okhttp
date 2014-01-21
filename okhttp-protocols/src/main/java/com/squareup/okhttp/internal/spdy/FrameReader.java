@@ -44,7 +44,7 @@ public interface FrameReader extends Closeable {
      * (highest) thru 2^31-1 (lowest), defaulting to 2^30.
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-        int priority, List<Header> nameValueBlock, HeadersMode headersMode);
+        int priority, List<Header> headerBlock, HeadersMode headersMode);
     void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
     void noop();

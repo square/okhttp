@@ -186,7 +186,7 @@ public final class MockSpdyPeer implements Closeable {
     public int priority;
     public ErrorCode errorCode;
     public int deltaWindowSize;
-    public List<Header> nameValueBlock;
+    public List<Header> headerBlock;
     public byte[] data;
     public Settings settings;
     public HeadersMode headersMode;
@@ -204,7 +204,7 @@ public final class MockSpdyPeer implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<Header> nameValueBlock,
+        int associatedStreamId, int priority, List<Header> headerBlock,
         HeadersMode headersMode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_HEADERS;
@@ -213,7 +213,7 @@ public final class MockSpdyPeer implements Closeable {
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.priority = priority;
-      this.nameValueBlock = nameValueBlock;
+      this.headerBlock = headerBlock;
       this.headersMode = headersMode;
     }
 
