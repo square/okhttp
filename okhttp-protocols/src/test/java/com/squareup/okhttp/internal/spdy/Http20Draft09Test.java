@@ -53,47 +53,38 @@ public class Http20Draft09Test {
 
       @Override
       public void headers(boolean outFinished, boolean inFinished, int streamId,
-          int associatedStreamId, int priority, List<Header> nameValueBlock,
+          int associatedStreamId, int priority, List<Header> headerBlock,
           HeadersMode headersMode) {
         assertFalse(outFinished);
         assertTrue(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
         assertEquals(-1, priority);
-        assertEquals(sentHeaders, nameValueBlock);
+        assertEquals(sentHeaders, headerBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
   }
 
-  @Test public void headersFrameThenContinuation() throws IOException {
-
+  @Test public void headersWithPriority() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
 
-    // Write the first headers frame.
-    {
-      byte[] headerBytes = literalHeaders(headerEntries("foo", "bar"));
+    final List<Header> sentHeaders = headerEntries("name", "value");
+
+    { // Write the headers frame, specifying priority flag and value.
+      byte[] headerBytes = literalHeaders(sentHeaders);
       dataOut.writeShort(headerBytes.length);
       dataOut.write(Http20Draft09.TYPE_HEADERS);
-      dataOut.write(0); // no flags
+      dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
       dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
-      dataOut.write(headerBytes);
-    }
-
-    // Write the continuation frame, specifying no more frames are expected.
-    {
-      byte[] headerBytes = literalHeaders(headerEntries("baz", "qux"));
-      dataOut.writeShort(headerBytes.length);
-      dataOut.write(Http20Draft09.TYPE_CONTINUATION);
-      dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
+      dataOut.writeInt(0); // Highest priority is 0.
       dataOut.write(headerBytes);
     }
 
     FrameReader fr = newReader(out);
 
-    // Reading the above frames should result in a concatenated nameValueBlock.
+    // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
 
       @Override
@@ -104,8 +95,52 @@ public class Http20Draft09Test {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
+        assertEquals(0, priority);
+        assertEquals(sentHeaders, nameValueBlock);
+        assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
+      }
+    });
+  }
+
+  /** Headers are compressed, then framed. */
+  @Test public void headersFrameThenContinuation() throws IOException {
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    // Decoding the first header will cross frame boundaries.
+    byte[] headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    { // Write the first headers frame.
+      dataOut.writeShort(headerBlock.length / 2);
+      dataOut.write(Http20Draft09.TYPE_HEADERS);
+      dataOut.write(0); // no flags
+      dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
+      dataOut.write(headerBlock, 0, headerBlock.length / 2);
+    }
+
+    { // Write the continuation frame, specifying no more frames are expected.
+      dataOut.writeShort(headerBlock.length / 2);
+      dataOut.write(Http20Draft09.TYPE_CONTINUATION);
+      dataOut.write(Http20Draft09.FLAG_END_HEADERS);
+      dataOut.writeInt(expectedStreamId & 0x7fffffff); // stream with reserved bit set
+      dataOut.write(headerBlock, headerBlock.length / 2, headerBlock.length / 2);
+    }
+
+    FrameReader fr = newReader(out);
+
+    // Reading the above frames should result in a concatenated headerBlock.
+    fr.nextFrame(new BaseTestHandler() {
+
+      @Override
+      public void headers(boolean outFinished, boolean inFinished, int streamId,
+          int associatedStreamId, int priority, List<Header> headerBlock,
+          HeadersMode headersMode) {
+        assertFalse(outFinished);
+        assertFalse(inFinished);
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(-1, associatedStreamId);
         assertEquals(-1, priority);
-        assertEquals(headerEntries("foo", "bar", "baz", "qux"), nameValueBlock);
+        assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });

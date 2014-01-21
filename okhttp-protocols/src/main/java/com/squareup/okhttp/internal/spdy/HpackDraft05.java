@@ -3,8 +3,8 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.BitArray;
 import com.squareup.okhttp.internal.ByteString;
 import com.squareup.okhttp.internal.Util;
-import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,13 +93,12 @@ final class HpackDraft05 {
   }
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
-  static class Reader {
+  static final class Reader {
     private final Huffman.Codec huffmanCodec;
 
-    private final DataInputStream in;
+    private final InputStream in;
     private final List<Header> emittedHeaders = new ArrayList<Header>();
     private int maxHeaderTableByteCount;
-    private long bytesLeft = 0;
 
     // Visible for testing.
     Header[] headerTable = new Header[8];
@@ -121,7 +120,7 @@ final class HpackDraft05 {
     long referencedStaticHeaders = 0L;
     int headerTableByteCount = 0;
 
-    Reader(boolean client, int maxHeaderTableByteCount, DataInputStream in) {
+    Reader(boolean client, int maxHeaderTableByteCount, InputStream in) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
       this.in = in;
@@ -178,13 +177,10 @@ final class HpackDraft05 {
      * Read {@code byteCount} bytes of headers from the source stream into the
      * set of emitted headers.
      */
-    public void readHeaders(int byteCount) throws IOException {
-      bytesLeft += byteCount;
-      // TODO: limit to 'byteCount' bytes?
-
-      while (bytesLeft > 0) {
-        int b = readByte();
-
+    void readHeaders() throws IOException {
+      int b;
+      while ((b = in.read()) != -1) {
+        b &= 0xff;
         if (b == 0x80) { // 10000000
           clearReferenceSet();
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
@@ -214,7 +210,7 @@ final class HpackDraft05 {
       referencedHeaders.clear();
     }
 
-    public void emitReferenceSet() {
+    void emitReferenceSet() {
       for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
         if (((referencedStaticHeaders >> i) & 1L) == 1) {
           emittedHeaders.add(STATIC_HEADER_TABLE[i]);
@@ -231,7 +227,7 @@ final class HpackDraft05 {
      * Returns all headers emitted since they were last cleared, then clears the
      * emitted headers.
      */
-    public List<Header> getAndReset() {
+    List<Header> getAndReset() {
       List<Header> result = new ArrayList<Header>(emittedHeaders);
       emittedHeaders.clear();
       return result;
@@ -335,8 +331,7 @@ final class HpackDraft05 {
     }
 
     private int readByte() throws IOException {
-      bytesLeft--;
-      return in.readByte() & 0xff;
+      return in.read() & 0xff;
     }
 
     int readInt(int firstByte, int prefixMask) throws IOException {
@@ -365,42 +360,40 @@ final class HpackDraft05 {
      * Reads a potentially Huffman encoded string byte string. When
      * {@code asciiLowercase} is true, bytes will be converted to lowercase.
      */
-    public ByteString readByteString(boolean asciiLowercase) throws IOException {
+    ByteString readByteString(boolean asciiLowercase) throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
       if ((length & 0x80) == 0x80) { // 1NNNNNNN
         length &= ~0x80;
         byte[] buff = new byte[length];
         Util.readFully(in, buff);
-        bytesLeft -= length;
         buff = huffmanCodec.decode(buff); // TODO: streaming Huffman!
         if (asciiLowercase) asciiLowerCase(buff);
         return ByteString.of(buff);
       }
-      bytesLeft -= length;
       return length == 0 ? ByteString.EMPTY
           : asciiLowercase ? ByteString.readLowerCase(in, length) : ByteString.read(in, length);
     }
   }
 
-  static class Writer {
+  static final class Writer {
     private final OutputStream out;
 
     Writer(OutputStream out) {
       this.out = out;
     }
 
-    public void writeHeaders(List<Header> nameValueBlock) throws IOException {
+    void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement a compression strategy.
-      for (int i = 0, size = nameValueBlock.size(); i < size; i++) {
+      for (int i = 0, size = headerBlock.size(); i < size; i++) {
         out.write(0x40); // Literal Header without Indexing - New Name.
-        writeByteString(nameValueBlock.get(i).name);
-        writeByteString(nameValueBlock.get(i).value);
+        writeByteString(headerBlock.get(i).name);
+        writeByteString(headerBlock.get(i).value);
       }
     }
 
     // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.1
-    public void writeInt(int value, int prefixMask, int bits) throws IOException {
+    void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
         out.write(bits | value);
@@ -420,7 +413,7 @@ final class HpackDraft05 {
       out.write(value);
     }
 
-    public void writeByteString(ByteString data) throws IOException {
+    void writeByteString(ByteString data) throws IOException {
       writeInt(data.size(), PREFIX_8_BITS, 0);
       data.write(out);
     }

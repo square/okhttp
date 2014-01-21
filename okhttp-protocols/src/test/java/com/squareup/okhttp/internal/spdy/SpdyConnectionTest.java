@@ -90,7 +90,7 @@ public final class SpdyConnectionTest {
     assertFalse(synStream.outFinished);
     assertEquals(1, synStream.streamId);
     assertEquals(0, synStream.associatedStreamId);
-    assertEquals(headerEntries("b", "banana"), synStream.nameValueBlock);
+    assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     MockSpdyPeer.InFrame requestData = peer.takeFrame();
     assertTrue(Arrays.equals("c3po".getBytes("UTF-8"), requestData.data));
   }
@@ -155,7 +155,7 @@ public final class SpdyConnectionTest {
     assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     assertFalse(reply.inFinished);
     assertEquals(2, reply.streamId);
-    assertEquals(headerEntries("b", "banana"), reply.nameValueBlock);
+    assertEquals(headerEntries("b", "banana"), reply.headerBlock);
     assertEquals(1, receiveCount.get());
   }
 
@@ -180,7 +180,7 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_HEADERS, reply.type);
     assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     assertTrue(reply.inFinished);
-    assertEquals(headerEntries("b", "banana"), reply.nameValueBlock);
+    assertEquals(headerEntries("b", "banana"), reply.headerBlock);
     assertEquals(1, receiveCount.get());
   }
 
@@ -1049,7 +1049,7 @@ public final class SpdyConnectionTest {
   }
 
   /** https://github.com/square/okhttp/issues/333 */
-  @Test public void nameValueBlockHasTrailingCompressedBytes() throws Exception {
+  @Test public void headerBlockHasTrailingCompressedBytes() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     // This specially-formatted frame has trailing deflated bytes after the name value block.

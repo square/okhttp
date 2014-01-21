@@ -19,7 +19,7 @@ import java.util.zip.InflaterInputStream;
  * bytes.
  */
 class NameValueBlockReader implements Closeable {
-  private final DataInputStream nameValueBlockIn;
+  private final DataInputStream headerBlockIn;
   private final FillableInflaterInputStream fillableInflaterInputStream;
   private int compressedLimit;
 
@@ -58,7 +58,7 @@ class NameValueBlockReader implements Closeable {
     };
 
     fillableInflaterInputStream = new FillableInflaterInputStream(throttleStream, inflater);
-    nameValueBlockIn = new DataInputStream(fillableInflaterInputStream);
+    headerBlockIn = new DataInputStream(fillableInflaterInputStream);
   }
 
   /** Extend the inflater stream so we can eagerly fill the compressed bytes buffer if necessary. */
@@ -74,7 +74,7 @@ class NameValueBlockReader implements Closeable {
 
   public List<Header> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
-    int numberOfPairs = nameValueBlockIn.readInt();
+    int numberOfPairs = headerBlockIn.readInt();
     if (numberOfPairs < 0) {
       throw new IOException("numberOfPairs < 0: " + numberOfPairs);
     }
@@ -83,8 +83,8 @@ class NameValueBlockReader implements Closeable {
     }
     List<Header> entries = new ArrayList<Header>(numberOfPairs);
     for (int i = 0; i < numberOfPairs; i++) {
-      ByteString name = ByteString.readLowerCase(nameValueBlockIn, nameValueBlockIn.readInt());
-      ByteString values = ByteString.read(nameValueBlockIn, nameValueBlockIn.readInt());
+      ByteString name = ByteString.readLowerCase(headerBlockIn, headerBlockIn.readInt());
+      ByteString values = ByteString.read(headerBlockIn, headerBlockIn.readInt());
       if (name.size() == 0) throw new IOException("name.size == 0");
       entries.add(new Header(name, values));
     }
@@ -107,6 +107,6 @@ class NameValueBlockReader implements Closeable {
   }
 
   @Override public void close() throws IOException {
-    nameValueBlockIn.close();
+    headerBlockIn.close();
   }
 }

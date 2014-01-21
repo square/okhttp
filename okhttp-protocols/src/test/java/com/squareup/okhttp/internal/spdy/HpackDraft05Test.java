@@ -18,9 +18,9 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.ByteString;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Before;
@@ -38,7 +38,7 @@ public class HpackDraft05Test {
   private HpackDraft05.Reader hpackReader;
 
   @Before public void resetReader() {
-    hpackReader = newReader(new DataInputStream(bytesIn));
+    hpackReader = newReader(bytesIn);
   }
 
   /**
@@ -57,7 +57,7 @@ public class HpackDraft05Test {
 
     bytesIn.set(out.toByteArray());
     hpackReader.maxHeaderTableByteCount(1);
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
@@ -93,7 +93,7 @@ public class HpackDraft05Test {
     bytesIn.set(out.toByteArray());
     // Set to only support 110 bytes (enough for 2 headers).
     hpackReader.maxHeaderTableByteCount(110);
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(2, hpackReader.headerCount);
@@ -131,7 +131,7 @@ public class HpackDraft05Test {
 
     bytesIn.set(out.toByteArray());
     hpackReader.maxHeaderTableByteCount(16384); // Lots of headers need more room!
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(256, hpackReader.headerCount);
@@ -153,7 +153,7 @@ public class HpackDraft05Test {
     out.write(huffmanBytes, 0, huffmanBytes.length);
 
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
@@ -178,7 +178,7 @@ public class HpackDraft05Test {
     out.write("custom-header".getBytes(), 0, 13);
 
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
@@ -203,7 +203,7 @@ public class HpackDraft05Test {
     out.write("/sample/path".getBytes(), 0, 12);
 
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
@@ -221,7 +221,7 @@ public class HpackDraft05Test {
                      // idx = 2 -> :method: GET
 
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
@@ -248,7 +248,7 @@ public class HpackDraft05Test {
                      // idx = 1 -> :method: GET
 
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
@@ -272,7 +272,7 @@ public class HpackDraft05Test {
 
     bytesIn.set(out.toByteArray());
     hpackReader.maxHeaderTableByteCount(0); // SETTINGS_HEADER_TABLE_SIZE == 0
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     // Not buffered in header table.
@@ -287,19 +287,19 @@ public class HpackDraft05Test {
   @Test public void decodeRequestExamplesWithoutHuffman() throws IOException {
     ByteArrayOutputStream out = firstRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkFirstRequestWithoutHuffman();
 
     out = secondRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkSecondRequestWithoutHuffman();
 
     out = thirdRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkThirdRequestWithoutHuffman();
   }
@@ -489,19 +489,19 @@ public class HpackDraft05Test {
   @Test public void decodeRequestExamplesWithHuffman() throws IOException {
     ByteArrayOutputStream out = firstRequestWithHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkFirstRequestWithHuffman();
 
     out = secondRequestWithHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkSecondRequestWithHuffman();
 
     out = thirdRequestWithHuffman();
     bytesIn.set(out.toByteArray());
-    hpackReader.readHeaders(out.size());
+    hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkThirdRequestWithHuffman();
   }
@@ -772,20 +772,20 @@ public class HpackDraft05Test {
     List<Header> sentHeaders = headerEntries("name", "value");
     hpackWriter.writeHeaders(sentHeaders);
     ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
-    HpackDraft05.Reader reader = newReader(new DataInputStream(bytesIn));
-    reader.readHeaders(bytesOut.size());
+    HpackDraft05.Reader reader = newReader(bytesIn);
+    reader.readHeaders();
     reader.emitReferenceSet();
     List<Header> receivedHeaders = reader.getAndReset();
     assertEquals(sentHeaders, receivedHeaders);
   }
 
-  private HpackDraft05.Reader newReader(DataInputStream input) {
+  private HpackDraft05.Reader newReader(InputStream input) {
     return new HpackDraft05.Reader(false, 4096, input);
   }
 
-  private DataInputStream byteStream(int... bytes) {
+  private InputStream byteStream(int... bytes) {
     byte[] data = intArrayToByteArray(bytes);
-    return new DataInputStream(new ByteArrayInputStream(data));
+    return new ByteArrayInputStream(data);
   }
 
   private void checkEntry(Header entry, String name, String value, int size) {
@@ -821,13 +821,13 @@ public class HpackDraft05Test {
     return hpackReader.headerTable.length;
   }
 
-  private static class MutableByteArrayInputStream extends ByteArrayInputStream {
+  static class MutableByteArrayInputStream extends ByteArrayInputStream {
 
-    private MutableByteArrayInputStream() {
+    MutableByteArrayInputStream() {
       super(new byte[] { });
     }
 
-    private void set(byte[] replacement) {
+    void set(byte[] replacement) {
       this.buf = replacement;
       this.pos = 0;
       this.count = replacement.length;

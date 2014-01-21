@@ -153,7 +153,7 @@ public final class SpdyTransport implements Transport {
   }
 
   /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(List<Header> nameValueBlock,
+  public static Response.Builder readNameValueBlock(List<Header> headerBlock,
       Protocol protocol) throws IOException {
     String status = null;
     String version = "HTTP/1.1"; // :version present only in spdy/3.
@@ -161,9 +161,9 @@ public final class SpdyTransport implements Transport {
     Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(OkHeaders.SELECTED_TRANSPORT, protocol.name.utf8());
     headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.name.utf8());
-    for (int i = 0; i < nameValueBlock.size(); i++) {
-      ByteString name = nameValueBlock.get(i).name;
-      String values = nameValueBlock.get(i).value.utf8();
+    for (int i = 0; i < headerBlock.size(); i++) {
+      ByteString name = headerBlock.get(i).name;
+      String values = headerBlock.get(i).value.utf8();
       for (int start = 0; start < values.length(); ) {
         int end = values.indexOf('\0', start);
         if (end == -1) {

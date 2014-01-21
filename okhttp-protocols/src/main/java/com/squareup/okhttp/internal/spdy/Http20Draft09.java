@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -94,6 +95,7 @@ public final class Http20Draft09 implements Variant {
 
   static final class Reader implements FrameReader {
     private final DataInputStream in;
+    private final ContinuationInputStream continuation;
     private final boolean client;
 
     // Visible for testing.
@@ -101,8 +103,9 @@ public final class Http20Draft09 implements Variant {
 
     Reader(InputStream in, int headerTableSize, boolean client) {
       this.in = new DataInputStream(in);
+      this.continuation = new ContinuationInputStream(this.in);
       this.client = client;
-      this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, this.in);
+      this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, continuation);
     }
 
     @Override public void readConnectionHeader() throws IOException {
@@ -174,41 +177,29 @@ public final class Http20Draft09 implements Variant {
 
     private void readHeaders(Handler handler, int flags, int length, int streamId)
         throws IOException {
-      if (streamId == 0) throw ioException("TYPE_HEADERS streamId == 0");
+      if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0");
 
-      boolean inFinished = (flags & FLAG_END_STREAM) != 0;
+      boolean endHeaders = (flags & FLAG_END_HEADERS) != 0;
+      boolean endStream = (flags & FLAG_END_STREAM) != 0;
+      int priority = ((flags & FLAG_PRIORITY) != 0) ? in.readInt() & 0x7fffffff : -1;
 
-      while (true) {
-        hpackReader.readHeaders(length);
+      List<Header> headerBlock = readHeaderBlock(length, endHeaders, streamId);
 
-        if ((flags & FLAG_END_HEADERS) != 0) {
-          hpackReader.emitReferenceSet();
-          List<Header> nameValueBlock = hpackReader.getAndReset();
-          // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
-          // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-          int priority = -1; // TODO: priority
-          handler.headers(false, inFinished, streamId, -1, priority, nameValueBlock,
-              HeadersMode.HTTP_20_HEADERS);
-          return;
-        }
+      handler.headers(false, endStream, streamId, -1, priority, headerBlock,
+          HeadersMode.HTTP_20_HEADERS);
+    }
 
-        // Read another continuation frame.
-        int w1 = in.readInt();
-        int w2 = in.readInt();
+    private List<Header> readHeaderBlock(int length, boolean endHeaders, int streamId)
+        throws IOException {
+      continuation.bytesLeft = length;
+      continuation.endHeaders = endHeaders;
+      continuation.streamId = streamId;
 
-        // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
-        length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
-        int newType = (w1 & 0xff00) >> 8;
-        flags = w1 & 0xff;
-
-        // boolean u = (w2 & 0x80000000) != 0; // Unused.
-        int newStreamId = (w2 & 0x7fffffff);
-
-        if (newType != TYPE_CONTINUATION) {
-          throw ioException("TYPE_CONTINUATION didn't have FLAG_END_HEADERS");
-        }
-        if (newStreamId != streamId) throw ioException("TYPE_CONTINUATION streamId changed");
-      }
+      hpackReader.readHeaders();
+      hpackReader.emitReferenceSet();
+      // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
+      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
+      return hpackReader.getAndReset();
     }
 
     private void readData(Handler handler, int flags, int length, int streamId) throws IOException {
@@ -334,26 +325,26 @@ public final class Http20Draft09 implements Variant {
 
     @Override
     public synchronized void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<Header> nameValueBlock)
+        int associatedStreamId, int priority, int slot, List<Header> headerBlock)
         throws IOException {
       if (inFinished) throw new UnsupportedOperationException();
-      headers(outFinished, streamId, priority, nameValueBlock);
+      headers(outFinished, streamId, priority, headerBlock);
     }
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
-        List<Header> nameValueBlock) throws IOException {
-      headers(outFinished, streamId, -1, nameValueBlock);
+        List<Header> headerBlock) throws IOException {
+      headers(outFinished, streamId, -1, headerBlock);
     }
 
-    @Override public synchronized void headers(int streamId, List<Header> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<Header> headerBlock)
         throws IOException {
-      headers(false, streamId, -1, nameValueBlock);
+      headers(false, streamId, -1, headerBlock);
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
-        List<Header> nameValueBlock) throws IOException {
+        List<Header> headerBlock) throws IOException {
       hpackBuffer.reset();
-      hpackWriter.writeHeaders(nameValueBlock);
+      hpackWriter.writeHeaders(headerBlock);
       int type = TYPE_HEADERS;
       // TODO: implement CONTINUATION
       int length = hpackBuffer.size();
@@ -439,5 +430,76 @@ public final class Http20Draft09 implements Variant {
 
   private static IOException ioException(String message, Object... args) throws IOException {
     throw new IOException(String.format(message, args));
+  }
+
+  /**
+   * Decompression of the header block occurs above the framing layer.  This
+   * class lazily reads continuation frames as they are needed by
+   * {@link HpackDraft05.Reader#readHeaders()}.
+   */
+  static final class ContinuationInputStream extends InputStream {
+    private final DataInputStream in;
+
+    int bytesLeft;
+    boolean endHeaders;
+    int streamId;
+
+    ContinuationInputStream(DataInputStream in) {
+      this.in = in;
+    }
+
+    @Override public int read() throws IOException {
+      if (bytesLeft == 0) {
+        if (endHeaders) {
+          return -1;
+        } else {
+          readContinuationHeader();
+        }
+      }
+      bytesLeft--;
+      int result = in.read();
+      if (result == -1) throw new EOFException();
+      return result;
+    }
+
+    @Override public int read(byte[] dst, int offset, int byteCount) throws IOException {
+      if (byteCount > bytesLeft) {
+        if (endHeaders) {
+          throw new EOFException(
+              String.format("Attempted to read %s bytes, when only %s left", byteCount, bytesLeft));
+        } else {
+          int beforeContinuation = bytesLeft;
+          Util.readFully(in, dst, offset, bytesLeft);
+          readContinuationHeader();
+          int afterContinuation = byteCount - beforeContinuation;
+          offset += beforeContinuation;
+          bytesLeft -= afterContinuation;
+          Util.readFully(in, dst, offset, afterContinuation);
+          return byteCount;
+        }
+      } else {
+        bytesLeft -= byteCount;
+        Util.readFully(in, dst, offset, byteCount);
+        return byteCount;
+      }
+    }
+
+    private void readContinuationHeader() throws IOException {
+      int w1 = in.readInt();
+      int w2 = in.readInt();
+
+      // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
+      bytesLeft = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
+      int newType = (w1 & 0xff00) >> 8;
+      endHeaders = (w1 & 0xff & FLAG_END_HEADERS) != 0;
+
+      // boolean u = (w2 & 0x80000000) != 0; // Unused.
+      int newStreamId = (w2 & 0x7fffffff);
+
+      if (newType != TYPE_CONTINUATION) {
+        throw ioException("TYPE_CONTINUATION didn't have FLAG_END_HEADERS");
+      }
+      if (newStreamId != streamId) throw ioException("TYPE_CONTINUATION streamId changed");
+    }
   }
 }

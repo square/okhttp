@@ -116,11 +116,11 @@ final class Spdy3 implements Variant {
   static final class Reader implements FrameReader {
     private final DataInputStream in;
     private final boolean client;
-    private final NameValueBlockReader nameValueBlockReader;
+    private final NameValueBlockReader headerBlockReader;
 
     Reader(InputStream in, boolean client) {
       this.in = new DataInputStream(in);
-      this.nameValueBlockReader = new NameValueBlockReader(in);
+      this.headerBlockReader = new NameValueBlockReader(in);
       this.client = client;
     }
 
@@ -213,20 +213,20 @@ final class Spdy3 implements Variant {
       int associatedStreamId = w2 & 0x7fffffff;
       int priority = (s3 & 0xe000) >>> 13;
       int slot = s3 & 0xff;
-      List<Header> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 10);
+      List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 10);
 
       boolean inFinished = (flags & FLAG_FIN) != 0;
       boolean outFinished = (flags & FLAG_UNIDIRECTIONAL) != 0;
       handler.headers(outFinished, inFinished, streamId, associatedStreamId, priority,
-          nameValueBlock, HeadersMode.SPDY_SYN_STREAM);
+          headerBlock, HeadersMode.SPDY_SYN_STREAM);
     }
 
     private void readSynReply(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
-      List<Header> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 4);
+      List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 4);
       boolean inFinished = (flags & FLAG_FIN) != 0;
-      handler.headers(false, inFinished, streamId, -1, -1, nameValueBlock, HeadersMode.SPDY_REPLY);
+      handler.headers(false, inFinished, streamId, -1, -1, headerBlock, HeadersMode.SPDY_REPLY);
     }
 
     private void readRstStream(Handler handler, int flags, int length) throws IOException {
@@ -243,8 +243,8 @@ final class Spdy3 implements Variant {
     private void readHeaders(Handler handler, int flags, int length) throws IOException {
       int w1 = in.readInt();
       int streamId = w1 & 0x7fffffff;
-      List<Header> nameValueBlock = nameValueBlockReader.readNameValueBlock(length - 4);
-      handler.headers(false, false, streamId, -1, -1, nameValueBlock, HeadersMode.SPDY_HEADERS);
+      List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 4);
+      handler.headers(false, false, streamId, -1, -1, headerBlock, HeadersMode.SPDY_HEADERS);
     }
 
     private void readWindowUpdate(Handler handler, int flags, int length) throws IOException {
@@ -296,15 +296,15 @@ final class Spdy3 implements Variant {
     }
 
     @Override public void close() throws IOException {
-      Util.closeAll(in, nameValueBlockReader);
+      Util.closeAll(in, headerBlockReader);
     }
   }
 
   /** Write spdy/3 frames. */
   static final class Writer implements FrameWriter {
     private final DataOutputStream out;
-    private final ByteArrayOutputStream nameValueBlockBuffer;
-    private final DataOutputStream nameValueBlockOut;
+    private final ByteArrayOutputStream headerBlockBuffer;
+    private final DataOutputStream headerBlockOut;
     private final boolean client;
 
     Writer(OutputStream out, boolean client) {
@@ -313,9 +313,9 @@ final class Spdy3 implements Variant {
 
       Deflater deflater = new Deflater();
       deflater.setDictionary(DICTIONARY);
-      nameValueBlockBuffer = new ByteArrayOutputStream();
-      nameValueBlockOut = new DataOutputStream(
-          Platform.get().newDeflaterOutputStream(nameValueBlockBuffer, deflater, true));
+      headerBlockBuffer = new ByteArrayOutputStream();
+      headerBlockOut = new DataOutputStream(
+          Platform.get().newDeflaterOutputStream(headerBlockBuffer, deflater, true));
     }
 
     @Override public void ackSettings() {
@@ -332,10 +332,10 @@ final class Spdy3 implements Variant {
 
     @Override
     public synchronized void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<Header> nameValueBlock)
+        int associatedStreamId, int priority, int slot, List<Header> headerBlock)
         throws IOException {
-      writeNameValueBlockToBuffer(nameValueBlock);
-      int length = 10 + nameValueBlockBuffer.size();
+      writeNameValueBlockToBuffer(headerBlock);
+      int length = 10 + headerBlockBuffer.size();
       int type = TYPE_SYN_STREAM;
       int flags = (outFinished ? FLAG_FIN : 0) | (inFinished ? FLAG_UNIDIRECTIONAL : 0);
 
@@ -345,35 +345,35 @@ final class Spdy3 implements Variant {
       out.writeInt(streamId & 0x7fffffff);
       out.writeInt(associatedStreamId & 0x7fffffff);
       out.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
-      nameValueBlockBuffer.writeTo(out);
+      headerBlockBuffer.writeTo(out);
       out.flush();
     }
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
-        List<Header> nameValueBlock) throws IOException {
-      writeNameValueBlockToBuffer(nameValueBlock);
+        List<Header> headerBlock) throws IOException {
+      writeNameValueBlockToBuffer(headerBlock);
       int type = TYPE_SYN_REPLY;
       int flags = (outFinished ? FLAG_FIN : 0);
-      int length = nameValueBlockBuffer.size() + 4;
+      int length = headerBlockBuffer.size() + 4;
 
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
-      nameValueBlockBuffer.writeTo(out);
+      headerBlockBuffer.writeTo(out);
       out.flush();
     }
 
-    @Override public synchronized void headers(int streamId, List<Header> nameValueBlock)
+    @Override public synchronized void headers(int streamId, List<Header> headerBlock)
         throws IOException {
-      writeNameValueBlockToBuffer(nameValueBlock);
+      writeNameValueBlockToBuffer(headerBlock);
       int flags = 0;
       int type = TYPE_HEADERS;
-      int length = nameValueBlockBuffer.size() + 4;
+      int length = headerBlockBuffer.size() + 4;
 
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
-      nameValueBlockBuffer.writeTo(out);
+      headerBlockBuffer.writeTo(out);
       out.flush();
     }
 
@@ -403,18 +403,18 @@ final class Spdy3 implements Variant {
       out.write(data, offset, byteCount);
     }
 
-    private void writeNameValueBlockToBuffer(List<Header> nameValueBlock) throws IOException {
-      nameValueBlockBuffer.reset();
-      nameValueBlockOut.writeInt(nameValueBlock.size());
-      for (int i = 0, size = nameValueBlock.size(); i < size; i++) {
-        ByteString name = nameValueBlock.get(i).name;
-        nameValueBlockOut.writeInt(name.size());
-        name.write(nameValueBlockOut);
-        ByteString value = nameValueBlock.get(i).value;
-        nameValueBlockOut.writeInt(value.size());
-        value.write(nameValueBlockOut);
+    private void writeNameValueBlockToBuffer(List<Header> headerBlock) throws IOException {
+      headerBlockBuffer.reset();
+      headerBlockOut.writeInt(headerBlock.size());
+      for (int i = 0, size = headerBlock.size(); i < size; i++) {
+        ByteString name = headerBlock.get(i).name;
+        headerBlockOut.writeInt(name.size());
+        name.write(headerBlockOut);
+        ByteString value = headerBlock.get(i).value;
+        headerBlockOut.writeInt(value.size());
+        value.write(headerBlockOut);
       }
-      nameValueBlockOut.flush();
+      headerBlockOut.flush();
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {
@@ -482,7 +482,7 @@ final class Spdy3 implements Variant {
     }
 
     @Override public void close() throws IOException {
-      Util.closeAll(out, nameValueBlockOut);
+      Util.closeAll(out, headerBlockOut);
     }
   }
 }

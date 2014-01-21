@@ -29,10 +29,10 @@ public interface FrameWriter extends Closeable {
   /** SPDY/3 only. */
   void flush() throws IOException;
   void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      int priority, int slot, List<Header> nameValueBlock) throws IOException;
-  void synReply(boolean outFinished, int streamId, List<Header> nameValueBlock)
+      int priority, int slot, List<Header> headerBlock) throws IOException;
+  void synReply(boolean outFinished, int streamId, List<Header> headerBlock)
       throws IOException;
-  void headers(int streamId, List<Header> nameValueBlock) throws IOException;
+  void headers(int streamId, List<Header> headerBlock) throws IOException;
   void rstStream(int streamId, ErrorCode errorCode) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data) throws IOException;
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
