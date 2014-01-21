@@ -29,6 +29,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 /** A logical bidirectional stream. */
 public final class SpdyStream {
+  static final int OUTPUT_BUFFER_SIZE = 8192;
 
   // Internal state is guarded by this. No long-running or potentially
   // blocking operations are performed while the lock is held.
@@ -576,7 +577,7 @@ public final class SpdyStream {
    * is not thread safe.
    */
   private final class SpdyDataOutputStream extends OutputStream {
-    private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(8192);
+    private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(OUTPUT_BUFFER_SIZE);
     private int pos = 0;
 
     /** True if the caller has closed this stream. */

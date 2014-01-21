@@ -403,7 +403,16 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
         int offset, int byteCount) throws IOException {
+      // TODO: Implement looping strategy.
       int flags = (outFinished ? FLAG_FIN : 0);
+      sendDataFrame(streamId, flags, data, offset, byteCount);
+    }
+
+    void sendDataFrame(int streamId, int flags, byte[] data, int offset, int byteCount)
+        throws IOException {
+      if (byteCount > 0xffffff) {
+        throw new IOException("FRAME_TOO_LARGE max size is 16Mib: " + byteCount);
+      }
       out.writeInt(streamId & 0x7fffffff);
       out.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
       out.write(data, offset, byteCount);
