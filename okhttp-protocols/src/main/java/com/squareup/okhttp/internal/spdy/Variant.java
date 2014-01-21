@@ -28,7 +28,7 @@ interface Variant {
   Protocol getProtocol();
 
   /**
-   * Default settings used for sending frames to the peer.
+   * Default settings used for reading or writing frames to the peer.
    * @param client true if these settings apply to writing requests, false if responses.
    */
   Settings defaultOkHttpSettings(boolean client);
@@ -47,9 +47,8 @@ interface Variant {
   FrameReader newReader(InputStream in, Settings peerSettings, boolean client);
 
   /**
-   * @param okHttpSettings settings configured locally.
+   * @param okHttpSettings settings sent to the peer, such compression header table size.
    * @param client true if this is the HTTP client's writer, writing frames to a server.
    */
   FrameWriter newWriter(OutputStream out, Settings okHttpSettings, boolean client);
-
 }

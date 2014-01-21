@@ -82,7 +82,10 @@ public final class SpdyConnection implements Closeable {
   private Map<Integer, Ping> pings;
   private int nextPingId;
 
+  // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
+  // Settings we might send include toggling push, adjusting compression table size.
   final Settings okHttpSettings;
+  // TODO: MWS will need to guard on this setting before attempting to push.
   final Settings peerSettings;
   final FrameReader frameReader;
   final FrameWriter frameWriter;

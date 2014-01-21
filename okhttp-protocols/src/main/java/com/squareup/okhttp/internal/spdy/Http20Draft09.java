@@ -39,20 +39,18 @@ public final class Http20Draft09 implements Variant {
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5
   @Override public Settings defaultOkHttpSettings(boolean client) {
-    Settings settings = new Settings();
-    settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
-    if (!client) { // client doesn't send push requests.
-      settings.set(Settings.ENABLE_PUSH, 0, 0); // TODO: support writing push.
+    Settings settings = initialPeerSettings(client);
+    if (client) { // TODO: we don't yet support reading push.
+      settings.set(Settings.ENABLE_PUSH, 0, 0);
     }
-    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
     return settings;
   }
 
   @Override public Settings initialPeerSettings(boolean client) {
     Settings settings = new Settings();
     settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
-    if (client) { // server doesn't read push requests.
-      settings.set(Settings.ENABLE_PUSH, 0, 0); // TODO: support reading push.
+    if (client) { // client specifies whether or not it accepts push.
+      settings.set(Settings.ENABLE_PUSH, 0, 1);
     }
     settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
     return settings;

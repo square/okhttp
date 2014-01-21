@@ -254,35 +254,33 @@ public final class SpdyConnectionTest {
     assertEquals(4, ping4.streamId);
   }
 
-  @Test public void http2SettingsAck() throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(Variant.HTTP_20_DRAFT_09, false);
-    // write the mocking script
-    Settings settings = new Settings();
-    settings.set(Settings.HEADER_TABLE_SIZE, PERSIST_VALUE, 1024);
-    peer.sendFrame().settings(settings);
-    peer.acceptFrame(); // ACK
-    peer.play();
+  @Test public void peerHttp2ServerZerosCompressionTable() throws Exception {
+    boolean client = false; // Peer is server, so we are client.
+    Settings settings = Variant.HTTP_20_DRAFT_09.initialPeerSettings(client);
+    settings.set(Settings.HEADER_TABLE_SIZE, PERSIST_VALUE, 0);
 
-    // play it back
-    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
-        .protocol(Protocol.HTTP_2)
-        .handler(REJECT_INCOMING_STREAMS)
-        .build();
-
-    // verify the peer received the ACK
-    MockSpdyPeer.InFrame pingFrame = peer.takeFrame();
-    assertEquals(TYPE_SETTINGS, pingFrame.type);
-    assertEquals(0, pingFrame.streamId);
-    // TODO: check for ACK flag.
-    assertEquals(0, pingFrame.settings.size());
+    SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
 
     // verify the peer's settings were read and applied.
     synchronized (connection) {
-      assertEquals(1024, connection.peerSettings.getHeaderTableSize());
+      assertEquals(0, connection.peerSettings.getHeaderTableSize());
       Http20Draft09.Reader frameReader = (Http20Draft09.Reader) connection.frameReader;
-      assertEquals(1024, frameReader.hpackReader.maxHeaderTableByteCount());
+      assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
+      // TODO: when supported, check the frameWriter's compression table is unaffected.
     }
-    peer.close();
+  }
+
+  @Test public void peerHttp2ClientDisablesPush() throws Exception {
+    boolean client = false; // Peer is client, so we are server.
+    Settings settings = Variant.HTTP_20_DRAFT_09.initialPeerSettings(client);
+    settings.set(Settings.ENABLE_PUSH, 0, 0); // The peer client disables push.
+
+    SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
+
+    // verify the peer's settings were read and applied.
+    synchronized (connection) {
+      assertFalse(connection.peerSettings.getEnablePush(true));
+    }
   }
 
   @Test public void serverSendsSettingsToClient() throws Exception {
@@ -1075,6 +1073,29 @@ public final class SpdyConnectionTest {
     assertEquals("a", stream.getResponseHeaders().get(0).name.utf8());
     assertEquals(60, stream.getResponseHeaders().get(0).value.size());
     assertStreamData("robot", stream.getInputStream());
+  }
+
+  private SpdyConnection sendHttp2SettingsAndCheckForAck(boolean client, Settings settings)
+      throws IOException, InterruptedException {
+    MockSpdyPeer peer = new MockSpdyPeer(Variant.HTTP_20_DRAFT_09, client);
+    peer.sendFrame().settings(settings);
+    peer.acceptFrame(); // ACK
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .protocol(Protocol.HTTP_2)
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
+
+    // verify the peer received the ACK
+    MockSpdyPeer.InFrame pingFrame = peer.takeFrame();
+    assertEquals(TYPE_SETTINGS, pingFrame.type);
+    assertEquals(0, pingFrame.streamId);
+    // TODO: check for ACK flag.
+    assertEquals(0, pingFrame.settings.size());
+    peer.close();
+    return connection;
   }
 
   private void writeAndClose(SpdyStream stream, String data) throws IOException {
