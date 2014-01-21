@@ -73,7 +73,6 @@ public final class Http20Draft09 implements Variant {
   static final int FLAG_END_PUSH_PROMISE = 0x4;
   static final int FLAG_PRIORITY = 0x8;
   static final int FLAG_ACK = 0x1;
-  static final int FLAG_END_FLOW_CONTROL = 0x1;
 
   @Override public FrameReader newReader(InputStream in, Settings peerSettings, boolean client) {
     return new Reader(in, peerSettings.getHeaderTableSize(), client);
@@ -119,6 +118,9 @@ public final class Http20Draft09 implements Variant {
 
       // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
       int length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
+      if ((length & 0xffffffffL) > 16383) {
+        throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + length);
+      }
       int type = (w1 & 0xff00) >> 8;
       int flags = w1 & 0xff;
       // boolean r = (w2 & 0x80000000) != 0; // Reserved.
@@ -282,11 +284,10 @@ public final class Http20Draft09 implements Variant {
 
     private void readWindowUpdate(Handler handler, int flags, int length, int streamId)
         throws IOException {
-      int w1 = in.readInt();
-      // boolean r = (w1 & 0x80000000) != 0; // Reserved.
-      int windowSizeIncrement = (w1 & 0x7fffffff);
-      boolean endFlowControl = (flags & FLAG_END_FLOW_CONTROL) != 0;
-      handler.windowUpdate(streamId, windowSizeIncrement, endFlowControl);
+      if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
+      int increment = (in.readInt() & 0x7fffffff);
+      if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
+      handler.windowUpdate(streamId, increment);
     }
 
     @Override public void close() throws IOException {
@@ -436,9 +437,15 @@ public final class Http20Draft09 implements Variant {
       // TODO
     }
 
-    @Override public synchronized void windowUpdate(int streamId, int deltaWindowSize)
+    @Override public synchronized void windowUpdate(int streamId, int increment)
         throws IOException {
-      // TODO
+      if (increment == 0 || (increment & 0xffffffffL) > 0x7fffffffL) {
+        throw new IllegalArgumentException(
+            "windowSizeIncrement must be between 1 and 0x7fffffff: " + (increment & 0xffffffffL));
+      }
+      out.writeInt(4 << 16 | (TYPE_WINDOW_UPDATE & 0xff) << 8); // No flags.
+      out.writeInt(streamId);
+      out.writeInt(increment);
     }
 
     @Override public void close() throws IOException {
@@ -447,7 +454,9 @@ public final class Http20Draft09 implements Variant {
   }
 
   private static void checkFrameSize(int bytes) throws IOException {
-    if (bytes > 16383) throw ioException("FRAME_SIZE_ERROR max size is 16383: %s", bytes);
+    if ((bytes & 0xffffffffL) > 16383) {
+      throw new IllegalArgumentException("FRAME_SIZE_ERROR max size is 16383: " + bytes);
+    }
   }
 
   private static IOException ioException(String message, Object... args) throws IOException {

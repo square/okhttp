@@ -218,19 +218,19 @@ public final class SpdyConnection implements Closeable {
     frameWriter.rstStream(streamId, statusCode);
   }
 
-  void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
+  void writeWindowUpdateLater(final int streamId, final int windowSizeIncrement) {
     executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
-          writeWindowUpdate(streamId, deltaWindowSize);
+          writeWindowUpdate(streamId, windowSizeIncrement);
         } catch (IOException ignored) {
         }
       }
     });
   }
 
-  void writeWindowUpdate(int streamId, int deltaWindowSize) throws IOException {
-    frameWriter.windowUpdate(streamId, deltaWindowSize);
+  void writeWindowUpdate(int streamId, int windowSizeIncrement) throws IOException {
+    frameWriter.windowUpdate(streamId, windowSizeIncrement);
   }
 
   /**
@@ -614,16 +614,16 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+    @Override public void windowUpdate(int streamId, int windowSizeIncrement) {
       if (streamId == 0) {
-        // TODO: honor whole-stream flow control
+        // TODO: honor connection-level flow control
         return;
       }
 
       // TODO: honor endFlowControl
       SpdyStream stream = getStream(streamId);
       if (stream != null) {
-        stream.receiveWindowUpdate(deltaWindowSize);
+        stream.receiveWindowUpdate(windowSizeIncrement);
       }
     }
 

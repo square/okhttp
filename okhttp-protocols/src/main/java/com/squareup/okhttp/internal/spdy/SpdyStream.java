@@ -325,8 +325,8 @@ public final class SpdyStream {
     notifyAll();
   }
 
-  synchronized void receiveWindowUpdate(int deltaWindowSize) {
-    out.unacknowledgedBytes -= deltaWindowSize;
+  synchronized void receiveWindowUpdate(int windowSizeIncrement) {
+    out.unacknowledgedBytes -= windowSizeIncrement;
     notifyAll();
   }
 

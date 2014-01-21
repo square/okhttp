@@ -29,8 +29,24 @@ public class Spdy3Test {
     try {
       sendDataFrame(new byte[0x1000000]);
       fail();
-    } catch (IOException e) {
+    } catch (IllegalArgumentException e) {
       assertEquals("FRAME_TOO_LARGE max size is 16Mib: 16777216", e.getMessage());
+    }
+  }
+
+  @Test public void badWindowSizeIncrement() throws IOException {
+    try {
+      windowUpdate(0);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 0", e.getMessage());
+    }
+    try {
+      windowUpdate(0x80000000);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 2147483648",
+          e.getMessage());
     }
   }
 
@@ -41,6 +57,12 @@ public class Spdy3Test {
   private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new Spdy3.Writer(out, true).sendDataFrame(expectedStreamId, 0, data, offset, byteCount);
+    return out.toByteArray();
+  }
+
+  private byte[] windowUpdate(int increment) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new Spdy3.Writer(out, true).windowUpdate(expectedStreamId, increment);
     return out.toByteArray();
   }
 }

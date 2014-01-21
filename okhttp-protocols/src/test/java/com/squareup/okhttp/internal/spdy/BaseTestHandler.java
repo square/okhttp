@@ -54,7 +54,7 @@ class BaseTestHandler implements FrameReader.Handler {
   }
 
   @Override
-  public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+  public void windowUpdate(int streamId, int windowSizeIncrement) {
     fail();
   }
 
