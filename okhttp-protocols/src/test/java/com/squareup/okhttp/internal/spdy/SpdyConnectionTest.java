@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
@@ -25,6 +24,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
@@ -1073,6 +1073,36 @@ public final class SpdyConnectionTest {
     assertEquals("a", stream.getResponseHeaders().get(0).name.utf8());
     assertEquals(60, stream.getResponseHeaders().get(0).value.size());
     assertStreamData("robot", stream.getInputStream());
+  }
+
+  // TODO: change this to only cancel when local settings disable push
+  @Test public void pushPromiseStreamsAutomaticallyCancel() throws Exception {
+    MockSpdyPeer peer = new MockSpdyPeer(Variant.HTTP_20_DRAFT_09, false);
+
+    // write the mocking script
+    peer.sendFrame().pushPromise(1, 2, Arrays.asList(
+        new Header(Header.TARGET_METHOD, "GET"),
+        new Header(Header.TARGET_SCHEME, "https"),
+        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
+        new Header(Header.TARGET_PATH, "/cached")
+    ));
+    peer.sendFrame().synReply(true, 1, Arrays.asList(
+        new Header(Header.RESPONSE_STATUS, "200")
+    ));
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket())
+        .protocol(Protocol.HTTP_2)
+        .handler(REJECT_INCOMING_STREAMS)
+        .build();
+
+    // verify the peer received what was expected
+    MockSpdyPeer.InFrame rstStream = peer.takeFrame();
+    assertEquals(TYPE_RST_STREAM, rstStream.type);
+    assertEquals(2, rstStream.streamId);
+    assertEquals(CANCEL, rstStream.errorCode);
   }
 
   private SpdyConnection sendHttp2SettingsAndCheckForAck(boolean client, Settings settings)

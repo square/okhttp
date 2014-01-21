@@ -61,4 +61,9 @@ class BaseTestHandler implements FrameReader.Handler {
   @Override public void priority(int streamId, int priority) {
     fail();
   }
+
+  @Override
+  public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+    fail();
+  }
 }

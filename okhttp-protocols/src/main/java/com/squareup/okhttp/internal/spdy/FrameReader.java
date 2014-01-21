@@ -52,5 +52,23 @@ public interface FrameReader extends Closeable {
     void goAway(int lastGoodStreamId, ErrorCode errorCode);
     void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl);
     void priority(int streamId, int priority);
+
+    /**
+     * HTTP/2 only. Receive a push promise header block.
+     * <p/>
+     * A push promise contains all the headers that pertain to a server-initiated
+     * request, and a {@code promisedStreamId} to which response frames will be
+     * delivered. Push promise frames are sent as a part of the response to
+     * {@code streamId}.  The {@code promisedStreamId} has a priority of one
+     * greater than {@code streamId}.
+     *
+     * @param streamId client-initiated stream ID.  Must be an odd number.
+     * @param promisedStreamId server-initiated stream ID.  Must be an even
+     * number.
+     * @param requestHeaders minimally includes {@code :method}, {@code :scheme},
+     * {@code :authority}, and (@code :path}.
+     */
+    void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+        throws IOException;
   }
 }

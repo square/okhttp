@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
@@ -142,6 +143,88 @@ public class Http20Draft09Test {
         assertEquals(-1, priority);
         assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
+      }
+    });
+  }
+
+  @Test public void pushPromise() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final int expectedPromisedStreamId = 11;
+
+    final List<Header> pushPromise = Arrays.asList(
+        new Header(Header.TARGET_METHOD, "GET"),
+        new Header(Header.TARGET_SCHEME, "https"),
+        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
+        new Header(Header.TARGET_PATH, "/")
+    );
+
+    { // Write the push promise frame, specifying the associated stream ID.
+      byte[] headerBytes = literalHeaders(pushPromise);
+      dataOut.writeShort(headerBytes.length);
+      dataOut.write(Http20Draft09.TYPE_PUSH_PROMISE);
+      dataOut.write(Http20Draft09.FLAG_END_PUSH_PROMISE);
+      dataOut.writeInt(expectedStreamId & 0x7fffffff);
+      dataOut.writeInt(expectedPromisedStreamId & 0x7fffffff);
+      dataOut.write(headerBytes);
+    }
+
+    FrameReader fr = newReader(out);
+
+    // Consume the headers frame.
+    fr.nextFrame(new BaseTestHandler() {
+      @Override
+      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(expectedPromisedStreamId, promisedStreamId);
+        assertEquals(pushPromise, headerBlock);
+      }
+    });
+  }
+
+  /** Headers are compressed, then framed. */
+  @Test public void pushPromiseThenContinuation() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final int expectedPromisedStreamId = 11;
+
+    final List<Header> pushPromise = Arrays.asList(
+        new Header(Header.TARGET_METHOD, "GET"),
+        new Header(Header.TARGET_SCHEME, "https"),
+        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
+        new Header(Header.TARGET_PATH, "/")
+    );
+
+    // Decoding the first header will cross frame boundaries.
+    byte[] headerBlock = literalHeaders(pushPromise);
+    { // Write the first headers frame.
+      dataOut.writeShort(headerBlock.length / 2);
+      dataOut.write(Http20Draft09.TYPE_PUSH_PROMISE);
+      dataOut.write(0); // no flags
+      dataOut.writeInt(expectedStreamId & 0x7fffffff);
+      dataOut.writeInt(expectedPromisedStreamId & 0x7fffffff);
+      dataOut.write(headerBlock, 0, headerBlock.length / 2);
+    }
+
+    { // Write the continuation frame, specifying no more frames are expected.
+      dataOut.writeShort(headerBlock.length / 2);
+      dataOut.write(Http20Draft09.TYPE_CONTINUATION);
+      dataOut.write(Http20Draft09.FLAG_END_HEADERS);
+      dataOut.writeInt(expectedStreamId & 0x7fffffff);
+      dataOut.write(headerBlock, headerBlock.length / 2, headerBlock.length / 2);
+    }
+
+    FrameReader fr = newReader(out);
+
+    // Reading the above frames should result in a concatenated headerBlock.
+    fr.nextFrame(new BaseTestHandler() {
+      @Override
+      public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(expectedPromisedStreamId, promisedStreamId);
+        assertEquals(pushPromise, headerBlock);
       }
     });
   }
