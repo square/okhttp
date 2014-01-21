@@ -24,6 +24,7 @@ import java.util.List;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -277,14 +278,49 @@ public class Http20Draft09Test {
     });
   }
 
+  @Test public void pingRoundTrip() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final int expectedPayload1 = 7;
+    final int expectedPayload2 = 8;
+
+    // Compose the expected PING frame.
+    dataOut.writeShort(8); // length
+    dataOut.write(Http20Draft09.TYPE_PING);
+    dataOut.write(Http20Draft09.FLAG_ACK);
+    dataOut.writeInt(0); // connection-level
+    dataOut.writeInt(expectedPayload1);
+    dataOut.writeInt(expectedPayload2);
+
+    // Check writer sends the same bytes.
+    assertArrayEquals(out.toByteArray(), sendPingFrame(true, expectedPayload1, expectedPayload2));
+
+    FrameReader fr = newReader(out);
+
+    fr.nextFrame(new BaseTestHandler() { // Consume the ping frame.
+      @Override public void ping(boolean ack, int payload1, int payload2) {
+        assertTrue(ack);
+        assertEquals(expectedPayload1, payload1);
+        assertEquals(expectedPayload2, payload2);
+      }
+    });
+  }
+
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
     return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()),
         Variant.HTTP_20_DRAFT_09.initialPeerSettings(false).getHeaderTableSize(), false);
   }
 
   private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
-    ByteArrayOutputStream headerBytes = new ByteArrayOutputStream();
-    new HpackDraft05.Writer(new DataOutputStream(headerBytes)).writeHeaders(sentHeaders);
-    return headerBytes.toByteArray();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new HpackDraft05.Writer(new DataOutputStream(out)).writeHeaders(sentHeaders);
+    return out.toByteArray();
+  }
+
+  private byte[] sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new Http20Draft09.Writer(out, true).ping(ack, payload1, payload2);
+    return out.toByteArray();
   }
 }

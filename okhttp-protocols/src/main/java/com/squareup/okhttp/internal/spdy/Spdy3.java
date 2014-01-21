@@ -259,8 +259,8 @@ final class Spdy3 implements Variant {
     private void readPing(Handler handler, int flags, int length) throws IOException {
       if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
       int id = in.readInt();
-      boolean reply = client == ((id % 2) == 1);
-      handler.ping(reply, id, 0);
+      boolean ack = client == ((id % 2) == 1);
+      handler.ping(ack, id, 0);
     }
 
     private void readGoAway(Handler handler, int flags, int length) throws IOException {

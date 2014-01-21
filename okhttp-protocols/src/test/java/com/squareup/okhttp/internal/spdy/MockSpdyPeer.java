@@ -190,6 +190,9 @@ public final class MockSpdyPeer implements Closeable {
     public byte[] data;
     public Settings settings;
     public HeadersMode headersMode;
+    public boolean ack;
+    public int payload1;
+    public int payload2;
 
     public InFrame(int sequence, FrameReader reader) {
       this.sequence = sequence;
@@ -234,10 +237,12 @@ public final class MockSpdyPeer implements Closeable {
       this.errorCode = errorCode;
     }
 
-    @Override public void ping(boolean reply, int payload1, int payload2) {
+    @Override public void ping(boolean ack, int payload1, int payload2) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_PING;
-      this.streamId = payload1;
+      this.ack = ack;
+      this.payload1 = payload1;
+      this.payload2 = payload2;
     }
 
     @Override public void noop() {

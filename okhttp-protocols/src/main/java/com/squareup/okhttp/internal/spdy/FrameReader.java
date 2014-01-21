@@ -48,7 +48,19 @@ public interface FrameReader extends Closeable {
     void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
     void noop();
-    void ping(boolean reply, int payload1, int payload2);
+
+    /**
+     *  Read a connection-level ping from the peer.  {@code ack} indicates this
+     *  is a reply.  Payload parameters are different between SPDY/3 and HTTP/2.
+     *  <p/>
+     *  In SPDY/3, only the first {@code payload1} parameter is set.  If the
+     *  reader is a client, it is an unsigned even number.  Likewise, a server
+     *  will receive an odd number.
+     *  <p/>
+     *  In HTTP/2, both {@code payload1} and {@code payload2} parameters are
+     *  set. The data is opaque binary, and there are no rules on the content.
+     */
+    void ping(boolean ack, int payload1, int payload2);
     void goAway(int lastGoodStreamId, ErrorCode errorCode);
     void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl);
     void priority(int streamId, int priority);

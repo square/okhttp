@@ -260,8 +260,8 @@ public final class Http20Draft09 implements Variant {
       if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
       int payload1 = in.readInt();
       int payload2 = in.readInt();
-      boolean reply = (flags & FLAG_ACK) != 0;
-      handler.ping(reply, payload1, payload2);
+      boolean ack = (flags & FLAG_ACK) != 0;
+      handler.ping(ack, payload1, payload2);
     }
 
     private void readGoAway(Handler handler, int flags, int length, int streamId)
@@ -419,9 +419,12 @@ public final class Http20Draft09 implements Variant {
       throw new UnsupportedOperationException();
     }
 
-    @Override public synchronized void ping(boolean reply, int payload1, int payload2)
+    @Override public synchronized void ping(boolean ack, int payload1, int payload2)
         throws IOException {
-      // TODO
+      out.writeInt(8 << 16 | (TYPE_PING & 0xff) << 8 | ((ack ? FLAG_ACK : 0) & 0xff));
+      out.writeInt(0); // connection-level
+      out.writeInt(payload1);
+      out.writeInt(payload2);
     }
 
     @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
