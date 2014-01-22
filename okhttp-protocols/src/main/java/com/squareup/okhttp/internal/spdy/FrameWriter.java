@@ -52,7 +52,17 @@ public interface FrameWriter extends Closeable {
       throws IOException;
   void headers(int streamId, List<Header> headerBlock) throws IOException;
   void rstStream(int streamId, ErrorCode errorCode) throws IOException;
+
+  /**
+   * {@code data.length} may be longer than the max length of the variant's data frame.
+   * Implementations must send multiple frames as necessary.
+   */
   void data(boolean outFinished, int streamId, byte[] data) throws IOException;
+
+  /**
+   * {@code byteCount} may be longer than the max length of the variant's data frame.
+   * Implementations must send multiple frames as necessary.
+   */
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
       throws IOException;
   /** Write okhttp's settings to the peer. */

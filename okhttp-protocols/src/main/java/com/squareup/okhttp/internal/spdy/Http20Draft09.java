@@ -391,12 +391,16 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
         int offset, int byteCount) throws IOException {
-      int type = TYPE_DATA;
       int flags = 0;
       if (outFinished) flags |= FLAG_END_STREAM;
       // TODO: Implement looping strategy.
+      sendDataFrame(streamId, flags, data, offset, byteCount);
+    }
+
+    void sendDataFrame(int streamId, int flags, byte[] data, int offset, int byteCount)
+        throws IOException {
       checkFrameSize(byteCount);
-      out.writeInt((byteCount & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt((byteCount & 0x3fff) << 16 | (TYPE_DATA & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
       out.write(data, offset, byteCount);
     }

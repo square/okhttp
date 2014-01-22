@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
@@ -1092,6 +1091,40 @@ public final class SpdyConnectionTest {
     } catch (IOException expected) {
       assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
     }
+  }
+
+  /**
+   * This tests that data frames are written in chunks limited by the
+   * SpdyDataOutputStream buffer size.  A side-effect is that this size
+   * prevents us from overrunning the max frame size of SPDY/3 or HTTP/2.
+   */
+  @Test public void spdyStreamOutputBufferSizeLimitsDataFrameLength() throws Exception {
+    MockSpdyPeer peer = new MockSpdyPeer(Variant.HTTP_20_DRAFT_09, false);
+
+    byte[] buff = new byte[SpdyStream.OUTPUT_BUFFER_SIZE * 2];
+    Arrays.fill(buff, (byte) '*');
+
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.acceptFrame(); // DATA 1
+    peer.acceptFrame(); // DATA 2
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = http2Connection(peer);
+    SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
+    OutputStream out = stream.getOutputStream();
+    out.write(buff);
+    out.flush();
+    out.close();
+
+    MockSpdyPeer.InFrame synStream = peer.takeFrame();
+    assertEquals(TYPE_HEADERS, synStream.type);
+    MockSpdyPeer.InFrame data = peer.takeFrame();
+    assertEquals(SpdyStream.OUTPUT_BUFFER_SIZE, data.data.length);
+    data = peer.takeFrame();
+    assertEquals(SpdyStream.OUTPUT_BUFFER_SIZE, data.data.length);
   }
 
   /** https://github.com/square/okhttp/issues/333 */

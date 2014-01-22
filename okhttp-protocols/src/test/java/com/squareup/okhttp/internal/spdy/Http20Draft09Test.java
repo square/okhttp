@@ -15,10 +15,12 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -28,6 +30,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class Http20Draft09Test {
   static final int expectedStreamId = 15;
@@ -307,6 +310,49 @@ public class Http20Draft09Test {
     });
   }
 
+  @Test public void maxLengthDataFrame() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final byte[] expectedData = new byte[16383];
+    Arrays.fill(expectedData, (byte) 2);
+
+    // Write the data frame.
+    dataOut.writeShort(expectedData.length);
+    dataOut.write(Http20Draft09.TYPE_DATA);
+    dataOut.write(0); // no flags
+    dataOut.writeInt(expectedStreamId & 0x7fffffff);
+    dataOut.write(expectedData);
+
+    // Check writer sends the same bytes.
+    assertArrayEquals(out.toByteArray(), sendDataFrame(expectedData));
+
+    FrameReader fr = newReader(out);
+
+    fr.nextFrame(new BaseTestHandler() {
+      @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
+          throws IOException {
+        assertFalse(inFinished);
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(16383, length);
+        byte[] data = new byte[length];
+        Util.readFully(in, data);
+        for (byte b : data){
+          assertEquals(2, b);
+        }
+      }
+    });
+  }
+
+  @Test public void tooLargeDataFrame() throws IOException {
+    try {
+      sendDataFrame(new byte[0x1000000]);
+      fail();
+    } catch (IOException e) {
+      assertEquals("FRAME_SIZE_ERROR max size is 16383: 16777216", e.getMessage());
+    }
+  }
+
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
     return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()),
         Variant.HTTP_20_DRAFT_09.initialPeerSettings(false).getHeaderTableSize(), false);
@@ -321,6 +367,16 @@ public class Http20Draft09Test {
   private byte[] sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new Http20Draft09.Writer(out, true).ping(ack, payload1, payload2);
+    return out.toByteArray();
+  }
+
+  private byte[] sendDataFrame(byte[] data) throws IOException {
+    return sendDataFrame(data, 0, data.length);
+  }
+
+  private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new Http20Draft09.Writer(out, true).sendDataFrame(expectedStreamId, 0, data, offset, byteCount);
     return out.toByteArray();
   }
 }
