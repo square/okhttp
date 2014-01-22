@@ -325,8 +325,8 @@ public final class SpdyStream {
     notifyAll();
   }
 
-  synchronized void receiveWindowUpdate(int deltaWindowSize) {
-    out.unacknowledgedBytes -= deltaWindowSize;
+  synchronized void receiveWindowUpdate(long windowSizeIncrement) {
+    out.unacknowledgedBytes -= windowSizeIncrement;
     notifyAll();
   }
 
@@ -594,7 +594,7 @@ public final class SpdyStream {
      * acknowledged with an incoming {@code WINDOW_UPDATE} frame. Writes
      * block if they cause this to exceed the {@code WINDOW_SIZE}.
      */
-    private int unacknowledgedBytes = 0;
+    private long unacknowledgedBytes = 0;
 
     @Override public void write(int b) throws IOException {
       Util.writeSingleByte(this, b);

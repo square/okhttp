@@ -65,6 +65,7 @@ public interface FrameWriter extends Closeable {
    */
   void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
       throws IOException;
+
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;
   void noop() throws IOException;
@@ -81,6 +82,21 @@ public interface FrameWriter extends Closeable {
    *  sent.  The data is opaque binary, and there are no rules on the content.
    */
   void ping(boolean ack, int payload1, int payload2) throws IOException;
-  void goAway(int lastGoodStreamId, ErrorCode errorCode) throws IOException;
-  void windowUpdate(int streamId, int deltaWindowSize) throws IOException;
+
+  /**
+   * Tell the peer to stop creating streams and that we last processed
+   * {@code lastGoodStreamId}, or zero if no streams were processed.
+   *
+   * @param lastGoodStreamId the last stream ID processed, or zero if no
+   * streams were processed.
+   * @param errorCode reason for closing the connection.
+   * @param debugData only valid for http/2; opaque debug data to send.
+   */
+  void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) throws IOException;
+
+  /**
+   * Inform peer that an additional {@code windowSizeIncrement} bytes can be
+   * sent on {@code streamId}, or the connection if {@code streamId} is zero.
+   */
+  void windowUpdate(int streamId, long windowSizeIncrement) throws IOException;
 }

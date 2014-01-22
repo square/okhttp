@@ -218,19 +218,19 @@ public final class SpdyConnection implements Closeable {
     frameWriter.rstStream(streamId, statusCode);
   }
 
-  void writeWindowUpdateLater(final int streamId, final int deltaWindowSize) {
+  void writeWindowUpdateLater(final int streamId, final int windowSizeIncrement) {
     executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
-          writeWindowUpdate(streamId, deltaWindowSize);
+          writeWindowUpdate(streamId, windowSizeIncrement);
         } catch (IOException ignored) {
         }
       }
     });
   }
 
-  void writeWindowUpdate(int streamId, int deltaWindowSize) throws IOException {
-    frameWriter.windowUpdate(streamId, deltaWindowSize);
+  void writeWindowUpdate(int streamId, int windowSizeIncrement) throws IOException {
+    frameWriter.windowUpdate(streamId, windowSizeIncrement);
   }
 
   /**
@@ -303,7 +303,8 @@ public final class SpdyConnection implements Closeable {
         shutdown = true;
         lastGoodStreamId = this.lastGoodStreamId;
       }
-      frameWriter.goAway(lastGoodStreamId, statusCode);
+      // TODO: propagate exception message into debugData
+      frameWriter.goAway(lastGoodStreamId, statusCode, Util.EMPTY_BYTE_ARRAY);
     }
   }
 
@@ -597,7 +598,10 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
+    @Override
+    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+      if (debugData.length > 0) { // TODO: log the debugData
+      }
       synchronized (SpdyConnection.this) {
         shutdown = true;
 
@@ -614,16 +618,16 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (streamId == 0) {
-        // TODO: honor whole-stream flow control
+        // TODO: honor connection-level flow control
         return;
       }
 
       // TODO: honor endFlowControl
       SpdyStream stream = getStream(streamId);
       if (stream != null) {
-        stream.receiveWindowUpdate(deltaWindowSize);
+        stream.receiveWindowUpdate(windowSizeIncrement);
       }
     }
 

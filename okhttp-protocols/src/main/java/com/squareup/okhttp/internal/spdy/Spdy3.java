@@ -252,8 +252,9 @@ final class Spdy3 implements Variant {
       int w1 = in.readInt();
       int w2 = in.readInt();
       int streamId = w1 & 0x7fffffff;
-      int deltaWindowSize = w2 & 0x7fffffff;
-      handler.windowUpdate(streamId, deltaWindowSize, false);
+      long increment = w2 & 0x7fffffff;
+      if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
+      handler.windowUpdate(streamId, increment);
     }
 
     private void readPing(Handler handler, int flags, int length) throws IOException {
@@ -271,7 +272,7 @@ final class Spdy3 implements Variant {
       if (errorCode == null) {
         throw ioException("TYPE_GOAWAY unexpected error code: %d", errorCodeInt);
       }
-      handler.goAway(lastGoodStreamId, errorCode);
+      handler.goAway(lastGoodStreamId, errorCode, Util.EMPTY_BYTE_ARRAY);
     }
 
     private void readSettings(Handler handler, int flags, int length) throws IOException {
@@ -410,8 +411,8 @@ final class Spdy3 implements Variant {
 
     void sendDataFrame(int streamId, int flags, byte[] data, int offset, int byteCount)
         throws IOException {
-      if (byteCount > 0xffffff) {
-        throw new IOException("FRAME_TOO_LARGE max size is 16Mib: " + byteCount);
+      if (byteCount > 0xffffffL) {
+        throw new IllegalArgumentException("FRAME_TOO_LARGE max size is 16Mib: " + byteCount);
       }
       out.writeInt(streamId & 0x7fffffff);
       out.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
@@ -471,9 +472,12 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
+    @Override
+    public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] ignored)
         throws IOException {
-      if (errorCode.spdyGoAwayCode == -1) throw new IllegalArgumentException();
+      if (errorCode.spdyGoAwayCode == -1) {
+        throw new IllegalArgumentException("errorCode.spdyGoAwayCode == -1");
+      }
       int type = TYPE_GOAWAY;
       int flags = 0;
       int length = 8;
@@ -484,15 +488,19 @@ final class Spdy3 implements Variant {
       out.flush();
     }
 
-    @Override public synchronized void windowUpdate(int streamId, int deltaWindowSize)
+    @Override public synchronized void windowUpdate(int streamId, long increment)
         throws IOException {
+      if (increment == 0 || increment > 0x7fffffffL) {
+        throw new IllegalArgumentException(
+            "windowSizeIncrement must be between 1 and 0x7fffffff: " + increment);
+      }
       int type = TYPE_WINDOW_UPDATE;
       int flags = 0;
       int length = 8;
       out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId);
-      out.writeInt(deltaWindowSize);
+      out.writeInt((int) increment);
       out.flush();
     }
 
