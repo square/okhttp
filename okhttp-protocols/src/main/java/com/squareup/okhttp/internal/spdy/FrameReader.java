@@ -62,7 +62,12 @@ public interface FrameReader extends Closeable {
      */
     void ping(boolean ack, int payload1, int payload2);
     void goAway(int lastGoodStreamId, ErrorCode errorCode);
-    void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl);
+
+    /**
+     * Notifies that an additional {@code windowSizeIncrement} bytes can be
+     * sent on {@code streamId} or the connection, if {@code streamId} is zero.
+     */
+    void windowUpdate(int streamId, int windowSizeIncrement);
     void priority(int streamId, int priority);
 
     /**

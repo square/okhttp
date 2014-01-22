@@ -348,8 +348,50 @@ public class Http20Draft09Test {
     try {
       sendDataFrame(new byte[0x1000000]);
       fail();
-    } catch (IOException e) {
+    } catch (IllegalArgumentException e) {
       assertEquals("FRAME_SIZE_ERROR max size is 16383: 16777216", e.getMessage());
+    }
+  }
+
+  @Test public void windowUpdateRoundTrip() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final int expectedWindowSizeIncrement = 0x7fffffff;
+
+    // Compose the expected window update frame.
+    dataOut.writeShort(4); // length
+    dataOut.write(Http20Draft09.TYPE_WINDOW_UPDATE);
+    dataOut.write(0); // No flags.
+    dataOut.writeInt(expectedStreamId);
+    dataOut.writeInt(expectedWindowSizeIncrement);
+
+    // Check writer sends the same bytes.
+    assertArrayEquals(out.toByteArray(), windowUpdate(expectedWindowSizeIncrement));
+
+    FrameReader fr = newReader(out);
+
+    fr.nextFrame(new BaseTestHandler() { // Consume the window update frame.
+      public void windowUpdate(int streamId, int windowSizeIncrement) {
+        assertEquals(expectedStreamId, streamId);
+        assertEquals(expectedWindowSizeIncrement, windowSizeIncrement);
+      }
+    });
+  }
+
+  @Test public void badWindowSizeIncrement() throws IOException {
+    try {
+      windowUpdate(0);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 0", e.getMessage());
+    }
+    try {
+      windowUpdate(0x80000000);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 2147483648",
+          e.getMessage());
     }
   }
 
@@ -377,6 +419,12 @@ public class Http20Draft09Test {
   private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new Http20Draft09.Writer(out, true).sendDataFrame(expectedStreamId, 0, data, offset, byteCount);
+    return out.toByteArray();
+  }
+
+  private byte[] windowUpdate(int windowSizeIncrement) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new Http20Draft09.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
     return out.toByteArray();
   }
 }

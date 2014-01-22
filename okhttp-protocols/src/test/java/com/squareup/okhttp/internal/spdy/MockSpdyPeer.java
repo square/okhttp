@@ -185,7 +185,7 @@ public final class MockSpdyPeer implements Closeable {
     public int associatedStreamId;
     public int priority;
     public ErrorCode errorCode;
-    public int deltaWindowSize;
+    public int windowSizeIncrement;
     public List<Header> headerBlock;
     public byte[] data;
     public Settings settings;
@@ -257,11 +257,11 @@ public final class MockSpdyPeer implements Closeable {
       this.errorCode = errorCode;
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+    @Override public void windowUpdate(int streamId, int windowSizeIncrement) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_WINDOW_UPDATE;
       this.streamId = streamId;
-      this.deltaWindowSize = deltaWindowSize;
+      this.windowSizeIncrement = windowSizeIncrement;
     }
 
     @Override public void priority(int streamId, int priority) {

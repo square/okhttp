@@ -82,5 +82,9 @@ public interface FrameWriter extends Closeable {
    */
   void ping(boolean ack, int payload1, int payload2) throws IOException;
   void goAway(int lastGoodStreamId, ErrorCode errorCode) throws IOException;
-  void windowUpdate(int streamId, int deltaWindowSize) throws IOException;
+  /**
+   * Inform peer that an additional {@code windowSizeIncrement} bytes can be
+   * sent on {@code streamId} or the connection, if {@code streamId} is zero.
+   */
+  void windowUpdate(int streamId, int windowSizeIncrement) throws IOException;
 }
