@@ -303,7 +303,8 @@ public final class SpdyConnection implements Closeable {
         shutdown = true;
         lastGoodStreamId = this.lastGoodStreamId;
       }
-      frameWriter.goAway(lastGoodStreamId, statusCode);
+      // TODO: propagate exception message into debugData
+      frameWriter.goAway(lastGoodStreamId, statusCode, Util.EMPTY_BYTE_ARRAY);
     }
   }
 
@@ -597,7 +598,10 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
+    @Override
+    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+      if (debugData.length > 0) { // TODO: log the debugData
+      }
       synchronized (SpdyConnection.this) {
         shutdown = true;
 
@@ -614,7 +618,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void windowUpdate(int streamId, int windowSizeIncrement) {
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (streamId == 0) {
         // TODO: honor connection-level flow control
         return;

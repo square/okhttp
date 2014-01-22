@@ -61,13 +61,25 @@ public interface FrameReader extends Closeable {
      *  set. The data is opaque binary, and there are no rules on the content.
      */
     void ping(boolean ack, int payload1, int payload2);
-    void goAway(int lastGoodStreamId, ErrorCode errorCode);
+
+    /**
+     * The peer tells us to stop creating streams.  It is safe to replay
+     * streams with {@code ID > lastGoodStreamId} on a new connection.  In-
+     * flight streams with {@code ID <= lastGoodStreamId} can only be replayed
+     * on a new connection if they are idempotent.
+     *
+     * @param lastGoodStreamId the last stream ID the peer processed before
+     * sending this message. If {@lastGoodStreamId} is zero, the peer processed no frames.
+     * @param errorCode reason for closing the connection.
+     * @param debugData only valid for http/2; opaque debug data to send.
+     */
+    void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData);
 
     /**
      * Notifies that an additional {@code windowSizeIncrement} bytes can be
-     * sent on {@code streamId} or the connection, if {@code streamId} is zero.
+     * sent on {@code streamId}, or the connection if {@code streamId} is zero.
      */
-    void windowUpdate(int streamId, int windowSizeIncrement);
+    void windowUpdate(int streamId, long windowSizeIncrement);
     void priority(int streamId, int priority);
 
     /**

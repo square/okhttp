@@ -118,7 +118,7 @@ public final class Http20Draft09 implements Variant {
 
       // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
       int length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
-      if ((length & 0xffffffffL) > 16383) {
+      if (length > 16383) {
         throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + length);
       }
       int type = (w1 & 0xff00) >> 8;
@@ -269,23 +269,26 @@ public final class Http20Draft09 implements Variant {
     private void readGoAway(Handler handler, int flags, int length, int streamId)
         throws IOException {
       if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
+      if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
       int lastStreamId = in.readInt();
       int errorCodeInt = in.readInt();
       int opaqueDataLength = length - 8;
       ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
       if (errorCode == null) {
-        throw ioException("TYPE_RST_STREAM unexpected error code: %d", errorCodeInt);
+        throw ioException("TYPE_GOAWAY unexpected error code: %d", errorCodeInt);
       }
-      if (Util.skipByReading(in, opaqueDataLength) != opaqueDataLength) {
-        throw new IOException("TYPE_GOAWAY opaque data was truncated");
+      byte[] debugData = Util.EMPTY_BYTE_ARRAY;
+      if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
+        debugData = new byte[opaqueDataLength];
+        Util.readFully(in, debugData);
       }
-      handler.goAway(lastStreamId, errorCode);
+      handler.goAway(lastStreamId, errorCode, debugData);
     }
 
     private void readWindowUpdate(Handler handler, int flags, int length, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
-      int increment = (in.readInt() & 0x7fffffff);
+      long increment = (in.readInt() & 0x7fffffff);
       if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
       handler.windowUpdate(streamId, increment);
     }
@@ -432,20 +435,33 @@ public final class Http20Draft09 implements Variant {
       out.writeInt(payload2);
     }
 
-    @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode)
+    @Override
+    public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
         throws IOException {
-      // TODO
+      if (errorCode.httpCode == -1) {
+        throw new IllegalArgumentException("errorCode.httpCode == -1");
+      }
+      int length = 8 + debugData.length;
+      checkFrameSize(length);
+      out.writeInt((length & 0x3fff) << 16 | (TYPE_GOAWAY & 0xff) << 8);
+      out.writeInt(0); // connection-level
+      out.writeInt(lastGoodStreamId);
+      out.writeInt(errorCode.httpCode);
+      if (debugData.length > 0) {
+        out.write(debugData);
+      }
+      out.flush();
     }
 
-    @Override public synchronized void windowUpdate(int streamId, int increment)
+    @Override public synchronized void windowUpdate(int streamId, long increment)
         throws IOException {
-      if (increment == 0 || (increment & 0xffffffffL) > 0x7fffffffL) {
+      if (increment == 0 || increment > 0x7fffffffL) {
         throw new IllegalArgumentException(
-            "windowSizeIncrement must be between 1 and 0x7fffffff: " + (increment & 0xffffffffL));
+            "windowSizeIncrement must be between 1 and 0x7fffffff: " + increment);
       }
       out.writeInt(4 << 16 | (TYPE_WINDOW_UPDATE & 0xff) << 8); // No flags.
       out.writeInt(streamId);
-      out.writeInt(increment);
+      out.writeInt((int) increment);
     }
 
     @Override public void close() throws IOException {
@@ -454,7 +470,7 @@ public final class Http20Draft09 implements Variant {
   }
 
   private static void checkFrameSize(int bytes) throws IOException {
-    if ((bytes & 0xffffffffL) > 16383) {
+    if (bytes > 16383) {
       throw new IllegalArgumentException("FRAME_SIZE_ERROR max size is 16383: " + bytes);
     }
   }

@@ -185,7 +185,7 @@ public final class MockSpdyPeer implements Closeable {
     public int associatedStreamId;
     public int priority;
     public ErrorCode errorCode;
-    public int windowSizeIncrement;
+    public long windowSizeIncrement;
     public List<Header> headerBlock;
     public byte[] data;
     public Settings settings;
@@ -250,14 +250,16 @@ public final class MockSpdyPeer implements Closeable {
       this.type = Spdy3.TYPE_NOOP;
     }
 
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
+    @Override
+    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_GOAWAY;
       this.streamId = lastGoodStreamId;
       this.errorCode = errorCode;
+      this.data = debugData;
     }
 
-    @Override public void windowUpdate(int streamId, int windowSizeIncrement) {
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_WINDOW_UPDATE;
       this.streamId = streamId;

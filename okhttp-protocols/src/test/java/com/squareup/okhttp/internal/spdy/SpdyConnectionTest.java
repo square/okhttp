@@ -754,18 +754,29 @@ public final class SpdyConnectionTest {
     assertEquals(2, ping.payload1);
   }
 
+
   @Test public void receiveGoAway() throws Exception {
+    receiveGoAway(Variant.SPDY3);
+  }
+
+  @Test public void receiveGoAwayHttp2() throws Exception {
+    receiveGoAway(Variant.HTTP_20_DRAFT_09);
+  }
+
+  private void receiveGoAway(Variant variant) throws Exception {
+    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM 1
     peer.acceptFrame(); // SYN_STREAM 3
-    peer.sendFrame().goAway(1, PROTOCOL_ERROR);
+    peer.sendFrame().goAway(1, PROTOCOL_ERROR, Util.EMPTY_BYTE_ARRAY);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // DATA STREAM 1
     peer.play();
 
     // play it back
-    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyConnection connection = connection(peer, variant);
     SpdyStream stream1 = connection.newStream(headerEntries("a", "android"), true, true);
     SpdyStream stream2 = connection.newStream(headerEntries("b", "banana"), true, true);
     connection.ping().roundTripTime(); // Ensure that the GO_AWAY has been received.

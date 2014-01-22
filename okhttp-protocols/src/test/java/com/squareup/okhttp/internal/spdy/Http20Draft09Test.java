@@ -357,14 +357,14 @@ public class Http20Draft09Test {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
 
-    final int expectedWindowSizeIncrement = 0x7fffffff;
+    final long expectedWindowSizeIncrement = 0x7fffffff;
 
     // Compose the expected window update frame.
     dataOut.writeShort(4); // length
     dataOut.write(Http20Draft09.TYPE_WINDOW_UPDATE);
     dataOut.write(0); // No flags.
     dataOut.writeInt(expectedStreamId);
-    dataOut.writeInt(expectedWindowSizeIncrement);
+    dataOut.writeInt((int) expectedWindowSizeIncrement);
 
     // Check writer sends the same bytes.
     assertArrayEquals(out.toByteArray(), windowUpdate(expectedWindowSizeIncrement));
@@ -372,7 +372,7 @@ public class Http20Draft09Test {
     FrameReader fr = newReader(out);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the window update frame.
-      public void windowUpdate(int streamId, int windowSizeIncrement) {
+      @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
         assertEquals(expectedStreamId, streamId);
         assertEquals(expectedWindowSizeIncrement, windowSizeIncrement);
       }
@@ -387,12 +387,72 @@ public class Http20Draft09Test {
       assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 0", e.getMessage());
     }
     try {
-      windowUpdate(0x80000000);
+      windowUpdate(0x80000000L);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("windowSizeIncrement must be between 1 and 0x7fffffff: 2147483648",
           e.getMessage());
     }
+  }
+
+  @Test public void goAwayWithoutDebugDataRoundTrip() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
+
+    // Compose the expected GOAWAY frame without debug data.
+    dataOut.writeShort(8); // Without debug data there's only 2 32-bit fields.
+    dataOut.write(Http20Draft09.TYPE_GOAWAY);
+    dataOut.write(0); // no flags.
+    dataOut.writeInt(0); // connection-scope
+    dataOut.writeInt(expectedStreamId); // last good stream.
+    dataOut.writeInt(expectedError.httpCode);
+
+    // Check writer sends the same bytes.
+    assertArrayEquals(out.toByteArray(),
+        sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
+
+    FrameReader fr = newReader(out);
+
+    fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
+      @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+        assertEquals(expectedStreamId, lastGoodStreamId);
+        assertEquals(expectedError, errorCode);
+        assertEquals(0, debugData.length);
+      }
+    });
+  }
+
+  @Test public void goAwayWithDebugDataRoundTrip() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+
+    final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
+    final byte[] expectedData = new byte[8];
+    Arrays.fill(expectedData, (byte) '*');
+
+    // Compose the expected GOAWAY frame without debug data.
+    dataOut.writeShort(8 + expectedData.length);
+    dataOut.write(Http20Draft09.TYPE_GOAWAY);
+    dataOut.write(0); // no flags.
+    dataOut.writeInt(0); // connection-scope
+    dataOut.writeInt(0); // never read any stream!
+    dataOut.writeInt(expectedError.httpCode);
+    dataOut.write(expectedData);
+
+    // Check writer sends the same bytes.
+    assertArrayEquals(out.toByteArray(), sendGoAway(0, expectedError, expectedData));
+
+    FrameReader fr = newReader(out);
+
+    fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
+      @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+        assertEquals(0, lastGoodStreamId);
+        assertEquals(expectedError, errorCode);
+        assertArrayEquals(expectedData, debugData);
+      }
+    });
   }
 
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
@@ -412,6 +472,13 @@ public class Http20Draft09Test {
     return out.toByteArray();
   }
 
+  private byte[] sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
+      throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    new Http20Draft09.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
+    return out.toByteArray();
+  }
+
   private byte[] sendDataFrame(byte[] data) throws IOException {
     return sendDataFrame(data, 0, data.length);
   }
@@ -422,7 +489,7 @@ public class Http20Draft09Test {
     return out.toByteArray();
   }
 
-  private byte[] windowUpdate(int windowSizeIncrement) throws IOException {
+  private byte[] windowUpdate(long windowSizeIncrement) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new Http20Draft09.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
     return out.toByteArray();

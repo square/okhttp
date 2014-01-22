@@ -49,12 +49,13 @@ class BaseTestHandler implements FrameReader.Handler {
     fail();
   }
 
-  @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
+  @Override
+  public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
     fail();
   }
 
   @Override
-  public void windowUpdate(int streamId, int windowSizeIncrement) {
+  public void windowUpdate(int streamId, long windowSizeIncrement) {
     fail();
   }
 
