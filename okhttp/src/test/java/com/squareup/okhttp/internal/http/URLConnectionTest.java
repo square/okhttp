@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpResponseCache;
+import com.squareup.okhttp.OkAuthenticator.Credential;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
@@ -75,7 +76,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import static com.squareup.okhttp.OkAuthenticator.Credential;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -2570,6 +2570,38 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals(Long.toString(contentLength), request.getHeader("Content-Length"));
+  }
+
+  /**
+   * We had a bug where we attempted to gunzip responses that didn't have a
+   * body. This only came up with 304s since that response code can include
+   * headers (like "Content-Encoding") without any content to go along with it.
+   * https://github.com/square/okhttp/issues/358
+   */
+  @Test public void noTransparentGzipFor304NotModified() throws Exception {
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+        .addHeader("Content-Encoding: gzip"));
+    server.enqueue(new MockResponse().setBody("b"));
+
+    server.play();
+
+    HttpURLConnection connection1 = client.open(server.getUrl("/"));
+    assertEquals(HttpURLConnection.HTTP_NOT_MODIFIED, connection1.getResponseCode());
+    assertContent("", connection1);
+    connection1.getInputStream().close();
+
+    HttpURLConnection connection2 = client.open(server.getUrl("/"));
+    assertEquals(HttpURLConnection.HTTP_OK, connection2.getResponseCode());
+    assertContent("b", connection2);
+    connection2.getInputStream().close();
+
+    RecordedRequest requestA = server.takeRequest();
+    assertEquals(0, requestA.getSequenceNumber());
+
+    RecordedRequest requestB = server.takeRequest();
+    assertEquals(1, requestB.getSequenceNumber());
   }
 
   /** Returns a gzipped copy of {@code bytes}. */

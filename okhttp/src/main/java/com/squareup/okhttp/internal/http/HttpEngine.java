@@ -401,16 +401,25 @@ public class HttpEngine {
     }
   }
 
+  /**
+   * Initialize the response content stream from the response transfer stream.
+   * These two streams are the same unless we're doing transparent gzip, in
+   * which case the content stream is decompressed.
+   *
+   * <p>Whenever we do transparent gzip we also strip the corresponding headers.
+   * We strip the Content-Encoding header to prevent the application from
+   * attempting to double decompress. We strip the Content-Length header because
+   * it is the length of the compressed content, but the application is only
+   * interested in the length of the uncompressed content.
+   *
+   * <p>This method should only be used for non-empty response bodies. Response
+   * codes like "304 Not Modified" can include "Content-Encoding: gzip" without
+   * a response body and we will crash if we attempt to decompress the zero-byte
+   * stream.
+   */
   private void initContentStream(InputStream transferStream) throws IOException {
     responseTransferIn = transferStream;
     if (transparentGzip && "gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
-      // If the response was transparently gzipped, remove the gzip header field
-      // so clients don't double decompress. http://b/3009828
-      //
-      // Also remove the Content-Length in this case because it contains the
-      // length of the gzipped response. This isn't terribly useful and is
-      // dangerous because clients can query the content length, but not the
-      // content encoding.
       response = response.newBuilder()
           .removeHeader("Content-Encoding")
           .removeHeader("Content-Length")
@@ -561,10 +570,14 @@ public class HttpEngine {
       }
     }
 
-    if (hasResponseBody()) {
-      maybeCache();
+    if (!hasResponseBody()) {
+      // Don't call initContentStream() when the response doesn't have any content.
+      responseTransferIn = transport.getTransferStream(cacheRequest);
+      responseBodyIn = responseTransferIn;
+      return;
     }
 
+    maybeCache();
     initContentStream(transport.getTransferStream(cacheRequest));
   }
 
