@@ -117,57 +117,57 @@ public final class Http20Draft09 implements Variant {
       int w2 = in.readInt();
 
       // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
-      int length = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
-      if (length > 16383) {
+      short length = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned.
+      if (length < 0 || length > 16383) {
         throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + length);
       }
-      int type = (w1 & 0xff00) >> 8;
-      int flags = w1 & 0xff;
+      byte type = (byte) ((w1 & 0xff00) >> 8);
+      byte flags = (byte) (w1 & 0xff);
       // boolean r = (w2 & 0x80000000) != 0; // Reserved.
       int streamId = (w2 & 0x7fffffff);
 
       switch (type) {
         case TYPE_DATA:
-          readData(handler, flags, length, streamId);
+          readData(handler, length, flags, streamId);
           return true;
 
         case TYPE_HEADERS:
-          readHeaders(handler, flags, length, streamId);
+          readHeaders(handler, length, flags, streamId);
           return true;
 
         case TYPE_PRIORITY:
-          readPriority(handler, flags, length, streamId);
+          readPriority(handler, length, flags, streamId);
           return true;
 
         case TYPE_RST_STREAM:
-          readRstStream(handler, flags, length, streamId);
+          readRstStream(handler, length, flags, streamId);
           return true;
 
         case TYPE_SETTINGS:
-          readSettings(handler, flags, length, streamId);
+          readSettings(handler, length, flags, streamId);
           return true;
 
         case TYPE_PUSH_PROMISE:
-          readPushPromise(handler, flags, length, streamId);
+          readPushPromise(handler, length, flags, streamId);
           return true;
 
         case TYPE_PING:
-          readPing(handler, flags, length, streamId);
+          readPing(handler, length, flags, streamId);
           return true;
 
         case TYPE_GOAWAY:
-          readGoAway(handler, flags, length, streamId);
+          readGoAway(handler, length, flags, streamId);
           return true;
 
         case TYPE_WINDOW_UPDATE:
-          readWindowUpdate(handler, flags, length, streamId);
+          readWindowUpdate(handler, length, flags, streamId);
           return true;
       }
 
       throw new UnsupportedOperationException(Integer.toBinaryString(type));
     }
 
-    private void readHeaders(Handler handler, int flags, int length, int streamId)
+    private void readHeaders(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0");
 
@@ -181,7 +181,7 @@ public final class Http20Draft09 implements Variant {
           HeadersMode.HTTP_20_HEADERS);
     }
 
-    private List<Header> readHeaderBlock(int length, boolean endHeaders, int streamId)
+    private List<Header> readHeaderBlock(short length, boolean endHeaders, int streamId)
         throws IOException {
       continuation.bytesLeft = length;
       continuation.endHeaders = endHeaders;
@@ -194,13 +194,14 @@ public final class Http20Draft09 implements Variant {
       return hpackReader.getAndReset();
     }
 
-    private void readData(Handler handler, int flags, int length, int streamId) throws IOException {
+    private void readData(Handler handler, short length, byte flags, int streamId)
+        throws IOException {
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
       // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
       handler.data(inFinished, streamId, in, length);
     }
 
-    private void readPriority(Handler handler, int flags, int length, int streamId)
+    private void readPriority(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_PRIORITY length: %d != 4", length);
       if (streamId == 0) throw ioException("TYPE_PRIORITY streamId == 0");
@@ -210,7 +211,7 @@ public final class Http20Draft09 implements Variant {
       handler.priority(streamId, priority);
     }
 
-    private void readRstStream(Handler handler, int flags, int length, int streamId)
+    private void readRstStream(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_RST_STREAM length: %d != 4", length);
       if (streamId == 0) throw ioException("TYPE_RST_STREAM streamId == 0");
@@ -222,7 +223,7 @@ public final class Http20Draft09 implements Variant {
       handler.rstStream(streamId, errorCode);
     }
 
-    private void readSettings(Handler handler, int flags, int length, int streamId)
+    private void readSettings(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if ((flags & FLAG_ACK) != 0) {
         if (length != 0) throw ioException("FRAME_SIZE_ERROR ack frame should be empty!");
@@ -244,7 +245,7 @@ public final class Http20Draft09 implements Variant {
       }
     }
 
-    private void readPushPromise(Handler handler, int flags, int length, int streamId)
+    private void readPushPromise(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (streamId == 0) {
         throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
@@ -257,7 +258,8 @@ public final class Http20Draft09 implements Variant {
       handler.pushPromise(streamId, promisedStreamId, headerBlock);
     }
 
-    private void readPing(Handler handler, int flags, int length, int streamId) throws IOException {
+    private void readPing(Handler handler, short length, byte flags, int streamId)
+        throws IOException {
       if (length != 8) throw ioException("TYPE_PING length != 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
       int payload1 = in.readInt();
@@ -266,7 +268,7 @@ public final class Http20Draft09 implements Variant {
       handler.ping(ack, payload1, payload2);
     }
 
-    private void readGoAway(Handler handler, int flags, int length, int streamId)
+    private void readGoAway(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
@@ -285,7 +287,7 @@ public final class Http20Draft09 implements Variant {
       handler.goAway(lastStreamId, errorCode, debugData);
     }
 
-    private void readWindowUpdate(Handler handler, int flags, int length, int streamId)
+    private void readWindowUpdate(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
       long increment = (in.readInt() & 0x7fffffff);
@@ -487,7 +489,7 @@ public final class Http20Draft09 implements Variant {
   static final class ContinuationInputStream extends InputStream {
     private final DataInputStream in;
 
-    int bytesLeft;
+    short bytesLeft;
     boolean endHeaders;
     int streamId;
 
@@ -536,7 +538,10 @@ public final class Http20Draft09 implements Variant {
       int w2 = in.readInt();
 
       // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
-      bytesLeft = (w1 & 0x3fff0000) >> 16; // 14-bit unsigned.
+      bytesLeft = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned.
+      if (bytesLeft < 0 || bytesLeft > 16383) {
+        throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + bytesLeft);
+      }
       int newType = (w1 & 0xff00) >> 8;
       endHeaders = (w1 & 0xff & FLAG_END_HEADERS) != 0;
 
