@@ -50,7 +50,7 @@ public final class MockSpdyPeer implements Closeable {
   public MockSpdyPeer(Variant variant, boolean client) {
     this.client = client;
     this.variant = variant;
-    this.frameWriter = variant.newWriter(bytesOut, variant.defaultOkHttpSettings(client), client);
+    this.frameWriter = variant.newWriter(bytesOut, client);
   }
 
   public void acceptFrame() {
@@ -110,7 +110,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = variant.newReader(in, variant.initialPeerSettings(client), client);
+    FrameReader reader = variant.newReader(in, client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();

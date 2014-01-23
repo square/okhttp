@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
@@ -61,7 +60,7 @@ public final class SpdyConnection implements Closeable {
       Util.threadFactory("OkHttp SpdyConnection", true));
 
   /** The protocol variant, like {@link com.squareup.okhttp.internal.spdy.Spdy3}. */
-  final Variant variant;
+  final Protocol protocol;
 
   /** True if this peer initiated the connection. */
   final boolean client;
@@ -93,27 +92,37 @@ public final class SpdyConnection implements Closeable {
   final ByteArrayPool bufferPool;
 
   private SpdyConnection(Builder builder) {
-    variant = builder.variant;
+    protocol = builder.protocol;
     client = builder.client;
-    okHttpSettings = variant.defaultOkHttpSettings(client);
-    // TODO: implement stream limit
-    // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
-    peerSettings = variant.initialPeerSettings(client);
-    bufferPool = new ByteArrayPool(peerSettings.getInitialWindowSize() * 8);
     handler = builder.handler;
-    frameReader = variant.newReader(builder.in, peerSettings, client);
-    frameWriter = variant.newWriter(builder.out, okHttpSettings, client);
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
-
     hostName = builder.hostName;
+
+    Variant variant;
+    if (protocol == Protocol.HTTP_2) {
+      okHttpSettings = Http20Draft09.defaultSettings(client);
+      variant = new Http20Draft09(); // connection-specific settings here!
+    } else if (protocol == Protocol.SPDY_3) {
+      okHttpSettings = Spdy3.defaultSettings(client);
+      variant = new Spdy3(); // connection-specific settings here!
+    } else {
+      throw new AssertionError(protocol);
+    }
+
+    // TODO: implement stream limit
+    // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
+    peerSettings = okHttpSettings;
+    bufferPool = new ByteArrayPool(peerSettings.getInitialWindowSize() * 8);
+    frameReader = variant.newReader(builder.in, client);
+    frameWriter = variant.newWriter(builder.out, client);
 
     new Thread(new Reader()).start(); // Not a daemon thread.
   }
 
   /** The protocol as selected using NPN or ALPN. */
   public Protocol getProtocol() {
-     return variant.getProtocol();
+     return protocol;
   }
 
   /**
@@ -392,7 +401,7 @@ public final class SpdyConnection implements Closeable {
     private InputStream in;
     private OutputStream out;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
-    private Variant variant = Variant.SPDY3;
+    private Protocol protocol = Protocol.SPDY_3;
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
@@ -428,14 +437,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     public Builder protocol(Protocol protocol) {
-      // TODO: protocol == variant.getProtocol, so we could map this.
-      if (protocol == Protocol.HTTP_2) {
-        this.variant = Variant.HTTP_20_DRAFT_09;
-      } else if (protocol == Protocol.SPDY_3) {
-        this.variant = Variant.SPDY3;
-      } else {
-        throw new AssertionError(protocol);
-      }
+      this.protocol = protocol;
       return this;
     }
 
@@ -550,7 +552,7 @@ public final class SpdyConnection implements Closeable {
         } else {
           peerSettings.merge(newSettings);
         }
-        if (SpdyConnection.this.variant.getProtocol() == Protocol.HTTP_2) {
+        if (getProtocol() == Protocol.HTTP_2) {
           ackSettingsLater();
         }
         if (!streams.isEmpty()) {

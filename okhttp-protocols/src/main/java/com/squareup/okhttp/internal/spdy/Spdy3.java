@@ -36,11 +36,7 @@ final class Spdy3 implements Variant {
     return Protocol.SPDY_3;
   }
 
-  @Override public Settings defaultOkHttpSettings(boolean client) {
-    return initialPeerSettings(client); // no difference in defaults.
-  }
-
-  @Override public Settings initialPeerSettings(boolean client) {
+  static Settings defaultSettings(boolean client) {
     Settings settings = new Settings();
     settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
     return settings;
@@ -104,11 +100,11 @@ final class Spdy3 implements Variant {
     }
   }
 
-  @Override public FrameReader newReader(InputStream in, Settings ignored, boolean client) {
+  @Override public FrameReader newReader(InputStream in, boolean client) {
     return new Reader(in, client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out, Settings ignored, boolean client) {
+  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
     return new Writer(out, client);
   }
 

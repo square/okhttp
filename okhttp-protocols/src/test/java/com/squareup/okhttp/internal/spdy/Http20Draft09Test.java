@@ -456,8 +456,7 @@ public class Http20Draft09Test {
   }
 
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
-    return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()),
-        Variant.HTTP_20_DRAFT_09.initialPeerSettings(false).getHeaderTableSize(), false);
+    return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), 4096, false);
   }
 
   private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
