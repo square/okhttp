@@ -51,24 +51,23 @@ public final class Http20Draft09 implements Variant {
   private static final byte[] CONNECTION_HEADER =
       "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes(Util.UTF_8);
 
-  static final int TYPE_DATA = 0x0;
-  static final int TYPE_HEADERS = 0x1;
-  static final int TYPE_PRIORITY = 0x2;
-  static final int TYPE_RST_STREAM = 0x3;
-  static final int TYPE_SETTINGS = 0x4;
-  static final int TYPE_PUSH_PROMISE = 0x5;
-  static final int TYPE_PING = 0x6;
-  static final int TYPE_GOAWAY = 0x7;
-  static final int TYPE_WINDOW_UPDATE = 0x9;
-  static final int TYPE_CONTINUATION = 0xa;
+  static final byte TYPE_DATA = 0x0;
+  static final byte TYPE_HEADERS = 0x1;
+  static final byte TYPE_PRIORITY = 0x2;
+  static final byte TYPE_RST_STREAM = 0x3;
+  static final byte TYPE_SETTINGS = 0x4;
+  static final byte TYPE_PUSH_PROMISE = 0x5;
+  static final byte TYPE_PING = 0x6;
+  static final byte TYPE_GOAWAY = 0x7;
+  static final byte TYPE_WINDOW_UPDATE = 0x9;
+  static final byte TYPE_CONTINUATION = 0xa;
 
-  static final int FLAG_END_STREAM = 0x1;
-
-  /** Used for headers and continuation. */
-  static final int FLAG_END_HEADERS = 0x4;
-  static final int FLAG_END_PUSH_PROMISE = 0x4;
-  static final int FLAG_PRIORITY = 0x8;
-  static final int FLAG_ACK = 0x1;
+  static final byte FLAG_NONE = 0x0;
+  static final byte FLAG_ACK = 0x1;
+  static final byte FLAG_END_STREAM = 0x1;
+  static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
+  static final byte FLAG_END_PUSH_PROMISE = 0x4;
+  static final byte FLAG_PRIORITY = 0x8;
 
   @Override public FrameReader newReader(InputStream in, boolean client) {
     return new Reader(in, 4096, client);
@@ -88,18 +87,18 @@ public final class Http20Draft09 implements Variant {
 
     Reader(InputStream in, int headerTableSize, boolean client) {
       this.in = new DataInputStream(in);
-      this.continuation = new ContinuationInputStream(this.in);
       this.client = client;
+      this.continuation = new ContinuationInputStream(this.in);
       this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, continuation);
     }
 
     @Override public void readConnectionHeader() throws IOException {
       if (client) return; // Nothing to read; servers don't send connection headers!
       byte[] connectionHeader = new byte[CONNECTION_HEADER.length];
-      in.readFully(connectionHeader);
+      Util.readFully(in, connectionHeader);
       if (!Arrays.equals(connectionHeader, CONNECTION_HEADER)) {
-        throw ioException("Expected a connection header but was "
-            + Arrays.toString(connectionHeader));
+        throw ioException("Expected a connection header but was %s",
+            Arrays.toString(connectionHeader));
       }
     }
 
@@ -110,77 +109,82 @@ public final class Http20Draft09 implements Variant {
       } catch (IOException e) {
         return false; // This might be a normal socket close.
       }
+
       int w2 = in.readInt();
 
-      // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
-      short length = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned.
-      if (length < 0 || length > 16383) {
-        throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + length);
-      }
+      // boolean r = (w1 & 0xc0000000) != 0; // Reserved: Ignore first 2 bits.
+      short length = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned == max 16383
       byte type = (byte) ((w1 & 0xff00) >> 8);
       byte flags = (byte) (w1 & 0xff);
-      // boolean r = (w2 & 0x80000000) != 0; // Reserved.
-      int streamId = (w2 & 0x7fffffff);
+      // boolean r = (w2 & 0x80000000) != 0; // Reserved: Ignore first bit.
+      int streamId = (w2 & 0x7fffffff); // 31-bit opaque identifier.
 
       switch (type) {
         case TYPE_DATA:
           readData(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_HEADERS:
           readHeaders(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_PRIORITY:
           readPriority(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_RST_STREAM:
           readRstStream(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_SETTINGS:
           readSettings(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_PUSH_PROMISE:
           readPushPromise(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_PING:
           readPing(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_GOAWAY:
           readGoAway(handler, length, flags, streamId);
-          return true;
+          break;
 
         case TYPE_WINDOW_UPDATE:
           readWindowUpdate(handler, length, flags, streamId);
-          return true;
-      }
+          break;
 
-      throw new UnsupportedOperationException(Integer.toBinaryString(type));
+        default:
+          // Implementations MUST ignore frames of unsupported or unrecognized types.
+          Util.skipByReading(in, length);
+      }
+      return true;
     }
 
     private void readHeaders(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0");
 
-      boolean endHeaders = (flags & FLAG_END_HEADERS) != 0;
       boolean endStream = (flags & FLAG_END_STREAM) != 0;
-      int priority = ((flags & FLAG_PRIORITY) != 0) ? in.readInt() & 0x7fffffff : -1;
 
-      List<Header> headerBlock = readHeaderBlock(length, endHeaders, streamId);
+      int priority = -1;
+      if ((flags & FLAG_PRIORITY) != 0) {
+        priority = in.readInt() & 0x7fffffff;
+        length -= 4; // account for above read.
+      }
+
+      List<Header> headerBlock = readHeaderBlock(length, flags, streamId);
 
       handler.headers(false, endStream, streamId, -1, priority, headerBlock,
           HeadersMode.HTTP_20_HEADERS);
     }
 
-    private List<Header> readHeaderBlock(short length, boolean endHeaders, int streamId)
+    private List<Header> readHeaderBlock(short length, byte flags, int streamId)
         throws IOException {
-      continuation.bytesLeft = length;
-      continuation.endHeaders = endHeaders;
+      continuation.length = continuation.left = length;
+      continuation.flags = flags;
       continuation.streamId = streamId;
 
       hpackReader.readHeaders();
@@ -246,11 +250,9 @@ public final class Http20Draft09 implements Variant {
       if (streamId == 0) {
         throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
       }
-      boolean endHeaders = (flags & FLAG_END_PUSH_PROMISE) != 0;
-
       int promisedStreamId = in.readInt() & 0x7fffffff;
-      List<Header> headerBlock = readHeaderBlock(length, endHeaders, streamId);
-
+      length -= 4; // account for above read.
+      List<Header> headerBlock = readHeaderBlock(length, flags, streamId);
       handler.pushPromise(streamId, promisedStreamId, headerBlock);
     }
 
@@ -314,9 +316,11 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override public synchronized void ackSettings() throws IOException {
-      // ACK the settings frame.
-      out.writeInt(0 | (TYPE_SETTINGS & 0xff) << 8 | (FLAG_ACK & 0xff));
-      out.writeInt(0);
+      int length = 0;
+      byte type = TYPE_SETTINGS;
+      byte flags = FLAG_ACK;
+      int streamId = 0;
+      frameHeader(length, type, flags, streamId);
     }
 
     @Override public synchronized void connectionHeader() throws IOException {
@@ -343,17 +347,16 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override
-    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
+    public synchronized void pushPromise(int streamId, int promisedStreamId,
+        List<Header> requestHeaders)
         throws IOException {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(requestHeaders);
-      int type = TYPE_PUSH_PROMISE;
-      // TODO: implement CONTINUATION
-      int length = hpackBuffer.size();
-      checkFrameSize(length);
-      int flags = FLAG_END_HEADERS;
-      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
+
+      int length = 4 + hpackBuffer.size();
+      byte type = TYPE_PUSH_PROMISE;
+      byte flags = FLAG_END_HEADERS;
+      frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
       out.writeInt(promisedStreamId & 0x7fffffff);
       hpackBuffer.writeTo(out);
     }
@@ -362,15 +365,14 @@ public final class Http20Draft09 implements Variant {
         List<Header> headerBlock) throws IOException {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(headerBlock);
-      int type = TYPE_HEADERS;
-      // TODO: implement CONTINUATION
+
       int length = hpackBuffer.size();
-      checkFrameSize(length);
-      int flags = FLAG_END_HEADERS;
+      byte type = TYPE_HEADERS;
+      byte flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
       if (priority != -1) flags |= FLAG_PRIORITY;
-      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
+      if (priority != -1) length += 4;
+      frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
       if (priority != -1) out.writeInt(priority & 0x7fffffff);
       hpackBuffer.writeTo(out);
     }
@@ -378,42 +380,40 @@ public final class Http20Draft09 implements Variant {
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
         throws IOException {
       if (errorCode.spdyRstCode == -1) throw new IllegalArgumentException();
-      int flags = 0;
-      int type = TYPE_RST_STREAM;
+
       int length = 4;
-      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
+      byte type = TYPE_RST_STREAM;
+      byte flags = FLAG_NONE;
+      frameHeader(length, type, flags, streamId);
       out.writeInt(errorCode.httpCode);
       out.flush();
     }
 
-    @Override public void data(boolean outFinished, int streamId, byte[] data) throws IOException {
+    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data)
+        throws IOException {
       data(outFinished, streamId, data, 0, data.length);
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
         int offset, int byteCount) throws IOException {
-      int flags = 0;
+      byte flags = FLAG_NONE;
       if (outFinished) flags |= FLAG_END_STREAM;
-      // TODO: Implement looping strategy.
-      sendDataFrame(streamId, flags, data, offset, byteCount);
+      dataFrame(streamId, flags, data, offset, byteCount); // TODO: Implement looping strategy
     }
 
-    void sendDataFrame(int streamId, int flags, byte[] data, int offset, int byteCount)
+    void dataFrame(int streamId, byte flags, byte[] data, int offset, int length)
         throws IOException {
-      checkFrameSize(byteCount);
-      out.writeInt((byteCount & 0x3fff) << 16 | (TYPE_DATA & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
-      out.write(data, offset, byteCount);
+      byte type = TYPE_DATA;
+      frameHeader(length, type, flags, streamId);
+      out.write(data, offset, length);
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {
-      int type = TYPE_SETTINGS;
       int length = settings.size() * 8;
-      int flags = 0;
+      byte type = TYPE_SETTINGS;
+      byte flags = FLAG_NONE;
       int streamId = 0;
-      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
+      frameHeader(length, type, flags, streamId);
       for (int i = 0; i < Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
         out.writeInt(i & 0xffffff);
@@ -427,8 +427,11 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void ping(boolean ack, int payload1, int payload2)
         throws IOException {
-      out.writeInt(8 << 16 | (TYPE_PING & 0xff) << 8 | ((ack ? FLAG_ACK : 0) & 0xff));
-      out.writeInt(0); // connection-level
+      int length = 8;
+      byte type = TYPE_PING;
+      byte flags = ack ? FLAG_ACK : FLAG_NONE;
+      int streamId = 0;
+      frameHeader(length, type, flags, streamId);
       out.writeInt(payload1);
       out.writeInt(payload2);
     }
@@ -436,41 +439,48 @@ public final class Http20Draft09 implements Variant {
     @Override
     public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
         throws IOException {
-      if (errorCode.httpCode == -1) {
-        throw new IllegalArgumentException("errorCode.httpCode == -1");
-      }
+      if (errorCode.httpCode == -1) throw illegalArgument("errorCode.httpCode == -1");
       int length = 8 + debugData.length;
-      checkFrameSize(length);
-      out.writeInt((length & 0x3fff) << 16 | (TYPE_GOAWAY & 0xff) << 8);
-      out.writeInt(0); // connection-level
+      byte type = TYPE_GOAWAY;
+      byte flags = FLAG_NONE;
+      int streamId = 0;
+      frameHeader(length, type, flags, streamId);
       out.writeInt(lastGoodStreamId);
       out.writeInt(errorCode.httpCode);
       if (debugData.length > 0) {
         out.write(debugData);
       }
-      out.flush();
     }
 
-    @Override public synchronized void windowUpdate(int streamId, long increment)
+    @Override public synchronized void windowUpdate(int streamId, long windowSizeIncrement)
         throws IOException {
-      if (increment == 0 || increment > 0x7fffffffL) {
-        throw new IllegalArgumentException(
-            "windowSizeIncrement must be between 1 and 0x7fffffff: " + increment);
+      if (windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL) {
+        throw illegalArgument("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: %s",
+            windowSizeIncrement);
       }
-      out.writeInt(4 << 16 | (TYPE_WINDOW_UPDATE & 0xff) << 8); // No flags.
-      out.writeInt(streamId);
-      out.writeInt((int) increment);
+      int length = 4;
+      byte type = TYPE_WINDOW_UPDATE;
+      byte flags = FLAG_NONE;
+      frameHeader(length, type, flags, streamId);
+      out.writeInt((int) windowSizeIncrement);
     }
 
     @Override public void close() throws IOException {
       out.close();
     }
+
+    private void frameHeader(int length, byte type, byte flags, int streamId)
+        throws IOException {
+      if (length > 16383) throw illegalArgument("FRAME_SIZE_ERROR length > 16383: %s", length);
+      if ((streamId & 0x80000000) == 1) throw illegalArgument("(streamId & 0x80000000) == 1: %s",
+          streamId);
+      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      out.writeInt(streamId & 0x7fffffff);
+    }
   }
 
-  private static void checkFrameSize(int bytes) throws IOException {
-    if (bytes > 16383) {
-      throw new IllegalArgumentException("FRAME_SIZE_ERROR max size is 16383: " + bytes);
-    }
+  private static IllegalArgumentException illegalArgument(String message, Object... args) {
+    throw new IllegalArgumentException(String.format(message, args));
   }
 
   private static IOException ioException(String message, Object... args) throws IOException {
@@ -478,76 +488,87 @@ public final class Http20Draft09 implements Variant {
   }
 
   /**
-   * Decompression of the header block occurs above the framing layer.  This
-   * class lazily reads continuation frames as they are needed by
-   * {@link HpackDraft05.Reader#readHeaders()}.
+   * Decompression of the header block occurs above the framing layer.  This class lazily reads
+   * continuation frames as they are needed by {@link HpackDraft05.Reader#readHeaders()}.
    */
   static final class ContinuationInputStream extends InputStream {
     private final DataInputStream in;
 
-    short bytesLeft;
-    boolean endHeaders;
+    int length;
+    byte flags;
     int streamId;
+
+    int left;
 
     ContinuationInputStream(DataInputStream in) {
       this.in = in;
     }
 
     @Override public int read() throws IOException {
-      if (bytesLeft == 0) {
-        if (endHeaders) {
-          return -1;
+      if (left == 0) {
+        if (endHeaders()) {
+          throw eofReading(1);
         } else {
           readContinuationHeader();
         }
       }
-      bytesLeft--;
-      int result = in.read();
-      if (result == -1) throw new EOFException();
-      return result;
+      left--;
+      return in.read();
+    }
+
+    @Override public int available() throws IOException {
+      if (left == 0) {
+        if (endHeaders()) {
+          return 0;
+        } else {
+          readContinuationHeader();
+        }
+      }
+      return left;
     }
 
     @Override public int read(byte[] dst, int offset, int byteCount) throws IOException {
-      if (byteCount > bytesLeft) {
-        if (endHeaders) {
-          throw new EOFException(
-              String.format("Attempted to read %s bytes, when only %s left", byteCount, bytesLeft));
+      if (byteCount > left) {
+        if (endHeaders()) {
+          throw eofReading(byteCount);
         } else {
-          int beforeContinuation = bytesLeft;
-          Util.readFully(in, dst, offset, bytesLeft);
+          int beforeContinuation = left;
+          Util.readFully(in, dst, offset, beforeContinuation);
           readContinuationHeader();
           int afterContinuation = byteCount - beforeContinuation;
           offset += beforeContinuation;
-          bytesLeft -= afterContinuation;
           Util.readFully(in, dst, offset, afterContinuation);
+          left -= afterContinuation;
           return byteCount;
         }
       } else {
-        bytesLeft -= byteCount;
         Util.readFully(in, dst, offset, byteCount);
+        left -= byteCount;
         return byteCount;
       }
     }
 
+    private EOFException eofReading(int byteCount) throws EOFException {
+      int read = length - left;
+      throw new EOFException(
+          String.format("EOF reading %s more bytes; read %s/%s of frame.", byteCount, read,
+              length));
+    }
+
     private void readContinuationHeader() throws IOException {
+      int previousStreamId = streamId;
       int w1 = in.readInt();
       int w2 = in.readInt();
+      length = left = (short) ((w1 & 0x3fff0000) >> 16);
+      byte type = (byte) ((w1 & 0xff00) >> 8);
+      flags = (byte) (w1 & 0xff);
+      streamId = (w2 & 0x7fffffff);
+      if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
+      if (streamId != previousStreamId) throw ioException("TYPE_CONTINUATION streamId changed");
+    }
 
-      // boolean r = (w1 & 0xc0000000) != 0; // Reserved.
-      bytesLeft = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned.
-      if (bytesLeft < 0 || bytesLeft > 16383) {
-        throw new IOException("FRAME_SIZE_ERROR max size is 16383: " + bytesLeft);
-      }
-      int newType = (w1 & 0xff00) >> 8;
-      endHeaders = (w1 & 0xff & FLAG_END_HEADERS) != 0;
-
-      // boolean u = (w2 & 0x80000000) != 0; // Unused.
-      int newStreamId = (w2 & 0x7fffffff);
-
-      if (newType != TYPE_CONTINUATION) {
-        throw ioException("TYPE_CONTINUATION didn't have FLAG_END_HEADERS");
-      }
-      if (newStreamId != streamId) throw ioException("TYPE_CONTINUATION streamId changed");
+    private boolean endHeaders() {
+      return (flags & FLAG_END_HEADERS) != 0;
     }
   }
 }

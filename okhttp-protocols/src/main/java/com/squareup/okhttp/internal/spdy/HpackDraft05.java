@@ -178,9 +178,8 @@ final class HpackDraft05 {
      * set of emitted headers.
      */
     void readHeaders() throws IOException {
-      int b;
-      while ((b = in.read()) != -1) {
-        b &= 0xff;
+      while (in.available() > 0) {
+        int b = in.read() & 0xff;
         if (b == 0x80) { // 10000000
           clearReferenceSet();
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
