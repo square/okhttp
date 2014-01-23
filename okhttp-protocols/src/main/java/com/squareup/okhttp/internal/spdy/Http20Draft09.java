@@ -38,11 +38,7 @@ public final class Http20Draft09 implements Variant {
   }
 
   // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5
-  @Override public Settings defaultOkHttpSettings(boolean client) {
-    return initialPeerSettings(client);
-  }
-
-  @Override public Settings initialPeerSettings(boolean client) {
+  static Settings defaultSettings(boolean client) {
     Settings settings = new Settings();
     settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
     if (client) { // client specifies whether or not it accepts push.
@@ -74,11 +70,11 @@ public final class Http20Draft09 implements Variant {
   static final int FLAG_PRIORITY = 0x8;
   static final int FLAG_ACK = 0x1;
 
-  @Override public FrameReader newReader(InputStream in, Settings peerSettings, boolean client) {
-    return new Reader(in, peerSettings.getHeaderTableSize(), client);
+  @Override public FrameReader newReader(InputStream in, boolean client) {
+    return new Reader(in, 4096, client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out, Settings ignored, boolean client) {
+  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
     return new Writer(out, client);
   }
 
