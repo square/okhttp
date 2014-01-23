@@ -25,6 +25,8 @@ import org.junit.Test;
 
 import static com.squareup.okhttp.internal.spdy.HpackDraft05Test.MutableByteArrayInputStream;
 import static com.squareup.okhttp.internal.spdy.Http20Draft09.ContinuationInputStream;
+import static com.squareup.okhttp.internal.spdy.Http20Draft09.FLAG_END_STREAM;
+import static com.squareup.okhttp.internal.spdy.Http20Draft09.TYPE_DATA;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -34,77 +36,130 @@ public final class ContinuationInputStreamTest {
   private final ContinuationInputStream continuation =
       new ContinuationInputStream(new DataInputStream(bytesIn));
 
-  @Test public void read() throws IOException {
+  @Test public void readCantOverrunHeaderPayload() throws IOException {
+    bytesIn.set(onlyHeadersPayloadFollowedByData());
 
-    // When there are bytes left this frame, read one.
-    continuation.bytesLeft = 2;
-    bytesIn.set(new byte[] {1, 2});
+    continuation.length = continuation.left = 3;
+    continuation.flags = Http20Draft09.FLAG_END_HEADERS;
+    continuation.streamId = 12345;
+
     assertEquals(1, continuation.read());
-    assertEquals(1, continuation.bytesLeft);
+    assertEquals(2, continuation.read());
+    assertEquals(3, continuation.read());
 
-    // When there are bytes left this frame, but none on the remote stream, EOF!
-    continuation.bytesLeft = 2;
-    bytesIn.set(new byte[] {});
     try {
       continuation.read();
       fail();
     } catch (EOFException expected) {
     }
-
-    // When there are no bytes left in the last header frame, return -1.
-    continuation.bytesLeft = 0;
-    continuation.endHeaders = true;
-    assertEquals(-1, continuation.read());
-    assertEquals(0, continuation.bytesLeft);
-
-    // When there are no bytes left in this frame, but it isn't the last, read continuation.
-    continuation.bytesLeft = 0;
-    continuation.endHeaders = false; // Read continuation.
-    bytesIn.set(lastContinuationFrame(new byte[] {1}));
-    assertEquals(1, continuation.read());
-    assertEquals(0, continuation.bytesLeft);
   }
 
-  @Test public void readArray() throws IOException {
-    byte[] buff = new byte[3];
+  @Test public void readCantOverrunHeaderContinuationPayload() throws IOException {
+    bytesIn.set(headersPayloadWithContinuationFollowedByData());
 
-    // When there are bytes left this frame, read them.
-    continuation.bytesLeft = 3;
-    continuation.endHeaders = true;
-    bytesIn.set(new byte[] {1, 2, 3});
+    continuation.length = continuation.left = 2;
+    continuation.flags = Http20Draft09.FLAG_NONE;
+    continuation.streamId = 12345;
+
+    assertEquals(1, continuation.read());
+    assertEquals(2, continuation.read());
+    assertEquals(3, continuation.read());
+    assertEquals(0, continuation.available());
+
+    try {
+      continuation.read();
+      fail();
+    } catch (EOFException expected) {
+    }
+  }
+
+  @Test public void availableWithContinuation() throws IOException {
+    bytesIn.set(headersPayloadWithContinuationFollowedByData());
+
+    continuation.length = continuation.left = 2;
+    continuation.flags = Http20Draft09.FLAG_NONE;
+    continuation.streamId = 12345;
+
+    assertEquals(1, continuation.read());
+    assertEquals(2, continuation.read()); // exhaust frame one
+
+    assertEquals(0, continuation.left);
+    assertEquals(1, continuation.available()); // lazy reads next
+
+    assertEquals(1, continuation.length);
+    assertEquals(1, continuation.left);
+    assertEquals(3, continuation.read());
+
+    assertEquals(0, continuation.available());
+    assertEquals(0, continuation.left);
+
+    try {
+      continuation.read();
+      fail();
+    } catch (EOFException expected) {
+    }
+  }
+
+  @Test public void readArrayCantOverrunHeaderPayload() throws IOException {
+    bytesIn.set(onlyHeadersPayloadFollowedByData());
+
+    continuation.length = continuation.left = 3;
+    continuation.flags = Http20Draft09.FLAG_END_HEADERS;
+    continuation.streamId = 12345;
+
+    byte[] buff = new byte[3];
     assertEquals(3, continuation.read(buff));
-    assertEquals(0, continuation.bytesLeft);
     assertTrue(Arrays.equals(buff, new byte[] {1, 2, 3}));
 
-    // When there are no bytes left in the last header frame, EOF.
-    Arrays.fill(buff, (byte) -1);
-    continuation.bytesLeft = 0;
-    continuation.endHeaders = true;
-    bytesIn.set(new byte[] {});
     try {
       continuation.read(buff);
       fail();
     } catch (EOFException expected) {
     }
-
-    // When there are no bytes left in this frame, but it isn't the last, read continuation.
-    Arrays.fill(buff, (byte) -1);
-    continuation.bytesLeft = 0;
-    continuation.endHeaders = false; // Read continuation.
-    bytesIn.set(lastContinuationFrame(new byte[] {1, 2, 3}));
-    assertEquals(3, continuation.read(buff));
-    assertTrue(Arrays.equals(buff, new byte[] {1, 2, 3}));
-    assertEquals(0, continuation.bytesLeft);
   }
 
-  static byte[] lastContinuationFrame(byte[] headerBlock) throws IOException {
+  @Test public void readArrayCantOverrunHeaderContinuationPayload() throws IOException {
+    bytesIn.set(headersPayloadWithContinuationFollowedByData());
+
+    continuation.length = continuation.left = 2;
+    continuation.flags = Http20Draft09.FLAG_NONE;
+    continuation.streamId = 12345;
+
+    byte[] buff = new byte[3];
+    assertEquals(3, continuation.read(buff));
+    assertTrue(Arrays.equals(buff, new byte[] {1, 2, 3}));
+
+    try {
+      continuation.read(buff);
+      fail();
+    } catch (EOFException expected) {
+    }
+  }
+
+  static byte[] onlyHeadersPayloadFollowedByData() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     DataOutputStream dataOut = new DataOutputStream(out);
-    dataOut.writeShort(headerBlock.length);
+    dataOut.write(new byte[] {1, 2, 3});
+    dataOut.writeShort(0);
+    dataOut.write(TYPE_DATA);
+    dataOut.write(FLAG_END_STREAM);
+    dataOut.writeInt(0xFFFFFFFF);
+    return out.toByteArray();
+  }
+
+  static byte[] headersPayloadWithContinuationFollowedByData() throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DataOutputStream dataOut = new DataOutputStream(out);
+    dataOut.write(new byte[] {1, 2});
+    dataOut.writeShort(1);
     dataOut.write(Http20Draft09.TYPE_CONTINUATION);
     dataOut.write(Http20Draft09.FLAG_END_HEADERS);
-    dataOut.writeInt(0);
-    dataOut.write(headerBlock);
+    dataOut.writeInt(12345);
+    dataOut.write(3);
+    dataOut.writeShort(0);
+    dataOut.write(TYPE_DATA);
+    dataOut.write(FLAG_END_STREAM);
+    dataOut.writeInt(0xFFFFFFFF);
     return out.toByteArray();
   }
 }
