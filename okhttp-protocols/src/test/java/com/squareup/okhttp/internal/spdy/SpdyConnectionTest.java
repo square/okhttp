@@ -162,6 +162,17 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void replyWithNoData() throws Exception {
+    MockSpdyPeer.InFrame reply = replyWithNoData(SPDY3);
+    assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
+  }
+
+  @Test public void replyWithNoDataHttp2() throws Exception {
+    MockSpdyPeer.InFrame reply = replyWithNoData(HTTP_20_DRAFT_09);
+    assertEquals(HeadersMode.HTTP_20_HEADERS, reply.headersMode);
+  }
+
+  private MockSpdyPeer.InFrame replyWithNoData(Variant variant) throws Exception {
+    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
     // write the mocking script
     peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
@@ -175,15 +186,15 @@ public final class SpdyConnectionTest {
         receiveCount.incrementAndGet();
       }
     };
-    new SpdyConnection.Builder(true, peer.openSocket()).handler(handler).build();
+    connectionBuilder(peer, variant).handler(handler).build();
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
     assertEquals(TYPE_HEADERS, reply.type);
-    assertEquals(HeadersMode.SPDY_REPLY, reply.headersMode);
     assertTrue(reply.inFinished);
     assertEquals(headerEntries("b", "banana"), reply.headerBlock);
     assertEquals(1, receiveCount.get());
+    return reply;
   }
 
   @Test public void noop() throws Exception {
@@ -1056,6 +1067,66 @@ public final class SpdyConnectionTest {
     }
   }
 
+  @Test public void serverSendsEmptyDataClientDoesntSendWindowUpdate() throws Exception {
+    serverSendsEmptyDataClientDoesntSendWindowUpdate(SPDY3);
+  }
+
+  @Test public void serverSendsEmptyDataClientDoesntSendWindowUpdateHttp2() throws Exception {
+    serverSendsEmptyDataClientDoesntSendWindowUpdate(HTTP_20_DRAFT_09);
+  }
+
+  private void serverSendsEmptyDataClientDoesntSendWindowUpdate(Variant variant)
+      throws IOException, InterruptedException {
+    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+
+    // Write the mocking script.
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 1, new byte[0]);
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = connection(peer, variant);
+    SpdyStream client = connection.newStream(headerEntries("b", "banana"), false, true);
+    assertEquals(-1, client.getInputStream().read());
+
+    // Verify the peer received what was expected.
+    MockSpdyPeer.InFrame synStream = peer.takeFrame();
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(3, peer.frameCount());
+  }
+
+  @Test public void clientSendsEmptyDataServerDoesntSendWindowUpdate() throws Exception {
+    clientSendsEmptyDataServerDoesntSendWindowUpdate(SPDY3);
+  }
+
+  @Test public void clientSendsEmptyDataServerDoesntSendWindowUpdateHttp2() throws Exception {
+    clientSendsEmptyDataServerDoesntSendWindowUpdate(HTTP_20_DRAFT_09);
+  }
+
+  private void clientSendsEmptyDataServerDoesntSendWindowUpdate(Variant variant)
+      throws IOException, InterruptedException {
+    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+
+    // Write the mocking script.
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = connection(peer, variant);
+    SpdyStream client = connection.newStream(headerEntries("b", "banana"), true, true);
+    assertEquals(0, client.getInputStream().available());
+    client.getOutputStream().write(Util.EMPTY_BYTE_ARRAY);
+    client.getOutputStream().flush();
+    client.getOutputStream().close();
+
+    // Verify the peer received what was expected.
+    MockSpdyPeer.InFrame synStream = peer.takeFrame();
+    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(2, peer.frameCount());
+  }
+
   @Test public void writeAwaitsWindowUpdate() throws Exception {
     int windowSize = 65535;
 
@@ -1215,9 +1286,12 @@ public final class SpdyConnectionTest {
   }
 
   private SpdyConnection connection(MockSpdyPeer peer, Variant variant) throws IOException {
-    return new SpdyConnection.Builder(true, peer.openSocket())
-        .protocol(variant.getProtocol())
-        .handler(REJECT_INCOMING_STREAMS).build();
+    return connectionBuilder(peer, variant).handler(REJECT_INCOMING_STREAMS).build();
+  }
+
+  private SpdyConnection.Builder connectionBuilder(MockSpdyPeer peer, Variant variant)
+      throws IOException {
+    return new SpdyConnection.Builder(true, peer.openSocket()).protocol(variant.getProtocol());
   }
 
   private void writeAndClose(SpdyStream stream, String data) throws IOException {
