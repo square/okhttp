@@ -76,6 +76,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -2527,6 +2528,71 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
   }
 
+  @Test public void npnSetsProtocolHeader_SPDY_3() throws Exception {
+    npnSetsProtocolHeader(Protocol.SPDY_3);
+  }
+
+  @Test public void npnSetsProtocolHeader_HTTP_2() throws Exception {
+    npnSetsProtocolHeader(Protocol.HTTP_2);
+  }
+
+  private void npnSetsProtocolHeader(Protocol protocol) throws IOException {
+    enableNpn(protocol);
+    server.enqueue(new MockResponse().setBody("A"));
+    server.play();
+    client.setProtocols(Arrays.asList(Protocol.HTTP_11, protocol));
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
+    assertEquals(Arrays.asList(protocol.name.utf8()), protocolValues);
+    assertContent("A", connection);
+  }
+
+  /** For example, empty Protobuf RPC messages end up as a zero-length POST. */
+  @Test public void zeroLengthPost() throws IOException, InterruptedException {
+    zeroLengthPayload("POST");
+  }
+
+  @Test public void zeroLengthPost_SPDY_3() throws Exception {
+    enableNpn(Protocol.SPDY_3);
+    zeroLengthPost();
+  }
+
+  @Test public void zeroLengthPost_HTTP_2() throws Exception {
+    enableNpn(Protocol.HTTP_2);
+    zeroLengthPost();
+  }
+
+  /** For example, creating an Amazon S3 bucket ends up as a zero-length POST. */
+  @Test public void zeroLengthPut() throws IOException, InterruptedException {
+    zeroLengthPayload("PUT");
+  }
+
+  @Test public void zeroLengthPut_SPDY_3() throws Exception {
+    enableNpn(Protocol.SPDY_3);
+    zeroLengthPut();
+  }
+
+  @Test public void zeroLengthPut_HTTP_2() throws Exception {
+    enableNpn(Protocol.HTTP_2);
+    zeroLengthPut();
+  }
+
+  private void zeroLengthPayload(String method)
+      throws IOException, InterruptedException {
+    server.enqueue(new MockResponse());
+    server.play();
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection.setRequestProperty("Content-Length", "0");
+    connection.setRequestMethod(method);
+    connection.setFixedLengthStreamingMode(0);
+    connection.setDoOutput(true);
+    assertContent("", connection);
+    RecordedRequest zeroLengthPayload = server.takeRequest();
+    assertEquals(method, zeroLengthPayload.getMethod());
+    assertEquals("0", zeroLengthPayload.getHeader("content-length"));
+    assertEquals(0L, zeroLengthPayload.getBodySize());
+  }
+
   @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
@@ -2771,5 +2837,17 @@ public final class URLConnectionTest {
 
     @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     }
+  }
+
+  /**
+   * Tests that use this will fail unless boot classpath is set. Ex. {@code
+   * -Xbootclasspath/p:/tmp/npn-boot-8.1.2.v20120308.jar}
+   */
+  private void enableNpn(Protocol protocol) {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.setNpnEnabled(true);
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_11));
   }
 }

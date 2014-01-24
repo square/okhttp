@@ -57,6 +57,10 @@ public final class MockSpdyPeer implements Closeable {
     frameCount++;
   }
 
+  public int frameCount() {
+    return frameCount;
+  }
+
   public FrameWriter sendFrame() {
     outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
     return frameWriter;
