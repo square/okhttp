@@ -34,7 +34,7 @@ The reader thread must never block on the application layer because this allows 
 
 It must never block on writing because this can deadlock the connection. Consider a client and server that both violate this rule. If you get unlucky, they could fill up their TCP buffers (so that writes block) and then use their reader threads to write a frame. Nobody is reading on either end, and the buffers are never drained.
 
-### Do-stuff-later pool
+#### Do-stuff-later pool
 
 Sometimes there's an action required like calling the application layer or responding to a ping, and the thread discovering the action is not the thread that should do the work. We enqueue a runnable on this executor and it gets handled by one of the executor's threads.
 
