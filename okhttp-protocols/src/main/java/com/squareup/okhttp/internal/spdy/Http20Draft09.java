@@ -37,17 +37,6 @@ public final class Http20Draft09 implements Variant {
     return Protocol.HTTP_2;
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-6.5
-  static Settings defaultSettings(boolean client) {
-    Settings settings = new Settings();
-    settings.set(Settings.HEADER_TABLE_SIZE, 0, 4096);
-    if (client) { // client specifies whether or not it accepts push.
-      settings.set(Settings.ENABLE_PUSH, 0, 1);
-    }
-    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
-    return settings;
-  }
-
   private static final byte[] CONNECTION_HEADER =
       "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n".getBytes(Util.UTF_8);
 
@@ -348,8 +337,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override
     public synchronized void pushPromise(int streamId, int promisedStreamId,
-        List<Header> requestHeaders)
-        throws IOException {
+        List<Header> requestHeaders) throws IOException {
       hpackBuffer.reset();
       hpackWriter.writeHeaders(requestHeaders);
 
