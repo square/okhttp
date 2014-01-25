@@ -12,7 +12,8 @@ Blocking APIs may be inefficient because you hold a thread idle while waiting on
 
 Framed protocols like spdy/3 and http/2 don't lend themselves to blocking APIs. Each application-layer thread wants to do blocking I/O for a specific stream, but the streams are multiplexed on the socket. You can't just talk to the socket, you need to cooperate with the other application-layer threads that you're sharing it with.
 
-Framing rules make it impractical to implement spdy/3 or http/2 correctly on a single blocking thread. The flow-control features introduce feedback between reads and writes, requiring writes to acknowledge reads and reads to control writes. 
+Framing rules make it impractical to implement spdy/3 or http/2 correctly on a single blocking thread. The flow-control features introduce feedback between reads and writes, requiring writes to acknowledge reads and reads to throttle writes.
+
 In OkHttp we expose a blocking API over a framed protocol. This document explains the code and policy that makes that work.
 
 ## Threads
@@ -23,16 +24,17 @@ The application-layer must block on writing I/O. We can't return from a write un
 
 The application-layer can also do blocking reads. If the application asks to read and there's nothing available, we need to hold that thread until either the bytes arrive, the stream is closed, or a timeout elapses. If we get bytes but there's nobody asking for them, we buffer them. We don't consider bytes as delivered for flow control until they're consumed by the application.
 
-Consider an application streaming a video over http/2. Perhaps the user pauses the video, and the application stops reading bytes from this stream. The buffer will fill up, and flow control prevents the server from sending more data on this stream. When the user unpauses her video the buffer drains, the read is acknowledged, and the server proceeds to stream data.
+Consider an application streaming a video over http/2. Perhaps the user pauses the video and the application stops reading bytes from this stream. The buffer will fill up, and flow control prevents the server from sending more data on this stream. When the user unpauses her video the buffer drains, the read is acknowledged, and the server proceeds to stream data.
 
 #### Shared reader thread
 
-We can't rely on application threads to read data from the socket. Application threads are transient: sometimes they're reading and writing and sometimes they're off doing application-layer things. But the socket is permanent, and it needs constant attention: we dispatch all incoming frames so the connection is good-to-go when the application layer needs it. 
+We can't rely on application threads to read data from the socket. Application threads are transient: sometimes they're reading and writing and sometimes they're off doing application-layer things. But the socket is permanent, and it needs constant attention: we dispatch all incoming frames so the connection is good-to-go when the application layer needs it.
+
 So we have a dedicated thread for every socket that just reads frames and dispatches them.
 
-The reader thread must never block on the application layer because this allows one slow stream to hold up the entire connection. Otherwise a slow incoming stream handler could starve the connection while this is happening.
+The reader thread must never run application-layer code. Otherwise one slow stream can hold up the entire connection.
 
-It must never block on writing because this can deadlock the connection. Consider a client and server that both violate this rule. If you get unlucky, they could fill up their TCP buffers (so that writes block) and then use their reader threads to write a frame. Nobody is reading on either end, and the buffers are never drained.
+Similarly, the reader thread must never block on writing because this can deadlock the connection. Consider a client and server that both violate this rule. If you get unlucky, they could fill up their TCP buffers (so that writes block) and then use their reader threads to write a frame. Nobody is reading on either end, and the buffers are never drained.
 
 #### Do-stuff-later pool
 
@@ -58,4 +60,4 @@ Socket writes are guarded by the FrameWriter. Only one stream can write at a tim
 
 You're allowed to take the SpdyConnection lock while holding the FrameWriter lock. But not vice-versa. Because taking the FrameWriter lock can block.
 
-This is necessary for book-keeping when creating new streams. Correct framing requires that stream IDs are sequential on the socket, so we need to bundle assigning the ID with sending the `SYN_STREAM` frame.
+This is necessary for bookkeeping when creating new streams. Correct framing requires that stream IDs are sequential on the socket, so we need to bundle assigning the ID with sending the `SYN_STREAM` frame.
