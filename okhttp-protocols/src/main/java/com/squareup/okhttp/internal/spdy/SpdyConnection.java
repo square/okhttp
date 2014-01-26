@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
@@ -80,6 +81,12 @@ public final class SpdyConnection implements Closeable {
   /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
   private Map<Integer, Ping> pings;
   private int nextPingId;
+
+  /**
+   * Count of bytes that can be written on the connection before receiving a
+   * window update.
+   */
+  private long bytesLeftInWriteWindow = 65535; // TODO: initialize this with settings.
 
   // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
   // Settings we might send include toggling push, adjusting compression table size.
@@ -209,7 +216,22 @@ public final class SpdyConnection implements Closeable {
 
   public void writeData(int streamId, boolean outFinished, byte[] buffer, int offset, int byteCount)
       throws IOException {
+    synchronized (SpdyConnection.this) {
+      waitUntilWritable(byteCount);
+      bytesLeftInWriteWindow -= byteCount;
+    }
     frameWriter.data(outFinished, streamId, buffer, offset, byteCount);
+  }
+
+  /** Returns once the peer is ready to receive {@code byteCount} bytes. */
+  private void waitUntilWritable(int byteCount) throws IOException {
+    try {
+      while (byteCount > bytesLeftInWriteWindow) {
+        SpdyConnection.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+      }
+    } catch (InterruptedException e) {
+      throw new InterruptedIOException();
+    }
   }
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
@@ -622,14 +644,16 @@ public final class SpdyConnection implements Closeable {
 
     @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (streamId == 0) {
-        // TODO: honor connection-level flow control
-        return;
-      }
-
-      // TODO: honor endFlowControl
-      SpdyStream stream = getStream(streamId);
-      if (stream != null) {
-        stream.receiveWindowUpdate(windowSizeIncrement);
+        synchronized (SpdyConnection.this) {
+          bytesLeftInWriteWindow += windowSizeIncrement;
+          notifyAll();
+        }
+      } else {
+        // TODO: honor endFlowControl
+        SpdyStream stream = getStream(streamId);
+        if (stream != null) {
+          stream.receiveWindowUpdate(windowSizeIncrement);
+        }
       }
     }
 
