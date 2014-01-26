@@ -322,7 +322,8 @@ public final class SpdyConnectionTest {
 
     assertEquals(3368, connection.initialWindowSize);
     assertEquals(1684, connection.bytesLeftInWriteWindow); // initial wasn't affected.
-    assertEquals(1684, stream.windowUpdateThreshold);
+    // New Stream is has the most recent initial window size.
+    assertEquals(3368, stream.bytesLeftInWriteWindow);
   }
 
   @Test public void unexpectedPingIsNotReturned() throws Exception {
@@ -1177,19 +1178,64 @@ public final class SpdyConnectionTest {
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     OutputStream out = stream.getOutputStream();
     out.write(new byte[windowSize]);
-    interruptAfterDelay(500);
-    try {
-      out.write('a');
-      out.flush();
-      fail();
-    } catch (InterruptedIOException expected) {
-    }
+    out.write('a');
+    assertFlushBlocks(out);
 
     // Verify the peer received what was expected.
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     MockSpdyPeer.InFrame data = peer.takeFrame();
     assertEquals(TYPE_DATA, data.type);
+  }
+
+  @Test public void initialSettingsWithWindowSizeAdjustsConnection() throws Exception {
+    int initialWindowSize = 65535;
+    int framesThatFillWindow = roundUp(initialWindowSize, SpdyStream.OUTPUT_BUFFER_SIZE);
+
+    // Write the mocking script. This accepts more data frames than necessary!
+    peer.acceptFrame(); // SYN_STREAM
+    for (int i = 0; i < framesThatFillWindow; i++) {
+      peer.acceptFrame(); // DATA on stream 1
+    }
+    peer.acceptFrame(); // DATA on stream 2
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyStream stream = connection.newStream(headerEntries("a", "apple"), true, true);
+    OutputStream out = stream.getOutputStream();
+    out.write(new byte[initialWindowSize]);
+    out.flush();
+
+    // write 1 more than the window size
+    out.write('a');
+    assertFlushBlocks(out);
+
+    // Check that we've filled the window for both the stream and also the connection.
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Receiving a Settings with a larger window size will unblock the streams.
+    Settings initial = new Settings();
+    initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, initialWindowSize + 1);
+    connection.readerRunnable.settings(false, initial);
+
+    assertEquals(1, connection.bytesLeftInWriteWindow);
+    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // The stream should no longer be blocked.
+    out.flush();
+
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Settings after the initial do not affect the connection window size.
+    Settings next = new Settings();
+    next.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, initialWindowSize + 2);
+    connection.readerRunnable.settings(false, next);
+
+    assertEquals(0, connection.bytesLeftInWriteWindow); // connection wasn't affected.
+    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
   }
 
   @Test public void testTruncatedDataFrame() throws Exception {
@@ -1210,6 +1256,46 @@ public final class SpdyConnectionTest {
     } catch (IOException expected) {
       assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());
     }
+  }
+
+  @Test public void blockedStreamDoesntStarveNewStream() throws Exception {
+    int initialWindowSize = 65535;
+    int framesThatFillWindow = roundUp(initialWindowSize, SpdyStream.OUTPUT_BUFFER_SIZE);
+
+    // Write the mocking script. This accepts more data frames than necessary!
+    peer.acceptFrame(); // SYN_STREAM
+    for (int i = 0; i < framesThatFillWindow; i++) {
+      peer.acceptFrame(); // DATA on stream 1
+    }
+    peer.acceptFrame(); // DATA on stream 2
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyStream stream1 = connection.newStream(headerEntries("a", "apple"), true, true);
+    OutputStream out1 = stream1.getOutputStream();
+    out1.write(new byte[initialWindowSize]);
+    out1.flush();
+
+    // Check that we've filled the window for both the stream and also the connection.
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // receiving a window update on the the connection will unblock new streams.
+    connection.readerRunnable.windowUpdate(0, 3);
+
+    assertEquals(3, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Another stream should be able to send data even though 1 is blocked.
+    SpdyStream stream2 = connection.newStream(headerEntries("b", "banana"), true, true);
+    OutputStream out2 = stream2.getOutputStream();
+    out2.write("foo".getBytes(UTF_8));
+    out2.flush();
+
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(initialWindowSize - 3, connection.getStream(3).bytesLeftInWriteWindow);
   }
 
   /**
@@ -1344,6 +1430,15 @@ public final class SpdyConnectionTest {
     assertEquals(expected, actual);
   }
 
+  private void assertFlushBlocks(OutputStream out) throws IOException {
+    interruptAfterDelay(500);
+    try {
+      out.flush();
+      fail();
+    } catch (InterruptedIOException expected) {
+    }
+  }
+
   /** Interrupts the current thread after {@code delayMillis}. */
   private void interruptAfterDelay(final long delayMillis) {
     final Thread toInterrupt = Thread.currentThread();
@@ -1357,5 +1452,9 @@ public final class SpdyConnectionTest {
         }
       }
     }.start();
+  }
+
+  static int roundUp(int num, int divisor) {
+    return (num + divisor - 1) / divisor;
   }
 }
