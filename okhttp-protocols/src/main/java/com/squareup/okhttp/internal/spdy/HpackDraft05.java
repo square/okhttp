@@ -1,7 +1,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
-import com.squareup.okhttp.internal.ByteString;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;

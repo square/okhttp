@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal;
+package com.squareup.okhttp.internal.bytes;
 
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,7 +35,7 @@ import static com.squareup.okhttp.internal.Util.asciiLowerCase;
  * process.
  */
 public final class ByteString {
-  private final byte[] data;
+  final byte[] data;
   private transient int hashCode; // Lazily computed; 0 if unknown.
   private transient String utf8; // Lazily computed.
 
@@ -119,7 +120,7 @@ public final class ByteString {
     return new ByteString(result);
   }
 
-  private ByteString(byte[] data) {
+  ByteString(byte[] data) {
     this.data = data; // Trusted internal constructor doesn't clone data.
   }
 
