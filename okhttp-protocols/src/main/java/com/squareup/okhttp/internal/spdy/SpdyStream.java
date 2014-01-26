@@ -55,7 +55,7 @@ public final class SpdyStream {
   private List<Header> responseHeaders;
 
   private final SpdyDataInputStream in;
-  private final SpdyDataOutputStream out;
+  final SpdyDataOutputStream out;
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple
@@ -65,18 +65,19 @@ public final class SpdyStream {
   private ErrorCode errorCode = null;
 
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      int priority, List<Header> requestHeaders, Settings peerSettings) {
+      int priority, List<Header> requestHeaders, int initialWriteWindow) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
-    this.in = new SpdyDataInputStream(peerSettings.getInitialWindowSize());
+    this.writeWindowSize = initialWriteWindow;
+    this.windowUpdateThreshold = initialWriteWindow / 2;
+    this.in = new SpdyDataInputStream(initialWriteWindow);
     this.out = new SpdyDataOutputStream();
     this.in.finished = inFinished;
     this.out.finished = outFinished;
     this.priority = priority;
     this.requestHeaders = requestHeaders;
-    setPeerSettings(peerSettings);
   }
 
   /**
@@ -311,11 +312,13 @@ public final class SpdyStream {
   }
 
   private void setPeerSettings(Settings peerSettings) {
-    // TODO: For HTTP/2.0, also adjust the stream flow control window size
+    // TODO: For HTTP/2, also adjust the stream flow control window size
     // by the difference between the new value and the old value.
     assert (Thread.holdsLock(connection)); // Because 'settings' is guarded by 'connection'.
+    long delta = peerSettings.getInitialWindowSize() - writeWindowSize;
     this.writeWindowSize = peerSettings.getInitialWindowSize();
     this.windowUpdateThreshold = peerSettings.getInitialWindowSize() / 2;
+    receiveWindowUpdate(delta);
   }
 
   /** Notification received when peer settings change. */

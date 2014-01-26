@@ -44,7 +44,7 @@ import javax.net.ssl.SSLSocket;
  * <h3>ALPN and NPN</h3>
  * This class uses TLS extensions ALPN and NPN to negotiate the upgrade from
  * HTTP/1.1 (the default protocol to use with TLS on port 443) to either SPDY
- * or HTTP/2.0.
+ * or HTTP/2.
  *
  * <p>NPN (Next Protocol Negotiation) was developed for SPDY. It is widely
  * available and we support it on both Android (4.1+) and OpenJDK 7 (via the

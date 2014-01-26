@@ -36,12 +36,6 @@ final class Spdy3 implements Variant {
     return Protocol.SPDY_3;
   }
 
-  static Settings defaultSettings(boolean client) {
-    Settings settings = new Settings();
-    settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
-    return settings;
-  }
-
   static final int TYPE_DATA = 0x0;
   static final int TYPE_SYN_STREAM = 0x1;
   static final int TYPE_SYN_REPLY = 0x2;
