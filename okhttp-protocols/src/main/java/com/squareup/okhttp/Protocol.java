@@ -26,7 +26,7 @@ import java.util.List;
  * <a href="http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04">NPN</a> or
  * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.
  *
- * <p/>
+ * <p>
  * <h3>Protocol vs Scheme</h3>
  * Despite its name, {@link java.net.URL#getProtocol()} returns the
  * {@link java.net.URI#getScheme() scheme} (http, https, etc.) of the URL, not

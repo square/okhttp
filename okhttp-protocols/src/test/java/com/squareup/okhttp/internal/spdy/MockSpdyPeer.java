@@ -210,6 +210,12 @@ public final class MockSpdyPeer implements Closeable {
       this.settings = settings;
     }
 
+    @Override public void ackSettings() {
+      if (this.type != -1) throw new IllegalStateException();
+      this.type = Spdy3.TYPE_SETTINGS;
+      this.ack = true;
+    }
+
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
         int associatedStreamId, int priority, List<Header> headerBlock,
         HeadersMode headersMode) {

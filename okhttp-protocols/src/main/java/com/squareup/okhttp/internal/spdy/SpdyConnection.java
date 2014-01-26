@@ -83,19 +83,29 @@ public final class SpdyConnection implements Closeable {
   private int nextPingId;
 
   /**
+   * Initial window size to use for the connection and new streams.  Until the
+   * peer sends an update, this will is initialized to {@code 65535}.
+   */
+  int initialWindowSize = 65535;
+
+  /**
    * Count of bytes that can be written on the connection before receiving a
    * window update.
    */
-  private long bytesLeftInWriteWindow = 65535; // TODO: initialize this with settings.
+  // Visible for testing
+  long bytesLeftInWriteWindow = initialWindowSize;
 
   // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
   // Settings we might send include toggling push, adjusting compression table size.
   final Settings okHttpSettings;
   // TODO: MWS will need to guard on this setting before attempting to push.
   final Settings peerSettings;
+  private boolean receivedInitialPeerSettings = false;
   final FrameReader frameReader;
   final FrameWriter frameWriter;
 
+  // Visible for testing
+  final Reader readerRunnable;
   final ByteArrayPool bufferPool;
 
   private SpdyConnection(Builder builder) {
@@ -108,23 +118,22 @@ public final class SpdyConnection implements Closeable {
 
     Variant variant;
     if (protocol == Protocol.HTTP_2) {
-      okHttpSettings = Http20Draft09.defaultSettings(client);
-      variant = new Http20Draft09(); // connection-specific settings here!
+      variant = new Http20Draft09();
     } else if (protocol == Protocol.SPDY_3) {
-      okHttpSettings = Spdy3.defaultSettings(client);
-      variant = new Spdy3(); // connection-specific settings here!
+      variant = new Spdy3();
     } else {
       throw new AssertionError(protocol);
     }
-
+    okHttpSettings = new Settings();
+    peerSettings = new Settings();
     // TODO: implement stream limit
     // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
-    peerSettings = okHttpSettings;
     bufferPool = new ByteArrayPool(peerSettings.getInitialWindowSize() * 8);
     frameReader = variant.newReader(builder.in, client);
     frameWriter = variant.newWriter(builder.out, client);
 
-    new Thread(new Reader()).start(); // Not a daemon thread.
+    readerRunnable = new Reader();
+    new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
   /** The protocol as selected using NPN or ALPN. */
@@ -195,7 +204,7 @@ public final class SpdyConnection implements Closeable {
         streamId = nextStreamId;
         nextStreamId += 2;
         stream = new SpdyStream(
-            streamId, this, outFinished, inFinished, priority, requestHeaders, peerSettings);
+            streamId, this, outFinished, inFinished, priority, requestHeaders, initialWindowSize);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
@@ -232,6 +241,15 @@ public final class SpdyConnection implements Closeable {
     } catch (InterruptedException e) {
       throw new InterruptedIOException();
     }
+  }
+
+  /**
+   * {@code delta} will be negative if a settings frame initial window is
+   * smaller than the last.
+   */
+  void addBytesToWriteWindow(long delta) {
+    bytesLeftInWriteWindow += delta;
+    if (delta > 0) SpdyConnection.this.notifyAll();
   }
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
@@ -468,7 +486,7 @@ public final class SpdyConnection implements Closeable {
     }
   }
 
-  private class Reader extends NamedRunnable implements FrameReader.Handler {
+  class Reader extends NamedRunnable implements FrameReader.Handler {
     private Reader() {
       super("OkHttp %s", hostName);
     }
@@ -531,7 +549,7 @@ public final class SpdyConnection implements Closeable {
 
           // Create a stream.
           final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
-              inFinished, priority, headerBlock, peerSettings);
+              inFinished, priority, headerBlock, initialWindowSize);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
@@ -577,6 +595,15 @@ public final class SpdyConnection implements Closeable {
         if (getProtocol() == Protocol.HTTP_2) {
           ackSettingsLater();
         }
+        int peerInitialWindowSize = peerSettings.getInitialWindowSize();
+        if (peerInitialWindowSize != -1 && peerInitialWindowSize != initialWindowSize) {
+          long delta = peerInitialWindowSize - initialWindowSize;
+          SpdyConnection.this.initialWindowSize = peerInitialWindowSize;
+          if (!receivedInitialPeerSettings) {
+            addBytesToWriteWindow(delta);
+            receivedInitialPeerSettings = true;
+          }
+        }
         if (!streams.isEmpty()) {
           streamsToNotify = streams.values().toArray(new SpdyStream[streams.size()]);
         }
@@ -605,6 +632,10 @@ public final class SpdyConnection implements Closeable {
           }
         }
       });
+    }
+
+    @Override public void ackSettings() {
+      // TODO: If we don't get this callback after sending settings to the peer, SETTINGS_TIMEOUT.
     }
 
     @Override public void noop() {
@@ -646,7 +677,7 @@ public final class SpdyConnection implements Closeable {
       if (streamId == 0) {
         synchronized (SpdyConnection.this) {
           bytesLeftInWriteWindow += windowSizeIncrement;
-          notifyAll();
+          SpdyConnection.this.notifyAll();
         }
       } else {
         // TODO: honor endFlowControl

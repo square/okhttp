@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-/** Reads transport frames for SPDY/3 or HTTP/2.0. */
+/** Reads transport frames for SPDY/3 or HTTP/2. */
 public interface FrameReader extends Closeable {
   void readConnectionHeader() throws IOException;
   boolean nextFrame(Handler handler) throws IOException;
@@ -32,7 +32,7 @@ public interface FrameReader extends Closeable {
     /**
      * Create or update incoming headers, creating the corresponding streams
      * if necessary. Frames that trigger this are SPDY SYN_STREAM, HEADERS, and
-     * SYN_REPLY, and HTTP/2.0 HEADERS and PUSH_PROMISE.
+     * SYN_REPLY, and HTTP/2 HEADERS and PUSH_PROMISE.
      *
      * @param outFinished true if the receiver should not send further frames.
      * @param inFinished true if the sender will not send further frames.
@@ -40,23 +40,28 @@ public interface FrameReader extends Closeable {
      * @param associatedStreamId the stream that triggered the sender to create
      * this stream.
      * @param priority or -1 for no priority. For SPDY, priorities range from 0
-     * (highest) thru 7 (lowest). For HTTP/2.0, priorities range from 0
+     * (highest) thru 7 (lowest). For HTTP/2, priorities range from 0
      * (highest) thru 2^31-1 (lowest), defaulting to 2^30.
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
         int priority, List<Header> headerBlock, HeadersMode headersMode);
     void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
+
+    /** HTTP/2 only. */
+    void ackSettings();
+
+    /** SPDY/3 only. */
     void noop();
 
     /**
      *  Read a connection-level ping from the peer.  {@code ack} indicates this
      *  is a reply.  Payload parameters are different between SPDY/3 and HTTP/2.
-     *  <p/>
+     *  <p>
      *  In SPDY/3, only the first {@code payload1} parameter is set.  If the
      *  reader is a client, it is an unsigned even number.  Likewise, a server
      *  will receive an odd number.
-     *  <p/>
+     *  <p>
      *  In HTTP/2, both {@code payload1} and {@code payload2} parameters are
      *  set. The data is opaque binary, and there are no rules on the content.
      */
@@ -84,7 +89,7 @@ public interface FrameReader extends Closeable {
 
     /**
      * HTTP/2 only. Receive a push promise header block.
-     * <p/>
+     * <p>
      * A push promise contains all the headers that pertain to a server-initiated
      * request, and a {@code promisedStreamId} to which response frames will be
      * delivered. Push promise frames are sent as a part of the response to

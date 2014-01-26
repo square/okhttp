@@ -191,7 +191,7 @@ public final class Response {
 
     /**
      * Returns true if further data from this response body should be read at
-     * this time. For asynchronous protocols like SPDY and HTTP/2.0, this will
+     * this time. For asynchronous protocols like SPDY and HTTP/2, this will
      * return false once all locally-available body bytes have been read.
      *
      * <p>Clients with many concurrent downloads can use this method to reduce

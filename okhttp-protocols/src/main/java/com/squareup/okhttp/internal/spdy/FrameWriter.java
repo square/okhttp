@@ -20,15 +20,15 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
 
-/** Writes transport frames for SPDY/3 or HTTP/2.0. */
+/** Writes transport frames for SPDY/3 or HTTP/2. */
 public interface FrameWriter extends Closeable {
-  /** HTTP/2.0 only. */
+  /** HTTP/2 only. */
   void connectionHeader() throws IOException;
   void ackSettings() throws IOException;
 
   /**
    * HTTP/2 only. Send a push promise header block.
-   * <p/>
+   * <p>
    * A push promise contains all the headers that pertain to a server-initiated
    * request, and a {@code promisedStreamId} to which response frames will be
    * delivered. Push promise frames are sent as a part of the response to
@@ -68,16 +68,18 @@ public interface FrameWriter extends Closeable {
 
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;
+
+  /** SPDY/3 only. */
   void noop() throws IOException;
 
   /**
    *  Send a connection-level ping to the peer.  {@code ack} indicates this is
    *  a reply.  Payload parameters are different between SPDY/3 and HTTP/2.
-   *  <p/>
+   *  <p>
    *  In SPDY/3, only the first {@code payload1} parameter is sent.  If the
    *  sender is a client, it is an unsigned odd number.  Likewise, a server
    *  will send an even number.
-   *  <p/>
+   *  <p>
    *  In HTTP/2, both {@code payload1} and {@code payload2} parameters are
    *  sent.  The data is opaque binary, and there are no rules on the content.
    */

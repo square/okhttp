@@ -41,6 +41,10 @@ class BaseTestHandler implements FrameReader.Handler {
     fail();
   }
 
+  @Override public void ackSettings() {
+    fail();
+  }
+
   @Override public void noop() {
     fail();
   }
