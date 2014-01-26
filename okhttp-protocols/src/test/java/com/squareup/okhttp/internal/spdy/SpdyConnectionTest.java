@@ -26,7 +26,6 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -39,6 +38,7 @@ import static com.squareup.okhttp.internal.spdy.ErrorCode.PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.REFUSED_STREAM;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.STREAM_IN_USE;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
+import static com.squareup.okhttp.internal.spdy.SpdyStream.OUTPUT_BUFFER_SIZE;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_HEADERS;
@@ -309,6 +309,64 @@ public final class SpdyConnectionTest {
     assertEquals(4, ping4.payload1);
   }
 
+  @Test public void peerHttp2ServerLowersInitialWindowSize() throws Exception {
+    boolean client = false; // Peer is server, so we are client.
+    Settings initial = new Settings();
+    initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 1684);
+    Settings shouldntImpactConnection = new Settings();
+    shouldntImpactConnection.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 3368);
+
+    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, client);
+    peer.sendFrame().settings(initial);
+    peer.acceptFrame(); // ACK
+    peer.sendFrame().settings(shouldntImpactConnection);
+    peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // HEADERS
+    peer.play();
+
+    SpdyConnection connection = connection(peer, HTTP_20_DRAFT_09);
+
+    // verify the peer received the ACK
+    MockSpdyPeer.InFrame pingFrame = peer.takeFrame();
+    assertEquals(TYPE_SETTINGS, pingFrame.type);
+    // TODO: check for ACK flag.
+    assertEquals(0, pingFrame.streamId);
+    assertEquals(0, pingFrame.settings.size());
+    pingFrame = peer.takeFrame();
+    assertEquals(TYPE_SETTINGS, pingFrame.type);
+    assertEquals(0, pingFrame.streamId);
+    assertEquals(0, pingFrame.settings.size());
+
+    Thread.sleep(100); // initial window size is applied async.
+
+    // This stream was created *after* the connection settings were adjusted.
+    SpdyStream stream = connection.newStream(headerEntries("a", "android"), true, true);
+
+    // verify the peer's settings were read and applied.
+    synchronized (stream) {
+      assertEquals(3368, connection.initialWindowSize);
+      assertEquals(1684, connection.bytesLeftInWriteWindow); // initial wasn't affected.
+      // New Stream is has the most recent initial window size.
+      assertEquals(3368, stream.bytesLeftInWriteWindow);
+    }
+  }
+
+  @Test public void peerHttp2ServerIncreaseInitialWindowSize() throws Exception {
+    boolean client = false; // Peer is server, so we are client.
+    Settings settings = new Settings();
+    settings.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 1684);
+
+    SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
+
+    Thread.sleep(100); // initial window size is applied async.
+
+    // verify the peer's settings were read and applied.
+    synchronized (connection) {
+      assertEquals(1684, connection.initialWindowSize);
+      assertEquals(1684, connection.bytesLeftInWriteWindow);
+    }
+  }
+
   @Test public void peerHttp2ServerZerosCompressionTable() throws Exception {
     boolean client = false; // Peer is server, so we are client.
     Settings settings = new Settings();
@@ -327,7 +385,7 @@ public final class SpdyConnectionTest {
 
   @Test public void peerHttp2ClientDisablesPush() throws Exception {
     boolean client = false; // Peer is client, so we are server.
-    Settings settings = Http20Draft09.defaultSettings(client);
+    Settings settings = new Settings();
     settings.set(Settings.ENABLE_PUSH, 0, 0); // The peer client disables push.
 
     SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
@@ -1016,13 +1074,7 @@ public final class SpdyConnectionTest {
     readSendsWindowUpdate(SPDY3);
   }
 
-  /**
-   * This test fails on http/2 as it tries to send too large data frame.  In
-   * practice, {@link SpdyStream#OUTPUT_BUFFER_SIZE} prevents us from sending
-   * too large frames.  The test should probably be rewritten to take into
-   * account max frame size per variant.
-   */
-  @Test @Ignore public void readSendsWindowUpdateHttp2() throws Exception {
+  @Test public void readSendsWindowUpdateHttp2() throws Exception {
     readSendsWindowUpdate(HTTP_20_DRAFT_09);
   }
 
@@ -1035,8 +1087,12 @@ public final class SpdyConnectionTest {
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
     for (int i = 0; i < 3; i++) {
-      peer.sendFrame().data(false, 1, new byte[windowUpdateThreshold]);
-      peer.acceptFrame(); // WINDOW UPDATE
+      peer.sendFrame().data(false, 1, new byte[OUTPUT_BUFFER_SIZE]);
+      peer.sendFrame().data(false, 1, new byte[OUTPUT_BUFFER_SIZE]);
+      peer.sendFrame().data(false, 1, new byte[OUTPUT_BUFFER_SIZE]);
+      peer.sendFrame().data(false, 1, new byte[windowUpdateThreshold - OUTPUT_BUFFER_SIZE * 3]);
+      peer.acceptFrame(); // connection WINDOW UPDATE
+      peer.acceptFrame(); // stream WINDOW UPDATE
     }
     peer.sendFrame().data(true, 1, new byte[0]);
     peer.play();
@@ -1044,7 +1100,7 @@ public final class SpdyConnectionTest {
     // Play it back.
     SpdyConnection connection = connection(peer, variant);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
-    assertEquals(windowUpdateThreshold, stream.windowUpdateThreshold);
+    assertEquals(windowUpdateThreshold, stream.readWindowUpdateThreshold);
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     InputStream in = stream.getInputStream();
     int total = 0;
@@ -1057,10 +1113,16 @@ public final class SpdyConnectionTest {
     assertEquals(-1, in.read());
 
     // Verify the peer received what was expected.
+    assertEquals(21, peer.frameCount());
+
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     for (int i = 0; i < 3; i++) {
       MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
+      assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
+      assertEquals(0, windowUpdate.streamId); // connection window update
+      assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
+      windowUpdate = peer.takeFrame();
       assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
       assertEquals(1, windowUpdate.streamId);
       assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
@@ -1129,12 +1191,14 @@ public final class SpdyConnectionTest {
 
   @Test public void writeAwaitsWindowUpdate() throws Exception {
     int windowSize = 65535;
+    int framesThatFillWindow = roundUp(windowSize, SpdyStream.OUTPUT_BUFFER_SIZE);
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
-    for (int i = 0; i < windowSize / 1024; i++) {
+    for (int i = 0; i < framesThatFillWindow; i++) {
       peer.acceptFrame(); // DATA
     }
+    peer.acceptFrame(); // DATA we won't be able to flush until a window update.
     peer.play();
 
     // Play it back.
@@ -1142,19 +1206,136 @@ public final class SpdyConnectionTest {
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     OutputStream out = stream.getOutputStream();
     out.write(new byte[windowSize]);
-    interruptAfterDelay(500);
-    try {
-      out.write('a');
-      out.flush();
-      fail();
-    } catch (InterruptedIOException expected) {
-    }
+    out.flush();
+
+    // Check that we've filled the window for both the stream and also the connection.
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    out.write('a');
+    assertFlushBlocks(out);
+
+    // receiving a window update on the the stream isn't enough.
+    connection.readerRunnable.windowUpdate(1, 1);
+    assertFlushBlocks(out);
+
+    // receiving a window update on the the connection will unblock the stream.
+    connection.readerRunnable.windowUpdate(0, 1);
+    out.flush();
 
     // Verify the peer received what was expected.
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
-    MockSpdyPeer.InFrame data = peer.takeFrame();
-    assertEquals(TYPE_DATA, data.type);
+    for (int i = 0; i < framesThatFillWindow; i++) {
+      MockSpdyPeer.InFrame data = peer.takeFrame();
+      assertEquals(TYPE_DATA, data.type);
+    }
+  }
+
+  private void assertFlushBlocks(OutputStream out) throws IOException {
+    interruptAfterDelay(500);
+    try {
+      out.flush();
+      fail();
+    } catch (InterruptedIOException expected) {
+    }
+  }
+
+  @Test public void blockedStreamDoesntStarveNewStream() throws Exception {
+    int initialWindowSize = 65535;
+    int framesThatFillWindow = roundUp(initialWindowSize, SpdyStream.OUTPUT_BUFFER_SIZE);
+
+    // Write the mocking script. This accepts more data frames than necessary!
+    peer.acceptFrame(); // SYN_STREAM
+    for (int i = 0; i < framesThatFillWindow; i++) {
+      peer.acceptFrame(); // DATA on stream 1
+    }
+    peer.acceptFrame(); // DATA on stream 2
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyStream stream1 = connection.newStream(headerEntries("a", "apple"), true, true);
+    OutputStream out1 = stream1.getOutputStream();
+    out1.write(new byte[initialWindowSize]);
+    out1.flush();
+
+    // Check that we've filled the window for both the stream and also the connection.
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // receiving a window update on the the connection will unblock new streams.
+    connection.readerRunnable.windowUpdate(0, 3);
+
+    // The above happens asynchronously in order to not have the reader block the writer.
+    Thread.sleep(100);
+
+    assertEquals(3, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Another stream should be able to send data even though 1 is blocked.
+    SpdyStream stream2 = connection.newStream(headerEntries("b", "banana"), true, true);
+    OutputStream out2 = stream2.getOutputStream();
+    out2.write("foo".getBytes(UTF_8));
+    out2.flush();
+
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(initialWindowSize - 3, connection.getStream(3).bytesLeftInWriteWindow);
+  }
+
+  @Test public void initialSettingsWithWindowSizeAdjustsConnection() throws Exception {
+    int initialWindowSize = 65535;
+    int framesThatFillWindow = roundUp(initialWindowSize, SpdyStream.OUTPUT_BUFFER_SIZE);
+
+    // Write the mocking script. This accepts more data frames than necessary!
+    peer.acceptFrame(); // SYN_STREAM
+    for (int i = 0; i < framesThatFillWindow; i++) {
+      peer.acceptFrame(); // DATA on stream 1
+    }
+    peer.acceptFrame(); // DATA on stream 2
+    peer.play();
+
+    // Play it back.
+    SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
+    SpdyStream stream = connection.newStream(headerEntries("a", "apple"), true, true);
+    OutputStream out = stream.getOutputStream();
+    out.write(new byte[initialWindowSize]);
+    out.flush();
+
+    // write 1 more than the window size
+    out.write('a');
+    assertFlushBlocks(out);
+
+    // Check that we've filled the window for both the stream and also the connection.
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Receiving a Settings with a larger window size will unblock the streams.
+    Settings initial = new Settings();
+    initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, initialWindowSize + 1);
+    connection.readerRunnable.settings(false, initial);
+
+    assertEquals(1, connection.bytesLeftInWriteWindow);
+    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // The stream should no longer be blocked.
+    out.flush();
+
+    assertEquals(0, connection.bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+
+    // Settings after the initial do not affect the connection window size.
+    Settings next = new Settings();
+    next.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, initialWindowSize + 2);
+    connection.readerRunnable.settings(false, next);
+
+    assertEquals(0, connection.bytesLeftInWriteWindow); // connection wasn't affected.
+    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
+  }
+
+  static int roundUp(int num, int divisor) {
+    return (num + divisor - 1) / divisor;
   }
 
   @Test public void testTruncatedDataFrame() throws Exception {
