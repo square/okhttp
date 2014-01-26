@@ -41,7 +41,14 @@ public final class SpdyStream {
    * stream. (Chrome 25 uses 5 MiB.)
    */
   int windowUpdateThreshold;
-  private int writeWindowSize;
+
+  /**
+   * Count of bytes that can be written on the stream before receiving a
+   * window update. Even if this is positive, writes will block until there
+   * available bytes in {@code connection.bytesLeftInWriteWindow}.
+   */
+  // guarded by this
+  long bytesLeftInWriteWindow = 0;
 
   private final int id;
   private final SpdyConnection connection;
@@ -70,7 +77,7 @@ public final class SpdyStream {
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
-    this.writeWindowSize = initialWriteWindow;
+    this.bytesLeftInWriteWindow = initialWriteWindow;
     this.windowUpdateThreshold = initialWriteWindow / 2;
     this.in = new SpdyDataInputStream(initialWriteWindow);
     this.out = new SpdyDataOutputStream();
@@ -309,28 +316,6 @@ public final class SpdyStream {
       this.errorCode = errorCode;
       notifyAll();
     }
-  }
-
-  private void setPeerSettings(Settings peerSettings) {
-    // TODO: For HTTP/2, also adjust the stream flow control window size
-    // by the difference between the new value and the old value.
-    assert (Thread.holdsLock(connection)); // Because 'settings' is guarded by 'connection'.
-    long delta = peerSettings.getInitialWindowSize() - writeWindowSize;
-    this.writeWindowSize = peerSettings.getInitialWindowSize();
-    this.windowUpdateThreshold = peerSettings.getInitialWindowSize() / 2;
-    receiveWindowUpdate(delta);
-  }
-
-  /** Notification received when peer settings change. */
-  void receiveSettings(Settings peerSettings) {
-    assert (Thread.holdsLock(this));
-    setPeerSettings(peerSettings);
-    notifyAll();
-  }
-
-  synchronized void receiveWindowUpdate(long windowSizeIncrement) {
-    out.unacknowledgedBytes -= windowSizeIncrement;
-    notifyAll();
   }
 
   int getPriority() {
@@ -579,7 +564,7 @@ public final class SpdyStream {
    * An output stream that writes outgoing data frames of a stream. This class
    * is not thread safe.
    */
-  private final class SpdyDataOutputStream extends OutputStream {
+  final class SpdyDataOutputStream extends OutputStream {
     private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(OUTPUT_BUFFER_SIZE);
     private int pos = 0;
 
@@ -592,13 +577,6 @@ public final class SpdyStream {
      */
     private boolean finished;
 
-    /**
-     * The total number of bytes written out to the peer, but not yet
-     * acknowledged with an incoming {@code WINDOW_UPDATE} frame. Writes
-     * block if they cause this to exceed the {@code WINDOW_SIZE}.
-     */
-    private long unacknowledgedBytes = 0;
-
     @Override public void write(int b) throws IOException {
       Util.writeSingleByte(this, b);
     }
@@ -606,11 +584,13 @@ public final class SpdyStream {
     @Override public void write(byte[] bytes, int offset, int count) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
       checkOffsetAndCount(bytes.length, offset, count);
-      checkNotClosed();
+      synchronized (SpdyStream.this) {
+        checkOutNotClosed();
+      }
 
       while (count > 0) {
         if (pos == buffer.length) {
-          writeFrame(false);
+          writeFrame();
         }
         int bytesToCopy = Math.min(count, buffer.length - pos);
         System.arraycopy(bytes, offset, buffer, pos, bytesToCopy);
@@ -622,9 +602,11 @@ public final class SpdyStream {
 
     @Override public void flush() throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
-      checkNotClosed();
+      synchronized (SpdyStream.this) {
+        checkOutNotClosed();
+      }
       if (pos > 0) {
-        writeFrame(false);
+        writeFrame();
         connection.flush();
       }
     }
@@ -639,59 +621,53 @@ public final class SpdyStream {
         SpdyStream.this.connection.bufferPool.returnBuf(buffer);
       }
       if (!out.finished) {
-        writeFrame(true);
+        connection.writeData(id, true, buffer, 0, pos);
       }
       connection.flush();
       cancelStreamIfNecessary();
     }
 
-    private void writeFrame(boolean outFinished) throws IOException {
+    private void writeFrame() throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
 
       int length = pos;
       synchronized (SpdyStream.this) {
-        waitUntilWritable(length, outFinished);
-        unacknowledgedBytes += length;
+        waitUntilWritable(length);
+        checkOutNotClosed(); // Kick out if the stream was reset or closed while waiting.
+        bytesLeftInWriteWindow -= length;
       }
-      connection.writeData(id, outFinished, buffer, 0, pos);
+      connection.writeData(id, false, buffer, 0, pos);
       pos = 0;
     }
+  }
 
-    /**
-     * Returns once the peer is ready to receive {@code count} bytes.
-     *
-     * @throws IOException if the stream was finished or closed, or the
-     * thread was interrupted.
-     */
-    private void waitUntilWritable(int count, boolean last) throws IOException {
-      try {
-        while (unacknowledgedBytes + count >= writeWindowSize) {
-          SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
-
-          // The stream may have been closed or reset while we were waiting!
-          if (!last && closed) {
-            throw new IOException("stream closed");
-          } else if (finished) {
-            throw new IOException("stream finished");
-          } else if (errorCode != null) {
-            throw new IOException("stream was reset: " + errorCode);
-          }
-        }
-      } catch (InterruptedException e) {
-        throw new InterruptedIOException();
+  /** Returns once the peer is ready to receive {@code byteCount} bytes. */
+  private void waitUntilWritable(int byteCount) throws IOException {
+    try {
+      while (byteCount > bytesLeftInWriteWindow) {
+        SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
       }
+    } catch (InterruptedException e) {
+      throw new InterruptedIOException();
     }
+  }
 
-    private void checkNotClosed() throws IOException {
-      synchronized (SpdyStream.this) {
-        if (closed) {
-          throw new IOException("stream closed");
-        } else if (finished) {
-          throw new IOException("stream finished");
-        } else if (errorCode != null) {
-          throw new IOException("stream was reset: " + errorCode);
-        }
-      }
+  /**
+   * {@code delta} will be negative if a settings frame initial window is
+   * smaller than the last.
+   */
+  void addBytesToWriteWindow(long delta) {
+    bytesLeftInWriteWindow += delta;
+    if (delta > 0) SpdyStream.this.notifyAll();
+  }
+
+  private void checkOutNotClosed() throws IOException {
+    if (out.closed) {
+      throw new IOException("stream closed");
+    } else if (out.finished) {
+      throw new IOException("stream finished");
+    } else if (errorCode != null) {
+      throw new IOException("stream was reset: " + errorCode);
     }
   }
 }

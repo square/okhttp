@@ -157,6 +157,25 @@ public abstract class HttpOverSpdyTest {
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
+  @Test public void closeAfterFlush() throws Exception {
+    MockResponse response = new MockResponse().setBody("ABCDE");
+    server.enqueue(response);
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection.setRequestProperty("Content-Length", String.valueOf(postBytes.length));
+    connection.setDoOutput(true);
+    connection.getOutputStream().write(postBytes); // push bytes into SpdyDataOutputStream.buffer
+    connection.getOutputStream().flush(); // SpdyConnection.writeData subject to write window
+    connection.getOutputStream().close(); // SpdyConnection.writeData empty frame
+    assertContent("ABCDE", connection, Integer.MAX_VALUE);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
+    assertArrayEquals(postBytes, request.getBody());
+    assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
+  }
+
   @Test public void setFixedLengthStreamingModeSetsContentLength() throws Exception {
     MockResponse response = new MockResponse().setBody("ABCDE");
     server.enqueue(response);

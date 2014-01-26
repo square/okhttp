@@ -128,7 +128,7 @@ public final class SpdyConnection implements Closeable {
     peerSettings = new Settings();
     // TODO: implement stream limit
     // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
-    bufferPool = new ByteArrayPool(peerSettings.getInitialWindowSize() * 8);
+    bufferPool = new ByteArrayPool(initialWindowSize * 8); // TODO: revisit size limit!
     frameReader = variant.newReader(builder.in, client);
     frameWriter = variant.newWriter(builder.out, client);
 
@@ -149,7 +149,7 @@ public final class SpdyConnection implements Closeable {
     return streams.size();
   }
 
-  private synchronized SpdyStream getStream(int id) {
+  synchronized SpdyStream getStream(int id) {
     return streams.get(id);
   }
 
@@ -223,8 +223,27 @@ public final class SpdyConnection implements Closeable {
     frameWriter.synReply(outFinished, streamId, alternating);
   }
 
+  /**
+   * Callers of this method are not thread safe, and sometimes on application
+   * threads.  Most often, this method will be called to send a buffer worth of
+   * data to the peer.
+   * <p>
+   * Writes are subject to the write window of the stream and the connection.
+   * Until there is a window sufficient to send {@code byteCount}, the caller
+   * will block.  For example, a user of {@code HttpURLConnection} who flushes
+   * more bytes to the output stream than the connection's write window will
+   * block.
+   * <p>
+   * Zero {@code byteCount} writes are not subject to flow control and
+   * will not block.  The only use case for zero {@code byteCount} is closing
+   * a flushed output stream.
+   */
   public void writeData(int streamId, boolean outFinished, byte[] buffer, int offset, int byteCount)
       throws IOException {
+    if (byteCount == 0) { // Empty data frames are not flow-controlled.
+      frameWriter.data(outFinished, streamId, buffer, offset, byteCount);
+      return;
+    }
     synchronized (SpdyConnection.this) {
       waitUntilWritable(byteCount);
       bytesLeftInWriteWindow -= byteCount;
@@ -267,19 +286,15 @@ public final class SpdyConnection implements Closeable {
     frameWriter.rstStream(streamId, statusCode);
   }
 
-  void writeWindowUpdateLater(final int streamId, final int windowSizeIncrement) {
+  void writeWindowUpdateLater(final int streamId, final long windowSizeIncrement) {
     executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
       @Override public void execute() {
         try {
-          writeWindowUpdate(streamId, windowSizeIncrement);
+          frameWriter.windowUpdate(streamId, windowSizeIncrement);
         } catch (IOException ignored) {
         }
       }
     });
-  }
-
-  void writeWindowUpdate(int streamId, int windowSizeIncrement) throws IOException {
-    frameWriter.windowUpdate(streamId, windowSizeIncrement);
   }
 
   /**
@@ -486,6 +501,10 @@ public final class SpdyConnection implements Closeable {
     }
   }
 
+  /**
+   * Methods in this class must not lock FrameWriter.  If a method needs to
+   * write a frame, create an async task to do so.
+   */
   class Reader extends NamedRunnable implements FrameReader.Handler {
     private Reader() {
       super("OkHttp %s", hostName);
@@ -585,6 +604,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void settings(boolean clearPrevious, Settings newSettings) {
+      long delta = 0;
       SpdyStream[] streamsToNotify = null;
       synchronized (SpdyConnection.this) {
         if (clearPrevious) {
@@ -597,27 +617,21 @@ public final class SpdyConnection implements Closeable {
         }
         int peerInitialWindowSize = peerSettings.getInitialWindowSize();
         if (peerInitialWindowSize != -1 && peerInitialWindowSize != initialWindowSize) {
-          long delta = peerInitialWindowSize - initialWindowSize;
+          delta = peerInitialWindowSize - initialWindowSize;
           SpdyConnection.this.initialWindowSize = peerInitialWindowSize;
           if (!receivedInitialPeerSettings) {
             addBytesToWriteWindow(delta);
             receivedInitialPeerSettings = true;
           }
-        }
-        if (!streams.isEmpty()) {
-          streamsToNotify = streams.values().toArray(new SpdyStream[streams.size()]);
+          if (!streams.isEmpty()) {
+            streamsToNotify = streams.values().toArray(new SpdyStream[streams.size()]);
+          }
         }
       }
-      if (streamsToNotify != null) {
-        for (SpdyStream stream : streamsToNotify) {
-          // The synchronization here is ugly. We need to synchronize on 'this' to guard
-          // reads to 'peerSettings'. We synchronize on 'stream' to guard the state change.
-          // And we need to acquire the 'stream' lock first, since that may block.
-          // TODO: this can block the reader thread until a write completes. That's bad!
+      if (streamsToNotify != null && delta != 0) {
+        for (SpdyStream stream : streams.values()) {
           synchronized (stream) {
-            synchronized (SpdyConnection.this) {
-              stream.receiveSettings(peerSettings);
-            }
+            stream.addBytesToWriteWindow(delta);
           }
         }
       }
@@ -653,8 +667,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override
-    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
       if (debugData.length > 0) { // TODO: log the debugData
       }
       synchronized (SpdyConnection.this) {
@@ -680,10 +693,11 @@ public final class SpdyConnection implements Closeable {
           SpdyConnection.this.notifyAll();
         }
       } else {
-        // TODO: honor endFlowControl
         SpdyStream stream = getStream(streamId);
         if (stream != null) {
-          stream.receiveWindowUpdate(windowSizeIncrement);
+          synchronized (stream) {
+            stream.addBytesToWriteWindow(windowSizeIncrement);
+          }
         }
       }
     }
