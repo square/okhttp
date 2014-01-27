@@ -348,11 +348,6 @@ public final class SpdyConnection implements Closeable {
     return pings != null ? pings.remove(id) : null;
   }
 
-  /** Sends a noop frame to the peer. */
-  public void noop() throws IOException {
-    frameWriter.noop();
-  }
-
   public void flush() throws IOException {
     frameWriter.flush();
   }
@@ -656,9 +651,6 @@ public final class SpdyConnection implements Closeable {
 
     @Override public void ackSettings() {
       // TODO: If we don't get this callback after sending settings to the peer, SETTINGS_TIMEOUT.
-    }
-
-    @Override public void noop() {
     }
 
     @Override public void ping(boolean reply, int payload1, int payload2) {

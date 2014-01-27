@@ -58,7 +58,7 @@ public final class OkHeaders {
 
   /**
    * Synthetic response header: the selected
-   * {@link com.squareup.okhttp.Protocol protocol} ("spdy/3", "http/1.1", etc).
+   * {@link com.squareup.okhttp.Protocol protocol} ("spdy/3.1", "http/1.1", etc).
    */
   public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
 

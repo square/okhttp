@@ -28,8 +28,14 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.zip.Deflater;
 
+/**
+ * Read and write spdy/3.1 frames.
+ * http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1
+ */
 final class Spdy3 implements Variant {
 
   @Override public Protocol getProtocol() {
@@ -41,12 +47,10 @@ final class Spdy3 implements Variant {
   static final int TYPE_SYN_REPLY = 0x2;
   static final int TYPE_RST_STREAM = 0x3;
   static final int TYPE_SETTINGS = 0x4;
-  static final int TYPE_NOOP = 0x5;
   static final int TYPE_PING = 0x6;
   static final int TYPE_GOAWAY = 0x7;
   static final int TYPE_HEADERS = 0x8;
   static final int TYPE_WINDOW_UPDATE = 0x9;
-  static final int TYPE_CREDENTIAL = 0x10;
 
   static final int FLAG_FIN = 0x1;
   static final int FLAG_UNIDIRECTIONAL = 0x2;
@@ -159,11 +163,6 @@ final class Spdy3 implements Variant {
             readSettings(handler, flags, length);
             return true;
 
-          case TYPE_NOOP:
-            if (length != 0) throw ioException("TYPE_NOOP length: %d != 0", length);
-            handler.noop();
-            return true;
-
           case TYPE_PING:
             readPing(handler, flags, length);
             return true;
@@ -180,12 +179,11 @@ final class Spdy3 implements Variant {
             readWindowUpdate(handler, flags, length);
             return true;
 
-          case TYPE_CREDENTIAL:
-            Util.skipByReading(in, length);
-            throw new UnsupportedOperationException("TODO"); // TODO: implement
-
           default:
-            throw new IOException("Unexpected frame");
+            Logger logger = Logger.getLogger("com.squareup.okhttp.internal.spdy.Spdy3");
+            logger.log(Level.INFO, "Ignoring unknown frame type " + type);
+            Util.skipByReading(in, length);
+            return true;
         }
       } else {
         int streamId = w1 & 0x7fffffff;
@@ -437,15 +435,6 @@ final class Spdy3 implements Variant {
         out.writeInt((settingsFlags & 0xff) << 24 | (i & 0xffffff));
         out.writeInt(settings.get(i));
       }
-      out.flush();
-    }
-
-    @Override public synchronized void noop() throws IOException {
-      int type = TYPE_NOOP;
-      int length = 0;
-      int flags = 0;
-      out.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
-      out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.flush();
     }
 

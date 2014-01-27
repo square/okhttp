@@ -323,12 +323,12 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * <p>The following protocols are currently supported:
    * <ul>
    *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
-   *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3">spdy/3</a>
+   *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
    *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-09">HTTP-draft-09/2.0</a>
    * </ul>
    *
    * <p><strong>This is an evolving set.</strong> Future releases may drop
-   * support for transitional protocols (like spdy/3), in favor of their
+   * support for transitional protocols (like spdy/3.1), in favor of their
    * successors (spdy/4 or http/2.0). The http/1.1 transport will never be
    * dropped.
    *

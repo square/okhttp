@@ -30,12 +30,12 @@ import java.util.List;
  * <h3>Protocol vs Scheme</h3>
  * Despite its name, {@link java.net.URL#getProtocol()} returns the
  * {@link java.net.URI#getScheme() scheme} (http, https, etc.) of the URL, not
- * the protocol (http/1.1, spdy/3, etc.).  OkHttp uses the word protocol to
+ * the protocol (http/1.1, spdy/3.1, etc.).  OkHttp uses the word protocol to
  * indicate how HTTP messages are framed.
  */
 public enum Protocol {
   HTTP_2("HTTP-draft-09/2.0", true),
-  SPDY_3("spdy/3", true),
+  SPDY_3("spdy/3.1", true),
   HTTP_11("http/1.1", false);
 
   public static final List<Protocol> HTTP2_SPDY3_AND_HTTP =

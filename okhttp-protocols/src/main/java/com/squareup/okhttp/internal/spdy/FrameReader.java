@@ -51,9 +51,6 @@ public interface FrameReader extends Closeable {
     /** HTTP/2 only. */
     void ackSettings();
 
-    /** SPDY/3 only. */
-    void noop();
-
     /**
      *  Read a connection-level ping from the peer.  {@code ack} indicates this
      *  is a reply.  Payload parameters are different between SPDY/3 and HTTP/2.

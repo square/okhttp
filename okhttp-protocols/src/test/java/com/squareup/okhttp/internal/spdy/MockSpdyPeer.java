@@ -256,11 +256,6 @@ public final class MockSpdyPeer implements Closeable {
       this.payload2 = payload2;
     }
 
-    @Override public void noop() {
-      if (this.type != -1) throw new IllegalStateException();
-      this.type = Spdy3.TYPE_NOOP;
-    }
-
     @Override
     public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
       if (this.type != -1) throw new IllegalStateException();

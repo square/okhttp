@@ -45,10 +45,6 @@ class BaseTestHandler implements FrameReader.Handler {
     fail();
   }
 
-  @Override public void noop() {
-    fail();
-  }
-
   @Override public void ping(boolean ack, int payload1, int payload2) {
     fail();
   }

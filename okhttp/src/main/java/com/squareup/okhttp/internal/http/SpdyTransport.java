@@ -98,8 +98,7 @@ public final class SpdyTransport implements Transport {
     // TODO: make the known header names constants.
     List<Header> result = new ArrayList<Header>(headers.size() + 10);
     result.add(new Header(TARGET_METHOD, request.method()));
-    result.add(
-        new Header(TARGET_PATH, RequestLine.requestPath(request.url())));
+    result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.url())));
     String host = HttpEngine.hostHeader(request.url());
     if (Protocol.SPDY_3 == protocol) {
       result.add(new Header(VERSION, version));
@@ -201,7 +200,7 @@ public final class SpdyTransport implements Transport {
   private static boolean isProhibitedHeader(Protocol protocol, ByteString name) {
     boolean prohibited = false;
     if (protocol == Protocol.SPDY_3) {
-      // http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3#TOC-3.2.1-Request
+      // http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-3.2.1-Request
       if (name.equalsAscii("connection")
           || name.equalsAscii("host")
           || name.equalsAscii("keep-alive")
