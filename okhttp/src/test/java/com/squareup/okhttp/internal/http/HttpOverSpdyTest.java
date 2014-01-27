@@ -34,7 +34,6 @@ import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -80,6 +79,7 @@ public abstract class HttpOverSpdyTest {
   private final MockWebServer server = new MockWebServer();
   private final String hostName = server.getHostName();
   private final OkHttpClient client = new OkHttpClient();
+  private HttpURLConnection connection;
   private HttpResponseCache cache;
 
   @Before public void setUp() throws Exception {
@@ -102,7 +102,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(response);
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
     assertEquals(200, connection.getResponseCode());
     assertEquals("Sweet", connection.getResponseMessage());
@@ -117,7 +117,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse());
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     assertEquals(-1, connection.getInputStream().read());
   }
 
@@ -129,7 +129,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(response);
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     connection.setDoOutput(true);
     connection.getOutputStream().write(postBytes);
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
@@ -145,7 +145,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(response);
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     connection.setRequestProperty("Content-Length", String.valueOf(postBytes.length));
     connection.setDoOutput(true);
     connection.getOutputStream().write(postBytes);
@@ -162,7 +162,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(response);
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     connection.setRequestProperty("Content-Length", String.valueOf(postBytes.length));
     connection.setDoOutput(true);
     connection.getOutputStream().write(postBytes); // push bytes into SpdyDataOutputStream.buffer
@@ -181,7 +181,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(response);
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/foo"));
+    connection = client.open(server.getUrl("/foo"));
     connection.setFixedLengthStreamingMode(postBytes.length);
     connection.setDoOutput(true);
     connection.getOutputStream().write(postBytes);
@@ -237,7 +237,7 @@ public abstract class HttpOverSpdyTest {
     server.play();
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection = client.open(server.getUrl("/"));
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
     RecordedRequest denied = server.takeRequest();
@@ -255,7 +255,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setBody("This is the new location!"));
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection = client.open(server.getUrl("/"));
     assertContent("This is the new location!", connection, Integer.MAX_VALUE);
 
     RecordedRequest request1 = server.takeRequest();
@@ -268,7 +268,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setBody("ABC"));
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection = client.open(server.getUrl("/"));
     InputStream in = connection.getInputStream();
     assertEquals("ABC", readAscii(in, 3));
     assertEquals(-1, in.read());
@@ -280,7 +280,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection = client.open(server.getUrl("/"));
     connection.setReadTimeout(1000);
     assertContent("A", connection, Integer.MAX_VALUE);
   }
@@ -341,12 +341,12 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));
     server.play();
 
-    URLConnection connection1 = client.open(server.getUrl("/"));
+    HttpURLConnection connection1 = client.open(server.getUrl("/"));
     InputStream in1 = connection1.getInputStream();
     assertEquals("AB", readAscii(in1, 2));
     in1.close();
 
-    URLConnection connection2 = client.open(server.getUrl("/"));
+    HttpURLConnection connection2 = client.open(server.getUrl("/"));
     InputStream in2 = connection2.getInputStream();
     assertEquals("ABCD", readAscii(in2, Integer.MAX_VALUE));
     in2.close();
@@ -378,11 +378,10 @@ public abstract class HttpOverSpdyTest {
     assertTrue(collection.toString(), collection.contains(value));
   }
 
-  private void assertContent(String expected, URLConnection connection, int limit)
+  private void assertContent(String expected, HttpURLConnection connection, int limit)
       throws IOException {
     connection.connect();
     assertEquals(expected, readAscii(connection.getInputStream(), limit));
-    ((HttpURLConnection) connection).disconnect();
   }
 
   private void assertContainsNoneMatching(List<String> headers, String pattern) {

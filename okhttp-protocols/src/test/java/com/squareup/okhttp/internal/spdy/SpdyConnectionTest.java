@@ -62,7 +62,7 @@ public final class SpdyConnectionTest {
       throw new AssertionError();
     }
   };
-  private final MockSpdyPeer peer = new MockSpdyPeer(SPDY3, false);
+  private final MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
     peer.close();
@@ -173,7 +173,7 @@ public final class SpdyConnectionTest {
   }
 
   private MockSpdyPeer.InFrame replyWithNoData(Variant variant) throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+    peer.setVariantAndClient(variant, false);
     // write the mocking script
     peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
@@ -230,7 +230,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void serverPingsClientHttp2() throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     // write the mocking script
     peer.sendFrame().ping(false, 2, 3);
@@ -270,7 +270,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void clientPingsServerHttp2() throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     // write the mocking script
     peer.acceptFrame(); // PING
@@ -292,13 +292,13 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void peerHttp2ServerLowersInitialWindowSize() throws Exception {
-    boolean client = false; // Peer is server, so we are client.
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+
     Settings initial = new Settings();
     initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 1684);
     Settings shouldntImpactConnection = new Settings();
     shouldntImpactConnection.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 3368);
 
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, client);
     peer.sendFrame().settings(initial);
     peer.acceptFrame(); // ACK
     peer.sendFrame().settings(shouldntImpactConnection);
@@ -815,7 +815,7 @@ public final class SpdyConnectionTest {
   }
 
   private void receiveGoAway(Variant variant) throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+    peer.setVariantAndClient(variant, false);
 
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM 1
@@ -1059,7 +1059,8 @@ public final class SpdyConnectionTest {
 
   private void readSendsWindowUpdate(Variant variant)
       throws IOException, InterruptedException {
-    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+    peer.setVariantAndClient(variant, false);
+
     int windowUpdateThreshold = INITIAL_WINDOW_SIZE / 2;
 
     // Write the mocking script.
@@ -1118,7 +1119,7 @@ public final class SpdyConnectionTest {
 
   private void serverSendsEmptyDataClientDoesntSendWindowUpdate(Variant variant)
       throws IOException, InterruptedException {
-    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+    peer.setVariantAndClient(variant, false);
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
@@ -1147,7 +1148,7 @@ public final class SpdyConnectionTest {
 
   private void clientSendsEmptyDataServerDoesntSendWindowUpdate(Variant variant)
       throws IOException, InterruptedException {
-    MockSpdyPeer peer = new MockSpdyPeer(variant, false);
+    peer.setVariantAndClient(variant, false);
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
@@ -1324,7 +1325,7 @@ public final class SpdyConnectionTest {
    * prevents us from overrunning the max frame size of SPDY/3 or HTTP/2.
    */
   @Test public void spdyStreamOutputBufferSizeLimitsDataFrameLength() throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     byte[] buff = new byte[SpdyStream.OUTPUT_BUFFER_SIZE * 2];
     Arrays.fill(buff, (byte) '*');
@@ -1381,7 +1382,7 @@ public final class SpdyConnectionTest {
 
   // TODO: change this to only cancel when local settings disable push
   @Test public void pushPromiseStreamsAutomaticallyCancel() throws Exception {
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     // write the mocking script
     peer.sendFrame().pushPromise(1, 2, Arrays.asList(
@@ -1408,7 +1409,7 @@ public final class SpdyConnectionTest {
 
   private SpdyConnection sendHttp2SettingsAndCheckForAck(boolean client, Settings settings)
       throws IOException, InterruptedException {
-    MockSpdyPeer peer = new MockSpdyPeer(HTTP_20_DRAFT_09, client);
+    peer.setVariantAndClient(HTTP_20_DRAFT_09, client);
     peer.sendFrame().settings(settings);
     peer.acceptFrame(); // ACK
     peer.play();
@@ -1421,7 +1422,6 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_SETTINGS, ackFrame.type);
     assertEquals(0, ackFrame.streamId);
     assertTrue(ackFrame.ack);
-    peer.close();
     return connection;
   }
 

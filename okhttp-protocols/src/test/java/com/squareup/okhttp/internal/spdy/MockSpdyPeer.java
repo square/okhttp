@@ -28,26 +28,29 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
-  private final boolean client;
-  private final Variant variant;
+  private boolean client = false;
+  private Variant variant = new Spdy3();
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final FrameWriter frameWriter;
+  private FrameWriter frameWriter = variant.newWriter(bytesOut, client);;
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
-  private final Executor executor = Executors.newCachedThreadPool(
+  private final ExecutorService executor = Executors.newCachedThreadPool(
       Util.threadFactory("MockSpdyPeer", false));
   private ServerSocket serverSocket;
   private Socket socket;
 
-  public MockSpdyPeer(Variant variant, boolean client) {
+  public void setVariantAndClient(Variant variant, boolean client) {
+    if (this.variant.getProtocol() == variant.getProtocol() && this.client == client) {
+      return;
+    }
     this.client = client;
     this.variant = variant;
     this.frameWriter = variant.newWriter(bytesOut, client);
@@ -85,10 +88,6 @@ public final class MockSpdyPeer implements Closeable {
     return frameWriter;
   }
 
-  public int getPort() {
-    return port;
-  }
-
   public InFrame takeFrame() throws InterruptedException {
     return inFrames.take();
   }
@@ -97,12 +96,13 @@ public final class MockSpdyPeer implements Closeable {
     if (serverSocket != null) throw new IllegalStateException();
     serverSocket = new ServerSocket(0);
     serverSocket.setReuseAddress(true);
-    this.port = serverSocket.getLocalPort();
+    port = serverSocket.getLocalPort();
     executor.execute(new Runnable() {
       @Override public void run() {
         try {
           readAndWriteFrames();
         } catch (IOException e) {
+          Util.closeQuietly(MockSpdyPeer.this);
           throw new RuntimeException(e);
         }
       }
@@ -153,15 +153,16 @@ public final class MockSpdyPeer implements Closeable {
     return new Socket("localhost", port);
   }
 
-  @Override public void close() throws IOException {
+  @Override public synchronized void close() throws IOException {
+    executor.shutdown();
     Socket socket = this.socket;
     if (socket != null) {
-      socket.close();
+      Util.closeQuietly(socket);
       this.socket = null;
     }
     ServerSocket serverSocket = this.serverSocket;
     if (serverSocket != null) {
-      serverSocket.close();
+      Util.closeQuietly(serverSocket);
       this.serverSocket = null;
     }
   }
