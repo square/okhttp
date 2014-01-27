@@ -35,12 +35,12 @@ public final class SpdyStream {
   // blocking operations are performed while the lock is held.
 
   /**
-   * The number of unacknowledged bytes at which the input stream will send
-   * the peer a {@code WINDOW_UPDATE} frame. Must be less than this client's
-   * window size, otherwise the remote peer will stop sending data on this
-   * stream. (Chrome 25 uses 5 MiB.)
+   * The total number of bytes consumed by the application
+   * (with {@link SpdyDataInputStream#read}), but not yet acknowledged by
+   * sending a {@code WINDOW_UPDATE} frame on this stream.
    */
-  int windowUpdateThreshold;
+  // Visible for testing
+  long unacknowledgedBytesRead = 0;
 
   /**
    * Count of bytes that can be written on the stream before receiving a
@@ -48,7 +48,7 @@ public final class SpdyStream {
    * available bytes in {@code connection.bytesLeftInWriteWindow}.
    */
   // guarded by this
-  long bytesLeftInWriteWindow = 0;
+  long bytesLeftInWriteWindow;
 
   private final int id;
   private final SpdyConnection connection;
@@ -72,14 +72,13 @@ public final class SpdyStream {
   private ErrorCode errorCode = null;
 
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      int priority, List<Header> requestHeaders, int initialWriteWindow) {
+      int priority, List<Header> requestHeaders) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
-    this.bytesLeftInWriteWindow = initialWriteWindow;
-    this.windowUpdateThreshold = initialWriteWindow / 2;
-    this.in = new SpdyDataInputStream(initialWriteWindow);
+    this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
+    this.in = new SpdyDataInputStream(connection.okHttpSettings.getInitialWindowSize());
     this.out = new SpdyDataOutputStream();
     this.in.finished = inFinished;
     this.out.finished = outFinished;
@@ -363,13 +362,6 @@ public final class SpdyStream {
      */
     private boolean finished;
 
-    /**
-     * The total number of bytes consumed by the application (with {@link
-     * #read}), but not yet acknowledged by sending a {@code WINDOW_UPDATE}
-     * frame.
-     */
-    private int unacknowledgedBytes = 0;
-
     @Override public int available() throws IOException {
       synchronized (SpdyStream.this) {
         checkNotClosed();
@@ -388,6 +380,7 @@ public final class SpdyStream {
     }
 
     @Override public int read(byte[] b, int offset, int count) throws IOException {
+      int copied = 0;
       synchronized (SpdyStream.this) {
         checkOffsetAndCount(b.length, offset, count);
         waitUntilReadable();
@@ -396,8 +389,6 @@ public final class SpdyStream {
         if (pos == -1) {
           return -1;
         }
-
-        int copied = 0;
 
         // drain from [pos..buffer.length)
         if (limit <= pos) {
@@ -419,19 +410,27 @@ public final class SpdyStream {
         }
 
         // Flow control: notify the peer that we're ready for more data!
-        unacknowledgedBytes += copied;
-        if (unacknowledgedBytes >= windowUpdateThreshold) {
-          connection.writeWindowUpdateLater(id, unacknowledgedBytes);
-          unacknowledgedBytes = 0;
+        unacknowledgedBytesRead += copied;
+        if (unacknowledgedBytesRead >= connection.okHttpSettings.getInitialWindowSize() / 2) {
+          connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
+          unacknowledgedBytesRead = 0;
         }
 
         if (pos == limit) {
           pos = -1;
           limit = 0;
         }
-
-        return copied;
       }
+      // Update connection.unacknowledgedBytesRead outside the stream lock.
+      synchronized (connection) { // Multiple application threads may hit this section.
+        connection.unacknowledgedBytesRead += copied;
+        if (connection.unacknowledgedBytesRead
+            >= connection.okHttpSettings.getInitialWindowSize() / 2) {
+          connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
+          connection.unacknowledgedBytesRead = 0;
+        }
+      }
+      return copied;
     }
 
     /**

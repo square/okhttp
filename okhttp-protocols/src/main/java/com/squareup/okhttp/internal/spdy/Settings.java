@@ -76,9 +76,9 @@ final class Settings {
     Arrays.fill(values, 0);
   }
 
-  void set(int id, int idFlags, int value) {
+  Settings set(int id, int idFlags, int value) {
     if (id >= values.length) {
-      return; // Discard unknown settings.
+      return this; // Discard unknown settings.
     }
 
     int bit = 1 << id;
@@ -95,6 +95,7 @@ final class Settings {
     }
 
     values[id] = value;
+    return this;
   }
 
   /** Returns true if a value has been assigned for the setting {@code id}. */
