@@ -75,19 +75,19 @@ public final class ConnectionPoolTest {
     Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true);
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, true);
     httpA = new Connection(httpRoute);
-    httpA.connect(100, 100, null);
+    httpA.connect(200, 200, null);
     httpB = new Connection(httpRoute);
-    httpB.connect(100, 100, null);
+    httpB.connect(200, 200, null);
     httpC = new Connection(httpRoute);
-    httpC.connect(100, 100, null);
+    httpC.connect(200, 200, null);
     httpD = new Connection(httpRoute);
-    httpD.connect(100, 100, null);
+    httpD.connect(200, 200, null);
     httpE = new Connection(httpRoute);
-    httpE.connect(100, 100, null);
+    httpE.connect(200, 200, null);
     spdyA = new Connection(spdyRoute);
-    spdyA.connect(100, 100, null);
+    spdyA.connect(200, 200, null);
     spdyB = new Connection(spdyRoute);
-    spdyB.connect(100, 100, null);
+    spdyB.connect(200, 200, null);
   }
 
   @After public void tearDown() throws Exception {
@@ -109,7 +109,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
-    connection.connect(100, 100, null);
+    connection.connect(200, 200, null);
     assertEquals(0, pool.getConnectionCount());
     pool.recycle(connection);
     assertEquals(1, pool.getConnectionCount());
