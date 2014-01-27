@@ -16,8 +16,10 @@
 package com.squareup.okhttp.internal.bytes;
 
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -48,8 +50,8 @@ public final class OkBufferTest {
   @Test public void multipleSegmentBuffers() throws Exception {
     OkBuffer buffer = new OkBuffer();
     buffer.writeUtf8(repeat('a',  1000));
-    buffer.writeUtf8(repeat('b',  2500));
-    buffer.writeUtf8(repeat('c',  5000));
+    buffer.writeUtf8(repeat('b', 2500));
+    buffer.writeUtf8(repeat('c', 5000));
     buffer.writeUtf8(repeat('d', 10000));
     buffer.writeUtf8(repeat('e', 25000));
     buffer.writeUtf8(repeat('f', 50000));
@@ -86,6 +88,98 @@ public final class OkBufferTest {
     // Take MAX_SIZE more segments. The pool is drained so these will need to be allocated.
     buffer.write(ByteString.of(new byte[(int) SegmentPool.MAX_SIZE]));
     assertEquals(0, SegmentPool.INSTANCE.byteCount);
+  }
+
+  @Test public void moveBytesBetweenBuffersShareSegment() throws Exception {
+    int size = (Segment.SIZE / 2) - 1;
+    List<Integer> segmentSizes = moveBytesBetweenBuffers(repeat('a', size), repeat('b', size));
+    assertEquals(asList(size * 2), segmentSizes);
+  }
+
+  @Test public void moveBytesBetweenBuffersReassignSegment() throws Exception {
+    int size = (Segment.SIZE / 2) + 1;
+    List<Integer> segmentSizes = moveBytesBetweenBuffers(repeat('a', size), repeat('b', size));
+    assertEquals(asList(size, size), segmentSizes);
+  }
+
+  @Test public void moveBytesBetweenBuffersMultipleSegments() throws Exception {
+    int size = 3 * Segment.SIZE + 1;
+    List<Integer> segmentSizes = moveBytesBetweenBuffers(repeat('a', size), repeat('b', size));
+    assertEquals(asList(Segment.SIZE, Segment.SIZE, Segment.SIZE, 1,
+        Segment.SIZE, Segment.SIZE, Segment.SIZE, 1), segmentSizes);
+  }
+
+  private List<Integer> moveBytesBetweenBuffers(String... contents) {
+    StringBuilder expected = new StringBuilder();
+    OkBuffer buffer = new OkBuffer();
+    for (String s : contents) {
+      OkBuffer source = new OkBuffer();
+      source.writeUtf8(s);
+      buffer.write(source, source.byteCount(), Timeout.NONE);
+      expected.append(s);
+    }
+    List<Integer> segmentSizes = buffer.segmentSizes();
+    assertEquals(expected.toString(), buffer.readUtf8(expected.length()));
+    return segmentSizes;
+  }
+
+  /** The big part of source's first segment is being moved. */
+  @Test public void writeSplitSourceBufferLeft() throws Exception {
+    int writeSize = Segment.SIZE / 2 + 1;
+
+    OkBuffer sink = new OkBuffer();
+    sink.writeUtf8(repeat('b', Segment.SIZE - 10));
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE * 2));
+    sink.write(source, writeSize, Timeout.NONE);
+
+    assertEquals(asList(Segment.SIZE - 10, writeSize), sink.segmentSizes());
+    assertEquals(asList(Segment.SIZE - writeSize, Segment.SIZE), source.segmentSizes());
+  }
+
+  /** The big part of source's first segment is staying put. */
+  @Test public void writeSplitSourceBufferRight() throws Exception {
+    int writeSize = Segment.SIZE / 2 - 1;
+
+    OkBuffer sink = new OkBuffer();
+    sink.writeUtf8(repeat('b', Segment.SIZE - 10));
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE * 2));
+    sink.write(source, writeSize, Timeout.NONE);
+
+    assertEquals(asList(Segment.SIZE - 10, writeSize), sink.segmentSizes());
+    assertEquals(asList(Segment.SIZE - writeSize, Segment.SIZE), source.segmentSizes());
+  }
+
+  @Test public void writePrefixDoesntSplit() throws Exception {
+    OkBuffer sink = new OkBuffer();
+    sink.writeUtf8(repeat('b', 10));
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE * 2));
+    sink.write(source, 20, Timeout.NONE);
+
+    assertEquals(asList(30), sink.segmentSizes());
+    assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
+    assertEquals(30, sink.byteCount());
+    assertEquals(Segment.SIZE * 2 - 20, source.byteCount());
+  }
+
+  @Test public void writePrefixDoesntSplitButRequiresCompact() throws Exception {
+    OkBuffer sink = new OkBuffer();
+    sink.writeUtf8(repeat('b', Segment.SIZE - 10)); // limit = size - 10
+    sink.readUtf8(Segment.SIZE - 20); // pos = size = 20
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE * 2));
+    sink.write(source, 20, Timeout.NONE);
+
+    assertEquals(asList(30), sink.segmentSizes());
+    assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
+    assertEquals(30, sink.byteCount());
+    assertEquals(Segment.SIZE * 2 - 20, source.byteCount());
   }
 
   private String repeat(char c, int count) {

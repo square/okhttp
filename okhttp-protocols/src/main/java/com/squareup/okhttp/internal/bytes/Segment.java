@@ -31,23 +31,23 @@ final class Segment {
   // TODO: Is 2 KiB a good default segment size?
   static final int SIZE = 2048;
 
-  final byte[] data;
+  final byte[] data = new byte[SIZE];
+
+  /** The next byte of application data byte to read in this segment. */
   int pos;
+
+  /** The first byte of available data ready to be written to. */
   int limit;
 
-  /** Next segment in a linked list. */
+  /** Next segment in a linked or circularly-linked list. */
   Segment next;
 
-  /** Previous segment in a linked list. */
+  /** Previous segment in a circularly-linked list. */
   Segment prev;
 
-  Segment() {
-    data = new byte[SIZE];
-  }
-
   /**
-   * Removes this head of a circularly-linked list, recycles it, and returns the
-   * new head of the list. Returns null if the list is now empty.
+   * Removes this segment of a circularly-linked list and returns its successor.
+   * Returns null if the list is now empty.
    */
   public Segment pop() {
     Segment result = next != this ? next : null;
@@ -55,20 +55,81 @@ final class Segment {
     next.prev = prev;
     next = null;
     prev = null;
-    SegmentPool.INSTANCE.recycle(this);
     return result;
   }
 
   /**
-   * Acquires a segment and appends it to this tail of a circularly-linked list.
-   * Returns the new tail segment.
+   * Appends {@code segment} after this segment in the circularly-linked list.
+   * Returns the pushed segment.
    */
-  public Segment push() {
-    Segment result = SegmentPool.INSTANCE.take();
-    result.prev = this;
-    result.next = next;
-    next.prev = result;
-    next = result;
-    return result;
+  public Segment push(Segment segment) {
+    segment.prev = this;
+    segment.next = next;
+    next.prev = segment;
+    next = segment;
+    return segment;
+  }
+
+  /**
+   * Splits this head of a circularly-linked list into two segments. The first
+   * segment contains the data in {@code [pos..pos+byteCount)}. The second
+   * segment contains the data in {@code [pos+byteCount..limit)}. This can be
+   * useful when moving partial segments from one OkBuffer to another.
+   *
+   * <p>Returns the new head of the circularly-linked list.
+   */
+  public Segment split(int byteCount) {
+    int aSize = byteCount;
+    int bSize = (limit - pos) - byteCount;
+    if (aSize <= 0 || bSize <= 0) throw new IllegalArgumentException();
+
+    // Which side of the split is larger? We want to copy as few bytes as possible.
+    if (aSize < bSize) {
+      // Create a segment of size 'aSize' before this segment.
+      Segment before = SegmentPool.INSTANCE.take();
+      System.arraycopy(data, pos, before.data, before.pos, aSize);
+      pos += aSize;
+      before.limit += aSize;
+      prev.push(before);
+      return before;
+    } else {
+      // Create a new segment of size 'bSize' after this segment.
+      Segment after = SegmentPool.INSTANCE.take();
+      System.arraycopy(data, pos + aSize, after.data, after.pos, bSize);
+      limit -= bSize;
+      after.limit += bSize;
+      push(after);
+      return this;
+    }
+  }
+
+  /**
+   * Call this when the tail and its predecessor may both be less than half
+   * full. This will copy data so that segments can be recycled.
+   */
+  public void compact() {
+    if (prev == this) throw new IllegalStateException();
+    if ((prev.limit - prev.pos) + (limit - pos) > SIZE) return; // Cannot compact.
+    writeTo(prev, limit - pos);
+    pop();
+    SegmentPool.INSTANCE.recycle(this);
+  }
+
+  /** Moves {@code byteCount} bytes from {@code sink} to this segment. */
+  // TODO: if sink has fewer bytes than this, it may be cheaper to reverse the
+  //       direction of the copy and swap the segments!
+  public void writeTo(Segment sink, int byteCount) {
+    if (byteCount + (sink.limit - sink.pos) > SIZE) throw new IllegalArgumentException();
+
+    if (sink.limit + byteCount > SIZE) {
+      // We can't fit byteCount bytes at the sink's current position. Compact sink first.
+      System.arraycopy(sink.data, sink.pos, sink.data, 0, sink.limit - sink.pos);
+      sink.limit -= sink.pos;
+      sink.pos = 0;
+    }
+
+    System.arraycopy(data, pos, sink.data, sink.limit, byteCount);
+    sink.limit += byteCount;
+    pos += byteCount;
   }
 }
