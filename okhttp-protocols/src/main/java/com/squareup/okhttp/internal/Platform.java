@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
