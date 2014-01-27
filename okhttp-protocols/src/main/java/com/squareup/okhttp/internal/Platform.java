@@ -340,7 +340,7 @@ public class Platform {
         if (!provider.unsupported && provider.selected == null) {
           Logger logger = Logger.getLogger("com.squareup.okhttp.OkHttpClient");
           logger.log(Level.INFO,
-              "NPN callback dropped so SPDY is disabled. " + "Is npn-boot on the boot class path?");
+              "NPN callback dropped so SPDY is disabled. Is npn-boot on the boot class path?");
           return null;
         }
         return provider.unsupported ? null : ByteString.encodeUtf8(provider.selected);

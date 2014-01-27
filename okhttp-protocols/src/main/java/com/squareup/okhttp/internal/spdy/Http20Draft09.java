@@ -411,10 +411,6 @@ public final class Http20Draft09 implements Variant {
       }
     }
 
-    @Override public synchronized void noop() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
     @Override public synchronized void ping(boolean ack, int payload1, int payload2)
         throws IOException {
       int length = 8;

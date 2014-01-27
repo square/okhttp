@@ -42,7 +42,6 @@ import static com.squareup.okhttp.internal.spdy.SpdyStream.OUTPUT_BUFFER_SIZE;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_NOOP;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_PING;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_RST_STREAM;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SETTINGS;
@@ -196,20 +195,6 @@ public final class SpdyConnectionTest {
     assertEquals(headerEntries("b", "banana"), reply.headerBlock);
     assertEquals(1, receiveCount.get());
     return reply;
-  }
-
-  @Test public void noop() throws Exception {
-    // write the mocking script
-    peer.acceptFrame(); // NOOP
-    peer.play();
-
-    // play it back
-    SpdyConnection connection = connection(peer, SPDY3);
-    connection.noop();
-
-    // verify the peer received what was expected
-    MockSpdyPeer.InFrame ping = peer.takeFrame();
-    assertEquals(TYPE_NOOP, ping.type);
   }
 
   @Test public void serverPingsClient() throws Exception {

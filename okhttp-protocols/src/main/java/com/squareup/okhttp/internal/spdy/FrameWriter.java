@@ -69,9 +69,6 @@ public interface FrameWriter extends Closeable {
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;
 
-  /** SPDY/3 only. */
-  void noop() throws IOException;
-
   /**
    *  Send a connection-level ping to the peer.  {@code ack} indicates this is
    *  a reply.  Payload parameters are different between SPDY/3 and HTTP/2.
