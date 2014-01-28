@@ -121,7 +121,7 @@ public final class OkBuffer implements Source, Sink {
     this.byteCount += data.length;
   }
 
-  @Override public void write(OkBuffer source, long byteCount, Timeout timeout) {
+  @Override public void write(OkBuffer source, long byteCount, Deadline deadline) {
     // Move bytes from the head of the source buffer to the tail of this buffer
     // while balancing two conflicting goals: don't waste CPU and don't waste
     // memory.
@@ -160,8 +160,8 @@ public final class OkBuffer implements Source, Sink {
     // memory use like [100%, 100%, 4%].
     //
     // When combining buffers, we will compact adjacent buffers when their
-    // combined level is less than 100%. For example, when we start with [100%,
-    // 40%] and append [30%, 80%], the result is [100%, 70%, 80%].
+    // combined level doesn't exceed 100%. For example, when we start with
+    // [100%, 40%] and append [30%, 80%], the result is [100%, 70%, 80%].
     //
     //
     // Splitting segments
@@ -213,19 +213,34 @@ public final class OkBuffer implements Source, Sink {
     }
   }
 
-  @Override public long read(OkBuffer sink, long byteCount, Timeout timeout) throws IOException {
-    throw new UnsupportedOperationException();
+  @Override public long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+    if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
+    if (this.byteCount == 0) return -1L;
+    if (byteCount > this.byteCount) byteCount = this.byteCount;
+    sink.write(this, byteCount, deadline);
+    return byteCount;
   }
 
-  @Override public long indexOf(byte b, Timeout timeout) throws IOException {
-    throw new UnsupportedOperationException();
+  @Override public long indexOf(byte b, Deadline deadline) throws IOException {
+    Segment s = head;
+    if (s == null) return -1L;
+    long offset = 0L;
+    do {
+      byte[] data = s.data;
+      for (int pos = s.pos, limit = s.limit; pos < limit; pos++) {
+        if (data[pos] == b) return offset + pos - s.pos;
+      }
+      offset += s.limit - s.pos;
+      s = s.next;
+    } while (s != head);
+    return -1L;
   }
 
-  @Override public void flush(Timeout timeout) {
+  @Override public void flush(Deadline deadline) {
     throw new UnsupportedOperationException("Cannot flush() an OkBuffer");
   }
 
-  @Override public void close(Timeout timeout) {
+  @Override public void close(Deadline deadline) {
     throw new UnsupportedOperationException("Cannot close() an OkBuffer");
   }
 
