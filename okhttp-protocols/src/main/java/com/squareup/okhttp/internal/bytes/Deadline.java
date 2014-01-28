@@ -18,12 +18,12 @@ package com.squareup.okhttp.internal.bytes;
 import java.util.concurrent.TimeUnit;
 
 /**
- * The deadline for a requested operation. If the timeout elapses before the
- * operation has completed, the operation should be aborted.
+ * The time that a requested operation is due. If the deadline is reached before
+ * the operation has completed, the operation should be aborted.
  */
-public class Timeout {
-  public static final Timeout NONE = new Timeout() {
-    @Override public Timeout start(long timeout, TimeUnit unit) {
+public class Deadline {
+  public static final Deadline NONE = new Deadline() {
+    @Override public Deadline start(long timeout, TimeUnit unit) {
       throw new UnsupportedOperationException();
     }
 
@@ -34,10 +34,10 @@ public class Timeout {
 
   private long deadlineNanos;
 
-  public Timeout() {
+  public Deadline() {
   }
 
-  public Timeout start(long timeout, TimeUnit unit) {
+  public Deadline start(long timeout, TimeUnit unit) {
     deadlineNanos = System.nanoTime() + unit.toNanos(timeout);
     return this;
   }

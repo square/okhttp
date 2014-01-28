@@ -22,15 +22,15 @@ import java.io.IOException;
  */
 public interface Sink {
   /** Removes {@code byteCount} bytes from {@code source} and appends them to this. */
-  void write(OkBuffer source, long byteCount, Timeout timeout) throws IOException;
+  void write(OkBuffer source, long byteCount, Deadline deadline) throws IOException;
 
   /** Pushes all buffered bytes to their final destination. */
-  void flush(Timeout timeout) throws IOException;
+  void flush(Deadline deadline) throws IOException;
 
   /**
    * Pushes all buffered bytes to their final destination and releases the
    * resources held by this sink. It is an error to write a closed sink. It is
    * safe to close a sink more than once.
    */
-  void close(Timeout timeout) throws IOException;
+  void close(Deadline deadline) throws IOException;
 }
