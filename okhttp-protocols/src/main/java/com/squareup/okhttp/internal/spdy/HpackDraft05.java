@@ -1,14 +1,17 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.squareup.okhttp.internal.Util.asciiLowerCase;
 
@@ -188,7 +191,7 @@ final class HpackDraft05 {
         } else { // 0NNNNNNN
           if (b == 0x40) { // 01000000
             readLiteralHeaderWithoutIndexingNewName();
-          } else if ((b & 0xe0) == 0x40) {  // 01NNNNNN
+          } else if ((b & 0x40) == 0x40) {  // 01NNNNNN
             int index = readInt(b, PREFIX_6_BITS);
             readLiteralHeaderWithoutIndexingIndexedName(index - 1);
           } else if (b == 0) { // 00000000
@@ -375,6 +378,19 @@ final class HpackDraft05 {
     }
   }
 
+  private static final Map<ByteString, Integer> NAME_TO_FIRST_INDEX = nameToFirstIndex();
+
+  private static Map<ByteString, Integer> nameToFirstIndex() {
+    Map<ByteString, Integer> result =
+        new LinkedHashMap<ByteString, Integer>(STATIC_HEADER_TABLE.length);
+    for (int i = 0; i < STATIC_HEADER_TABLE.length; i++) {
+      if (!result.containsKey(STATIC_HEADER_TABLE[i].name)) {
+        result.put(STATIC_HEADER_TABLE[i].name, i);
+      }
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
   static final class Writer {
     private final OutputStream out;
 
@@ -383,11 +399,19 @@ final class HpackDraft05 {
     }
 
     void writeHeaders(List<Header> headerBlock) throws IOException {
-      // TODO: implement a compression strategy.
+      // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
-        out.write(0x40); // Literal Header without Indexing - New Name.
-        writeByteString(headerBlock.get(i).name);
-        writeByteString(headerBlock.get(i).value);
+        ByteString name = headerBlock.get(i).name;
+        Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
+        if (staticIndex != null) {
+          // Literal Header Field without Indexing - Indexed Name.
+          writeInt(staticIndex + 1, PREFIX_6_BITS, 0x40);
+          writeByteString(headerBlock.get(i).value);
+        } else {
+          out.write(0x40); // Literal Header without Indexing - New Name.
+          writeByteString(name);
+          writeByteString(headerBlock.get(i).value);
+        }
       }
     }
 
