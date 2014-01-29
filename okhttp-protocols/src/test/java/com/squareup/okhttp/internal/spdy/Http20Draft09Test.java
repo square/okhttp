@@ -219,21 +219,22 @@ public class Http20Draft09Test {
 
     // Decoding the first header will cross frame boundaries.
     byte[] headerBlock = literalHeaders(pushPromise);
+    int firstFrameLength = headerBlock.length - 1;
     { // Write the first headers frame.
-      dataOut.writeShort((headerBlock.length / 2) + 4);
+      dataOut.writeShort(firstFrameLength + 4);
       dataOut.write(Http20Draft09.TYPE_PUSH_PROMISE);
       dataOut.write(0); // no flags
       dataOut.writeInt(expectedStreamId & 0x7fffffff);
       dataOut.writeInt(expectedPromisedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, 0, headerBlock.length / 2);
+      dataOut.write(headerBlock, 0, firstFrameLength);
     }
 
     { // Write the continuation frame, specifying no more frames are expected.
-      dataOut.writeShort(headerBlock.length / 2);
+      dataOut.writeShort(1);
       dataOut.write(Http20Draft09.TYPE_CONTINUATION);
       dataOut.write(Http20Draft09.FLAG_END_HEADERS);
       dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, headerBlock.length / 2, headerBlock.length / 2);
+      dataOut.write(headerBlock, firstFrameLength, 1);
     }
 
     FrameReader fr = newReader(out);

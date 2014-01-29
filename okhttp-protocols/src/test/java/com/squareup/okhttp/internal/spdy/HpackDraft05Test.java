@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
@@ -36,9 +37,12 @@ public class HpackDraft05Test {
 
   private final MutableByteArrayInputStream bytesIn = new MutableByteArrayInputStream();
   private HpackDraft05.Reader hpackReader;
+  private ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+  private HpackDraft05.Writer hpackWriter;
 
-  @Before public void resetReader() {
+  @Before public void reset() {
     hpackReader = newReader(bytesIn);
+    hpackWriter = new HpackDraft05.Writer(new DataOutputStream(bytesOut));
   }
 
   /**
@@ -167,7 +171,7 @@ public class HpackDraft05Test {
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.1
    */
-  @Test public void decodeLiteralHeaderFieldWithIndexing() throws IOException {
+  @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     out.write(0x00); // Literal indexed
@@ -192,29 +196,60 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.2
+   * Literal Header Field without Indexing - New Name
    */
-  @Test public void decodeLiteralHeaderFieldWithoutIndexingIndexedName() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+  @Test public void literalHeaderFieldWithoutIndexingNewName() throws IOException {
+    List<Header> headerBlock = headerEntries("custom-key", "custom-header");
 
-    out.write(0x44); // == Literal not indexed ==
-                     // Indexed name (idx = 4) -> :path
-    out.write(0x0c); // Literal value (len = 12)
-    out.write("/sample/path".getBytes(), 0, 12);
+    ByteArrayOutputStream expectedBytes = new ByteArrayOutputStream();
 
-    bytesIn.set(out.toByteArray());
+    expectedBytes.write(0x40); // Not indexed
+    expectedBytes.write(0x0a); // Literal name (len = 10)
+    expectedBytes.write("custom-key".getBytes(), 0, 10);
+
+    expectedBytes.write(0x0d); // Literal value (len = 13)
+    expectedBytes.write("custom-header".getBytes(), 0, 13);
+
+    hpackWriter.writeHeaders(headerBlock);
+    assertArrayEquals(expectedBytes.toByteArray(), bytesOut.toByteArray());
+
+    bytesIn.set(bytesOut.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries(":path", "/sample/path"), hpackReader.getAndReset());
+    assertEquals(headerBlock, hpackReader.getAndReset());
+  }
+
+  /**
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.2
+   */
+  @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
+    List<Header> headerBlock = headerEntries(":path", "/sample/path");
+
+    ByteArrayOutputStream expectedBytes = new ByteArrayOutputStream();
+    expectedBytes.write(0x44); // == Literal not indexed ==
+                               // Indexed name (idx = 4) -> :path
+    expectedBytes.write(0x0c); // Literal value (len = 12)
+    expectedBytes.write("/sample/path".getBytes(), 0, 12);
+
+    hpackWriter.writeHeaders(headerBlock);
+    assertArrayEquals(expectedBytes.toByteArray(), bytesOut.toByteArray());
+
+    bytesIn.set(bytesOut.toByteArray());
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+
+    assertEquals(0, hpackReader.headerCount);
+
+    assertEquals(headerBlock, hpackReader.getAndReset());
   }
 
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.3
    */
-  @Test public void decodeIndexedHeaderField() throws IOException {
+  @Test public void readIndexedHeaderField() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     out.write(0x82); // == Indexed - Add ==
@@ -264,7 +299,7 @@ public class HpackDraft05Test {
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.4
    */
-  @Test public void decodeIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
+  @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
 
     out.write(0x82); // == Indexed - Add ==
@@ -284,24 +319,24 @@ public class HpackDraft05Test {
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.2
    */
-  @Test public void decodeRequestExamplesWithoutHuffman() throws IOException {
+  @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     ByteArrayOutputStream out = firstRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkFirstRequestWithoutHuffman();
+    checkReadFirstRequestWithoutHuffman();
 
     out = secondRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkSecondRequestWithoutHuffman();
+    checkReadSecondRequestWithoutHuffman();
 
     out = thirdRequestWithoutHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkThirdRequestWithoutHuffman();
+    checkReadThirdRequestWithoutHuffman();
   }
 
   private ByteArrayOutputStream firstRequestWithoutHuffman() {
@@ -321,7 +356,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkFirstRequestWithoutHuffman() {
+  private void checkReadFirstRequestWithoutHuffman() {
     assertEquals(4, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
@@ -366,7 +401,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkSecondRequestWithoutHuffman() {
+  private void checkReadSecondRequestWithoutHuffman() {
     assertEquals(5, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
@@ -427,7 +462,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkThirdRequestWithoutHuffman() {
+  private void checkReadThirdRequestWithoutHuffman() {
     assertEquals(8, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
@@ -486,24 +521,24 @@ public class HpackDraft05Test {
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.3
    */
-  @Test public void decodeRequestExamplesWithHuffman() throws IOException {
+  @Test public void readRequestExamplesWithHuffman() throws IOException {
     ByteArrayOutputStream out = firstRequestWithHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkFirstRequestWithHuffman();
+    checkReadFirstRequestWithHuffman();
 
     out = secondRequestWithHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkSecondRequestWithHuffman();
+    checkReadSecondRequestWithHuffman();
 
     out = thirdRequestWithHuffman();
     bytesIn.set(out.toByteArray());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
-    checkThirdRequestWithHuffman();
+    checkReadThirdRequestWithHuffman();
   }
 
   private ByteArrayOutputStream firstRequestWithHuffman() {
@@ -528,7 +563,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkFirstRequestWithHuffman() {
+  private void checkReadFirstRequestWithHuffman() {
     assertEquals(4, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
@@ -577,7 +612,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkSecondRequestWithHuffman() {
+  private void checkReadSecondRequestWithHuffman() {
     assertEquals(5, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
@@ -647,7 +682,7 @@ public class HpackDraft05Test {
     return out;
   }
 
-  private void checkThirdRequestWithHuffman() {
+  private void checkReadThirdRequestWithHuffman() {
     assertEquals(8, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
@@ -702,10 +737,6 @@ public class HpackDraft05Test {
         ":path", "/index.html",
         "custom-key", "custom-value"), hpackReader.getAndReset());
   }
-
-  private ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final HpackDraft05.Writer hpackWriter =
-      new HpackDraft05.Writer(new DataOutputStream(bytesOut));
 
   @Test public void readSingleByteInt() throws IOException {
     assertEquals(10, newReader(byteStream()).readInt(10, 31));
@@ -766,17 +797,6 @@ public class HpackDraft05Test {
     assertBytes(0);
     assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(true));
     assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
-  }
-
-  @Test public void headersRoundTrip() throws IOException {
-    List<Header> sentHeaders = headerEntries("name", "value");
-    hpackWriter.writeHeaders(sentHeaders);
-    ByteArrayInputStream bytesIn = new ByteArrayInputStream(bytesOut.toByteArray());
-    HpackDraft05.Reader reader = newReader(bytesIn);
-    reader.readHeaders();
-    reader.emitReferenceSet();
-    List<Header> receivedHeaders = reader.getAndReset();
-    assertEquals(sentHeaders, receivedHeaders);
   }
 
   private HpackDraft05.Reader newReader(InputStream input) {
