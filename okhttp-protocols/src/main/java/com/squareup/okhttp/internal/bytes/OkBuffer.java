@@ -51,6 +51,91 @@ public final class OkBuffer implements Source, Sink {
     return byteCount;
   }
 
+  /** Reads a byte from the front of this buffer and returns it. */
+  public byte readByte() {
+    if (byteCount < 1) throw new IllegalArgumentException("byteCount < 1: " + byteCount);
+
+    Segment segment = head;
+    int pos = segment.pos;
+    int limit = segment.limit;
+
+    byte[] data = segment.data;
+    byte b = data[pos++];
+    byteCount -= 1;
+
+    if (pos == limit) {
+      head = segment.pop();
+      SegmentPool.INSTANCE.recycle(segment);
+    } else {
+      segment.pos = pos;
+    }
+
+    return b;
+  }
+
+  /** Reads a Big-Endian short from the front of this buffer and returns it. */
+  public short readShort() {
+    if (byteCount < 2) throw new IllegalArgumentException("byteCount < 2: " + byteCount);
+
+    Segment segment = head;
+    int pos = segment.pos;
+    int limit = segment.limit;
+
+    // If the short is split across multiple segments, delegate to readByte().
+    if (limit - pos < 2) {
+      int s = (readByte() & 0xff) << 8
+          |   (readByte() & 0xff);
+      return (short) s;
+    }
+
+    byte[] data = segment.data;
+    int s = (data[pos++] & 0xff) << 8
+        |   (data[pos++] & 0xff);
+    byteCount -= 2;
+
+    if (pos == limit) {
+      head = segment.pop();
+      SegmentPool.INSTANCE.recycle(segment);
+    } else {
+      segment.pos = pos;
+    }
+
+    return (short) s;
+  }
+
+  /** Reads a Big-Endian int from the front of this buffer and returns it. */
+  public int readInt() {
+    if (byteCount < 4) throw new IllegalArgumentException("byteCount < 4: " + byteCount);
+
+    Segment segment = head;
+    int pos = segment.pos;
+    int limit = segment.limit;
+
+    // If the int is split across multiple segments, delegate to readByte().
+    if (limit - pos < 4) {
+      return (readByte() & 0xff) << 24
+          |  (readByte() & 0xff) << 16
+          |  (readByte() & 0xff) << 8
+          |  (readByte() & 0xff);
+    }
+
+    byte[] data = segment.data;
+    int i = (data[pos++] & 0xff) << 24
+        |   (data[pos++] & 0xff) << 16
+        |   (data[pos++] & 0xff) << 8
+        |   (data[pos++] & 0xff);
+    byteCount -= 4;
+
+    if (pos == limit) {
+      head = segment.pop();
+      SegmentPool.INSTANCE.recycle(segment);
+    } else {
+      segment.pos = pos;
+    }
+
+    return i;
+  }
+
   /** Removes {@code byteCount} bytes from this and returns them as a byte string. */
   public ByteString readByteString(int byteCount) {
     return new ByteString(readBytes(byteCount));
@@ -87,20 +172,21 @@ public final class OkBuffer implements Source, Sink {
 
   /** Appends {@code byteString} to this. */
   public void write(ByteString byteString) {
-    write(byteString.data);
+    write(byteString.data, 0, byteString.data.length);
   }
 
   /** Encodes {@code string} as UTF-8 and appends the bytes to this. */
   public void writeUtf8(String string) {
-    write(string.getBytes(Util.UTF_8));
+    byte[] data = string.getBytes(Util.UTF_8);
+    write(data, 0, data.length);
   }
 
-  private void write(byte[] data) {
-    int offset = 0;
-    while (offset < data.length) {
-      Segment tail = writableSegment();
+  void write(byte[] data, int offset, int byteCount) {
+    int limit = offset + byteCount;
+    while (offset < limit) {
+      Segment tail = writableSegment(1);
 
-      int toCopy = Math.min(data.length - offset, Segment.SIZE - tail.limit);
+      int toCopy = Math.min(limit - offset, Segment.SIZE - tail.limit);
       System.arraycopy(data, offset, tail.data, tail.limit, toCopy);
 
       offset += toCopy;
@@ -110,15 +196,54 @@ public final class OkBuffer implements Source, Sink {
     this.byteCount += data.length;
   }
 
-  /** Returns a tail segment that we can write bytes to, creating it if necessary. */
-  Segment writableSegment() {
+  /** Appends a Big-Endian byte to the end of this buffer. */
+  public OkBuffer writeByte(int b) {
+    Segment tail = writableSegment(1);
+    tail.data[tail.limit++] = (byte) b;
+    byteCount += 1;
+    return this;
+  }
+
+  /** Appends a Big-Endian short to the end of this buffer. */
+  public OkBuffer writeShort(int s) {
+    Segment tail = writableSegment(2);
+    byte[] data = tail.data;
+    int limit = tail.limit;
+    data[limit++] = (byte) ((s >> 8) & 0xff);
+    data[limit++] = (byte)  (s       & 0xff);
+    tail.limit = limit;
+    byteCount += 2;
+    return this;
+  }
+
+  /** Appends a Big-Endian int to the end of this buffer. */
+  public OkBuffer writeInt(int i) {
+    Segment tail = writableSegment(4);
+    byte[] data = tail.data;
+    int limit = tail.limit;
+    data[limit++] = (byte) ((i >> 24) & 0xff);
+    data[limit++] = (byte) ((i >> 16) & 0xff);
+    data[limit++] = (byte) ((i >>  8) & 0xff);
+    data[limit++] = (byte)  (i        & 0xff);
+    tail.limit = limit;
+    byteCount += 4;
+    return this;
+  }
+
+  /**
+   * Returns a tail segment that we can write at least {@code minimumCapacity}
+   * bytes to, creating it if necessary.
+   */
+  Segment writableSegment(int minimumCapacity) {
+    if (minimumCapacity < 1 || minimumCapacity > Segment.SIZE) throw new IllegalArgumentException();
+
     if (head == null) {
       head = SegmentPool.INSTANCE.take(); // Acquire a first segment.
       return head.next = head.prev = head;
     }
 
     Segment tail = head.prev;
-    if (tail.limit == Segment.SIZE) {
+    if (tail.limit + minimumCapacity > Segment.SIZE) {
       tail = tail.push(SegmentPool.INSTANCE.take()); // Append a new empty segment to fill up.
     }
     return tail;
@@ -264,14 +389,14 @@ public final class OkBuffer implements Source, Sink {
    */
   @Override public String toString() {
     if (byteCount > 0x100000) return super.toString();
-    char[] result = new char[(int) (byteCount * 2)];
+    int charCount = (int) (byteCount * 2);
+    char[] result = new char[charCount];
     int offset = 0;
-    for (Segment s = head; offset < byteCount; s = s.next) {
+    for (Segment s = head; offset < charCount; s = s.next) {
       for (int i = s.pos; i < s.limit; i++) {
         result[offset++] = HEX_DIGITS[(s.data[i] >> 4) & 0xf];
         result[offset++] = HEX_DIGITS[s.data[i] & 0xf];
       }
-      offset += s.limit - s.pos;
     }
     return new String(result);
   }

@@ -67,7 +67,7 @@ public final class OkBuffers {
           OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
         if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
         deadline.throwIfReached();
-        Segment tail = sink.writableSegment();
+        Segment tail = sink.writableSegment(1);
         int maxToCopy = (int) Math.min(byteCount, Segment.SIZE - tail.limit);
         int bytesRead = in.read(tail.data, tail.limit, maxToCopy);
         if (bytesRead == -1) return -1;
