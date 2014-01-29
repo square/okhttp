@@ -22,16 +22,11 @@ import java.io.IOException;
  */
 public interface Source {
   /**
-   * Removes {@code byteCount} bytes from this and appends them to {@code sink}.
-   * Returns the number of bytes actually written.
+   * Removes at least 1, and up to {@code byteCount} bytes from this and appends
+   * them to {@code sink}. Returns the number of bytes read, or -1 if this
+   * source is exhausted.
    */
   long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException;
-
-  /**
-   * Returns the index of {@code b} in this, or -1 if this source is exhausted
-   * first. This may cause this source to buffer a large number of bytes.
-   */
-  long indexOf(byte b, Deadline deadline) throws IOException;
 
   /**
    * Closes this source and releases the resources held by this source. It is an
