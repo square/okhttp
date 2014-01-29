@@ -40,8 +40,8 @@ public final class OkBuffer implements Source, Sink {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-  private Segment head;
-  private long byteCount;
+  Segment head;
+  long byteCount;
 
   public OkBuffer() {
   }
@@ -62,10 +62,7 @@ public final class OkBuffer implements Source, Sink {
   }
 
   private byte[] readBytes(int byteCount) {
-    if (byteCount > this.byteCount) {
-      throw new IllegalArgumentException(
-          String.format("requested %s > available %s", byteCount, this.byteCount));
-    }
+    checkByteCount(byteCount);
 
     int offset = 0;
     byte[] result = new byte[byteCount];
@@ -101,15 +98,7 @@ public final class OkBuffer implements Source, Sink {
   private void write(byte[] data) {
     int offset = 0;
     while (offset < data.length) {
-      if (head == null) {
-        head = SegmentPool.INSTANCE.take(); // Acquire a first segment.
-        head.next = head.prev = head;
-      }
-
-      Segment tail = head.prev;
-      if (tail.limit == Segment.SIZE) {
-        tail = tail.push(SegmentPool.INSTANCE.take()); // Append a new empty segment to fill up.
-      }
+      Segment tail = writableSegment();
 
       int toCopy = Math.min(data.length - offset, Segment.SIZE - tail.limit);
       System.arraycopy(data, offset, tail.data, tail.limit, toCopy);
@@ -119,6 +108,20 @@ public final class OkBuffer implements Source, Sink {
     }
 
     this.byteCount += data.length;
+  }
+
+  /** Returns a tail segment that we can write bytes to, creating it if necessary. */
+  Segment writableSegment() {
+    if (head == null) {
+      head = SegmentPool.INSTANCE.take(); // Acquire a first segment.
+      return head.next = head.prev = head;
+    }
+
+    Segment tail = head.prev;
+    if (tail.limit == Segment.SIZE) {
+      tail = tail.push(SegmentPool.INSTANCE.take()); // Append a new empty segment to fill up.
+    }
+    return tail;
   }
 
   @Override public void write(OkBuffer source, long byteCount, Deadline deadline) {
@@ -173,10 +176,7 @@ public final class OkBuffer implements Source, Sink {
     // yielding sink [51%, 91%, 30%] and source [62%, 82%].
 
     if (source == this) throw new IllegalArgumentException("source == this");
-    if (byteCount > source.byteCount) {
-      throw new IllegalArgumentException(
-          String.format("requested %s > available %s", byteCount, this.byteCount));
-    }
+    source.checkByteCount(byteCount);
 
     while (byteCount > 0) {
       // Is a prefix of the source's head segment all that we need to move?
@@ -214,14 +214,17 @@ public final class OkBuffer implements Source, Sink {
   }
 
   @Override public long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
-    if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (this.byteCount == 0) return -1L;
     if (byteCount > this.byteCount) byteCount = this.byteCount;
     sink.write(this, byteCount, deadline);
     return byteCount;
   }
 
-  @Override public long indexOf(byte b, Deadline deadline) throws IOException {
+  /**
+   * Returns the index of {@code b} in this, or -1 if this buffer does not
+   * contain {@code b}.
+   */
+  public long indexOf(byte b) throws IOException {
     Segment s = head;
     if (s == null) return -1L;
     long offset = 0L;
@@ -271,5 +274,16 @@ public final class OkBuffer implements Source, Sink {
       offset += s.limit - s.pos;
     }
     return new String(result);
+  }
+
+  /** Throws if this has fewer bytes than {@code requested}. */
+  void checkByteCount(long requested) {
+    if (requested < 0) {
+      throw new IllegalArgumentException("requested < 0: " + requested);
+    }
+    if (requested > this.byteCount) {
+      throw new IllegalArgumentException(
+          String.format("requested %s > available %s", requested, this.byteCount));
+    }
   }
 }

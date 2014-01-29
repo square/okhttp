@@ -15,10 +15,14 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -236,42 +240,80 @@ public final class OkBufferTest {
     OkBuffer buffer = new OkBuffer();
 
     // The segment is empty.
-    assertEquals(-1, buffer.indexOf((byte) 'a', Deadline.NONE));
+    assertEquals(-1, buffer.indexOf((byte) 'a'));
 
     // The segment has one value.
     buffer.writeUtf8("a"); // a
-    assertEquals(0, buffer.indexOf((byte) 'a', Deadline.NONE));
-    assertEquals(-1, buffer.indexOf((byte) 'b', Deadline.NONE));
+    assertEquals(0, buffer.indexOf((byte) 'a'));
+    assertEquals(-1, buffer.indexOf((byte) 'b'));
 
     // The segment has lots of data.
     buffer.writeUtf8(repeat('b', Segment.SIZE - 2)); // ab...b
-    assertEquals(0, buffer.indexOf((byte) 'a', Deadline.NONE));
-    assertEquals(1, buffer.indexOf((byte) 'b', Deadline.NONE));
-    assertEquals(-1, buffer.indexOf((byte) 'c', Deadline.NONE));
+    assertEquals(0, buffer.indexOf((byte) 'a'));
+    assertEquals(1, buffer.indexOf((byte) 'b'));
+    assertEquals(-1, buffer.indexOf((byte) 'c'));
 
     // The segment doesn't start at 0, it starts at 2.
     buffer.readUtf8(2); // b...b
-    assertEquals(-1, buffer.indexOf((byte) 'a', Deadline.NONE));
-    assertEquals(0, buffer.indexOf((byte) 'b', Deadline.NONE));
-    assertEquals(-1, buffer.indexOf((byte) 'c', Deadline.NONE));
+    assertEquals(-1, buffer.indexOf((byte) 'a'));
+    assertEquals(0, buffer.indexOf((byte) 'b'));
+    assertEquals(-1, buffer.indexOf((byte) 'c'));
 
     // The segment is full.
     buffer.writeUtf8("c"); // b...bc
-    assertEquals(-1, buffer.indexOf((byte) 'a', Deadline.NONE));
-    assertEquals(0, buffer.indexOf((byte) 'b', Deadline.NONE));
-    assertEquals(Segment.SIZE - 3, buffer.indexOf((byte) 'c', Deadline.NONE));
+    assertEquals(-1, buffer.indexOf((byte) 'a'));
+    assertEquals(0, buffer.indexOf((byte) 'b'));
+    assertEquals(Segment.SIZE - 3, buffer.indexOf((byte) 'c'));
 
     // The segment doesn't start at 2, it starts at 4.
     buffer.readUtf8(2); // b...bc
-    assertEquals(-1, buffer.indexOf((byte) 'a', Deadline.NONE));
-    assertEquals(0, buffer.indexOf((byte) 'b', Deadline.NONE));
-    assertEquals(Segment.SIZE - 5, buffer.indexOf((byte) 'c', Deadline.NONE));
+    assertEquals(-1, buffer.indexOf((byte) 'a'));
+    assertEquals(0, buffer.indexOf((byte) 'b'));
+    assertEquals(Segment.SIZE - 5, buffer.indexOf((byte) 'c'));
 
     // Two segments.
     buffer.writeUtf8("d"); // b...bcd, d is in the 2nd segment.
     assertEquals(asList(Segment.SIZE - 4, 1), buffer.segmentSizes());
-    assertEquals(Segment.SIZE - 4, buffer.indexOf((byte) 'd', Deadline.NONE));
-    assertEquals(-1, buffer.indexOf((byte) 'e', Deadline.NONE));
+    assertEquals(Segment.SIZE - 4, buffer.indexOf((byte) 'd'));
+    assertEquals(-1, buffer.indexOf((byte) 'e'));
+  }
+
+  @Test public void sinkFromOutputStream() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeUtf8("a");
+    data.writeUtf8(repeat('b', 9998));
+    data.writeUtf8("c");
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Sink sink = OkBuffers.sink(out);
+    sink.write(data, 3, Deadline.NONE);
+    assertEquals("abb", out.toString("UTF-8"));
+    sink.write(data, data.byteCount(), Deadline.NONE);
+    assertEquals("a" + repeat('b', 9998) + "c", out.toString("UTF-8"));
+  }
+
+  @Test public void sourceFromInputStream() throws Exception {
+    InputStream in = new ByteArrayInputStream(
+        ("a" + repeat('b', Segment.SIZE * 2) + "c").getBytes(UTF_8));
+
+    // Source: ab...bc
+    Source source = OkBuffers.source(in);
+    OkBuffer sink = new OkBuffer();
+
+    // Source: b...bc. Sink: abb.
+    assertEquals(3, source.read(sink, 3, Deadline.NONE));
+    assertEquals("abb", sink.readUtf8(3));
+
+    // Source: b...bc. Sink: b...b.
+    assertEquals(Segment.SIZE, source.read(sink, 20000, Deadline.NONE));
+    assertEquals(repeat('b', Segment.SIZE), sink.readUtf8((int) sink.byteCount()));
+
+    // Source: b...bc. Sink: b...bc.
+    assertEquals(Segment.SIZE - 1, source.read(sink, 20000, Deadline.NONE));
+    assertEquals(repeat('b', Segment.SIZE - 2) + "c", sink.readUtf8((int) sink.byteCount()));
+
+    // Source and sink are empty.
+    assertEquals(-1, source.read(sink, 1, Deadline.NONE));
   }
 
   private String repeat(char c, int count) {

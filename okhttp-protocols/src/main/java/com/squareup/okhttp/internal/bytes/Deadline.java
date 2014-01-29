@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,5 +45,10 @@ public class Deadline {
 
   public boolean reached() {
     return System.nanoTime() - deadlineNanos >= 0; // Subtract to avoid overflow!
+  }
+
+  public void throwIfReached() throws IOException {
+    // TODO: a more catchable exception type?
+    if (reached()) throw new IOException("Deadline reached");
   }
 }
