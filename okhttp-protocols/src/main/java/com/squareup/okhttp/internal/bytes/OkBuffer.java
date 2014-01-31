@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+
 /**
  * A collection of bytes in memory.
  *
@@ -147,7 +149,7 @@ public final class OkBuffer implements Source, Sink {
   }
 
   private byte[] readBytes(int byteCount) {
-    checkByteCount(byteCount);
+    checkOffsetAndCount(this.byteCount, 0, byteCount);
 
     int offset = 0;
     byte[] result = new byte[byteCount];
@@ -301,7 +303,7 @@ public final class OkBuffer implements Source, Sink {
     // yielding sink [51%, 91%, 30%] and source [62%, 82%].
 
     if (source == this) throw new IllegalArgumentException("source == this");
-    source.checkByteCount(byteCount);
+    checkOffsetAndCount(source.byteCount, 0, byteCount);
 
     while (byteCount > 0) {
       // Is a prefix of the source's head segment all that we need to move?
@@ -365,7 +367,6 @@ public final class OkBuffer implements Source, Sink {
   }
 
   @Override public void flush(Deadline deadline) {
-    throw new UnsupportedOperationException("Cannot flush() an OkBuffer");
   }
 
   @Override public void close(Deadline deadline) {
@@ -399,16 +400,5 @@ public final class OkBuffer implements Source, Sink {
       }
     }
     return new String(result);
-  }
-
-  /** Throws if this has fewer bytes than {@code requested}. */
-  void checkByteCount(long requested) {
-    if (requested < 0) {
-      throw new IllegalArgumentException("requested < 0: " + requested);
-    }
-    if (requested > this.byteCount) {
-      throw new IllegalArgumentException(
-          String.format("requested %s > available %s", requested, this.byteCount));
-    }
   }
 }

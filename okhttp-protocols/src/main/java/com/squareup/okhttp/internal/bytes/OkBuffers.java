@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+
 public final class OkBuffers {
   private OkBuffers() {
   }
@@ -28,7 +30,7 @@ public final class OkBuffers {
     return new Sink() {
       @Override public void write(OkBuffer source, long byteCount, Deadline deadline)
           throws IOException {
-        source.checkByteCount(byteCount);
+        checkOffsetAndCount(source.byteCount, 0, byteCount);
         while (byteCount > 0) {
           deadline.throwIfReached();
           Segment head = source.head;
@@ -60,6 +62,52 @@ public final class OkBuffers {
     };
   }
 
+  /**
+   * Returns an output stream that writes to {@code sink}. This may buffer data
+   * by deferring writes.
+   */
+  public static OutputStream outputStream(final Sink sink) {
+    return new OutputStream() {
+      final OkBuffer buffer = new OkBuffer(); // Buffer at most one segment of data.
+
+      @Override public void write(int b) throws IOException {
+        buffer.writeByte((byte) b);
+        if (buffer.byteCount == Segment.SIZE) {
+          sink.write(buffer, buffer.byteCount, Deadline.NONE);
+        }
+      }
+
+      @Override public void write(byte[] data, int offset, int byteCount) throws IOException {
+        checkOffsetAndCount(data.length, offset, byteCount);
+        int limit = offset + byteCount;
+        while (offset < limit) {
+          Segment onlySegment = buffer.writableSegment(1);
+          int toCopy = Math.min(limit - offset, Segment.SIZE - onlySegment.limit);
+          System.arraycopy(data, offset, onlySegment.data, onlySegment.limit, toCopy);
+          offset += toCopy;
+          onlySegment.limit += toCopy;
+          buffer.byteCount += toCopy;
+          if (buffer.byteCount == Segment.SIZE) {
+            sink.write(buffer, buffer.byteCount, Deadline.NONE);
+          }
+        }
+      }
+
+      @Override public void flush() throws IOException {
+        sink.write(buffer, buffer.byteCount, Deadline.NONE);
+        sink.flush(Deadline.NONE);
+      }
+
+      @Override public void close() throws IOException {
+        sink.close(Deadline.NONE);
+      }
+
+      @Override public String toString() {
+        return "outputStream(" + sink + ")";
+      }
+    };
+  }
+
   /** Returns a source that reads from {@code in}. */
   public static Source source(final InputStream in) {
     return new Source() {
@@ -82,6 +130,59 @@ public final class OkBuffers {
 
       @Override public String toString() {
         return "source(" + in + ")";
+      }
+    };
+  }
+
+  /**
+   * Returns an input stream that reads from {@code source}. This may buffer
+   * data by reading extra data eagerly.
+   */
+  public static InputStream inputStream(final Source source) {
+    return new InputStream() {
+      final OkBuffer buffer = new OkBuffer();
+
+      @Override public int read() throws IOException {
+        if (buffer.byteCount == 0) {
+          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
+          if (count == -1) return -1;
+        }
+        return buffer.readByte();
+      }
+
+      @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
+        checkOffsetAndCount(data.length, offset, byteCount);
+
+        if (buffer.byteCount == 0) {
+          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
+          if (count == -1) return -1;
+        }
+
+        Segment head = buffer.head;
+        int toCopy = Math.min(byteCount, head.limit - head.pos);
+        System.arraycopy(head.data, head.pos, data, offset, toCopy);
+
+        head.pos += toCopy;
+        buffer.byteCount -= toCopy;
+
+        if (head.pos == head.limit) {
+          buffer.head = head.pop();
+          SegmentPool.INSTANCE.recycle(head);
+        }
+
+        return toCopy;
+      }
+
+      @Override public int available() throws IOException {
+        return (int) Math.min(buffer.byteCount, Integer.MAX_VALUE);
+      }
+
+      @Override public void close() throws IOException {
+        super.close();
+      }
+
+      @Override public String toString() {
+        return "inputStream(" + source + ")";
       }
     };
   }
