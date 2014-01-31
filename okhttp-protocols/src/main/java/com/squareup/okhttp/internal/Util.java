@@ -82,7 +82,7 @@ public final class Util {
     return -1;
   }
 
-  public static void checkOffsetAndCount(int arrayLength, int offset, int count) {
+  public static void checkOffsetAndCount(long arrayLength, long offset, long count) {
     if ((offset | count) < 0 || offset > arrayLength || arrayLength - offset < count) {
       throw new ArrayIndexOutOfBoundsException();
     }

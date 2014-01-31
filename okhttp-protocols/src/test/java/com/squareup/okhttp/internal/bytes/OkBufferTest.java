@@ -17,7 +17,9 @@ package com.squareup.okhttp.internal.bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -41,7 +43,7 @@ public final class OkBufferTest {
     try {
       buffer.readUtf8(1);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (ArrayIndexOutOfBoundsException expected) {
     }
   }
 
@@ -292,6 +294,26 @@ public final class OkBufferTest {
     assertEquals("a" + repeat('b', 9998) + "c", out.toString("UTF-8"));
   }
 
+  @Test public void outputStreamFromSink() throws Exception {
+    OkBuffer sink = new OkBuffer();
+    OutputStream out = OkBuffers.outputStream(sink);
+    out.write('a');
+    out.write(repeat('b', 9998).getBytes(UTF_8));
+    out.write('c');
+    out.flush();
+    assertEquals("a" + repeat('b', 9998) + "c", sink.readUtf8(10000));
+  }
+
+  @Test public void outputStreamFromSinkBounds() throws Exception {
+    OkBuffer sink = new OkBuffer();
+    OutputStream out = OkBuffers.outputStream(sink);
+    try {
+      out.write(new byte[100], 50, 51);
+      fail();
+    } catch (ArrayIndexOutOfBoundsException expected) {
+    }
+  }
+
   @Test public void sourceFromInputStream() throws Exception {
     InputStream in = new ByteArrayInputStream(
         ("a" + repeat('b', Segment.SIZE * 2) + "c").getBytes(UTF_8));
@@ -314,6 +336,62 @@ public final class OkBufferTest {
 
     // Source and sink are empty.
     assertEquals(-1, source.read(sink, 1, Deadline.NONE));
+  }
+
+  @Test public void sourceFromInputStreamBounds() throws Exception {
+    Source source = OkBuffers.source(new ByteArrayInputStream(new byte[100]));
+    try {
+      source.read(new OkBuffer(), -1, Deadline.NONE);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void inputStreamFromSource() throws Exception {
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("a");
+    source.writeUtf8(repeat('b', Segment.SIZE));
+    source.writeUtf8("c");
+
+    InputStream in = OkBuffers.inputStream(source);
+    assertEquals(0, in.available());
+    assertEquals(Segment.SIZE + 2, source.byteCount());
+
+    // Reading one byte buffers a full segment.
+    assertEquals('a', in.read());
+    assertEquals(Segment.SIZE - 1, in.available());
+    assertEquals(2, source.byteCount());
+
+    // Reading as much as possible reads the rest of that buffered segment.
+    byte[] data = new byte[Segment.SIZE * 2];
+    assertEquals(Segment.SIZE - 1, in.read(data, 0, data.length));
+    assertEquals(repeat('b', Segment.SIZE - 1), new String(data, 0, Segment.SIZE - 1, UTF_8));
+    assertEquals(2, source.byteCount());
+
+    // Continuing to read buffers the next segment.
+    assertEquals('b', in.read());
+    assertEquals(1, in.available());
+    assertEquals(0, source.byteCount());
+
+    // Continuing to read reads from the buffer.
+    assertEquals('c', in.read());
+    assertEquals(0, in.available());
+    assertEquals(0, source.byteCount());
+
+    // Once we've exhausted the source, we're done.
+    assertEquals(-1, in.read());
+    assertEquals(0, source.byteCount());
+  }
+
+  @Test public void inputStreamFromSourceBounds() throws IOException {
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', 100));
+    InputStream in = OkBuffers.inputStream(source);
+    try {
+      in.read(new byte[100], 50, 51);
+      fail();
+    } catch (ArrayIndexOutOfBoundsException expected) {
+    }
   }
 
   @Test public void writeBytes() throws Exception {
