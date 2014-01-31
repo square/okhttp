@@ -1280,6 +1280,7 @@ public final class URLConnectionTest {
     assertValidRequestMethod("OPTIONS");
     assertValidRequestMethod("POST");
     assertValidRequestMethod("PUT");
+    assertValidRequestMethod("PATCH");
     assertValidRequestMethod("TRACE");
   }
 

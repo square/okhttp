@@ -749,6 +749,10 @@ public final class HttpResponseCacheTest {
     testRequestMethod("PUT", false);
   }
 
+  @Test public void requestMethodPatchIsNotCached() throws Exception {
+    testRequestMethod("PATCH", false);
+  }
+
   @Test public void requestMethodDeleteIsNotCached() throws Exception {
     testRequestMethod("DELETE", false);
   }
@@ -786,6 +790,10 @@ public final class HttpResponseCacheTest {
 
   @Test public void putInvalidatesCache() throws Exception {
     testMethodInvalidates("PUT");
+  }
+
+  @Test public void patchInvalidatesCache() throws Exception {
+    testMethodInvalidates("PATCH");
   }
 
   @Test public void deleteMethodInvalidatesCache() throws Exception {
@@ -1825,7 +1833,7 @@ public final class HttpResponseCacheTest {
 
   private void addRequestBodyIfNecessary(String requestMethod, HttpURLConnection invalidate)
       throws IOException {
-    if (requestMethod.equals("POST") || requestMethod.equals("PUT")) {
+    if (requestMethod.equals("POST") || requestMethod.equals("PUT") || requestMethod.equals("PATCH") ) {
       invalidate.setDoOutput(true);
       OutputStream requestBody = invalidate.getOutputStream();
       requestBody.write('x');

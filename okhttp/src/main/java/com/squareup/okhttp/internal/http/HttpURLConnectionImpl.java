@@ -34,6 +34,7 @@ import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,6 +68,22 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
   private static final int MAX_REDIRECTS = 20;
+
+  /**
+   * The subset of HTTP methods that the user may select via {@link
+   * #setRequestMethod(String)}.
+   */
+  private static final String[] PERMITTED_USER_METHODS = {
+    "OPTIONS",
+    "GET",
+    "HEAD",
+    "POST",
+    "PUT",
+    "DELETE",
+    "TRACE",
+    "PATCH"
+    // Note: we don't allow users to specify "CONNECT"
+  };
 
   final OkHttpClient client;
 
@@ -587,4 +604,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   @Override public final void setSelectedProxy(Proxy proxy) {
     this.selectedProxy = proxy;
   }
+
+  @Override public void setRequestMethod(String method) throws ProtocolException {
+    if (connected) throw new ProtocolException("Connection already established");
+
+    for (String permittedUserMethod : PERMITTED_USER_METHODS) {
+      if (permittedUserMethod.equals(method)) {
+        this.method = permittedUserMethod;
+        return;
+      }
+    }
+
+    throw new ProtocolException("Unknown method '" + method + "'; must be one of "
+                                + Arrays.toString(PERMITTED_USER_METHODS));
+    }
 }

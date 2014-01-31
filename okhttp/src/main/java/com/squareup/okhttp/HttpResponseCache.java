@@ -249,8 +249,8 @@ public final class HttpResponseCache extends ResponseCache {
    * cache.
    */
   private boolean maybeRemove(String requestMethod, URI uri) {
-    if (requestMethod.equals("POST") || requestMethod.equals("PUT") || requestMethod.equals(
-        "DELETE")) {
+    if (requestMethod.equals("POST") || requestMethod.equals("PUT")
+        || requestMethod.equals("PATCH") || requestMethod.equals("DELETE")) {
       try {
         cache.remove(uriToKey(uri));
       } catch (IOException ignored) {

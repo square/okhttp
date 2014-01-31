@@ -258,6 +258,10 @@ import java.util.Set;
       return method("PUT", body);
     }
 
+    public Builder patch(Body body) {
+      return method("PATCH", body);
+    }
+
     public Builder method(String method, Body body) {
       if (method == null || method.length() == 0) {
         throw new IllegalArgumentException("method == null || method.length() == 0");
