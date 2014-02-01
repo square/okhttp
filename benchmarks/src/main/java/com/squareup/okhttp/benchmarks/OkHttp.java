@@ -18,7 +18,6 @@ package com.squareup.okhttp.benchmarks;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
@@ -62,18 +61,10 @@ class OkHttp extends SynchronousHttpClient {
     }
 
     public void run() {
-      byte[] buffer = new byte[1024];
       long start = System.nanoTime();
       try {
         HttpURLConnection urlConnection = client.open(url);
-        InputStream in = urlConnection.getInputStream();
-
-        // Consume the response body.
-        int total = 0;
-        for (int count; (count = in.read(buffer)) != -1; ) {
-          total += count;
-        }
-        in.close();
+        long total = readAllAndClose(urlConnection.getInputStream());
         long finish = System.nanoTime();
 
         if (VERBOSE) {

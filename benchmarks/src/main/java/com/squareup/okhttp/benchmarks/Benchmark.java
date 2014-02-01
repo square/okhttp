@@ -15,6 +15,9 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.google.caliper.Param;
+import com.google.caliper.model.ArbitraryMeasurement;
+import com.google.caliper.runner.CaliperMain;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
@@ -40,41 +43,57 @@ import javax.net.ssl.SSLContext;
  * It uses a local connection to a MockWebServer to measure how many identical
  * requests per second can be carried over a fixed number of threads.
  */
-public class Benchmark {
+public class Benchmark extends com.google.caliper.Benchmark {
   private static final int NUM_REPORTS = 10;
+  private static final boolean VERBOSE = false;
+
   private final Random random = new Random(0);
 
   /** Which client to run.*/
-  HttpClient httpClient = new NettyHttpClient();
+  @Param
+  Client client;
 
   /** How many concurrent requests to execute. */
-  int concurrencyLevel = 10;
+  @Param({ "1", "10" })
+  int concurrencyLevel;
 
   /** True to use TLS. */
   // TODO: compare different ciphers?
-  boolean tls = false;
+  @Param
+  boolean tls;
 
   /** True to use gzip content-encoding for the response body. */
-  boolean gzip = false;
+  @Param
+  boolean gzip;
 
   /** Don't combine chunked with SPDY_3 or HTTP_2; that's not allowed. */
-  boolean chunked = false;
+  @Param
+  boolean chunked;
 
   /** The size of the HTTP response body, in uncompressed bytes. */
-  int bodyByteCount = 1024 * 1024;
+  @Param({ "128", "1048576" })
+  int bodyByteCount;
 
   /** How many additional headers were included, beyond the built-in ones. */
-  int headerCount = 20;
+  @Param({ "0", "20" })
+  int headerCount;
 
   /** Which ALPN/NPN protocols are in use. Only useful with TLS. */
   List<Protocol> protocols = Arrays.asList(Protocol.HTTP_11);
 
-  public static void main(String[] args) throws Exception {
-    new Benchmark().run();
+  public static void main(String[] args) {
+    List<String> allArgs = new ArrayList<String>();
+    allArgs.add("--instrument");
+    allArgs.add("arbitrary");
+    allArgs.addAll(Arrays.asList(args));
+
+    CaliperMain.main(Benchmark.class, allArgs.toArray(new String[allArgs.size()]));
   }
 
-  public void run() throws Exception {
-    System.out.println(toString());
+  @ArbitraryMeasurement(description = "requests per second")
+  public double run() throws Exception {
+    if (VERBOSE) System.out.println(toString());
+    HttpClient httpClient = client.create();
 
     // Prepare the client & server
     httpClient.prepare(this);
@@ -85,6 +104,7 @@ public class Benchmark {
     long reportStart = System.nanoTime();
     long reportPeriod = TimeUnit.SECONDS.toNanos(1);
     int reports = 0;
+    double best = 0.0;
 
     // Run until we've printed enough reports.
     while (reports < NUM_REPORTS) {
@@ -93,7 +113,10 @@ public class Benchmark {
       double reportDuration = now - reportStart;
       if (reportDuration > reportPeriod) {
         double requestsPerSecond = requestCount / reportDuration * TimeUnit.SECONDS.toNanos(1);
-        System.out.println(String.format("Requests per second: %.1f", requestsPerSecond));
+        if (VERBOSE) {
+          System.out.println(String.format("Requests per second: %.1f", requestsPerSecond));
+        }
+        best = Math.max(best, requestsPerSecond);
         requestCount = 0;
         reportStart = now;
         reports++;
@@ -108,6 +131,8 @@ public class Benchmark {
       // The job queue is full. Take a break.
       sleep(10);
     }
+
+    return best;
   }
 
   @Override public String toString() {
@@ -117,10 +142,8 @@ public class Benchmark {
     if (chunked) modifiers.add("chunked");
     modifiers.addAll(protocols);
 
-    return String.format("%s %s\n"
-        + "bodyByteCount=%s headerCount=%s concurrencyLevel=%s",
-        httpClient.getClass().getSimpleName(), modifiers,
-        bodyByteCount, headerCount, concurrencyLevel);
+    return String.format("%s %s\nbodyByteCount=%s headerCount=%s concurrencyLevel=%s",
+        client, modifiers, bodyByteCount, headerCount, concurrencyLevel);
   }
 
   private void sleep(int millis) {
