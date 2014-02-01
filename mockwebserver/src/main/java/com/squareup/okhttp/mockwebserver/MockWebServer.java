@@ -106,6 +106,7 @@ public final class MockWebServer {
 
   private int port = -1;
   private boolean npnEnabled = true;
+  private List<Protocol> npnProtocols = Protocol.HTTP2_SPDY3_AND_HTTP;
 
   public int getPort() {
     if (port == -1) throw new IllegalStateException("Cannot retrieve port before calling play()");
@@ -163,6 +164,27 @@ public final class MockWebServer {
    */
   public void setNpnEnabled(boolean npnEnabled) {
     this.npnEnabled = npnEnabled;
+  }
+
+  /**
+   * Indicates the protocols supported by NPN on incoming HTTPS connections.
+   * This list is ignored when npn is disabled.
+   *
+   * @param protocols the protocols to use, in order of preference. The list
+   *     must contain "http/1.1". It must not contain null.
+   */
+  public void setNpnProtocols(List<Protocol> protocols) {
+    protocols = Util.immutableList(protocols);
+    if (!protocols.contains(Protocol.HTTP_11)) {
+      throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
+    }
+    if (protocols.contains(null)) {
+      throw new IllegalArgumentException("protocols must not contain null");
+    }
+    if (protocols.contains(ByteString.EMPTY)) {
+      throw new IllegalArgumentException("protocols contains an empty string");
+    }
+    this.npnProtocols = Util.immutableList(protocols);
   }
 
   /**
@@ -304,8 +326,7 @@ public final class MockWebServer {
           openClientSockets.put(socket, true);
 
           if (npnEnabled) {
-            // TODO: expose means to select which protocols to advertise.
-            Platform.get().setNpnProtocols(sslSocket, Protocol.HTTP2_SPDY3_AND_HTTP);
+            Platform.get().setNpnProtocols(sslSocket, npnProtocols);
           }
 
           sslSocket.startHandshake();

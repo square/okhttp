@@ -2834,10 +2834,11 @@ public final class URLConnectionTest {
    * -Xbootclasspath/p:/tmp/npn-boot-8.1.2.v20120308.jar}
    */
   private void enableNpn(Protocol protocol) {
-    server.useHttps(sslContext.getSocketFactory(), false);
-    server.setNpnEnabled(true);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_11));
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.setNpnEnabled(true);
+    server.setNpnProtocols(client.getProtocols());
   }
 }
