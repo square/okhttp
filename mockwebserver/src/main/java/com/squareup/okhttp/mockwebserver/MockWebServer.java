@@ -18,10 +18,10 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -72,7 +72,6 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
  * replays them upon request in sequence.
  */
 public final class MockWebServer {
-
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -381,7 +380,9 @@ public final class MockWebServer {
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
         }
-        logger.info("Received request: " + request + " and responded: " + response);
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("Received request: " + request + " and responded: " + response);
+        }
         sequenceNumber++;
         return true;
       }
@@ -611,8 +612,10 @@ public final class MockWebServer {
         throw new AssertionError(e);
       }
       writeResponse(stream, response);
-      logger.info("Received request: " + request + " and responded: " + response
-          + " protocol is " + protocol.name.utf8());
+      if (logger.isLoggable(Level.INFO)) {
+        logger.info("Received request: " + request + " and responded: " + response
+            + " protocol is " + protocol.name.utf8());
+      }
     }
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {

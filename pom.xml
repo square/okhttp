@@ -24,6 +24,7 @@
     <module>okhttp-protocols</module>
     <module>mockwebserver</module>
     <module>samples</module>
+    <module>benchmarks</module>
   </modules>
 
   <properties>
