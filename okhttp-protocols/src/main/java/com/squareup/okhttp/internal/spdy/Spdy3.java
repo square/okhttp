@@ -369,7 +369,6 @@ final class Spdy3 implements Variant {
       out.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       out.writeInt(streamId & 0x7fffffff);
       headerBlockBuffer.writeTo(out);
-      out.flush();
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)

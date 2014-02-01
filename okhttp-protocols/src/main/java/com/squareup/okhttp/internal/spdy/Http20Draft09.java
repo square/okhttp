@@ -317,6 +317,7 @@ public final class Http20Draft09 implements Variant {
     @Override public synchronized void connectionHeader() throws IOException {
       if (!client) return; // Nothing to write; servers don't send connection headers!
       out.write(CONNECTION_HEADER);
+      out.flush();
     }
 
     @Override
@@ -409,6 +410,7 @@ public final class Http20Draft09 implements Variant {
         out.writeInt(i & 0xffffff);
         out.writeInt(settings.get(i));
       }
+      out.flush();
     }
 
     @Override public synchronized void ping(boolean ack, int payload1, int payload2)
@@ -420,6 +422,7 @@ public final class Http20Draft09 implements Variant {
       frameHeader(length, type, flags, streamId);
       out.writeInt(payload1);
       out.writeInt(payload2);
+      out.flush();
     }
 
     @Override
@@ -436,6 +439,7 @@ public final class Http20Draft09 implements Variant {
       if (debugData.length > 0) {
         out.write(debugData);
       }
+      out.flush();
     }
 
     @Override public synchronized void windowUpdate(int streamId, long windowSizeIncrement)
@@ -449,6 +453,7 @@ public final class Http20Draft09 implements Variant {
       byte flags = FLAG_NONE;
       frameHeader(length, type, flags, streamId);
       out.writeInt((int) windowSizeIncrement);
+      out.flush();
     }
 
     @Override public void close() throws IOException {
