@@ -19,9 +19,11 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -81,6 +83,7 @@ public class NettyHttpClient implements HttpClient {
     EventLoopGroup group = new NioEventLoopGroup();
     bootstrap = new Bootstrap();
     bootstrap.group(group)
+        .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
         .channel(NioSocketChannel.class)
         .handler(channelInitializer);
   }
