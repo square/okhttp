@@ -15,6 +15,8 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -36,6 +38,16 @@ abstract class SynchronousHttpClient implements HttpClient {
 
   @Override public boolean acceptingJobs() {
     return executor.getQueue().size() < targetBacklog;
+  }
+
+  protected long readAllAndClose(InputStream in) throws IOException {
+    byte[] buffer = new byte[1024];
+    long total = 0;
+    for (int count; (count = in.read(buffer)) != -1; ) {
+      total += count;
+    }
+    in.close();
+    return total;
   }
 
   abstract Runnable request(URL url);

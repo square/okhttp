@@ -58,7 +58,6 @@ class UrlConnection extends SynchronousHttpClient {
     }
 
     public void run() {
-      byte[] buffer = new byte[1024];
       long start = System.nanoTime();
       try {
         HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
@@ -67,12 +66,7 @@ class UrlConnection extends SynchronousHttpClient {
           in = new GZIPInputStream(in);
         }
 
-        // Consume the response body.
-        int total = 0;
-        for (int count; (count = in.read(buffer)) != -1; ) {
-          total += count;
-        }
-        in.close();
+        long total = readAllAndClose(in);
         long finish = System.nanoTime();
 
         if (VERBOSE) {

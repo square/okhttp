@@ -48,7 +48,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 
 /** Netty isn't an HTTP client, but it's almost one. */
-public class NettyHttpClient implements HttpClient {
+class NettyHttpClient implements HttpClient {
   private static final boolean VERBOSE = false;
 
   // Guarded by this. Real apps need more capable connection management.
