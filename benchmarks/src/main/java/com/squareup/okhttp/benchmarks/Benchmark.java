@@ -138,6 +138,7 @@ public class Benchmark {
       SSLContext sslContext = SslContextBuilder.localhost();
       server.useHttps(sslContext.getSocketFactory(), false);
       server.setNpnEnabled(true);
+      server.setNpnProtocols(protocols);
     }
 
     final MockResponse response = newResponse();
