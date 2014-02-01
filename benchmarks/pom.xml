@@ -52,4 +52,30 @@
       <version>4.0.15.Final</version>
     </dependency>
   </dependencies>
+  <build>
+    <plugins>
+    <plugin>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>exec-maven-plugin</artifactId>
+      <executions>
+        <execution>
+          <goals>
+            <goal>java</goal>
+          </goals>
+        </execution>
+      </executions>
+      <configuration>
+        <executable>java</executable>
+        <arguments>
+          <argument>-Xms512m</argument>
+          <argument>-Xmx512m</argument>
+          <commandlineArgs>-Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</commandlineArgs>
+          <argument>-classpath</argument>
+          <classpath/>
+          <argument>com.squareup.okhttp.benchmarks.Benchmark</argument>
+        </arguments>
+      </configuration>
+    </plugin>
+    </plugins>
+  </build>
 </project>
