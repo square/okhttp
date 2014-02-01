@@ -18,6 +18,7 @@ package com.squareup.okhttp.benchmarks;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -25,7 +26,6 @@ import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +40,11 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
 /**
  * This benchmark is fake, but may be useful for certain relative comparisons.
@@ -51,8 +56,7 @@ public class Benchmark {
   private final Random random = new Random(0);
 
   /** Which client to run.*/
-  // TODO: implement additional candidates for other HTTP client libraries.
-  Candidate candidate = new OkHttp();
+  Candidate candidate = new UrlConnection(); // new OkHttp(); // new ApacheHttpClient();
 
   /** How many concurrent threads to execute. */
   int threadCount = 10;
@@ -62,10 +66,10 @@ public class Benchmark {
   boolean tls = false;
 
   /** True to use gzip content-encoding for the response body. */
-  boolean gzip = true;
+  boolean gzip = false;
 
   /** Don't combine chunked with SPDY_3 or HTTP_2; that's not allowed. */
-  boolean chunked = true;
+  boolean chunked = false;
 
   /** The size of the HTTP response body, in uncompressed bytes. */
   int bodyByteCount = 1024 * 1024;
@@ -216,8 +220,6 @@ public class Benchmark {
       client = new OkHttpClient();
       client.setProtocols(protocols);
 
-      URL.setURLStreamHandlerFactory(client);
-
       if (tls) {
         SSLContext sslContext = SslContextBuilder.localhost();
         SSLSocketFactory socketFactory = sslContext.getSocketFactory();
@@ -232,7 +234,45 @@ public class Benchmark {
     }
 
     @Override public Runnable request(String url) {
-      return new HttpURLConnectionRequest(url);
+      return new OkHttpRequest(client, url);
+    }
+  }
+
+  class UrlConnection implements Candidate {
+    @Override public void prepare() {
+      if (tls) {
+        SSLContext sslContext = SslContextBuilder.localhost();
+        SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
+          @Override public boolean verify(String s, SSLSession session) {
+            return true;
+          }
+        };
+        HttpsURLConnectionImpl.setDefaultHostnameVerifier(hostnameVerifier);
+        HttpsURLConnectionImpl.setDefaultSSLSocketFactory(socketFactory);
+      }
+    }
+
+    @Override public Runnable request(String url) {
+      return new UrlConnectionRequest(url);
+    }
+  }
+
+  class ApacheHttpClient implements Candidate {
+    private HttpClient client;
+
+    @Override public void prepare() {
+      ClientConnectionManager connectionManager = new PoolingClientConnectionManager();
+      if (tls) {
+        SSLContext sslContext = SslContextBuilder.localhost();
+        connectionManager.getSchemeRegistry().register(
+            new Scheme("https", 443, new org.apache.http.conn.ssl.SSLSocketFactory(sslContext)));
+      }
+      client = new DefaultHttpClient(connectionManager);
+    }
+
+    @Override public Runnable request(String url) {
+      return new ApacheHttpClientRequest(url, client);
     }
   }
 }
