@@ -15,10 +15,8 @@
  */
 package com.squareup.okhttp.benchmarks;
 
-import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -26,25 +24,16 @@ import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.PoolingClientConnectionManager;
 
 /**
  * This benchmark is fake, but may be useful for certain relative comparisons.
@@ -56,10 +45,10 @@ public class Benchmark {
   private final Random random = new Random(0);
 
   /** Which client to run.*/
-  Candidate candidate = new UrlConnection(); // new OkHttp(); // new ApacheHttpClient();
+  HttpClient httpClient = new NettyHttpClient();
 
-  /** How many concurrent threads to execute. */
-  int threadCount = 10;
+  /** How many concurrent requests to execute. */
+  int concurrencyLevel = 10;
 
   /** True to use TLS. */
   // TODO: compare different ciphers?
@@ -80,22 +69,18 @@ public class Benchmark {
   /** Which ALPN/NPN protocols are in use. Only useful with TLS. */
   List<Protocol> protocols = Arrays.asList(Protocol.HTTP_11);
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws Exception {
     new Benchmark().run();
   }
 
-  public void run() throws IOException {
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(threadCount, threadCount,
-        1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-
+  public void run() throws Exception {
     System.out.println(toString());
 
     // Prepare the client & server
-    candidate.prepare();
+    httpClient.prepare(this);
     MockWebServer server = startServer();
-    String url = server.getUrl("/").toString();
+    URL url = server.getUrl("/");
 
-    int targetBacklog = 10;
     int requestCount = 0;
     long reportStart = System.nanoTime();
     long reportPeriod = TimeUnit.SECONDS.toNanos(1);
@@ -115,8 +100,8 @@ public class Benchmark {
       }
 
       // Fill the job queue with work.
-      while (executor.getQueue().size() < targetBacklog) {
-        executor.execute(candidate.request(url));
+      while (httpClient.acceptingJobs()) {
+        httpClient.enqueue(url);
         requestCount++;
       }
 
@@ -133,9 +118,9 @@ public class Benchmark {
     modifiers.addAll(protocols);
 
     return String.format("%s %s\n"
-        + "bodyByteCount=%s headerCount=%s threadCount=%s",
-        candidate.getClass().getSimpleName(), modifiers,
-        bodyByteCount, headerCount, threadCount);
+        + "bodyByteCount=%s headerCount=%s concurrencyLevel=%s",
+        httpClient.getClass().getSimpleName(), modifiers,
+        bodyByteCount, headerCount, concurrencyLevel);
   }
 
   private void sleep(int millis) {
@@ -206,73 +191,5 @@ public class Benchmark {
     gzippedOut.write(bytes);
     gzippedOut.close();
     return bytesOut.toByteArray();
-  }
-
-  interface Candidate {
-    void prepare();
-    Runnable request(String url);
-  }
-
-  class OkHttp implements Candidate {
-    private OkHttpClient client;
-
-    @Override public void prepare() {
-      client = new OkHttpClient();
-      client.setProtocols(protocols);
-
-      if (tls) {
-        SSLContext sslContext = SslContextBuilder.localhost();
-        SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-          @Override public boolean verify(String s, SSLSession session) {
-            return true;
-          }
-        };
-        client.setSslSocketFactory(socketFactory);
-        client.setHostnameVerifier(hostnameVerifier);
-      }
-    }
-
-    @Override public Runnable request(String url) {
-      return new OkHttpRequest(client, url);
-    }
-  }
-
-  class UrlConnection implements Candidate {
-    @Override public void prepare() {
-      if (tls) {
-        SSLContext sslContext = SslContextBuilder.localhost();
-        SSLSocketFactory socketFactory = sslContext.getSocketFactory();
-        HostnameVerifier hostnameVerifier = new HostnameVerifier() {
-          @Override public boolean verify(String s, SSLSession session) {
-            return true;
-          }
-        };
-        HttpsURLConnectionImpl.setDefaultHostnameVerifier(hostnameVerifier);
-        HttpsURLConnectionImpl.setDefaultSSLSocketFactory(socketFactory);
-      }
-    }
-
-    @Override public Runnable request(String url) {
-      return new UrlConnectionRequest(url);
-    }
-  }
-
-  class ApacheHttpClient implements Candidate {
-    private HttpClient client;
-
-    @Override public void prepare() {
-      ClientConnectionManager connectionManager = new PoolingClientConnectionManager();
-      if (tls) {
-        SSLContext sslContext = SslContextBuilder.localhost();
-        connectionManager.getSchemeRegistry().register(
-            new Scheme("https", 443, new org.apache.http.conn.ssl.SSLSocketFactory(sslContext)));
-      }
-      client = new DefaultHttpClient(connectionManager);
-    }
-
-    @Override public Runnable request(String url) {
-      return new ApacheHttpClientRequest(url, client);
-    }
   }
 }
