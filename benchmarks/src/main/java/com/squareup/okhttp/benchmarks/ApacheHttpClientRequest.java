@@ -17,31 +17,35 @@ package com.squareup.okhttp.benchmarks;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 
-public class HttpURLConnectionRequest implements Runnable {
+class ApacheHttpClientRequest implements Runnable {
   private static final boolean VERBOSE = false;
-  private final URL url;
+  private final HttpClient client;
+  private final String url;
 
-  public HttpURLConnectionRequest(String url) {
-    try {
-      this.url = new URL(url);
-    } catch (MalformedURLException e) {
-      throw new AssertionError();
-    }
+  public ApacheHttpClientRequest(String url, HttpClient client) {
+    this.client = client;
+    this.url = url;
   }
 
   public void run() {
     byte[] buffer = new byte[1024];
     long start = System.nanoTime();
     try {
-      HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-      InputStream in = urlConnection.getInputStream();
+      HttpResponse response = client.execute(new HttpGet(url));
+      InputStream in = response.getEntity().getContent();
+      Header contentEncoding = response.getFirstHeader("Content-Encoding");
+      if (contentEncoding != null && contentEncoding.getValue().equals("gzip")) {
+        in = new GZIPInputStream(in);
+      }
 
-      // Discard the response body.
+      // Consume the response body.
       int total = 0;
       for (int count; (count = in.read(buffer)) != -1; ) {
         total += count;
