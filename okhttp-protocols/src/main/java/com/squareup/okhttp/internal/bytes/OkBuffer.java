@@ -370,7 +370,6 @@ public final class OkBuffer implements Source, Sink {
   }
 
   @Override public void close(Deadline deadline) {
-    throw new UnsupportedOperationException("Cannot close() an OkBuffer");
   }
 
   /** For testing. This returns the sizes of the segments in this buffer. */
