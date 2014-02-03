@@ -280,6 +280,23 @@ public final class OkBufferTest {
     assertEquals(-1, buffer.indexOf((byte) 'e'));
   }
 
+  @Test public void indexOfWithOffset() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    int halfSegment = Segment.SIZE / 2;
+    buffer.writeUtf8(repeat('a', halfSegment));
+    buffer.writeUtf8(repeat('b', halfSegment));
+    buffer.writeUtf8(repeat('c', halfSegment));
+    buffer.writeUtf8(repeat('d', halfSegment));
+    assertEquals(0, buffer.indexOf((byte) 'a', 0));
+    assertEquals(halfSegment - 1, buffer.indexOf((byte) 'a', halfSegment - 1));
+    assertEquals(halfSegment, buffer.indexOf((byte) 'b', halfSegment - 1));
+    assertEquals(halfSegment * 2, buffer.indexOf((byte) 'c', halfSegment - 1));
+    assertEquals(halfSegment * 3, buffer.indexOf((byte) 'd', halfSegment - 1));
+    assertEquals(halfSegment * 3, buffer.indexOf((byte) 'd', halfSegment * 2));
+    assertEquals(halfSegment * 3, buffer.indexOf((byte) 'd', halfSegment * 3));
+    assertEquals(halfSegment * 4 - 1, buffer.indexOf((byte) 'd', halfSegment * 4 - 1));
+  }
+
   @Test public void sinkFromOutputStream() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeUtf8("a");
@@ -492,6 +509,40 @@ public final class OkBufferTest {
     data.readUtf8(Segment.SIZE - 3);
     assertEquals(0xabcdef01, data.readInt());
     assertEquals(0, data.byteCount());
+  }
+
+  @Test public void byteAt() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8("a");
+    buffer.writeUtf8(repeat('b', Segment.SIZE));
+    buffer.writeUtf8("c");
+    assertEquals('a', buffer.byteAt(0));
+    assertEquals('a', buffer.byteAt(0)); // Peek doesn't mutate!
+    assertEquals('c', buffer.byteAt(buffer.byteCount - 1));
+    assertEquals('b', buffer.byteAt(buffer.byteCount - 2));
+    assertEquals('b', buffer.byteAt(buffer.byteCount - 3));
+  }
+
+  @Test public void byteAtOfEmptyBuffer() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    try {
+      buffer.byteAt(0);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  @Test public void skip() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8("a");
+    buffer.writeUtf8(repeat('b', Segment.SIZE));
+    buffer.writeUtf8("c");
+    buffer.skip(1);
+    assertEquals('b', buffer.readByte());
+    buffer.skip(Segment.SIZE - 2);
+    assertEquals('b', buffer.readByte());
+    buffer.skip(1);
+    assertEquals(0, buffer.byteCount());
   }
 
   private String repeat(char c, int count) {

@@ -24,7 +24,8 @@ import java.util.zip.Inflater;
 public final class InflaterSource implements Source {
   private final Source source;
   private final Inflater inflater;
-  private final OkBuffer buffer = new OkBuffer();
+  /** This holds bytes read from the source, but not yet inflated. */
+  private final OkBuffer buffer;
 
   /**
    * When we call Inflater.setInput(), the inflater keeps our byte array until
@@ -35,10 +36,15 @@ public final class InflaterSource implements Source {
   private boolean closed;
 
   public InflaterSource(Source source, Inflater inflater) {
+    this(source, inflater, new OkBuffer());
+  }
+
+  InflaterSource(Source source, Inflater inflater, OkBuffer buffer) {
     if (source == null) throw new IllegalArgumentException("source == null");
     if (inflater == null) throw new IllegalArgumentException("inflater == null");
     this.source = source;
     this.inflater = inflater;
+    this.buffer = buffer;
   }
 
   @Override public long read(
@@ -50,16 +56,8 @@ public final class InflaterSource implements Source {
     while (true) {
       boolean sourceExhausted = false;
       if (inflater.needsInput()) {
-        // Release buffer bytes from the inflater.
-        if (bufferBytesHeldByInflater > 0) {
-          Segment head = buffer.head;
-          head.pos += bufferBytesHeldByInflater;
-          buffer.byteCount -= bufferBytesHeldByInflater;
-          if (head.pos == head.limit) {
-            buffer.head = head.pop();
-            SegmentPool.INSTANCE.recycle(head);
-          }
-        }
+        releaseInflatedBytes();
+        if (inflater.getRemaining() != 0) throw new IllegalStateException("?"); // TODO: possible?
 
         // Refill the buffer with compressed data from the source.
         if (buffer.byteCount == 0) {
@@ -83,7 +81,10 @@ public final class InflaterSource implements Source {
           sink.byteCount += bytesInflated;
           return bytesInflated;
         }
-        if (inflater.finished() || inflater.needsDictionary()) return -1;
+        if (inflater.finished() || inflater.needsDictionary()) {
+          releaseInflatedBytes();
+          return -1;
+        }
         if (sourceExhausted) throw new EOFException("source exhausted prematurely");
       } catch (DataFormatException e) {
         throw new IOException(e);
@@ -91,9 +92,18 @@ public final class InflaterSource implements Source {
     }
   }
 
+  /** When the inflater has processed compressed data, remove it from the buffer. */
+  private void releaseInflatedBytes() {
+    if (bufferBytesHeldByInflater == 0) return;
+    int toRelease = bufferBytesHeldByInflater - inflater.getRemaining();
+    bufferBytesHeldByInflater -= toRelease;
+    buffer.skip(toRelease);
+  }
+
   @Override public void close(Deadline deadline) throws IOException {
     if (closed) return;
     inflater.end();
+    buffer.clear();
     closed = true;
     source.close(deadline);
   }
