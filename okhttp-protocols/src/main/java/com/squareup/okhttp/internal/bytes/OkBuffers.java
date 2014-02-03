@@ -94,11 +94,12 @@ public final class OkBuffers {
       }
 
       @Override public void flush() throws IOException {
-        sink.write(buffer, buffer.byteCount, Deadline.NONE);
+        sink.write(buffer, buffer.byteCount, Deadline.NONE); // Flush the buffer.
         sink.flush(Deadline.NONE);
       }
 
       @Override public void close() throws IOException {
+        sink.write(buffer, buffer.byteCount, Deadline.NONE); // Flush the buffer.
         sink.close(Deadline.NONE);
       }
 
