@@ -24,10 +24,11 @@ import java.util.concurrent.TimeUnit;
 
 /** Any HTTP client with a blocking API. */
 abstract class SynchronousHttpClient implements HttpClient {
-  int targetBacklog = 10;
   ThreadPoolExecutor executor;
+  int targetBacklog;
 
   @Override public void prepare(Benchmark benchmark) {
+    this.targetBacklog = benchmark.targetBacklog;
     executor = new ThreadPoolExecutor(benchmark.concurrencyLevel, benchmark.concurrencyLevel,
         1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
   }
@@ -40,7 +41,7 @@ abstract class SynchronousHttpClient implements HttpClient {
     return executor.getQueue().size() < targetBacklog;
   }
 
-  protected long readAllAndClose(InputStream in) throws IOException {
+  static long readAllAndClose(InputStream in) throws IOException {
     byte[] buffer = new byte[1024];
     long total = 0;
     for (int count; (count = in.read(buffer)) != -1; ) {

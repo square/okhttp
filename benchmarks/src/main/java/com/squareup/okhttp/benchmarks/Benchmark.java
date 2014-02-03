@@ -57,6 +57,10 @@ public class Benchmark extends com.google.caliper.Benchmark {
   @Param({ "1", "10" })
   int concurrencyLevel;
 
+  /** How many requests to enqueue to await threads to execute them. */
+  @Param({ "10" })
+  int targetBacklog;
+
   /** True to use TLS. */
   // TODO: compare different ciphers?
   @Param
@@ -129,7 +133,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
       }
 
       // The job queue is full. Take a break.
-      sleep(10);
+      sleep(1);
     }
 
     return best;

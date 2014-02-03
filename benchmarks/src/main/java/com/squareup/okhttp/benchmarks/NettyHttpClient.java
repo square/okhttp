@@ -25,7 +25,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -43,8 +42,8 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.ssl.SslHandler;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -54,14 +53,17 @@ class NettyHttpClient implements HttpClient {
   private static final boolean VERBOSE = false;
 
   // Guarded by this. Real apps need more capable connection management.
-  private final List<HttpChannel> freeChannels = new ArrayList<HttpChannel>();
-  private int totalChannels = 0;
+  private final Deque<HttpChannel> freeChannels = new ArrayDeque<HttpChannel>();
+  private final Deque<URL> backlog = new ArrayDeque<URL>();
 
+  private int totalChannels = 0;
   private int concurrencyLevel;
+  private int targetBacklog;
   private Bootstrap bootstrap;
 
   @Override public void prepare(final Benchmark benchmark) {
     this.concurrencyLevel = benchmark.concurrencyLevel;
+    this.targetBacklog = benchmark.targetBacklog;
 
     ChannelInitializer<SocketChannel> channelInitializer = new ChannelInitializer<SocketChannel>() {
       @Override public void initChannel(SocketChannel channel) throws Exception {
@@ -80,38 +82,55 @@ class NettyHttpClient implements HttpClient {
       }
     };
 
-    EventLoopGroup group = new NioEventLoopGroup();
     bootstrap = new Bootstrap();
-    bootstrap.group(group)
+    bootstrap.group(new NioEventLoopGroup(concurrencyLevel))
         .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
         .channel(NioSocketChannel.class)
         .handler(channelInitializer);
   }
 
   @Override public void enqueue(URL url) throws Exception {
-    acquireChannel(url).sendRequest(url);
+    HttpChannel httpChannel = null;
+    synchronized (this) {
+      if (!freeChannels.isEmpty()) {
+        httpChannel = freeChannels.pop();
+      } else if (totalChannels < concurrencyLevel) {
+        totalChannels++; // Create a new channel. (outside of the synchronized block).
+      } else {
+        backlog.add(url); // Enqueue this for later, to be picked up when another request completes.
+        return;
+      }
+    }
+    if (httpChannel == null) {
+      Channel channel = bootstrap.connect(url.getHost(), Util.getEffectivePort(url))
+          .sync().channel();
+      httpChannel = (HttpChannel) channel.pipeline().last();
+    }
+    httpChannel.sendRequest(url);
   }
 
   @Override public synchronized boolean acceptingJobs() {
+    return backlog.size() < targetBacklog || hasFreeChannels();
+  }
+
+  private boolean hasFreeChannels() {
     int activeChannels = totalChannels - freeChannels.size();
     return activeChannels < concurrencyLevel;
   }
 
-  private HttpChannel acquireChannel(URL url) throws InterruptedException {
+  private void release(HttpChannel httpChannel) {
+    URL url;
     synchronized (this) {
-      if (!freeChannels.isEmpty()) {
-        return freeChannels.remove(freeChannels.size() - 1);
-      } else {
-        totalChannels++;
+      url = backlog.pop();
+      if (url == null) {
+        // There were no URLs in the backlog. Pool this channel for later.
+        freeChannels.push(httpChannel);
+        return;
       }
     }
 
-    Channel channel = bootstrap.connect(url.getHost(), Util.getEffectivePort(url)).sync().channel();
-    return (HttpChannel) channel.pipeline().last();
-  }
-
-  private synchronized void release(HttpChannel httpChannel) {
-    freeChannels.add(httpChannel);
+    // We removed a URL from the backlog. Schedule it right away.
+    httpChannel.sendRequest(url);
   }
 
   class HttpChannel extends SimpleChannelInboundHandler<HttpObject> {

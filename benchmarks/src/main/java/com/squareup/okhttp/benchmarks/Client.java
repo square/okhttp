@@ -22,6 +22,12 @@ enum Client {
     }
   },
 
+  OkHttpAsync {
+    @Override HttpClient create() {
+      return new OkHttpAsync();
+    }
+  },
+
   Apache {
     @Override HttpClient create() {
       return new ApacheHttpClient();
