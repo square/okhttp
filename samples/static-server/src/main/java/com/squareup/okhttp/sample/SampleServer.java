@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
@@ -116,8 +117,12 @@ public class SampleServer extends Dispatcher {
   private static SSLContext sslContext(String keystoreFile, String password)
       throws GeneralSecurityException, IOException {
     KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-    keystore.load(new FileInputStream(keystoreFile), password.toCharArray());
-
+    InputStream in = new FileInputStream(keystoreFile);
+    try {
+      keystore.load(in, password.toCharArray());
+    } finally {
+      Util.closeQuietly(in);
+    }
     KeyManagerFactory keyManagerFactory =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyManagerFactory.init(keystore, password.toCharArray());

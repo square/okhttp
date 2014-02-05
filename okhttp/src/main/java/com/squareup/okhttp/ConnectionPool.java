@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -83,8 +82,8 @@ public class ConnectionPool {
   private final ExecutorService executorService = new ThreadPoolExecutor(0, 1,
       60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
       Util.threadFactory("OkHttp ConnectionPool", true));
-  private final Callable<Void> connectionsCleanupCallable = new Callable<Void>() {
-    @Override public Void call() throws Exception {
+  private final Runnable connectionsCleanupRunnable = new Runnable() {
+    @Override public void run() {
       List<Connection> expiredConnections = new ArrayList<Connection>(MAX_CONNECTIONS_TO_CLEANUP);
       int idleConnectionCount = 0;
       synchronized (ConnectionPool.this) {
@@ -113,7 +112,6 @@ public class ConnectionPool {
       for (Connection expiredConnection : expiredConnections) {
         Util.closeQuietly(expiredConnection);
       }
-      return null;
     }
   };
 
@@ -205,7 +203,7 @@ public class ConnectionPool {
       connections.addFirst(foundConnection); // Add it back after iteration.
     }
 
-    executorService.submit(connectionsCleanupCallable);
+    executorService.execute(connectionsCleanupRunnable);
     return foundConnection;
   }
 
@@ -239,7 +237,7 @@ public class ConnectionPool {
       connection.resetIdleStartTime();
     }
 
-    executorService.submit(connectionsCleanupCallable);
+    executorService.execute(connectionsCleanupRunnable);
   }
 
   /**
@@ -247,7 +245,7 @@ public class ConnectionPool {
    * continue to use {@code connection}.
    */
   public void maybeShare(Connection connection) {
-    executorService.submit(connectionsCleanupCallable);
+    executorService.execute(connectionsCleanupRunnable);
     if (!connection.isSpdy()) {
       // Only SPDY connections are sharable.
       return;

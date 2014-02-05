@@ -18,7 +18,7 @@ public class OkHttpContributors {
       new TypeToken<List<Contributor>>() {
       };
 
-  class Contributor {
+  static class Contributor {
     String login;
     int contributions;
   }

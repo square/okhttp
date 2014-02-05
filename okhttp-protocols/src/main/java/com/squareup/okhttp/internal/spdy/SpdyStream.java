@@ -108,7 +108,7 @@ public final class SpdyStream {
 
   /** Returns true if this stream was created by this peer. */
   public boolean isLocallyInitiated() {
-    boolean streamIsClient = (id % 2 == 1);
+    boolean streamIsClient = ((id & 1) == 1);
     return connection.client == streamIsClient;
   }
 

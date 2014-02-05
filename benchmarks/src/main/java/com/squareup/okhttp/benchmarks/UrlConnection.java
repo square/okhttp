@@ -50,7 +50,7 @@ class UrlConnection extends SynchronousHttpClient {
     return new UrlConnectionRequest(url);
   }
 
-  class UrlConnectionRequest implements Runnable {
+  static class UrlConnectionRequest implements Runnable {
     private final URL url;
 
     public UrlConnectionRequest(URL url) {

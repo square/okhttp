@@ -200,7 +200,7 @@ final class Spdy3 implements Variant {
       int streamId = w1 & 0x7fffffff;
       int associatedStreamId = w2 & 0x7fffffff;
       int priority = (s3 & 0xe000) >>> 13;
-      int slot = s3 & 0xff;
+      // int slot = s3 & 0xff;
       List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 10);
 
       boolean inFinished = (flags & FLAG_FIN) != 0;
@@ -248,7 +248,7 @@ final class Spdy3 implements Variant {
     private void readPing(Handler handler, int flags, int length) throws IOException {
       if (length != 4) throw ioException("TYPE_PING length: %d != 4", length);
       int id = in.readInt();
-      boolean ack = client == ((id % 2) == 1);
+      boolean ack = client == ((id & 1) == 1);
       handler.ping(ack, id, 0);
     }
 
@@ -439,7 +439,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void ping(boolean reply, int payload1, int payload2)
         throws IOException {
-      boolean payloadIsReply = client != ((payload1 % 2) == 1);
+      boolean payloadIsReply = client != ((payload1 & 1) == 1);
       if (reply != payloadIsReply) throw new IllegalArgumentException("payload != reply");
       int type = TYPE_PING;
       int flags = 0;
