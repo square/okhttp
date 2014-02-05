@@ -460,11 +460,9 @@ public final class Http20Draft09 implements Variant {
       out.close();
     }
 
-    private void frameHeader(int length, byte type, byte flags, int streamId)
-        throws IOException {
+    void frameHeader(int length, byte type, byte flags, int streamId) throws IOException {
       if (length > 16383) throw illegalArgument("FRAME_SIZE_ERROR length > 16383: %s", length);
-      if ((streamId & 0x80000000) == 1) throw illegalArgument("(streamId & 0x80000000) == 1: %s",
-          streamId);
+      if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
       out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
       out.writeInt(streamId & 0x7fffffff);
     }

@@ -477,6 +477,30 @@ public class Http20Draft09Test {
     return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), 4096, false);
   }
 
+  @Test public void frameSizeError() throws IOException {
+    Http20Draft09.Writer writer = new Http20Draft09.Writer(new ByteArrayOutputStream(), true);
+
+    try {
+      writer.frameHeader(16384, Http20Draft09.TYPE_DATA, Http20Draft09.FLAG_NONE, 0);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("FRAME_SIZE_ERROR length > 16383: 16384", e.getMessage());
+    }
+  }
+
+  @Test public void streamIdHasReservedBit() throws IOException {
+      Http20Draft09.Writer writer = new Http20Draft09.Writer(new ByteArrayOutputStream(), true);
+
+      try {
+      int streamId = 3;
+      streamId |= 1L << 31; // set reserved bit
+      writer.frameHeader(16383, Http20Draft09.TYPE_DATA, Http20Draft09.FLAG_NONE, streamId);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("reserved bit set: -2147483645", e.getMessage());
+    }
+  }
+
   private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     new HpackDraft05.Writer(new DataOutputStream(out)).writeHeaders(sentHeaders);

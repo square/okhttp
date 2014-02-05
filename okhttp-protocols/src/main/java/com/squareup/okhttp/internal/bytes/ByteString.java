@@ -71,7 +71,7 @@ public final class ByteString {
     if (ascii == null || data.length != ascii.length()) {
       return false;
     }
-    if (ascii == this.utf8) {
+    if (ascii == this.utf8) { // not using String.equals to avoid looping twice.
       return true;
     }
     for (int i = 0; i < data.length; i++) {

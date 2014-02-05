@@ -1376,7 +1376,7 @@ public final class SpdyConnectionTest {
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
         new Header(Header.TARGET_PATH, "/cached")
     ));
-    peer.sendFrame().synReply(true, 1, Arrays.asList(
+    peer.sendFrame().synReply(true, 2, Arrays.asList(
         new Header(Header.RESPONSE_STATUS, "200")
     ));
     peer.acceptFrame(); // RST_STREAM

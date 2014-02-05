@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -130,17 +131,21 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveFile(SpdyStream stream, File file) throws IOException {
-    InputStream in = new FileInputStream(file);
     byte[] buffer = new byte[8192];
     stream.reply(
         headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
         true);
+    InputStream in = new FileInputStream(file);
     OutputStream out = stream.getOutputStream();
-    int count;
-    while ((count = in.read(buffer)) != -1) {
-      out.write(buffer, 0, count);
+    try {
+      int count;
+      while ((count = in.read(buffer)) != -1) {
+        out.write(buffer, 0, count);
+      }
+    } finally {
+      Util.closeQuietly(in);
+      Util.closeQuietly(out);
     }
-    out.close();
   }
 
   private String contentType(File file) {

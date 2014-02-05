@@ -181,9 +181,6 @@ public final class MockWebServer {
     if (protocols.contains(null)) {
       throw new IllegalArgumentException("protocols must not contain null");
     }
-    if (protocols.contains(ByteString.EMPTY)) {
-      throw new IllegalArgumentException("protocols contains an empty string");
-    }
     this.npnProtocols = Util.immutableList(protocols);
   }
 
