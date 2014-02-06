@@ -293,7 +293,9 @@ public class Platform {
           byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
           if (alpnResult != null) return ByteString.of(alpnResult);
         }
-        return ByteString.of((byte[]) getNpnSelectedProtocol.invoke(socket));
+        byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
+        if (npnResult == null) return null;
+        return ByteString.of(npnResult);
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
