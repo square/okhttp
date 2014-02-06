@@ -18,7 +18,13 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.Route;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.FileNotFoundException;
@@ -33,15 +39,15 @@ import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLHandshakeException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
  * This implementation uses HttpEngine to send requests and receive responses.
@@ -53,30 +59,31 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * is <strong>not</strong> used to indicate not whether this URLConnection is
  * currently connected. Instead, it indicates whether a connection has ever been
  * attempted. Once a connection has been attempted, certain properties (request
- * header fields, request method, etc.) are immutable. Test the {@code
- * connection} field on this class for null/non-null to determine of an instance
- * is currently connected to a server.
+ * header fields, request method, etc.) are immutable.
  */
-public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
-
-  /** Numeric status code, 307: Temporary Redirect. */
-  static final int HTTP_TEMP_REDIRECT = 307;
+public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /**
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
-  private static final int MAX_REDIRECTS = 20;
+  public static final int MAX_REDIRECTS = 20;
 
   final OkHttpClient client;
 
-  private final RawHeaders rawRequestHeaders = new RawHeaders();
+  private Headers.Builder requestHeaders = new Headers.Builder();
+
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
   private int redirectionCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
-  private Proxy selectedProxy;
+
+  /**
+   * The most recently attempted route. This will be null if we haven't sent a
+   * request yet, or if the response comes from a cache.
+   */
+  private Route route;
 
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
@@ -113,7 +120,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   @Override public final InputStream getErrorStream() {
     try {
       HttpEngine response = getResponse();
-      if (response.hasResponseBody() && response.getResponseCode() >= HTTP_BAD_REQUEST) {
+      if (response.hasResponseBody() && response.getResponse().code() >= HTTP_BAD_REQUEST) {
         return response.getResponseBody();
       }
       return null;
@@ -128,7 +135,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponseHeaders().getHeaders().getValue(position);
+      return getResponse().getResponse().headers().value(position);
     } catch (IOException e) {
       return null;
     }
@@ -141,8 +148,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
-      RawHeaders rawHeaders = getResponse().getResponseHeaders().getHeaders();
-      return fieldName == null ? rawHeaders.getStatusLine() : rawHeaders.get(fieldName);
+      Response response = getResponse().getResponse();
+      return fieldName == null ? response.statusLine() : response.headers().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -150,7 +157,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponseHeaders().getHeaders().getFieldName(position);
+      return getResponse().getResponse().headers().name(position);
     } catch (IOException e) {
       return null;
     }
@@ -158,7 +165,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      return getResponse().getResponseHeaders().getHeaders().toMultimap(true);
+      Response response = getResponse().getResponse();
+      return OkHeaders.toMultimap(response.headers(), response.statusLine());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -169,7 +177,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       throw new IllegalStateException(
           "Cannot access request header fields after connection is set");
     }
-    return rawRequestHeaders.toMultimap(false);
+
+    // For the request line property assigned to the null key, just use no proxy and HTTP 1.1.
+    Request request = new Request.Builder().url(getURL()).method(method, null).build();
+    String requestLine = RequestLine.get(request, null, 1);
+    return OkHeaders.toMultimap(requestHeaders.build(), requestLine);
   }
 
   @Override public final InputStream getInputStream() throws IOException {
@@ -219,10 +231,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   }
 
   @Override public final String getRequestProperty(String field) {
-    if (field == null) {
-      return null;
-    }
-    return rawRequestHeaders.get(field);
+    if (field == null) return null;
+    return requestHeaders.get(field);
   }
 
   @Override public void setConnectTimeout(int timeoutMillis) {
@@ -254,31 +264,48 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         if (method.equals("GET")) {
           // they are requesting a stream to write to. This implies a POST method
           method = "POST";
-        } else if (!method.equals("POST") && !method.equals("PUT")) {
-          // If the request method is neither POST nor PUT, then you're not writing
+        } else if (!method.equals("POST") && !method.equals("PUT") && !method.equals("PATCH")) {
+          // If the request method is neither POST nor PUT nor PATCH, then you're not writing
           throw new ProtocolException(method + " does not support writing");
         }
       }
-      httpEngine = newHttpEngine(method, rawRequestHeaders, null, null);
+      httpEngine = newHttpEngine(method, null, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
     }
   }
 
-  @Override public HttpURLConnection getHttpConnectionToCache() {
-    return this;
-  }
-
-  private HttpEngine newHttpEngine(String method, RawHeaders requestHeaders,
-      Connection connection, RetryableOutputStream requestBody) throws IOException {
-    if (url.getProtocol().equals("http")) {
-      return new HttpEngine(client, this, method, requestHeaders, connection, requestBody);
-    } else if (url.getProtocol().equals("https")) {
-      return new HttpsEngine(client, this, method, requestHeaders, connection, requestBody);
-    } else {
-      throw new AssertionError();
+  private HttpEngine newHttpEngine(String method, Connection connection,
+      RetryableOutputStream requestBody) {
+    Request.Builder builder = new Request.Builder()
+        .url(getURL())
+        .method(method, null /* No body; that's passed separately. */);
+    Headers headers = requestHeaders.build();
+    for (int i = 0; i < headers.size(); i++) {
+      builder.addHeader(headers.name(i), headers.value(i));
     }
+
+    boolean bufferRequestBody;
+    if (fixedContentLength != -1) {
+      bufferRequestBody = false;
+      builder.header("Content-Length", Long.toString(fixedContentLength));
+    } else if (chunkLength > 0) {
+      bufferRequestBody = false;
+      builder.header("Transfer-Encoding", "chunked");
+    } else {
+      bufferRequestBody = true;
+    }
+
+    Request request = builder.build();
+
+    // If we're currently not using caches, make sure the engine's client doesn't have one.
+    OkHttpClient engineClient = client;
+    if (engineClient.getOkResponseCache() != null && !getUseCaches()) {
+      engineClient = client.clone().setOkResponseCache(null);
+    }
+
+    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody);
   }
 
   /**
@@ -311,18 +338,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
       // redirect should keep the same method, Chrome, Firefox and the
       // RI all issue GETs when following any redirect.
-      int responseCode = getResponseCode();
+      int responseCode = httpEngine.getResponse().code();
       if (responseCode == HTTP_MULT_CHOICE
           || responseCode == HTTP_MOVED_PERM
           || responseCode == HTTP_MOVED_TEMP
           || responseCode == HTTP_SEE_OTHER) {
         retryMethod = "GET";
+        requestHeaders.removeAll("Content-Length");
         requestBody = null;
       }
 
       if (requestBody != null && !(requestBody instanceof RetryableOutputStream)) {
-        throw new HttpRetryException("Cannot retry streamed HTTP body",
-            httpEngine.getResponseCode());
+        throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
       if (retry == Retry.DIFFERENT_CONNECTION) {
@@ -330,14 +357,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       }
 
       httpEngine.release(false);
-
-      httpEngine = newHttpEngine(retryMethod, rawRequestHeaders, httpEngine.getConnection(),
+      httpEngine = newHttpEngine(retryMethod, httpEngine.getConnection(),
           (RetryableOutputStream) requestBody);
-
-      if (requestBody == null) {
-        // Drop the Content-Length header when redirected from POST to GET.
-        httpEngine.getRequestHeaders().removeContentLength();
-      }
     }
   }
 
@@ -349,60 +370,23 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
   private boolean execute(boolean readResponse) throws IOException {
     try {
       httpEngine.sendRequest();
+      route = httpEngine.getRoute();
       if (readResponse) {
         httpEngine.readResponse();
       }
 
       return true;
     } catch (IOException e) {
-      if (handleFailure(e)) {
+      HttpEngine retryEngine = httpEngine.recover(e);
+      if (retryEngine != null) {
+        httpEngine = retryEngine;
         return false;
-      } else {
-        throw e;
       }
-    }
-  }
 
-  /**
-   * Report and attempt to recover from {@code e}. Returns true if the HTTP
-   * engine was replaced and the request should be retried. Otherwise the
-   * failure is permanent.
-   */
-  private boolean handleFailure(IOException e) throws IOException {
-    RouteSelector routeSelector = httpEngine.routeSelector;
-    if (routeSelector != null && httpEngine.connection != null) {
-      routeSelector.connectFailed(httpEngine.connection, e);
-    }
-
-    OutputStream requestBody = httpEngine.getRequestBody();
-    boolean canRetryRequestBody = requestBody == null
-        || requestBody instanceof RetryableOutputStream;
-    if (routeSelector == null && httpEngine.connection == null // No connection.
-        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
-        || !isRecoverable(e)
-        || !canRetryRequestBody) {
+      // Give up; recovery is not possible.
       httpEngineFailure = e;
-      return false;
+      throw e;
     }
-
-    httpEngine.release(true);
-    RetryableOutputStream retryableOutputStream = (RetryableOutputStream) requestBody;
-    httpEngine = newHttpEngine(method, rawRequestHeaders, null, retryableOutputStream);
-    httpEngine.routeSelector = routeSelector; // Keep the same routeSelector.
-    return true;
-  }
-
-  private boolean isRecoverable(IOException e) {
-    // If the problem was a CertificateException from the X509TrustManager,
-    // do not retry, we didn't have an abrupt server initiated exception.
-    boolean sslFailure =
-        e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
-    boolean protocolFailure = e instanceof ProtocolException;
-    return !sslFailure && !protocolFailure;
-  }
-
-  public HttpEngine getHttpEngine() {
-    return httpEngine;
   }
 
   enum Retry {
@@ -413,12 +397,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
 
   /**
    * Returns the retry action to take for the current response headers. The
-   * headers, proxy and target URL or this connection may be adjusted to
+   * headers, proxy and target URL for this connection may be adjusted to
    * prepare for a follow up request.
    */
   private Retry processResponseHeaders() throws IOException {
-    Proxy selectedProxy = httpEngine.connection != null
-        ? httpEngine.connection.getRoute().getProxy()
+    Connection connection = httpEngine.getConnection();
+    Proxy selectedProxy = connection != null
+        ? connection.getRoute().getProxy()
         : client.getProxy();
     final int responseCode = getResponseCode();
     switch (responseCode) {
@@ -428,10 +413,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        boolean credentialsFound = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
-            getResponseCode(), httpEngine.getResponseHeaders().getHeaders(), rawRequestHeaders,
-            selectedProxy, url);
-        return credentialsFound ? Retry.SAME_CONNECTION : Retry.NONE;
+        Request successorRequest = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
+            httpEngine.getResponse(), selectedProxy);
+        if (successorRequest == null) return Retry.NONE;
+        requestHeaders = successorRequest.getHeaders().newBuilder();
+        return Retry.SAME_CONNECTION;
 
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:
@@ -475,38 +461,30 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     }
   }
 
-  /** @see java.net.HttpURLConnection#setFixedLengthStreamingMode(int) */
-  @Override public final long getFixedContentLength() {
-    return fixedContentLength;
-  }
-
-  @Override public final int getChunkLength() {
-    return chunkLength;
-  }
-
+  /**
+   * Returns true if either:
+   * <ul>
+   *   <li>A specific proxy was explicitly configured for this connection.
+   *   <li>The response has already been retrieved, and a proxy was {@link
+   *       java.net.ProxySelector selected} in order to get it.
+   * </ul>
+   *
+   * <p><strong>Warning:</strong> This method may return false before attempting
+   * to connect and true afterwards.
+   */
   @Override public final boolean usingProxy() {
-    if (selectedProxy != null) {
-      return isValidNonDirectProxy(selectedProxy);
-    }
-
-    // This behavior is a bit odd (but is probably justified by the
-    // oddness of the APIs involved). Before a connection is established,
-    // this method will return true only if this connection was explicitly
-    // opened with a Proxy. We don't attempt to query the ProxySelector
-    // at all.
-    return isValidNonDirectProxy(client.getProxy());
-  }
-
-  private static boolean isValidNonDirectProxy(Proxy proxy) {
+    Proxy proxy = route != null
+        ? route.getProxy()
+        : client.getProxy();
     return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().getResponseHeaders().getHeaders().getResponseMessage();
+    return getResponse().getResponse().statusMessage();
   }
 
   @Override public final int getResponseCode() throws IOException {
-    return getResponse().getResponseCode();
+    return getResponse().getResponse().code();
   }
 
   @Override public final void setRequestProperty(String field, String newValue) {
@@ -526,10 +504,20 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       return;
     }
 
-    if ("X-Android-Transports".equals(field)) {
-      setTransports(newValue, false /* append */);
+    // TODO: Deprecate use of X-Android-Transports header?
+    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
+      setProtocols(newValue, false /* append */);
     } else {
-      rawRequestHeaders.set(field, newValue);
+      requestHeaders.set(field, newValue);
+    }
+  }
+
+  @Override public void setIfModifiedSince(long newValue) {
+    super.setIfModifiedSince(newValue);
+    if (ifModifiedSince != 0) {
+      requestHeaders.set("If-Modified-Since", HttpDate.format(new Date(ifModifiedSince)));
+    } else {
+      requestHeaders.removeAll("If-Modified-Since");
     }
   }
 
@@ -550,26 +538,33 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
       return;
     }
 
-    if ("X-Android-Transports".equals(field)) {
-      setTransports(value, true /* append */);
+    // TODO: Deprecate use of X-Android-Transports header?
+    if ("X-Android-Transports".equals(field) || "X-Android-Protocols".equals(field)) {
+      setProtocols(value, true /* append */);
     } else {
-      rawRequestHeaders.add(field, value);
+      requestHeaders.add(field, value);
     }
   }
 
   /*
-   * Splits and validates a comma-separated string of transports.
+   * Splits and validates a comma-separated string of protocols.
    * When append == false, we require that the transport list contains "http/1.1".
+   * Throws {@link IllegalStateException} when one of the protocols isn't
+   * defined in {@link Protocol OkHttp's protocol enumeration}.
    */
-  private void setTransports(String transportsString, boolean append) {
-    List<String> transportsList = new ArrayList<String>();
+  private void setProtocols(String protocolsString, boolean append) {
+    List<Protocol> protocolsList = new ArrayList<Protocol>();
     if (append) {
-      transportsList.addAll(client.getTransports());
+      protocolsList.addAll(client.getProtocols());
     }
-    for (String transport : transportsString.split(",", -1)) {
-      transportsList.add(transport);
+    for (String protocol : protocolsString.split(",", -1)) {
+      try {
+        protocolsList.add(Protocol.find(ByteString.encodeUtf8(protocol)));
+      } catch (IOException e) {
+        throw new IllegalStateException(e);
+      }
     }
-    client.setTransports(transportsList);
+    client.setProtocols(protocolsList);
   }
 
   @Override public void setFixedLengthStreamingMode(int contentLength) {
@@ -583,9 +578,5 @@ public class HttpURLConnectionImpl extends HttpURLConnection implements Policy {
     if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
     this.fixedContentLength = contentLength;
     super.fixedContentLength = (int) Math.min(contentLength, Integer.MAX_VALUE);
-  }
-
-  @Override public final void setSelectedProxy(Proxy proxy) {
-    this.selectedProxy = proxy;
   }
 }

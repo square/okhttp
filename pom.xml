@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>parent</artifactId>
-  <version>1.2.2-SNAPSHOT</version>
+  <version>2.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -24,6 +24,7 @@
     <module>okhttp-protocols</module>
     <module>mockwebserver</module>
     <module>samples</module>
+    <module>benchmarks</module>
   </modules>
 
   <properties>
@@ -37,7 +38,7 @@
     <apache.http.version>4.2.2</apache.http.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.10</junit.version>
+    <junit.version>4.11</junit.version>
   </properties>
 
   <scm>
@@ -105,10 +106,17 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.9</version>
+          <version>2.16</version>
           <configuration>
             <argLine>-Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</argLine>
           </configuration>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.16</version>
+            </dependency>
+          </dependencies>
         </plugin>
 
         <plugin>
@@ -162,8 +170,8 @@
         <configuration>
           <signature>
             <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java15</artifactId>
-            <version>1.0</version>
+            <artifactId>java16</artifactId>
+            <version>1.1</version>
           </signature>
         </configuration>
       </plugin>

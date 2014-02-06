@@ -17,17 +17,22 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Protocol;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.List;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
+import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
+
 public final class ExternalSpdyExample {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://www.google.ca/");
-    HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient().open(url);
+    HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient()
+        .setProtocols(Protocol.SPDY3_AND_HTTP11).open(url);
 
     connection.setHostnameVerifier(new HostnameVerifier() {
       @Override public boolean verify(String s, SSLSession sslSession) {
@@ -38,6 +43,11 @@ public final class ExternalSpdyExample {
 
     int responseCode = connection.getResponseCode();
     System.out.println(responseCode);
+    List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
+    // If null, probably you didn't add jetty's npn jar to your boot classpath!
+    if (protocolValues != null && !protocolValues.isEmpty()) {
+      System.out.println("PROTOCOL " + protocolValues.get(0));
+    }
 
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));

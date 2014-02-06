@@ -17,6 +17,10 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.Util;
 import java.io.ByteArrayOutputStream;
@@ -28,15 +32,9 @@ import java.net.ProtocolException;
 import java.net.Socket;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
 
 public final class HttpTransport implements Transport {
-  /**
-   * The timeout to use while discarding a stream of input data. Since this is
-   * used for connection reuse, this timeout should be significantly less than
-   * the time it takes to establish a new connection.
-   */
-  private static final int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
-
   public static final int DEFAULT_CHUNK_LENGTH = 1024;
 
   private final HttpEngine httpEngine;
@@ -58,49 +56,41 @@ public final class HttpTransport implements Transport {
     this.socketIn = inputStream;
   }
 
-  @Override public OutputStream createRequestBody() throws IOException {
-    boolean chunked = httpEngine.requestHeaders.isChunked();
-    if (!chunked
-        && httpEngine.policy.getChunkLength() > 0
-        && httpEngine.connection.getHttpMinorVersion() != 0) {
-      httpEngine.requestHeaders.setChunked();
-      chunked = true;
-    }
+  @Override public OutputStream createRequestBody(Request request) throws IOException {
+    long contentLength = OkHeaders.contentLength(request);
 
-    // Stream a request body of unknown length.
-    if (chunked) {
-      int chunkLength = httpEngine.policy.getChunkLength();
-      if (chunkLength == -1) {
-        chunkLength = DEFAULT_CHUNK_LENGTH;
+    if (httpEngine.bufferRequestBody) {
+      if (contentLength > Integer.MAX_VALUE) {
+        throw new IllegalStateException("Use setFixedLengthStreamingMode() or "
+            + "setChunkedStreamingMode() for requests larger than 2 GiB.");
       }
-      writeRequestHeaders();
-      return new ChunkedOutputStream(requestOut, chunkLength);
+
+      if (contentLength != -1) {
+        // Buffer a request body of a known length.
+        writeRequestHeaders(request);
+        return new RetryableOutputStream((int) contentLength);
+      } else {
+        // Buffer a request body of an unknown length. Don't write request
+        // headers until the entire body is ready; otherwise we can't set the
+        // Content-Length header correctly.
+        return new RetryableOutputStream();
+      }
     }
 
-    // Stream a request body of a known length.
-    long fixedContentLength = httpEngine.policy.getFixedContentLength();
-    if (fixedContentLength != -1) {
-      httpEngine.requestHeaders.setContentLength(fixedContentLength);
-      writeRequestHeaders();
-      return new FixedLengthOutputStream(requestOut, fixedContentLength);
+    if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
+      // Stream a request body of unknown length.
+      writeRequestHeaders(request);
+      return new ChunkedOutputStream(requestOut, DEFAULT_CHUNK_LENGTH);
     }
 
-    long contentLength = httpEngine.requestHeaders.getContentLength();
-    if (contentLength > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("Use setFixedLengthStreamingMode() or "
-          + "setChunkedStreamingMode() for requests larger than 2 GiB.");
-    }
-
-    // Buffer a request body of a known length.
     if (contentLength != -1) {
-      writeRequestHeaders();
-      return new RetryableOutputStream((int) contentLength);
+      // Stream a request body of a known length.
+      writeRequestHeaders(request);
+      return new FixedLengthOutputStream(requestOut, contentLength);
     }
 
-    // Buffer a request body of an unknown length. Don't write request
-    // headers until the entire body is ready; otherwise we can't set the
-    // Content-Length header correctly.
-    return new RetryableOutputStream();
+    throw new IllegalStateException(
+        "Cannot stream a request body without chunked encoding or a known content length!");
   }
 
   @Override public void flushRequest() throws IOException {
@@ -124,21 +114,50 @@ public final class HttpTransport implements Transport {
    * This ensures that the {@code Content-Length} header field receives the
    * proper value.
    */
-  public void writeRequestHeaders() throws IOException {
+  public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
-    RawHeaders headersToSend = httpEngine.requestHeaders.getHeaders();
-    byte[] bytes = headersToSend.toBytes();
-    requestOut.write(bytes);
+    String requestLine = RequestLine.get(request,
+        httpEngine.getConnection().getRoute().getProxy().type(),
+        httpEngine.getConnection().getHttpMinorVersion());
+    writeRequest(requestOut, request.getHeaders(), requestLine);
   }
 
-  @Override public ResponseHeaders readResponseHeaders() throws IOException {
-    RawHeaders rawHeaders = RawHeaders.fromBytes(socketIn);
-    httpEngine.connection.setHttpMinorVersion(rawHeaders.getHttpMinorVersion());
-    httpEngine.receiveHeaders(rawHeaders);
+  @Override public Response.Builder readResponseHeaders() throws IOException {
+    return readResponse(socketIn);
+  }
 
-    ResponseHeaders headers = new ResponseHeaders(httpEngine.uri, rawHeaders);
-    headers.setTransport("http/1.1");
-    return headers;
+  /** Returns bytes of a request header for sending on an HTTP transport. */
+  public static void writeRequest(OutputStream out, Headers headers, String requestLine)
+      throws IOException {
+    StringBuilder result = new StringBuilder(256);
+    result.append(requestLine).append("\r\n");
+    for (int i = 0; i < headers.size(); i ++) {
+      result.append(headers.name(i))
+          .append(": ")
+          .append(headers.value(i))
+          .append("\r\n");
+    }
+    result.append("\r\n");
+    out.write(result.toString().getBytes("ISO-8859-1"));
+  }
+
+  /** Parses bytes of a response header from an HTTP transport. */
+  public static Response.Builder readResponse(InputStream in) throws IOException {
+    while (true) {
+      String statusLineString = Util.readAsciiLine(in);
+      StatusLine statusLine = new StatusLine(statusLineString);
+
+      Response.Builder responseBuilder = new Response.Builder()
+          .statusLine(statusLine)
+          .header(OkHeaders.SELECTED_TRANSPORT, Protocol.HTTP_11.name.utf8())
+          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.name.utf8());
+
+      Headers.Builder headersBuilder = new Headers.Builder();
+      OkHeaders.readHeaders(headersBuilder, in);
+      responseBuilder.headers(headersBuilder.build());
+
+      if (statusLine.code() != HTTP_CONTINUE) return responseBuilder;
+    }
   }
 
   public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
@@ -153,12 +172,13 @@ public final class HttpTransport implements Transport {
     }
 
     // If the request specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.requestHeaders.hasConnectionClose()) {
+    if ("close".equalsIgnoreCase(httpEngine.getRequest().header("Connection"))) {
       return false;
     }
 
     // If the response specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.responseHeaders != null && httpEngine.responseHeaders.hasConnectionClose()) {
+    if (httpEngine.getResponse() != null
+        && "close".equalsIgnoreCase(httpEngine.getResponse().header("Connection"))) {
       return false;
     }
 
@@ -183,7 +203,7 @@ public final class HttpTransport implements Transport {
    * reuse.
    */
   private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
-    Connection connection = httpEngine.connection;
+    Connection connection = httpEngine.getConnection();
     if (connection == null) return false;
     Socket socket = connection.getSocket();
     if (socket == null) return false;
@@ -191,7 +211,7 @@ public final class HttpTransport implements Transport {
       int socketTimeout = socket.getSoTimeout();
       socket.setSoTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
       try {
-        Util.skipAll(responseBodyIn);
+        Util.skipByReading(responseBodyIn, Long.MAX_VALUE, DISCARD_STREAM_TIMEOUT_MILLIS);
         return true;
       } finally {
         socket.setSoTimeout(socketTimeout);
@@ -206,13 +226,13 @@ public final class HttpTransport implements Transport {
       return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine, 0);
     }
 
-    if (httpEngine.responseHeaders.isChunked()) {
+    if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
       return new ChunkedInputStream(socketIn, cacheRequest, this);
     }
 
-    if (httpEngine.responseHeaders.getContentLength() != -1) {
-      return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine,
-          httpEngine.responseHeaders.getContentLength());
+    long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
+    if (contentLength != -1) {
+      return new FixedLengthInputStream(socketIn, cacheRequest, httpEngine, contentLength);
     }
 
     // Wrap the input stream from the connection (rather than just returning
@@ -370,10 +390,10 @@ public final class HttpTransport implements Transport {
 
   /** An HTTP body with a fixed length specified in advance. */
   private static class FixedLengthInputStream extends AbstractHttpInputStream {
-    private int bytesRemaining;
+    private long bytesRemaining;
 
     public FixedLengthInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine,
-        int length) throws IOException {
+        long length) throws IOException {
       super(is, httpEngine, cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
@@ -387,7 +407,7 @@ public final class HttpTransport implements Transport {
       if (bytesRemaining == 0) {
         return -1;
       }
-      int read = in.read(buffer, offset, Math.min(count, bytesRemaining));
+      int read = in.read(buffer, offset, (int) Math.min(count, bytesRemaining));
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised content length
         throw new ProtocolException("unexpected end of stream");
@@ -402,7 +422,7 @@ public final class HttpTransport implements Transport {
 
     @Override public int available() throws IOException {
       checkNotClosed();
-      return bytesRemaining == 0 ? 0 : Math.min(in.available(), bytesRemaining);
+      return bytesRemaining == 0 ? 0 : (int) Math.min(in.available(), bytesRemaining);
     }
 
     @Override public void close() throws IOException {
@@ -419,14 +439,12 @@ public final class HttpTransport implements Transport {
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private static class ChunkedInputStream extends AbstractHttpInputStream {
     private static final int NO_CHUNK_YET = -1;
-    private final HttpTransport transport;
     private int bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
 
     ChunkedInputStream(InputStream is, CacheRequest cacheRequest, HttpTransport transport)
         throws IOException {
       super(is, transport.httpEngine, cacheRequest);
-      this.transport = transport;
     }
 
     @Override public int read(byte[] buffer, int offset, int count) throws IOException {
@@ -469,9 +487,9 @@ public final class HttpTransport implements Transport {
       }
       if (bytesRemainingInChunk == 0) {
         hasMoreChunks = false;
-        RawHeaders rawResponseHeaders = httpEngine.responseHeaders.getHeaders();
-        RawHeaders.readHeaders(transport.socketIn, rawResponseHeaders);
-        httpEngine.receiveHeaders(rawResponseHeaders);
+        Headers.Builder trailersBuilder = new Headers.Builder();
+        OkHeaders.readHeaders(trailersBuilder, in);
+        httpEngine.receiveHeaders(trailersBuilder.build());
         endOfInput();
       }
     }

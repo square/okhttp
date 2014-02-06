@@ -16,7 +16,9 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,15 +26,15 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import org.eclipse.jetty.npn.NextProtoNego;
+
+import static com.squareup.okhttp.internal.Util.headerEntries;
 
 /** A basic SPDY server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
@@ -70,7 +72,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         System.out.println("UNSUPPORTED");
       }
       @Override public List<String> protocols() {
-        return Arrays.asList("spdy/3");
+        return Arrays.asList(Protocol.SPDY_3.name.utf8());
       }
       @Override public void protocolSelected(String protocol) {
         System.out.println("PROTOCOL SELECTED: " + protocol);
@@ -80,12 +82,11 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   @Override public void receive(final SpdyStream stream) throws IOException {
-    List<String> requestHeaders = stream.getRequestHeaders();
+    List<Header> requestHeaders = stream.getRequestHeaders();
     String path = null;
-    for (int i = 0; i < requestHeaders.size(); i += 2) {
-      String s = requestHeaders.get(i);
-      if (":path".equals(s)) {
-        path = requestHeaders.get(i + 1);
+    for (int i = 0; i < requestHeaders.size(); i++) {
+      if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
+        path = requestHeaders.get(i).value.utf8();
         break;
       }
     }
@@ -107,8 +108,8 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void send404(SpdyStream stream, String path) throws IOException {
-    List<String> responseHeaders =
-        Arrays.asList(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
+    List<Header> responseHeaders =
+        headerEntries(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
     String text = "Not found: " + path;
@@ -117,8 +118,8 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
-    List<String> responseHeaders =
-        Arrays.asList(":status", "200", ":version", "HTTP/1.1", "content-type",
+    List<Header> responseHeaders =
+        headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type",
             "text/html; charset=UTF-8");
     stream.reply(responseHeaders, true);
     OutputStream out = stream.getOutputStream();
@@ -130,17 +131,21 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveFile(SpdyStream stream, File file) throws IOException {
-    InputStream in = new FileInputStream(file);
     byte[] buffer = new byte[8192];
     stream.reply(
-        Arrays.asList(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
+        headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
         true);
+    InputStream in = new FileInputStream(file);
     OutputStream out = stream.getOutputStream();
-    int count;
-    while ((count = in.read(buffer)) != -1) {
-      out.write(buffer, 0, count);
+    try {
+      int count;
+      while ((count = in.read(buffer)) != -1) {
+        out.write(buffer, 0, count);
+      }
+    } finally {
+      Util.closeQuietly(in);
+      Util.closeQuietly(out);
     }
-    out.close();
   }
 
   private String contentType(File file) {
@@ -154,8 +159,7 @@ public final class SpdyServer implements IncomingStreamHandler {
     }
 
     SpdyServer server = new SpdyServer(new File(args[0]));
-    SSLContext sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    server.useHttps(sslContext.getSocketFactory());
+    server.useHttps(SslContextBuilder.localhost().getSocketFactory());
     server.run();
   }
 }

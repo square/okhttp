@@ -16,16 +16,16 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URI;
@@ -42,11 +42,25 @@ import javax.net.ssl.SSLSocket;
 /**
  * Access to Platform-specific features necessary for SPDY and advanced TLS.
  *
- * <h3>SPDY</h3>
- * SPDY requires a TLS extension called NPN (Next Protocol Negotiation) that's
- * available in Android 4.1+ and OpenJDK 7+ (with the npn-boot extension). It
- * also requires a recent version of {@code DeflaterOutputStream} that is
- * public API in Java 7 and callable via reflection in Android 4.1+.
+ * <h3>ALPN and NPN</h3>
+ * This class uses TLS extensions ALPN and NPN to negotiate the upgrade from
+ * HTTP/1.1 (the default protocol to use with TLS on port 443) to either SPDY
+ * or HTTP/2.
+ *
+ * <p>NPN (Next Protocol Negotiation) was developed for SPDY. It is widely
+ * available and we support it on both Android (4.1+) and OpenJDK 7 (via the
+ * Jetty NPN-boot library).
+ *
+ * <p>ALPN (Application Layer Protocol Negotiation) is the successor to NPN. It
+ * has some technical advantages over NPN. We support it on Android (4.4+) only.
+ *
+ * <p>On platforms that support both extensions, OkHttp will use both,
+ * preferring ALPN's result. Future versions of OkHttp will drop support NPN.
+ *
+ * <h3>Deflater Sync Flush</h3>
+ * SPDY header compression requires a recent version of {@code
+ * DeflaterOutputStream} that is public API in Java 7 and callable via
+ * reflection in Android 4.1+.
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
@@ -93,7 +107,7 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public byte[] getNpnSelectedProtocol(SSLSocket socket) {
+  public ByteString getNpnSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
@@ -101,7 +115,7 @@ public class Platform {
    * Sets client-supported protocols on a socket to send to a server. The
    * protocols are only sent if the socket implementation supports NPN.
    */
-  public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+  public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
   }
 
   public void connectSocket(Socket socket, InetSocketAddress address,
@@ -135,27 +149,8 @@ public class Platform {
     }
   }
 
-  /**
-   * Returns the maximum transmission unit of the network interface used by
-   * {@code socket}, or a reasonable default if this platform doesn't expose the
-   * MTU to the application layer.
-   *
-   * <p>The returned value should only be used as an optimization; such as to
-   * size buffers efficiently.
-   */
-  public int getMtu(Socket socket) throws IOException {
-    return 1400; // Smaller than 1500 to leave room for headers on interfaces like PPPoE.
-  }
-
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
-    Method getMtu;
-    try {
-      getMtu = NetworkInterface.class.getMethod("getMTU");
-    } catch (NoSuchMethodException e) {
-      return new Platform(); // No Java 1.6 APIs. It's either Java 1.5, Android 2.2 or earlier.
-    }
-
     // Attempt to find Android 2.3+ APIs.
     Class<?> openSslSocketClass;
     Method setUseSessionTickets;
@@ -173,14 +168,23 @@ public class Platform {
       setHostname = openSslSocketClass.getMethod("setHostname", String.class);
 
       // Attempt to find Android 4.1+ APIs.
+      Method setNpnProtocols = null;
+      Method getNpnSelectedProtocol = null;
+      Method setAlpnProtocols = null;
+      Method getAlpnSelectedProtocol = null;
       try {
-        Method setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
-        Method getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
-        return new Android41(getMtu, openSslSocketClass, setUseSessionTickets, setHostname,
-            setNpnProtocols, getNpnSelectedProtocol);
+        setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
+        getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
+        try {
+          setAlpnProtocols = openSslSocketClass.getMethod("setAlpnProtocols", byte[].class);
+          getAlpnSelectedProtocol = openSslSocketClass.getMethod("getAlpnSelectedProtocol");
+        } catch (NoSuchMethodException ignored) {
+        }
       } catch (NoSuchMethodException ignored) {
-        return new Android23(getMtu, openSslSocketClass, setUseSessionTickets, setHostname);
       }
+
+      return new Android(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
+          getNpnSelectedProtocol, setAlpnProtocols, getAlpnSelectedProtocol);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     } catch (NoSuchMethodException ignored) {
@@ -196,59 +200,46 @@ public class Platform {
       Class<?> serverProviderClass = Class.forName(npnClassName + "$ServerProvider");
       Method putMethod = nextProtoNegoClass.getMethod("put", SSLSocket.class, providerClass);
       Method getMethod = nextProtoNegoClass.getMethod("get", SSLSocket.class);
-      return new JdkWithJettyNpnPlatform(getMtu, putMethod, getMethod, clientProviderClass,
-          serverProviderClass);
+      return new JdkWithJettyNpnPlatform(
+          putMethod, getMethod, clientProviderClass, serverProviderClass);
     } catch (ClassNotFoundException ignored) {
       // NPN isn't on the classpath.
     } catch (NoSuchMethodException ignored) {
       // The NPN version isn't what we expect.
     }
 
-    return new Java6(getMtu);
+    return new Platform();
   }
 
-  private static class Java6 extends Platform {
-    private final Method getMtu;
-
-    private Java6(Method getMtu) {
-      this.getMtu = getMtu;
-    }
-
-    @Override public int getMtu(Socket socket) throws IOException {
-      try {
-        NetworkInterface networkInterface = NetworkInterface.getByInetAddress(
-            socket.getLocalAddress());
-        if (networkInterface == null) {
-          return super.getMtu(socket); // There's no longer an interface with this local address.
-        }
-        return (Integer) getMtu.invoke(networkInterface);
-      } catch (NullPointerException e) {
-        // Certain Alcatel devices throw on getByInetAddress. Return default.
-        return super.getMtu(socket);
-      } catch (SocketException e) {
-        // Certain Motorola devices always throw on getByInetAddress. Return the default for those.
-        return super.getMtu(socket);
-      } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
-      } catch (InvocationTargetException e) {
-        if (e.getCause() instanceof IOException) throw (IOException) e.getCause();
-        throw new RuntimeException(e.getCause());
-      }
-    }
-  }
-
-  /** Android version 2.3 and newer support TLS session tickets and server name indication (SNI). */
-  private static class Android23 extends Java6 {
+  /**
+   * Android 2.3 or better. Version 2.3 supports TLS session tickets and server
+   * name indication (SNI). Versions 4.1 supports NPN.
+   */
+  private static class Android extends Platform {
+    // Non-null.
     protected final Class<?> openSslSocketClass;
     private final Method setUseSessionTickets;
     private final Method setHostname;
 
-    private Android23(Method getMtu, Class<?> openSslSocketClass, Method setUseSessionTickets,
-        Method setHostname) {
-      super(getMtu);
+    // Non-null on Android 4.1+.
+    private final Method setNpnProtocols;
+    private final Method getNpnSelectedProtocol;
+
+    // Non-null on Android 4.4+.
+    private final Method setAlpnProtocols;
+    private final Method getAlpnSelectedProtocol;
+
+    private Android(
+        Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
+        Method setNpnProtocols, Method getNpnSelectedProtocol, Method setAlpnProtocols,
+        Method getAlpnSelectedProtocol) {
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
+      this.setNpnProtocols = setNpnProtocols;
+      this.getNpnSelectedProtocol = getNpnSelectedProtocol;
+      this.setAlpnProtocols = setAlpnProtocols;
+      this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
     }
 
     @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -266,38 +257,26 @@ public class Platform {
 
     @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
       super.enableTlsExtensions(socket, uriHost);
-      if (openSslSocketClass.isInstance(socket)) {
-        // This is Android: use reflection on OpenSslSocketImpl.
-        try {
-          setUseSessionTickets.invoke(socket, true);
-          setHostname.invoke(socket, uriHost);
-        } catch (InvocationTargetException e) {
-          throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }
-  }
-
-  /** Android version 4.1 and newer support NPN. */
-  private static class Android41 extends Android23 {
-    private final Method setNpnProtocols;
-    private final Method getNpnSelectedProtocol;
-
-    private Android41(Method getMtu, Class<?> openSslSocketClass, Method setUseSessionTickets,
-        Method setHostname, Method setNpnProtocols, Method getNpnSelectedProtocol) {
-      super(getMtu, openSslSocketClass, setUseSessionTickets, setHostname);
-      this.setNpnProtocols = setNpnProtocols;
-      this.getNpnSelectedProtocol = getNpnSelectedProtocol;
-    }
-
-    @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
-      if (!openSslSocketClass.isInstance(socket)) {
-        return;
-      }
+      if (!openSslSocketClass.isInstance(socket)) return;
       try {
-        setNpnProtocols.invoke(socket, new Object[] {npnProtocols});
+        setUseSessionTickets.invoke(socket, true);
+        setHostname.invoke(socket, uriHost);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
+      if (setNpnProtocols == null) return;
+      if (!openSslSocketClass.isInstance(socket)) return;
+      try {
+        Object[] parameters = { concatLengthPrefixed(npnProtocols) };
+        if (setAlpnProtocols != null) {
+          setAlpnProtocols.invoke(socket, parameters);
+        }
+        setNpnProtocols.invoke(socket, parameters);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
       } catch (InvocationTargetException e) {
@@ -305,12 +284,18 @@ public class Platform {
       }
     }
 
-    @Override public byte[] getNpnSelectedProtocol(SSLSocket socket) {
-      if (!openSslSocketClass.isInstance(socket)) {
-        return null;
-      }
+    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
+      if (getNpnSelectedProtocol == null) return null;
+      if (!openSslSocketClass.isInstance(socket)) return null;
       try {
-        return (byte[]) getNpnSelectedProtocol.invoke(socket);
+        if (getAlpnSelectedProtocol != null) {
+          // Prefer ALPN's result if it is present.
+          byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
+          if (alpnResult != null) return ByteString.of(alpnResult);
+        }
+        byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
+        if (npnResult == null) return null;
+        return ByteString.of(npnResult);
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
@@ -320,35 +305,29 @@ public class Platform {
   }
 
   /** OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class path. */
-  private static class JdkWithJettyNpnPlatform extends Java6 {
+  private static class JdkWithJettyNpnPlatform extends Platform {
     private final Method getMethod;
     private final Method putMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyNpnPlatform(Method getMtu, Method putMethod, Method getMethod,
-        Class<?> clientProviderClass, Class<?> serverProviderClass) {
-      super(getMtu);
+    public JdkWithJettyNpnPlatform(Method putMethod, Method getMethod, Class<?> clientProviderClass,
+        Class<?> serverProviderClass) {
       this.putMethod = putMethod;
       this.getMethod = getMethod;
       this.clientProviderClass = clientProviderClass;
       this.serverProviderClass = serverProviderClass;
     }
 
-    @Override public void setNpnProtocols(SSLSocket socket, byte[] npnProtocols) {
+    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
       try {
-        List<String> strings = new ArrayList<String>();
-        for (int i = 0; i < npnProtocols.length; ) {
-          int length = npnProtocols[i++];
-          strings.add(new String(npnProtocols, i, length, "US-ASCII"));
-          i += length;
+        List<String> names = new ArrayList<String>(npnProtocols.size());
+        for (int i = 0, size = npnProtocols.size(); i < size; i++) {
+          names.add(npnProtocols.get(i).name.utf8());
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] {clientProviderClass, serverProviderClass},
-            new JettyNpnProvider(strings));
+            new Class[] { clientProviderClass, serverProviderClass }, new JettyNpnProvider(names));
         putMethod.invoke(null, socket, provider);
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError(e);
       } catch (InvocationTargetException e) {
         throw new AssertionError(e);
       } catch (IllegalAccessException e) {
@@ -356,19 +335,17 @@ public class Platform {
       }
     }
 
-    @Override public byte[] getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
       try {
         JettyNpnProvider provider =
             (JettyNpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
         if (!provider.unsupported && provider.selected == null) {
           Logger logger = Logger.getLogger("com.squareup.okhttp.OkHttpClient");
           logger.log(Level.INFO,
-              "NPN callback dropped so SPDY is disabled. " + "Is npn-boot on the boot class path?");
+              "NPN callback dropped so SPDY is disabled. Is npn-boot on the boot class path?");
           return null;
         }
-        return provider.unsupported ? null : provider.selected.getBytes("US-ASCII");
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError();
+        return provider.unsupported ? null : ByteString.encodeUtf8(provider.selected);
       } catch (InvocationTargetException e) {
         throw new AssertionError();
       } catch (IllegalAccessException e) {
@@ -382,8 +359,11 @@ public class Platform {
    * without a compile-time dependency on those interfaces.
    */
   private static class JettyNpnProvider implements InvocationHandler {
+    /** This peer's supported protocols. */
     private final List<String> protocols;
+    /** Set when remote peer notifies NPN is unsupported. */
     private boolean unsupported;
+    /** The protocol the client selected. */
     private String selected;
 
     public JettyNpnProvider(List<String> protocols) {
@@ -397,26 +377,53 @@ public class Platform {
         args = Util.EMPTY_STRING_ARRAY;
       }
       if (methodName.equals("supports") && boolean.class == returnType) {
-        return true;
+        return true; // Client supports NPN.
       } else if (methodName.equals("unsupported") && void.class == returnType) {
-        this.unsupported = true;
+        this.unsupported = true; // Remote peer doesn't support NPN.
         return null;
       } else if (methodName.equals("protocols") && args.length == 0) {
-        return protocols;
-      } else if (methodName.equals("selectProtocol")
+        return protocols; // Server advertises these protocols.
+      } else if (methodName.equals("selectProtocol") // Called when client.
           && String.class == returnType
           && args.length == 1
           && (args[0] == null || args[0] instanceof List)) {
-        // TODO: use OpenSSL's algorithm which uses both lists
-        List<?> serverProtocols = (List) args[0];
-        this.selected = protocols.get(0);
-        return selected;
+        List<String> serverProtocols = (List) args[0];
+        // Pick the first protocol the server advertises and client knows.
+        for (int i = 0, size = serverProtocols.size(); i < size; i++) {
+          if (protocols.contains(serverProtocols.get(i))) {
+            return selected = serverProtocols.get(i);
+          }
+        }
+        // On no intersection, try client's first protocol.
+        return selected = protocols.get(0);
       } else if (methodName.equals("protocolSelected") && args.length == 1) {
-        this.selected = (String) args[0];
+        this.selected = (String) args[0]; // Client selected this protocol.
         return null;
       } else {
         return method.invoke(this, args);
       }
     }
+  }
+
+  /**
+   * Concatenation of 8-bit, length prefixed protocol names.
+   *
+   * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
+   */
+  static byte[] concatLengthPrefixed(List<Protocol> protocols) {
+    int size = 0;
+    for (Protocol protocol : protocols) {
+      size += protocol.name.size() + 1; // add a byte for 8-bit length prefix.
+    }
+    byte[] result = new byte[size];
+    int pos = 0;
+    for (Protocol protocol : protocols) {
+      int nameSize = protocol.name.size();
+      result[pos++] = (byte) nameSize;
+      // toByteArray allocates an array, but this is only called on new connections.
+      System.arraycopy(protocol.name.toByteArray(), 0, result, pos, nameSize);
+      pos += nameSize;
+    }
+    return result;
   }
 }

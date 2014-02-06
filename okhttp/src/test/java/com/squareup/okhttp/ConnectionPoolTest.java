@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.UnknownHostException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
@@ -40,17 +38,7 @@ import static org.junit.Assert.assertTrue;
 
 public final class ConnectionPoolTest {
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
-  private static final SSLContext sslContext;
-
-  static {
-    try {
-      sslContext = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   private final MockWebServer spdyServer = new MockWebServer();
   private InetSocketAddress spdySocketAddress;
@@ -73,33 +61,33 @@ public final class ConnectionPoolTest {
 
     httpServer.play();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), null, null,
-        HttpAuthenticator.SYSTEM_DEFAULT, null, Arrays.asList("spdy/3", "http/1.1"));
+        HttpAuthenticator.SYSTEM_DEFAULT, null, Protocol.SPDY3_AND_HTTP11);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.play();
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(),
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(),
-        HttpAuthenticator.SYSTEM_DEFAULT, null, Arrays.asList("spdy/3", "http/1.1"));
+        HttpAuthenticator.SYSTEM_DEFAULT, null,Protocol.SPDY3_AND_HTTP11);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
     Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true);
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, true);
     httpA = new Connection(httpRoute);
-    httpA.connect(100, 100, null);
+    httpA.connect(200, 200, null);
     httpB = new Connection(httpRoute);
-    httpB.connect(100, 100, null);
+    httpB.connect(200, 200, null);
     httpC = new Connection(httpRoute);
-    httpC.connect(100, 100, null);
+    httpC.connect(200, 200, null);
     httpD = new Connection(httpRoute);
-    httpD.connect(100, 100, null);
+    httpD.connect(200, 200, null);
     httpE = new Connection(httpRoute);
-    httpE.connect(100, 100, null);
+    httpE.connect(200, 200, null);
     spdyA = new Connection(spdyRoute);
-    spdyA.connect(100, 100, null);
+    spdyA.connect(200, 200, null);
     spdyB = new Connection(spdyRoute);
-    spdyB.connect(100, 100, null);
+    spdyB.connect(200, 200, null);
   }
 
   @After public void tearDown() throws Exception {
@@ -121,7 +109,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
-    connection.connect(100, 100, null);
+    connection.connect(200, 200, null);
     assertEquals(0, pool.getConnectionCount());
     pool.recycle(connection);
     assertEquals(1, pool.getConnectionCount());

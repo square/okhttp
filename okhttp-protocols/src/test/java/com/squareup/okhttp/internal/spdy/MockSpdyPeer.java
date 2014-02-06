@@ -28,37 +28,54 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import static java.util.concurrent.Executors.defaultThreadFactory;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
-  private final boolean client;
+  private boolean client = false;
+  private Variant variant = new Spdy3();
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private final FrameWriter frameWriter;
+  private FrameWriter frameWriter = variant.newWriter(bytesOut, client);;
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
-  private final Executor executor = Executors.newCachedThreadPool(defaultThreadFactory());
+  private final ExecutorService executor = Executors.newCachedThreadPool(
+      Util.threadFactory("MockSpdyPeer", false));
   private ServerSocket serverSocket;
   private Socket socket;
 
-  public MockSpdyPeer(boolean client) {
+  public void setVariantAndClient(Variant variant, boolean client) {
+    if (this.variant.getProtocol() == variant.getProtocol() && this.client == client) {
+      return;
+    }
     this.client = client;
-    this.frameWriter = Variant.SPDY3.newWriter(bytesOut, client);
+    this.variant = variant;
+    this.frameWriter = variant.newWriter(bytesOut, client);
   }
 
   public void acceptFrame() {
     frameCount++;
   }
 
+  public int frameCount() {
+    return frameCount;
+  }
+
   public FrameWriter sendFrame() {
     outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
     return frameWriter;
+  }
+
+  /**
+   * Sends a manually-constructed frame. This is useful to test frames that
+   * won't be generated naturally.
+   */
+  public void sendFrame(byte[] frame) throws IOException {
+    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    bytesOut.write(frame);
   }
 
   /**
@@ -71,10 +88,6 @@ public final class MockSpdyPeer implements Closeable {
     return frameWriter;
   }
 
-  public int getPort() {
-    return port;
-  }
-
   public InFrame takeFrame() throws InterruptedException {
     return inFrames.take();
   }
@@ -83,12 +96,13 @@ public final class MockSpdyPeer implements Closeable {
     if (serverSocket != null) throw new IllegalStateException();
     serverSocket = new ServerSocket(0);
     serverSocket.setReuseAddress(true);
-    this.port = serverSocket.getLocalPort();
+    port = serverSocket.getLocalPort();
     executor.execute(new Runnable() {
       @Override public void run() {
         try {
           readAndWriteFrames();
         } catch (IOException e) {
+          Util.closeQuietly(MockSpdyPeer.this);
           throw new RuntimeException(e);
         }
       }
@@ -100,7 +114,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = Variant.SPDY3.newReader(in, client);
+    FrameReader reader = variant.newReader(in, client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();
@@ -139,15 +153,16 @@ public final class MockSpdyPeer implements Closeable {
     return new Socket("localhost", port);
   }
 
-  @Override public void close() throws IOException {
+  @Override public synchronized void close() throws IOException {
+    executor.shutdown();
     Socket socket = this.socket;
     if (socket != null) {
-      socket.close();
+      Util.closeQuietly(socket);
       this.socket = null;
     }
     ServerSocket serverSocket = this.serverSocket;
     if (serverSocket != null) {
-      serverSocket.close();
+      Util.closeQuietly(serverSocket);
       this.serverSocket = null;
     }
   }
@@ -175,11 +190,14 @@ public final class MockSpdyPeer implements Closeable {
     public int associatedStreamId;
     public int priority;
     public ErrorCode errorCode;
-    public int deltaWindowSize;
-    public List<String> nameValueBlock;
+    public long windowSizeIncrement;
+    public List<Header> headerBlock;
     public byte[] data;
     public Settings settings;
     public HeadersMode headersMode;
+    public boolean ack;
+    public int payload1;
+    public int payload2;
 
     public InFrame(int sequence, FrameReader reader) {
       this.sequence = sequence;
@@ -193,8 +211,14 @@ public final class MockSpdyPeer implements Closeable {
       this.settings = settings;
     }
 
+    @Override public void ackSettings() {
+      if (this.type != -1) throw new IllegalStateException();
+      this.type = Spdy3.TYPE_SETTINGS;
+      this.ack = true;
+    }
+
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<String> nameValueBlock,
+        int associatedStreamId, int priority, List<Header> headerBlock,
         HeadersMode headersMode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_HEADERS;
@@ -203,7 +227,7 @@ public final class MockSpdyPeer implements Closeable {
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.priority = priority;
-      this.nameValueBlock = nameValueBlock;
+      this.headerBlock = headerBlock;
       this.headersMode = headersMode;
     }
 
@@ -224,33 +248,40 @@ public final class MockSpdyPeer implements Closeable {
       this.errorCode = errorCode;
     }
 
-    @Override public void ping(boolean reply, int payload1, int payload2) {
+    @Override public void ping(boolean ack, int payload1, int payload2) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_PING;
-      this.streamId = payload1;
+      this.ack = ack;
+      this.payload1 = payload1;
+      this.payload2 = payload2;
     }
 
-    @Override public void noop() {
-      if (this.type != -1) throw new IllegalStateException();
-      this.type = Spdy3.TYPE_NOOP;
-    }
-
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode) {
+    @Override
+    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_GOAWAY;
       this.streamId = lastGoodStreamId;
       this.errorCode = errorCode;
+      this.data = debugData;
     }
 
-    @Override public void windowUpdate(int streamId, int deltaWindowSize, boolean endFlowControl) {
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_WINDOW_UPDATE;
       this.streamId = streamId;
-      this.deltaWindowSize = deltaWindowSize;
+      this.windowSizeIncrement = windowSizeIncrement;
     }
 
     @Override public void priority(int streamId, int priority) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+      this.type = Http20Draft09.TYPE_PUSH_PROMISE;
+      this.streamId = streamId;
+      this.associatedStreamId = associatedStreamId;
+      this.headerBlock = headerBlock;
     }
   }
 }

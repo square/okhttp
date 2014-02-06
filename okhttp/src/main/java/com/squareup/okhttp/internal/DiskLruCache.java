@@ -30,11 +30,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -159,21 +157,24 @@ public final class DiskLruCache implements Closeable {
   private long nextSequenceNumber = 0;
 
   /** This cache uses a single background thread to evict entries. */
-  final ThreadPoolExecutor executorService =
-      new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
-  private final Callable<Void> cleanupCallable = new Callable<Void>() {
-    public Void call() throws Exception {
+  final ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
+  private final Runnable cleanupRunnable = new Runnable() {
+    public void run() {
       synchronized (DiskLruCache.this) {
         if (journalWriter == null) {
-          return null; // Closed.
+          return; // Closed.
         }
-        trimToSize();
-        if (journalRebuildRequired()) {
-          rebuildJournal();
-          redundantOpCount = 0;
+        try {
+          trimToSize();
+          if (journalRebuildRequired()) {
+            rebuildJournal();
+            redundantOpCount = 0;
+          }
+        } catch (IOException e) {
+          throw new RuntimeException(e);
         }
       }
-      return null;
     }
   };
 
@@ -432,7 +433,7 @@ public final class DiskLruCache implements Closeable {
     redundantOpCount++;
     journalWriter.append(READ + ' ' + key + '\n');
     if (journalRebuildRequired()) {
-      executorService.submit(cleanupCallable);
+      executorService.execute(cleanupRunnable);
     }
 
     return new Snapshot(key, entry.sequenceNumber, ins, entry.lengths);
@@ -489,7 +490,7 @@ public final class DiskLruCache implements Closeable {
    */
   public synchronized void setMaxSize(long maxSize) {
     this.maxSize = maxSize;
-    executorService.submit(cleanupCallable);
+    executorService.execute(cleanupRunnable);
   }
 
   /**
@@ -552,7 +553,7 @@ public final class DiskLruCache implements Closeable {
     journalWriter.flush();
 
     if (size > maxSize || journalRebuildRequired()) {
-      executorService.submit(cleanupCallable);
+      executorService.execute(cleanupRunnable);
     }
   }
 
@@ -562,7 +563,7 @@ public final class DiskLruCache implements Closeable {
    */
   private boolean journalRebuildRequired() {
     final int redundantOpCompactThreshold = 2000;
-    return redundantOpCount >= redundantOpCompactThreshold //
+    return redundantOpCount >= redundantOpCompactThreshold
         && redundantOpCount >= lruEntries.size();
   }
 
@@ -594,7 +595,7 @@ public final class DiskLruCache implements Closeable {
     lruEntries.remove(key);
 
     if (journalRebuildRequired()) {
-      executorService.submit(cleanupCallable);
+      executorService.execute(cleanupRunnable);
     }
 
     return true;
@@ -623,7 +624,9 @@ public final class DiskLruCache implements Closeable {
     if (journalWriter == null) {
       return; // Already closed.
     }
-    for (Entry entry : new ArrayList<Entry>(lruEntries.values())) {
+    // Copying for safe iteration.
+    for (Object next : lruEntries.values().toArray()) {
+      Entry entry = (Entry) next;
       if (entry.currentEditor != null) {
         entry.currentEditor.abort();
       }

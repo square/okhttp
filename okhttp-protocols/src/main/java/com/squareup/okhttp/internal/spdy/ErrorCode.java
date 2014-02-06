@@ -1,5 +1,7 @@
 package com.squareup.okhttp.internal.spdy;
 
+// TODO: revisit for http/2 draft 9
+// http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-7
 public enum ErrorCode {
   /** Not an error! For SPDY stream resets, prefer null over NO_ERROR. */
   NO_ERROR(0, -1, 0),
