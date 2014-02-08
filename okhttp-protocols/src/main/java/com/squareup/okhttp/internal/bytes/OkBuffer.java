@@ -76,7 +76,7 @@ public final class OkBuffer implements Source, Sink {
   }
 
   /** Returns the byte at {@code i}. */
-  public byte byteAt(long i) {
+  public byte getByte(long i) {
     checkOffsetAndCount(byteCount, i, 1);
     for (Segment s = head; true; s = s.next) {
       int segmentByteCount = s.limit - s.pos;

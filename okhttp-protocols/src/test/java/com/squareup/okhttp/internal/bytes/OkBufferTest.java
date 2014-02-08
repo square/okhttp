@@ -516,17 +516,17 @@ public final class OkBufferTest {
     buffer.writeUtf8("a");
     buffer.writeUtf8(repeat('b', Segment.SIZE));
     buffer.writeUtf8("c");
-    assertEquals('a', buffer.byteAt(0));
-    assertEquals('a', buffer.byteAt(0)); // Peek doesn't mutate!
-    assertEquals('c', buffer.byteAt(buffer.byteCount - 1));
-    assertEquals('b', buffer.byteAt(buffer.byteCount - 2));
-    assertEquals('b', buffer.byteAt(buffer.byteCount - 3));
+    assertEquals('a', buffer.getByte(0));
+    assertEquals('a', buffer.getByte(0)); // getByte doesn't mutate!
+    assertEquals('c', buffer.getByte(buffer.byteCount - 1));
+    assertEquals('b', buffer.getByte(buffer.byteCount - 2));
+    assertEquals('b', buffer.getByte(buffer.byteCount - 3));
   }
 
-  @Test public void byteAtOfEmptyBuffer() throws Exception {
+  @Test public void getByteOfEmptyBuffer() throws Exception {
     OkBuffer buffer = new OkBuffer();
     try {
-      buffer.byteAt(0);
+      buffer.getByte(0);
       fail();
     } catch (IndexOutOfBoundsException expected) {
     }
