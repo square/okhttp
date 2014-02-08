@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 /**
@@ -165,7 +166,25 @@ public final class OkBuffer implements Source, Sink {
 
   /** Removes {@code byteCount} bytes from this, decodes them as UTF-8 and returns the string. */
   public String readUtf8(int byteCount) {
-    return new String(readBytes(byteCount), Util.UTF_8);
+    checkOffsetAndCount(this.byteCount, 0, byteCount);
+    if (byteCount == 0) return "";
+
+    Segment head = this.head;
+    if (head.pos + byteCount > head.limit) {
+      // If the string spans multiple segments, delegate to readBytes().
+      return new String(readBytes(byteCount), Util.UTF_8);
+    }
+
+    String result = new String(head.data, head.pos, byteCount, UTF_8);
+    head.pos += byteCount;
+    this.byteCount -= byteCount;
+
+    if (head.pos == head.limit) {
+      this.head = head.pop();
+      SegmentPool.INSTANCE.recycle(head);
+    }
+
+    return result;
   }
 
   private byte[] readBytes(int byteCount) {
@@ -354,8 +373,8 @@ public final class OkBuffer implements Source, Sink {
     while (byteCount > 0) {
       // Is a prefix of the source's head segment all that we need to move?
       if (byteCount < (source.head.limit - source.head.pos)) {
-        Segment tail = head.prev;
-        if (byteCount + (tail.limit - tail.pos) > Segment.SIZE) {
+        Segment tail = head != null ? head.prev : null;
+        if (tail == null || byteCount + (tail.limit - tail.pos) > Segment.SIZE) {
           // We're going to need another segment. Split the source's head
           // segment in two, then move the first of those two to this buffer.
           source.head = source.head.split((int) byteCount);

@@ -115,7 +115,7 @@ public class GzipSourceTest {
       gunzip(gzipped);
       fail();
     } catch (IOException e) {
-      assertEquals("FHCRC: actual 0x00261d != expected 0x000000", e.getMessage());
+      assertEquals("FHCRC: actual 0x0000261d != expected 0x00000000", e.getMessage());
     }
   }
 
@@ -130,7 +130,7 @@ public class GzipSourceTest {
       gunzip(gzipped);
       fail();
     } catch (IOException e) {
-      assertEquals("CRC: actual 0x37ad8f8d != expected 0x1234567", e.getMessage());
+      assertEquals("CRC: actual 0x37ad8f8d != expected 0x01234567", e.getMessage());
     }
   }
 
@@ -145,7 +145,7 @@ public class GzipSourceTest {
       gunzip(gzipped);
       fail();
     } catch (IOException e) {
-      assertEquals("ISIZE: actual 0x000020 != expected 0x123456", e.getMessage());
+      assertEquals("ISIZE: actual 0x00000020 != expected 0x00123456", e.getMessage());
     }
   }
 
