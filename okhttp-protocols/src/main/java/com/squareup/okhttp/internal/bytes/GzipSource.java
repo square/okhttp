@@ -109,7 +109,7 @@ public final class GzipSource implements Source {
     // |ID1|ID2|CM |FLG|     MTIME     |XFL|OS | (more-->)
     // +---+---+---+---+---+---+---+---+---+---+
     require(10, deadline);
-    byte flags = buffer.byteAt(3);
+    byte flags = buffer.getByte(3);
     boolean fhcrc = ((flags >> FHCRC) & 1) == 1;
     if (fhcrc) updateCrc(buffer, 0, 10);
 
