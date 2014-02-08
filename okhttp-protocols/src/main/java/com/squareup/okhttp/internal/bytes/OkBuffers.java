@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,6 +24,22 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 public final class OkBuffers {
   private OkBuffers() {
+  }
+
+  /**
+   * Returns the index of {@code b} in {@code buffer}, refilling it if necessary
+   * until it is found. This reads an unbounded number of bytes into {@code
+   * buffer}.
+   */
+  public static long seek(OkBuffer buffer, byte b, Source source, Deadline deadline)
+      throws IOException {
+    long start = 0;
+    long index;
+    while ((index = buffer.indexOf(b, start)) == -1) {
+      start = buffer.byteCount;
+      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
+    }
+    return index;
   }
 
   /** Returns a sink that writes to {@code out}. */
@@ -148,7 +165,7 @@ public final class OkBuffers {
           long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
           if (count == -1) return -1;
         }
-        return buffer.readByte();
+        return buffer.readByte() & 0xff;
       }
 
       @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
@@ -179,7 +196,7 @@ public final class OkBuffers {
       }
 
       @Override public void close() throws IOException {
-        super.close();
+        source.close(Deadline.NONE);
       }
 
       @Override public String toString() {

@@ -135,7 +135,7 @@ public final class GzipSource implements Source {
     // |...original file name, zero-terminated...| (more-->)
     // +=========================================+
     if (((flags >> FNAME) & 1) == 1) {
-      long index = seek((byte) 0, deadline);
+      long index = OkBuffers.seek(buffer, (byte) 0, source, deadline);
       if (fhcrc) updateCrc(buffer, 0, index + 1);
       buffer.skip(index + 1);
     }
@@ -145,7 +145,7 @@ public final class GzipSource implements Source {
     // |...file comment, zero-terminated...| (more-->)
     // +===================================+
     if (((flags >> FCOMMENT) & 1) == 1) {
-      long index = seek((byte) 0, deadline);
+      long index = OkBuffers.seek(buffer, (byte) 0, source, deadline);
       if (fhcrc) updateCrc(buffer, 0, index + 1);
       buffer.skip(index + 1);
     }
@@ -194,21 +194,10 @@ public final class GzipSource implements Source {
     }
   }
 
-  /** Returns the next index of {@code b}, reading data into the buffer as necessary. */
-  private long seek(byte b, Deadline deadline) throws IOException {
-    long start = 0;
-    long index;
-    while ((index = buffer.indexOf(b, start)) == -1) {
-      start = buffer.byteCount;
-      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
-    }
-    return index;
-  }
-
   private void checkEqual(String name, int expected, int actual) throws IOException {
     if (actual != expected) {
       throw new IOException(String.format(
-          "%s: actual %#08x != expected %#08x", name, actual, expected));
+          "%s: actual 0x%08x != expected 0x%08x", name, actual, expected));
     }
   }
 }
