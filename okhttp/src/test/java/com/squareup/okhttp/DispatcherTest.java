@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executor;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -129,7 +130,7 @@ public final class DispatcherTest {
     executor.assertJobs("http://a/2");
   }
 
-  class RecordingExecutor implements Executor {
+  class RecordingExecutor extends AbstractExecutorService {
     private List<Job> jobs = new ArrayList<Job>();
 
     @Override public void execute(Runnable command) {
@@ -154,6 +155,27 @@ public final class DispatcherTest {
         }
       }
       throw new AssertionError("No such job: " + url);
+    }
+
+    @Override public void shutdown() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public List<Runnable> shutdownNow() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean isShutdown() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean isTerminated() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override public boolean awaitTermination(long timeout, TimeUnit unit)
+        throws InterruptedException {
+      throw new UnsupportedOperationException();
     }
   }
 

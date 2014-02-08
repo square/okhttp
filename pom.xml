@@ -22,6 +22,7 @@
     <module>okhttp</module>
     <module>okhttp-apache</module>
     <module>okhttp-protocols</module>
+    <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
     <module>benchmarks</module>
@@ -36,6 +37,8 @@
     <bouncycastle.version>1.48</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
+    <airlift.version>0.6</airlift.version>
+    <guava.version>16.0</guava.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.11</junit.version>
@@ -86,6 +89,16 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${apache.http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.airlift</groupId>
+        <artifactId>airline</artifactId>
+        <version>${airlift.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

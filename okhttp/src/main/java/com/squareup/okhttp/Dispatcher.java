@@ -19,7 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Policy on when async requests are executed.
  *
- * <p>Each dispatcher uses an {@link Executor} to run jobs internally. If you
+ * <p>Each dispatcher uses an {@link ExecutorService} to run jobs internally. If you
  * supply your own executor, it should be able to run {@link #getMaxRequests the
  * configured maximum} number of jobs concurrently.
  */
@@ -36,7 +36,7 @@ public final class Dispatcher {
   private int maxRequestsPerHost = 5;
 
   /** Executes jobs. Created lazily. */
-  private Executor executor;
+  private ExecutorService executorService;
 
   /** Ready jobs in the order they'll be run. */
   private final Deque<Job> readyJobs = new ArrayDeque<Job>();
@@ -44,19 +44,19 @@ public final class Dispatcher {
   /** Running jobs. Includes canceled jobs that haven't finished yet. */
   private final Deque<Job> runningJobs = new ArrayDeque<Job>();
 
-  public Dispatcher(Executor executor) {
-    this.executor = executor;
+  public Dispatcher(ExecutorService executorService) {
+    this.executorService = executorService;
   }
 
   public Dispatcher() {
   }
 
-  public synchronized Executor getExecutor() {
-    if (executor == null) {
-      executor = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
+  public synchronized ExecutorService getExecutorService() {
+    if (executorService == null) {
+      executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
     }
-    return executor;
+    return executorService;
   }
 
   /**
@@ -107,7 +107,7 @@ public final class Dispatcher {
 
     if (runningJobs.size() < maxRequests && runningJobsForHost(job) < maxRequestsPerHost) {
       runningJobs.add(job);
-      getExecutor().execute(job);
+      getExecutorService().execute(job);
     } else {
       readyJobs.add(job);
     }
@@ -143,7 +143,7 @@ public final class Dispatcher {
       if (runningJobsForHost(job) < maxRequestsPerHost) {
         i.remove();
         runningJobs.add(job);
-        getExecutor().execute(job);
+        getExecutorService().execute(job);
       }
 
       if (runningJobs.size() >= maxRequests) return; // Reached max capacity.
