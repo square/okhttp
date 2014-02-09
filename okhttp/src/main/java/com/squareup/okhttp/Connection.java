@@ -38,9 +38,9 @@ import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
 /**
- * The sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection. May be
- * used for multiple HTTP request/response exchanges. Connections may be direct
- * to the origin server or via a proxy.
+ * Holds the sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection,
+ * which may be used for multiple HTTP request/response exchanges. Connections
+ * may be direct to the origin server or via a proxy.
  *
  * <p>Typically instances of this class are created, connected and exercised
  * automatically by the HTTP client. Applications may use this class to monitor
@@ -53,10 +53,10 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * There are tradeoffs when selecting which options to include when negotiating
  * a secure connection to a remote host. Newer TLS options are quite useful:
  * <ul>
- *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
- *       connections for multiple domain names.
- *   <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
- *       for both HTTP and SPDY protocols.
+ * <li>Server Name Indication (SNI) enables one IP address to negotiate secure
+ * connections for multiple domain names.
+ * <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
+ * for both HTTP and SPDY transports.
  * </ul>
  * Unfortunately, older HTTPS servers refuse to connect when such options are
  * presented. Rather than avoiding these options entirely, this class allows a
@@ -75,9 +75,16 @@ public final class Connection implements Closeable {
   private int httpMinorVersion = 1; // Assume HTTP/1.1
   private long idleStartTimeNs;
   private Handshake handshake;
+  private long keepAliveDurationNs;
 
   public Connection(Route route) {
     this.route = route;
+    this.keepAliveDurationNs = ConnectionPool.DEFAULT_KEEP_ALIVE_DURATION_MS  * 1000 * 1000;
+  }
+
+  public Connection(Route route, long keepAliveDuration) {
+    this.route = route;
+    this.keepAliveDurationNs = keepAliveDuration;
   }
 
   public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
@@ -226,6 +233,10 @@ public final class Connection implements Closeable {
     this.idleStartTimeNs = System.nanoTime();
   }
 
+  public void setKeepAliveDurationNs(long keepAliveDuration) {
+    this.keepAliveDurationNs = keepAliveDuration;
+  }
+
   /** Returns true if this connection is idle. */
   public boolean isIdle() {
     return spdyConnection == null || spdyConnection.isIdle();
@@ -235,7 +246,7 @@ public final class Connection implements Closeable {
    * Returns true if this connection has been idle for longer than
    * {@code keepAliveDurationNs}.
    */
-  public boolean isExpired(long keepAliveDurationNs) {
+  public boolean isExpired() {
     return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
   }
 

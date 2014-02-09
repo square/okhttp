@@ -29,6 +29,7 @@ import com.squareup.okhttp.internal.spdy.SpdyStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -252,7 +253,7 @@ public final class MockWebServer {
 
         // This gnarly block of code will release all sockets and all thread,
         // even if any close fails.
-        Util.closeQuietly(serverSocket);
+        Util.closeQuietly((Closeable) serverSocket);
         for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();

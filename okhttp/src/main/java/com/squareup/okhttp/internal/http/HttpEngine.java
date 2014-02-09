@@ -28,6 +28,7 @@ import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.Platform;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,6 +40,7 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
@@ -75,6 +77,7 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
+  public static final long SEC2NS = TimeUnit.SECONDS.toNanos(1);
   final OkHttpClient client;
 
   private Connection connection;
@@ -131,15 +134,10 @@ public class HttpEngine {
   private boolean connectionReleased;
 
   /**
-   * @param request the HTTP request without a body. The body must be
-   *     written via the engine's request body stream.
    * @param connection the connection used for an intermediate response
    *     immediately prior to this request/response pair, such as a same-host
    *     redirect. This engine assumes ownership of the connection and must
    *     release it when it is unneeded.
-   * @param routeSelector the route selector used for a failed attempt
-   *     immediately preceding this attempt, or null if this request doesn't
-   *     recover from a failure.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableOutputStream requestBodyOut) {
@@ -253,8 +251,8 @@ public class HttpEngine {
   }
 
   /**
-   * Recycle the connection to the origin server. It is an error to call this
-   * with a request in flight.
+   * Called after a socket connection has been created or retrieved from the
+   * pool. Subclasses use this hook to get a reference to the TLS data.
    */
   private void disconnect() {
     client.getConnectionPool().recycle(connection);
@@ -341,8 +339,9 @@ public class HttpEngine {
   }
 
   /**
-   * Returns the route used to retrieve the response. Null if we haven't
-   * connected yet, or if no connection was necessary.
+   * Returns true if {@code cacheResponse} is of the right type. This
+   * condition is necessary but not sufficient for the cached response to
+   * be used.
    */
   public Route getRoute() {
     return route;
@@ -459,7 +458,7 @@ public class HttpEngine {
   }
 
   /**
-   * Populates request with defaults and cookies.
+   * Populates requestHeaders with defaults and cookies.
    *
    * <p>This client doesn't specify a default {@code Accept} header because it
    * doesn't know what content types the application is interested in.
@@ -641,6 +640,46 @@ public class HttpEngine {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
       cookieHandler.put(request.uri(), OkHeaders.toMultimap(headers, null));
+    }
+    // If connection is not SPDY, search headers for Keep-Alive, parse and set
+    // timeout.
+    if (connection != null && !connection.isSpdy()) {
+      String keepAliveHeader = headers.get("Keep-Alive");
+      if (keepAliveHeader != null) {
+        // We only care about the timeout, the server will issue
+        // "Connection: Close" on the last allowed request, so we do not need
+        // to handle max.
+        int i = keepAliveHeader.indexOf("timeout=");
+        if (i > -1
+            && (i == 0
+                || Character.isWhitespace(keepAliveHeader.charAt(i - 1)))) {
+          String timeoutStr;
+          int j = keepAliveHeader.indexOf(' ', i + 8);
+          if (j > -1) {
+            timeoutStr = keepAliveHeader.substring(i + 8, j);
+          } else {
+            timeoutStr = keepAliveHeader.substring(i + 8);
+          }
+          int len = timeoutStr.length();
+          long timeConversion = SEC2NS;
+          if (!Character.isDigit(timeoutStr.charAt(len - 1))) {
+            if (timeoutStr.endsWith("ms")
+                && Character.isDigit(timeoutStr.charAt(len - 3))) {
+              timeoutStr = timeoutStr.substring(0, len - 3);
+              timeConversion = TimeUnit.MILLISECONDS.toNanos(1);
+            } else {
+              Platform.get().logW("failed to parse string '" + timeoutStr + "'");
+              return;
+            }
+          }
+          try {
+            connection.setKeepAliveDurationNs(Integer.decode(timeoutStr) * timeConversion);
+          } catch (NumberFormatException e) {
+            Platform.get().logW("failed to parse string '" + timeoutStr
+                          + "' as integer. Exception=" + e.getMessage());
+          }
+        }
+      }
     }
   }
 }
