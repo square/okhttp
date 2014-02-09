@@ -37,7 +37,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public final class ConnectionPoolTest {
-  private static final int KEEP_ALIVE_DURATION_MS = 5000;
+  private static final long KEEP_ALIVE_DURATION_MS = 5000;
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   private final MockWebServer spdyServer = new MockWebServer();
@@ -148,7 +148,7 @@ public final class ConnectionPoolTest {
 
   @Test public void idleConnectionNotReturned() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    httpA.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
+    httpA.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
     pool.recycle(httpA);
     Thread.sleep(KEEP_ALIVE_DURATION_MS * 2);
     assertNull(pool.get(httpAddress));
@@ -166,8 +166,8 @@ public final class ConnectionPoolTest {
 
   @Test public void expiredConnectionsAreEvicted() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    httpA.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
-    httpB.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
+    httpA.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
+    httpB.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
     pool.recycle(httpA);
     pool.recycle(httpB);
     Thread.sleep(2 * KEEP_ALIVE_DURATION_MS);
@@ -227,7 +227,7 @@ public final class ConnectionPoolTest {
 
   @Test public void validateIdleSpdyConnectionTimeout() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    spdyA.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
+    spdyA.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
     pool.maybeShare(spdyA);
     Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
     assertNull(pool.get(httpAddress));
@@ -353,9 +353,9 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(10, KEEP_ALIVE_DURATION_MS);
 
     // Add 3 connections to the pool.
-    httpA.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
-    httpB.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
-    spdyA.setKeepAliveDurationNs(((long) KEEP_ALIVE_DURATION_MS) * 1000 * 1000);
+    httpA.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
+    httpB.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
+    spdyA.setKeepAliveDurationNs(KEEP_ALIVE_DURATION_MS * 1000 * 1000);
     pool.recycle(httpA);
     pool.recycle(httpB);
     pool.maybeShare(spdyA);

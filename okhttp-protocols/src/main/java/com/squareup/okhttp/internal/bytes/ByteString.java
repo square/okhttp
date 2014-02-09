@@ -46,6 +46,9 @@ public final class ByteString {
    * Returns a new byte string containing a clone of the bytes of {@code data}.
    */
   public static ByteString of(byte... data) {
+    if (data == null) {
+      return null;
+    }
     return new ByteString(data.clone());
   }
 
