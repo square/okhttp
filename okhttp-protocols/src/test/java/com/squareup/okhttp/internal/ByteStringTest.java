@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class ByteStringTest {
@@ -74,6 +75,19 @@ public class ByteStringTest {
     assertEquals(ByteString.of((byte) 0x61, (byte) 0x62), ByteString.readLowerCase(in, 2));
     assertEquals(ByteString.of((byte) 0x63), ByteString.readLowerCase(in, 1));
     assertEquals(ByteString.of(), ByteString.readLowerCase(in, 0));
+  }
+
+  @Test public void toAsciiLowerCaseNoUppercase() throws Exception {
+    ByteString s = ByteString.encodeUtf8("a1_+");
+    assertSame(s, s.toAsciiLowercase());
+  }
+
+  @Test public void toAsciiAllUppercase() throws Exception {
+    assertEquals(ByteString.encodeUtf8("ab"), ByteString.encodeUtf8("AB").toAsciiLowercase());
+  }
+
+  @Test public void toAsciiStartsLowercaseEndsUppercase() throws Exception {
+    assertEquals(ByteString.encodeUtf8("abcd"), ByteString.encodeUtf8("abCD").toAsciiLowercase());
   }
 
   @Test public void write() throws Exception {

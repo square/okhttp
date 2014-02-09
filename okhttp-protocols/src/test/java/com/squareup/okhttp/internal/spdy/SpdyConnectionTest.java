@@ -38,7 +38,6 @@ import static com.squareup.okhttp.internal.spdy.ErrorCode.PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.REFUSED_STREAM;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.STREAM_IN_USE;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
-import static com.squareup.okhttp.internal.spdy.SpdyStream.OUTPUT_BUFFER_SIZE;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_HEADERS;
@@ -47,6 +46,7 @@ import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_RST_STREAM;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SETTINGS;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_WINDOW_UPDATE;
 import static com.squareup.okhttp.internal.spdy.SpdyConnection.INITIAL_WINDOW_SIZE;
+import static com.squareup.okhttp.internal.spdy.SpdyStream.OUTPUT_BUFFER_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -1339,9 +1339,7 @@ public final class SpdyConnectionTest {
   }
 
   /** https://github.com/square/okhttp/issues/333 */
-  @Test public void headerBlockHasTrailingCompressedBytes() throws Exception {
-    // write the mocking script
-    peer.acceptFrame(); // SYN_STREAM
+  @Test public void headerBlockHasTrailingCompressedBytes512() throws Exception {
     // This specially-formatted frame has trailing deflated bytes after the name value block.
     String frame = "gAMAAgAAAgkAAAABeLvjxqfCYgAAAAD//2IAAAAA//9iAAAAAP//YgQAAAD//2IAAAAA//9iAAAAAP/"
         + "/YgAAAAD//2IEAAAA//9KBAAAAP//YgAAAAD//2IAAAAA//9iAAAAAP//sgEAAAD//2IAAAAA\n//9iBAAAAP//Y"
@@ -1352,6 +1350,49 @@ public final class SpdyConnectionTest {
         + "//SAAAAAP//0gQAAAD//9ICAAAA///SBgAAAP//0gEAAAD//9IFAAAA///SAwAAAP//0gcAAAD//zIAAAAA//8yB"
         + "AAAAP//MgIAAAD//zIGAAAA//8yAQAAAP//MgUAAAD//zIDAAAA//8yBwAAAP//sgAAAAD//7IEAAAA//+yAgAAA"
         + "P//sgYAAAD//w==";
+    headerBlockHasTrailingCompressedBytes(frame, 60);
+  }
+
+  @Test public void headerBlockHasTrailingCompressedBytes2048() throws Exception {
+    // This specially-formatted frame has trailing deflated bytes after the name value block.
+    String frame = "gAMAAgAAB/sAAAABeLvjxqfCAqYjRhAGJmxGxUQAAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAA"
+        + "AAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP/"
+        + "/SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQ"
+        + "AAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD"
+        + "//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0o"
+        + "EAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAA"
+        + "A//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9"
+        + "KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAA"
+        + "AAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP/"
+        + "/SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQ"
+        + "AAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD"
+        + "//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0o"
+        + "EAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAA"
+        + "A//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9"
+        + "KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAA"
+        + "AAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP/"
+        + "/SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQ"
+        + "AAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD"
+        + "//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0o"
+        + "EAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAA"
+        + "A//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9"
+        + "KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAA"
+        + "AAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP/"
+        + "/SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQ"
+        + "AAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD"
+        + "//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0o"
+        + "EAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAA"
+        + "A//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9"
+        + "KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAA"
+        + "AAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP/"
+        + "/SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQAAAD//0oEAAAA//9KBAAAAP//SgQ"
+        + "AAAD//0oEAAAA//8=";
+    headerBlockHasTrailingCompressedBytes(frame, 289);
+  }
+
+  private void headerBlockHasTrailingCompressedBytes(String frame, int length) throws IOException {
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame(Base64.decode(frame.getBytes(UTF_8)));
     peer.sendFrame().data(true, 1, "robot".getBytes("UTF-8"));
     peer.acceptFrame(); // DATA
@@ -1361,7 +1402,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = new SpdyConnection.Builder(true, peer.openSocket()).build();
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     assertEquals("a", stream.getResponseHeaders().get(0).name.utf8());
-    assertEquals(60, stream.getResponseHeaders().get(0).value.size());
+    assertEquals(length, stream.getResponseHeaders().get(0).value.size());
     assertStreamData("robot", stream.getInputStream());
   }
 

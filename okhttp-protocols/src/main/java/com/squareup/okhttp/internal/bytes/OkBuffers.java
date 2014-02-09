@@ -42,6 +42,35 @@ public final class OkBuffers {
     return index;
   }
 
+  /**
+   * Returns when {@code sink} contains at least {@code byteCount} bytes. Throws
+   * an {@link EOFException} if the source is exhausted before the requested
+   * bytes can be read.
+   */
+  public static void require(Source source, OkBuffer sink, long byteCount, Deadline deadline)
+      throws IOException {
+    while (sink.byteCount < byteCount) {
+      if (source.read(sink, Segment.SIZE, deadline) == -1) throw new EOFException();
+    }
+  }
+
+  /**
+   * Reads and discards {@code byteCount} bytes from {@code source} using {@code
+   * buffer} as a buffer. Throws an {@link EOFException} if the source is
+   * exhausted before the requested bytes can be skipped.
+   */
+  public static void skip(Source source, OkBuffer buffer, long byteCount, Deadline deadline)
+      throws IOException {
+    while (byteCount > 0) {
+      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE, deadline) == -1) {
+        throw new EOFException();
+      }
+      long toSkip = Math.min(byteCount, buffer.byteCount());
+      buffer.skip(toSkip);
+      byteCount -= toSkip;
+    }
+  }
+
   /** Returns a sink that writes to {@code out}. */
   public static Sink sink(final OutputStream out) {
     return new Sink() {
@@ -157,9 +186,17 @@ public final class OkBuffers {
    * data by reading extra data eagerly.
    */
   public static InputStream inputStream(final Source source) {
-    return new InputStream() {
-      final OkBuffer buffer = new OkBuffer();
+    return inputStream(source, new OkBuffer());
+  }
 
+  /**
+   * Returns a buffered input stream that reads from {@code source}, with {@code
+   * buffer} as a buffer. Bytes are drawn from {@code buffer}, which is refilled
+   * from {@code source} when it is empty. This may read extra data eagerly into
+   * {@code buffer}.
+   */
+  public static InputStream inputStream(final Source source, final OkBuffer buffer) {
+    return new InputStream() {
       @Override public int read() throws IOException {
         if (buffer.byteCount == 0) {
           long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
