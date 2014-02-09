@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
@@ -31,11 +31,12 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 /** Configures and creates HTTP connections. */
@@ -202,8 +203,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   /**
    * Sets the socket factory used to secure HTTPS connections.
    *
-   * <p>If unset, the {@link HttpsURLConnection#getDefaultSSLSocketFactory()
-   * system-wide default} SSL socket factory will be used.
+   * <p>If unset, a lazily created SSL socket factory will be used.
    */
   public OkHttpClient setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
     this.sslSocketFactory = sslSocketFactory;
@@ -218,7 +218,8 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * Sets the verifier used to confirm that response certificates apply to
    * requested hostnames for HTTPS connections.
    *
-   * <p>If unset, the {@link HttpsURLConnection#getDefaultHostnameVerifier()
+   * <p>If unset, the
+   * {@link javax.net.ssl.HttpsURLConnection#getDefaultHostnameVerifier()
    * system-wide default} hostname verifier will be used.
    */
   public OkHttpClient setHostnameVerifier(HostnameVerifier hostnameVerifier) {
@@ -422,7 +423,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       result.responseCache = toOkResponseCacheOrNull(ResponseCache.getDefault());
     }
     if (result.sslSocketFactory == null) {
-      result.sslSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
+      result.sslSocketFactory = getDefaultSSLSocketFactory();
     }
     if (result.hostnameVerifier == null) {
       result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
@@ -437,6 +438,30 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       result.protocols = Protocol.HTTP2_SPDY3_AND_HTTP;
     }
     return result;
+  }
+
+  /**
+   * Java and Android programs default to using a single global SSL context,
+   * accessible to HTTP clients as {@link SSLSocketFactory#getDefault()}. If we
+   * used the shared SSL context, when OkHttp enables NPN for its SPDY-related
+   * stuff, it would also enable NPN for other usages, which might crash them
+   * because NPN is enabled when it isn't expected to be.
+   * <p>
+   * This code avoids that by defaulting to an OkHttp created SSL context. The
+   * significant drawback of this approach is that apps that customize the
+   * global SSL context will lose these customizations.
+   */
+  private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
+    if (sslSocketFactory == null) {
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        sslSocketFactory = sslContext.getSocketFactory();
+      } catch (GeneralSecurityException e) {
+        throw new AssertionError(); // The system has no TLS. Just give up.
+      }
+    }
+    return sslSocketFactory;
   }
 
   /** Returns a shallow copy of this OkHttpClient. */
