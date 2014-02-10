@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ConnectionPool {
   private static final int MAX_CONNECTIONS_TO_CLEANUP = 2;
-  private static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
+  static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
 
   private static final ConnectionPool systemDefault;
 
@@ -90,7 +90,7 @@ public class ConnectionPool {
         for (ListIterator<Connection> i = connections.listIterator(connections.size());
             i.hasPrevious(); ) {
           Connection connection = i.previous();
-          if (!connection.isAlive() || connection.isExpired(keepAliveDurationNs)) {
+          if (!connection.isAlive() || connection.isExpired()) {
             i.remove();
             expiredConnections.add(connection);
             if (expiredConnections.size() == MAX_CONNECTIONS_TO_CLEANUP) break;
@@ -118,6 +118,10 @@ public class ConnectionPool {
   public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs) {
     this.maxIdleConnections = maxIdleConnections;
     this.keepAliveDurationNs = keepAliveDurationMs * 1000 * 1000;
+  }
+
+  public long getKeepAliveDurationNs() {
+    return keepAliveDurationNs;
   }
 
   /**
@@ -181,7 +185,7 @@ public class ConnectionPool {
       Connection connection = i.previous();
       if (!connection.getRoute().getAddress().equals(address)
           || !connection.isAlive()
-          || System.nanoTime() - connection.getIdleStartTimeNs() >= keepAliveDurationNs) {
+          || connection.isExpired()) {
         continue;
       }
       i.remove();
