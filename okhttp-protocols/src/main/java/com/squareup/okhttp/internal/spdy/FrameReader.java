@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -71,11 +72,12 @@ public interface FrameReader extends Closeable {
      * on a new connection if they are idempotent.
      *
      * @param lastGoodStreamId the last stream ID the peer processed before
-     * sending this message. If {@lastGoodStreamId} is zero, the peer processed no frames.
+     *     sending this message. If {@code lastGoodStreamId} is zero, the peer
+     *     processed no frames.
      * @param errorCode reason for closing the connection.
      * @param debugData only valid for http/2; opaque debug data to send.
      */
-    void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData);
+    void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData);
 
     /**
      * Notifies that an additional {@code windowSizeIncrement} bytes can be

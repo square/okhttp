@@ -16,7 +16,8 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayInputStream;
+import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -434,10 +435,11 @@ public class Http20Draft09Test {
     FrameReader fr = newReader(out);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
-      @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+      @Override public void goAway(
+          int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
         assertEquals(expectedStreamId, lastGoodStreamId);
         assertEquals(expectedError, errorCode);
-        assertEquals(0, debugData.length);
+        assertEquals(0, debugData.size());
       }
     });
   }
@@ -447,34 +449,36 @@ public class Http20Draft09Test {
     DataOutputStream dataOut = new DataOutputStream(out);
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
-    final byte[] expectedData = new byte[8];
-    Arrays.fill(expectedData, (byte) '*');
+    final ByteString expectedData = ByteString.encodeUtf8("abcdefgh");
 
     // Compose the expected GOAWAY frame without debug data.
-    dataOut.writeShort(8 + expectedData.length);
+    dataOut.writeShort(8 + expectedData.size());
     dataOut.write(Http20Draft09.TYPE_GOAWAY);
     dataOut.write(0); // no flags.
     dataOut.writeInt(0); // connection-scope
     dataOut.writeInt(0); // never read any stream!
     dataOut.writeInt(expectedError.httpCode);
-    dataOut.write(expectedData);
+    dataOut.write(expectedData.toByteArray());
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), sendGoAway(0, expectedError, expectedData));
+    assertArrayEquals(out.toByteArray(), sendGoAway(0, expectedError, expectedData.toByteArray()));
 
     FrameReader fr = newReader(out);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
-      @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+      @Override public void goAway(
+          int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
         assertEquals(0, lastGoodStreamId);
         assertEquals(expectedError, errorCode);
-        assertArrayEquals(expectedData, debugData);
+        assertEquals(expectedData, debugData);
       }
     });
   }
 
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
-    return new Http20Draft09.Reader(new ByteArrayInputStream(out.toByteArray()), 4096, false);
+    OkBuffer buffer = new OkBuffer();
+    buffer.write(ByteString.of(out.toByteArray()));
+    return new Http20Draft09.Reader(buffer, 4096, false);
   }
 
   @Test public void frameSizeError() throws IOException {

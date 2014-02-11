@@ -79,10 +79,11 @@ public class Spdy3Test {
     FrameReader fr = newReader(out);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the goAway frame.
-      @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+      @Override public void goAway(
+          int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
         assertEquals(expectedStreamId, lastGoodStreamId);
         assertEquals(expectedError, errorCode);
-        assertEquals(0, debugData.length);
+        assertEquals(0, debugData.size());
       }
     });
   }
