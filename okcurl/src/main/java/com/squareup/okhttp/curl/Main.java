@@ -59,6 +59,10 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
         }));
   }
 
+  @Option(name = { "-X", "--request" }, description = "Specify request command to use",
+      allowedValues = { "GET", "HEAD" })
+  public String method = "GET";
+
   @Option(name = { "-H", "--header" }, description = "Custom header to pass to server")
   public List<String> headers;
 
@@ -130,6 +134,7 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
 
   private Request getConfiguredRequest() {
     Request.Builder request = new Request.Builder();
+    request.method(method, null);
     request.url(url);
     if (headers != null) {
       for (String header : headers) {
