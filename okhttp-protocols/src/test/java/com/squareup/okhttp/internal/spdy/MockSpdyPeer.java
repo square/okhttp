@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -256,13 +257,12 @@ public final class MockSpdyPeer implements Closeable {
       this.payload2 = payload2;
     }
 
-    @Override
-    public void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) {
+    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_GOAWAY;
       this.streamId = lastGoodStreamId;
       this.errorCode = errorCode;
-      this.data = debugData;
+      this.data = debugData.toByteArray();
     }
 
     @Override public void windowUpdate(int streamId, long windowSizeIncrement) {

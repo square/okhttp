@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -30,7 +31,6 @@ import static com.squareup.okhttp.internal.Util.headerEntries;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class HpackDraft05Test {
@@ -795,12 +795,12 @@ public class HpackDraft05Test {
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(true));
-    assertSame(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
+    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(true));
+    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
   }
 
   private HpackDraft05.Reader newReader(InputStream input) {
-    return new HpackDraft05.Reader(false, 4096, input);
+    return new HpackDraft05.Reader(false, 4096, OkBuffers.source(input));
   }
 
   private InputStream byteStream(int... bytes) {

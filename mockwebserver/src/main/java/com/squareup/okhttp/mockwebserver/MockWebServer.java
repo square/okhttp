@@ -344,7 +344,6 @@ public final class MockWebServer {
               .handler(spdySocketHandler).build();
           openSpdyConnections.put(spdyConnection, Boolean.TRUE);
           openClientSockets.remove(socket);
-          spdyConnection.readConnectionHeader();
           return;
         }
 

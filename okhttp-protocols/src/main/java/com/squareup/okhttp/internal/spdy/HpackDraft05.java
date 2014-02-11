@@ -1,10 +1,12 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,8 +14,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.squareup.okhttp.internal.Util.asciiLowerCase;
 
 /**
  * Read and write HPACK v05.
@@ -99,8 +99,9 @@ final class HpackDraft05 {
   static final class Reader {
     private final Huffman.Codec huffmanCodec;
 
-    private final InputStream in;
     private final List<Header> emittedHeaders = new ArrayList<Header>();
+    private final Source source;
+    private final OkBuffer buffer = new OkBuffer();
     private int maxHeaderTableByteCount;
 
     // Visible for testing.
@@ -123,10 +124,10 @@ final class HpackDraft05 {
     long referencedStaticHeaders = 0L;
     int headerTableByteCount = 0;
 
-    Reader(boolean client, int maxHeaderTableByteCount, InputStream in) {
+    Reader(boolean client, int maxHeaderTableByteCount, Source source) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
-      this.in = in;
+      this.source = source;
     }
 
     int maxHeaderTableByteCount() {
@@ -181,8 +182,9 @@ final class HpackDraft05 {
      * set of emitted headers.
      */
     void readHeaders() throws IOException {
-      while (in.available() > 0) {
-        int b = in.read() & 0xff;
+      while (buffer.byteCount() > 0
+          || source.read(buffer, 2048, Deadline.NONE) != -1) {
+        int b = buffer.readByte() & 0xff;
         if (b == 0x80) { // 10000000
           clearReferenceSet();
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
@@ -333,7 +335,8 @@ final class HpackDraft05 {
     }
 
     private int readByte() throws IOException {
-      return in.read() & 0xff;
+      OkBuffers.require(source, buffer, 1, Deadline.NONE);
+      return buffer.readByte() & 0xff;
     }
 
     int readInt(int firstByte, int prefixMask) throws IOException {
@@ -365,16 +368,25 @@ final class HpackDraft05 {
     ByteString readByteString(boolean asciiLowercase) throws IOException {
       int firstByte = readByte();
       int length = readInt(firstByte, PREFIX_8_BITS);
+
+      boolean huffmanDecode = false;
       if ((length & 0x80) == 0x80) { // 1NNNNNNN
         length &= ~0x80;
-        byte[] buff = new byte[length];
-        Util.readFully(in, buff);
-        buff = huffmanCodec.decode(buff); // TODO: streaming Huffman!
-        if (asciiLowercase) asciiLowerCase(buff);
-        return ByteString.of(buff);
+        huffmanDecode = true;
       }
-      return length == 0 ? ByteString.EMPTY
-          : asciiLowercase ? ByteString.readLowerCase(in, length) : ByteString.read(in, length);
+
+      OkBuffers.require(source, buffer, length, Deadline.NONE);
+      ByteString byteString = buffer.readByteString(length);
+
+      if (huffmanDecode) {
+        byteString = huffmanCodec.decode(byteString); // TODO: streaming Huffman!
+      }
+
+      if (asciiLowercase) {
+        byteString = byteString.toAsciiLowercase();
+      }
+
+      return byteString;
     }
   }
 

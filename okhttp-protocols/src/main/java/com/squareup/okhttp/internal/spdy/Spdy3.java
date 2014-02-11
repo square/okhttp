@@ -31,8 +31,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.Deflater;
 
 /**
@@ -184,8 +182,6 @@ final class Spdy3 implements Variant {
             return true;
 
           default:
-            Logger logger = Logger.getLogger("com.squareup.okhttp.internal.spdy.Spdy3");
-            logger.log(Level.INFO, "Ignoring unknown frame type " + type);
             OkBuffers.skip(source, buffer, length, Deadline.NONE);
             return true;
         }
@@ -271,7 +267,7 @@ final class Spdy3 implements Variant {
       if (errorCode == null) {
         throw ioException("TYPE_GOAWAY unexpected error code: %d", errorCodeInt);
       }
-      handler.goAway(lastGoodStreamId, errorCode, Util.EMPTY_BYTE_ARRAY);
+      handler.goAway(lastGoodStreamId, errorCode, ByteString.EMPTY);
     }
 
     private void readSettings(Handler handler, int flags, int length) throws IOException {
