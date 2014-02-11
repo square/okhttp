@@ -54,23 +54,7 @@ public final class InflaterSource implements Source {
     if (byteCount == 0) return 0;
 
     while (true) {
-      boolean sourceExhausted = false;
-      if (inflater.needsInput()) {
-        releaseInflatedBytes();
-        if (inflater.getRemaining() != 0) throw new IllegalStateException("?"); // TODO: possible?
-
-        // Refill the buffer with compressed data from the source.
-        if (buffer.byteCount == 0) {
-          sourceExhausted = source.read(buffer, Segment.SIZE, deadline) == -1;
-        }
-
-        // Acquire buffer bytes for the inflater.
-        if (buffer.byteCount > 0) {
-          Segment head = buffer.head;
-          bufferBytesHeldByInflater = head.limit - head.pos;
-          inflater.setInput(head.data, head.pos, bufferBytesHeldByInflater);
-        }
-      }
+      boolean sourceExhausted = refill(deadline);
 
       // Decompress the inflater's compressed data into the sink.
       try {
@@ -90,6 +74,29 @@ public final class InflaterSource implements Source {
         throw new IOException(e);
       }
     }
+  }
+
+  /**
+   * Refills the inflater with compressed data if it needs input. (And only if
+   * it needs input). Returns true if the inflater required input but the source
+   * was exhausted.
+   */
+  public boolean refill(Deadline deadline) throws IOException {
+    if (!inflater.needsInput()) return false;
+
+    releaseInflatedBytes();
+    if (inflater.getRemaining() != 0) throw new IllegalStateException("?"); // TODO: possible?
+
+    // Refill the buffer with compressed data from the source.
+    if (buffer.byteCount == 0) {
+      if (source.read(buffer, Segment.SIZE, deadline) == -1) return true;
+    }
+
+    // Assign buffer bytes to the inflater.
+    Segment head = buffer.head;
+    bufferBytesHeldByInflater = head.limit - head.pos;
+    inflater.setInput(head.data, head.pos, bufferBytesHeldByInflater);
+    return false;
   }
 
   /** When the inflater has processed compressed data, remove it from the buffer. */

@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -564,6 +565,88 @@ public final class OkBufferTest {
     source.writeUtf8("abcd");
     sink.write(source, 2, Deadline.NONE);
     assertEquals("ab", sink.readUtf8(2));
+  }
+
+  @Test public void requireTracksBufferFirst() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8("aa");
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("bb");
+
+    OkBuffers.require(source, buffer, 2, Deadline.NONE);
+    assertEquals(2, buffer.byteCount());
+    assertEquals(2, source.byteCount());
+  }
+
+  @Test public void requireIncludesBufferBytes() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8("a");
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("b");
+
+    OkBuffers.require(source, buffer, 2, Deadline.NONE);
+    assertEquals("ab", buffer.readUtf8(2));
+  }
+
+  @Test public void requireInsufficientData() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("a");
+
+    try {
+      OkBuffers.require(source, buffer, 2, Deadline.NONE);
+      fail();
+    } catch (EOFException expected) {
+    }
+  }
+
+  @Test public void requireReadsOneSegmentAtATime() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE));
+    source.writeUtf8(repeat('b', Segment.SIZE));
+
+    OkBuffers.require(source, buffer, 2, Deadline.NONE);
+    assertEquals(Segment.SIZE, source.byteCount());
+    assertEquals(Segment.SIZE, buffer.byteCount());
+  }
+
+  @Test public void skipInsufficientData() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("a");
+    try {
+      OkBuffers.require(source, buffer, 2, Deadline.NONE);
+      fail();
+    } catch (EOFException expected) {
+    }
+  }
+
+  @Test public void skipReadsOneSegmentAtATime() throws Exception {
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8(repeat('a', Segment.SIZE));
+    source.writeUtf8(repeat('b', Segment.SIZE));
+    OkBuffer buffer = new OkBuffer();
+    OkBuffers.skip(source, buffer, 2, Deadline.NONE);
+    assertEquals(Segment.SIZE, source.byteCount());
+    assertEquals(Segment.SIZE - 2, buffer.byteCount());
+  }
+
+  @Test public void skipTracksBufferFirst() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8("aa");
+
+    OkBuffer source = new OkBuffer();
+    source.writeUtf8("bb");
+
+    OkBuffers.skip(source, buffer, 2, Deadline.NONE);
+    assertEquals(0, buffer.byteCount());
+    assertEquals(2, source.byteCount());
   }
 
   private String repeat(char c, int count) {

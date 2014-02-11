@@ -1,16 +1,16 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.Util;
-import java.io.Closeable;
-import java.io.DataInputStream;
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.InflaterSource;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-import java.util.zip.InflaterInputStream;
 
 /**
  * Reads a SPDY/3 Name/Value header block. This class is made complicated by the
@@ -18,29 +18,38 @@ import java.util.zip.InflaterInputStream;
  * buffer. We need to put all compressed bytes into that buffer -- but no other
  * bytes.
  */
-class NameValueBlockReader implements Closeable {
-  private final DataInputStream headerBlockIn;
-  private final FillableInflaterInputStream fillableInflaterInputStream;
+class NameValueBlockReader {
+  /** This source transforms compressed bytes into uncompressed bytes. */
+  private final InflaterSource inflaterSource;
+
+  /**
+   * How many compressed bytes must be read into inflaterSource before
+   * {@link #readNameValueBlock} returns.
+   */
   private int compressedLimit;
 
-  NameValueBlockReader(final InputStream in) {
-    // Limit the inflater input stream to only those bytes in the Name/Value block. We cut the
-    // inflater off at its source because we can't predict the ratio of compressed bytes to
-    // uncompressed bytes.
-    InputStream throttleStream = new InputStream() {
-      @Override public int read() throws IOException {
-        return Util.readSingleByte(this);
-      }
+  /** This buffer holds inflated bytes read from inflaterSource. */
+  private final OkBuffer inflatedBuffer = new OkBuffer();
 
-      @Override public int read(byte[] buffer, int offset, int byteCount) throws IOException {
+  public NameValueBlockReader(final OkBuffer sourceBuffer, final Source source) {
+    // Limit the inflater input stream to only those bytes in the Name/Value
+    // block. We cut the inflater off at its source because we can't predict the
+    // ratio of compressed bytes to uncompressed bytes.
+    Source throttleSource = new Source() {
+      @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+          throws IOException {
+        if (compressedLimit == 0) return -1; // Out of data for the current block.
         byteCount = Math.min(byteCount, compressedLimit);
-        int consumed = in.read(buffer, offset, byteCount);
-        compressedLimit -= consumed;
-        return consumed;
+        long read = sourceBuffer.byteCount() > 0
+            ? sourceBuffer.read(sink, byteCount, deadline)
+            : source.read(sink, byteCount, deadline);
+        if (read == -1) return -1;
+        compressedLimit -= read;
+        return read;
       }
 
-      @Override public void close() throws IOException {
-        in.close();
+      @Override public void close(Deadline deadline) throws IOException {
+        source.close(deadline);
       }
     };
 
@@ -57,56 +66,47 @@ class NameValueBlockReader implements Closeable {
       }
     };
 
-    fillableInflaterInputStream = new FillableInflaterInputStream(throttleStream, inflater);
-    headerBlockIn = new DataInputStream(fillableInflaterInputStream);
-  }
-
-  /** Extend the inflater stream so we can eagerly fill the compressed bytes buffer if necessary. */
-  static class FillableInflaterInputStream extends InflaterInputStream {
-    public FillableInflaterInputStream(InputStream in, Inflater inf) {
-      super(in, inf);
-    }
-
-    @Override public void fill() throws IOException {
-      super.fill(); // This method is protected in the superclass.
-    }
+    inflaterSource = new InflaterSource(throttleSource, inflater);
   }
 
   public List<Header> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
-    int numberOfPairs = headerBlockIn.readInt();
-    if (numberOfPairs < 0) {
-      throw new IOException("numberOfPairs < 0: " + numberOfPairs);
-    }
-    if (numberOfPairs > 1024) {
-      throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
-    }
+
+    OkBuffers.require(inflaterSource, inflatedBuffer, 4, Deadline.NONE);
+    int numberOfPairs = inflatedBuffer.readInt();
+    if (numberOfPairs < 0) throw new IOException("numberOfPairs < 0: " + numberOfPairs);
+    if (numberOfPairs > 1024) throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
+
     List<Header> entries = new ArrayList<Header>(numberOfPairs);
     for (int i = 0; i < numberOfPairs; i++) {
-      ByteString name = ByteString.readLowerCase(headerBlockIn, headerBlockIn.readInt());
-      ByteString values = ByteString.read(headerBlockIn, headerBlockIn.readInt());
+      ByteString name = readByteString().toAsciiLowercase();
+      ByteString values = readByteString();
       if (name.size() == 0) throw new IOException("name.size == 0");
       entries.add(new Header(name, values));
     }
 
     doneReading();
-
     return entries;
   }
 
+  private ByteString readByteString() throws IOException {
+    OkBuffers.require(inflaterSource, inflatedBuffer, 4, Deadline.NONE);
+    int length = inflatedBuffer.readInt();
+    OkBuffers.require(inflaterSource, inflatedBuffer, length, Deadline.NONE);
+    return inflatedBuffer.readByteString(length);
+  }
+
   private void doneReading() throws IOException {
-    if (compressedLimit == 0) return;
-
-    // Read any outstanding unread bytes. One side-effect of deflate compression is that sometimes
-    // there are bytes remaining in the stream after we've consumed all of the content.
-    fillableInflaterInputStream.fill();
-
-    if (compressedLimit != 0) {
-      throw new IOException("compressedLimit > 0: " + compressedLimit);
+    // Move any outstanding unread bytes into the inflater. One side-effect of
+    // deflate compression is that sometimes there are bytes remaining in the
+    // stream after we've consumed all of the content.
+    if (compressedLimit > 0) {
+      inflaterSource.refill(Deadline.NONE);
+      if (compressedLimit != 0) throw new IOException("compressedLimit > 0: " + compressedLimit);
     }
   }
 
-  @Override public void close() throws IOException {
-    headerBlockIn.close();
+  public void close(Deadline deadline) throws IOException {
+    inflaterSource.close(deadline);
   }
 }

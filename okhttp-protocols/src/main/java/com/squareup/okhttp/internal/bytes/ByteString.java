@@ -106,6 +106,31 @@ public final class ByteString {
     return new ByteString(result);
   }
 
+  /**
+   * Returns a byte string equal to this byte string, but with the bytes 'A'
+   * through 'Z' replaced with the corresponding byte in 'a' through 'z'.
+   * Returns this byte string if it contains no bytes in 'A' through 'Z'.
+   */
+  public ByteString toAsciiLowercase() {
+    // Search for an uppercase character. If we don't find one, return this.
+    for (int i = 0; i < data.length; i++) {
+      byte c = data[i];
+      if (c < 'A' || c > 'Z') continue;
+
+      // If we reach this point, this string is not not lowercase. Create and
+      // return a new byte string.
+      byte[] lowercase = data.clone();
+      lowercase[i++] = (byte) (c - ('A' - 'a'));
+      for (; i < lowercase.length; i++) {
+        c = lowercase[i];
+        if (c < 'A' || c > 'Z') continue;
+        lowercase[i] = (byte) (c - ('A' - 'a'));
+      }
+      return new ByteString(lowercase);
+    }
+    return this;
+  }
+
   public static ByteString concat(ByteString... byteStrings) {
     int size = 0;
     for (ByteString byteString : byteStrings) {
