@@ -384,7 +384,7 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('b', Segment.SIZE));
     source.writeUtf8("c");
 
-    InputStream in = OkBuffers.inputStream(source);
+    InputStream in = new BufferedSource(source, new OkBuffer()).inputStream();
     assertEquals(0, in.available());
     assertEquals(Segment.SIZE + 2, source.byteCount());
 
@@ -417,7 +417,7 @@ public final class OkBufferTest {
   @Test public void inputStreamFromSourceBounds() throws IOException {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', 100));
-    InputStream in = OkBuffers.inputStream(source);
+    InputStream in = new BufferedSource(source, new OkBuffer()).inputStream();
     try {
       in.read(new byte[100], 50, 51);
       fail();
@@ -568,60 +568,60 @@ public final class OkBufferTest {
   }
 
   @Test public void requireTracksBufferFirst() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-    buffer.writeUtf8("aa");
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8("bb");
 
-    OkBuffers.require(source, buffer, 2, Deadline.NONE);
-    assertEquals(2, buffer.byteCount());
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    bufferedSource.buffer.writeUtf8("aa");
+
+    bufferedSource.require(2, Deadline.NONE);
+    assertEquals(2, bufferedSource.buffer.byteCount());
     assertEquals(2, source.byteCount());
   }
 
   @Test public void requireIncludesBufferBytes() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-    buffer.writeUtf8("a");
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8("b");
 
-    OkBuffers.require(source, buffer, 2, Deadline.NONE);
-    assertEquals("ab", buffer.readUtf8(2));
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    bufferedSource.buffer.writeUtf8("a");
+
+    bufferedSource.require(2, Deadline.NONE);
+    assertEquals("ab", bufferedSource.buffer.readUtf8(2));
   }
 
   @Test public void requireInsufficientData() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8("a");
 
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+
     try {
-      OkBuffers.require(source, buffer, 2, Deadline.NONE);
+      bufferedSource.require(2, Deadline.NONE);
       fail();
     } catch (EOFException expected) {
     }
   }
 
   @Test public void requireReadsOneSegmentAtATime() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE));
     source.writeUtf8(repeat('b', Segment.SIZE));
 
-    OkBuffers.require(source, buffer, 2, Deadline.NONE);
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+
+    bufferedSource.require(2, Deadline.NONE);
     assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE, buffer.byteCount());
+    assertEquals(Segment.SIZE, bufferedSource.buffer.byteCount());
   }
 
   @Test public void skipInsufficientData() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8("a");
+
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
     try {
-      OkBuffers.require(source, buffer, 2, Deadline.NONE);
+      bufferedSource.skip(2, Deadline.NONE);
       fail();
     } catch (EOFException expected) {
     }
@@ -631,21 +631,21 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE));
     source.writeUtf8(repeat('b', Segment.SIZE));
-    OkBuffer buffer = new OkBuffer();
-    OkBuffers.skip(source, buffer, 2, Deadline.NONE);
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    bufferedSource.skip(2, Deadline.NONE);
     assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE - 2, buffer.byteCount());
+    assertEquals(Segment.SIZE - 2, bufferedSource.buffer.byteCount());
   }
 
   @Test public void skipTracksBufferFirst() throws Exception {
-    OkBuffer buffer = new OkBuffer();
-    buffer.writeUtf8("aa");
-
     OkBuffer source = new OkBuffer();
     source.writeUtf8("bb");
 
-    OkBuffers.skip(source, buffer, 2, Deadline.NONE);
-    assertEquals(0, buffer.byteCount());
+    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    bufferedSource.buffer.writeUtf8("aa");
+
+    bufferedSource.skip(2, Deadline.NONE);
+    assertEquals(0, bufferedSource.buffer.byteCount());
     assertEquals(2, source.byteCount());
   }
 

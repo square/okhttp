@@ -1,10 +1,9 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -100,8 +99,7 @@ final class HpackDraft05 {
     private final Huffman.Codec huffmanCodec;
 
     private final List<Header> emittedHeaders = new ArrayList<Header>();
-    private final Source source;
-    private final OkBuffer buffer = new OkBuffer();
+    private final BufferedSource source;
     private int maxHeaderTableByteCount;
 
     // Visible for testing.
@@ -127,7 +125,7 @@ final class HpackDraft05 {
     Reader(boolean client, int maxHeaderTableByteCount, Source source) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
-      this.source = source;
+      this.source = new BufferedSource(source, new OkBuffer());
     }
 
     int maxHeaderTableByteCount() {
@@ -182,9 +180,8 @@ final class HpackDraft05 {
      * set of emitted headers.
      */
     void readHeaders() throws IOException {
-      while (buffer.byteCount() > 0
-          || source.read(buffer, 2048, Deadline.NONE) != -1) {
-        int b = buffer.readByte() & 0xff;
+      while (!source.exhausted()) {
+        int b = source.readByte() & 0xff;
         if (b == 0x80) { // 10000000
           clearReferenceSet();
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
@@ -335,8 +332,7 @@ final class HpackDraft05 {
     }
 
     private int readByte() throws IOException {
-      OkBuffers.require(source, buffer, 1, Deadline.NONE);
-      return buffer.readByte() & 0xff;
+      return source.readByte() & 0xff;
     }
 
     int readInt(int firstByte, int prefixMask) throws IOException {
@@ -375,8 +371,7 @@ final class HpackDraft05 {
         huffmanDecode = true;
       }
 
-      OkBuffers.require(source, buffer, length, Deadline.NONE);
-      ByteString byteString = buffer.readByteString(length);
+      ByteString byteString = source.readByteString(length);
 
       if (huffmanDecode) {
         byteString = huffmanCodec.decode(byteString); // TODO: streaming Huffman!
