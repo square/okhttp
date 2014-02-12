@@ -42,35 +42,6 @@ public final class OkBuffers {
     return index;
   }
 
-  /**
-   * Returns when {@code sink} contains at least {@code byteCount} bytes. Throws
-   * an {@link EOFException} if the source is exhausted before the requested
-   * bytes can be read.
-   */
-  public static void require(Source source, OkBuffer sink, long byteCount, Deadline deadline)
-      throws IOException {
-    while (sink.byteCount < byteCount) {
-      if (source.read(sink, Segment.SIZE, deadline) == -1) throw new EOFException();
-    }
-  }
-
-  /**
-   * Reads and discards {@code byteCount} bytes from {@code source} using {@code
-   * buffer} as a buffer. Throws an {@link EOFException} if the source is
-   * exhausted before the requested bytes can be skipped.
-   */
-  public static void skip(Source source, OkBuffer buffer, long byteCount, Deadline deadline)
-      throws IOException {
-    while (byteCount > 0) {
-      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE, deadline) == -1) {
-        throw new EOFException();
-      }
-      long toSkip = Math.min(byteCount, buffer.byteCount());
-      buffer.skip(toSkip);
-      byteCount -= toSkip;
-    }
-  }
-
   /** Returns a sink that writes to {@code out}. */
   public static Sink sink(final OutputStream out) {
     return new Sink() {
@@ -177,67 +148,6 @@ public final class OkBuffers {
 
       @Override public String toString() {
         return "source(" + in + ")";
-      }
-    };
-  }
-
-  /**
-   * Returns an input stream that reads from {@code source}. This may buffer
-   * data by reading extra data eagerly.
-   */
-  public static InputStream inputStream(final Source source) {
-    return inputStream(source, new OkBuffer());
-  }
-
-  /**
-   * Returns a buffered input stream that reads from {@code source}, with {@code
-   * buffer} as a buffer. Bytes are drawn from {@code buffer}, which is refilled
-   * from {@code source} when it is empty. This may read extra data eagerly into
-   * {@code buffer}.
-   */
-  public static InputStream inputStream(final Source source, final OkBuffer buffer) {
-    return new InputStream() {
-      @Override public int read() throws IOException {
-        if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
-          if (count == -1) return -1;
-        }
-        return buffer.readByte() & 0xff;
-      }
-
-      @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
-        checkOffsetAndCount(data.length, offset, byteCount);
-
-        if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
-          if (count == -1) return -1;
-        }
-
-        Segment head = buffer.head;
-        int toCopy = Math.min(byteCount, head.limit - head.pos);
-        System.arraycopy(head.data, head.pos, data, offset, toCopy);
-
-        head.pos += toCopy;
-        buffer.byteCount -= toCopy;
-
-        if (head.pos == head.limit) {
-          buffer.head = head.pop();
-          SegmentPool.INSTANCE.recycle(head);
-        }
-
-        return toCopy;
-      }
-
-      @Override public int available() throws IOException {
-        return (int) Math.min(buffer.byteCount, Integer.MAX_VALUE);
-      }
-
-      @Override public void close() throws IOException {
-        source.close(Deadline.NONE);
-      }
-
-      @Override public String toString() {
-        return "inputStream(" + source + ")";
       }
     };
   }

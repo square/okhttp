@@ -1,10 +1,10 @@
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.InflaterSource;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,10 +28,10 @@ class NameValueBlockReader {
    */
   private int compressedLimit;
 
-  /** This buffer holds inflated bytes read from inflaterSource. */
-  private final OkBuffer inflatedBuffer = new OkBuffer();
+  /** This source holds inflated bytes. */
+  private final BufferedSource source;
 
-  public NameValueBlockReader(final OkBuffer sourceBuffer, final Source source) {
+  public NameValueBlockReader(final BufferedSource source) {
     // Limit the inflater input stream to only those bytes in the Name/Value
     // block. We cut the inflater off at its source because we can't predict the
     // ratio of compressed bytes to uncompressed bytes.
@@ -39,10 +39,7 @@ class NameValueBlockReader {
       @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
           throws IOException {
         if (compressedLimit == 0) return -1; // Out of data for the current block.
-        byteCount = Math.min(byteCount, compressedLimit);
-        long read = sourceBuffer.byteCount() > 0
-            ? sourceBuffer.read(sink, byteCount, deadline)
-            : source.read(sink, byteCount, deadline);
+        long read = source.read(sink, Math.min(byteCount, compressedLimit), deadline);
         if (read == -1) return -1;
         compressedLimit -= read;
         return read;
@@ -66,14 +63,14 @@ class NameValueBlockReader {
       }
     };
 
-    inflaterSource = new InflaterSource(throttleSource, inflater);
+    this.inflaterSource = new InflaterSource(throttleSource, inflater);
+    this.source = new BufferedSource(inflaterSource, new OkBuffer());
   }
 
   public List<Header> readNameValueBlock(int length) throws IOException {
     this.compressedLimit += length;
 
-    OkBuffers.require(inflaterSource, inflatedBuffer, 4, Deadline.NONE);
-    int numberOfPairs = inflatedBuffer.readInt();
+    int numberOfPairs = source.readInt();
     if (numberOfPairs < 0) throw new IOException("numberOfPairs < 0: " + numberOfPairs);
     if (numberOfPairs > 1024) throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
 
@@ -90,10 +87,8 @@ class NameValueBlockReader {
   }
 
   private ByteString readByteString() throws IOException {
-    OkBuffers.require(inflaterSource, inflatedBuffer, 4, Deadline.NONE);
-    int length = inflatedBuffer.readInt();
-    OkBuffers.require(inflaterSource, inflatedBuffer, length, Deadline.NONE);
-    return inflatedBuffer.readByteString(length);
+    int length = source.readInt();
+    return source.readByteString(length);
   }
 
   private void doneReading() throws IOException {
@@ -107,6 +102,6 @@ class NameValueBlockReader {
   }
 
   public void close(Deadline deadline) throws IOException {
-    inflaterSource.close(deadline);
+    source.close(deadline);
   }
 }

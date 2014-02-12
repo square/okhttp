@@ -367,7 +367,9 @@ public final class OkBuffer implements Source, Sink {
     // an equivalent buffer [30%, 62%, 82%] and then move the head segment,
     // yielding sink [51%, 91%, 30%] and source [62%, 82%].
 
-    if (source == this) throw new IllegalArgumentException("source == this");
+    if (source == this) {
+      throw new IllegalArgumentException("source == this");
+    }
     checkOffsetAndCount(source.byteCount, 0, byteCount);
 
     while (byteCount > 0) {

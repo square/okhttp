@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
@@ -68,8 +69,7 @@ public final class Http20Draft09 implements Variant {
   }
 
   static final class Reader implements FrameReader {
-    private final OkBuffer buffer = new OkBuffer();
-    private final Source source;
+    private final BufferedSource source;
     private final ContinuationSource continuation;
     private final boolean client;
 
@@ -77,29 +77,29 @@ public final class Http20Draft09 implements Variant {
     final HpackDraft05.Reader hpackReader;
 
     Reader(Source source, int headerTableSize, boolean client) {
-      this.source = source;
+      this.source = new BufferedSource(source, new OkBuffer());
       this.client = client;
-      this.continuation = new ContinuationSource(source, buffer);
+      this.continuation = new ContinuationSource(this.source);
       this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, continuation);
     }
 
     @Override public void readConnectionHeader() throws IOException {
       if (client) return; // Nothing to read; servers don't send connection headers!
-      OkBuffers.require(source, buffer, CONNECTION_HEADER.size(), Deadline.NONE);
-      ByteString connectionHeader = buffer.readByteString(CONNECTION_HEADER.size());
+      ByteString connectionHeader = source.readByteString(CONNECTION_HEADER.size());
       if (!CONNECTION_HEADER.equals(connectionHeader)) {
         throw ioException("Expected a connection header but was %s", connectionHeader.utf8());
       }
     }
 
     @Override public boolean nextFrame(Handler handler) throws IOException {
+      int w1;
+      int w2;
       try {
-        OkBuffers.require(source, buffer, 8, Deadline.NONE);
+        w1 = source.readInt();
+        w2 = source.readInt();
       } catch (IOException e) {
         return false; // This might be a normal socket close.
       }
-      int w1 = buffer.readInt();
-      int w2 = buffer.readInt();
 
       // boolean r = (w1 & 0xc0000000) != 0; // Reserved: Ignore first 2 bits.
       short length = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned == max 16383
@@ -147,7 +147,7 @@ public final class Http20Draft09 implements Variant {
 
         default:
           // Implementations MUST ignore frames of unsupported or unrecognized types.
-          OkBuffers.skip(source, buffer, length, Deadline.NONE);
+          source.skip(length, Deadline.NONE);
       }
       return true;
     }
@@ -160,8 +160,7 @@ public final class Http20Draft09 implements Variant {
 
       int priority = -1;
       if ((flags & FLAG_PRIORITY) != 0) {
-        OkBuffers.require(source, buffer, 4, Deadline.NONE);
-        priority = buffer.readInt() & 0x7fffffff;
+        priority = source.readInt() & 0x7fffffff;
         length -= 4; // account for above read.
       }
 
@@ -188,15 +187,14 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
       // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
-      handler.data(inFinished, streamId, OkBuffers.inputStream(source, buffer), length);
+      handler.data(inFinished, streamId, source.inputStream(), length);
     }
 
     private void readPriority(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_PRIORITY length: %d != 4", length);
       if (streamId == 0) throw ioException("TYPE_PRIORITY streamId == 0");
-      OkBuffers.require(source, buffer, 4, Deadline.NONE);
-      int w1 = buffer.readInt();
+      int w1 = source.readInt();
       // boolean r = (w1 & 0x80000000) != 0; // Reserved.
       int priority = (w1 & 0x7fffffff);
       handler.priority(streamId, priority);
@@ -206,8 +204,7 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       if (length != 4) throw ioException("TYPE_RST_STREAM length: %d != 4", length);
       if (streamId == 0) throw ioException("TYPE_RST_STREAM streamId == 0");
-      OkBuffers.require(source, buffer, 4, Deadline.NONE);
-      int errorCodeInt = buffer.readInt();
+      int errorCodeInt = source.readInt();
       ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
       if (errorCode == null) {
         throw ioException("TYPE_RST_STREAM unexpected error code: %d", errorCodeInt);
@@ -226,10 +223,9 @@ public final class Http20Draft09 implements Variant {
 
       if (length % 8 != 0) throw ioException("TYPE_SETTINGS length %% 8 != 0: %s", length);
       Settings settings = new Settings();
-      OkBuffers.require(source, buffer, length, Deadline.NONE);
       for (int i = 0; i < length; i += 8) {
-        int w1 = buffer.readInt();
-        int value = buffer.readInt();
+        int w1 = source.readInt();
+        int value = source.readInt();
         // int r = (w1 & 0xff000000) >>> 24; // Reserved.
         int id = w1 & 0xffffff;
         settings.set(id, 0, value);
@@ -245,8 +241,7 @@ public final class Http20Draft09 implements Variant {
       if (streamId == 0) {
         throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
       }
-      OkBuffers.require(source, buffer, 4, Deadline.NONE);
-      int promisedStreamId = buffer.readInt() & 0x7fffffff;
+      int promisedStreamId = source.readInt() & 0x7fffffff;
       length -= 4; // account for above read.
       List<Header> headerBlock = readHeaderBlock(length, flags, streamId);
       handler.pushPromise(streamId, promisedStreamId, headerBlock);
@@ -256,9 +251,8 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       if (length != 8) throw ioException("TYPE_PING length != 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
-      OkBuffers.require(source, buffer, 8, Deadline.NONE);
-      int payload1 = buffer.readInt();
-      int payload2 = buffer.readInt();
+      int payload1 = source.readInt();
+      int payload2 = source.readInt();
       boolean ack = (flags & FLAG_ACK) != 0;
       handler.ping(ack, payload1, payload2);
     }
@@ -267,9 +261,8 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
-      OkBuffers.require(source, buffer, 8, Deadline.NONE);
-      int lastStreamId = buffer.readInt();
-      int errorCodeInt = buffer.readInt();
+      int lastStreamId = source.readInt();
+      int errorCodeInt = source.readInt();
       int opaqueDataLength = length - 8;
       ErrorCode errorCode = ErrorCode.fromHttp2(errorCodeInt);
       if (errorCode == null) {
@@ -277,8 +270,7 @@ public final class Http20Draft09 implements Variant {
       }
       ByteString debugData = ByteString.EMPTY;
       if (opaqueDataLength > 0) { // Must read debug data in order to not corrupt the connection.
-        OkBuffers.require(source, buffer, opaqueDataLength, Deadline.NONE);
-        debugData = buffer.readByteString(opaqueDataLength);
+        debugData = source.readByteString(opaqueDataLength);
       }
       handler.goAway(lastStreamId, errorCode, debugData);
     }
@@ -286,8 +278,7 @@ public final class Http20Draft09 implements Variant {
     private void readWindowUpdate(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
-      OkBuffers.require(source, buffer, 4, Deadline.NONE);
-      long increment = (buffer.readInt() & 0x7fffffff);
+      long increment = (source.readInt() & 0x7fffffff);
       if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
       handler.windowUpdate(streamId, increment);
     }
@@ -490,8 +481,7 @@ public final class Http20Draft09 implements Variant {
    * HpackDraft05.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
-    private final Source source;
-    private final OkBuffer buffer;
+    private final BufferedSource source;
 
     int length;
     byte flags;
@@ -499,23 +489,19 @@ public final class Http20Draft09 implements Variant {
 
     int left;
 
-    public ContinuationSource(Source source, OkBuffer buffer) {
+    public ContinuationSource(BufferedSource source) {
       this.source = source;
-      this.buffer = buffer;
     }
 
     @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
         throws IOException {
       while (left == 0) {
         if ((flags & FLAG_END_HEADERS) != 0) return -1;
-        readContinuationHeader(deadline);
+        readContinuationHeader();
         // TODO: test case for empty continuation header?
       }
 
-      long toRead = Math.min(byteCount, left);
-      long read = buffer.byteCount() > 0
-          ? buffer.read(sink, toRead, deadline)
-          : source.read(sink, toRead, deadline);
+      long read = source.read(sink, Math.min(byteCount, left), deadline);
       if (read == -1) return -1;
       left -= read;
       return read;
@@ -524,11 +510,10 @@ public final class Http20Draft09 implements Variant {
     @Override public void close(Deadline deadline) throws IOException {
     }
 
-    private void readContinuationHeader(Deadline deadline) throws IOException {
-      OkBuffers.require(source, buffer, 8, deadline);
+    private void readContinuationHeader() throws IOException {
       int previousStreamId = streamId;
-      int w1 = buffer.readInt();
-      int w2 = buffer.readInt();
+      int w1 = source.readInt();
+      int w2 = source.readInt();
       length = left = (short) ((w1 & 0x3fff0000) >> 16);
       byte type = (byte) ((w1 & 0xff00) >> 8);
       flags = (byte) (w1 & 0xff);
