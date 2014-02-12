@@ -16,10 +16,10 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 /** Reads transport frames for SPDY/3 or HTTP/2. */
@@ -28,7 +28,8 @@ public interface FrameReader extends Closeable {
   boolean nextFrame(Handler handler) throws IOException;
 
   public interface Handler {
-    void data(boolean inFinished, int streamId, InputStream in, int length) throws IOException;
+    void data(boolean inFinished, int streamId, BufferedSource source, int length)
+        throws IOException;
 
     /**
      * Create or update incoming headers, creating the corresponding streams

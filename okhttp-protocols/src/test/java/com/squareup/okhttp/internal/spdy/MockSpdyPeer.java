@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -39,7 +40,7 @@ public final class MockSpdyPeer implements Closeable {
   private boolean client = false;
   private Variant variant = new Spdy3();
   private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-  private FrameWriter frameWriter = variant.newWriter(bytesOut, client);;
+  private FrameWriter frameWriter = variant.newWriter(bytesOut, client);
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
@@ -232,14 +233,13 @@ public final class MockSpdyPeer implements Closeable {
       this.headersMode = headersMode;
     }
 
-    @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_DATA;
       this.inFinished = inFinished;
       this.streamId = streamId;
-      this.data = new byte[length];
-      Util.readFully(in, this.data);
+      this.data = source.readByteString(length).toByteArray();
     }
 
     @Override public void rstStream(int streamId, ErrorCode errorCode) {

@@ -17,6 +17,11 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.Source;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -35,9 +40,9 @@ public final class SpdyStream {
   // blocking operations are performed while the lock is held.
 
   /**
-   * The total number of bytes consumed by the application
-   * (with {@link SpdyDataInputStream#read}), but not yet acknowledged by
-   * sending a {@code WINDOW_UPDATE} frame on this stream.
+   * The total number of bytes consumed by the application (with {@link
+   * SpdyDataSource#read}), but not yet acknowledged by sending a {@code
+   * WINDOW_UPDATE} frame on this stream.
    */
   // Visible for testing
   long unacknowledgedBytesRead = 0;
@@ -61,7 +66,8 @@ public final class SpdyStream {
   /** Headers sent in the stream reply. Null if reply is either not sent or not sent yet. */
   private List<Header> responseHeaders;
 
-  private final SpdyDataInputStream in;
+  private final SpdyDataSource source;
+  private final InputStream in;
   final SpdyDataOutputStream out;
 
   /**
@@ -78,9 +84,10 @@ public final class SpdyStream {
     this.id = id;
     this.connection = connection;
     this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
-    this.in = new SpdyDataInputStream(connection.okHttpSettings.getInitialWindowSize());
+    this.source = new SpdyDataSource(connection.okHttpSettings.getInitialWindowSize());
+    this.in = new BufferedSource(source, new OkBuffer()).inputStream();
     this.out = new SpdyDataOutputStream();
-    this.in.finished = inFinished;
+    this.source.finished = inFinished;
     this.out.finished = outFinished;
     this.priority = priority;
     this.requestHeaders = requestHeaders;
@@ -100,7 +107,9 @@ public final class SpdyStream {
     if (errorCode != null) {
       return false;
     }
-    if ((in.finished || in.closed) && (out.finished || out.closed) && responseHeaders != null) {
+    if ((source.finished || source.closed)
+        && (out.finished || out.closed)
+        && responseHeaders != null) {
       return false;
     }
     return true;
@@ -251,7 +260,7 @@ public final class SpdyStream {
       if (this.errorCode != null) {
         return false;
       }
-      if (in.finished && out.finished) {
+      if (source.finished && out.finished) {
         return false;
       }
       this.errorCode = errorCode;
@@ -292,16 +301,16 @@ public final class SpdyStream {
     }
   }
 
-  void receiveData(InputStream in, int length) throws IOException {
+  void receiveData(BufferedSource in, int length) throws IOException {
     assert (!Thread.holdsLock(SpdyStream.this));
-    this.in.receive(in, length);
+    this.source.receive(in, length);
   }
 
   void receiveFin() {
     assert (!Thread.holdsLock(SpdyStream.this));
     boolean open;
     synchronized (this) {
-      this.in.finished = true;
+      this.source.finished = true;
       open = isOpen();
       notifyAll();
     }
@@ -322,36 +331,19 @@ public final class SpdyStream {
   }
 
   /**
-   * An input stream that reads the incoming data frames of a stream. Although
-   * this class uses synchronization to safely receive incoming data frames,
-   * it is not intended for use by multiple readers.
+   * A source that reads the incoming data frames of a stream. Although this
+   * class uses synchronization to safely receive incoming data frames, it is
+   * not intended for use by multiple readers.
    */
-  private final class SpdyDataInputStream extends InputStream {
+  private final class SpdyDataSource implements Source {
+    /** Buffer to receive data from the network into. Only accessed by the reader thread. */
+    private final OkBuffer receiveBuffer = new OkBuffer();
 
-    // Store incoming data bytes in a circular buffer. When the buffer is
-    // empty, pos == -1. Otherwise pos is the first byte to read and limit
-    // is the first byte to write.
-    //
-    // { - - - X X X X - - - }
-    //         ^       ^
-    //        pos    limit
-    //
-    // { X X X - - - - X X X }
-    //         ^       ^
-    //       limit    pos
-    private final byte[] buffer;
+    /** Buffer with readable data. Guarded by SpdyStream.this. */
+    private final OkBuffer readBuffer = new OkBuffer();
 
-    private SpdyDataInputStream(int bufferLength) {
-      // TODO: We probably need to change to growable buffers here pretty soon.
-      // Otherwise we have a performance problem where we pay for 64 KiB even if we aren't using it.
-      buffer = connection.bufferPool.getBuf(bufferLength);
-    }
-
-    /** the next byte to be read, or -1 if the buffer is empty. Never buffer.length */
-    private int pos = -1;
-
-    /** the last byte to be read. Never buffer.length */
-    private int limit;
+    /** Maximum number of bytes to buffer before reporting a flow control error. */
+    private final long maxByteCount;
 
     /** True if the caller has closed this stream. */
     private boolean closed;
@@ -362,75 +354,42 @@ public final class SpdyStream {
      */
     private boolean finished;
 
-    @Override public int available() throws IOException {
-      synchronized (SpdyStream.this) {
-        checkNotClosed();
-        if (pos == -1) {
-          return 0;
-        } else if (limit > pos) {
-          return limit - pos;
-        } else {
-          return limit + (buffer.length - pos);
-        }
-      }
+    private SpdyDataSource(long maxByteCount) {
+      this.maxByteCount = maxByteCount;
     }
 
-    @Override public int read() throws IOException {
-      return Util.readSingleByte(this);
-    }
+    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+        throws IOException {
+      if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
 
-    @Override public int read(byte[] b, int offset, int count) throws IOException {
-      int copied = 0;
+      long read;
       synchronized (SpdyStream.this) {
-        checkOffsetAndCount(b.length, offset, count);
         waitUntilReadable();
         checkNotClosed();
+        if (readBuffer.byteCount() == 0) return -1; // This source is exhausted.
 
-        if (pos == -1) {
-          return -1;
-        }
-
-        // drain from [pos..buffer.length)
-        if (limit <= pos) {
-          int bytesToCopy = Math.min(count, buffer.length - pos);
-          System.arraycopy(buffer, pos, b, offset, bytesToCopy);
-          pos += bytesToCopy;
-          copied += bytesToCopy;
-          if (pos == buffer.length) {
-            pos = 0;
-          }
-        }
-
-        // drain from [pos..limit)
-        if (copied < count) {
-          int bytesToCopy = Math.min(limit - pos, count - copied);
-          System.arraycopy(buffer, pos, b, offset + copied, bytesToCopy);
-          pos += bytesToCopy;
-          copied += bytesToCopy;
-        }
+        // Move bytes from the read buffer into the caller's buffer.
+        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.byteCount()), deadline);
 
         // Flow control: notify the peer that we're ready for more data!
-        unacknowledgedBytesRead += copied;
+        unacknowledgedBytesRead += read;
         if (unacknowledgedBytesRead >= connection.okHttpSettings.getInitialWindowSize() / 2) {
           connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
           unacknowledgedBytesRead = 0;
         }
-
-        if (pos == limit) {
-          pos = -1;
-          limit = 0;
-        }
       }
+
       // Update connection.unacknowledgedBytesRead outside the stream lock.
       synchronized (connection) { // Multiple application threads may hit this section.
-        connection.unacknowledgedBytesRead += copied;
+        connection.unacknowledgedBytesRead += read;
         if (connection.unacknowledgedBytesRead
             >= connection.okHttpSettings.getInitialWindowSize() / 2) {
           connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
           connection.unacknowledgedBytesRead = 0;
         }
       }
-      return copied;
+
+      return read;
     }
 
     /**
@@ -446,7 +405,7 @@ public final class SpdyStream {
         remaining = readTimeoutMillis;
       }
       try {
-        while (pos == -1 && !finished && !closed && errorCode == null) {
+        while (readBuffer.byteCount() == 0 && !finished && !closed && errorCode == null) {
           if (readTimeoutMillis == 0) {
             SpdyStream.this.wait();
           } else if (remaining > 0) {
@@ -461,71 +420,51 @@ public final class SpdyStream {
       }
     }
 
-    void receive(InputStream in, int byteCount) throws IOException {
+    void receive(BufferedSource in, long byteCount) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
 
-      if (byteCount == 0) {
-        return;
-      }
-
-      int pos;
-      int limit;
-      int firstNewByte;
-      boolean finished;
-      boolean flowControlError;
-      synchronized (SpdyStream.this) {
-        finished = this.finished;
-        pos = this.pos;
-        firstNewByte = this.limit;
-        limit = this.limit;
-        flowControlError = byteCount > buffer.length - available();
-      }
-
-      // If the peer sends more data than we can handle, discard it and close the connection.
-      if (flowControlError) {
-        Util.skipByReading(in, byteCount);
-        closeLater(ErrorCode.FLOW_CONTROL_ERROR);
-        return;
-      }
-
-      // Discard data received after the stream is finished. It's probably a benign race.
-      if (finished) {
-        Util.skipByReading(in, byteCount);
-        return;
-      }
-
-      // Fill the buffer without holding any locks. First fill [limit..buffer.length) if that
-      // won't overwrite unread data. Then fill [limit..pos). We can't hold a lock, otherwise
-      // writes will be blocked until reads complete.
-      if (pos < limit) {
-        int firstCopyCount = Math.min(byteCount, buffer.length - limit);
-        Util.readFully(in, buffer, limit, firstCopyCount);
-        limit += firstCopyCount;
-        byteCount -= firstCopyCount;
-        if (limit == buffer.length) {
-          limit = 0;
+      while (byteCount > 0) {
+        boolean finished;
+        boolean flowControlError;
+        synchronized (SpdyStream.this) {
+          finished = this.finished;
+          flowControlError = byteCount + readBuffer.byteCount() > maxByteCount;
         }
-      }
-      if (byteCount > 0) {
-        Util.readFully(in, buffer, limit, byteCount);
-        limit += byteCount;
-      }
 
-      synchronized (SpdyStream.this) {
-        // Update the new limit, and mark the position as readable if necessary.
-        this.limit = limit;
-        if (this.pos == -1) {
-          this.pos = firstNewByte;
-          SpdyStream.this.notifyAll();
+        // If the peer sends more data than we can handle, discard it and close the connection.
+        if (flowControlError) {
+          in.skip(byteCount, Deadline.NONE);
+          closeLater(ErrorCode.FLOW_CONTROL_ERROR);
+          return;
+        }
+
+        // Discard data received after the stream is finished. It's probably a benign race.
+        if (finished) {
+          in.skip(byteCount, Deadline.NONE);
+          return;
+        }
+
+        // Fill the receive buffer without holding any locks.
+        long read = in.read(receiveBuffer, byteCount, Deadline.NONE);
+        if (read == -1) throw new EOFException();
+        byteCount -= read;
+
+        // Move the received data to the read buffer to the reader can read it.
+        synchronized (SpdyStream.this) {
+          boolean wasEmpty = readBuffer.byteCount() == 0;
+          readBuffer.write(receiveBuffer, receiveBuffer.byteCount(), Deadline.NONE);
+          if (wasEmpty) {
+            SpdyStream.this.notifyAll();
+          }
         }
       }
     }
 
-    @Override public void close() throws IOException {
+    @Override public void close(Deadline deadline) throws IOException {
       synchronized (SpdyStream.this) {
         closed = true;
+        readBuffer.clear();
         SpdyStream.this.notifyAll();
-        SpdyStream.this.connection.bufferPool.returnBuf(buffer);
       }
       cancelStreamIfNecessary();
     }
@@ -545,7 +484,7 @@ public final class SpdyStream {
     boolean open;
     boolean cancel;
     synchronized (this) {
-      cancel = !in.finished && in.closed && (out.finished || out.closed);
+      cancel = !source.finished && source.closed && (out.finished || out.closed);
       open = isOpen();
     }
     if (cancel) {

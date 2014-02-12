@@ -187,7 +187,7 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
       // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
-      handler.data(inFinished, streamId, source.inputStream(), length);
+      handler.data(inFinished, streamId, source, length);
     }
 
     private void readPriority(Handler handler, short length, byte flags, int streamId)

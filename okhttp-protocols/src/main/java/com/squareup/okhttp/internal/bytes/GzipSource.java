@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.zip.CRC32;
 import java.util.zip.Inflater;
@@ -35,21 +34,11 @@ public final class GzipSource implements Source {
   private int section = SECTION_HEADER;
 
   /**
-   * This buffer is carefully shared between this source and the InflaterSource
-   * it wraps. In particular, this source may read more bytes than necessary for
-   * the GZIP header; the InflaterSource will pick those up when it starts to
-   * read the compressed body. And the InflaterSource may read more bytes than
-   * necessary for the compressed body, and this source will pick those up for
-   * the GZIP trailer.
-   */
-  private final OkBuffer buffer = new OkBuffer();
-
-  /**
    * Our source should yield a GZIP header (which we consume directly), followed
    * by deflated bytes (which we consume via an InflaterSource), followed by a
    * GZIP trailer (which we also consume directly).
    */
-  private final Source source;
+  private final BufferedSource source;
 
   /** The inflater used to decompress the deflated body. */
   private final Inflater inflater;
@@ -65,8 +54,8 @@ public final class GzipSource implements Source {
 
   public GzipSource(Source source) throws IOException {
     this.inflater = new Inflater(true);
-    this.source = source;
-    this.inflaterSource = new InflaterSource(source, inflater, buffer);
+    this.source = new BufferedSource(source, new OkBuffer());
+    this.inflaterSource = new InflaterSource(this.source, inflater);
   }
 
   @Override public long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
@@ -108,26 +97,26 @@ public final class GzipSource implements Source {
     // +---+---+---+---+---+---+---+---+---+---+
     // |ID1|ID2|CM |FLG|     MTIME     |XFL|OS | (more-->)
     // +---+---+---+---+---+---+---+---+---+---+
-    require(10, deadline);
-    byte flags = buffer.getByte(3);
+    source.require(10, deadline);
+    byte flags = source.buffer.getByte(3);
     boolean fhcrc = ((flags >> FHCRC) & 1) == 1;
-    if (fhcrc) updateCrc(buffer, 0, 10);
+    if (fhcrc) updateCrc(source.buffer, 0, 10);
 
-    short id1id2 = buffer.readShort();
+    short id1id2 = source.readShort();
     checkEqual("ID1ID2", (short) 0x1f8b, id1id2);
-    buffer.skip(8);
+    source.skip(8, deadline);
 
     // Skip optional extra fields.
     // +---+---+=================================+
     // | XLEN  |...XLEN bytes of "extra field"...| (more-->)
     // +---+---+=================================+
     if (((flags >> FEXTRA) & 1) == 1) {
-      require(2, deadline);
-      if (fhcrc) updateCrc(buffer, 0, 2);
-      int xlen = buffer.readShortLe() & 0xffff;
-      require(xlen, deadline);
-      if (fhcrc) updateCrc(buffer, 0, xlen);
-      buffer.skip(xlen);
+      source.require(2, deadline);
+      if (fhcrc) updateCrc(source.buffer, 0, 2);
+      int xlen = source.buffer.readShortLe() & 0xffff;
+      source.require(xlen, deadline);
+      if (fhcrc) updateCrc(source.buffer, 0, xlen);
+      source.skip(xlen, deadline);
     }
 
     // Skip an optional 0-terminated name.
@@ -135,9 +124,9 @@ public final class GzipSource implements Source {
     // |...original file name, zero-terminated...| (more-->)
     // +=========================================+
     if (((flags >> FNAME) & 1) == 1) {
-      long index = OkBuffers.seek(buffer, (byte) 0, source, deadline);
-      if (fhcrc) updateCrc(buffer, 0, index + 1);
-      buffer.skip(index + 1);
+      long index = source.seek((byte) 0, deadline);
+      if (fhcrc) updateCrc(source.buffer, 0, index + 1);
+      source.buffer.skip(index + 1);
     }
 
     // Skip an optional 0-terminated comment.
@@ -145,9 +134,9 @@ public final class GzipSource implements Source {
     // |...file comment, zero-terminated...| (more-->)
     // +===================================+
     if (((flags >> FCOMMENT) & 1) == 1) {
-      long index = OkBuffers.seek(buffer, (byte) 0, source, deadline);
-      if (fhcrc) updateCrc(buffer, 0, index + 1);
-      buffer.skip(index + 1);
+      long index = source.seek((byte) 0, deadline);
+      if (fhcrc) updateCrc(source.buffer, 0, index + 1);
+      source.skip(index + 1, deadline);
     }
 
     // Confirm the optional header CRC.
@@ -155,7 +144,7 @@ public final class GzipSource implements Source {
     // | CRC16 |
     // +---+---+
     if (fhcrc) {
-      checkEqual("FHCRC", buffer.readShortLe(), (short) crc.getValue());
+      checkEqual("FHCRC", source.readShortLe(), (short) crc.getValue());
       crc.reset();
     }
   }
@@ -165,9 +154,8 @@ public final class GzipSource implements Source {
     // +---+---+---+---+---+---+---+---+
     // |     CRC32     |     ISIZE     |
     // +---+---+---+---+---+---+---+---+
-    require(8, deadline);
-    checkEqual("CRC", buffer.readIntLe(), (int) crc.getValue());
-    checkEqual("ISIZE", buffer.readIntLe(), inflater.getTotalOut());
+    checkEqual("CRC", source.readIntLe(), (int) crc.getValue());
+    checkEqual("ISIZE", source.readIntLe(), inflater.getTotalOut());
   }
 
   @Override public void close(Deadline deadline) throws IOException {
@@ -184,13 +172,6 @@ public final class GzipSource implements Source {
         byteCount -= toUpdate;
       }
       offset -= segmentByteCount; // Track the offset of the current segment.
-    }
-  }
-
-  /** Fills the buffer with at least {@code byteCount} bytes. */
-  private void require(int byteCount, Deadline deadline) throws IOException {
-    while (buffer.byteCount < byteCount) {
-      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
     }
   }
 
