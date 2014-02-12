@@ -22,10 +22,8 @@ import java.util.zip.Inflater;
 
 /** A source that inflates another source. */
 public final class InflaterSource implements Source {
-  private final Source source;
+  private final BufferedSource source;
   private final Inflater inflater;
-  /** This holds bytes read from the source, but not yet inflated. */
-  private final OkBuffer buffer;
 
   /**
    * When we call Inflater.setInput(), the inflater keeps our byte array until
@@ -36,15 +34,19 @@ public final class InflaterSource implements Source {
   private boolean closed;
 
   public InflaterSource(Source source, Inflater inflater) {
-    this(source, inflater, new OkBuffer());
+    this(new BufferedSource(source, new OkBuffer()), inflater);
   }
 
-  InflaterSource(Source source, Inflater inflater, OkBuffer buffer) {
+  /**
+   * This package-private constructor shares a buffer with its trusted caller.
+   * In general we can't share a BufferedSource because the inflater holds input
+   * bytes until they are inflated.
+   */
+  InflaterSource(BufferedSource source, Inflater inflater) {
     if (source == null) throw new IllegalArgumentException("source == null");
     if (inflater == null) throw new IllegalArgumentException("inflater == null");
     this.source = source;
     this.inflater = inflater;
-    this.buffer = buffer;
   }
 
   @Override public long read(
@@ -87,13 +89,11 @@ public final class InflaterSource implements Source {
     releaseInflatedBytes();
     if (inflater.getRemaining() != 0) throw new IllegalStateException("?"); // TODO: possible?
 
-    // Refill the buffer with compressed data from the source.
-    if (buffer.byteCount == 0) {
-      if (source.read(buffer, Segment.SIZE, deadline) == -1) return true;
-    }
+    // If there are compressed bytes in the source, assign them to the inflater.
+    if (source.exhausted(deadline)) return true;
 
     // Assign buffer bytes to the inflater.
-    Segment head = buffer.head;
+    Segment head = source.buffer.head;
     bufferBytesHeldByInflater = head.limit - head.pos;
     inflater.setInput(head.data, head.pos, bufferBytesHeldByInflater);
     return false;
@@ -104,13 +104,12 @@ public final class InflaterSource implements Source {
     if (bufferBytesHeldByInflater == 0) return;
     int toRelease = bufferBytesHeldByInflater - inflater.getRemaining();
     bufferBytesHeldByInflater -= toRelease;
-    buffer.skip(toRelease);
+    source.buffer.skip(toRelease);
   }
 
   @Override public void close(Deadline deadline) throws IOException {
     if (closed) return;
     inflater.end();
-    buffer.clear();
     closed = true;
     source.close(deadline);
   }

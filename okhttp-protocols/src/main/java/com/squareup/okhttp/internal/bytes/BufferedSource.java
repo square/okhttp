@@ -54,8 +54,8 @@ public final class BufferedSource implements Source {
    * will block until there are bytes to read or the source is definitely
    * exhausted.
    */
-  public boolean exhausted() throws IOException {
-    return buffer.byteCount() == 0 && source.read(buffer, Segment.SIZE, Deadline.NONE) == -1;
+  public boolean exhausted(Deadline deadline) throws IOException {
+    return buffer.byteCount() == 0 && source.read(buffer, Segment.SIZE, deadline) == -1;
   }
 
   /**
@@ -84,9 +84,19 @@ public final class BufferedSource implements Source {
     return buffer.readShort();
   }
 
+  public int readShortLe() throws IOException {
+    require(2, Deadline.NONE);
+    return buffer.readShortLe();
+  }
+
   public int readInt() throws IOException {
     require(4, Deadline.NONE);
     return buffer.readInt();
+  }
+
+  public int readIntLe() throws IOException {
+    require(4, Deadline.NONE);
+    return buffer.readIntLe();
   }
 
   /**
@@ -103,6 +113,20 @@ public final class BufferedSource implements Source {
       buffer.skip(toSkip);
       byteCount -= toSkip;
     }
+  }
+
+  /**
+   * Returns the index of {@code b} in the buffer, refilling it if necessary
+   * until it is found. This reads an unbounded number of bytes into the buffer.
+   */
+  public long seek(byte b, Deadline deadline) throws IOException {
+    long start = 0;
+    long index;
+    while ((index = buffer.indexOf(b, start)) == -1) {
+      start = buffer.byteCount;
+      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
+    }
+    return index;
   }
 
   /** Returns an input stream that reads from this source. */

@@ -16,12 +16,12 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -348,14 +348,13 @@ public class Http20Draft09Test {
     FrameReader fr = newReader(out);
 
     fr.nextFrame(new BaseTestHandler() {
-      @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
-          throws IOException {
+      @Override public void data(
+          boolean inFinished, int streamId, BufferedSource source, int length) throws IOException {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(16383, length);
-        byte[] data = new byte[length];
-        Util.readFully(in, data);
-        for (byte b : data){
+        ByteString data = source.readByteString(length);
+        for (byte b : data.toByteArray()){
           assertEquals(2, b);
         }
       }

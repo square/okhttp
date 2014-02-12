@@ -3,6 +3,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.BitArray;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
@@ -180,7 +181,7 @@ final class HpackDraft05 {
      * set of emitted headers.
      */
     void readHeaders() throws IOException {
-      while (!source.exhausted()) {
+      while (!source.exhausted(Deadline.NONE)) {
         int b = source.readByte() & 0xff;
         if (b == 0x80) { // 10000000
           clearReferenceSet();

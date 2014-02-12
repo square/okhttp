@@ -18,7 +18,9 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.Deadline;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -526,15 +528,15 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void data(boolean inFinished, int streamId, InputStream in, int length)
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
-        Util.skipByReading(in, length);
+        source.skip(length, Deadline.NONE);
         return;
       }
-      dataStream.receiveData(in, length);
+      dataStream.receiveData(source, length);
       if (inFinished) {
         dataStream.receiveFin();
       }
