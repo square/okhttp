@@ -16,9 +16,10 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.SpdyTransport;
@@ -71,6 +72,7 @@ public final class Connection implements Closeable {
   private InputStream in;
   private OutputStream out;
   private boolean connected = false;
+  private HttpConnection httpConnection;
   private SpdyConnection spdyConnection;
   private int httpMinorVersion = 1; // Assume HTTP/1.1
   private long idleStartTimeNs;
@@ -94,6 +96,7 @@ public final class Connection implements Closeable {
       upgradeToTls(tunnelRequest);
     } else {
       streamWrapper();
+      httpConnection = new HttpConnection(in, out);
     }
     connected = true;
   }
@@ -150,14 +153,18 @@ public final class Connection implements Closeable {
     streamWrapper();
 
     ByteString maybeProtocol;
+    Protocol selectedProtocol = Protocol.HTTP_11;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      Protocol selectedProtocol = Protocol.find(maybeProtocol); // Throws IOE on unknown.
-      if (selectedProtocol.spdyVariant) {
-        sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
-            .protocol(selectedProtocol).build();
-        spdyConnection.sendConnectionHeader();
-      }
+      selectedProtocol = Protocol.find(maybeProtocol); // Throws IOE on unknown.
+    }
+
+    if (selectedProtocol.spdyVariant) {
+      sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
+      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, in, out)
+          .protocol(selectedProtocol).build();
+      spdyConnection.sendConnectionHeader();
+    } else {
+      httpConnection = new HttpConnection(in, out);
     }
   }
 
@@ -255,7 +262,7 @@ public final class Connection implements Closeable {
   public Object newTransport(HttpEngine httpEngine) throws IOException {
     return (spdyConnection != null)
         ? new SpdyTransport(httpEngine, spdyConnection)
-        : new HttpTransport(httpEngine, out, in);
+        : new HttpTransport(httpEngine, httpConnection);
   }
 
   /**
@@ -299,11 +306,12 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
+    HttpConnection tunnelConnection = new HttpConnection(in, out);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {
-      HttpTransport.writeRequest(out, request.headers(), requestLine);
-      Response response = HttpTransport.readResponse(in).request(request).build();
+      tunnelConnection.writeRequest(request.headers(), requestLine);
+      Response response = tunnelConnection.readResponse().request(request).build();
 
       switch (response.code()) {
         case HTTP_OK:
