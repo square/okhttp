@@ -24,6 +24,14 @@ Download [the latest JAR][2] or grab via Maven:
 Building
 --------
 
+OkHttp requires Java 7 to build and run tests. Runtime compatibility with Java 6 is enforced as
+part of the build to ensure compliance with Android and older versions of the JVM.
+
+
+
+Testing
+-------
+
 ### On the Desktop
 
 Run OkHttp tests on the desktop with Maven. Running SPDY tests on the desktop uses
