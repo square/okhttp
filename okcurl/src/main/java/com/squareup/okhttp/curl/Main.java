@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2014 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.squareup.okhttp.curl;
 
 import com.google.common.base.Function;
@@ -6,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -34,8 +50,12 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
   static final String NAME = "okcurl";
   static final int DEFAULT_TIMEOUT = -1;
 
+  static Main fromArgs(String... args) {
+    return SingleCommand.singleCommand(Main.class).parse(args);
+  }
+
   public static void main(String... args) {
-    SingleCommand.singleCommand(Main.class).parse(args).run();
+    fromArgs(args).run();
   }
 
   private static String versionString() {
@@ -59,9 +79,11 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
         }));
   }
 
-  @Option(name = { "-X", "--request" }, description = "Specify request command to use",
-      allowedValues = { "GET", "HEAD" })
-  public String method = "GET";
+  @Option(name = { "-X", "--request" }, description = "Specify request command to use")
+  public String method;
+
+  @Option(name = { "-d", "--data" }, description = "HTTP POST data")
+  public String data;
 
   @Option(name = { "-H", "--header" }, description = "Custom header to pass to server")
   public List<String> headers;
@@ -106,8 +128,8 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
       return;
     }
 
-    client = getConfiguredClient();
-    Request request = getConfiguredRequest();
+    client = createClient();
+    Request request = createRequest();
     client.enqueue(request, this);
 
     // Immediately begin triggering an executor shutdown so that after execution of the above
@@ -115,7 +137,7 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
     client.getDispatcher().getExecutorService().shutdown();
   }
 
-  private OkHttpClient getConfiguredClient() {
+  private OkHttpClient createClient() {
     OkHttpClient client = new OkHttpClient();
     client.setFollowProtocolRedirects(followRedirects);
     if (connectTimeout != DEFAULT_TIMEOUT) {
@@ -132,10 +154,43 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
     return client;
   }
 
-  private Request getConfiguredRequest() {
+  private String getRequestMethod() {
+    if (method != null) {
+      return method;
+    }
+    if (data != null) {
+      return "POST";
+    }
+    return "GET";
+  }
+
+  private Request.Body getRequestBody() {
+    if (data == null) {
+      return null;
+    }
+    String bodyData = data;
+
+    String mimeType = "application/x-form-urlencoded";
+    if (headers != null) {
+      for (String header : headers) {
+        String[] parts = header.split(":", -1);
+        if ("Content-Type".equalsIgnoreCase(parts[0])) {
+          mimeType = parts[1].trim();
+          headers.remove(header);
+          break;
+        }
+      }
+    }
+
+    return Request.Body.create(MediaType.parse(mimeType), bodyData);
+  }
+
+  Request createRequest() {
     Request.Builder request = new Request.Builder();
-    request.method(method, null);
+
     request.url(url);
+    request.method(getRequestMethod(), getRequestBody());
+
     if (headers != null) {
       for (String header : headers) {
         String[] parts = header.split(":", -1);
@@ -146,6 +201,7 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
       request.header("Referer", referer);
     }
     request.header("User-Agent", userAgent);
+
     return request.build();
   }
 
