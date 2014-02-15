@@ -552,6 +552,7 @@ public class HttpEngine {
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (validatingResponse.validate(response)) {
+        transport.emptyTransferStream();
         release(false);
         response = combine(validatingResponse, response);
 

@@ -64,6 +64,9 @@ interface Transport {
   /** Read response headers and update the cookie manager. */
   Response.Builder readResponseHeaders() throws IOException;
 
+  /** Notify the transport that no response body will be read. */
+  void emptyTransferStream();
+
   // TODO: make this the content stream?
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
 

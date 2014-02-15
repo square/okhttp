@@ -126,7 +126,7 @@ public final class HttpTransport implements Transport {
       return false;
     }
 
-    if (responseBodyIn instanceof UnknownLengthHttpInputStream) {
+    if (responseBodyIn instanceof HttpConnection.UnknownLengthHttpInputStream) {
       return false;
     }
 
@@ -135,6 +135,10 @@ public final class HttpTransport implements Transport {
     }
 
     return true;
+  }
+
+  @Override public void emptyTransferStream() {
+    httpConnection.emptyResponseBody();
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
