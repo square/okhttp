@@ -80,7 +80,7 @@ final class Job extends NamedRunnable {
           .exception(e)
           .build());
     } finally {
-      engine.release(true); // Release the connection if it isn't already released.
+      engine.close(); // Close the connection if it isn't already.
       dispatcher.finished(this);
     }
   }
@@ -142,7 +142,7 @@ final class Job extends NamedRunnable {
       Request redirect = processResponse(engine, response);
 
       if (redirect == null) {
-        engine.automaticallyReleaseConnectionToPool();
+        engine.releaseConnection();
         return response.newBuilder()
             .body(new RealResponseBody(response, engine.getResponseBody()))
             .redirectedBy(redirectedBy)
@@ -150,11 +150,10 @@ final class Job extends NamedRunnable {
       }
 
       if (!sameConnection(request, redirect)) {
-        engine.automaticallyReleaseConnectionToPool();
+        engine.releaseConnection();
       }
 
-      engine.release(false);
-      Connection connection = engine.getConnection();
+      Connection connection = engine.close();
       redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = redirect;
       engine = new HttpEngine(client, request, false, connection, null, null);

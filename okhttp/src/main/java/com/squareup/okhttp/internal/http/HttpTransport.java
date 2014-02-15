@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.AbstractOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -104,46 +103,39 @@ public final class HttpTransport implements Transport {
     return httpConnection.readResponse();
   }
 
-  public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
-      InputStream responseBodyIn) {
-    if (streamCanceled) {
-      return false;
+  @Override public void releaseConnectionOnIdle() throws IOException {
+    if (canReuseConnection()) {
+      httpConnection.poolOnIdle();
+    } else {
+      httpConnection.closeOnIdle();
     }
+  }
 
-    // We cannot reuse sockets that have incomplete output.
-    if (requestBodyOut != null && !((AbstractOutputStream) requestBodyOut).isClosed()) {
-      return false;
-    }
-
+  @Override public boolean canReuseConnection() {
     // If the request specified that the connection shouldn't be reused, don't reuse it.
     if ("close".equalsIgnoreCase(httpEngine.getRequest().header("Connection"))) {
       return false;
     }
 
     // If the response specified that the connection shouldn't be reused, don't reuse it.
-    if (httpEngine.getResponse() != null
-        && "close".equalsIgnoreCase(httpEngine.getResponse().header("Connection"))) {
+    if ("close".equalsIgnoreCase(httpEngine.getResponse().header("Connection"))) {
       return false;
     }
 
-    if (responseBodyIn instanceof HttpConnection.UnknownLengthHttpInputStream) {
+    if (httpConnection.isClosed()) {
       return false;
-    }
-
-    if (responseBodyIn != null) {
-      return httpConnection.discard(httpEngine, responseBodyIn);
     }
 
     return true;
   }
 
-  @Override public void emptyTransferStream() {
+  @Override public void emptyTransferStream() throws IOException {
     httpConnection.emptyResponseBody();
   }
 
   @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
     if (!httpEngine.hasResponseBody()) {
-      return httpConnection.newFixedLengthInputStream(cacheRequest, httpEngine, 0);
+      return httpConnection.newFixedLengthInputStream(cacheRequest, 0);
     }
 
     if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
@@ -152,7 +144,7 @@ public final class HttpTransport implements Transport {
 
     long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
     if (contentLength != -1) {
-      return httpConnection.newFixedLengthInputStream(cacheRequest, httpEngine, contentLength);
+      return httpConnection.newFixedLengthInputStream(cacheRequest, contentLength);
     }
 
     // Wrap the input stream from the connection (rather than just returning

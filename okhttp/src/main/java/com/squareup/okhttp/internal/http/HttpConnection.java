@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
@@ -61,14 +62,57 @@ public final class HttpConnection {
   private static final int STATE_READING_RESPONSE_BODY = 5;
   private static final int STATE_CLOSED = 6;
 
+  private static final int ON_IDLE_HOLD = 0;
+  private static final int ON_IDLE_POOL = 1;
+  private static final int ON_IDLE_CLOSE = 2;
+
+  private final ConnectionPool pool;
+  private final Connection connection;
   private final InputStream in;
   private final OutputStream out;
 
   private int state = STATE_IDLE;
+  private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(InputStream in, OutputStream out) {
+  public HttpConnection(ConnectionPool pool, Connection connection, InputStream in,
+      OutputStream out) {
+    this.pool = pool;
+    this.connection = connection;
     this.in = in;
     this.out = out;
+  }
+
+  /**
+   * Configure this connection to put itself back into the connection pool when
+   * the HTTP response body is exhausted.
+   */
+  public void poolOnIdle() {
+    onIdle = ON_IDLE_POOL;
+
+    // If we're already idle, go to the pool immediately.
+    if (state == STATE_IDLE) {
+      onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
+      pool.recycle(connection);
+    }
+  }
+
+  /**
+   * Configure this connection to close itself when the HTTP response body is
+   * exhausted.
+   */
+  public void closeOnIdle() throws IOException {
+    onIdle = ON_IDLE_CLOSE;
+
+    // If we're already idle, close immediately.
+    if (state == STATE_IDLE) {
+      state = STATE_CLOSED;
+      connection.close();
+    }
+  }
+
+  /** Returns true if this connection is closed. */
+  public boolean isClosed() {
+    return state == STATE_CLOSED;
   }
 
   public void flush() throws IOException {
@@ -126,11 +170,8 @@ public final class HttpConnection {
    * cannot be cached unless it is consumed completely) or to enable connection
    * reuse.
    */
-  private static boolean discardStream(HttpEngine httpEngine, InputStream responseBodyIn) {
-    Connection connection = httpEngine.getConnection();
-    if (connection == null) return false;
+  public boolean discard(InputStream responseBodyIn) {
     Socket socket = connection.getSocket();
-    if (socket == null) return false;
     try {
       int socketTimeout = socket.getSoTimeout();
       socket.setSoTimeout(Transport.DISCARD_STREAM_TIMEOUT_MILLIS);
@@ -163,38 +204,33 @@ public final class HttpConnection {
     requestBody.writeToSocket(out);
   }
 
-  public InputStream newFixedLengthInputStream(
-      CacheRequest cacheRequest, HttpEngine httpEngine, long length) throws IOException {
+  public InputStream newFixedLengthInputStream(CacheRequest cacheRequest, long length)
+      throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new FixedLengthInputStream(in, cacheRequest, httpEngine, length);
+    return new FixedLengthInputStream(cacheRequest, length);
   }
 
   /**
    * Call this to advance past a response body for HTTP responses that do not
    * have a response body.
    */
-  public void emptyResponseBody() {
-    if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
-    state = STATE_IDLE;
+  public void emptyResponseBody() throws IOException {
+    newFixedLengthInputStream(null, 0L); // Transition to STATE_IDLE.
   }
 
   public InputStream newChunkedInputStream(
       CacheRequest cacheRequest, HttpEngine httpEngine) throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new ChunkedInputStream(in, cacheRequest, httpEngine);
+    return new ChunkedInputStream(cacheRequest, httpEngine);
   }
 
   public InputStream newUnknownLengthInputStream(CacheRequest cacheRequest, HttpEngine httpEngine)
       throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new UnknownLengthHttpInputStream(in, cacheRequest, httpEngine);
-  }
-
-  public boolean discard(HttpEngine httpEngine, InputStream responseBodyIn) {
-    return discardStream(httpEngine, responseBodyIn);
+    return new UnknownLengthHttpInputStream(cacheRequest);
   }
 
   /** An HTTP body with a fixed length known in advance. */
@@ -347,17 +383,11 @@ public final class HttpConnection {
   }
 
   private class AbstractHttpInputStream extends InputStream {
-    protected final InputStream in;
-    protected final HttpEngine httpEngine;
     private final CacheRequest cacheRequest;
     protected final OutputStream cacheBody;
     protected boolean closed;
 
-    AbstractHttpInputStream(InputStream in, HttpEngine httpEngine, CacheRequest cacheRequest)
-        throws IOException {
-      this.in = in;
-      this.httpEngine = httpEngine;
-
+    AbstractHttpInputStream(CacheRequest cacheRequest) throws IOException {
       OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
 
       // Some apps return a null body; for compatibility we treat that like a null cache request.
@@ -378,9 +408,7 @@ public final class HttpConnection {
     }
 
     protected final void checkNotClosed() throws IOException {
-      if (closed) {
-        throw new IOException("stream closed");
-      }
+      if (closed) throw new IOException("stream closed");
     }
 
     protected final void cacheWrite(byte[] buffer, int offset, int count) throws IOException {
@@ -395,11 +423,19 @@ public final class HttpConnection {
      */
     protected final void endOfInput() throws IOException {
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
+
       if (cacheRequest != null) {
         cacheBody.close();
       }
-      httpEngine.release(false);
+
       state = STATE_IDLE;
+      if (onIdle == ON_IDLE_POOL) {
+        onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
+        pool.recycle(connection);
+      } else if (onIdle == ON_IDLE_CLOSE) {
+        state = STATE_CLOSED;
+        connection.close();
+      }
     }
 
     /**
@@ -418,7 +454,7 @@ public final class HttpConnection {
       if (cacheRequest != null) {
         cacheRequest.abort();
       }
-      httpEngine.release(true);
+      Util.closeQuietly(connection);
       state = STATE_CLOSED;
     }
   }
@@ -427,9 +463,8 @@ public final class HttpConnection {
   private class FixedLengthInputStream extends AbstractHttpInputStream {
     private long bytesRemaining;
 
-    public FixedLengthInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine,
-        long length) throws IOException {
-      super(is, httpEngine, cacheRequest);
+    public FixedLengthInputStream(CacheRequest cacheRequest, long length) throws IOException {
+      super(cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
         endOfInput();
@@ -464,7 +499,7 @@ public final class HttpConnection {
       if (closed) {
         return;
       }
-      if (bytesRemaining != 0 && !discardStream(httpEngine, this)) {
+      if (bytesRemaining != 0 && !discard(this)) {
         unexpectedEndOfInput();
       }
       closed = true;
@@ -476,10 +511,11 @@ public final class HttpConnection {
     private static final int NO_CHUNK_YET = -1;
     private int bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
+    private final HttpEngine httpEngine;
 
-    ChunkedInputStream(InputStream is, CacheRequest cacheRequest, HttpEngine httpEngine)
-        throws IOException {
-      super(is, httpEngine, cacheRequest);
+    ChunkedInputStream(CacheRequest cacheRequest, HttpEngine httpEngine) throws IOException {
+      super(cacheRequest);
+      this.httpEngine = httpEngine;
     }
 
     @Override public int read(byte[] buffer, int offset, int count) throws IOException {
@@ -541,7 +577,7 @@ public final class HttpConnection {
       if (closed) {
         return;
       }
-      if (hasMoreChunks && !discardStream(httpEngine, this)) {
+      if (hasMoreChunks && !discard(this)) {
         unexpectedEndOfInput();
       }
       closed = true;
@@ -552,9 +588,8 @@ public final class HttpConnection {
   class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
     private boolean inputExhausted;
 
-    UnknownLengthHttpInputStream(InputStream in, CacheRequest cacheRequest, HttpEngine httpEngine)
-        throws IOException {
-      super(in, httpEngine, cacheRequest);
+    UnknownLengthHttpInputStream(CacheRequest cacheRequest) throws IOException {
+      super(cacheRequest);
     }
 
     @Override public int read(byte[] buffer, int offset, int count) throws IOException {

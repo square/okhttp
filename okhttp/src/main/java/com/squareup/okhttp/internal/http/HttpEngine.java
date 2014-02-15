@@ -68,11 +68,6 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  *
  * <p>The request and response may be served by the HTTP response cache, by the
  * network, or by both in the event of a conditional GET.
- *
- * <p>This class may hold a socket connection that needs to be released or
- * recycled. By default, this socket connection is held when the last byte of
- * the response is consumed. To release the connection when it is no longer
- * required, use {@link #automaticallyReleaseConnectionToPool()}.
  */
 public class HttpEngine {
   final OkHttpClient client;
@@ -120,15 +115,6 @@ public class HttpEngine {
 
   /** The cache request currently being populated from a network response. */
   private CacheRequest cacheRequest;
-
-  /**
-   * True if the socket connection should be released to the connection pool
-   * when the response has been fully read.
-   */
-  private boolean automaticallyReleaseConnectionToPool;
-
-  /** True if the socket connection is no longer needed by this engine. */
-  private boolean connectionReleased;
 
   /**
    * @param request the HTTP request without a body. The body must be
@@ -199,9 +185,10 @@ public class HttpEngine {
       }
 
     } else {
-      // We're using a cached response. Close the connection we may have inherited from a redirect.
+      // We're using a cached response. Recycle a connection we may have inherited from a redirect.
       if (connection != null) {
-        disconnect();
+        client.getConnectionPool().recycle(connection);
+        connection = null;
       }
 
       // No need for the network! Promote the cached response immediately.
@@ -243,22 +230,13 @@ public class HttpEngine {
 
     if (!connection.isConnected()) {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
-      client.getConnectionPool().maybeShare(connection);
+      if (connection.isSpdy()) client.getConnectionPool().share(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     } else if (!connection.isSpdy()) {
       connection.updateReadTimeout(client.getReadTimeout());
     }
 
     route = connection.getRoute();
-  }
-
-  /**
-   * Recycle the connection to the origin server. It is an error to call this
-   * with a request in flight.
-   */
-  private void disconnect() {
-    client.getConnectionPool().recycle(connection);
-    connection = null;
   }
 
   /**
@@ -324,10 +302,10 @@ public class HttpEngine {
       return null;
     }
 
-    release(true);
+    Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, request, bufferRequestBody, null, routeSelector,
+    return new HttpEngine(client, request, bufferRequestBody, connection, routeSelector,
         (RetryableOutputStream) requestBodyOut);
   }
 
@@ -363,42 +341,42 @@ public class HttpEngine {
   }
 
   /**
-   * Cause the socket connection to be released to the connection pool when
-   * it is no longer needed. If it is already unneeded, it will be pooled
-   * immediately. Otherwise the connection is held so that redirects can be
-   * handled by the same connection.
+   * Configure the socket connection to be either pooled or closed when it is
+   * either exhausted or closed. If it is unneeded when this is called, it will
+   * be released immediately.
    */
-  public final void automaticallyReleaseConnectionToPool() {
-    automaticallyReleaseConnectionToPool = true;
-    if (connection != null && connectionReleased) {
-      disconnect();
+  public final void releaseConnection() throws IOException {
+    if (transport != null) {
+      transport.releaseConnectionOnIdle();
     }
+    connection = null;
   }
 
   /**
-   * Releases this engine so that its resources may be either reused or
-   * closed. Also call {@link #automaticallyReleaseConnectionToPool} unless
-   * the connection will be used to follow a redirect.
+   * Release any resources held by this engine. If a connection is still held by
+   * this engine, it is returned.
    */
-  public final void release(boolean streamCanceled) {
-    // If the response body comes from the cache, close it.
-    if (validatingResponse != null
-        && validatingResponse.body() != null
-        && responseBodyIn == validatingResponse.body().byteStream()) {
-      closeQuietly(responseBodyIn);
+  public final Connection close() {
+    // If this engine never achieved a response body, its connection cannot be reused.
+    if (responseBodyIn == null) {
+      closeQuietly(connection);
+      connection = null;
+      return null;
     }
 
-    if (connection != null && !connectionReleased) {
-      connectionReleased = true;
+    // Close the response body. This will recycle the connection if it is eligible.
+    closeQuietly(responseBodyIn);
 
-      if (transport == null
-          || !transport.makeReusable(streamCanceled, requestBodyOut, responseTransferIn)) {
-        closeQuietly(connection);
-        connection = null;
-      } else if (automaticallyReleaseConnectionToPool) {
-        disconnect();
-      }
+    // Close the connection if it cannot be reused.
+    if (transport != null && !transport.canReuseConnection()) {
+      closeQuietly(connection);
+      connection = null;
+      return null;
     }
+
+    Connection result = connection;
+    connection = null;
+    return result;
   }
 
   /**
@@ -553,7 +531,7 @@ public class HttpEngine {
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
       if (validatingResponse.validate(response)) {
         transport.emptyTransferStream();
-        release(false);
+        releaseConnection();
         response = combine(validatingResponse, response);
 
         // Update the cache after combining headers but before stripping the

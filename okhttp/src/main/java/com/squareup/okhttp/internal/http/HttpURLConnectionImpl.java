@@ -24,9 +24,9 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -101,15 +101,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final void disconnect() {
     // Calling disconnect() before a connection exists should have no effect.
     if (httpEngine != null) {
-      // We close the response body here instead of in
-      // HttpEngine.release because that is called when input
-      // has been completely read from the underlying socket.
-      // However the response body can be a GZIPInputStream that
-      // still has unread data.
-      if (httpEngine.hasResponse()) {
-        Util.closeQuietly(httpEngine.getResponseBody());
-      }
-      httpEngine.release(true);
+      httpEngine.close();
     }
   }
 
@@ -327,7 +319,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
       Retry retry = processResponseHeaders();
       if (retry == Retry.NONE) {
-        httpEngine.automaticallyReleaseConnectionToPool();
+        httpEngine.releaseConnection();
         return httpEngine;
       }
 
@@ -353,12 +345,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       if (retry == Retry.DIFFERENT_CONNECTION) {
-        httpEngine.automaticallyReleaseConnectionToPool();
+        httpEngine.releaseConnection();
       }
 
-      httpEngine.release(false);
-      httpEngine = newHttpEngine(retryMethod, httpEngine.getConnection(),
-          (RetryableOutputStream) requestBody);
+      Connection connection = httpEngine.close();
+      httpEngine = newHttpEngine(retryMethod, connection, (RetryableOutputStream) requestBody);
     }
   }
 
