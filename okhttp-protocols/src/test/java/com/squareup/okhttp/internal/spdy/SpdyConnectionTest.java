@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1393,7 +1393,7 @@ public final class SpdyConnectionTest {
   private void headerBlockHasTrailingCompressedBytes(String frame, int length) throws IOException {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame(Base64.decode(frame.getBytes(UTF_8)));
+    peer.sendFrame(ByteString.decodeBase64(frame).toByteArray());
     peer.sendFrame().data(true, 1, "robot".getBytes("UTF-8"));
     peer.acceptFrame(); // DATA
     peer.play();

@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
-import com.squareup.okhttp.internal.Base64;
-import com.squareup.okhttp.internal.Util;
 import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
@@ -78,8 +76,7 @@ public class InflaterSourceTest {
 
   private OkBuffer decodeBase64(String s) {
     OkBuffer result = new OkBuffer();
-    byte[] data = Base64.decode(s.getBytes(Util.UTF_8));
-    result.write(data, 0, data.length);
+    result.write(ByteString.decodeBase64(s));
     return result;
   }
 
