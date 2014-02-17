@@ -62,53 +62,6 @@ public final class OkBuffers {
     };
   }
 
-  /**
-   * Returns an output stream that writes to {@code sink}. This may buffer data
-   * by deferring writes.
-   */
-  public static OutputStream outputStream(final Sink sink) {
-    return new OutputStream() {
-      final OkBuffer buffer = new OkBuffer(); // Buffer at most one segment of data.
-
-      @Override public void write(int b) throws IOException {
-        buffer.writeByte((byte) b);
-        if (buffer.byteCount == Segment.SIZE) {
-          sink.write(buffer, buffer.byteCount, Deadline.NONE);
-        }
-      }
-
-      @Override public void write(byte[] data, int offset, int byteCount) throws IOException {
-        checkOffsetAndCount(data.length, offset, byteCount);
-        int limit = offset + byteCount;
-        while (offset < limit) {
-          Segment onlySegment = buffer.writableSegment(1);
-          int toCopy = Math.min(limit - offset, Segment.SIZE - onlySegment.limit);
-          System.arraycopy(data, offset, onlySegment.data, onlySegment.limit, toCopy);
-          offset += toCopy;
-          onlySegment.limit += toCopy;
-          buffer.byteCount += toCopy;
-          if (buffer.byteCount == Segment.SIZE) {
-            sink.write(buffer, buffer.byteCount, Deadline.NONE);
-          }
-        }
-      }
-
-      @Override public void flush() throws IOException {
-        sink.write(buffer, buffer.byteCount, Deadline.NONE); // Flush the buffer.
-        sink.flush(Deadline.NONE);
-      }
-
-      @Override public void close() throws IOException {
-        sink.write(buffer, buffer.byteCount, Deadline.NONE); // Flush the buffer.
-        sink.close(Deadline.NONE);
-      }
-
-      @Override public String toString() {
-        return "outputStream(" + sink + ")";
-      }
-    };
-  }
-
   /** Returns a source that reads from {@code in}. */
   public static Source source(final InputStream in) {
     return new Source() {

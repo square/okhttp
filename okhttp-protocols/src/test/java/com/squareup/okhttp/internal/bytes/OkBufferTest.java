@@ -327,7 +327,7 @@ public final class OkBufferTest {
 
   @Test public void outputStreamFromSink() throws Exception {
     OkBuffer sink = new OkBuffer();
-    OutputStream out = OkBuffers.outputStream(sink);
+    OutputStream out = new BufferedSink(sink).outputStream();
     out.write('a');
     out.write(repeat('b', 9998).getBytes(UTF_8));
     out.write('c');
@@ -337,12 +337,47 @@ public final class OkBufferTest {
 
   @Test public void outputStreamFromSinkBounds() throws Exception {
     OkBuffer sink = new OkBuffer();
-    OutputStream out = OkBuffers.outputStream(sink);
+    OutputStream out = new BufferedSink(sink).outputStream();
     try {
       out.write(new byte[100], 50, 51);
       fail();
     } catch (ArrayIndexOutOfBoundsException expected) {
     }
+  }
+
+  @Test public void bufferedSinkEmitsTailWhenItIsComplete() throws IOException {
+    OkBuffer sink = new OkBuffer();
+    BufferedSink bufferedSink = new BufferedSink(sink);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1), Deadline.NONE);
+    assertEquals(0, sink.byteCount());
+    bufferedSink.writeByte(0, Deadline.NONE);
+    assertEquals(Segment.SIZE, sink.byteCount());
+    assertEquals(0, bufferedSink.buffer.byteCount());
+  }
+
+  @Test public void bufferedSinkEmitZero() throws IOException {
+    OkBuffer sink = new OkBuffer();
+    BufferedSink bufferedSink = new BufferedSink(sink);
+    bufferedSink.writeUtf8("", Deadline.NONE);
+    assertEquals(0, sink.byteCount());
+  }
+
+  @Test public void bufferedSinkEmitMultipleSegments() throws IOException {
+    OkBuffer sink = new OkBuffer();
+    BufferedSink bufferedSink = new BufferedSink(sink);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1), Deadline.NONE);
+    assertEquals(Segment.SIZE * 3, sink.byteCount());
+    assertEquals(Segment.SIZE - 1, bufferedSink.buffer.byteCount());
+  }
+
+  @Test public void bufferedSinkFlush() throws IOException {
+    OkBuffer sink = new OkBuffer();
+    BufferedSink bufferedSink = new BufferedSink(sink);
+    bufferedSink.writeByte('a', Deadline.NONE);
+    assertEquals(0, sink.byteCount());
+    bufferedSink.flush(Deadline.NONE);
+    assertEquals(0, bufferedSink.buffer.byteCount());
+    assertEquals(1, sink.byteCount());
   }
 
   @Test public void sourceFromInputStream() throws Exception {

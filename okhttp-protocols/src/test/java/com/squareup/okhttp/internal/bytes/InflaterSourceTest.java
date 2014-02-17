@@ -87,7 +87,7 @@ public class InflaterSourceTest {
   /** Use DeflaterOutputStream to deflate source. */
   private OkBuffer deflate(OkBuffer buffer) throws IOException {
     OkBuffer result = new OkBuffer();
-    Sink sink = OkBuffers.sink(new DeflaterOutputStream(OkBuffers.outputStream(result)));
+    Sink sink = OkBuffers.sink(new DeflaterOutputStream(new BufferedSink(result).outputStream()));
     sink.write(buffer, buffer.byteCount(), Deadline.NONE);
     sink.close(Deadline.NONE);
     return result;
