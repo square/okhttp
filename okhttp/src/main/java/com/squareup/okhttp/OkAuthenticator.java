@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Base64;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
@@ -97,7 +97,7 @@ public interface OkAuthenticator {
       try {
         String usernameAndPassword = userName + ":" + password;
         byte[] bytes = usernameAndPassword.getBytes("ISO-8859-1");
-        String encoded = Base64.encode(bytes);
+        String encoded = ByteString.of(bytes).base64();
         return new Credential("Basic " + encoded);
       } catch (UnsupportedEncodingException e) {
         throw new AssertionError();

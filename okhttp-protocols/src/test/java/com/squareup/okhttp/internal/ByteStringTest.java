@@ -106,6 +106,51 @@ public class ByteStringTest {
     assertEquals(ByteString.encodeUtf8("foobar"), ByteString.concat(foo, bar));
   }
 
+  @Test public void encodeBase64() {
+    assertEquals("", ByteString.encodeUtf8("").base64());
+    assertEquals("AA==", ByteString.encodeUtf8("\u0000").base64());
+    assertEquals("AAA=", ByteString.encodeUtf8("\u0000\u0000").base64());
+    assertEquals("AAAA", ByteString.encodeUtf8("\u0000\u0000\u0000").base64());
+    assertEquals("V2UncmUgZ29ubmEgbWFrZSBhIGZvcnR1bmUgd2l0aCB0aGlzIHBsYWNlLg==",
+        ByteString.encodeUtf8("We're gonna make a fortune with this place.").base64());
+  }
+
+  @Test public void ignoreUnnecessaryPadding() {
+    assertEquals("", ByteString.decodeBase64("====").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64("AAAA====").utf8());
+  }
+
+  @Test public void decodeBase64() {
+    assertEquals("", ByteString.decodeBase64("").utf8());
+    assertEquals(null, ByteString.decodeBase64("/===")); // Can't do anything with 6 bits!
+    assertEquals(bytes(0xff), ByteString.decodeBase64("//=="));
+    assertEquals(bytes(0xff, 0xff), ByteString.decodeBase64("///="));
+    assertEquals(bytes(0xff, 0xff, 0xff), ByteString.decodeBase64("////"));
+    assertEquals(bytes(0xff, 0xff, 0xff, 0xff, 0xff, 0xff), ByteString.decodeBase64("////////"));
+    assertEquals("What's to be scared about? It's just a little hiccup in the power...",
+        ByteString.decodeBase64("V2hhdCdzIHRvIGJlIHNjYXJlZCBhYm91dD8gSXQncyBqdXN0IGEgbGl0dGxlIGhpY2"
+            + "N1cCBpbiB0aGUgcG93ZXIuLi4=").utf8());
+  }
+
+  @Test public void decodeWithWhitespace() {
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA AA ").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA A\r\nA ").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64("AA AA").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA AA ").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA A\r\nA ").utf8());
+    assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64("A    AAA").utf8());
+    assertEquals("", ByteString.decodeBase64("    ").utf8());
+  }
+
+  /** Make it easy to make varargs calls. Otherwise we need a lot of (byte) casts. */
+  private ByteString bytes(int... bytes) {
+    byte[] result = new byte[bytes.length];
+    for (int i = 0; i < bytes.length; i++) {
+      result[i] = (byte) bytes[i];
+    }
+    return ByteString.of(result);
+  }
+
   private static void assertByteArraysEquals(byte[] a, byte[] b) {
     assertEquals(Arrays.toString(a), Arrays.toString(b));
   }

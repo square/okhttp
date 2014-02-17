@@ -64,6 +64,24 @@ public final class ByteString {
   }
 
   /**
+   * Returns this byte string encoded as <a
+   * href="http://www.ietf.org/rfc/rfc2045.txt">Base64</a>. In violation of the
+   * RFC, the returned string does not wrap lines at 76 columns.
+   */
+  public String base64() {
+    return Base64.encode(data);
+  }
+
+  /**
+   * Decodes the Base64-encoded bytes and returns their value as a byte string.
+   * Returns null if {@code base64} is not a Base64-encoded sequence of bytes.
+   */
+  public static ByteString decodeBase64(String base64) {
+    byte[] decoded = Base64.decode(base64);
+    return decoded != null ? new ByteString(decoded) : null;
+  }
+
+  /**
    * Returns true when {@code ascii} is not null and equals the bytes wrapped
    * by this byte string.
    */

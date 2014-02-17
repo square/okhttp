@@ -19,109 +19,93 @@
  * @author Alexander Y. Kleymenov
  */
 
-package com.squareup.okhttp.internal;
+package com.squareup.okhttp.internal.bytes;
 
 import java.io.UnsupportedEncodingException;
 
-import static com.squareup.okhttp.internal.Util.EMPTY_BYTE_ARRAY;
-
-/**
- * <a href="http://www.ietf.org/rfc/rfc2045.txt">Base64</a> encoder/decoder.
- * In violation of the RFC, this encoder doesn't wrap lines at 76 columns.
- */
-public final class Base64 {
+final class Base64 {
   private Base64() {
   }
 
-  public static byte[] decode(byte[] in) {
-    return decode(in, in.length);
-  }
-
-  public static byte[] decode(byte[] in, int len) {
-    // approximate output length
-    int length = len / 4 * 3;
-    // return an empty array on empty or short input without padding
-    if (length == 0) {
-      return EMPTY_BYTE_ARRAY;
-    }
-    // temporary array
-    byte[] out = new byte[length];
-    // number of padding characters ('=')
-    int pad = 0;
-    byte chr;
-    // compute the number of the padding characters
-    // and adjust the length of the input
-    for (; ; len--) {
-      chr = in[len - 1];
-      // skip the neutral characters
-      if ((chr == '\n') || (chr == '\r') || (chr == ' ') || (chr == '\t')) {
-        continue;
-      }
-      if (chr == '=') {
-        pad++;
-      } else {
+  public static byte[] decode(String in) {
+    // Ignore trailing '=' padding and whitespace from the input.
+    int limit = in.length();
+    for (; limit > 0; limit--) {
+      char c = in.charAt(limit - 1);
+      if (c != '=' && c != '\n' && c != '\r' && c != ' ' && c != '\t') {
         break;
       }
     }
-    // index in the output array
-    int outIndex = 0;
-    // index in the input array
-    int inIndex = 0;
-    // holds the value of the input character
-    int bits = 0;
-    // holds the value of the input quantum
-    int quantum = 0;
-    for (int i = 0; i < len; i++) {
-      chr = in[i];
-      // skip the neutral characters
-      if ((chr == '\n') || (chr == '\r') || (chr == ' ') || (chr == '\t')) {
-        continue;
-      }
-      if ((chr >= 'A') && (chr <= 'Z')) {
+
+    // If the input includes whitespace, this output array will be longer than necessary.
+    byte[] out = new byte[(int) (limit * 6L / 8L)];
+    int outCount = 0;
+    int inCount = 0;
+
+    int word = 0;
+    for (int pos = 0; pos < limit; pos++) {
+      char c = in.charAt(pos);
+
+      int bits;
+      if (c >= 'A' && c <= 'Z') {
         // char ASCII value
         //  A    65    0
         //  Z    90    25 (ASCII - 65)
-        bits = chr - 65;
-      } else if ((chr >= 'a') && (chr <= 'z')) {
+        bits = c - 65;
+      } else if (c >= 'a' && c <= 'z') {
         // char ASCII value
         //  a    97    26
         //  z    122   51 (ASCII - 71)
-        bits = chr - 71;
-      } else if ((chr >= '0') && (chr <= '9')) {
+        bits = c - 71;
+      } else if (c >= '0' && c <= '9') {
         // char ASCII value
         //  0    48    52
         //  9    57    61 (ASCII + 4)
-        bits = chr + 4;
-      } else if (chr == '+') {
+        bits = c + 4;
+      } else if (c == '+') {
         bits = 62;
-      } else if (chr == '/') {
+      } else if (c == '/') {
         bits = 63;
+      } else if (c == '\n' || c == '\r' || c == ' ' || c == '\t') {
+        continue;
       } else {
         return null;
       }
-      // append the value to the quantum
-      quantum = (quantum << 6) | (byte) bits;
-      if (inIndex % 4 == 3) {
-        // 4 characters were read, so make the output:
-        out[outIndex++] = (byte) (quantum >> 16);
-        out[outIndex++] = (byte) (quantum >> 8);
-        out[outIndex++] = (byte) quantum;
-      }
-      inIndex++;
-    }
-    if (pad > 0) {
-      // adjust the quantum value according to the padding
-      quantum = quantum << (6 * pad);
-      // make output
-      out[outIndex++] = (byte) (quantum >> 16);
-      if (pad == 1) {
-        out[outIndex++] = (byte) (quantum >> 8);
+
+      // Append this char's 6 bits to the word.
+      word = (word << 6) | (byte) bits;
+
+      // For every 4 chars of input, we accumulate 24 bits of output. Emit 3 bytes.
+      inCount++;
+      if (inCount % 4 == 0) {
+        out[outCount++] = (byte) (word >> 16);
+        out[outCount++] = (byte) (word >> 8);
+        out[outCount++] = (byte) word;
       }
     }
-    // create the resulting array
-    byte[] result = new byte[outIndex];
-    System.arraycopy(out, 0, result, 0, outIndex);
-    return result;
+
+    int lastWordChars = inCount % 4;
+    if (lastWordChars == 1) {
+      // We read 1 char followed by "===". But 6 bits is a truncated byte! Fail.
+      return null;
+    } else if (lastWordChars == 2) {
+      // We read 2 chars followed by "==". Emit 1 byte with 8 of those 12 bits.
+      word = word << 12;
+      out[outCount++] = (byte) (word >> 16);
+    } else if (lastWordChars == 3) {
+      // We read 3 chars, followed by "=". Emit 2 bytes for 16 of those 18 bits.
+      word = word << 6;
+      out[outCount++] = (byte) (word >> 16);
+      out[outCount++] = (byte) (word >> 8);
+    }
+
+    // If we sized our out array perfectly, we're done.
+    if (outCount == out.length) return out;
+
+    // Copy the decoded bytes to a new, right-sized array.
+    byte[] prefix = new byte[outCount];
+    System.arraycopy(out, 0, prefix, 0, outCount);
+    return prefix;
   }
 
   private static final byte[] MAP = new byte[] {

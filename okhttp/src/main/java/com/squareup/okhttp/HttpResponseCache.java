@@ -16,10 +16,10 @@
 
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Base64;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.StrictLineReader;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -495,7 +495,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         List<Certificate> result = new ArrayList<Certificate>(length);
         for (int i = 0; i < length; i++) {
           String line = reader.readLine();
-          byte[] bytes = Base64.decode(line.getBytes("US-ASCII"));
+          byte[] bytes = ByteString.decodeBase64(line).toByteArray();
           result.add(certificateFactory.generateCertificate(new ByteArrayInputStream(bytes)));
         }
         return result;
@@ -509,7 +509,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         writer.write(Integer.toString(certificates.size()) + '\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
-          String line = Base64.encode(bytes);
+          String line = ByteString.of(bytes).base64();
           writer.write(line + '\n');
         }
       } catch (CertificateEncodingException e) {
