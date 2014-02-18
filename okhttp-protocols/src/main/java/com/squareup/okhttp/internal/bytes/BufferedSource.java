@@ -35,6 +35,10 @@ public final class BufferedSource implements Source {
     this.source = source;
   }
 
+  public BufferedSource(Source source) {
+    this(source, new OkBuffer());
+  }
+
   @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
       throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);

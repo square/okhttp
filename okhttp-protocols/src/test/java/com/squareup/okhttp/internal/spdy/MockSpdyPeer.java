@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -116,7 +117,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = variant.newReader(in, client);
+    FrameReader reader = variant.newReader(new BufferedSource(OkBuffers.source(in)), client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();

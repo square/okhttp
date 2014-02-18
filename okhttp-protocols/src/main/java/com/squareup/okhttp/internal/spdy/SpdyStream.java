@@ -23,7 +23,6 @@ import com.squareup.okhttp.internal.bytes.OkBuffer;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.SocketTimeoutException;
@@ -67,7 +66,6 @@ public final class SpdyStream {
   private List<Header> responseHeaders;
 
   private final SpdyDataSource source;
-  private final InputStream in;
   final SpdyDataOutputStream out;
 
   /**
@@ -85,7 +83,6 @@ public final class SpdyStream {
     this.connection = connection;
     this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
     this.source = new SpdyDataSource(connection.okHttpSettings.getInitialWindowSize());
-    this.in = new BufferedSource(source, new OkBuffer()).inputStream();
     this.out = new SpdyDataOutputStream();
     this.source.finished = inFinished;
     this.out.finished = outFinished;
@@ -211,9 +208,9 @@ public final class SpdyStream {
     return readTimeoutMillis;
   }
 
-  /** Returns an input stream that can be used to read data from the peer. */
-  public InputStream getInputStream() {
-    return in;
+  /** Returns a source that reads data from the peer. */
+  public Source getSource() {
+    return source;
   }
 
   /**

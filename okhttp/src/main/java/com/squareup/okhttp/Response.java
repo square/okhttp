@@ -16,6 +16,8 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -189,6 +191,9 @@ public final class Response {
     /** Multiple calls to {@link #charStream()} must return the same instance. */
     private Reader reader;
 
+    /** Multiple calls to {@link #source()} must return the same instance. */
+    private Source source;
+
     /**
      * Returns true if further data from this response body should be read at
      * this time. For asynchronous protocols like SPDY and HTTP/2, this will
@@ -212,6 +217,12 @@ public final class Response {
     public abstract long contentLength();
 
     public abstract InputStream byteStream();
+
+    // TODO: Source needs to be an API type for this to be public
+    public Source source() {
+      Source s = source;
+      return s != null ? s : (source = OkBuffers.source(byteStream()));
+    }
 
     public final byte[] bytes() throws IOException {
       long contentLength = contentLength();
@@ -239,10 +250,8 @@ public final class Response {
      * charset, this will attempt to decode the response body as UTF-8.
      */
     public final Reader charStream() {
-      if (reader == null) {
-        reader = new InputStreamReader(byteStream(), charset());
-      }
-      return reader;
+      Reader r = reader;
+      return r != null ? r : (reader = new InputStreamReader(byteStream(), charset()));
     }
 
     /**

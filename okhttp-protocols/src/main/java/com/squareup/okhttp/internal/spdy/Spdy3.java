@@ -21,13 +21,9 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
-import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
-import com.squareup.okhttp.internal.bytes.Source;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
@@ -100,8 +96,8 @@ final class Spdy3 implements Variant {
     }
   }
 
-  @Override public FrameReader newReader(InputStream in, boolean client) {
-    return new Reader(OkBuffers.source(in), client);
+  @Override public FrameReader newReader(BufferedSource source, boolean client) {
+    return new Reader(source, client);
   }
 
   @Override public FrameWriter newWriter(OutputStream out, boolean client) {
@@ -114,8 +110,8 @@ final class Spdy3 implements Variant {
     private final boolean client;
     private final NameValueBlockReader headerBlockReader;
 
-    Reader(Source source, boolean client) {
-      this.source = new BufferedSource(source, new OkBuffer());
+    Reader(BufferedSource source, boolean client) {
+      this.source = source;
       this.headerBlockReader = new NameValueBlockReader(this.source);
       this.client = client;
     }

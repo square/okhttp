@@ -34,7 +34,7 @@ public final class InflaterSource implements Source {
   private boolean closed;
 
   public InflaterSource(Source source, Inflater inflater) {
-    this(new BufferedSource(source, new OkBuffer()), inflater);
+    this(new BufferedSource(source), inflater);
   }
 
   /**

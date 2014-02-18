@@ -113,7 +113,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     try {
       HttpEngine response = getResponse();
       if (response.hasResponseBody() && response.getResponse().code() >= HTTP_BAD_REQUEST) {
-        return response.getResponseBody();
+        return response.getResponseBodyBytes();
       }
       return null;
     } catch (IOException e) {
@@ -191,7 +191,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw new FileNotFoundException(url.toString());
     }
 
-    InputStream result = response.getResponseBody();
+    InputStream result = response.getResponseBodyBytes();
     if (result == null) {
       throw new ProtocolException("No response body exists; responseCode=" + getResponseCode());
     }

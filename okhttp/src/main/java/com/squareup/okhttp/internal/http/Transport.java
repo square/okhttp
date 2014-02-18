@@ -18,8 +18,8 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 
@@ -68,7 +68,7 @@ interface Transport {
   void emptyTransferStream() throws IOException;
 
   // TODO: make this the content stream?
-  InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
+  Source getTransferStream(CacheRequest cacheRequest) throws IOException;
 
   /**
    * Configures the response body to pool or close the socket connection when

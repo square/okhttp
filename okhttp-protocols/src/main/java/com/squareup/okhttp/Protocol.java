@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;

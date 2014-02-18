@@ -22,12 +22,15 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.ProtocolException;
@@ -37,7 +40,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_HOST;
@@ -191,8 +193,8 @@ public final class SpdyTransport implements Transport {
     // Do nothing.
   }
 
-  @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
-    return new SpdyInputStream(stream, cacheRequest, httpEngine);
+  @Override public Source getTransferStream(CacheRequest cacheRequest) throws IOException {
+    return new SpdySource(stream, cacheRequest);
   }
 
   @Override public void releaseConnectionOnIdle() {
@@ -232,28 +234,22 @@ public final class SpdyTransport implements Transport {
     return prohibited;
   }
 
-  /**
-   * An input stream for the body of an HTTP response.
-   *
-   * <p>Since a single socket's input stream may be used to read multiple HTTP
-   * responses from the same server, subclasses shouldn't close the socket stream.
-   *
-   * <p>A side effect of reading an HTTP response is that the response cache
-   * is populated. If the stream is closed early, that cache entry will be
-   * invalidated.
-   */
-  abstract static class AbstractHttpInputStream extends InputStream {
-    protected final InputStream in;
+  /** An HTTP message body terminated by the end of the underlying stream. */
+  private static class SpdySource implements Source {
+    private final SpdyStream stream;
+    private final Source source;
     private final CacheRequest cacheRequest;
-    protected final OutputStream cacheBody;
-    protected boolean closed;
+    private final OutputStream cacheBody;
 
-    AbstractHttpInputStream(InputStream in, CacheRequest cacheRequest) throws IOException {
-      this.in = in;
+    private boolean inputExhausted;
+    private boolean closed;
 
-      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
+    SpdySource(SpdyStream stream, CacheRequest cacheRequest) throws IOException {
+      this.stream = stream;
+      this.source = stream.getSource();
 
       // Some apps return a null body; for compatibility we treat that like a null cache request.
+      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
       if (cacheBody == null) {
         cacheRequest = null;
       }
@@ -262,86 +258,29 @@ public final class SpdyTransport implements Transport {
       this.cacheRequest = cacheRequest;
     }
 
-    /**
-     * read() is implemented using read(byte[], int, int) so subclasses only
-     * need to override the latter.
-     */
-    @Override public final int read() throws IOException {
-      return Util.readSingleByte(this);
-    }
-
-    protected final void checkNotClosed() throws IOException {
-      if (closed) throw new IOException("stream closed");
-    }
-
-    protected final void cacheWrite(byte[] buffer, int offset, int count) throws IOException {
-      if (cacheBody != null) {
-        cacheBody.write(buffer, offset, count);
-      }
-    }
-
-    /**
-     * Closes the cache entry and makes the socket available for reuse. This
-     * should be invoked when the end of the body has been reached.
-     */
-    protected final void endOfInput() throws IOException {
-      if (cacheRequest != null) {
-        cacheBody.close();
-      }
-    }
-
-    /**
-     * Calls abort on the cache entry and disconnects the socket. This
-     * should be invoked when the connection is closed unexpectedly to
-     * invalidate the cache entry and to prevent the HTTP connection from
-     * being reused. HTTP messages are sent in serial so whenever a message
-     * cannot be read to completion, subsequent messages cannot be read
-     * either and the connection must be discarded.
-     *
-     * <p>An earlier implementation skipped the remaining bytes, but this
-     * requires that the entire transfer be completed. If the intention was
-     * to cancel the transfer, closing the connection is the only solution.
-     */
-    protected final void unexpectedEndOfInput() {
-      if (cacheRequest != null) {
-        cacheRequest.abort();
-      }
-    }
-  }
-
-  /** An HTTP message body terminated by the end of the underlying stream. */
-  private static class SpdyInputStream extends AbstractHttpInputStream {
-    private final SpdyStream stream;
-    private boolean inputExhausted;
-
-    SpdyInputStream(SpdyStream stream, CacheRequest cacheRequest, HttpEngine httpEngine)
+    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
         throws IOException {
-      super(stream.getInputStream(), cacheRequest);
-      this.stream = stream;
-    }
+      if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
+      if (closed) throw new IllegalStateException("closed");
+      if (inputExhausted) return -1;
 
-    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-      checkOffsetAndCount(buffer.length, offset, count);
-      checkNotClosed();
-      if (in == null || inputExhausted) {
-        return -1;
-      }
-      int read = in.read(buffer, offset, count);
+      long read = source.read(sink, byteCount, deadline);
       if (read == -1) {
         inputExhausted = true;
-        endOfInput();
+        if (cacheRequest != null) {
+          cacheBody.close();
+        }
         return -1;
       }
-      cacheWrite(buffer, offset, read);
+
+      if (cacheBody != null) {
+        OkBuffers.copy(sink, sink.byteCount() - read, read, cacheBody);
+      }
+
       return read;
     }
 
-    @Override public int available() throws IOException {
-      checkNotClosed();
-      return in == null ? 0 : in.available();
-    }
-
-    @Override public void close() throws IOException {
+    @Override public void close(Deadline deadline) throws IOException {
       if (closed) return;
 
       if (!inputExhausted && cacheBody != null) {
@@ -352,7 +291,9 @@ public final class SpdyTransport implements Transport {
 
       if (!inputExhausted) {
         stream.closeLater(ErrorCode.CANCEL);
-        unexpectedEndOfInput();
+        if (cacheRequest != null) {
+          cacheRequest.abort();
+        }
       }
     }
 
@@ -362,7 +303,7 @@ public final class SpdyTransport implements Transport {
         stream.setReadTimeout(socketTimeout);
         stream.setReadTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
         try {
-          Util.skipByReading(this, Long.MAX_VALUE, DISCARD_STREAM_TIMEOUT_MILLIS);
+          Util.skipAll(this, DISCARD_STREAM_TIMEOUT_MILLIS);
           return true;
         } finally {
           stream.setReadTimeout(socketTimeout);

@@ -16,6 +16,9 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -29,7 +32,6 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -40,7 +42,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -55,7 +56,6 @@ public final class Util {
 
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
-  private static AtomicReference<byte[]> skipBuffer = new AtomicReference<byte[]>();
 
   private static final char[] DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
@@ -100,6 +100,21 @@ public final class Util {
     if (closeable != null) {
       try {
         closeable.close();
+      } catch (RuntimeException rethrown) {
+        throw rethrown;
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  /**
+   * Closes {@code source}, ignoring any checked exceptions. Does nothing if
+   * {@code source} is null.
+   */
+  public static void closeQuietly(Source source) {
+    if (source != null) {
+      try {
+        source.close(Deadline.NONE);
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
@@ -180,17 +195,6 @@ public final class Util {
   }
 
   /**
-   * Implements InputStream.read(int) in terms of InputStream.read(byte[], int, int).
-   * InputStream assumes that you implement InputStream.read(int) and provides default
-   * implementations of the others, but often the opposite is more efficient.
-   */
-  public static int readSingleByte(InputStream in) throws IOException {
-    byte[] buffer = new byte[1];
-    int result = in.read(buffer, 0, 1);
-    return (result != -1) ? buffer[0] & 0xff : -1;
-  }
-
-  /**
    * Implements OutputStream.write(int) in terms of OutputStream.write(byte[], int, int).
    * OutputStream assumes that you implement OutputStream.write(int) and provides default
    * implementations of the others, but often the opposite is more efficient.
@@ -251,53 +255,17 @@ public final class Util {
     }
   }
 
-  /**
-   * Call {@code in.read()} repeatedly until either the stream is exhausted or
-   * {@code byteCount} bytes have been read.
-   *
-   * <p>This method reuses the skip buffer but is careful to never use it at
-   * the same time that another stream is using it. Otherwise streams that use
-   * the caller's buffer for consistency checks like CRC could be clobbered by
-   * other threads. A thread-local buffer is also insufficient because some
-   * streams may call other streams in their skip() method, also clobbering the
-   * buffer.
-   *
-   * <p>This method throws a SocketTimeoutException if {@code timeoutMillis}
-   * elapses before the bytes can be skipped.
-   *
-   * @param timeoutMillis the maximum time to wait, or 0 to wait indefinitely.
-   */
-  public static long skipByReading(InputStream in, long byteCount, long timeoutMillis)
-      throws IOException {
-    if (byteCount == 0) return 0L;
-    long startNanos = timeoutMillis != 0 ? System.nanoTime() : 0;
-
-    // acquire the shared skip buffer.
-    byte[] buffer = skipBuffer.getAndSet(null);
-    if (buffer == null) {
-      buffer = new byte[4096];
+  /** Reads until {@code in} is exhausted or the timeout has elapsed. */
+  public static boolean skipAll(Source in, int timeoutMillis) throws IOException {
+    // TODO: Implement deadlines everywhere so they can do this work.
+    long startNanos = System.nanoTime();
+    OkBuffer skipBuffer = new OkBuffer();
+    while (NANOSECONDS.toMillis(System.nanoTime() - startNanos) < timeoutMillis) {
+      long read = in.read(skipBuffer, 2048, Deadline.NONE);
+      if (read == -1) return true; // Successfully exhausted the stream.
+      skipBuffer.clear();
     }
-
-    long skipped = 0;
-    while (skipped < byteCount) {
-      int toRead = (int) Math.min(byteCount - skipped, buffer.length);
-      int read = in.read(buffer, 0, toRead);
-      if (read == -1) break;
-      skipped += read;
-      if (timeoutMillis != 0
-          && NANOSECONDS.toMillis(System.nanoTime() - startNanos) > timeoutMillis) {
-        throw new SocketTimeoutException("Timed out after reading " + skipped + " of " + byteCount);
-      }
-    }
-
-    // release the shared skip buffer.
-    skipBuffer.set(buffer);
-
-    return skipped;
-  }
-
-  public static long skipByReading(InputStream in, long byteCount) throws IOException {
-    return skipByReading(in, byteCount, 0);
+    return false; // Ran out of time.
   }
 
   /**
@@ -313,33 +281,6 @@ public final class Util {
       out.write(buffer, 0, c);
     }
     return total;
-  }
-
-  /**
-   * Returns the ASCII characters up to but not including the next "\r\n", or
-   * "\n".
-   *
-   * @throws java.io.EOFException if the stream is exhausted before the next newline
-   * character.
-   */
-  public static String readAsciiLine(InputStream in) throws IOException {
-    // TODO: support UTF-8 here instead
-    StringBuilder result = new StringBuilder(80);
-    while (true) {
-      int c = in.read();
-      if (c == -1) {
-        throw new EOFException();
-      } else if (c == '\n') {
-        break;
-      }
-
-      result.append((char) c);
-    }
-    int length = result.length();
-    if (length > 0 && result.charAt(length - 1) == '\r') {
-      result.setLength(length - 1);
-    }
-    return result.toString();
   }
 
   /** Returns a 32 character string containing a hash of {@code s}. */
