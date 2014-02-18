@@ -65,7 +65,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * should the attempt fail.
  */
 public final class Connection implements Closeable {
-
+  private final ConnectionPool pool;
   private final Route route;
 
   private Socket socket;
@@ -78,7 +78,8 @@ public final class Connection implements Closeable {
   private long idleStartTimeNs;
   private Handshake handshake;
 
-  public Connection(Route route) {
+  public Connection(ConnectionPool pool, Route route) {
+    this.pool = pool;
     this.route = route;
   }
 
@@ -96,7 +97,7 @@ public final class Connection implements Closeable {
       upgradeToTls(tunnelRequest);
     } else {
       streamWrapper();
-      httpConnection = new HttpConnection(in, out);
+      httpConnection = new HttpConnection(pool, this, in, out);
     }
     connected = true;
   }
@@ -164,7 +165,7 @@ public final class Connection implements Closeable {
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
-      httpConnection = new HttpConnection(in, out);
+      httpConnection = new HttpConnection(pool, this, in, out);
     }
   }
 
@@ -306,7 +307,7 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    HttpConnection tunnelConnection = new HttpConnection(in, out);
+    HttpConnection tunnelConnection = new HttpConnection(pool, this, in, out);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {

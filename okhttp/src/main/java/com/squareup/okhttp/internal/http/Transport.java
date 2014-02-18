@@ -65,12 +65,20 @@ interface Transport {
   Response.Builder readResponseHeaders() throws IOException;
 
   /** Notify the transport that no response body will be read. */
-  void emptyTransferStream();
+  void emptyTransferStream() throws IOException;
 
   // TODO: make this the content stream?
   InputStream getTransferStream(CacheRequest cacheRequest) throws IOException;
 
-  /** Returns true if the underlying connection can be recycled. */
-  boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
-      InputStream responseBodyIn);
+  /**
+   * Configures the response body to pool or close the socket connection when
+   * the response body is closed.
+   */
+  void releaseConnectionOnIdle() throws IOException;
+
+  /**
+   * Returns true if the socket connection held by this transport can be reused
+   * for a follow-up exchange.
+   */
+  boolean canReuseConnection();
 }

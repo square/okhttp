@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class ConnectionPoolTest {
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
@@ -54,7 +55,6 @@ public final class ConnectionPoolTest {
   private Connection httpD;
   private Connection httpE;
   private Connection spdyA;
-  private Connection spdyB;
 
   @Before public void setUp() throws Exception {
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
@@ -74,20 +74,18 @@ public final class ConnectionPoolTest {
 
     Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true);
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, true);
-    httpA = new Connection(httpRoute);
+    httpA = new Connection(null, httpRoute);
     httpA.connect(200, 200, null);
-    httpB = new Connection(httpRoute);
+    httpB = new Connection(null, httpRoute);
     httpB.connect(200, 200, null);
-    httpC = new Connection(httpRoute);
+    httpC = new Connection(null, httpRoute);
     httpC.connect(200, 200, null);
-    httpD = new Connection(httpRoute);
+    httpD = new Connection(null, httpRoute);
     httpD.connect(200, 200, null);
-    httpE = new Connection(httpRoute);
+    httpE = new Connection(null, httpRoute);
     httpE.connect(200, 200, null);
-    spdyA = new Connection(spdyRoute);
-    spdyA.connect(200, 200, null);
-    spdyB = new Connection(spdyRoute);
-    spdyB.connect(200, 200, null);
+    spdyA = new Connection(null, spdyRoute);
+    spdyA.connect(20000, 20000, null);
   }
 
   @After public void tearDown() throws Exception {
@@ -100,7 +98,6 @@ public final class ConnectionPoolTest {
     Util.closeQuietly(httpD);
     Util.closeQuietly(httpE);
     Util.closeQuietly(spdyA);
-    Util.closeQuietly(spdyB);
   }
 
   @Test public void poolSingleHttpConnection() throws IOException {
@@ -108,7 +105,8 @@ public final class ConnectionPoolTest {
     Connection connection = pool.get(httpAddress);
     assertNull(connection);
 
-    connection = new Connection(new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
+    connection = new Connection(
+        null, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
     connection.connect(200, 200, null);
     assertEquals(0, pool.getConnectionCount());
     pool.recycle(connection);
@@ -134,7 +132,7 @@ public final class ConnectionPoolTest {
 
   @Test public void getSpdyConnection() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     assertSame(spdyA, pool.get(spdyAddress));
     assertPooled(pool, spdyA);
   }
@@ -189,7 +187,7 @@ public final class ConnectionPoolTest {
 
   @Test public void gettingSpdyConnectionPromotesItToFrontOfQueue() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     pool.recycle(httpA);
     assertPooled(pool, httpA, spdyA);
     assertSame(spdyA, pool.get(spdyAddress));
@@ -210,9 +208,13 @@ public final class ConnectionPoolTest {
     assertTrue(httpA.getSocket().isClosed());
   }
 
-  @Test public void shareHttpConnectionDoesNothing() throws Exception {
+  @Test public void shareHttpConnectionFails() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    pool.maybeShare(httpA);
+    try {
+      pool.share(httpA);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
     assertPooled(pool);
   }
 
@@ -224,7 +226,7 @@ public final class ConnectionPoolTest {
 
   @Test public void validateIdleSpdyConnectionTimeout() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
     assertNull(pool.get(httpAddress));
     assertPooled(pool, spdyA); // Connection should still be in the pool.
@@ -270,7 +272,7 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getSpdyConnectionCount());
 
     // spdy A should be added and http B should be removed.
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
@@ -299,24 +301,10 @@ public final class ConnectionPoolTest {
     assertEquals(1, pool.getHttpConnectionCount());
     assertEquals(1, pool.getSpdyConnectionCount());
 
-    // Nothing should change.
-    pool.maybeShare(spdyB);
-    Thread.sleep(50);
-    assertEquals(2, pool.getConnectionCount());
-    assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
-
     // An http connection should be removed from the pool.
     recycledHttpConnection = pool.get(httpAddress);
     assertNotNull(recycledHttpConnection);
     assertTrue(recycledHttpConnection.isAlive());
-    assertEquals(1, pool.getConnectionCount());
-    assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
-
-    // Shouldn't change numbers because spdyConnections A and B user the same server address.
-    pool.maybeShare(spdyB);
-    Thread.sleep(50);
     assertEquals(1, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
     assertEquals(1, pool.getSpdyConnectionCount());
@@ -350,7 +338,7 @@ public final class ConnectionPoolTest {
     // Add 3 connections to the pool.
     pool.recycle(httpA);
     pool.recycle(httpB);
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     assertEquals(3, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
     assertEquals(1, pool.getSpdyConnectionCount());
@@ -383,7 +371,7 @@ public final class ConnectionPoolTest {
     pool.recycle(httpA);
     Util.closeQuietly(httpA); // Include a closed connection in the pool.
     pool.recycle(httpB);
-    pool.maybeShare(spdyA);
+    pool.share(spdyA);
     int connectionCount = pool.getConnectionCount();
     assertTrue(connectionCount == 2 || connectionCount == 3);
 

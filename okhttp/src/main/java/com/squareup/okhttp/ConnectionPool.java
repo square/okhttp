@@ -244,12 +244,9 @@ public class ConnectionPool {
    * Shares the SPDY connection with the pool. Callers to this method may
    * continue to use {@code connection}.
    */
-  public void maybeShare(Connection connection) {
+  public void share(Connection connection) {
+    if (!connection.isSpdy()) throw new IllegalArgumentException();
     executorService.execute(connectionsCleanupRunnable);
-    if (!connection.isSpdy()) {
-      // Only SPDY connections are sharable.
-      return;
-    }
     if (connection.isAlive()) {
       synchronized (this) {
         connections.addFirst(connection);

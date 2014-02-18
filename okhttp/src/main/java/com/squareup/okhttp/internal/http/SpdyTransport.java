@@ -195,9 +195,11 @@ public final class SpdyTransport implements Transport {
     return new SpdyInputStream(stream, cacheRequest, httpEngine);
   }
 
-  @Override public boolean makeReusable(boolean streamCanceled, OutputStream requestBodyOut,
-      InputStream responseBodyIn) {
-    return true; // SPDY sockets are always reusable.
+  @Override public void releaseConnectionOnIdle() {
+  }
+
+  @Override public boolean canReuseConnection() {
+    return true; // TODO: spdyConnection.isClosed() ?
   }
 
   /** When true, this header should not be emitted or consumed. */
@@ -242,15 +244,12 @@ public final class SpdyTransport implements Transport {
    */
   abstract static class AbstractHttpInputStream extends InputStream {
     protected final InputStream in;
-    protected final HttpEngine httpEngine;
     private final CacheRequest cacheRequest;
     protected final OutputStream cacheBody;
     protected boolean closed;
 
-    AbstractHttpInputStream(InputStream in, HttpEngine httpEngine, CacheRequest cacheRequest)
-        throws IOException {
+    AbstractHttpInputStream(InputStream in, CacheRequest cacheRequest) throws IOException {
       this.in = in;
-      this.httpEngine = httpEngine;
 
       OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
 
@@ -272,9 +271,7 @@ public final class SpdyTransport implements Transport {
     }
 
     protected final void checkNotClosed() throws IOException {
-      if (closed) {
-        throw new IOException("stream closed");
-      }
+      if (closed) throw new IOException("stream closed");
     }
 
     protected final void cacheWrite(byte[] buffer, int offset, int count) throws IOException {
@@ -291,7 +288,6 @@ public final class SpdyTransport implements Transport {
       if (cacheRequest != null) {
         cacheBody.close();
       }
-      httpEngine.release(false);
     }
 
     /**
@@ -310,7 +306,6 @@ public final class SpdyTransport implements Transport {
       if (cacheRequest != null) {
         cacheRequest.abort();
       }
-      httpEngine.release(true);
     }
   }
 
@@ -321,7 +316,7 @@ public final class SpdyTransport implements Transport {
 
     SpdyInputStream(SpdyStream stream, CacheRequest cacheRequest, HttpEngine httpEngine)
         throws IOException {
-      super(stream.getInputStream(), httpEngine, cacheRequest);
+      super(stream.getInputStream(), cacheRequest);
       this.stream = stream;
     }
 

@@ -117,7 +117,7 @@ public final class RouteSelector {
           if (!hasNextPostponed()) {
             throw new NoSuchElementException();
           }
-          return new Connection(nextPostponed());
+          return new Connection(pool, nextPostponed());
         }
         lastProxy = nextProxy();
         resetNextInetSocketAddress(lastProxy);
@@ -135,7 +135,7 @@ public final class RouteSelector {
       return next(method);
     }
 
-    return new Connection(route);
+    return new Connection(pool, route);
   }
 
   /**
