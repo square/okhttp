@@ -4,9 +4,6 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -130,13 +127,5 @@ public final class OkHeaders {
       sb.append(cookies.get(i));
     }
     return sb.toString();
-  }
-
-  /** Reads headers or trailers into {@code builder}. */
-  public static void readHeaders(Headers.Builder builder, InputStream in) throws IOException {
-    // parse the result headers until the first blank line
-    for (String line; (line = Util.readAsciiLine(in)).length() != 0; ) {
-      builder.addLine(line);
-    }
   }
 }

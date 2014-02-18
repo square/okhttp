@@ -21,9 +21,9 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.Socket;
@@ -139,7 +139,7 @@ public final class SpdyConnection implements Closeable {
     }
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize();
     bufferPool = new ByteArrayPool(INITIAL_WINDOW_SIZE * 8); // TODO: revisit size limit!
-    frameReader = variant.newReader(builder.in, client);
+    frameReader = variant.newReader(builder.source, client);
     frameWriter = variant.newWriter(builder.out, client);
 
     readerRunnable = new Reader();
@@ -449,36 +449,25 @@ public final class SpdyConnection implements Closeable {
 
   public static class Builder {
     private String hostName;
-    private InputStream in;
+    private BufferedSource source;
     private OutputStream out;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
     private Protocol protocol = Protocol.SPDY_3;
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
-      this("", client, socket.getInputStream(), socket.getOutputStream());
-    }
-
-    public Builder(boolean client, InputStream in, OutputStream out) {
-      this("", client, in, out);
-    }
-
-    /**
-     * @param client true if this peer initiated the connection; false if
-     * this peer accepted the connection.
-     */
-    public Builder(String hostName, boolean client, Socket socket) throws IOException {
-      this(hostName, client, socket.getInputStream(), socket.getOutputStream());
+      this("", client, new BufferedSource(OkBuffers.source(socket.getInputStream())),
+          socket.getOutputStream());
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
-     * peer accepted the connection.
+     *     peer accepted the connection.
      */
-    public Builder(String hostName, boolean client, InputStream in, OutputStream out) {
+    public Builder(String hostName, boolean client, BufferedSource source, OutputStream out) {
       this.hostName = hostName;
       this.client = client;
-      this.in = in;
+      this.source = source;
       this.out = out;
     }
 

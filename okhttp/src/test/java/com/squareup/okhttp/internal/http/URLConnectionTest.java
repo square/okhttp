@@ -880,7 +880,7 @@ public final class URLConnectionTest {
     try {
       in.read();
       fail("Expected a connection closed exception");
-    } catch (IOException expected) {
+    } catch (IllegalStateException expected) {
     }
   }
 
@@ -2365,6 +2365,7 @@ public final class URLConnectionTest {
       throws Exception {
     server.enqueue(new MockResponse().setBody("A").setSocketPolicy(SHUTDOWN_INPUT_AT_END));
     server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse().setBody("C"));
     server.play();
 
     assertContent("A", client.open(server.getUrl("/a")));

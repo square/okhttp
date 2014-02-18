@@ -20,12 +20,10 @@ import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
@@ -60,8 +58,8 @@ public final class Http20Draft09 implements Variant {
   static final byte FLAG_END_PUSH_PROMISE = 0x4;
   static final byte FLAG_PRIORITY = 0x8;
 
-  @Override public FrameReader newReader(InputStream in, boolean client) {
-    return new Reader(OkBuffers.source(in), 4096, client);
+  @Override public FrameReader newReader(BufferedSource source, boolean client) {
+    return new Reader(source, 4096, client);
   }
 
   @Override public FrameWriter newWriter(OutputStream out, boolean client) {
@@ -76,8 +74,8 @@ public final class Http20Draft09 implements Variant {
     // Visible for testing.
     final HpackDraft05.Reader hpackReader;
 
-    Reader(Source source, int headerTableSize, boolean client) {
-      this.source = new BufferedSource(source, new OkBuffer());
+    Reader(BufferedSource source, int headerTableSize, boolean client) {
+      this.source = source;
       this.client = client;
       this.continuation = new ContinuationSource(this.source);
       this.hpackReader = new HpackDraft05.Reader(client, headerTableSize, continuation);

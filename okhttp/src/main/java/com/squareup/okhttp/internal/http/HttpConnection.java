@@ -23,9 +23,13 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
+import com.squareup.okhttp.internal.bytes.Deadline;
+import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.ProtocolException;
@@ -33,6 +37,7 @@ import java.net.Socket;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
+import static com.squareup.okhttp.internal.http.Transport.DISCARD_STREAM_TIMEOUT_MILLIS;
 
 /**
  * A socket connection that can be used to send HTTP/1.1 messages. This class
@@ -45,8 +50,8 @@ import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
  *   <li>Write to and then close that stream.
  *   <li>{@link #readResponse Read response headers}.
  *   <li>Open the HTTP response body input stream. Either {@link
- *       #newFixedLengthInputStream fixed-length}, {@link #newChunkedInputStream
- *       chunked} or {@link #newUnknownLengthInputStream unknown length}.
+ *       #newFixedLengthSource fixed-length}, {@link #newChunkedSource chunked}
+ *       or {@link #newUnknownLengthSource unknown length}.
  *   <li>Read from and close that stream.
  * </ol>
  * <p>Exchanges that do not have a request body may skip creating and closing
@@ -68,17 +73,17 @@ public final class HttpConnection {
 
   private final ConnectionPool pool;
   private final Connection connection;
-  private final InputStream in;
+  private final BufferedSource source;
   private final OutputStream out;
 
   private int state = STATE_IDLE;
   private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(ConnectionPool pool, Connection connection, InputStream in,
+  public HttpConnection(ConnectionPool pool, Connection connection, BufferedSource source,
       OutputStream out) {
     this.pool = pool;
     this.connection = connection;
-    this.in = in;
+    this.source = source;
     this.out = out;
   }
 
@@ -137,12 +142,12 @@ public final class HttpConnection {
 
   /** Parses bytes of a response header from an HTTP transport. */
   public Response.Builder readResponse() throws IOException {
-    if (state != STATE_OPEN_REQUEST_BODY
-        && state != STATE_READ_RESPONSE_HEADERS) {
+    if (state != STATE_OPEN_REQUEST_BODY && state != STATE_READ_RESPONSE_HEADERS) {
       throw new IllegalStateException("state: " + state);
     }
+
     while (true) {
-      String statusLineString = Util.readAsciiLine(in);
+      String statusLineString = readLine();
       StatusLine statusLine = new StatusLine(statusLineString);
 
       Response.Builder responseBuilder = new Response.Builder()
@@ -151,7 +156,7 @@ public final class HttpConnection {
           .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.name.utf8());
 
       Headers.Builder headersBuilder = new Headers.Builder();
-      OkHeaders.readHeaders(headersBuilder, in);
+      readHeaders(headersBuilder);
       responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) {
@@ -161,23 +166,44 @@ public final class HttpConnection {
     }
   }
 
+  /** Reads headers or trailers into {@code builder}. */
+  public void readHeaders(Headers.Builder builder) throws IOException {
+    // parse the result headers until the first blank line
+    for (String line; (line = readLine()).length() != 0; ) {
+      builder.addLine(line);
+    }
+  }
+
+  private String readLine() throws IOException {
+    long newline = source.seek((byte) '\n', Deadline.NONE);
+
+    if (newline > 0 && source.buffer.getByte(newline - 1) == '\r') {
+      // Read everything until '\r\n', then skip the '\r\n'.
+      String result = source.buffer.readUtf8((int) (newline - 1));
+      source.buffer.skip(2);
+      return result;
+
+    } else {
+      // Read everything until '\n', then skip the '\n'.
+      String result = source.buffer.readUtf8((int) (newline));
+      source.buffer.skip(1);
+      return result;
+    }
+  }
+
   /**
-   * Discards the response body so that the connection can be reused. This
-   * needs to be done judiciously, since it delays the current request in
-   * order to speed up a potential future request that may never occur.
-   *
-   * <p>A stream may be discarded to encourage response caching (a response
-   * cannot be cached unless it is consumed completely) or to enable connection
-   * reuse.
+   * Discards the response body so that the connection can be reused and the
+   * cache entry can be completed. This needs to be done judiciously, since it
+   * delays the current request in order to speed up a potential future request
+   * that may never occur.
    */
-  public boolean discard(InputStream responseBodyIn) {
+  public boolean discard(Source in, int timeoutMillis) {
     Socket socket = connection.getSocket();
     try {
       int socketTimeout = socket.getSoTimeout();
-      socket.setSoTimeout(Transport.DISCARD_STREAM_TIMEOUT_MILLIS);
+      socket.setSoTimeout(timeoutMillis);
       try {
-        Util.skipByReading(responseBodyIn, Long.MAX_VALUE, Transport.DISCARD_STREAM_TIMEOUT_MILLIS);
-        return true;
+        return Util.skipAll(in, timeoutMillis);
       } finally {
         socket.setSoTimeout(socketTimeout);
       }
@@ -204,11 +230,11 @@ public final class HttpConnection {
     requestBody.writeToSocket(out);
   }
 
-  public InputStream newFixedLengthInputStream(CacheRequest cacheRequest, long length)
+  public Source newFixedLengthSource(CacheRequest cacheRequest, long length)
       throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new FixedLengthInputStream(cacheRequest, length);
+    return new FixedLengthSource(cacheRequest, length);
   }
 
   /**
@@ -216,21 +242,20 @@ public final class HttpConnection {
    * have a response body.
    */
   public void emptyResponseBody() throws IOException {
-    newFixedLengthInputStream(null, 0L); // Transition to STATE_IDLE.
+    newFixedLengthSource(null, 0L); // Transition to STATE_IDLE.
   }
 
-  public InputStream newChunkedInputStream(
-      CacheRequest cacheRequest, HttpEngine httpEngine) throws IOException {
-    if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
-    state = STATE_READING_RESPONSE_BODY;
-    return new ChunkedInputStream(cacheRequest, httpEngine);
-  }
-
-  public InputStream newUnknownLengthInputStream(CacheRequest cacheRequest, HttpEngine httpEngine)
+  public Source newChunkedSource(CacheRequest cacheRequest, HttpEngine httpEngine)
       throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
-    return new UnknownLengthHttpInputStream(cacheRequest);
+    return new ChunkedSource(cacheRequest, httpEngine);
+  }
+
+  public Source newUnknownLengthSource(CacheRequest cacheRequest) throws IOException {
+    if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
+    state = STATE_READING_RESPONSE_BODY;
+    return new UnknownLengthSource(cacheRequest);
   }
 
   /** An HTTP body with a fixed length known in advance. */
@@ -382,15 +407,14 @@ public final class HttpConnection {
     }
   }
 
-  private class AbstractHttpInputStream extends InputStream {
+  private class AbstractSource {
     private final CacheRequest cacheRequest;
     protected final OutputStream cacheBody;
     protected boolean closed;
 
-    AbstractHttpInputStream(CacheRequest cacheRequest) throws IOException {
-      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
-
+    AbstractSource(CacheRequest cacheRequest) throws IOException {
       // Some apps return a null body; for compatibility we treat that like a null cache request.
+      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
       if (cacheBody == null) {
         cacheRequest = null;
       }
@@ -399,21 +423,10 @@ public final class HttpConnection {
       this.cacheRequest = cacheRequest;
     }
 
-    /**
-     * read() is implemented using read(byte[], int, int) so subclasses only
-     * need to override the latter.
-     */
-    @Override public final int read() throws IOException {
-      return Util.readSingleByte(this);
-    }
-
-    protected final void checkNotClosed() throws IOException {
-      if (closed) throw new IOException("stream closed");
-    }
-
-    protected final void cacheWrite(byte[] buffer, int offset, int count) throws IOException {
+    /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
+    protected final void cacheWrite(OkBuffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        cacheBody.write(buffer, offset, count);
+        OkBuffers.copy(source, source.byteCount() - byteCount, byteCount, cacheBody);
       }
     }
 
@@ -460,10 +473,10 @@ public final class HttpConnection {
   }
 
   /** An HTTP body with a fixed length specified in advance. */
-  private class FixedLengthInputStream extends AbstractHttpInputStream {
+  private class FixedLengthSource extends AbstractSource implements Source {
     private long bytesRemaining;
 
-    public FixedLengthInputStream(CacheRequest cacheRequest, long length) throws IOException {
+    public FixedLengthSource(CacheRequest cacheRequest, long length) throws IOException {
       super(cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
@@ -471,82 +484,76 @@ public final class HttpConnection {
       }
     }
 
-    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-      checkOffsetAndCount(buffer.length, offset, count);
-      checkNotClosed();
-      if (bytesRemaining == 0) {
-        return -1;
-      }
-      int read = in.read(buffer, offset, (int) Math.min(count, bytesRemaining));
+    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+        throws IOException {
+      if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
+      if (closed) throw new IllegalStateException("closed");
+      if (bytesRemaining == 0) return -1;
+
+      long read = source.read(sink, Math.min(bytesRemaining, byteCount), deadline);
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised content length
         throw new ProtocolException("unexpected end of stream");
       }
+
       bytesRemaining -= read;
-      cacheWrite(buffer, offset, read);
+      cacheWrite(sink, read);
       if (bytesRemaining == 0) {
         endOfInput();
       }
       return read;
     }
 
-    @Override public int available() throws IOException {
-      checkNotClosed();
-      return bytesRemaining == 0 ? 0 : (int) Math.min(in.available(), bytesRemaining);
-    }
+    @Override public void close(Deadline deadline) throws IOException {
+      if (closed) return;
 
-    @Override public void close() throws IOException {
-      if (closed) {
-        return;
-      }
-      if (bytesRemaining != 0 && !discard(this)) {
+      if (bytesRemaining != 0 && !discard(this, DISCARD_STREAM_TIMEOUT_MILLIS)) {
         unexpectedEndOfInput();
       }
+
       closed = true;
     }
   }
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
-  private class ChunkedInputStream extends AbstractHttpInputStream {
+  private class ChunkedSource extends AbstractSource implements Source {
     private static final int NO_CHUNK_YET = -1;
     private int bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
     private final HttpEngine httpEngine;
 
-    ChunkedInputStream(CacheRequest cacheRequest, HttpEngine httpEngine) throws IOException {
+    ChunkedSource(CacheRequest cacheRequest, HttpEngine httpEngine) throws IOException {
       super(cacheRequest);
       this.httpEngine = httpEngine;
     }
 
-    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-      checkOffsetAndCount(buffer.length, offset, count);
-      checkNotClosed();
+    @Override public long read(
+        OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+      if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
+      if (closed) throw new IllegalStateException("closed");
+      if (!hasMoreChunks) return -1;
 
-      if (!hasMoreChunks) {
-        return -1;
-      }
       if (bytesRemainingInChunk == 0 || bytesRemainingInChunk == NO_CHUNK_YET) {
         readChunkSize();
-        if (!hasMoreChunks) {
-          return -1;
-        }
+        if (!hasMoreChunks) return -1;
       }
-      int read = in.read(buffer, offset, Math.min(count, bytesRemainingInChunk));
+
+      long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk), deadline);
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised chunk length
         throw new IOException("unexpected end of stream");
       }
       bytesRemainingInChunk -= read;
-      cacheWrite(buffer, offset, read);
+      cacheWrite(sink, read);
       return read;
     }
 
     private void readChunkSize() throws IOException {
       // read the suffix of the previous chunk
       if (bytesRemainingInChunk != NO_CHUNK_YET) {
-        Util.readAsciiLine(in);
+        readLine();
       }
-      String chunkSizeString = Util.readAsciiLine(in);
+      String chunkSizeString = readLine();
       int index = chunkSizeString.indexOf(";");
       if (index != -1) {
         chunkSizeString = chunkSizeString.substring(0, index);
@@ -559,25 +566,15 @@ public final class HttpConnection {
       if (bytesRemainingInChunk == 0) {
         hasMoreChunks = false;
         Headers.Builder trailersBuilder = new Headers.Builder();
-        OkHeaders.readHeaders(trailersBuilder, in);
+        readHeaders(trailersBuilder);
         httpEngine.receiveHeaders(trailersBuilder.build());
         endOfInput();
       }
     }
 
-    @Override public int available() throws IOException {
-      checkNotClosed();
-      if (!hasMoreChunks || bytesRemainingInChunk == NO_CHUNK_YET) {
-        return 0;
-      }
-      return Math.min(in.available(), bytesRemainingInChunk);
-    }
-
-    @Override public void close() throws IOException {
-      if (closed) {
-        return;
-      }
-      if (hasMoreChunks && !discard(this)) {
+    @Override public void close(Deadline deadline) throws IOException {
+      if (closed) return;
+      if (hasMoreChunks && !discard(this, DISCARD_STREAM_TIMEOUT_MILLIS)) {
         unexpectedEndOfInput();
       }
       closed = true;
@@ -585,42 +582,36 @@ public final class HttpConnection {
   }
 
   /** An HTTP message body terminated by the end of the underlying stream. */
-  class UnknownLengthHttpInputStream extends AbstractHttpInputStream {
+  class UnknownLengthSource extends AbstractSource implements Source {
     private boolean inputExhausted;
 
-    UnknownLengthHttpInputStream(CacheRequest cacheRequest) throws IOException {
+    UnknownLengthSource(CacheRequest cacheRequest) throws IOException {
       super(cacheRequest);
     }
 
-    @Override public int read(byte[] buffer, int offset, int count) throws IOException {
-      checkOffsetAndCount(buffer.length, offset, count);
-      checkNotClosed();
-      if (in == null || inputExhausted) {
-        return -1;
-      }
-      int read = in.read(buffer, offset, count);
+    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+        throws IOException {
+      if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
+      if (closed) throw new IllegalStateException("closed");
+      if (inputExhausted) return -1;
+
+      long read = source.read(sink, byteCount, deadline);
       if (read == -1) {
         inputExhausted = true;
         endOfInput();
         return -1;
       }
-      cacheWrite(buffer, offset, read);
+      cacheWrite(sink, read);
       return read;
     }
 
-    @Override public int available() throws IOException {
-      checkNotClosed();
-      return in == null ? 0 : in.available();
-    }
-
-    @Override public void close() throws IOException {
-      if (closed) {
-        return;
-      }
-      closed = true;
+    @Override public void close(Deadline deadline) throws IOException {
+      if (closed) return;
+      // TODO: discard unknown length streams for best caching?
       if (!inputExhausted) {
         unexpectedEndOfInput();
       }
+      closed = true;
     }
   }
 }

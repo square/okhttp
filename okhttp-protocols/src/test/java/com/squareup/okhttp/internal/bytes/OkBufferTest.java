@@ -419,7 +419,7 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('b', Segment.SIZE));
     source.writeUtf8("c");
 
-    InputStream in = new BufferedSource(source, new OkBuffer()).inputStream();
+    InputStream in = new BufferedSource(source).inputStream();
     assertEquals(0, in.available());
     assertEquals(Segment.SIZE + 2, source.byteCount());
 
@@ -452,7 +452,7 @@ public final class OkBufferTest {
   @Test public void inputStreamFromSourceBounds() throws IOException {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', 100));
-    InputStream in = new BufferedSource(source, new OkBuffer()).inputStream();
+    InputStream in = new BufferedSource(source).inputStream();
     try {
       in.read(new byte[100], 50, 51);
       fail();
@@ -606,7 +606,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8("bb");
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("aa");
 
     bufferedSource.require(2, Deadline.NONE);
@@ -618,7 +618,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8("b");
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("a");
 
     bufferedSource.require(2, Deadline.NONE);
@@ -629,7 +629,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8("a");
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
 
     try {
       bufferedSource.require(2, Deadline.NONE);
@@ -643,7 +643,7 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('a', Segment.SIZE));
     source.writeUtf8(repeat('b', Segment.SIZE));
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
 
     bufferedSource.require(2, Deadline.NONE);
     assertEquals(Segment.SIZE, source.byteCount());
@@ -654,7 +654,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8("a");
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
     try {
       bufferedSource.skip(2, Deadline.NONE);
       fail();
@@ -666,7 +666,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE));
     source.writeUtf8(repeat('b', Segment.SIZE));
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.skip(2, Deadline.NONE);
     assertEquals(Segment.SIZE, source.byteCount());
     assertEquals(Segment.SIZE - 2, bufferedSource.buffer.byteCount());
@@ -676,7 +676,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8("bb");
 
-    BufferedSource bufferedSource = new BufferedSource(source, new OkBuffer());
+    BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("aa");
 
     bufferedSource.skip(2, Deadline.NONE);

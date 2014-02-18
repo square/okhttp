@@ -16,6 +16,8 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
+import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
@@ -228,11 +230,14 @@ final class Job extends NamedRunnable {
 
   static class RealResponseBody extends Response.Body {
     private final Response response;
-    private final InputStream in;
+    private final Source source;
 
-    RealResponseBody(Response response, InputStream in) {
+    /** Multiple calls to {@link #byteStream} must return the same instance. */
+    private InputStream in;
+
+    RealResponseBody(Response response, Source source) {
       this.response = response;
-      this.in = in;
+      this.source = source;
     }
 
     @Override public boolean ready() throws IOException {
@@ -248,8 +253,15 @@ final class Job extends NamedRunnable {
       return OkHeaders.contentLength(response);
     }
 
+    @Override public Source source() {
+      return source;
+    }
+
     @Override public InputStream byteStream() {
-      return in;
+      InputStream result = in;
+      return result != null
+          ? result
+          : (in = new BufferedSource(source).inputStream());
     }
   }
 }

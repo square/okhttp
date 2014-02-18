@@ -18,8 +18,8 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.CacheRequest;
 
@@ -133,23 +133,23 @@ public final class HttpTransport implements Transport {
     httpConnection.emptyResponseBody();
   }
 
-  @Override public InputStream getTransferStream(CacheRequest cacheRequest) throws IOException {
+  @Override public Source getTransferStream(CacheRequest cacheRequest) throws IOException {
     if (!httpEngine.hasResponseBody()) {
-      return httpConnection.newFixedLengthInputStream(cacheRequest, 0);
+      return httpConnection.newFixedLengthSource(cacheRequest, 0);
     }
 
     if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
-      return httpConnection.newChunkedInputStream(cacheRequest, httpEngine);
+      return httpConnection.newChunkedSource(cacheRequest, httpEngine);
     }
 
     long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
     if (contentLength != -1) {
-      return httpConnection.newFixedLengthInputStream(cacheRequest, contentLength);
+      return httpConnection.newFixedLengthSource(cacheRequest, contentLength);
     }
 
     // Wrap the input stream from the connection (rather than just returning
     // "socketIn" directly here), so that we can control its use after the
     // reference escapes.
-    return httpConnection.newUnknownLengthInputStream(cacheRequest, httpEngine);
+    return httpConnection.newUnknownLengthSource(cacheRequest);
   }
 }

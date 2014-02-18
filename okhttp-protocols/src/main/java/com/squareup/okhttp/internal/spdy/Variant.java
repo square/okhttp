@@ -16,7 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
-import java.io.InputStream;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
 import java.io.OutputStream;
 
 /** A version and dialect of the framed socket protocol. */
@@ -28,7 +28,7 @@ interface Variant {
   /**
    * @param client true if this is the HTTP client's reader, reading frames from a server.
    */
-  FrameReader newReader(InputStream in, boolean client);
+  FrameReader newReader(BufferedSource source, boolean client);
 
   /**
    * @param client true if this is the HTTP client's writer, writing frames to a server.

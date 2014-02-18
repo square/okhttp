@@ -577,7 +577,7 @@ public final class HttpResponseCacheTest {
     try {
       in.read();
       fail("Expected an IOException because the stream is closed.");
-    } catch (IOException expected) {
+    } catch (IllegalStateException expected) {
     }
 
     assertEquals(1, cache.getWriteAbortCount());

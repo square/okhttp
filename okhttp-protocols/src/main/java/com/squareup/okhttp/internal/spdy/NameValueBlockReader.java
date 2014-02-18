@@ -64,7 +64,7 @@ class NameValueBlockReader {
     };
 
     this.inflaterSource = new InflaterSource(throttleSource, inflater);
-    this.source = new BufferedSource(inflaterSource, new OkBuffer());
+    this.source = new BufferedSource(inflaterSource);
   }
 
   public List<Header> readNameValueBlock(int length) throws IOException {

@@ -28,6 +28,9 @@ import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.bytes.BufferedSource;
+import com.squareup.okhttp.internal.bytes.GzipSource;
+import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,7 +42,6 @@ import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
@@ -102,8 +104,9 @@ public class HttpEngine {
 
   /** Null until a response is received from the network or the cache. */
   private Response response;
-  private InputStream responseTransferIn;
-  private InputStream responseBodyIn;
+  private Source responseTransferSource;
+  private Source responseBody;
+  private InputStream responseBodyBytes;
 
   /**
    * The cache response currently being validated on a conditional get. Null
@@ -194,7 +197,7 @@ public class HttpEngine {
       // No need for the network! Promote the cached response immediately.
       this.response = validatingResponse;
       if (validatingResponse.body() != null) {
-        initContentStream(validatingResponse.body().byteStream());
+        initContentStream(validatingResponse.body().source());
       }
     }
   }
@@ -274,9 +277,16 @@ public class HttpEngine {
     return response;
   }
 
-  public final InputStream getResponseBody() {
+  public final Source getResponseBody() {
     if (response == null) throw new IllegalStateException();
-    return responseBodyIn;
+    return responseBody;
+  }
+
+  public final InputStream getResponseBodyBytes() {
+    InputStream result = responseBodyBytes;
+    return result != null
+        ? result
+        : (responseBodyBytes = new BufferedSource(getResponseBody()).inputStream());
   }
 
   public final Connection getConnection() {
@@ -358,14 +368,17 @@ public class HttpEngine {
    */
   public final Connection close() {
     // If this engine never achieved a response body, its connection cannot be reused.
-    if (responseBodyIn == null) {
+    if (responseBody == null) {
       closeQuietly(connection);
       connection = null;
       return null;
     }
 
     // Close the response body. This will recycle the connection if it is eligible.
-    closeQuietly(responseBodyIn);
+    closeQuietly(responseBody);
+
+    // Clear the buffer held by the response body input stream adapter.
+    closeQuietly(responseBodyBytes);
 
     // Close the connection if it cannot be reused.
     if (transport != null && !transport.canReuseConnection()) {
@@ -380,9 +393,9 @@ public class HttpEngine {
   }
 
   /**
-   * Initialize the response content stream from the response transfer stream.
-   * These two streams are the same unless we're doing transparent gzip, in
-   * which case the content stream is decompressed.
+   * Initialize the response content stream from the response transfer source.
+   * These two sources are the same unless we're doing transparent gzip, in
+   * which case the content source is decompressed.
    *
    * <p>Whenever we do transparent gzip we also strip the corresponding headers.
    * We strip the Content-Encoding header to prevent the application from
@@ -393,18 +406,18 @@ public class HttpEngine {
    * <p>This method should only be used for non-empty response bodies. Response
    * codes like "304 Not Modified" can include "Content-Encoding: gzip" without
    * a response body and we will crash if we attempt to decompress the zero-byte
-   * stream.
+   * source.
    */
-  private void initContentStream(InputStream transferStream) throws IOException {
-    responseTransferIn = transferStream;
+  private void initContentStream(Source transferSource) throws IOException {
+    responseTransferSource = transferSource;
     if (transparentGzip && "gzip".equalsIgnoreCase(response.header("Content-Encoding"))) {
       response = response.newBuilder()
           .removeHeader("Content-Encoding")
           .removeHeader("Content-Length")
           .build();
-      responseBodyIn = new GZIPInputStream(transferStream);
+      responseBody = new GzipSource(transferSource);
     } else {
-      responseBodyIn = transferStream;
+      responseBody = transferSource;
     }
   }
 
@@ -541,7 +554,7 @@ public class HttpEngine {
         responseCache.update(validatingResponse, cacheableResponse());
 
         if (validatingResponse.body() != null) {
-          initContentStream(validatingResponse.body().byteStream());
+          initContentStream(validatingResponse.body().source());
         }
         return;
       } else {
@@ -551,8 +564,8 @@ public class HttpEngine {
 
     if (!hasResponseBody()) {
       // Don't call initContentStream() when the response doesn't have any content.
-      responseTransferIn = transport.getTransferStream(cacheRequest);
-      responseBodyIn = responseTransferIn;
+      responseTransferSource = transport.getTransferStream(cacheRequest);
+      responseBody = responseTransferSource;
       return;
     }
 

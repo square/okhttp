@@ -25,6 +25,28 @@ public final class OkBuffers {
   private OkBuffers() {
   }
 
+  /** Copies bytes from {@code source} to {@code sink}. */
+  public static void copy(OkBuffer source, long offset, long byteCount, OutputStream sink)
+      throws IOException {
+    checkOffsetAndCount(source.byteCount, offset, byteCount);
+
+    // Skip segments that we aren't copying from.
+    Segment s = source.head;
+    while (offset >= (s.limit - s.pos)) {
+      offset -= (s.limit - s.pos);
+      s = s.next;
+    }
+
+    // Copy from one segment at a time.
+    while (byteCount > 0) {
+      int pos = (int) (s.pos + offset);
+      int toWrite = (int) Math.min(s.limit - pos, byteCount);
+      sink.write(s.data, pos, toWrite);
+      byteCount -= toWrite;
+      offset = 0;
+    }
+  }
+
   /** Returns a sink that writes to {@code out}. */
   public static Sink sink(final OutputStream out) {
     return new Sink() {
