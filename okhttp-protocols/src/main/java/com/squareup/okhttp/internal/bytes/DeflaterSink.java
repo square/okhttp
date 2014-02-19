@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.bytes;
 
 import java.io.IOException;
 import java.util.zip.Deflater;
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
@@ -67,6 +68,7 @@ public final class DeflaterSink implements Sink {
     }
   }
 
+  @IgnoreJRERequirement
   private void deflate(Deadline deadline, boolean syncFlush) throws IOException {
     while (true) {
       Segment s = sink.buffer.writableSegment(1);

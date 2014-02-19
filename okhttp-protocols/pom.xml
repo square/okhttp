@@ -23,5 +23,11 @@
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <version>1.10</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 </project>
