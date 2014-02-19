@@ -26,7 +26,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class InflaterSourceTest {
+public final class InflaterSourceTest {
   @Test public void inflate() throws Exception {
     OkBuffer deflated = decodeBase64("eJxzz09RyEjNKVAoLdZRKE9VL0pVyMxTKMlIVchIzEspVshPU0jNS8/MS00tK"
         + "tYDAF6CD5s=");
