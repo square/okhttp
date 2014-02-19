@@ -73,7 +73,7 @@ public final class BufferedSink implements Sink {
     emitCompleteSegments(deadline);
   }
 
-  private void emitCompleteSegments(Deadline deadline) throws IOException {
+  void emitCompleteSegments(Deadline deadline) throws IOException {
     long byteCount = buffer.byteCount;
     if (byteCount == 0) return;
 

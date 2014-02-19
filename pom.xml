@@ -171,7 +171,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.9</version>
+        <version>1.10</version>
         <executions>
           <execution>
             <phase>test</phase>

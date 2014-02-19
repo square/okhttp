@@ -20,7 +20,10 @@ import java.io.IOException;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
-/** A source that inflates another source. */
+/**
+ * A source that uses <a href="http://tools.ietf.org/html/rfc1951">DEFLATE</a>
+ * to decompress data read from another source.
+ */
 public final class InflaterSource implements Source {
   private final BufferedSource source;
   private final Inflater inflater;
