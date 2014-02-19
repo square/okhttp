@@ -119,7 +119,6 @@ public final class SpdyConnection implements Closeable {
 
   // Visible for testing
   final Reader readerRunnable;
-  final ByteArrayPool bufferPool;
 
   private SpdyConnection(Builder builder) {
     protocol = builder.protocol;
@@ -138,7 +137,6 @@ public final class SpdyConnection implements Closeable {
       throw new AssertionError(protocol);
     }
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize();
-    bufferPool = new ByteArrayPool(INITIAL_WINDOW_SIZE * 8); // TODO: revisit size limit!
     frameReader = variant.newReader(builder.source, client);
     frameWriter = variant.newWriter(builder.out, client);
 
