@@ -736,12 +736,11 @@ public final class SpdyConnectionTest {
     assertEquals(2, ping.payload1);
   }
 
-  @Test public void remoteSendsTooMuchData() throws Exception {
+  @Test public void clientDoesNotLimitFlowControl() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
     peer.sendFrame().data(false, 1, new byte[64 * 1024 + 1]);
-    peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().ping(false, 2, 0); // Ping just to make sure the stream was fastforwarded.
     peer.acceptFrame(); // PING
     peer.play();
@@ -755,10 +754,6 @@ public final class SpdyConnectionTest {
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
-    MockSpdyPeer.InFrame rstStream = peer.takeFrame();
-    assertEquals(TYPE_RST_STREAM, rstStream.type);
-    assertEquals(1, rstStream.streamId);
-    assertEquals(FLOW_CONTROL_ERROR, rstStream.errorCode);
     MockSpdyPeer.InFrame ping = peer.takeFrame();
     assertEquals(TYPE_PING, ping.type);
     assertEquals(2, ping.payload1);
@@ -1066,6 +1061,7 @@ public final class SpdyConnectionTest {
 
     // Play it back.
     SpdyConnection connection = connection(peer, variant);
+    connection.okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, INITIAL_WINDOW_SIZE);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     assertEquals(0, stream.unacknowledgedBytesRead);
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
