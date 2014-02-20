@@ -25,8 +25,8 @@ import java.util.List;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
-import static junit.framework.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
