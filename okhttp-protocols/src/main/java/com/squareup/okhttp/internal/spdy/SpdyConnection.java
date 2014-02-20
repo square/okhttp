@@ -127,6 +127,15 @@ public final class SpdyConnection implements Closeable {
     handler = builder.handler;
     nextStreamId = builder.client ? 1 : 2;
     nextPingId = builder.client ? 1 : 2;
+
+    // Flow control was designed more for servers, or proxies than edge clients.
+    // If we are a client, set the flow control window to 16MiB.  This avoids
+    // thrashing window updates every 64KiB, yet small enough to avoid blowing
+    // up the heap.
+    if (builder.client) {
+      okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 16 * 1024 * 1024);
+    }
+
     hostName = builder.hostName;
 
     Variant variant;
