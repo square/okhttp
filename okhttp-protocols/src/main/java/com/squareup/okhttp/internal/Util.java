@@ -16,9 +16,6 @@
 
 package com.squareup.okhttp.internal;
 
-import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.Sink;
-import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -42,6 +39,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
+import okio.OkBuffer;
+import okio.Sink;
+import okio.Source;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -348,18 +348,5 @@ public final class Util {
       result.add(new Header(elements[i], elements[i + 1]));
     }
     return result;
-  }
-
-  public static int reverseBytesShort(short s) {
-    int i = s & 0xffff;
-    return (i & 0xff00) >>> 8
-        |  (i & 0x00ff) << 8;
-  }
-
-  public static int reverseBytesInt(int i) {
-    return (i & 0xff000000) >>> 24
-        |  (i & 0x00ff0000) >>> 8
-        |  (i & 0x0000ff00) << 8
-        |  (i & 0x000000ff) << 24;
   }
 }

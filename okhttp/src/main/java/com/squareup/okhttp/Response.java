@@ -16,8 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
-import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -34,6 +32,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import okio.OkBuffers;
+import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.Util.equal;

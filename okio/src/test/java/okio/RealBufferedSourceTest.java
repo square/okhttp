@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.UTF_8;
+import static okio.Util.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 

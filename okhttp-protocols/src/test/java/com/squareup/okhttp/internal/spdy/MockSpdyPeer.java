@@ -17,9 +17,6 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
-import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,6 +31,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import okio.BufferedSource;
+import okio.ByteString;
+import okio.OkBuffers;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {

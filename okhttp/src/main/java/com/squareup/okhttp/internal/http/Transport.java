@@ -18,10 +18,10 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.CacheRequest;
+import okio.Source;
 
 interface Transport {
   /**

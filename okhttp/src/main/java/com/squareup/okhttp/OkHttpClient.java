@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
@@ -38,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import okio.ByteString;
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {

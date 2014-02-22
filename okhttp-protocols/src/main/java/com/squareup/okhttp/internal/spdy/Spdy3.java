@@ -18,8 +18,6 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -28,6 +26,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
 import java.util.zip.Deflater;
+import okio.BufferedSource;
+import okio.ByteString;
 
 /**
  * Read and write spdy/3.1 frames.

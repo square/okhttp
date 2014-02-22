@@ -17,9 +17,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
-import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
@@ -35,6 +32,9 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import javax.net.ssl.SSLSocket;
+import okio.BufferedSource;
+import okio.ByteString;
+import okio.OkBuffers;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;

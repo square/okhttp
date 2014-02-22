@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
-import com.squareup.okhttp.internal.Util;
 import java.io.EOFException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -23,8 +22,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.squareup.okhttp.internal.Util.UTF_8;
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static okio.Util.UTF_8;
+import static okio.Util.checkOffsetAndCount;
 
 /**
  * A collection of bytes in memory.

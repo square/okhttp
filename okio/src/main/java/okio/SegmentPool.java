@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 /**
  * A collection of unused segments, necessary to avoid GC churn and zero-fill.
