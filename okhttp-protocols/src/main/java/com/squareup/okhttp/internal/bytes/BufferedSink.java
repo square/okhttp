@@ -55,6 +55,12 @@ public final class BufferedSink implements Sink {
     emitCompleteSegments(deadline);
   }
 
+  public void write(byte[] data, int offset, int byteCount, Deadline deadline) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    buffer.write(data, offset, byteCount);
+    emitCompleteSegments(deadline);
+  }
+
   public void writeByte(int b, Deadline deadline) throws IOException {
     if (closed) throw new IllegalStateException("closed");
     buffer.writeByte(b);
@@ -74,16 +80,8 @@ public final class BufferedSink implements Sink {
   }
 
   void emitCompleteSegments(Deadline deadline) throws IOException {
-    long byteCount = buffer.byteCount;
+    long byteCount = buffer.completeSegmentByteCount();
     if (byteCount == 0) return;
-
-    // Omit the tail if it's still writable.
-    Segment tail = buffer.head.prev;
-    if (tail.limit < Segment.SIZE) {
-      byteCount -= tail.limit - tail.pos;
-      if (byteCount == 0) return;
-    }
-
     sink.write(buffer, byteCount, deadline);
   }
 
@@ -121,6 +119,7 @@ public final class BufferedSink implements Sink {
     if (buffer.byteCount > 0) {
       sink.write(buffer, buffer.byteCount, deadline);
     }
+    sink.flush(deadline);
   }
 
   @Override public void close(Deadline deadline) throws IOException {

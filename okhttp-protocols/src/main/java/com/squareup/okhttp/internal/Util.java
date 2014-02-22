@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.Sink;
 import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
@@ -115,6 +116,21 @@ public final class Util {
     if (source != null) {
       try {
         source.close(Deadline.NONE);
+      } catch (RuntimeException rethrown) {
+        throw rethrown;
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  /**
+   * Closes {@code sink}, ignoring any checked exceptions. Does nothing if
+   * {@code sink} is null.
+   */
+  public static void closeQuietly(Sink sink) {
+    if (sink != null) {
+      try {
+        sink.close(Deadline.NONE);
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
