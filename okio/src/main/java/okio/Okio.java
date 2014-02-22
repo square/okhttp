@@ -21,8 +21,8 @@ import java.io.OutputStream;
 
 import static okio.Util.checkOffsetAndCount;
 
-public final class OkBuffers {
-  private OkBuffers() {
+public final class Okio {
+  private Okio() {
   }
 
   public static BufferedSource buffer(Source source) {

@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 /**
@@ -125,7 +125,7 @@ final class HpackDraft05 {
     Reader(boolean client, int maxHeaderTableByteCount, Source source) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
-      this.source = OkBuffers.buffer(source);
+      this.source = Okio.buffer(source);
     }
 
     int maxHeaderTableByteCount() {

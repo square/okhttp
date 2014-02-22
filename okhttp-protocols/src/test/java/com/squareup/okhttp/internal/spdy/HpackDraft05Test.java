@@ -23,7 +23,7 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -800,7 +800,7 @@ public class HpackDraft05Test {
   }
 
   private HpackDraft05.Reader newReader(InputStream input) {
-    return new HpackDraft05.Reader(false, 4096, OkBuffers.source(input));
+    return new HpackDraft05.Reader(false, 4096, Okio.source(input));
   }
 
   private InputStream byteStream(int... bytes) {

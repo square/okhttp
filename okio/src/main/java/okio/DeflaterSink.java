@@ -40,7 +40,7 @@ public final class DeflaterSink implements Sink {
   private final Deflater deflater;
 
   public DeflaterSink(Sink sink, Deflater deflater) {
-    this.sink = OkBuffers.buffer(sink);
+    this.sink = Okio.buffer(sink);
     this.deflater = deflater;
   }
 

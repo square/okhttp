@@ -32,7 +32,7 @@ import java.net.Socket;
 import okio.BufferedSource;
 import okio.Deadline;
 import okio.OkBuffer;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
@@ -425,7 +425,7 @@ public final class HttpConnection {
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
     protected final void cacheWrite(OkBuffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        OkBuffers.copy(source, source.byteCount() - byteCount, byteCount, cacheBody);
+        Okio.copy(source, source.byteCount() - byteCount, byteCount, cacheBody);
       }
     }
 

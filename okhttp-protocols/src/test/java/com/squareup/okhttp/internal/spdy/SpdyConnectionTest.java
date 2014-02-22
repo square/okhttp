@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import okio.ByteString;
 import okio.OkBuffer;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 import org.junit.After;
 import org.junit.Test;
@@ -1252,7 +1252,7 @@ public final class SpdyConnectionTest {
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     Source in = stream.getSource();
     try {
-      OkBuffers.buffer(in).readByteString(101);
+      Okio.buffer(in).readByteString(101);
       fail();
     } catch (IOException expected) {
       assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());

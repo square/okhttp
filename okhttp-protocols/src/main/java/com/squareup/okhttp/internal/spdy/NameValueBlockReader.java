@@ -10,7 +10,7 @@ import okio.ByteString;
 import okio.Deadline;
 import okio.InflaterSource;
 import okio.OkBuffer;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 /**
@@ -70,7 +70,7 @@ class NameValueBlockReader {
     };
 
     this.inflaterSource = new InflaterSource(throttleSource, inflater);
-    this.source = OkBuffers.buffer(inflaterSource);
+    this.source = Okio.buffer(inflaterSource);
   }
 
   public List<Header> readNameValueBlock(int length) throws IOException {

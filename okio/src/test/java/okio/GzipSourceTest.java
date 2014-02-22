@@ -16,7 +16,6 @@
 package okio;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.zip.CRC32;
 import org.junit.Test;
 
@@ -30,51 +29,52 @@ public class GzipSourceTest {
 
   @Test public void gunzip() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeader, 0, gzipHeader.length);
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(gzipHeader);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
   @Test public void gunzip_withHCRC() throws Exception {
     CRC32 hcrc = new CRC32();
-    hcrc.update(gzipHeaderWithFlags((byte) 0x02));
+    ByteString gzipHeader = gzipHeaderWithFlags((byte) 0x02);
+    hcrc.update(gzipHeader.toByteArray());
 
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x02), 0, gzipHeader.length);
+    gzipped.write(gzipHeader);
     gzipped.writeShort(Util.reverseBytesShort((short) hcrc.getValue())); // little endian
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
   @Test public void gunzip_withExtra() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x04), 0, gzipHeader.length);
+    gzipped.write(gzipHeaderWithFlags((byte) 0x04));
     gzipped.writeShort(Util.reverseBytesShort((short) 7)); // little endian extra length
     gzipped.write("blubber".getBytes(UTF_8), 0, 7);
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
   @Test public void gunzip_withName() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x08), 0, gzipHeader.length);
+    gzipped.write(gzipHeaderWithFlags((byte) 0x08));
     gzipped.write("foo.txt".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
   @Test public void gunzip_withComment() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x10), 0, gzipHeader.length);
+    gzipped.write(gzipHeaderWithFlags((byte) 0x10));
     gzipped.write("rubbish".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
@@ -84,15 +84,15 @@ public class GzipSourceTest {
    */
   @Test public void gunzip_withAll() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x1c), 0, gzipHeader.length);
+    gzipped.write(gzipHeaderWithFlags((byte) 0x1c));
     gzipped.writeShort(Util.reverseBytesShort((short) 7)); // little endian extra length
     gzipped.write("blubber".getBytes(UTF_8), 0, 7);
     gzipped.write("foo.txt".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
     gzipped.write("rubbish".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
     assertGzipped(gzipped);
   }
 
@@ -108,10 +108,10 @@ public class GzipSourceTest {
    */
   @Test public void gunzipWhenHeaderCRCIncorrect() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeaderWithFlags((byte) 0x02), 0, gzipHeader.length);
+    gzipped.write(gzipHeaderWithFlags((byte) 0x02));
     gzipped.writeShort((short) 0); // wrong HCRC!
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, gzipTrailer.length);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer);
 
     try {
       gunzip(gzipped);
@@ -123,10 +123,10 @@ public class GzipSourceTest {
 
   @Test public void gunzipWhenCRCIncorrect() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeader, 0, gzipHeader.length);
-    gzipped.write(deflated, 0, deflated.length);
+    gzipped.write(gzipHeader);
+    gzipped.write(deflated);
     gzipped.writeInt(Util.reverseBytesInt(0x1234567)); // wrong CRC
-    gzipped.write(gzipTrailer, 3, 4);
+    gzipped.write(gzipTrailer.toByteArray(), 3, 4);
 
     try {
       gunzip(gzipped);
@@ -138,9 +138,9 @@ public class GzipSourceTest {
 
   @Test public void gunzipWhenLengthIncorrect() throws Exception {
     OkBuffer gzipped = new OkBuffer();
-    gzipped.write(gzipHeader, 0, gzipHeader.length);
-    gzipped.write(deflated, 0, deflated.length);
-    gzipped.write(gzipTrailer, 0, 4);
+    gzipped.write(gzipHeader);
+    gzipped.write(deflated);
+    gzipped.write(gzipTrailer.toByteArray(), 0, 4);
     gzipped.writeInt(Util.reverseBytesInt(0x123456)); // wrong length
 
     try {
@@ -152,17 +152,11 @@ public class GzipSourceTest {
   }
 
   @Test public void gunzipExhaustsSource() throws Exception {
-    byte[] abcGzipped = {
-        (byte) 0x1f, (byte) 0x8b, (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-        (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x4b, (byte) 0x4c, (byte) 0x4a, (byte) 0x06,
-        (byte) 0x00, (byte) 0xc2, (byte) 0x41, (byte) 0x24, (byte) 0x35, (byte) 0x03, (byte) 0x00,
-        (byte) 0x00, (byte) 0x00
-    };
-    OkBuffer gzippedSource = new OkBuffer();
-    gzippedSource.write(abcGzipped, 0, abcGzipped.length);
+    OkBuffer gzippedSource = new OkBuffer()
+        .write(ByteString.decodeHex("1f8b08000000000000004b4c4a0600c241243503000000")); // 'abc'
 
     ExhaustableSource exhaustableSource = new ExhaustableSource(gzippedSource);
-    BufferedSource gunzippedSource = OkBuffers.buffer(new GzipSource(exhaustableSource));
+    BufferedSource gunzippedSource = Okio.buffer(new GzipSource(exhaustableSource));
 
     assertEquals('a', gunzippedSource.readByte());
     assertEquals('b', gunzippedSource.readByte());
@@ -173,17 +167,11 @@ public class GzipSourceTest {
   }
 
   @Test public void gunzipThrowsIfSourceIsNotExhausted() throws Exception {
-    byte[] abcGzipped = {
-        (byte) 0x1f, (byte) 0x8b, (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-        (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x4b, (byte) 0x4c, (byte) 0x4a, (byte) 0x06,
-        (byte) 0x00, (byte) 0xc2, (byte) 0x41, (byte) 0x24, (byte) 0x35, (byte) 0x03, (byte) 0x00,
-        (byte) 0x00, (byte) 0x00
-    };
-    OkBuffer gzippedSource = new OkBuffer();
-    gzippedSource.write(abcGzipped, 0, abcGzipped.length);
+    OkBuffer gzippedSource = new OkBuffer()
+        .write(ByteString.decodeHex("1f8b08000000000000004b4c4a0600c241243503000000")); // 'abc'
     gzippedSource.writeByte('d'); // This byte shouldn't be here!
 
-    BufferedSource gunzippedSource = OkBuffers.buffer(new GzipSource(gzippedSource));
+    BufferedSource gunzippedSource = Okio.buffer(new GzipSource(gzippedSource));
 
     assertEquals('a', gunzippedSource.readByte());
     assertEquals('b', gunzippedSource.readByte());
@@ -195,29 +183,22 @@ public class GzipSourceTest {
     }
   }
 
-  private byte[] gzipHeaderWithFlags(byte flags) {
-    byte[] result = Arrays.copyOf(gzipHeader, gzipHeader.length);
+  private ByteString gzipHeaderWithFlags(byte flags) {
+    byte[] result = gzipHeader.toByteArray();
     result[3] = flags;
-    return result;
+    return ByteString.of(result);
   }
 
-  private final byte[] gzipHeader = new byte[] {
-      (byte) 0x1f, (byte) 0x8b, (byte) 0x08, 0, 0, 0, 0, 0, 0, 0
-  };
+  private final ByteString gzipHeader = ByteString.decodeHex("1f8b0800000000000000");
 
-  // deflated "It's a UNIX system! I know this!"
-  private final byte[] deflated = new byte[] {
-      (byte) 0xf3, (byte) 0x2c, (byte) 0x51, (byte) 0x2f, (byte) 0x56, (byte) 0x48, (byte) 0x54,
-      (byte) 0x08, (byte) 0xf5, (byte) 0xf3, (byte) 0x8c, (byte) 0x50, (byte) 0x28, (byte) 0xae,
-      (byte) 0x2c, (byte) 0x2e, (byte) 0x49, (byte) 0xcd, (byte) 0x55, (byte) 0x54, (byte) 0xf0,
-      (byte) 0x54, (byte) 0xc8, (byte) 0xce, (byte) 0xcb, (byte) 0x2f, (byte) 0x57, (byte) 0x28,
-      (byte) 0xc9, (byte) 0xc8, (byte) 0x2c, (byte) 0x56, (byte) 0x04, (byte) 0x00
-  };
+  // Deflated "It's a UNIX system! I know this!"
+  private final ByteString deflated = ByteString.decodeHex(
+      "f32c512f56485408f5f38c5028ae2c2e49cd5554f054c8cecb2f5728c9c82c560400");
 
-  private final byte[] gzipTrailer = new byte[] {
-      (byte) 0x8d, (byte) 0x8f, (byte) 0xad, (byte) 0x37, // checksum of deflated
-      0x20, 0, 0, 0, // 32 in little endian
-  };
+  private final ByteString gzipTrailer = ByteString.decodeHex(""
+      + "8d8fad37" // Checksum of deflated.
+      + "20000000" // 32 in little endian.
+  );
 
   private OkBuffer gunzip(OkBuffer gzipped) throws IOException {
     OkBuffer result = new OkBuffer();

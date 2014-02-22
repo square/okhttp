@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
@@ -261,7 +261,7 @@ final class Job extends NamedRunnable {
       InputStream result = in;
       return result != null
           ? result
-          : (in = OkBuffers.buffer(source).inputStream());
+          : (in = Okio.buffer(source).inputStream());
     }
   }
 }

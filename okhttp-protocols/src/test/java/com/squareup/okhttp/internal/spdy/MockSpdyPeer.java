@@ -33,7 +33,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
@@ -118,7 +118,7 @@ public final class MockSpdyPeer implements Closeable {
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
-    FrameReader reader = variant.newReader(OkBuffers.buffer(OkBuffers.source(in)), client);
+    FrameReader reader = variant.newReader(Okio.buffer(Okio.source(in)), client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
     byte[] outBytes = bytesOut.toByteArray();

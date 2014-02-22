@@ -37,7 +37,7 @@ public final class InflaterSource implements Source {
   private boolean closed;
 
   public InflaterSource(Source source, Inflater inflater) {
-    this(OkBuffers.buffer(source), inflater);
+    this(Okio.buffer(source), inflater);
   }
 
   /**

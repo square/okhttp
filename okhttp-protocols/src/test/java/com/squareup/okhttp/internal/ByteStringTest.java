@@ -26,17 +26,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class ByteStringTest {
 
   @Test public void equals() throws Exception {
-    ByteString byteString = ByteString.of((byte) 0x0, (byte) 0x1, (byte) 0x2);
+    ByteString byteString = ByteString.decodeHex("000102");
     assertTrue(byteString.equals(byteString));
-    assertTrue(byteString.equals(ByteString.of((byte) 0x0, (byte) 0x1, (byte) 0x2)));
+    assertTrue(byteString.equals(ByteString.decodeHex("000102")));
     assertTrue(ByteString.of().equals(ByteString.EMPTY));
     assertTrue(ByteString.EMPTY.equals(ByteString.of()));
     assertFalse(byteString.equals(new Object()));
-    assertFalse(byteString.equals(ByteString.of((byte) 0x0, (byte) 0x2, (byte) 0x1)));
+    assertFalse(byteString.equals(ByteString.decodeHex("000201")));
   }
 
   private final String bronzeHorseman = "На берегу пустынных волн";
@@ -58,15 +59,15 @@ public class ByteStringTest {
   }
 
   @Test public void testHashCode() throws Exception {
-    ByteString byteString = ByteString.of((byte) 0x1, (byte) 0x2);
+    ByteString byteString = ByteString.decodeHex("0102");
     assertEquals(byteString.hashCode(), byteString.hashCode());
-    assertEquals(byteString.hashCode(), ByteString.of((byte) 0x1, (byte) 0x2).hashCode());
+    assertEquals(byteString.hashCode(), ByteString.decodeHex("0102").hashCode());
   }
 
   @Test public void read() throws Exception {
     InputStream in = new ByteArrayInputStream("abc".getBytes(Util.UTF_8));
-    assertEquals(ByteString.of((byte) 0x61, (byte) 0x62), ByteString.read(in, 2));
-    assertEquals(ByteString.of((byte) 0x63), ByteString.read(in, 1));
+    assertEquals(ByteString.decodeHex("6162"), ByteString.read(in, 2));
+    assertEquals(ByteString.decodeHex("63"), ByteString.read(in, 1));
     assertEquals(ByteString.of(), ByteString.read(in, 0));
   }
 
@@ -92,7 +93,7 @@ public class ByteStringTest {
 
   @Test public void write() throws Exception {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    ByteString.of((byte) 0x61, (byte) 0x62, (byte) 0x63).write(out);
+    ByteString.decodeHex("616263").write(out);
     assertByteArraysEquals(new byte[] { 0x61, 0x62, 0x63 }, out.toByteArray());
   }
 
@@ -123,16 +124,16 @@ public class ByteStringTest {
   @Test public void decodeBase64() {
     assertEquals("", ByteString.decodeBase64("").utf8());
     assertEquals(null, ByteString.decodeBase64("/===")); // Can't do anything with 6 bits!
-    assertEquals(bytes(0xff), ByteString.decodeBase64("//=="));
-    assertEquals(bytes(0xff, 0xff), ByteString.decodeBase64("///="));
-    assertEquals(bytes(0xff, 0xff, 0xff), ByteString.decodeBase64("////"));
-    assertEquals(bytes(0xff, 0xff, 0xff, 0xff, 0xff, 0xff), ByteString.decodeBase64("////////"));
+    assertEquals(ByteString.decodeHex("ff"), ByteString.decodeBase64("//=="));
+    assertEquals(ByteString.decodeHex("ffff"), ByteString.decodeBase64("///="));
+    assertEquals(ByteString.decodeHex("ffffff"), ByteString.decodeBase64("////"));
+    assertEquals(ByteString.decodeHex("ffffffffffff"), ByteString.decodeBase64("////////"));
     assertEquals("What's to be scared about? It's just a little hiccup in the power...",
         ByteString.decodeBase64("V2hhdCdzIHRvIGJlIHNjYXJlZCBhYm91dD8gSXQncyBqdXN0IGEgbGl0dGxlIGhpY2"
             + "N1cCBpbiB0aGUgcG93ZXIuLi4=").utf8());
   }
 
-  @Test public void decodeWithWhitespace() {
+  @Test public void decodeBase64WithWhitespace() {
     assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA AA ").utf8());
     assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64(" AA A\r\nA ").utf8());
     assertEquals("\u0000\u0000\u0000", ByteString.decodeBase64("AA AA").utf8());
@@ -142,13 +143,28 @@ public class ByteStringTest {
     assertEquals("", ByteString.decodeBase64("    ").utf8());
   }
 
-  /** Make it easy to make varargs calls. Otherwise we need a lot of (byte) casts. */
-  private ByteString bytes(int... bytes) {
-    byte[] result = new byte[bytes.length];
-    for (int i = 0; i < bytes.length; i++) {
-      result[i] = (byte) bytes[i];
+  @Test public void encodeHex() throws Exception {
+    assertEquals("000102", ByteString.of((byte) 0x0, (byte) 0x1, (byte) 0x2).hex());
+  }
+
+  @Test public void decodeHex() throws Exception {
+    assertEquals(ByteString.of((byte) 0x0, (byte) 0x1, (byte) 0x2), ByteString.decodeHex("000102"));
+  }
+
+  @Test public void decodeHexOddNumberOfChars() throws Exception {
+    try {
+      ByteString.decodeHex("aaa");
+      fail();
+    } catch (IllegalArgumentException expected) {
     }
-    return ByteString.of(result);
+  }
+
+  @Test public void decodeHexInvalidChar() throws Exception {
+    try {
+      ByteString.decodeHex("a\u0000");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   private static void assertByteArraysEquals(byte[] a, byte[] b) {
