@@ -22,6 +22,8 @@ import java.util.zip.CRC32;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class GzipSourceTest {
@@ -149,6 +151,50 @@ public class GzipSourceTest {
     }
   }
 
+  @Test public void gunzipExhaustsSource() throws Exception {
+    byte[] abcGzipped = {
+        (byte) 0x1f, (byte) 0x8b, (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+        (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x4b, (byte) 0x4c, (byte) 0x4a, (byte) 0x06,
+        (byte) 0x00, (byte) 0xc2, (byte) 0x41, (byte) 0x24, (byte) 0x35, (byte) 0x03, (byte) 0x00,
+        (byte) 0x00, (byte) 0x00
+    };
+    OkBuffer gzippedSource = new OkBuffer();
+    gzippedSource.write(abcGzipped, 0, abcGzipped.length);
+
+    ExhaustableSource exhaustableSource = new ExhaustableSource(gzippedSource);
+    BufferedSource gunzippedSource = new BufferedSource(new GzipSource(exhaustableSource));
+
+    assertEquals('a', gunzippedSource.readByte());
+    assertEquals('b', gunzippedSource.readByte());
+    assertEquals('c', gunzippedSource.readByte());
+    assertFalse(exhaustableSource.exhausted);
+    assertEquals(-1, gunzippedSource.read(new OkBuffer(), 1, Deadline.NONE));
+    assertTrue(exhaustableSource.exhausted);
+  }
+
+  @Test public void gunzipThrowsIfSourceIsNotExhausted() throws Exception {
+    byte[] abcGzipped = {
+        (byte) 0x1f, (byte) 0x8b, (byte) 0x08, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+        (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x4b, (byte) 0x4c, (byte) 0x4a, (byte) 0x06,
+        (byte) 0x00, (byte) 0xc2, (byte) 0x41, (byte) 0x24, (byte) 0x35, (byte) 0x03, (byte) 0x00,
+        (byte) 0x00, (byte) 0x00
+    };
+    OkBuffer gzippedSource = new OkBuffer();
+    gzippedSource.write(abcGzipped, 0, abcGzipped.length);
+    gzippedSource.writeByte('d'); // This byte shouldn't be here!
+
+    BufferedSource gunzippedSource = new BufferedSource(new GzipSource(gzippedSource));
+
+    assertEquals('a', gunzippedSource.readByte());
+    assertEquals('b', gunzippedSource.readByte());
+    assertEquals('c', gunzippedSource.readByte());
+    try {
+      gunzippedSource.readByte();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   private byte[] gzipHeaderWithFlags(byte flags) {
     byte[] result = Arrays.copyOf(gzipHeader, gzipHeader.length);
     result[3] = flags;
@@ -179,5 +225,26 @@ public class GzipSourceTest {
     while (source.read(result, Integer.MAX_VALUE, Deadline.NONE) != -1) {
     }
     return result;
+  }
+
+  /** This source keeps track of whether its read have returned -1. */
+  static class ExhaustableSource implements Source {
+    private final Source source;
+    private boolean exhausted;
+
+    ExhaustableSource(Source source) {
+      this.source = source;
+    }
+
+    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+        throws IOException {
+      long result = source.read(sink, byteCount, deadline);
+      if (result == -1) exhausted = true;
+      return result;
+    }
+
+    @Override public void close(Deadline deadline) throws IOException {
+      source.close(deadline);
+    }
   }
 }

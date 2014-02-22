@@ -83,8 +83,16 @@ public final class GzipSource implements Source {
     // trailer before returning a -1 exhausted result; that way if you read to
     // the end of a GzipSource you guarantee that the CRC has been checked.
     if (section == SECTION_TRAILER) {
-      consumeTrailer(deadline);
+      consumeTrailer();
       section = SECTION_DONE;
+
+      // Gzip streams self-terminate: they return -1 before their underlying
+      // source returns -1. Here we attempt to force the underlying stream to
+      // return -1 which may trigger it to release its resources. If it doesn't
+      // return -1, then our Gzip data finished prematurely!
+      if (!source.exhausted(deadline)) {
+        throw new IOException("gzip finished without exhausting source");
+      }
     }
 
     return -1;
@@ -149,7 +157,7 @@ public final class GzipSource implements Source {
     }
   }
 
-  private void consumeTrailer(Deadline deadline) throws IOException {
+  private void consumeTrailer() throws IOException {
     // Read the eight-byte trailer. Confirm the body's CRC and size.
     // +---+---+---+---+---+---+---+---+
     // |     CRC32     |     ISIZE     |
