@@ -168,7 +168,7 @@ public class GzipSourceTest {
     assertEquals('b', gunzippedSource.readByte());
     assertEquals('c', gunzippedSource.readByte());
     assertFalse(exhaustableSource.exhausted);
-    assertEquals(-1, gunzippedSource.read(new OkBuffer(), 1, Deadline.NONE));
+    assertEquals(-1, gunzippedSource.read(new OkBuffer(), 1));
     assertTrue(exhaustableSource.exhausted);
   }
 
@@ -236,15 +236,19 @@ public class GzipSourceTest {
       this.source = source;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
-        throws IOException {
-      long result = source.read(sink, byteCount, deadline);
+    @Override public long read(OkBuffer sink, long byteCount) throws IOException {
+      long result = source.read(sink, byteCount);
       if (result == -1) exhausted = true;
       return result;
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
-      source.close(deadline);
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
+      source.close();
     }
   }
 }
