@@ -54,7 +54,7 @@ public final class GzipSource implements Source {
 
   public GzipSource(Source source) throws IOException {
     this.inflater = new Inflater(true);
-    this.source = new BufferedSource(source);
+    this.source = OkBuffers.buffer(source);
     this.inflaterSource = new InflaterSource(this.source, inflater);
   }
 
@@ -106,9 +106,9 @@ public final class GzipSource implements Source {
     // |ID1|ID2|CM |FLG|     MTIME     |XFL|OS | (more-->)
     // +---+---+---+---+---+---+---+---+---+---+
     source.require(10);
-    byte flags = source.buffer.getByte(3);
+    byte flags = source.buffer().getByte(3);
     boolean fhcrc = ((flags >> FHCRC) & 1) == 1;
-    if (fhcrc) updateCrc(source.buffer, 0, 10);
+    if (fhcrc) updateCrc(source.buffer(), 0, 10);
 
     short id1id2 = source.readShort();
     checkEqual("ID1ID2", (short) 0x1f8b, id1id2);
@@ -120,10 +120,10 @@ public final class GzipSource implements Source {
     // +---+---+=================================+
     if (((flags >> FEXTRA) & 1) == 1) {
       source.require(2);
-      if (fhcrc) updateCrc(source.buffer, 0, 2);
-      int xlen = source.buffer.readShortLe() & 0xffff;
+      if (fhcrc) updateCrc(source.buffer(), 0, 2);
+      int xlen = source.buffer().readShortLe() & 0xffff;
       source.require(xlen);
-      if (fhcrc) updateCrc(source.buffer, 0, xlen);
+      if (fhcrc) updateCrc(source.buffer(), 0, xlen);
       source.skip(xlen);
     }
 
@@ -133,8 +133,8 @@ public final class GzipSource implements Source {
     // +=========================================+
     if (((flags >> FNAME) & 1) == 1) {
       long index = source.seek((byte) 0);
-      if (fhcrc) updateCrc(source.buffer, 0, index + 1);
-      source.buffer.skip(index + 1);
+      if (fhcrc) updateCrc(source.buffer(), 0, index + 1);
+      source.skip(index + 1);
     }
 
     // Skip an optional 0-terminated comment.
@@ -143,7 +143,7 @@ public final class GzipSource implements Source {
     // +===================================+
     if (((flags >> FCOMMENT) & 1) == 1) {
       long index = source.seek((byte) 0);
-      if (fhcrc) updateCrc(source.buffer, 0, index + 1);
+      if (fhcrc) updateCrc(source.buffer(), 0, index + 1);
       source.skip(index + 1);
     }
 

@@ -25,6 +25,14 @@ public final class OkBuffers {
   private OkBuffers() {
   }
 
+  public static BufferedSource buffer(Source source) {
+    return new RealBufferedSource(source);
+  }
+
+  public static BufferedSink buffer(Sink sink) {
+    return new RealBufferedSink(sink);
+  }
+
   /** Copies bytes from {@code source} to {@code sink}. */
   public static void copy(OkBuffer source, long offset, long byteCount, OutputStream sink)
       throws IOException {

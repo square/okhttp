@@ -22,118 +22,34 @@ import java.io.OutputStream;
  * A sink that keeps a buffer internally so that callers can do small writes
  * without a performance penalty.
  */
-public final class BufferedSink implements Sink {
-  public final OkBuffer buffer;
-  public final Sink sink;
-  private boolean closed;
+public interface BufferedSink extends Sink {
+  OkBuffer buffer();
 
-  public BufferedSink(Sink sink, OkBuffer buffer) {
-    this.buffer = buffer;
-    this.sink = sink;
-  }
+  BufferedSink write(ByteString byteString) throws IOException;
 
-  public BufferedSink(Sink sink) {
-    this(sink, new OkBuffer());
-  }
+  /**
+   * Like {@link OutputStream#write}, this writes a complete byte array to this
+   * sink.
+   */
+  BufferedSink write(byte[] source) throws IOException;
 
-  @Override public void write(OkBuffer source, long byteCount)
-      throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.write(source, byteCount);
-    emitCompleteSegments();
-  }
+  /**
+   * Like {@link OutputStream#write}, this writes {@code byteCount} bytes
+   * of {@code source}, starting at {@code offset}.
+   */
+  BufferedSink write(byte[] source, int offset, int byteCount) throws IOException;
 
-  public void write(ByteString byteString) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.write(byteString);
-    emitCompleteSegments();
-  }
+  BufferedSink writeUtf8(String string) throws IOException;
 
-  public void writeUtf8(String string) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.writeUtf8(string);
-    emitCompleteSegments();
-  }
+  BufferedSink writeByte(int b) throws IOException;
 
-  public void write(byte[] data, int offset, int byteCount) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.write(data, offset, byteCount);
-    emitCompleteSegments();
-  }
+  BufferedSink writeShort(int s) throws IOException;
 
-  public void writeByte(int b) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.writeByte(b);
-    emitCompleteSegments();
-  }
+  BufferedSink writeInt(int i) throws IOException;
 
-  public void writeShort(int s) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.writeShort(s);
-    emitCompleteSegments();
-  }
-
-  public void writeInt(int i) throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    buffer.writeInt(i);
-    emitCompleteSegments();
-  }
-
-  void emitCompleteSegments() throws IOException {
-    long byteCount = buffer.completeSegmentByteCount();
-    if (byteCount == 0) return;
-    sink.write(buffer, byteCount);
-  }
+  /** Writes complete segments to the sink. Like {@link #flush}, but weaker. */
+  BufferedSink emitCompleteSegments() throws IOException;
 
   /** Returns an output stream that writes to this sink. */
-  public OutputStream outputStream() {
-    return new OutputStream() {
-      @Override public void write(int b) throws IOException {
-        if (closed) throw new IllegalStateException("closed");
-        buffer.writeByte((byte) b);
-        emitCompleteSegments();
-      }
-
-      @Override public void write(byte[] data, int offset, int byteCount) throws IOException {
-        if (closed) throw new IllegalStateException("closed");
-        buffer.write(data, offset, byteCount);
-        emitCompleteSegments();
-      }
-
-      @Override public void flush() throws IOException {
-        BufferedSink.this.flush();
-      }
-
-      @Override public void close() throws IOException {
-        BufferedSink.this.close();
-      }
-
-      @Override public String toString() {
-        return "outputStream(" + sink + ")";
-      }
-    };
-  }
-
-  @Override public void flush() throws IOException {
-    if (closed) throw new IllegalStateException("closed");
-    if (buffer.byteCount > 0) {
-      sink.write(buffer, buffer.byteCount);
-    }
-    sink.flush();
-  }
-
-  @Override public void close() throws IOException {
-    flush();
-    sink.close();
-    closed = true;
-  }
-
-  @Override public Sink deadline(Deadline deadline) {
-    sink.deadline(deadline);
-    return this;
-  }
-
-  @Override public String toString() {
-    return "BufferedSink(" + sink + ")";
-  }
+  OutputStream outputStream();
 }

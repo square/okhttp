@@ -176,16 +176,16 @@ public final class HttpConnection {
   private String readLine() throws IOException {
     long newline = source.seek((byte) '\n');
 
-    if (newline > 0 && source.buffer.getByte(newline - 1) == '\r') {
+    if (newline > 0 && source.buffer().getByte(newline - 1) == '\r') {
       // Read everything until '\r\n', then skip the '\r\n'.
-      String result = source.buffer.readUtf8((int) (newline - 1));
-      source.buffer.skip(2);
+      String result = source.readUtf8((int) (newline - 1));
+      source.skip(2);
       return result;
 
     } else {
       // Read everything until '\n', then skip the '\n'.
-      String result = source.buffer.readUtf8((int) (newline));
-      source.buffer.skip(1);
+      String result = source.readUtf8((int) (newline));
+      source.skip(1);
       return result;
     }
   }

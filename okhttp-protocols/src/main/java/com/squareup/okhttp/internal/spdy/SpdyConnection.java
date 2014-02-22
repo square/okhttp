@@ -464,7 +464,7 @@ public final class SpdyConnection implements Closeable {
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
-      this("", client, new BufferedSource(OkBuffers.source(socket.getInputStream())),
+      this("", client, OkBuffers.buffer(OkBuffers.source(socket.getInputStream())),
           socket.getOutputStream());
     }
 

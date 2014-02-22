@@ -37,7 +37,7 @@ public final class InflaterSource implements Source {
   private boolean closed;
 
   public InflaterSource(Source source, Inflater inflater) {
-    this(new BufferedSource(source), inflater);
+    this(OkBuffers.buffer(source), inflater);
   }
 
   /**
@@ -96,18 +96,18 @@ public final class InflaterSource implements Source {
     if (source.exhausted()) return true;
 
     // Assign buffer bytes to the inflater.
-    Segment head = source.buffer.head;
+    Segment head = source.buffer().head;
     bufferBytesHeldByInflater = head.limit - head.pos;
     inflater.setInput(head.data, head.pos, bufferBytesHeldByInflater);
     return false;
   }
 
   /** When the inflater has processed compressed data, remove it from the buffer. */
-  private void releaseInflatedBytes() {
+  private void releaseInflatedBytes() throws IOException {
     if (bufferBytesHeldByInflater == 0) return;
     int toRelease = bufferBytesHeldByInflater - inflater.getRemaining();
     bufferBytesHeldByInflater -= toRelease;
-    source.buffer.skip(toRelease);
+    source.skip(toRelease);
   }
 
   @Override public Source deadline(Deadline deadline) {

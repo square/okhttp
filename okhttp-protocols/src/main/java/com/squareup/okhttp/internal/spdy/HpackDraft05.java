@@ -3,6 +3,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.BitArray;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -124,7 +125,7 @@ final class HpackDraft05 {
     Reader(boolean client, int maxHeaderTableByteCount, Source source) {
       this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
-      this.source = new BufferedSource(source);
+      this.source = OkBuffers.buffer(source);
     }
 
     int maxHeaderTableByteCount() {

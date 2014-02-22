@@ -16,7 +16,6 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
 import java.io.ByteArrayOutputStream;
@@ -90,9 +89,8 @@ public class Spdy3Test {
   }
 
   private Spdy3.Reader newReader(ByteArrayOutputStream out) {
-    OkBuffer data = new OkBuffer();
-    data.write(ByteString.of(out.toByteArray()));
-    return new Spdy3.Reader(new BufferedSource(data), false);
+    OkBuffer data = new OkBuffer().write(out.toByteArray());
+    return new Spdy3.Reader(data, false);
   }
 
   private byte[] sendDataFrame(byte[] data) throws IOException {
