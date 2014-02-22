@@ -399,6 +399,17 @@ public final class URLConnectionTest {
     testServerClosesOutput(SHUTDOWN_OUTPUT_AT_END);
   }
 
+  @Test public void invalidHost() throws Exception {
+    // Note that 1234.1.1.1 is an invalid host in a URI, but URL isn't as strict.
+    URL url = new URL("http://1234.1.1.1/index.html");
+    HttpURLConnection connection = client.open(url);
+    try {
+      connection.connect();
+      fail();
+    } catch (UnknownHostException expected) {
+    }
+  }
+
   private void testServerClosesOutput(SocketPolicy socketPolicy) throws Exception {
     server.enqueue(new MockResponse().setBody("This connection won't pool properly")
         .setSocketPolicy(socketPolicy));

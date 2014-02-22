@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 public interface Dns {
   Dns DEFAULT = new Dns() {
     @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
+      if (host == null) throw new UnknownHostException("host == null");
       return InetAddress.getAllByName(host);
     }
   };
