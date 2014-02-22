@@ -17,10 +17,6 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
-import com.squareup.okhttp.internal.bytes.Deadline;
-import com.squareup.okhttp.internal.bytes.OkBuffer;
-import com.squareup.okhttp.internal.bytes.Source;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -28,6 +24,10 @@ import java.io.OutputStream;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import okio.BufferedSource;
+import okio.Deadline;
+import okio.OkBuffer;
+import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 

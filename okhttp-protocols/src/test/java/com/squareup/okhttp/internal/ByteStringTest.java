@@ -15,11 +15,11 @@
  */
 package com.squareup.okhttp.internal;
 
-import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Arrays;
+import okio.ByteString;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

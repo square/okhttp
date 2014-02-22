@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
-import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.zip.CRC32;
 import org.junit.Test;
 
+import static okio.Util.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -52,7 +52,7 @@ public class GzipSourceTest {
     OkBuffer gzipped = new OkBuffer();
     gzipped.write(gzipHeaderWithFlags((byte) 0x04), 0, gzipHeader.length);
     gzipped.writeShort(Util.reverseBytesShort((short) 7)); // little endian extra length
-    gzipped.write("blubber".getBytes(Util.US_ASCII), 0, 7);
+    gzipped.write("blubber".getBytes(UTF_8), 0, 7);
     gzipped.write(deflated, 0, deflated.length);
     gzipped.write(gzipTrailer, 0, gzipTrailer.length);
     assertGzipped(gzipped);
@@ -61,7 +61,7 @@ public class GzipSourceTest {
   @Test public void gunzip_withName() throws Exception {
     OkBuffer gzipped = new OkBuffer();
     gzipped.write(gzipHeaderWithFlags((byte) 0x08), 0, gzipHeader.length);
-    gzipped.write("foo.txt".getBytes(Util.US_ASCII), 0, 7);
+    gzipped.write("foo.txt".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
     gzipped.write(deflated, 0, deflated.length);
     gzipped.write(gzipTrailer, 0, gzipTrailer.length);
@@ -71,7 +71,7 @@ public class GzipSourceTest {
   @Test public void gunzip_withComment() throws Exception {
     OkBuffer gzipped = new OkBuffer();
     gzipped.write(gzipHeaderWithFlags((byte) 0x10), 0, gzipHeader.length);
-    gzipped.write("rubbish".getBytes(Util.US_ASCII), 0, 7);
+    gzipped.write("rubbish".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
     gzipped.write(deflated, 0, deflated.length);
     gzipped.write(gzipTrailer, 0, gzipTrailer.length);
@@ -86,10 +86,10 @@ public class GzipSourceTest {
     OkBuffer gzipped = new OkBuffer();
     gzipped.write(gzipHeaderWithFlags((byte) 0x1c), 0, gzipHeader.length);
     gzipped.writeShort(Util.reverseBytesShort((short) 7)); // little endian extra length
-    gzipped.write("blubber".getBytes(Util.US_ASCII), 0, 7);
-    gzipped.write("foo.txt".getBytes(Util.US_ASCII), 0, 7);
+    gzipped.write("blubber".getBytes(UTF_8), 0, 7);
+    gzipped.write("foo.txt".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
-    gzipped.write("rubbish".getBytes(Util.US_ASCII), 0, 7);
+    gzipped.write("rubbish".getBytes(UTF_8), 0, 7);
     gzipped.writeByte(0); // zero-terminated
     gzipped.write(deflated, 0, deflated.length);
     gzipped.write(gzipTrailer, 0, gzipTrailer.length);

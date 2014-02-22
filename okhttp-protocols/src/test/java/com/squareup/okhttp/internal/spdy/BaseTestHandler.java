@@ -15,10 +15,10 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.bytes.BufferedSource;
-import com.squareup.okhttp.internal.bytes.ByteString;
 import java.io.IOException;
 import java.util.List;
+import okio.BufferedSource;
+import okio.ByteString;
 
 import static org.junit.Assert.fail;
 

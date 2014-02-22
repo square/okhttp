@@ -19,7 +19,7 @@
  * @author Alexander Y. Kleymenov
  */
 
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 import java.io.UnsupportedEncodingException;
 

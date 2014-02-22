@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
+import static okio.Util.checkOffsetAndCount;
 
 final class RealBufferedSource implements BufferedSource {
   public final OkBuffer buffer;

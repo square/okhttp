@@ -13,31 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * An alternative to InputStream.
+ * An alternative to OutputStream.
  */
-public interface Source extends Closeable {
-  /**
-   * Removes at least 1, and up to {@code byteCount} bytes from this and appends
-   * them to {@code sink}. Returns the number of bytes read, or -1 if this
-   * source is exhausted.
-   */
-  long read(OkBuffer sink, long byteCount) throws IOException;
+public interface Sink extends Closeable {
+  /** Removes {@code byteCount} bytes from {@code source} and appends them to this. */
+  void write(OkBuffer source, long byteCount) throws IOException;
+
+  /** Pushes all buffered bytes to their final destination. */
+  void flush() throws IOException;
 
   /**
-   * Sets the deadline for all operations on this source.
-   * @return this source.
+   * Sets the deadline for all operations on this sink.
+   * @return this sink.
    */
-  Source deadline(Deadline deadline);
+  Sink deadline(Deadline deadline);
 
   /**
-   * Closes this source and releases the resources held by this source. It is an
-   * error to read a closed source. It is safe to close a source more than once.
+   * Pushes all buffered bytes to their final destination and releases the
+   * resources held by this sink. It is an error to write a closed sink. It is
+   * safe to close a sink more than once.
    */
   @Override void close() throws IOException;
 }

@@ -9,24 +9,21 @@
     <version>2.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>okhttp-protocols</artifactId>
-  <name>OkHttp SPDY and HTTP/2.0 internals</name>
+  <groupId>com.squareup.okio</groupId>
+  <artifactId>okio</artifactId>
+  <name>Okio</name>
 
   <dependencies>
-    <dependency>
-      <groupId>com.squareup.okio</groupId>
-      <artifactId>okio</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mortbay.jetty.npn</groupId>
-      <artifactId>npn-boot</artifactId>
-      <optional>true</optional>
-    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <version>1.10</version>
+      <optional>true</optional>
     </dependency>
   </dependencies>
 </project>

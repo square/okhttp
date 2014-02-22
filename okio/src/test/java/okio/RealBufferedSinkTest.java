@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.bytes;
+package okio;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Arrays;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.UTF_8;
+import static okio.Util.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public final class RealBufferedSinkTest {
   @Test public void outputStreamFromSink() throws Exception {
     OkBuffer sink = new OkBuffer();
-    OutputStream out = new RealBufferedSink((Sink) sink).outputStream();
+    OutputStream out = new RealBufferedSink(sink).outputStream();
     out.write('a');
     out.write(repeat('b', 9998).getBytes(UTF_8));
     out.write('c');
@@ -37,7 +37,7 @@ public final class RealBufferedSinkTest {
 
   @Test public void outputStreamFromSinkBounds() throws Exception {
     OkBuffer sink = new OkBuffer();
-    OutputStream out = new RealBufferedSink((Sink) sink).outputStream();
+    OutputStream out = new RealBufferedSink(sink).outputStream();
     try {
       out.write(new byte[100], 50, 51);
       fail();
@@ -47,7 +47,7 @@ public final class RealBufferedSinkTest {
 
   @Test public void bufferedSinkEmitsTailWhenItIsComplete() throws IOException {
     OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new RealBufferedSink((Sink) sink);
+    BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1));
     assertEquals(0, sink.byteCount());
     bufferedSink.writeByte(0);
@@ -57,14 +57,14 @@ public final class RealBufferedSinkTest {
 
   @Test public void bufferedSinkEmitZero() throws IOException {
     OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new RealBufferedSink((Sink) sink);
+    BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8("");
     assertEquals(0, sink.byteCount());
   }
 
   @Test public void bufferedSinkEmitMultipleSegments() throws IOException {
     OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new RealBufferedSink((Sink) sink);
+    BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1));
     assertEquals(Segment.SIZE * 3, sink.byteCount());
     assertEquals(Segment.SIZE - 1, bufferedSink.buffer().byteCount());
@@ -72,7 +72,7 @@ public final class RealBufferedSinkTest {
 
   @Test public void bufferedSinkFlush() throws IOException {
     OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new RealBufferedSink((Sink) sink);
+    BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeByte('a');
     assertEquals(0, sink.byteCount());
     bufferedSink.flush();
