@@ -36,17 +36,22 @@ class NameValueBlockReader {
     // block. We cut the inflater off at its source because we can't predict the
     // ratio of compressed bytes to uncompressed bytes.
     Source throttleSource = new Source() {
-      @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+      @Override public long read(OkBuffer sink, long byteCount)
           throws IOException {
         if (compressedLimit == 0) return -1; // Out of data for the current block.
-        long read = source.read(sink, Math.min(byteCount, compressedLimit), deadline);
+        long read = source.read(sink, Math.min(byteCount, compressedLimit));
         if (read == -1) return -1;
         compressedLimit -= read;
         return read;
       }
 
-      @Override public void close(Deadline deadline) throws IOException {
-        source.close(deadline);
+      @Override public void close() throws IOException {
+        source.close();
+      }
+
+      @Override public Source deadline(Deadline deadline) {
+        source.deadline(deadline);
+        return this;
       }
     };
 
@@ -96,12 +101,12 @@ class NameValueBlockReader {
     // deflate compression is that sometimes there are bytes remaining in the
     // stream after we've consumed all of the content.
     if (compressedLimit > 0) {
-      inflaterSource.refill(Deadline.NONE);
+      inflaterSource.refill();
       if (compressedLimit != 0) throw new IOException("compressedLimit > 0: " + compressedLimit);
     }
   }
 
-  public void close(Deadline deadline) throws IOException {
-    source.close(deadline);
+  public void close() throws IOException {
+    source.close();
   }
 }

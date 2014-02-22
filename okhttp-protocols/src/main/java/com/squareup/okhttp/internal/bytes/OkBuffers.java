@@ -50,7 +50,9 @@ public final class OkBuffers {
   /** Returns a sink that writes to {@code out}. */
   public static Sink sink(final OutputStream out) {
     return new Sink() {
-      @Override public void write(OkBuffer source, long byteCount, Deadline deadline)
+      private Deadline deadline = Deadline.NONE;
+
+      @Override public void write(OkBuffer source, long byteCount)
           throws IOException {
         checkOffsetAndCount(source.byteCount, 0, byteCount);
         while (byteCount > 0) {
@@ -70,12 +72,18 @@ public final class OkBuffers {
         }
       }
 
-      @Override public void flush(Deadline deadline) throws IOException {
+      @Override public void flush() throws IOException {
         out.flush();
       }
 
-      @Override public void close(Deadline deadline) throws IOException {
+      @Override public void close() throws IOException {
         out.close();
+      }
+
+      @Override public Sink deadline(Deadline deadline) {
+        if (deadline == null) throw new IllegalArgumentException("deadline == null");
+        this.deadline = deadline;
+        return this;
       }
 
       @Override public String toString() {
@@ -87,8 +95,9 @@ public final class OkBuffers {
   /** Returns a source that reads from {@code in}. */
   public static Source source(final InputStream in) {
     return new Source() {
-      @Override public long read(
-          OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+      private Deadline deadline = Deadline.NONE;
+
+      @Override public long read(OkBuffer sink, long byteCount) throws IOException {
         if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
         deadline.throwIfReached();
         Segment tail = sink.writableSegment(1);
@@ -100,8 +109,14 @@ public final class OkBuffers {
         return bytesRead;
       }
 
-      @Override public void close(Deadline deadline) throws IOException {
+      @Override public void close() throws IOException {
         in.close();
+      }
+
+      @Override public Source deadline(Deadline deadline) {
+        if (deadline == null) throw new IllegalArgumentException("deadline == null");
+        this.deadline = deadline;
+        return this;
       }
 
       @Override public String toString() {

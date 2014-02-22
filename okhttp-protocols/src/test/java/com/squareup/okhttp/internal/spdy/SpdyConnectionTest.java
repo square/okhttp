@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
@@ -33,7 +32,6 @@ import org.junit.Test;
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.Util.headerEntries;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.CANCEL;
-import static com.squareup.okhttp.internal.spdy.ErrorCode.FLOW_CONTROL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.INTERNAL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.INVALID_STREAM;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.PROTOCOL_ERROR;
@@ -551,9 +549,9 @@ public final class SpdyConnectionTest {
     SpdyStream stream = connection.newStream(headerEntries("a", "android"), false, true);
     Source in = stream.getSource();
     OutputStream out = stream.getOutputStream();
-    in.close(Deadline.NONE);
+    in.close();
     try {
-      in.read(new OkBuffer(), 1, Deadline.NONE);
+      in.read(new OkBuffer(), 1);
       fail();
     } catch (IOException expected) {
       assertEquals("stream closed", expected.getMessage());
@@ -594,9 +592,9 @@ public final class SpdyConnectionTest {
     SpdyStream stream = connection.newStream(headerEntries("a", "android"), true, true);
     Source source = stream.getSource();
     OutputStream out = stream.getOutputStream();
-    source.close(Deadline.NONE);
+    source.close();
     try {
-      source.read(new OkBuffer(), 1, Deadline.NONE);
+      source.read(new OkBuffer(), 1);
       fail();
     } catch (IOException expected) {
       assertEquals("stream closed", expected.getMessage());
@@ -662,7 +660,7 @@ public final class SpdyConnectionTest {
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     connection.ping().roundTripTime(); // Ensure that the 2nd SYN REPLY has been received.
     try {
-      stream.getSource().read(new OkBuffer(), 1, Deadline.NONE);
+      stream.getSource().read(new OkBuffer(), 1);
       fail();
     } catch (IOException expected) {
       assertEquals("stream was reset: STREAM_IN_USE", expected.getMessage());
@@ -918,7 +916,7 @@ public final class SpdyConnectionTest {
       assertEquals("stream was reset: CANCEL", expected.getMessage());
     }
     try {
-      stream.getSource().read(new OkBuffer(), 1, Deadline.NONE);
+      stream.getSource().read(new OkBuffer(), 1);
       fail();
     } catch (IOException expected) {
       assertEquals("stream was reset: CANCEL", expected.getMessage());
@@ -963,7 +961,7 @@ public final class SpdyConnectionTest {
     Source source = stream.getSource();
     long startNanos = System.nanoTime();
     try {
-      source.read(new OkBuffer(), 1, Deadline.NONE);
+      source.read(new OkBuffer(), 1);
       fail();
     } catch (IOException expected) {
     }
@@ -1067,10 +1065,10 @@ public final class SpdyConnectionTest {
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     Source in = stream.getSource();
     OkBuffer buffer = new OkBuffer();
-    while (in.read(buffer, 1024, Deadline.NONE) != -1) {
+    while (in.read(buffer, 1024) != -1) {
       if (buffer.byteCount() == 3 * windowUpdateThreshold) break;
     }
-    assertEquals(-1, in.read(buffer, 1, Deadline.NONE));
+    assertEquals(-1, in.read(buffer, 1));
 
     // Verify the peer received what was expected.
     assertEquals(21, peer.frameCount());
@@ -1110,7 +1108,7 @@ public final class SpdyConnectionTest {
     // Play it back.
     SpdyConnection connection = connection(peer, variant);
     SpdyStream client = connection.newStream(headerEntries("b", "banana"), false, true);
-    assertEquals(-1, client.getSource().read(new OkBuffer(), 1, Deadline.NONE));
+    assertEquals(-1, client.getSource().read(new OkBuffer(), 1));
 
     // Verify the peer received what was expected.
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
@@ -1462,7 +1460,7 @@ public final class SpdyConnectionTest {
 
   private void assertStreamData(String expected, Source source) throws IOException {
     OkBuffer buffer = new OkBuffer();
-    while (source.read(buffer, Long.MAX_VALUE, Deadline.NONE) != -1) {
+    while (source.read(buffer, Long.MAX_VALUE) != -1) {
     }
     String actual = buffer.readUtf8((int) buffer.byteCount());
     assertEquals(expected, actual);

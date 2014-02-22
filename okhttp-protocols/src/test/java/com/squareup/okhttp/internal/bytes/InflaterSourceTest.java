@@ -88,8 +88,8 @@ public final class InflaterSourceTest {
   private OkBuffer deflate(OkBuffer buffer) throws IOException {
     OkBuffer result = new OkBuffer();
     Sink sink = OkBuffers.sink(new DeflaterOutputStream(new BufferedSink(result).outputStream()));
-    sink.write(buffer, buffer.byteCount(), Deadline.NONE);
-    sink.close(Deadline.NONE);
+    sink.write(buffer, buffer.byteCount());
+    sink.close();
     return result;
   }
 
@@ -103,7 +103,7 @@ public final class InflaterSourceTest {
   private OkBuffer inflate(OkBuffer deflated) throws IOException {
     OkBuffer result = new OkBuffer();
     InflaterSource source = new InflaterSource(deflated, new Inflater());
-    while (source.read(result, Integer.MAX_VALUE, Deadline.NONE) != -1) {
+    while (source.read(result, Integer.MAX_VALUE) != -1) {
     }
     return result;
   }

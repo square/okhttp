@@ -44,7 +44,7 @@ public final class DeflaterSink implements Sink {
     this.deflater = deflater;
   }
 
-  @Override public void write(OkBuffer source, long byteCount, Deadline deadline)
+  @Override public void write(OkBuffer source, long byteCount)
       throws IOException {
     checkOffsetAndCount(source.byteCount, 0, byteCount);
     while (byteCount > 0) {
@@ -54,7 +54,7 @@ public final class DeflaterSink implements Sink {
       deflater.setInput(head.data, head.pos, toDeflate);
 
       // Deflate those bytes into sink.
-      deflate(deadline, false);
+      deflate(false);
 
       // Mark those bytes as read.
       source.byteCount -= toDeflate;
@@ -69,7 +69,7 @@ public final class DeflaterSink implements Sink {
   }
 
   @IgnoreJRERequirement
-  private void deflate(Deadline deadline, boolean syncFlush) throws IOException {
+  private void deflate(boolean syncFlush) throws IOException {
     while (true) {
       Segment s = sink.buffer.writableSegment(1);
 
@@ -84,18 +84,27 @@ public final class DeflaterSink implements Sink {
       if (deflated == 0) return;
       s.limit += deflated;
       sink.buffer.byteCount += deflated;
-      sink.emitCompleteSegments(deadline);
+      sink.emitCompleteSegments();
     }
   }
 
-  @Override public void flush(Deadline deadline) throws IOException {
-    deflate(deadline, true);
-    sink.flush(deadline);
+  @Override public void flush() throws IOException {
+    deflate(true);
+    sink.flush();
   }
 
-  @Override public void close(Deadline deadline) throws IOException {
+  @Override public void close() throws IOException {
     deflater.finish();
-    deflate(deadline, false);
-    sink.close(deadline);
+    deflate(false);
+    sink.close();
+  }
+
+  @Override public Sink deadline(Deadline deadline) {
+    sink.deadline(deadline);
+    return this;
+  }
+
+  @Override public String toString() {
+    return "DeflaterSink(" + sink + ")";
   }
 }

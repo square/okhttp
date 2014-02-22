@@ -15,22 +15,29 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * An alternative to InputStream.
  */
-public interface Source {
+public interface Source extends Closeable {
   /**
    * Removes at least 1, and up to {@code byteCount} bytes from this and appends
    * them to {@code sink}. Returns the number of bytes read, or -1 if this
    * source is exhausted.
    */
-  long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException;
+  long read(OkBuffer sink, long byteCount) throws IOException;
+
+  /**
+   * Sets the deadline for all operations on this source.
+   * @return this source.
+   */
+  Source deadline(Deadline deadline);
 
   /**
    * Closes this source and releases the resources held by this source. It is an
    * error to read a closed source. It is safe to close a source more than once.
    */
-  void close(Deadline deadline) throws IOException;
+  @Override void close() throws IOException;
 }

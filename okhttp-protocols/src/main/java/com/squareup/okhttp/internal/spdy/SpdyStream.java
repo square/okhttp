@@ -355,7 +355,7 @@ public final class SpdyStream {
       this.maxByteCount = maxByteCount;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+    @Override public long read(OkBuffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
 
@@ -366,7 +366,7 @@ public final class SpdyStream {
         if (readBuffer.byteCount() == 0) return -1; // This source is exhausted.
 
         // Move bytes from the read buffer into the caller's buffer.
-        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.byteCount()), deadline);
+        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.byteCount()));
 
         // Flow control: notify the peer that we're ready for more data!
         unacknowledgedBytesRead += read;
@@ -430,26 +430,26 @@ public final class SpdyStream {
 
         // If the peer sends more data than we can handle, discard it and close the connection.
         if (flowControlError) {
-          in.skip(byteCount, Deadline.NONE);
+          in.skip(byteCount);
           closeLater(ErrorCode.FLOW_CONTROL_ERROR);
           return;
         }
 
         // Discard data received after the stream is finished. It's probably a benign race.
         if (finished) {
-          in.skip(byteCount, Deadline.NONE);
+          in.skip(byteCount);
           return;
         }
 
         // Fill the receive buffer without holding any locks.
-        long read = in.read(receiveBuffer, byteCount, Deadline.NONE);
+        long read = in.read(receiveBuffer, byteCount);
         if (read == -1) throw new EOFException();
         byteCount -= read;
 
         // Move the received data to the read buffer to the reader can read it.
         synchronized (SpdyStream.this) {
           boolean wasEmpty = readBuffer.byteCount() == 0;
-          readBuffer.write(receiveBuffer, receiveBuffer.byteCount(), Deadline.NONE);
+          readBuffer.write(receiveBuffer, receiveBuffer.byteCount());
           if (wasEmpty) {
             SpdyStream.this.notifyAll();
           }
@@ -457,7 +457,12 @@ public final class SpdyStream {
       }
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      // TODO: honor deadlines.
+      return this;
+    }
+
+    @Override public void close() throws IOException {
       synchronized (SpdyStream.this) {
         closed = true;
         readBuffer.clear();

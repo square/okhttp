@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.Deadline;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -179,7 +178,7 @@ final class Spdy3 implements Variant {
             return true;
 
           default:
-            source.skip(length, Deadline.NONE);
+            source.skip(length);
             return true;
         }
       } else {
@@ -282,7 +281,7 @@ final class Spdy3 implements Variant {
     }
 
     @Override public void close() throws IOException {
-      headerBlockReader.close(Deadline.NONE);
+      headerBlockReader.close();
     }
   }
 

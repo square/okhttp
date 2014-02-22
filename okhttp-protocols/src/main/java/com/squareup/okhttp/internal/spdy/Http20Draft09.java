@@ -145,7 +145,7 @@ public final class Http20Draft09 implements Variant {
 
         default:
           // Implementations MUST ignore frames of unsupported or unrecognized types.
-          source.skip(length, Deadline.NONE);
+          source.skip(length);
       }
       return true;
     }
@@ -282,7 +282,7 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override public void close() throws IOException {
-      source.close(Deadline.NONE);
+      source.close();
     }
   }
 
@@ -491,7 +491,7 @@ public final class Http20Draft09 implements Variant {
       this.source = source;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+    @Override public long read(OkBuffer sink, long byteCount)
         throws IOException {
       while (left == 0) {
         if ((flags & FLAG_END_HEADERS) != 0) return -1;
@@ -499,13 +499,18 @@ public final class Http20Draft09 implements Variant {
         // TODO: test case for empty continuation header?
       }
 
-      long read = source.read(sink, Math.min(byteCount, left), deadline);
+      long read = source.read(sink, Math.min(byteCount, left));
       if (read == -1) return -1;
       left -= read;
       return read;
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
     }
 
     private void readContinuationHeader() throws IOException {

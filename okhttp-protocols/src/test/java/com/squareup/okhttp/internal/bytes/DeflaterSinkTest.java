@@ -33,8 +33,8 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount(), Deadline.NONE);
-    deflaterSink.close(Deadline.NONE);
+    deflaterSink.write(data, data.byteCount());
+    deflaterSink.close();
     OkBuffer inflated = inflate(sink);
     assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
   }
@@ -45,8 +45,8 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount(), Deadline.NONE);
-    deflaterSink.flush(Deadline.NONE);
+    deflaterSink.write(data, data.byteCount());
+    deflaterSink.flush();
     OkBuffer inflated = inflate(sink);
     assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
   }
@@ -57,8 +57,8 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount(), Deadline.NONE);
-    deflaterSink.close(Deadline.NONE);
+    deflaterSink.write(data, data.byteCount());
+    deflaterSink.close();
     OkBuffer inflated = inflate(sink);
     assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
   }
@@ -69,8 +69,8 @@ public final class DeflaterSinkTest {
     data.write(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount(), Deadline.NONE);
-    deflaterSink.close(Deadline.NONE);
+    deflaterSink.write(data, data.byteCount());
+    deflaterSink.close();
     OkBuffer inflated = inflate(sink);
     assertEquals(original, inflated.readByteString((int) inflated.byteCount()));
   }

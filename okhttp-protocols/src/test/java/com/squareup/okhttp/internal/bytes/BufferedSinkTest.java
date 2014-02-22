@@ -24,29 +24,29 @@ public final class BufferedSinkTest {
   @Test public void bytesEmittedToSinkWithFlush() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8("abc", Deadline.NONE);
-    bufferedSink.flush(Deadline.NONE);
+    bufferedSink.writeUtf8("abc");
+    bufferedSink.flush();
     assertEquals(3, sink.byteCount());
   }
 
   @Test public void bytesNotEmittedToSinkWithoutFlush() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8("abc", Deadline.NONE);
+    bufferedSink.writeUtf8("abc");
     assertEquals(0, sink.byteCount());
   }
 
   @Test public void completeSegmentsEmitted() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3), Deadline.NONE);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3));
     assertEquals(Segment.SIZE * 3, sink.byteCount());
   }
 
   @Test public void incompleteSegmentsNotEmitted() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3 - 1), Deadline.NONE);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3 - 1));
     assertEquals(Segment.SIZE * 2, sink.byteCount());
   }
 
