@@ -63,6 +63,7 @@ public final class MockSpdyPeer implements Closeable {
     frameCount++;
   }
 
+  /** Count of frames sent or received. */
   public int frameCount() {
     return frameCount;
   }
