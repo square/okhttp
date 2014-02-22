@@ -1130,20 +1130,22 @@ public final class SpdyConnectionTest {
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // DATA
     peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
     peer.play();
 
     // Play it back.
     SpdyConnection connection = connection(peer, variant);
     SpdyStream client = connection.newStream(headerEntries("b", "banana"), true, true);
-    client.getOutputStream().write(Util.EMPTY_BYTE_ARRAY);
-    client.getOutputStream().flush();
-    client.getOutputStream().close();
+    OutputStream out = client.getOutputStream();
+    out.write(Util.EMPTY_BYTE_ARRAY);
+    out.flush();
+    out.close();
 
     // Verify the peer received what was expected.
-    MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_HEADERS, synStream.type);
-    assertEquals(2, peer.frameCount());
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(TYPE_DATA, peer.takeFrame().type);
+    assertEquals(3, peer.frameCount());
   }
 
   @Test public void writeAwaitsWindowUpdate() throws Exception {
@@ -1261,10 +1263,11 @@ public final class SpdyConnectionTest {
     int framesThatFillWindow = roundUp(INITIAL_WINDOW_SIZE, SpdyStream.OUTPUT_BUFFER_SIZE);
 
     // Write the mocking script. This accepts more data frames than necessary!
-    peer.acceptFrame(); // SYN_STREAM
+    peer.acceptFrame(); // SYN_STREAM on stream 1
     for (int i = 0; i < framesThatFillWindow; i++) {
       peer.acceptFrame(); // DATA on stream 1
     }
+    peer.acceptFrame(); // SYN_STREAM on stream 2
     peer.acceptFrame(); // DATA on stream 2
     peer.play();
 

@@ -90,7 +90,7 @@ public final class GzipSource implements Source {
       // source returns -1. Here we attempt to force the underlying stream to
       // return -1 which may trigger it to release its resources. If it doesn't
       // return -1, then our Gzip data finished prematurely!
-      if (!source.exhausted(deadline)) {
+      if (!source.exhausted()) {
         throw new IOException("gzip finished without exhausting source");
       }
     }
