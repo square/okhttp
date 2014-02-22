@@ -48,6 +48,23 @@ public final class OkBufferTest {
     }
   }
 
+  @Test public void completeSegmentByteCountOnEmptyBuffer() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    assertEquals(0, buffer.completeSegmentByteCount());
+  }
+
+  @Test public void completeSegmentByteCountOnBufferWithFullSegments() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8(repeat('a', Segment.SIZE * 4));
+    assertEquals(Segment.SIZE * 4, buffer.completeSegmentByteCount());
+  }
+
+  @Test public void completeSegmentByteCountOnBufferWithIncompleteTailSegment() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8(repeat('a', Segment.SIZE * 4 - 10));
+    assertEquals(Segment.SIZE * 3, buffer.completeSegmentByteCount());
+  }
+
   @Test public void readUtf8SpansSegments() throws Exception {
     OkBuffer buffer = new OkBuffer();
     buffer.writeUtf8(repeat('a', Segment.SIZE * 2));
@@ -682,6 +699,51 @@ public final class OkBufferTest {
     bufferedSource.skip(2, Deadline.NONE);
     assertEquals(0, bufferedSource.buffer.byteCount());
     assertEquals(2, source.byteCount());
+  }
+
+  @Test public void cloneDoesNotObserveWritesToOriginal() throws Exception {
+    OkBuffer original = new OkBuffer();
+    OkBuffer clone = original.clone();
+    original.writeUtf8("abc");
+    assertEquals(0, clone.byteCount());
+  }
+
+  @Test public void cloneDoesNotObserveReadsFromOriginal() throws Exception {
+    OkBuffer original = new OkBuffer();
+    original.writeUtf8("abc");
+    OkBuffer clone = original.clone();
+    assertEquals("abc", original.readUtf8(3));
+    assertEquals(3, clone.byteCount());
+    assertEquals("ab", clone.readUtf8(2));
+  }
+
+  @Test public void originalDoesNotObserveWritesToClone() throws Exception {
+    OkBuffer original = new OkBuffer();
+    OkBuffer clone = original.clone();
+    clone.writeUtf8("abc");
+    assertEquals(0, original.byteCount());
+  }
+
+  @Test public void originalDoesNotObserveReadsFromClone() throws Exception {
+    OkBuffer original = new OkBuffer();
+    original.writeUtf8("abc");
+    OkBuffer clone = original.clone();
+    assertEquals("abc", clone.readUtf8(3));
+    assertEquals(3, original.byteCount());
+    assertEquals("ab", original.readUtf8(2));
+  }
+
+  @Test public void cloneMultipleSegments() throws Exception {
+    OkBuffer original = new OkBuffer();
+    original.writeUtf8(repeat('a', Segment.SIZE * 3));
+    OkBuffer clone = original.clone();
+    original.writeUtf8(repeat('b', Segment.SIZE * 3));
+    clone.writeUtf8(repeat('c', Segment.SIZE * 3));
+
+    assertEquals(repeat('a', Segment.SIZE * 3) + repeat('b', Segment.SIZE * 3),
+        original.readUtf8(Segment.SIZE * 6));
+    assertEquals(repeat('a', Segment.SIZE * 3) + repeat('c', Segment.SIZE * 3),
+        clone.readUtf8(Segment.SIZE * 6));
   }
 
   private String repeat(char c, int count) {

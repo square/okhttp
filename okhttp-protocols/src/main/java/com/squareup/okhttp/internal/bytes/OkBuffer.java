@@ -39,7 +39,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
  * returning it to you. Even if you're going to write over that space anyway.
  * This class avoids zero-fill and GC churn by pooling byte arrays.
  */
-public final class OkBuffer implements Source, Sink {
+public final class OkBuffer implements Source, Sink, Cloneable {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
@@ -52,6 +52,24 @@ public final class OkBuffer implements Source, Sink {
   /** Returns the number of bytes currently in this buffer. */
   public long byteCount() {
     return byteCount;
+  }
+
+  /**
+   * Returns the number of bytes in segments that are not writable. This is the
+   * number of bytes that can be flushed immediately to an underlying sink
+   * without harming throughput.
+   */
+  public long completeSegmentByteCount() {
+    long result = byteCount;
+    if (result == 0) return 0;
+
+    // Omit the tail if it's still writable.
+    Segment tail = head.prev;
+    if (tail.limit < Segment.SIZE) {
+      result -= tail.limit - tail.pos;
+    }
+
+    return result;
   }
 
   /** Removes a byte from the front of this buffer and returns it. */
@@ -480,5 +498,18 @@ public final class OkBuffer implements Source, Sink {
       }
     }
     return new String(result);
+  }
+
+  /** Returns a deep copy of this buffer. */
+  @Override public OkBuffer clone() {
+    OkBuffer result = new OkBuffer();
+    if (byteCount() == 0) return result;
+
+    result.write(head.data, head.pos, head.limit - head.pos);
+    for (Segment s = head.next; s != head; s = s.next) {
+      result.write(s.data, s.pos, s.limit - s.pos);
+    }
+
+    return result;
   }
 }
