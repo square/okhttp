@@ -174,7 +174,7 @@ public final class HttpConnection {
   }
 
   private String readLine() throws IOException {
-    long newline = source.seek((byte) '\n', Deadline.NONE);
+    long newline = source.seek((byte) '\n');
 
     if (newline > 0 && source.buffer.getByte(newline - 1) == '\r') {
       // Read everything until '\r\n', then skip the '\r\n'.
@@ -483,13 +483,13 @@ public final class HttpConnection {
       }
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+    @Override public long read(OkBuffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (bytesRemaining == 0) return -1;
 
-      long read = source.read(sink, Math.min(bytesRemaining, byteCount), deadline);
+      long read = source.read(sink, Math.min(bytesRemaining, byteCount));
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised content length
         throw new ProtocolException("unexpected end of stream");
@@ -503,7 +503,12 @@ public final class HttpConnection {
       return read;
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
       if (closed) return;
 
       if (bytesRemaining != 0 && !discard(this, DISCARD_STREAM_TIMEOUT_MILLIS)) {
@@ -527,7 +532,7 @@ public final class HttpConnection {
     }
 
     @Override public long read(
-        OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+        OkBuffer sink, long byteCount) throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (!hasMoreChunks) return -1;
@@ -537,7 +542,7 @@ public final class HttpConnection {
         if (!hasMoreChunks) return -1;
       }
 
-      long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk), deadline);
+      long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk));
       if (read == -1) {
         unexpectedEndOfInput(); // the server didn't supply the promised chunk length
         throw new IOException("unexpected end of stream");
@@ -571,7 +576,12 @@ public final class HttpConnection {
       }
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
       if (closed) return;
       if (hasMoreChunks && !discard(this, DISCARD_STREAM_TIMEOUT_MILLIS)) {
         unexpectedEndOfInput();
@@ -588,13 +598,13 @@ public final class HttpConnection {
       super(cacheRequest);
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+    @Override public long read(OkBuffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (inputExhausted) return -1;
 
-      long read = source.read(sink, byteCount, deadline);
+      long read = source.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
         endOfInput();
@@ -604,7 +614,12 @@ public final class HttpConnection {
       return read;
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
       if (closed) return;
       // TODO: discard unknown length streams for best caching?
       if (!inputExhausted) {

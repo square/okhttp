@@ -152,7 +152,7 @@ public final class OkBufferTest {
     for (String s : contents) {
       OkBuffer source = new OkBuffer();
       source.writeUtf8(s);
-      buffer.write(source, source.byteCount(), Deadline.NONE);
+      buffer.write(source, source.byteCount());
       expected.append(s);
     }
     List<Integer> segmentSizes = buffer.segmentSizes();
@@ -169,7 +169,7 @@ public final class OkBufferTest {
 
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE * 2));
-    sink.write(source, writeSize, Deadline.NONE);
+    sink.write(source, writeSize);
 
     assertEquals(asList(Segment.SIZE - 10, writeSize), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - writeSize, Segment.SIZE), source.segmentSizes());
@@ -184,7 +184,7 @@ public final class OkBufferTest {
 
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE * 2));
-    sink.write(source, writeSize, Deadline.NONE);
+    sink.write(source, writeSize);
 
     assertEquals(asList(Segment.SIZE - 10, writeSize), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - writeSize, Segment.SIZE), source.segmentSizes());
@@ -196,7 +196,7 @@ public final class OkBufferTest {
 
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE * 2));
-    sink.write(source, 20, Deadline.NONE);
+    sink.write(source, 20);
 
     assertEquals(asList(30), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
@@ -211,7 +211,7 @@ public final class OkBufferTest {
 
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('a', Segment.SIZE * 2));
-    sink.write(source, 20, Deadline.NONE);
+    sink.write(source, 20);
 
     assertEquals(asList(30), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
@@ -225,7 +225,7 @@ public final class OkBufferTest {
 
     OkBuffer source = new OkBuffer();
 
-    assertEquals(-1, source.read(sink, 10, Deadline.NONE));
+    assertEquals(-1, source.read(sink, 10));
     assertEquals(10, sink.byteCount());
     assertEquals(0, source.byteCount());
   }
@@ -238,7 +238,7 @@ public final class OkBufferTest {
 
     // Either 0 or -1 is reasonable here. For consistency with Android's
     // ByteArrayInputStream we return 0.
-    assertEquals(-1, source.read(sink, 0, Deadline.NONE));
+    assertEquals(-1, source.read(sink, 0));
     assertEquals(10, sink.byteCount());
     assertEquals(0, source.byteCount());
   }
@@ -250,7 +250,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('b', 15));
 
-    assertEquals(10, source.read(sink, 10, Deadline.NONE));
+    assertEquals(10, source.read(sink, 10));
     assertEquals(20, sink.byteCount());
     assertEquals(5, source.byteCount());
     assertEquals(repeat('a', 10) + repeat('b', 10), sink.readUtf8(20));
@@ -263,7 +263,7 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
     source.writeUtf8(repeat('b', 20));
 
-    assertEquals(20, source.read(sink, 25, Deadline.NONE));
+    assertEquals(20, source.read(sink, 25));
     assertEquals(30, sink.byteCount());
     assertEquals(0, source.byteCount());
     assertEquals(repeat('a', 10) + repeat('b', 20), sink.readUtf8(30));
@@ -336,9 +336,9 @@ public final class OkBufferTest {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Sink sink = OkBuffers.sink(out);
-    sink.write(data, 3, Deadline.NONE);
+    sink.write(data, 3);
     assertEquals("abb", out.toString("UTF-8"));
-    sink.write(data, data.byteCount(), Deadline.NONE);
+    sink.write(data, data.byteCount());
     assertEquals("a" + repeat('b', 9998) + "c", out.toString("UTF-8"));
   }
 
@@ -365,9 +365,9 @@ public final class OkBufferTest {
   @Test public void bufferedSinkEmitsTailWhenItIsComplete() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1), Deadline.NONE);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1));
     assertEquals(0, sink.byteCount());
-    bufferedSink.writeByte(0, Deadline.NONE);
+    bufferedSink.writeByte(0);
     assertEquals(Segment.SIZE, sink.byteCount());
     assertEquals(0, bufferedSink.buffer.byteCount());
   }
@@ -375,14 +375,14 @@ public final class OkBufferTest {
   @Test public void bufferedSinkEmitZero() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8("", Deadline.NONE);
+    bufferedSink.writeUtf8("");
     assertEquals(0, sink.byteCount());
   }
 
   @Test public void bufferedSinkEmitMultipleSegments() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1), Deadline.NONE);
+    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1));
     assertEquals(Segment.SIZE * 3, sink.byteCount());
     assertEquals(Segment.SIZE - 1, bufferedSink.buffer.byteCount());
   }
@@ -390,9 +390,9 @@ public final class OkBufferTest {
   @Test public void bufferedSinkFlush() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeByte('a', Deadline.NONE);
+    bufferedSink.writeByte('a');
     assertEquals(0, sink.byteCount());
-    bufferedSink.flush(Deadline.NONE);
+    bufferedSink.flush();
     assertEquals(0, bufferedSink.buffer.byteCount());
     assertEquals(1, sink.byteCount());
   }
@@ -406,25 +406,25 @@ public final class OkBufferTest {
     OkBuffer sink = new OkBuffer();
 
     // Source: b...bc. Sink: abb.
-    assertEquals(3, source.read(sink, 3, Deadline.NONE));
+    assertEquals(3, source.read(sink, 3));
     assertEquals("abb", sink.readUtf8(3));
 
     // Source: b...bc. Sink: b...b.
-    assertEquals(Segment.SIZE, source.read(sink, 20000, Deadline.NONE));
+    assertEquals(Segment.SIZE, source.read(sink, 20000));
     assertEquals(repeat('b', Segment.SIZE), sink.readUtf8((int) sink.byteCount()));
 
     // Source: b...bc. Sink: b...bc.
-    assertEquals(Segment.SIZE - 1, source.read(sink, 20000, Deadline.NONE));
+    assertEquals(Segment.SIZE - 1, source.read(sink, 20000));
     assertEquals(repeat('b', Segment.SIZE - 2) + "c", sink.readUtf8((int) sink.byteCount()));
 
     // Source and sink are empty.
-    assertEquals(-1, source.read(sink, 1, Deadline.NONE));
+    assertEquals(-1, source.read(sink, 1));
   }
 
   @Test public void sourceFromInputStreamBounds() throws Exception {
     Source source = OkBuffers.source(new ByteArrayInputStream(new byte[100]));
     try {
-      source.read(new OkBuffer(), -1, Deadline.NONE);
+      source.read(new OkBuffer(), -1);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -615,7 +615,7 @@ public final class OkBufferTest {
     OkBuffer sink = new OkBuffer();
     OkBuffer source = new OkBuffer();
     source.writeUtf8("abcd");
-    sink.write(source, 2, Deadline.NONE);
+    sink.write(source, 2);
     assertEquals("ab", sink.readUtf8(2));
   }
 
@@ -626,7 +626,7 @@ public final class OkBufferTest {
     BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("aa");
 
-    bufferedSource.require(2, Deadline.NONE);
+    bufferedSource.require(2);
     assertEquals(2, bufferedSource.buffer.byteCount());
     assertEquals(2, source.byteCount());
   }
@@ -638,7 +638,7 @@ public final class OkBufferTest {
     BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("a");
 
-    bufferedSource.require(2, Deadline.NONE);
+    bufferedSource.require(2);
     assertEquals("ab", bufferedSource.buffer.readUtf8(2));
   }
 
@@ -649,7 +649,7 @@ public final class OkBufferTest {
     BufferedSource bufferedSource = new BufferedSource(source);
 
     try {
-      bufferedSource.require(2, Deadline.NONE);
+      bufferedSource.require(2);
       fail();
     } catch (EOFException expected) {
     }
@@ -662,7 +662,7 @@ public final class OkBufferTest {
 
     BufferedSource bufferedSource = new BufferedSource(source);
 
-    bufferedSource.require(2, Deadline.NONE);
+    bufferedSource.require(2);
     assertEquals(Segment.SIZE, source.byteCount());
     assertEquals(Segment.SIZE, bufferedSource.buffer.byteCount());
   }
@@ -673,7 +673,7 @@ public final class OkBufferTest {
 
     BufferedSource bufferedSource = new BufferedSource(source);
     try {
-      bufferedSource.skip(2, Deadline.NONE);
+      bufferedSource.skip(2);
       fail();
     } catch (EOFException expected) {
     }
@@ -684,7 +684,7 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('a', Segment.SIZE));
     source.writeUtf8(repeat('b', Segment.SIZE));
     BufferedSource bufferedSource = new BufferedSource(source);
-    bufferedSource.skip(2, Deadline.NONE);
+    bufferedSource.skip(2);
     assertEquals(Segment.SIZE, source.byteCount());
     assertEquals(Segment.SIZE - 2, bufferedSource.buffer.byteCount());
   }
@@ -696,7 +696,7 @@ public final class OkBufferTest {
     BufferedSource bufferedSource = new BufferedSource(source);
     bufferedSource.buffer.writeUtf8("aa");
 
-    bufferedSource.skip(2, Deadline.NONE);
+    bufferedSource.skip(2);
     assertEquals(0, bufferedSource.buffer.byteCount());
     assertEquals(2, source.byteCount());
   }

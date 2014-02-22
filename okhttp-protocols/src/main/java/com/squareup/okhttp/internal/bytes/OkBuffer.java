@@ -334,7 +334,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
     return tail;
   }
 
-  @Override public void write(OkBuffer source, long byteCount, Deadline deadline) {
+  @Override public void write(OkBuffer source, long byteCount) {
     // Move bytes from the head of the source buffer to the tail of this buffer
     // while balancing two conflicting goals: don't waste CPU and don't waste
     // memory.
@@ -425,11 +425,16 @@ public final class OkBuffer implements Source, Sink, Cloneable {
     }
   }
 
-  @Override public long read(OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+  @Override public long read(OkBuffer sink, long byteCount) throws IOException {
     if (this.byteCount == 0) return -1L;
     if (byteCount > this.byteCount) byteCount = this.byteCount;
-    sink.write(this, byteCount, deadline);
+    sink.write(this, byteCount);
     return byteCount;
+  }
+
+  @Override public OkBuffer deadline(Deadline deadline) {
+    // All operations are in memory so this class doesn't need to honor deadlines.
+    return this;
   }
 
   /**
@@ -465,10 +470,10 @@ public final class OkBuffer implements Source, Sink, Cloneable {
     return -1L;
   }
 
-  @Override public void flush(Deadline deadline) {
+  @Override public void flush() {
   }
 
-  @Override public void close(Deadline deadline) {
+  @Override public void close() {
   }
 
   /** For testing. This returns the sizes of the segments in this buffer. */

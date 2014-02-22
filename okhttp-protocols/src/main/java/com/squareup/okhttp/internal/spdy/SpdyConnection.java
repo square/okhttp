@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffers;
 import java.io.Closeable;
 import java.io.IOException;
@@ -531,7 +530,7 @@ public final class SpdyConnection implements Closeable {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
-        source.skip(length, Deadline.NONE);
+        source.skip(length);
         return;
       }
       dataStream.receiveData(source, length);

@@ -39,18 +39,18 @@ public final class BufferedSource implements Source {
     this(source, new OkBuffer());
   }
 
-  @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+  @Override public long read(OkBuffer sink, long byteCount)
       throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (closed) throw new IllegalStateException("closed");
 
     if (buffer.byteCount == 0) {
-      long read = source.read(buffer, Segment.SIZE, deadline);
+      long read = source.read(buffer, Segment.SIZE);
       if (read == -1) return -1;
     }
 
     long toRead = Math.min(byteCount, buffer.byteCount);
-    return buffer.read(sink, toRead, deadline);
+    return buffer.read(sink, toRead);
   }
 
   /**
@@ -58,8 +58,8 @@ public final class BufferedSource implements Source {
    * will block until there are bytes to read or the source is definitely
    * exhausted.
    */
-  public boolean exhausted(Deadline deadline) throws IOException {
-    return buffer.byteCount() == 0 && source.read(buffer, Segment.SIZE, deadline) == -1;
+  public boolean exhausted() throws IOException {
+    return buffer.byteCount() == 0 && source.read(buffer, Segment.SIZE) == -1;
   }
 
   /**
@@ -67,39 +67,39 @@ public final class BufferedSource implements Source {
    * an {@link EOFException} if the source is exhausted before the required
    * bytes can be read.
    */
-  void require(long byteCount, Deadline deadline) throws IOException {
+  void require(long byteCount) throws IOException {
     while (buffer.byteCount < byteCount) {
-      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
+      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
     }
   }
 
   public byte readByte() throws IOException {
-    require(1, Deadline.NONE);
+    require(1);
     return buffer.readByte();
   }
 
   public ByteString readByteString(int byteCount) throws IOException {
-    require(byteCount, Deadline.NONE);
+    require(byteCount);
     return buffer.readByteString(byteCount);
   }
 
   public short readShort() throws IOException {
-    require(2, Deadline.NONE);
+    require(2);
     return buffer.readShort();
   }
 
   public int readShortLe() throws IOException {
-    require(2, Deadline.NONE);
+    require(2);
     return buffer.readShortLe();
   }
 
   public int readInt() throws IOException {
-    require(4, Deadline.NONE);
+    require(4);
     return buffer.readInt();
   }
 
   public int readIntLe() throws IOException {
-    require(4, Deadline.NONE);
+    require(4);
     return buffer.readIntLe();
   }
 
@@ -108,9 +108,9 @@ public final class BufferedSource implements Source {
    * buffer} as a buffer. Throws an {@link EOFException} if the source is
    * exhausted before the requested bytes can be skipped.
    */
-  public void skip(long byteCount, Deadline deadline) throws IOException {
+  public void skip(long byteCount) throws IOException {
     while (byteCount > 0) {
-      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE, deadline) == -1) {
+      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE) == -1) {
         throw new EOFException();
       }
       long toSkip = Math.min(byteCount, buffer.byteCount());
@@ -123,12 +123,12 @@ public final class BufferedSource implements Source {
    * Returns the index of {@code b} in the buffer, refilling it if necessary
    * until it is found. This reads an unbounded number of bytes into the buffer.
    */
-  public long seek(byte b, Deadline deadline) throws IOException {
+  public long seek(byte b) throws IOException {
     long start = 0;
     long index;
     while ((index = buffer.indexOf(b, start)) == -1) {
       start = buffer.byteCount;
-      if (source.read(buffer, Segment.SIZE, deadline) == -1) throw new EOFException();
+      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
     }
     return index;
   }
@@ -138,7 +138,7 @@ public final class BufferedSource implements Source {
     return new InputStream() {
       @Override public int read() throws IOException {
         if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
+          long count = source.read(buffer, Segment.SIZE);
           if (count == -1) return -1;
         }
         return buffer.readByte() & 0xff;
@@ -148,7 +148,7 @@ public final class BufferedSource implements Source {
         checkOffsetAndCount(data.length, offset, byteCount);
 
         if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE, Deadline.NONE);
+          long count = source.read(buffer, Segment.SIZE);
           if (count == -1) return -1;
         }
 
@@ -172,7 +172,7 @@ public final class BufferedSource implements Source {
       }
 
       @Override public void close() throws IOException {
-        BufferedSource.this.close(Deadline.NONE);
+        BufferedSource.this.close();
       }
 
       @Override public String toString() {
@@ -181,10 +181,15 @@ public final class BufferedSource implements Source {
     };
   }
 
-  @Override public void close(Deadline deadline) throws IOException {
+  @Override public Source deadline(Deadline deadline) {
+    source.deadline(deadline);
+    return this;
+  }
+
+  @Override public void close() throws IOException {
     if (closed) return;
     closed = true;
-    source.close(deadline);
+    source.close();
     buffer.clear();
   }
 

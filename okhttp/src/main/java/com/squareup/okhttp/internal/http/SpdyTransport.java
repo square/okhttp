@@ -257,13 +257,13 @@ public final class SpdyTransport implements Transport {
       this.cacheRequest = cacheRequest;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount, Deadline deadline)
+    @Override public long read(OkBuffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (inputExhausted) return -1;
 
-      long read = source.read(sink, byteCount, deadline);
+      long read = source.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
         if (cacheRequest != null) {
@@ -279,7 +279,12 @@ public final class SpdyTransport implements Transport {
       return read;
     }
 
-    @Override public void close(Deadline deadline) throws IOException {
+    @Override public Source deadline(Deadline deadline) {
+      source.deadline(deadline);
+      return this;
+    }
+
+    @Override public void close() throws IOException {
       if (closed) return;
 
       if (!inputExhausted && cacheBody != null) {

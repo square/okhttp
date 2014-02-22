@@ -53,13 +53,13 @@ public final class InflaterSource implements Source {
   }
 
   @Override public long read(
-      OkBuffer sink, long byteCount, Deadline deadline) throws IOException {
+      OkBuffer sink, long byteCount) throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (closed) throw new IllegalStateException("closed");
     if (byteCount == 0) return 0;
 
     while (true) {
-      boolean sourceExhausted = refill(deadline);
+      boolean sourceExhausted = refill();
 
       // Decompress the inflater's compressed data into the sink.
       try {
@@ -86,14 +86,14 @@ public final class InflaterSource implements Source {
    * it needs input). Returns true if the inflater required input but the source
    * was exhausted.
    */
-  public boolean refill(Deadline deadline) throws IOException {
+  public boolean refill() throws IOException {
     if (!inflater.needsInput()) return false;
 
     releaseInflatedBytes();
     if (inflater.getRemaining() != 0) throw new IllegalStateException("?"); // TODO: possible?
 
     // If there are compressed bytes in the source, assign them to the inflater.
-    if (source.exhausted(deadline)) return true;
+    if (source.exhausted()) return true;
 
     // Assign buffer bytes to the inflater.
     Segment head = source.buffer.head;
@@ -110,10 +110,15 @@ public final class InflaterSource implements Source {
     source.buffer.skip(toRelease);
   }
 
-  @Override public void close(Deadline deadline) throws IOException {
+  @Override public Source deadline(Deadline deadline) {
+    source.deadline(deadline);
+    return this;
+  }
+
+  @Override public void close() throws IOException {
     if (closed) return;
     inflater.end();
     closed = true;
-    source.close(deadline);
+    source.close();
   }
 }

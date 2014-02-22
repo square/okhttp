@@ -19,7 +19,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
-import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpConnection;
@@ -215,7 +214,7 @@ public final class Connection implements Closeable {
       int readTimeout = socket.getSoTimeout();
       try {
         socket.setSoTimeout(1);
-        if (source.source.read(source.buffer, 1, Deadline.NONE) == -1) {
+        if (source.source.read(source.buffer, 1) == -1) {
           return false; // Stream is exhausted; socket is closed.
         }
         return true;

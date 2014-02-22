@@ -16,7 +16,6 @@
 
 package com.squareup.okhttp.internal;
 
-import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
 import com.squareup.okhttp.internal.bytes.Sink;
 import com.squareup.okhttp.internal.bytes.Source;
@@ -115,7 +114,7 @@ public final class Util {
   public static void closeQuietly(Source source) {
     if (source != null) {
       try {
-        source.close(Deadline.NONE);
+        source.close();
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
@@ -130,7 +129,7 @@ public final class Util {
   public static void closeQuietly(Sink sink) {
     if (sink != null) {
       try {
-        sink.close(Deadline.NONE);
+        sink.close();
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
@@ -277,7 +276,7 @@ public final class Util {
     long startNanos = System.nanoTime();
     OkBuffer skipBuffer = new OkBuffer();
     while (NANOSECONDS.toMillis(System.nanoTime() - startNanos) < timeoutMillis) {
-      long read = in.read(skipBuffer, 2048, Deadline.NONE);
+      long read = in.read(skipBuffer, 2048);
       if (read == -1) return true; // Successfully exhausted the stream.
       skipBuffer.clear();
     }

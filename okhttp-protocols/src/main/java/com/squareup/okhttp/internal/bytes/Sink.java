@@ -15,22 +15,29 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
+import java.io.Closeable;
 import java.io.IOException;
 
 /**
  * An alternative to OutputStream.
  */
-public interface Sink {
+public interface Sink extends Closeable {
   /** Removes {@code byteCount} bytes from {@code source} and appends them to this. */
-  void write(OkBuffer source, long byteCount, Deadline deadline) throws IOException;
+  void write(OkBuffer source, long byteCount) throws IOException;
 
   /** Pushes all buffered bytes to their final destination. */
-  void flush(Deadline deadline) throws IOException;
+  void flush() throws IOException;
 
   /**
    * Pushes all buffered bytes to their final destination and releases the
    * resources held by this sink. It is an error to write a closed sink. It is
    * safe to close a sink more than once.
    */
-  void close(Deadline deadline) throws IOException;
+  @Override void close() throws IOException;
+
+  /**
+   * Sets the deadline for all operations on this sink.
+   * @return this sink.
+   */
+  Sink deadline(Deadline deadline);
 }
