@@ -350,17 +350,6 @@ public final class Util {
     return result;
   }
 
-  /** Mutates the byte array to ensure all characters are lowercase. */
-  public static void asciiLowerCase(byte[] bytes) {
-    for (int i = 0; i < bytes.length; i++) {
-      bytes[i] = asciiLowerCase(bytes[i]);
-    }
-  }
-
-  public static byte asciiLowerCase(byte c) {
-    return 'A' <= c && c <= 'Z' ? (byte) (c + 'a' - 'A') : c;
-  }
-
   public static int reverseBytesShort(short s) {
     int i = s & 0xffff;
     return (i & 0xff00) >>> 8
