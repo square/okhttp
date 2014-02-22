@@ -15,185 +15,61 @@
  */
 package com.squareup.okhttp.internal.bytes;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
-
 /**
  * A source that keeps a buffer internally so that callers can do small reads
- * without a performance penalty.
+ * without a performance penalty. It also allows clients to read ahead,
+ * buffering as much as necessary before consuming input.
  */
-public final class BufferedSource implements Source {
-  public final OkBuffer buffer;
-  public final Source source;
-  private boolean closed;
-
-  public BufferedSource(Source source, OkBuffer buffer) {
-    this.buffer = buffer;
-    this.source = source;
-  }
-
-  public BufferedSource(Source source) {
-    this(source, new OkBuffer());
-  }
-
-  @Override public long read(OkBuffer sink, long byteCount)
-      throws IOException {
-    if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
-    if (closed) throw new IllegalStateException("closed");
-
-    if (buffer.byteCount == 0) {
-      long read = source.read(buffer, Segment.SIZE);
-      if (read == -1) return -1;
-    }
-
-    long toRead = Math.min(byteCount, buffer.byteCount);
-    return buffer.read(sink, toRead);
-  }
+public interface BufferedSource extends Source {
+  OkBuffer buffer();
 
   /**
    * Returns true if there are no more bytes in the buffer or the source. This
    * will block until there are bytes to read or the source is definitely
    * exhausted.
    */
-  public boolean exhausted() throws IOException {
-    return buffer.byteCount() == 0 && source.read(buffer, Segment.SIZE) == -1;
-  }
+  boolean exhausted() throws IOException;
 
   /**
    * Returns when the buffer contains at least {@code byteCount} bytes. Throws
-   * an {@link EOFException} if the source is exhausted before the required
-   * bytes can be read.
+   * an {@link java.io.EOFException} if the source is exhausted before the
+   * required bytes can be read.
    */
-  void require(long byteCount) throws IOException {
-    while (buffer.byteCount < byteCount) {
-      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
-    }
-  }
+  void require(long byteCount) throws IOException;
 
-  public byte readByte() throws IOException {
-    require(1);
-    return buffer.readByte();
-  }
+  byte readByte() throws IOException;
 
-  public ByteString readByteString(int byteCount) throws IOException {
-    require(byteCount);
-    return buffer.readByteString(byteCount);
-  }
+  short readShort() throws IOException;
 
-  public short readShort() throws IOException {
-    require(2);
-    return buffer.readShort();
-  }
+  int readShortLe() throws IOException;
 
-  public int readShortLe() throws IOException {
-    require(2);
-    return buffer.readShortLe();
-  }
+  int readInt() throws IOException;
 
-  public int readInt() throws IOException {
-    require(4);
-    return buffer.readInt();
-  }
-
-  public int readIntLe() throws IOException {
-    require(4);
-    return buffer.readIntLe();
-  }
+  int readIntLe() throws IOException;
 
   /**
    * Reads and discards {@code byteCount} bytes from {@code source} using {@code
-   * buffer} as a buffer. Throws an {@link EOFException} if the source is
-   * exhausted before the requested bytes can be skipped.
+   * buffer} as a buffer. Throws an {@link java.io.EOFException} if the source
+   * is exhausted before the requested bytes can be skipped.
    */
-  public void skip(long byteCount) throws IOException {
-    while (byteCount > 0) {
-      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE) == -1) {
-        throw new EOFException();
-      }
-      long toSkip = Math.min(byteCount, buffer.byteCount());
-      buffer.skip(toSkip);
-      byteCount -= toSkip;
-    }
-  }
+  void skip(long byteCount) throws IOException;
+
+  ByteString readByteString(int byteCount) throws IOException;
+
+  String readUtf8(int byteCount) throws IOException;
 
   /**
    * Returns the index of {@code b} in the buffer, refilling it if necessary
    * until it is found. This reads an unbounded number of bytes into the buffer.
+   *
+   * @throws java.io.EOFException if the stream is exhausted before the
+   *     requested byte is found.
    */
-  public long seek(byte b) throws IOException {
-    long start = 0;
-    long index;
-    while ((index = buffer.indexOf(b, start)) == -1) {
-      start = buffer.byteCount;
-      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
-    }
-    return index;
-  }
+  long seek(byte b) throws IOException;
 
   /** Returns an input stream that reads from this source. */
-  public InputStream inputStream() {
-    return new InputStream() {
-      @Override public int read() throws IOException {
-        if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE);
-          if (count == -1) return -1;
-        }
-        return buffer.readByte() & 0xff;
-      }
-
-      @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
-        checkOffsetAndCount(data.length, offset, byteCount);
-
-        if (buffer.byteCount == 0) {
-          long count = source.read(buffer, Segment.SIZE);
-          if (count == -1) return -1;
-        }
-
-        Segment head = buffer.head;
-        int toCopy = Math.min(byteCount, head.limit - head.pos);
-        System.arraycopy(head.data, head.pos, data, offset, toCopy);
-
-        head.pos += toCopy;
-        buffer.byteCount -= toCopy;
-
-        if (head.pos == head.limit) {
-          buffer.head = head.pop();
-          SegmentPool.INSTANCE.recycle(head);
-        }
-
-        return toCopy;
-      }
-
-      @Override public int available() throws IOException {
-        return (int) Math.min(buffer.byteCount, Integer.MAX_VALUE);
-      }
-
-      @Override public void close() throws IOException {
-        BufferedSource.this.close();
-      }
-
-      @Override public String toString() {
-        return BufferedSource.this.toString() + ".inputStream()";
-      }
-    };
-  }
-
-  @Override public Source deadline(Deadline deadline) {
-    source.deadline(deadline);
-    return this;
-  }
-
-  @Override public void close() throws IOException {
-    if (closed) return;
-    closed = true;
-    source.close();
-    buffer.clear();
-  }
-
-  @Override public String toString() {
-    return "BufferedSource(" + source + ")";
-  }
+  InputStream inputStream();
 }

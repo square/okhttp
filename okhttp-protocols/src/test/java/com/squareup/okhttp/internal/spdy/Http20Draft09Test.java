@@ -475,9 +475,8 @@ public class Http20Draft09Test {
   }
 
   private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
-    OkBuffer buffer = new OkBuffer();
-    buffer.write(ByteString.of(out.toByteArray()));
-    return new Http20Draft09.Reader(new BufferedSource(buffer), 4096, false);
+    OkBuffer buffer = new OkBuffer().write(out.toByteArray());
+    return new Http20Draft09.Reader(buffer, 4096, false);
   }
 
   @Test public void frameSizeError() throws IOException {

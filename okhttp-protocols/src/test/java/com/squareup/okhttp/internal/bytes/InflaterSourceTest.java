@@ -69,15 +69,13 @@ public final class InflaterSourceTest {
 
   @Test public void inflatePoorlyCompressed() throws Exception {
     ByteString original = randomBytes(1024 * 1024);
-    OkBuffer deflated = deflate(toBuffer(original));
+    OkBuffer deflated = deflate(original);
     OkBuffer inflated = inflate(deflated);
     assertEquals(original, inflated.readByteString((int) inflated.byteCount()));
   }
 
   private OkBuffer decodeBase64(String s) {
-    OkBuffer result = new OkBuffer();
-    result.write(ByteString.decodeBase64(s));
-    return result;
+    return new OkBuffer().write(ByteString.decodeBase64(s));
   }
 
   private String readUtf8(OkBuffer buffer) {
@@ -85,18 +83,12 @@ public final class InflaterSourceTest {
   }
 
   /** Use DeflaterOutputStream to deflate source. */
-  private OkBuffer deflate(OkBuffer buffer) throws IOException {
+  private OkBuffer deflate(ByteString source) throws IOException {
     OkBuffer result = new OkBuffer();
-    Sink sink = OkBuffers.sink(new DeflaterOutputStream(new BufferedSink(result).outputStream()));
-    sink.write(buffer, buffer.byteCount());
+    Sink sink = OkBuffers.sink(new DeflaterOutputStream(result.outputStream()));
+    sink.write(new OkBuffer().write(source), source.size());
     sink.close();
     return result;
-  }
-
-  private OkBuffer toBuffer(ByteString byteString) {
-    OkBuffer byteStringBuffer = new OkBuffer();
-    byteStringBuffer.write(byteString);
-    return byteStringBuffer;
   }
 
   /** Returns a new buffer containing the inflated contents of {@code deflated}. */

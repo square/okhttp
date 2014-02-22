@@ -16,9 +16,9 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -1252,7 +1252,7 @@ public final class SpdyConnectionTest {
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     Source in = stream.getSource();
     try {
-      new BufferedSource(in).readByteString(101);
+      OkBuffers.buffer(in).readByteString(101);
       fail();
     } catch (IOException expected) {
       assertEquals("stream was reset: PROTOCOL_ERROR", expected.getMessage());

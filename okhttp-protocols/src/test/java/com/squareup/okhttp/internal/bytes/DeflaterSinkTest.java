@@ -80,7 +80,7 @@ public final class DeflaterSinkTest {
    * either be finished or have a trailing sync flush.
    */
   private OkBuffer inflate(OkBuffer deflated) throws IOException {
-    InputStream deflatedIn = new BufferedSource(deflated).inputStream();
+    InputStream deflatedIn = deflated.inputStream();
     Inflater inflater = new Inflater();
     InputStream inflatedIn = new InflaterInputStream(deflatedIn, inflater);
     OkBuffer result = new OkBuffer();

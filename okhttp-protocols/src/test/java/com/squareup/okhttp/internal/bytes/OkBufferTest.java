@@ -17,10 +17,7 @@ package com.squareup.okhttp.internal.bytes;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
@@ -106,8 +103,8 @@ public final class OkBufferTest {
     OkBuffer buffer = new OkBuffer();
 
     // Take 2 * MAX_SIZE segments. This will drain the pool, even if other tests filled it.
-    buffer.write(ByteString.of(new byte[(int) SegmentPool.MAX_SIZE]));
-    buffer.write(ByteString.of(new byte[(int) SegmentPool.MAX_SIZE]));
+    buffer.write(new byte[(int) SegmentPool.MAX_SIZE]);
+    buffer.write(new byte[(int) SegmentPool.MAX_SIZE]);
     assertEquals(0, SegmentPool.INSTANCE.byteCount);
 
     // Recycle MAX_SIZE segments. They're all in the pool.
@@ -119,11 +116,11 @@ public final class OkBufferTest {
     assertEquals(SegmentPool.MAX_SIZE, SegmentPool.INSTANCE.byteCount);
 
     // Take MAX_SIZE segments to drain the pool.
-    buffer.write(ByteString.of(new byte[(int) SegmentPool.MAX_SIZE]));
+    buffer.write(new byte[(int) SegmentPool.MAX_SIZE]);
     assertEquals(0, SegmentPool.INSTANCE.byteCount);
 
     // Take MAX_SIZE more segments. The pool is drained so these will need to be allocated.
-    buffer.write(ByteString.of(new byte[(int) SegmentPool.MAX_SIZE]));
+    buffer.write(new byte[(int) SegmentPool.MAX_SIZE]);
     assertEquals(0, SegmentPool.INSTANCE.byteCount);
   }
 
@@ -342,61 +339,6 @@ public final class OkBufferTest {
     assertEquals("a" + repeat('b', 9998) + "c", out.toString("UTF-8"));
   }
 
-  @Test public void outputStreamFromSink() throws Exception {
-    OkBuffer sink = new OkBuffer();
-    OutputStream out = new BufferedSink(sink).outputStream();
-    out.write('a');
-    out.write(repeat('b', 9998).getBytes(UTF_8));
-    out.write('c');
-    out.flush();
-    assertEquals("a" + repeat('b', 9998) + "c", sink.readUtf8(10000));
-  }
-
-  @Test public void outputStreamFromSinkBounds() throws Exception {
-    OkBuffer sink = new OkBuffer();
-    OutputStream out = new BufferedSink(sink).outputStream();
-    try {
-      out.write(new byte[100], 50, 51);
-      fail();
-    } catch (ArrayIndexOutOfBoundsException expected) {
-    }
-  }
-
-  @Test public void bufferedSinkEmitsTailWhenItIsComplete() throws IOException {
-    OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1));
-    assertEquals(0, sink.byteCount());
-    bufferedSink.writeByte(0);
-    assertEquals(Segment.SIZE, sink.byteCount());
-    assertEquals(0, bufferedSink.buffer.byteCount());
-  }
-
-  @Test public void bufferedSinkEmitZero() throws IOException {
-    OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8("");
-    assertEquals(0, sink.byteCount());
-  }
-
-  @Test public void bufferedSinkEmitMultipleSegments() throws IOException {
-    OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1));
-    assertEquals(Segment.SIZE * 3, sink.byteCount());
-    assertEquals(Segment.SIZE - 1, bufferedSink.buffer.byteCount());
-  }
-
-  @Test public void bufferedSinkFlush() throws IOException {
-    OkBuffer sink = new OkBuffer();
-    BufferedSink bufferedSink = new BufferedSink(sink);
-    bufferedSink.writeByte('a');
-    assertEquals(0, sink.byteCount());
-    bufferedSink.flush();
-    assertEquals(0, bufferedSink.buffer.byteCount());
-    assertEquals(1, sink.byteCount());
-  }
-
   @Test public void sourceFromInputStream() throws Exception {
     InputStream in = new ByteArrayInputStream(
         ("a" + repeat('b', Segment.SIZE * 2) + "c").getBytes(UTF_8));
@@ -427,53 +369,6 @@ public final class OkBufferTest {
       source.read(new OkBuffer(), -1);
       fail();
     } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test public void inputStreamFromSource() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("a");
-    source.writeUtf8(repeat('b', Segment.SIZE));
-    source.writeUtf8("c");
-
-    InputStream in = new BufferedSource(source).inputStream();
-    assertEquals(0, in.available());
-    assertEquals(Segment.SIZE + 2, source.byteCount());
-
-    // Reading one byte buffers a full segment.
-    assertEquals('a', in.read());
-    assertEquals(Segment.SIZE - 1, in.available());
-    assertEquals(2, source.byteCount());
-
-    // Reading as much as possible reads the rest of that buffered segment.
-    byte[] data = new byte[Segment.SIZE * 2];
-    assertEquals(Segment.SIZE - 1, in.read(data, 0, data.length));
-    assertEquals(repeat('b', Segment.SIZE - 1), new String(data, 0, Segment.SIZE - 1, UTF_8));
-    assertEquals(2, source.byteCount());
-
-    // Continuing to read buffers the next segment.
-    assertEquals('b', in.read());
-    assertEquals(1, in.available());
-    assertEquals(0, source.byteCount());
-
-    // Continuing to read reads from the buffer.
-    assertEquals('c', in.read());
-    assertEquals(0, in.available());
-    assertEquals(0, source.byteCount());
-
-    // Once we've exhausted the source, we're done.
-    assertEquals(-1, in.read());
-    assertEquals(0, source.byteCount());
-  }
-
-  @Test public void inputStreamFromSourceBounds() throws IOException {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8(repeat('a', 100));
-    InputStream in = new BufferedSource(source).inputStream();
-    try {
-      in.read(new byte[100], 50, 51);
-      fail();
-    } catch (ArrayIndexOutOfBoundsException expected) {
     }
   }
 
@@ -530,7 +425,7 @@ public final class OkBufferTest {
 
   @Test public void readByte() throws Exception {
     OkBuffer data = new OkBuffer();
-    data.write(new ByteString(new byte[] { (byte) 0xab, (byte) 0xcd }));
+    data.write(new byte[] { (byte) 0xab, (byte) 0xcd });
     assertEquals(0xab, data.readByte() & 0xff);
     assertEquals(0xcd, data.readByte() & 0xff);
     assertEquals(0, data.byteCount());
@@ -538,9 +433,9 @@ public final class OkBufferTest {
 
   @Test public void readShort() throws Exception {
     OkBuffer data = new OkBuffer();
-    data.write(new ByteString(new byte[] {
+    data.write(new byte[] {
         (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x01
-    }));
+    });
     assertEquals((short) 0xabcd, data.readShort());
     assertEquals((short) 0xef01, data.readShort());
     assertEquals(0, data.byteCount());
@@ -549,7 +444,7 @@ public final class OkBufferTest {
   @Test public void readShortSplitAcrossMultipleSegments() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeUtf8(repeat('a', Segment.SIZE - 1));
-    data.write(new ByteString(new byte[] { (byte) 0xab, (byte) 0xcd }));
+    data.write(new byte[] { (byte) 0xab, (byte) 0xcd });
     data.readUtf8(Segment.SIZE - 1);
     assertEquals((short) 0xabcd, data.readShort());
     assertEquals(0, data.byteCount());
@@ -557,10 +452,10 @@ public final class OkBufferTest {
 
   @Test public void readInt() throws Exception {
     OkBuffer data = new OkBuffer();
-    data.write(new ByteString(new byte[] {
+    data.write(new byte[] {
         (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x01,
         (byte) 0x87, (byte) 0x65, (byte) 0x43, (byte) 0x21
-    }));
+    });
     assertEquals(0xabcdef01, data.readInt());
     assertEquals(0x87654321, data.readInt());
     assertEquals(0, data.byteCount());
@@ -569,9 +464,9 @@ public final class OkBufferTest {
   @Test public void readIntSplitAcrossMultipleSegments() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeUtf8(repeat('a', Segment.SIZE - 3));
-    data.write(new ByteString(new byte[] {
+    data.write(new byte[] {
         (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x01
-    }));
+    });
     data.readUtf8(Segment.SIZE - 3);
     assertEquals(0xabcdef01, data.readInt());
     assertEquals(0, data.byteCount());
@@ -617,88 +512,6 @@ public final class OkBufferTest {
     source.writeUtf8("abcd");
     sink.write(source, 2);
     assertEquals("ab", sink.readUtf8(2));
-  }
-
-  @Test public void requireTracksBufferFirst() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("bb");
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-    bufferedSource.buffer.writeUtf8("aa");
-
-    bufferedSource.require(2);
-    assertEquals(2, bufferedSource.buffer.byteCount());
-    assertEquals(2, source.byteCount());
-  }
-
-  @Test public void requireIncludesBufferBytes() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("b");
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-    bufferedSource.buffer.writeUtf8("a");
-
-    bufferedSource.require(2);
-    assertEquals("ab", bufferedSource.buffer.readUtf8(2));
-  }
-
-  @Test public void requireInsufficientData() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("a");
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-
-    try {
-      bufferedSource.require(2);
-      fail();
-    } catch (EOFException expected) {
-    }
-  }
-
-  @Test public void requireReadsOneSegmentAtATime() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8(repeat('a', Segment.SIZE));
-    source.writeUtf8(repeat('b', Segment.SIZE));
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-
-    bufferedSource.require(2);
-    assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE, bufferedSource.buffer.byteCount());
-  }
-
-  @Test public void skipInsufficientData() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("a");
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-    try {
-      bufferedSource.skip(2);
-      fail();
-    } catch (EOFException expected) {
-    }
-  }
-
-  @Test public void skipReadsOneSegmentAtATime() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8(repeat('a', Segment.SIZE));
-    source.writeUtf8(repeat('b', Segment.SIZE));
-    BufferedSource bufferedSource = new BufferedSource(source);
-    bufferedSource.skip(2);
-    assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE - 2, bufferedSource.buffer.byteCount());
-  }
-
-  @Test public void skipTracksBufferFirst() throws Exception {
-    OkBuffer source = new OkBuffer();
-    source.writeUtf8("bb");
-
-    BufferedSource bufferedSource = new BufferedSource(source);
-    bufferedSource.buffer.writeUtf8("aa");
-
-    bufferedSource.skip(2);
-    assertEquals(0, bufferedSource.buffer.byteCount());
-    assertEquals(2, source.byteCount());
   }
 
   @Test public void cloneDoesNotObserveWritesToOriginal() throws Exception {

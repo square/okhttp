@@ -162,7 +162,7 @@ public class GzipSourceTest {
     gzippedSource.write(abcGzipped, 0, abcGzipped.length);
 
     ExhaustableSource exhaustableSource = new ExhaustableSource(gzippedSource);
-    BufferedSource gunzippedSource = new BufferedSource(new GzipSource(exhaustableSource));
+    BufferedSource gunzippedSource = OkBuffers.buffer(new GzipSource(exhaustableSource));
 
     assertEquals('a', gunzippedSource.readByte());
     assertEquals('b', gunzippedSource.readByte());
@@ -183,7 +183,7 @@ public class GzipSourceTest {
     gzippedSource.write(abcGzipped, 0, abcGzipped.length);
     gzippedSource.writeByte('d'); // This byte shouldn't be here!
 
-    BufferedSource gunzippedSource = new BufferedSource(new GzipSource(gzippedSource));
+    BufferedSource gunzippedSource = OkBuffers.buffer(new GzipSource(gzippedSource));
 
     assertEquals('a', gunzippedSource.readByte());
     assertEquals('b', gunzippedSource.readByte());

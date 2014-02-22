@@ -29,15 +29,15 @@ public interface Sink extends Closeable {
   void flush() throws IOException;
 
   /**
+   * Sets the deadline for all operations on this sink.
+   * @return this sink.
+   */
+  Sink deadline(Deadline deadline);
+
+  /**
    * Pushes all buffered bytes to their final destination and releases the
    * resources held by this sink. It is an error to write a closed sink. It is
    * safe to close a sink more than once.
    */
   @Override void close() throws IOException;
-
-  /**
-   * Sets the deadline for all operations on this sink.
-   * @return this sink.
-   */
-  Sink deadline(Deadline deadline);
 }

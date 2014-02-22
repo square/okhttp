@@ -214,7 +214,7 @@ public final class Connection implements Closeable {
       int readTimeout = socket.getSoTimeout();
       try {
         socket.setSoTimeout(1);
-        if (source.source.read(source.buffer, 1) == -1) {
+        if (source.exhausted()) {
           return false; // Stream is exhausted; socket is closed.
         }
         return true;
@@ -306,7 +306,7 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    BufferedSource tunnelSource = new BufferedSource(OkBuffers.source(in));
+    BufferedSource tunnelSource = OkBuffers.buffer(OkBuffers.source(in));
     HttpConnection tunnelConnection = new HttpConnection(pool, this, tunnelSource, out);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
@@ -319,7 +319,7 @@ public final class Connection implements Closeable {
         case HTTP_OK:
           // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If that
           // happens, then we will have buffered bytes that are needed by the SSLSocket!
-          if (tunnelSource.buffer.byteCount() > 0) {
+          if (tunnelSource.buffer().byteCount() > 0) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
           return;
@@ -338,7 +338,7 @@ public final class Connection implements Closeable {
   }
 
   private void streamWrapper() throws IOException {
-    source = new BufferedSource(OkBuffers.source(in));
+    source = OkBuffers.buffer(OkBuffers.source(in));
     out = new BufferedOutputStream(out, 256);
   }
 }

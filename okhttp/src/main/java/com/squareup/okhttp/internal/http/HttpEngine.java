@@ -28,8 +28,8 @@ import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.GzipSource;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.io.InputStream;
@@ -286,7 +286,7 @@ public class HttpEngine {
     InputStream result = responseBodyBytes;
     return result != null
         ? result
-        : (responseBodyBytes = new BufferedSource(getResponseBody()).inputStream());
+        : (responseBodyBytes = OkBuffers.buffer(getResponseBody()).inputStream());
   }
 
   public final Connection getConnection() {

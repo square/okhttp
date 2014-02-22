@@ -16,7 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
@@ -261,7 +261,7 @@ final class Job extends NamedRunnable {
       InputStream result = in;
       return result != null
           ? result
-          : (in = new BufferedSource(source).inputStream());
+          : (in = OkBuffers.buffer(source).inputStream());
     }
   }
 }

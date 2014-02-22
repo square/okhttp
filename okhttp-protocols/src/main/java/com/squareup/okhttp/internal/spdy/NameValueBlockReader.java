@@ -5,6 +5,7 @@ import com.squareup.okhttp.internal.bytes.ByteString;
 import com.squareup.okhttp.internal.bytes.Deadline;
 import com.squareup.okhttp.internal.bytes.InflaterSource;
 import com.squareup.okhttp.internal.bytes.OkBuffer;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.bytes.Source;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ class NameValueBlockReader {
     };
 
     this.inflaterSource = new InflaterSource(throttleSource, inflater);
-    this.source = new BufferedSource(inflaterSource);
+    this.source = OkBuffers.buffer(inflaterSource);
   }
 
   public List<Header> readNameValueBlock(int length) throws IOException {

@@ -16,7 +16,9 @@
 package com.squareup.okhttp.internal.bytes;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
+import java.io.EOFException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +41,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
  * returning it to you. Even if you're going to write over that space anyway.
  * This class avoids zero-fill and GC churn by pooling byte arrays.
  */
-public final class OkBuffer implements Source, Sink, Cloneable {
+public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
@@ -52,6 +54,73 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   /** Returns the number of bytes currently in this buffer. */
   public long byteCount() {
     return byteCount;
+  }
+
+  @Override public OkBuffer buffer() {
+    return this;
+  }
+
+  @Override public OutputStream outputStream() {
+    return new OutputStream() {
+      @Override public void write(int b) {
+        writeByte((byte) b);
+      }
+
+      @Override public void write(byte[] data, int offset, int byteCount) {
+        OkBuffer.this.write(data, offset, byteCount);
+      }
+
+      @Override public void flush() {
+      }
+
+      @Override public void close() {
+      }
+
+      @Override public String toString() {
+        return this + ".outputStream()";
+      }
+    };
+  }
+
+  @Override public OkBuffer emitCompleteSegments() {
+    return this; // Nowhere to emit to!
+  }
+
+  @Override public boolean exhausted() {
+    return byteCount == 0;
+  }
+
+  @Override public void require(long byteCount) throws EOFException {
+    if (this.byteCount < byteCount) throw new EOFException();
+  }
+
+  @Override public long seek(byte b) throws EOFException {
+    long index = indexOf(b);
+    if (index == -1) throw new EOFException();
+    return index;
+  }
+
+  @Override public InputStream inputStream() {
+    return new InputStream() {
+      @Override public int read() {
+        return readByte() & 0xff;
+      }
+
+      @Override public int read(byte[] sink, int offset, int byteCount) {
+        return OkBuffer.this.read(sink, offset, byteCount);
+      }
+
+      @Override public int available() {
+        return (int) Math.min(byteCount, Integer.MAX_VALUE);
+      }
+
+      @Override public void close() {
+      }
+
+      @Override public String toString() {
+        return OkBuffer.this + ".inputStream()";
+      }
+    };
   }
 
   /**
@@ -73,8 +142,8 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Removes a byte from the front of this buffer and returns it. */
-  public byte readByte() {
-    if (byteCount < 1) throw new IllegalArgumentException("byteCount < 1: " + byteCount);
+  @Override public byte readByte() {
+    if (byteCount == 0) throw new IllegalStateException("byteCount == 0");
 
     Segment segment = head;
     int pos = segment.pos;
@@ -105,7 +174,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Removes a Big-Endian short from the front of this buffer and returns it. */
-  public short readShort() {
+  @Override public short readShort() {
     if (byteCount < 2) throw new IllegalArgumentException("byteCount < 2: " + byteCount);
 
     Segment segment = head;
@@ -135,7 +204,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Removes a Big-Endian int from the front of this buffer and returns it. */
-  public int readInt() {
+  @Override public int readInt() {
     if (byteCount < 4) throw new IllegalArgumentException("byteCount < 4: " + byteCount);
 
     Segment segment = head;
@@ -229,6 +298,25 @@ public final class OkBuffer implements Source, Sink, Cloneable {
     return result;
   }
 
+  /** Like {@link InputStream#read}. */
+  int read(byte[] sink, int offset, int byteCount) {
+    if (byteCount == 0) return -1;
+
+    Segment s = this.head;
+    int toCopy = Math.min(byteCount, s.limit - s.pos);
+    System.arraycopy(s.data, s.pos, sink, offset, toCopy);
+
+    s.pos += toCopy;
+    this.byteCount -= toCopy;
+
+    if (s.pos == s.limit) {
+      this.head = s.pop();
+      SegmentPool.INSTANCE.recycle(s);
+    }
+
+    return toCopy;
+  }
+
   /**
    * Discards all bytes in this buffer. Calling this method when you're done
    * with a buffer will return its segments to the pool.
@@ -256,33 +344,38 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Appends {@code byteString} to this. */
-  public void write(ByteString byteString) {
-    write(byteString.data, 0, byteString.data.length);
+  @Override public OkBuffer write(ByteString byteString) {
+    return write(byteString.data, 0, byteString.data.length);
   }
 
   /** Encodes {@code string} as UTF-8 and appends the bytes to this. */
-  public void writeUtf8(String string) {
+  @Override public OkBuffer writeUtf8(String string) {
     byte[] data = string.getBytes(Util.UTF_8);
-    write(data, 0, data.length);
+    return write(data, 0, data.length);
   }
 
-  void write(byte[] data, int offset, int byteCount) {
+  @Override public OkBuffer write(byte[] source) {
+    return write(source, 0, source.length);
+  }
+
+  @Override public OkBuffer write(byte[] source, int offset, int byteCount) {
     int limit = offset + byteCount;
     while (offset < limit) {
       Segment tail = writableSegment(1);
 
       int toCopy = Math.min(limit - offset, Segment.SIZE - tail.limit);
-      System.arraycopy(data, offset, tail.data, tail.limit, toCopy);
+      System.arraycopy(source, offset, tail.data, tail.limit, toCopy);
 
       offset += toCopy;
       tail.limit += toCopy;
     }
 
     this.byteCount += byteCount;
+    return this;
   }
 
   /** Appends a Big-Endian byte to the end of this buffer. */
-  public OkBuffer writeByte(int b) {
+  @Override public OkBuffer writeByte(int b) {
     Segment tail = writableSegment(1);
     tail.data[tail.limit++] = (byte) b;
     byteCount += 1;
@@ -290,7 +383,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Appends a Big-Endian short to the end of this buffer. */
-  public OkBuffer writeShort(int s) {
+  @Override public OkBuffer writeShort(int s) {
     Segment tail = writableSegment(2);
     byte[] data = tail.data;
     int limit = tail.limit;
@@ -302,7 +395,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
   }
 
   /** Appends a Big-Endian int to the end of this buffer. */
-  public OkBuffer writeInt(int i) {
+  @Override public OkBuffer writeInt(int i) {
     Segment tail = writableSegment(4);
     byte[] data = tail.data;
     int limit = tail.limit;
@@ -425,7 +518,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
     }
   }
 
-  @Override public long read(OkBuffer sink, long byteCount) throws IOException {
+  @Override public long read(OkBuffer sink, long byteCount) {
     if (this.byteCount == 0) return -1L;
     if (byteCount > this.byteCount) byteCount = this.byteCount;
     sink.write(this, byteCount);
@@ -441,7 +534,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
    * Returns the index of {@code b} in this, or -1 if this buffer does not
    * contain {@code b}.
    */
-  public long indexOf(byte b) throws IOException {
+  public long indexOf(byte b) {
     return indexOf(b, 0);
   }
 
@@ -449,7 +542,7 @@ public final class OkBuffer implements Source, Sink, Cloneable {
    * Returns the index of {@code b} in this at or beyond {@code fromIndex}, or
    * -1 if this buffer does not contain {@code b} in that range.
    */
-  public long indexOf(byte b, long fromIndex) throws IOException {
+  public long indexOf(byte b, long fromIndex) {
     Segment s = head;
     if (s == null) return -1L;
     long offset = 0L;

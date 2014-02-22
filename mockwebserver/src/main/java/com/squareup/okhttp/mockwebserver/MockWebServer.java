@@ -21,8 +21,8 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.bytes.BufferedSource;
 import com.squareup.okhttp.internal.bytes.ByteString;
+import com.squareup.okhttp.internal.bytes.OkBuffers;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -656,7 +656,7 @@ public final class MockWebServer {
         }
       }
 
-      InputStream bodyIn = new BufferedSource(stream.getSource()).inputStream();
+      InputStream bodyIn = OkBuffers.buffer(stream.getSource()).inputStream();
       ByteArrayOutputStream bodyOut = new ByteArrayOutputStream();
       byte[] buffer = new byte[8192];
       int count;
