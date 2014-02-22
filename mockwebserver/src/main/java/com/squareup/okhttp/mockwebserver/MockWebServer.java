@@ -63,7 +63,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
@@ -656,7 +656,7 @@ public final class MockWebServer {
         }
       }
 
-      InputStream bodyIn = OkBuffers.buffer(stream.getSource()).inputStream();
+      InputStream bodyIn = Okio.buffer(stream.getSource()).inputStream();
       ByteArrayOutputStream bodyOut = new ByteArrayOutputStream();
       byte[] buffer = new byte[8192];
       int count;

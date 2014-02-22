@@ -33,7 +33,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can
@@ -464,7 +464,7 @@ public final class SpdyConnection implements Closeable {
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
-      this("", client, OkBuffers.buffer(OkBuffers.source(socket.getInputStream())),
+      this("", client, Okio.buffer(Okio.source(socket.getInputStream())),
           socket.getOutputStream());
     }
 

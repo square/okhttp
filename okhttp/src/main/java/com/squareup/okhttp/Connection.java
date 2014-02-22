@@ -34,7 +34,7 @@ import java.net.SocketTimeoutException;
 import javax.net.ssl.SSLSocket;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffers;
+import okio.Okio;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
@@ -306,7 +306,7 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    BufferedSource tunnelSource = OkBuffers.buffer(OkBuffers.source(in));
+    BufferedSource tunnelSource = Okio.buffer(Okio.source(in));
     HttpConnection tunnelConnection = new HttpConnection(pool, this, tunnelSource, out);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
@@ -338,7 +338,7 @@ public final class Connection implements Closeable {
   }
 
   private void streamWrapper() throws IOException {
-    source = OkBuffers.buffer(OkBuffers.source(in));
+    source = Okio.buffer(Okio.source(in));
     out = new BufferedOutputStream(out, 256);
   }
 }

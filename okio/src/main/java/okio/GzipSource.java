@@ -54,7 +54,7 @@ public final class GzipSource implements Source {
 
   public GzipSource(Source source) throws IOException {
     this.inflater = new Inflater(true);
-    this.source = OkBuffers.buffer(source);
+    this.source = Okio.buffer(source);
     this.inflaterSource = new InflaterSource(this.source, inflater);
   }
 

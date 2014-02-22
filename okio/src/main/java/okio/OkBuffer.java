@@ -18,6 +18,8 @@ package okio;
 import java.io.EOFException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,9 +43,6 @@ import static okio.Util.checkOffsetAndCount;
  * This class avoids zero-fill and GC churn by pooling byte arrays.
  */
 public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
-  private static final char[] HEX_DIGITS =
-      { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
   Segment head;
   long byteCount;
 
@@ -579,22 +578,27 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return result;
   }
 
-  /**
-   * Returns the contents of this buffer in hex. For buffers larger than 1 MiB
-   * this method is undefined.
-   */
   @Override public String toString() {
-    if (byteCount > 0x100000) return super.toString();
-    int charCount = (int) (byteCount * 2);
-    char[] result = new char[charCount];
-    int offset = 0;
-    for (Segment s = head; offset < charCount; s = s.next) {
-      for (int i = s.pos; i < s.limit; i++) {
-        result[offset++] = HEX_DIGITS[(s.data[i] >> 4) & 0xf];
-        result[offset++] = HEX_DIGITS[s.data[i] & 0xf];
-      }
+    if (byteCount == 0) {
+      return "OkBuffer[size=0]";
     }
-    return new String(result);
+
+    if (byteCount <= 16) {
+      ByteString data = clone().readByteString((int) byteCount);
+      return String.format("OkBuffer[size=%s data=%s]", byteCount, data.hex());
+    }
+
+    try {
+      MessageDigest md5 = MessageDigest.getInstance("MD5");
+      md5.update(head.data, head.pos, head.limit - head.pos);
+      for (Segment s = head.next; s != head; s = s.next) {
+        md5.update(s.data, s.pos, s.limit - s.pos);
+      }
+      return String.format("OkBuffer[size=%s md5=%s]",
+          byteCount, ByteString.of(md5.digest()).hex());
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError();
+    }
   }
 
   /** Returns a deep copy of this buffer. */

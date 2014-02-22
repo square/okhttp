@@ -15,14 +15,10 @@
  */
 package okio;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
-import static okio.Util.UTF_8;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -75,10 +71,27 @@ public final class OkBufferTest {
     assertEquals(repeat('a', Segment.SIZE), buffer.readUtf8(Segment.SIZE));
   }
 
-  @Test public void bufferToString() throws Exception {
+  @Test public void toStringOnEmptyBuffer() throws Exception {
     OkBuffer buffer = new OkBuffer();
-    buffer.writeUtf8("\u0000\u0001\u0002\u007f");
-    assertEquals("0001027f", buffer.toString());
+    assertEquals("OkBuffer[size=0]", buffer.toString());
+  }
+
+  @Test public void toStringOnSmallBufferIncludesContents() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.write(ByteString.decodeHex("a1b2c3d4e5f61a2b3c4d5e6f10203040"));
+    assertEquals("OkBuffer[size=16 data=a1b2c3d4e5f61a2b3c4d5e6f10203040]", buffer.toString());
+  }
+
+  @Test public void toStringIncludesMd5() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.write(ByteString.encodeUtf8("12345678901234567"));
+    assertEquals("OkBuffer[size=17 md5=2c9728a2138b2f25e9f89f99bdccf8db]", buffer.toString());
+  }
+
+  @Test public void toStringOnMultipleSegmentBuffer() throws Exception {
+    OkBuffer buffer = new OkBuffer();
+    buffer.writeUtf8(repeat('a', 6144));
+    assertEquals("OkBuffer[size=6144 md5=d890021f28522533c1cc1b9b1f83ce73]", buffer.toString());
   }
 
   @Test public void multipleSegmentBuffers() throws Exception {
@@ -325,58 +338,11 @@ public final class OkBufferTest {
     assertEquals(halfSegment * 4 - 1, buffer.indexOf((byte) 'd', halfSegment * 4 - 1));
   }
 
-  @Test public void sinkFromOutputStream() throws Exception {
-    OkBuffer data = new OkBuffer();
-    data.writeUtf8("a");
-    data.writeUtf8(repeat('b', 9998));
-    data.writeUtf8("c");
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    Sink sink = OkBuffers.sink(out);
-    sink.write(data, 3);
-    assertEquals("abb", out.toString("UTF-8"));
-    sink.write(data, data.byteCount());
-    assertEquals("a" + repeat('b', 9998) + "c", out.toString("UTF-8"));
-  }
-
-  @Test public void sourceFromInputStream() throws Exception {
-    InputStream in = new ByteArrayInputStream(
-        ("a" + repeat('b', Segment.SIZE * 2) + "c").getBytes(UTF_8));
-
-    // Source: ab...bc
-    Source source = OkBuffers.source(in);
-    OkBuffer sink = new OkBuffer();
-
-    // Source: b...bc. Sink: abb.
-    assertEquals(3, source.read(sink, 3));
-    assertEquals("abb", sink.readUtf8(3));
-
-    // Source: b...bc. Sink: b...b.
-    assertEquals(Segment.SIZE, source.read(sink, 20000));
-    assertEquals(repeat('b', Segment.SIZE), sink.readUtf8((int) sink.byteCount()));
-
-    // Source: b...bc. Sink: b...bc.
-    assertEquals(Segment.SIZE - 1, source.read(sink, 20000));
-    assertEquals(repeat('b', Segment.SIZE - 2) + "c", sink.readUtf8((int) sink.byteCount()));
-
-    // Source and sink are empty.
-    assertEquals(-1, source.read(sink, 1));
-  }
-
-  @Test public void sourceFromInputStreamBounds() throws Exception {
-    Source source = OkBuffers.source(new ByteArrayInputStream(new byte[100]));
-    try {
-      source.read(new OkBuffer(), -1);
-      fail();
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
   @Test public void writeBytes() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeByte(0xab);
     data.writeByte(0xcd);
-    assertEquals("abcd", data.toString());
+    assertEquals("OkBuffer[size=2 data=abcd]", data.toString());
   }
 
   @Test public void writeLastByteInSegment() throws Exception {
@@ -386,21 +352,21 @@ public final class OkBufferTest {
     data.writeByte(0x21);
     assertEquals(asList(Segment.SIZE, 1), data.segmentSizes());
     assertEquals(repeat('a', Segment.SIZE - 1), data.readUtf8(Segment.SIZE - 1));
-    assertEquals("2021", data.toString());
+    assertEquals("OkBuffer[size=2 data=2021]", data.toString());
   }
 
   @Test public void writeShort() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeShort(0xabcd);
     data.writeShort(0x4321);
-    assertEquals("abcd4321", data.toString());
+    assertEquals("OkBuffer[size=4 data=abcd4321]", data.toString());
   }
 
   @Test public void writeInt() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeInt(0xabcdef01);
     data.writeInt(0x87654321);
-    assertEquals("abcdef0187654321", data.toString());
+    assertEquals("OkBuffer[size=8 data=abcdef0187654321]", data.toString());
   }
 
   @Test public void writeLastIntegerInSegment() throws Exception {
@@ -410,7 +376,7 @@ public final class OkBufferTest {
     data.writeInt(0x87654321);
     assertEquals(asList(Segment.SIZE, 4), data.segmentSizes());
     assertEquals(repeat('a', Segment.SIZE - 4), data.readUtf8(Segment.SIZE - 4));
-    assertEquals("abcdef0187654321", data.toString());
+    assertEquals("OkBuffer[size=8 data=abcdef0187654321]", data.toString());
   }
 
   @Test public void writeIntegerDoesntQuiteFitInSegment() throws Exception {
@@ -420,7 +386,7 @@ public final class OkBufferTest {
     data.writeInt(0x87654321);
     assertEquals(asList(Segment.SIZE - 3, 8), data.segmentSizes());
     assertEquals(repeat('a', Segment.SIZE - 3), data.readUtf8(Segment.SIZE - 3));
-    assertEquals("abcdef0187654321", data.toString());
+    assertEquals("OkBuffer[size=8 data=abcdef0187654321]", data.toString());
   }
 
   @Test public void readByte() throws Exception {

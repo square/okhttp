@@ -43,7 +43,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import okio.GzipSource;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
@@ -290,7 +290,7 @@ public class HttpEngine {
     InputStream result = responseBodyBytes;
     return result != null
         ? result
-        : (responseBodyBytes = OkBuffers.buffer(getResponseBody()).inputStream());
+        : (responseBodyBytes = Okio.buffer(getResponseBody()).inputStream());
   }
 
   public final Connection getConnection() {

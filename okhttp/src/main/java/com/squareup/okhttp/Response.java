@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -221,7 +221,7 @@ public final class Response {
     // TODO: Source needs to be an API type for this to be public
     public Source source() {
       Source s = source;
-      return s != null ? s : (source = OkBuffers.source(byteStream()));
+      return s != null ? s : (source = Okio.source(byteStream()));
     }
 
     public final byte[] bytes() throws IOException {

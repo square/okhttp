@@ -39,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
+import okio.ByteString;
 import okio.OkBuffer;
 import okio.Sink;
 import okio.Source;
@@ -56,9 +57,6 @@ public final class Util {
 
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
-
-  private static final char[] DIGITS =
-      { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
   private Util() {
   }
@@ -303,23 +301,12 @@ public final class Util {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance("MD5");
       byte[] md5bytes = messageDigest.digest(s.getBytes("UTF-8"));
-      return bytesToHexString(md5bytes);
+      return ByteString.of(md5bytes).hex();
     } catch (NoSuchAlgorithmException e) {
       throw new AssertionError(e);
     } catch (UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }
-  }
-
-  private static String bytesToHexString(byte[] bytes) {
-    char[] digits = DIGITS;
-    char[] buf = new char[bytes.length * 2];
-    int c = 0;
-    for (byte b : bytes) {
-      buf[c++] = digits[(b >> 4) & 0xf];
-      buf[c++] = digits[b & 0xf];
-    }
-    return new String(buf);
   }
 
   /** Returns an immutable copy of {@code list}. */

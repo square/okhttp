@@ -37,7 +37,7 @@ import java.util.Set;
 import okio.ByteString;
 import okio.Deadline;
 import okio.OkBuffer;
-import okio.OkBuffers;
+import okio.Okio;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
@@ -273,7 +273,7 @@ public final class SpdyTransport implements Transport {
       }
 
       if (cacheBody != null) {
-        OkBuffers.copy(sink, sink.byteCount() - read, read, cacheBody);
+        Okio.copy(sink, sink.byteCount() - read, read, cacheBody);
       }
 
       return read;
