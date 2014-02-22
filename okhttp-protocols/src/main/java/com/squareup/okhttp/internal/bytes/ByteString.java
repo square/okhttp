@@ -21,8 +21,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import static com.squareup.okhttp.internal.Util.asciiLowerCase;
-
 /**
  * An immutable sequence of bytes.
  *
@@ -107,20 +105,6 @@ public final class ByteString {
   public static ByteString read(InputStream in, int count) throws IOException {
     byte[] result = new byte[count];
     Util.readFully(in, result);
-    return new ByteString(result);
-  }
-
-  /**
-   * Reads {@code count} bytes from {@code in} and returns the result converted
-   * to ASCII lowercase.
-   *
-   * @throws java.io.EOFException if {@code in} has fewer than {@code count}
-   * bytes to read.
-   */
-  public static ByteString readLowerCase(InputStream in, int count) throws IOException {
-    byte[] result = new byte[count];
-    Util.readFully(in, result);
-    asciiLowerCase(result);
     return new ByteString(result);
   }
 

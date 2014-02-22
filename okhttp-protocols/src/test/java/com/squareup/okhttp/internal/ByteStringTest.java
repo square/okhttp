@@ -72,9 +72,9 @@ public class ByteStringTest {
 
   @Test public void readLowerCase() throws Exception {
     InputStream in = new ByteArrayInputStream("ABC".getBytes(Util.UTF_8));
-    assertEquals(ByteString.of((byte) 0x61, (byte) 0x62), ByteString.readLowerCase(in, 2));
-    assertEquals(ByteString.of((byte) 0x63), ByteString.readLowerCase(in, 1));
-    assertEquals(ByteString.of(), ByteString.readLowerCase(in, 0));
+    assertEquals(ByteString.encodeUtf8("ab"), ByteString.read(in, 2).toAsciiLowercase());
+    assertEquals(ByteString.encodeUtf8("c"), ByteString.read(in, 1).toAsciiLowercase());
+    assertEquals(ByteString.EMPTY, ByteString.read(in, 0).toAsciiLowercase());
   }
 
   @Test public void toAsciiLowerCaseNoUppercase() throws Exception {
