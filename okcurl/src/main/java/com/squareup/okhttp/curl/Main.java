@@ -19,7 +19,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -46,7 +45,7 @@ import javax.net.ssl.X509TrustManager;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @Command(name = Main.NAME, description = "A curl for the next-generation web.")
-public class Main extends HelpOption implements Runnable, Response.Receiver {
+public class Main extends HelpOption implements Runnable {
   static final String NAME = "okcurl";
   static final int DEFAULT_TIMEOUT = -1;
 
@@ -130,11 +129,32 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
 
     client = createClient();
     Request request = createRequest();
-    client.enqueue(request, this);
+    try {
+      Response response = client.execute(request);
+      if (showHeaders) {
+        System.out.println(response.statusLine());
+        Headers headers = response.headers();
+        for (int i = 0, count = headers.size(); i < count; i++) {
+          System.out.println(headers.name(i) + ": " + headers.value(i));
+        }
+        System.out.println();
+      }
 
-    // Immediately begin triggering an executor shutdown so that after execution of the above
-    // request the threads do not stick around until timeout.
-    client.getDispatcher().getExecutorService().shutdown();
+      Response.Body body = response.body();
+      byte[] buffer = new byte[1024];
+      while (body.ready()) {
+        int c = body.byteStream().read(buffer);
+        if (c == -1) {
+          return;
+        }
+        System.out.write(buffer, 0, c);
+      }
+      body.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } finally {
+      close();
+    }
   }
 
   private OkHttpClient createClient() {
@@ -203,36 +223,6 @@ public class Main extends HelpOption implements Runnable, Response.Receiver {
     request.header("User-Agent", userAgent);
 
     return request.build();
-  }
-
-  @Override public void onFailure(Failure failure) {
-    failure.exception().printStackTrace();
-    close();
-  }
-
-  @Override public boolean onResponse(Response response) throws IOException {
-    if (showHeaders) {
-      System.out.println(response.statusLine());
-      Headers headers = response.headers();
-      for (int i = 0, count = headers.size(); i < count; i++) {
-        System.out.println(headers.name(i) + ": " + headers.value(i));
-      }
-      System.out.println();
-    }
-
-    Response.Body body = response.body();
-    byte[] buffer = new byte[1024];
-    while (body.ready()) {
-      int c = body.byteStream().read(buffer);
-      if (c == -1) {
-        close();
-        return true;
-      }
-
-      System.out.write(buffer, 0, c);
-    }
-    close();
-    return false;
   }
 
   private void close() {

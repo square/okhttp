@@ -266,6 +266,10 @@ public class HttpEngine {
     return response != null;
   }
 
+  public final ResponseSource responseSource() {
+    return responseSource;
+  }
+
   public final Request getRequest() {
     return request;
   }

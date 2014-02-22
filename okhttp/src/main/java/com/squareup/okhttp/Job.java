@@ -47,7 +47,7 @@ final class Job extends NamedRunnable {
 
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
-  private HttpEngine engine;
+  HttpEngine engine;
 
   public Job(Dispatcher dispatcher, OkHttpClient client, Request request,
       Response.Receiver responseReceiver) {
@@ -91,7 +91,7 @@ final class Job extends NamedRunnable {
    * Performs the request and returns the response. May return null if this job
    * was canceled.
    */
-  private Response getResponse() throws IOException {
+  Response getResponse() throws IOException {
     Response redirectedBy = null;
 
     // Copy body metadata to the appropriate request headers.
@@ -146,7 +146,10 @@ final class Job extends NamedRunnable {
       if (redirect == null) {
         engine.releaseConnection();
         return response.newBuilder()
-            .body(new RealResponseBody(response, engine.getResponseBody()))
+            // Cache body includes original content-length and content-type data.
+            .body(engine.responseSource().usesCache()
+                ? engine.getResponse().body()
+                : new RealResponseBody(response, engine.getResponseBody()))
             .redirectedBy(redirectedBy)
             .build();
       }

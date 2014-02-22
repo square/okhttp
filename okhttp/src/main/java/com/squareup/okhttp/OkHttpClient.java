@@ -372,6 +372,46 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
+   * Invokes {@code request} immediately, and blocks until the response can be
+   * processed or is in error.
+   *
+   * <p>The caller may read the response body with the response's
+   * {@link Response#body} method.  To facilitate connection recycling, callers
+   * should always {@link Response.Body#close() close the response body}.
+   *
+   * <p>Note that transport-layer success (receiving a HTTP response code,
+   * headers and body) does not necessarily indicate application-layer
+   * success: {@code response} may still indicate an unhappy HTTP response
+   * code like 404 or 500.
+   *
+   * <h3>Non-blocking responses</h3>
+   *
+   * <p>Receivers do not need to block while waiting for the response body to
+   * download. Instead, they can get called back as data arrives. Use {@link
+   * Response.Body#ready} to check if bytes should be read immediately. While
+   * there is data ready, read it.
+   *
+   * <p>The current implementation of {@link Response.Body#ready} always
+   * returns true when the underlying transport is HTTP/1. This results in
+   * blocking on that transport. For effective non-blocking your server must
+   * support {@link Protocol#SPDY_3} or {@link Protocol#HTTP_2}.
+   *
+   * @throws IOException when the request could not be executed due to a
+   * connectivity problem or timeout. Because networks can fail during an
+   * exchange, it is possible that the remote server accepted the request
+   * before the failure.
+   */
+  public Response execute(Request request) throws IOException {
+    // Copy the client. Otherwise changes (socket factory, redirect policy,
+    // etc.) may incorrectly be reflected in the request when it is executed.
+    OkHttpClient client = copyWithDefaults();
+    Job job = new Job(dispatcher, client, request, null);
+    Response result = job.getResponse(); // Since we don't cancel, this won't be null.
+    job.engine.releaseConnection(); // Transfer ownership of the body to the caller.
+    return result;
+  }
+
+  /**
    * Schedules {@code request} to be executed at some point in the future. The
    * {@link #getDispatcher dispatcher} defines when the request will run:
    * usually immediately unless there are several other requests currently being
