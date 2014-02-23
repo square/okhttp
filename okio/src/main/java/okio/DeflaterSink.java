@@ -70,8 +70,9 @@ public final class DeflaterSink implements Sink {
 
   @IgnoreJRERequirement
   private void deflate(boolean syncFlush) throws IOException {
+    OkBuffer buffer = sink.buffer();
     while (true) {
-      Segment s = sink.buffer().writableSegment(1);
+      Segment s = buffer.writableSegment(1);
 
       // The 4-parameter overload of deflate() doesn't exist in the RI until
       // Java 1.7, and is public (although with @hide) on Android since 2.3.
@@ -83,7 +84,7 @@ public final class DeflaterSink implements Sink {
 
       if (deflated == 0) return;
       s.limit += deflated;
-      sink.buffer().byteCount += deflated;
+      buffer.byteCount += deflated;
       sink.emitCompleteSegments();
     }
   }

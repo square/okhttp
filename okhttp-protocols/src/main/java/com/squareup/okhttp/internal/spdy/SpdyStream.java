@@ -194,6 +194,10 @@ public final class SpdyStream {
       }
     }
     connection.writeSynReply(id, outFinished, responseHeaders);
+
+    if (outFinished) {
+      connection.flush();
+    }
   }
 
   /**
@@ -547,8 +551,8 @@ public final class SpdyStream {
       }
       if (pos > 0) {
         writeFrame();
-        connection.flush();
       }
+      connection.flush();
     }
 
     @Override public void close() throws IOException {

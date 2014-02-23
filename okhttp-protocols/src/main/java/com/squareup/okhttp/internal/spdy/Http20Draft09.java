@@ -16,11 +16,9 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Deadline;
@@ -62,8 +60,8 @@ public final class Http20Draft09 implements Variant {
     return new Reader(source, 4096, client);
   }
 
-  @Override public FrameWriter newWriter(OutputStream out, boolean client) {
-    return new Writer(out, client);
+  @Override public FrameWriter newWriter(BufferedSink sink, boolean client) {
+    return new Writer(sink, client);
   }
 
   static final class Reader implements FrameReader {
@@ -287,20 +285,20 @@ public final class Http20Draft09 implements Variant {
   }
 
   static final class Writer implements FrameWriter {
-    private final DataOutputStream out;
+    private final BufferedSink sink;
     private final boolean client;
-    private final ByteArrayOutputStream hpackBuffer;
+    private final OkBuffer hpackBuffer;
     private final HpackDraft05.Writer hpackWriter;
 
-    Writer(OutputStream out, boolean client) {
-      this.out = new DataOutputStream(out);
+    Writer(BufferedSink sink, boolean client) {
+      this.sink = sink;
       this.client = client;
-      this.hpackBuffer = new ByteArrayOutputStream();
+      this.hpackBuffer = new OkBuffer();
       this.hpackWriter = new HpackDraft05.Writer(hpackBuffer);
     }
 
     @Override public synchronized void flush() throws IOException {
-      out.flush();
+      sink.flush();
     }
 
     @Override public synchronized void ackSettings() throws IOException {
@@ -309,17 +307,17 @@ public final class Http20Draft09 implements Variant {
       byte flags = FLAG_ACK;
       int streamId = 0;
       frameHeader(length, type, flags, streamId);
+      sink.flush();
     }
 
     @Override public synchronized void connectionHeader() throws IOException {
       if (!client) return; // Nothing to write; servers don't send connection headers!
-      out.write(CONNECTION_HEADER.toByteArray());
-      out.flush();
+      sink.write(CONNECTION_HEADER.toByteArray());
+      sink.flush();
     }
 
-    @Override
-    public synchronized void synStream(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, int slot, List<Header> headerBlock)
+    @Override public synchronized void synStream(boolean outFinished, boolean inFinished,
+        int streamId, int associatedStreamId, int priority, int slot, List<Header> headerBlock)
         throws IOException {
       if (inFinished) throw new UnsupportedOperationException();
       headers(outFinished, streamId, priority, headerBlock);
@@ -335,34 +333,33 @@ public final class Http20Draft09 implements Variant {
       headers(false, streamId, -1, headerBlock);
     }
 
-    @Override
-    public synchronized void pushPromise(int streamId, int promisedStreamId,
+    @Override public synchronized void pushPromise(int streamId, int promisedStreamId,
         List<Header> requestHeaders) throws IOException {
-      hpackBuffer.reset();
+      if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(requestHeaders);
 
-      int length = 4 + hpackBuffer.size();
+      int length = (int) (4 + hpackBuffer.byteCount());
       byte type = TYPE_PUSH_PROMISE;
       byte flags = FLAG_END_HEADERS;
       frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
-      out.writeInt(promisedStreamId & 0x7fffffff);
-      hpackBuffer.writeTo(out);
+      sink.writeInt(promisedStreamId & 0x7fffffff);
+      sink.write(hpackBuffer, hpackBuffer.byteCount());
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
         List<Header> headerBlock) throws IOException {
-      hpackBuffer.reset();
+      if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(headerBlock);
 
-      int length = hpackBuffer.size();
+      int length = (int) hpackBuffer.byteCount();
       byte type = TYPE_HEADERS;
       byte flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
       if (priority != -1) flags |= FLAG_PRIORITY;
       if (priority != -1) length += 4;
       frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
-      if (priority != -1) out.writeInt(priority & 0x7fffffff);
-      hpackBuffer.writeTo(out);
+      if (priority != -1) sink.writeInt(priority & 0x7fffffff);
+      sink.write(hpackBuffer, hpackBuffer.byteCount());
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
@@ -373,8 +370,8 @@ public final class Http20Draft09 implements Variant {
       byte type = TYPE_RST_STREAM;
       byte flags = FLAG_NONE;
       frameHeader(length, type, flags, streamId);
-      out.writeInt(errorCode.httpCode);
-      out.flush();
+      sink.writeInt(errorCode.httpCode);
+      sink.flush();
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, byte[] data)
@@ -393,7 +390,7 @@ public final class Http20Draft09 implements Variant {
         throws IOException {
       byte type = TYPE_DATA;
       frameHeader(length, type, flags, streamId);
-      out.write(data, offset, length);
+      sink.write(data, offset, length);
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {
@@ -404,10 +401,10 @@ public final class Http20Draft09 implements Variant {
       frameHeader(length, type, flags, streamId);
       for (int i = 0; i < Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
-        out.writeInt(i & 0xffffff);
-        out.writeInt(settings.get(i));
+        sink.writeInt(i & 0xffffff);
+        sink.writeInt(settings.get(i));
       }
-      out.flush();
+      sink.flush();
     }
 
     @Override public synchronized void ping(boolean ack, int payload1, int payload2)
@@ -417,26 +414,25 @@ public final class Http20Draft09 implements Variant {
       byte flags = ack ? FLAG_ACK : FLAG_NONE;
       int streamId = 0;
       frameHeader(length, type, flags, streamId);
-      out.writeInt(payload1);
-      out.writeInt(payload2);
-      out.flush();
+      sink.writeInt(payload1);
+      sink.writeInt(payload2);
+      sink.flush();
     }
 
-    @Override
-    public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
-        throws IOException {
+    @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode,
+        byte[] debugData) throws IOException {
       if (errorCode.httpCode == -1) throw illegalArgument("errorCode.httpCode == -1");
       int length = 8 + debugData.length;
       byte type = TYPE_GOAWAY;
       byte flags = FLAG_NONE;
       int streamId = 0;
       frameHeader(length, type, flags, streamId);
-      out.writeInt(lastGoodStreamId);
-      out.writeInt(errorCode.httpCode);
+      sink.writeInt(lastGoodStreamId);
+      sink.writeInt(errorCode.httpCode);
       if (debugData.length > 0) {
-        out.write(debugData);
+        sink.write(debugData);
       }
-      out.flush();
+      sink.flush();
     }
 
     @Override public synchronized void windowUpdate(int streamId, long windowSizeIncrement)
@@ -449,19 +445,19 @@ public final class Http20Draft09 implements Variant {
       byte type = TYPE_WINDOW_UPDATE;
       byte flags = FLAG_NONE;
       frameHeader(length, type, flags, streamId);
-      out.writeInt((int) windowSizeIncrement);
-      out.flush();
+      sink.writeInt((int) windowSizeIncrement);
+      sink.flush();
     }
 
-    @Override public void close() throws IOException {
-      out.close();
+    @Override public synchronized void close() throws IOException {
+      sink.close();
     }
 
     void frameHeader(int length, byte type, byte flags, int streamId) throws IOException {
       if (length > 16383) throw illegalArgument("FRAME_SIZE_ERROR length > 16383: %s", length);
       if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
-      out.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
-      out.writeInt(streamId & 0x7fffffff);
+      sink.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      sink.writeInt(streamId & 0x7fffffff);
     }
   }
 
@@ -491,8 +487,7 @@ public final class Http20Draft09 implements Variant {
       this.source = source;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount)
-        throws IOException {
+    @Override public long read(OkBuffer sink, long byteCount) throws IOException {
       while (left == 0) {
         if ((flags & FLAG_END_HEADERS) != 0) return -1;
         readContinuationHeader();

@@ -480,7 +480,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void frameSizeError() throws IOException {
-    Http20Draft09.Writer writer = new Http20Draft09.Writer(new ByteArrayOutputStream(), true);
+    Http20Draft09.Writer writer = new Http20Draft09.Writer(new OkBuffer(), true);
 
     try {
       writer.frameHeader(16384, Http20Draft09.TYPE_DATA, Http20Draft09.FLAG_NONE, 0);
@@ -491,7 +491,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void streamIdHasReservedBit() throws IOException {
-      Http20Draft09.Writer writer = new Http20Draft09.Writer(new ByteArrayOutputStream(), true);
+      Http20Draft09.Writer writer = new Http20Draft09.Writer(new OkBuffer(), true);
 
       try {
       int streamId = 3;
@@ -504,22 +504,22 @@ public class Http20Draft09Test {
   }
 
   private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    new HpackDraft05.Writer(new DataOutputStream(out)).writeHeaders(sentHeaders);
-    return out.toByteArray();
+    OkBuffer out = new OkBuffer();
+    new HpackDraft05.Writer(out).writeHeaders(sentHeaders);
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).ping(ack, payload1, payload2);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] sendDataFrame(byte[] data) throws IOException {
@@ -527,15 +527,15 @@ public class Http20Draft09Test {
   }
 
   private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).dataFrame(expectedStreamId, Http20Draft09.FLAG_NONE, data,
         offset, byteCount);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] windowUpdate(long windowSizeIncrement) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 }

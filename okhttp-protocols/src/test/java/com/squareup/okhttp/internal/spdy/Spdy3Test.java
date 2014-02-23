@@ -98,21 +98,21 @@ public class Spdy3Test {
   }
 
   private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Spdy3.Writer(out, true).sendDataFrame(expectedStreamId, 0, data, offset, byteCount);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] windowUpdate(long increment) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Spdy3.Writer(out, true).windowUpdate(expectedStreamId, increment);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
   private byte[] sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    OkBuffer out = new OkBuffer();
     new Spdy3.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
-    return out.toByteArray();
+    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 }

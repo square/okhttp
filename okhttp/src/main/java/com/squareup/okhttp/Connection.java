@@ -32,6 +32,7 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import javax.net.ssl.SSLSocket;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
@@ -73,6 +74,7 @@ public final class Connection implements Closeable {
   private InputStream in;
   private OutputStream out;
   private BufferedSource source;
+  private BufferedSink sink;
   private boolean connected = false;
   private HttpConnection httpConnection;
   private SpdyConnection spdyConnection;
@@ -98,7 +100,7 @@ public final class Connection implements Closeable {
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
     } else {
-      streamWrapper();
+      streamWrapper(true);
       httpConnection = new HttpConnection(pool, this, source, out);
     }
     connected = true;
@@ -153,7 +155,6 @@ public final class Connection implements Closeable {
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
     handshake = Handshake.get(sslSocket.getSession());
-    streamWrapper();
 
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
@@ -162,11 +163,13 @@ public final class Connection implements Closeable {
     }
 
     if (selectedProtocol.spdyVariant) {
+      streamWrapper(false);
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, source, out)
+      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, source, sink)
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
+      streamWrapper(true);
       httpConnection = new HttpConnection(pool, this, source, out);
     }
   }
@@ -337,8 +340,14 @@ public final class Connection implements Closeable {
     }
   }
 
-  private void streamWrapper() throws IOException {
+  // TODO: drop the outputStream option when we use Okio's sink in HttpConnection.
+  private void streamWrapper(boolean outputStream) throws IOException {
     source = Okio.buffer(Okio.source(in));
-    out = new BufferedOutputStream(out, 256);
+
+    if (outputStream) {
+      out = new BufferedOutputStream(out, 256);
+    } else {
+      sink = Okio.buffer(Okio.sink(out));
+    }
   }
 }

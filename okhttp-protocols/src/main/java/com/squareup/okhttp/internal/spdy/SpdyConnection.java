@@ -21,7 +21,6 @@ import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
@@ -148,7 +148,7 @@ public final class SpdyConnection implements Closeable {
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize();
     bufferPool = new ByteArrayPool(INITIAL_WINDOW_SIZE * 8); // TODO: revisit size limit!
     frameReader = variant.newReader(builder.source, client);
-    frameWriter = variant.newWriter(builder.out, client);
+    frameWriter = variant.newWriter(builder.sink, client);
 
     readerRunnable = new Reader();
     new Thread(readerRunnable).start(); // Not a daemon thread.
@@ -230,6 +230,10 @@ public final class SpdyConnection implements Closeable {
 
       frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
           requestHeaders);
+    }
+
+    if (!out) {
+      frameWriter.flush();
     }
 
     return stream;
@@ -458,25 +462,25 @@ public final class SpdyConnection implements Closeable {
   public static class Builder {
     private String hostName;
     private BufferedSource source;
-    private OutputStream out;
+    private BufferedSink sink;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
     private Protocol protocol = Protocol.SPDY_3;
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
       this("", client, Okio.buffer(Okio.source(socket.getInputStream())),
-          socket.getOutputStream());
+          Okio.buffer(Okio.sink(socket.getOutputStream())));
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
      *     peer accepted the connection.
      */
-    public Builder(String hostName, boolean client, BufferedSource source, OutputStream out) {
+    public Builder(String hostName, boolean client, BufferedSource source, BufferedSink sink) {
       this.hostName = hostName;
       this.client = client;
       this.source = source;
-      this.out = out;
+      this.sink = sink;
     }
 
     public Builder handler(IncomingStreamHandler handler) {
