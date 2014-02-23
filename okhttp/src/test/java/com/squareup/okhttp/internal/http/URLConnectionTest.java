@@ -2105,11 +2105,12 @@ public final class URLConnectionTest {
     out.write(upload);
     assertEquals("abc", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
-    out.flush(); // dubious but permitted
+    out.flush(); // Dubious but permitted.
     try {
       out.write("ghi".getBytes("UTF-8"));
+      out.flush();
       fail();
-    } catch (IOException expected) {
+    } catch (IllegalStateException expected) {
     }
   }
 
@@ -2432,6 +2433,7 @@ public final class URLConnectionTest {
     out.write('c');
     try {
       out.write('d');
+      out.flush();
       fail();
     } catch (IOException expected) {
     }

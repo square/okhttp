@@ -44,7 +44,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import okio.BufferedSink;
 import okio.ByteString;
+import okio.Sink;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -201,14 +203,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final OutputStream getOutputStream() throws IOException {
     connect();
 
-    OutputStream out = httpEngine.getRequestBody();
-    if (out == null) {
+    BufferedSink sink = httpEngine.getBufferedRequestBody();
+    if (sink == null) {
       throw new ProtocolException("method does not support a request body: " + method);
     } else if (httpEngine.hasResponse()) {
       throw new ProtocolException("cannot write request body after response has been read");
     }
 
-    return out;
+    return sink.outputStream();
   }
 
   @Override public final Permission getPermission() throws IOException {
@@ -269,7 +271,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableOutputStream requestBody) {
+      RetryableSink requestBody) {
     Request.Builder builder = new Request.Builder()
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
@@ -325,7 +327,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
       // The first request was insufficient. Prepare for another...
       String retryMethod = method;
-      OutputStream requestBody = httpEngine.getRequestBody();
+      Sink requestBody = httpEngine.getRequestBody();
 
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
       // redirect should keep the same method, Chrome, Firefox and the
@@ -340,7 +342,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         requestBody = null;
       }
 
-      if (requestBody != null && !(requestBody instanceof RetryableOutputStream)) {
+      if (requestBody != null && !(requestBody instanceof RetryableSink)) {
         throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
@@ -349,7 +351,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(retryMethod, connection, (RetryableOutputStream) requestBody);
+      httpEngine = newHttpEngine(retryMethod, connection, (RetryableSink) requestBody);
     }
   }
 

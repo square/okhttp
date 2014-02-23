@@ -32,7 +32,7 @@ public class Spdy3Test {
 
   @Test public void tooLargeDataFrame() throws IOException {
     try {
-      sendDataFrame(new byte[0x1000000]);
+      sendDataFrame(new OkBuffer().write(new byte[0x1000000]));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("FRAME_TOO_LARGE max size is 16Mib: " + 0x1000000L, e.getMessage());
@@ -93,13 +93,10 @@ public class Spdy3Test {
     return new Spdy3.Reader(data, false);
   }
 
-  private byte[] sendDataFrame(byte[] data) throws IOException {
-    return sendDataFrame(data, 0, data.length);
-  }
-
-  private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
+  private byte[] sendDataFrame(OkBuffer source) throws IOException {
     OkBuffer out = new OkBuffer();
-    new Spdy3.Writer(out, true).sendDataFrame(expectedStreamId, 0, data, offset, byteCount);
+    Spdy3.Writer writer = new Spdy3.Writer(out, true);
+    writer.sendDataFrame(expectedStreamId, 0, source, (int) source.byteCount());
     return out.readByteString((int) out.byteCount()).toByteArray();
   }
 

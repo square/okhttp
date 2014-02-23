@@ -21,13 +21,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import okio.BufferedSink;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
@@ -158,7 +158,7 @@ public final class Request {
     }
 
     /** Writes the content of this request to {@code out}. */
-    public abstract void writeTo(OutputStream out) throws IOException;
+    public abstract void writeTo(BufferedSink sink) throws IOException;
 
     /**
      * Returns a new request body that transmits {@code content}. If {@code
@@ -190,8 +190,8 @@ public final class Request {
           return content.length;
         }
 
-        @Override public void writeTo(OutputStream out) throws IOException {
-          out.write(content);
+        @Override public void writeTo(BufferedSink sink) throws IOException {
+          sink.write(content);
         }
       };
     }
@@ -210,7 +210,7 @@ public final class Request {
           return file.length();
         }
 
-        @Override public void writeTo(OutputStream out) throws IOException {
+        @Override public void writeTo(BufferedSink sink) throws IOException {
           long length = contentLength();
           if (length == 0) return;
 
@@ -219,7 +219,7 @@ public final class Request {
             in = new FileInputStream(file);
             byte[] buffer = new byte[(int) Math.min(8192, length)];
             for (int c; (c = in.read(buffer)) != -1; ) {
-              out.write(buffer, 0, c);
+              sink.write(buffer, 0, c);
             }
           } finally {
             Util.closeQuietly(in);

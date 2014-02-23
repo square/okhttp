@@ -64,6 +64,10 @@ public final class Http20Draft09 implements Variant {
     return new Writer(sink, client);
   }
 
+  @Override public int maxFrameSize() {
+    return 16383;
+  }
+
   static final class Reader implements FrameReader {
     private final BufferedSource source;
     private final ContinuationSource continuation;
@@ -289,6 +293,7 @@ public final class Http20Draft09 implements Variant {
     private final boolean client;
     private final OkBuffer hpackBuffer;
     private final HpackDraft05.Writer hpackWriter;
+    private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
@@ -298,10 +303,12 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override public synchronized void flush() throws IOException {
+      if (closed) throw new IOException("closed");
       sink.flush();
     }
 
     @Override public synchronized void ackSettings() throws IOException {
+      if (closed) throw new IOException("closed");
       int length = 0;
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_ACK;
@@ -311,6 +318,7 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override public synchronized void connectionHeader() throws IOException {
+      if (closed) throw new IOException("closed");
       if (!client) return; // Nothing to write; servers don't send connection headers!
       sink.write(CONNECTION_HEADER.toByteArray());
       sink.flush();
@@ -320,21 +328,25 @@ public final class Http20Draft09 implements Variant {
         int streamId, int associatedStreamId, int priority, int slot, List<Header> headerBlock)
         throws IOException {
       if (inFinished) throw new UnsupportedOperationException();
+      if (closed) throw new IOException("closed");
       headers(outFinished, streamId, priority, headerBlock);
     }
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
         List<Header> headerBlock) throws IOException {
+      if (closed) throw new IOException("closed");
       headers(outFinished, streamId, -1, headerBlock);
     }
 
     @Override public synchronized void headers(int streamId, List<Header> headerBlock)
         throws IOException {
+      if (closed) throw new IOException("closed");
       headers(false, streamId, -1, headerBlock);
     }
 
     @Override public synchronized void pushPromise(int streamId, int promisedStreamId,
         List<Header> requestHeaders) throws IOException {
+      if (closed) throw new IOException("closed");
       if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(requestHeaders);
 
@@ -348,6 +360,7 @@ public final class Http20Draft09 implements Variant {
 
     private void headers(boolean outFinished, int streamId, int priority,
         List<Header> headerBlock) throws IOException {
+      if (closed) throw new IOException("closed");
       if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(headerBlock);
 
@@ -364,6 +377,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
         throws IOException {
+      if (closed) throw new IOException("closed");
       if (errorCode.spdyRstCode == -1) throw new IllegalArgumentException();
 
       int length = 4;
@@ -374,26 +388,27 @@ public final class Http20Draft09 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data)
+    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
         throws IOException {
-      data(outFinished, streamId, data, 0, data.length);
+      data(outFinished, streamId, source, (int) source.byteCount());
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
-        int offset, int byteCount) throws IOException {
+    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,
+        int byteCount) throws IOException {
+      if (closed) throw new IOException("closed");
       byte flags = FLAG_NONE;
       if (outFinished) flags |= FLAG_END_STREAM;
-      dataFrame(streamId, flags, data, offset, byteCount); // TODO: Implement looping strategy
+      dataFrame(streamId, flags, source, byteCount);
     }
 
-    void dataFrame(int streamId, byte flags, byte[] data, int offset, int length)
-        throws IOException {
+    void dataFrame(int streamId, byte flags, OkBuffer buffer, int length) throws IOException {
       byte type = TYPE_DATA;
       frameHeader(length, type, flags, streamId);
-      sink.write(data, offset, length);
+      sink.write(buffer, length);
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {
+      if (closed) throw new IOException("closed");
       int length = settings.size() * 8;
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_NONE;
@@ -409,6 +424,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void ping(boolean ack, int payload1, int payload2)
         throws IOException {
+      if (closed) throw new IOException("closed");
       int length = 8;
       byte type = TYPE_PING;
       byte flags = ack ? FLAG_ACK : FLAG_NONE;
@@ -421,6 +437,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode,
         byte[] debugData) throws IOException {
+      if (closed) throw new IOException("closed");
       if (errorCode.httpCode == -1) throw illegalArgument("errorCode.httpCode == -1");
       int length = 8 + debugData.length;
       byte type = TYPE_GOAWAY;
@@ -437,6 +454,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void windowUpdate(int streamId, long windowSizeIncrement)
         throws IOException {
+      if (closed) throw new IOException("closed");
       if (windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL) {
         throw illegalArgument("windowSizeIncrement == 0 || windowSizeIncrement > 0x7fffffffL: %s",
             windowSizeIncrement);
@@ -450,6 +468,7 @@ public final class Http20Draft09 implements Variant {
     }
 
     @Override public synchronized void close() throws IOException {
+      closed = true;
       sink.close();
     }
 

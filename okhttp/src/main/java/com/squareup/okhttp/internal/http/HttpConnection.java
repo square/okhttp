@@ -21,7 +21,6 @@ import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.AbstractOutputStream;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,6 +32,7 @@ import okio.BufferedSource;
 import okio.Deadline;
 import okio.OkBuffer;
 import okio.Okio;
+import okio.Sink;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
@@ -209,19 +209,19 @@ public final class HttpConnection {
     }
   }
 
-  public OutputStream newChunkedOutputStream(int defaultChunkLength) {
+  public Sink newChunkedOutputStream(int defaultChunkLength) {
     if (state != STATE_OPEN_REQUEST_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_WRITING_REQUEST_BODY;
-    return new ChunkedOutputStream(sink, defaultChunkLength);
+    return new ChunkedSink(sink, defaultChunkLength);
   }
 
-  public OutputStream newFixedLengthOutputStream(long contentLength) {
+  public Sink newFixedLengthOutputStream(long contentLength) {
     if (state != STATE_OPEN_REQUEST_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_WRITING_REQUEST_BODY;
-    return new FixedLengthOutputStream(sink, contentLength);
+    return new FixedLengthSink(sink, contentLength);
   }
 
-  public void writeRequestBody(RetryableOutputStream requestBody) throws IOException {
+  public void writeRequestBody(RetryableSink requestBody) throws IOException {
     if (state != STATE_OPEN_REQUEST_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READ_RESPONSE_HEADERS;
     requestBody.writeToSocket(sink);
@@ -256,40 +256,40 @@ public final class HttpConnection {
   }
 
   /** An HTTP body with a fixed length known in advance. */
-  private final class FixedLengthOutputStream extends AbstractOutputStream {
+  private final class FixedLengthSink implements Sink {
+    private boolean closed;
     private final BufferedSink sink;
     private long bytesRemaining;
 
-    private FixedLengthOutputStream(BufferedSink sink, long bytesRemaining) {
+    private FixedLengthSink(BufferedSink sink, long bytesRemaining) {
       this.sink = sink;
       this.bytesRemaining = bytesRemaining;
     }
 
-    @Override public void write(byte[] buffer, int offset, int count) throws IOException {
-      checkNotClosed();
-      checkOffsetAndCount(buffer.length, offset, count);
-      if (count > bytesRemaining) {
-        throw new ProtocolException("expected " + bytesRemaining + " bytes but received " + count);
+    @Override public Sink deadline(Deadline deadline) {
+      return this; // TODO: honor deadline.
+    }
+
+    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+      if (closed) throw new IllegalStateException("closed");
+      checkOffsetAndCount(source.byteCount(), 0, byteCount);
+      if (byteCount > bytesRemaining) {
+        throw new ProtocolException("expected " + bytesRemaining
+            + " bytes but received " + byteCount);
       }
-      sink.write(buffer, offset, count);
-      bytesRemaining -= count;
+      sink.write(source, byteCount);
+      bytesRemaining -= byteCount;
     }
 
     @Override public void flush() throws IOException {
-      if (closed) {
-        return; // don't throw; this stream might have been closed on the caller's behalf
-      }
+      if (closed) return; // Don't throw; this stream might have been closed on the caller's behalf.
       sink.flush();
     }
 
     @Override public void close() throws IOException {
-      if (closed) {
-        return;
-      }
+      if (closed) return;
       closed = true;
-      if (bytesRemaining > 0) {
-        throw new ProtocolException("unexpected end of stream");
-      }
+      if (bytesRemaining > 0) throw new ProtocolException("unexpected end of stream");
       state = STATE_READ_RESPONSE_HEADERS;
     }
   }
@@ -305,15 +305,16 @@ public final class HttpConnection {
    * buffered until {@code maxChunkLength} bytes are ready, at which point the
    * chunk is written and the buffer is cleared.
    */
-  private final class ChunkedOutputStream extends AbstractOutputStream {
+  private final class ChunkedSink implements Sink {
     /** Scratch space for up to 8 hex digits, and then a constant CRLF. */
     private final byte[] hex = { 0, 0, 0, 0, 0, 0, 0, 0, '\r', '\n' };
 
+    private boolean closed;
     private final BufferedSink sink;
     private final int maxChunkLength;
     private final OkBuffer bufferedChunk;
 
-    private ChunkedOutputStream(BufferedSink sink, int maxChunkLength) {
+    private ChunkedSink(BufferedSink sink, int maxChunkLength) {
       this.sink = sink;
       this.maxChunkLength = Math.max(1, dataLength(maxChunkLength));
       this.bufferedChunk = new OkBuffer();
@@ -332,59 +333,26 @@ public final class HttpConnection {
       return dataPlusHeaderLength - headerLength;
     }
 
-    @Override public synchronized void write(byte[] buffer, int offset, int count)
-        throws IOException {
-      checkNotClosed();
-      checkOffsetAndCount(buffer.length, offset, count);
-
-      while (count > 0) {
-        int numBytesWritten;
-
-        if (bufferedChunk.byteCount() > 0 || count < maxChunkLength) {
-          // fill the buffered chunk and then maybe write that to the stream
-          numBytesWritten = (int) Math.min(count, maxChunkLength - bufferedChunk.byteCount());
-          // TODO: skip unnecessary copies from buffer->bufferedChunk?
-          bufferedChunk.write(buffer, offset, numBytesWritten);
-          if (bufferedChunk.byteCount() == maxChunkLength) {
-            writeBufferedChunkToSocket();
-          }
-        } else {
-          // write a single chunk of size maxChunkLength to the stream
-          numBytesWritten = maxChunkLength;
-          writeHex(numBytesWritten);
-          sink.write(buffer, offset, numBytesWritten);
-          sink.writeUtf8(CRLF);
-        }
-
-        offset += numBytesWritten;
-        count -= numBytesWritten;
-      }
+    @Override public Sink deadline(Deadline deadline) {
+      return this; // TODO: honor deadline.
     }
 
-    /**
-     * Equivalent to, but cheaper than writing Integer.toHexString().getBytes()
-     * followed by CRLF.
-     */
-    private void writeHex(int i) throws IOException {
-      int cursor = 8;
-      do {
-        hex[--cursor] = HEX_DIGITS[i & 0xf];
-      } while ((i >>>= 4) != 0);
-      sink.write(hex, cursor, hex.length - cursor);
+    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+      if (closed) throw new IllegalStateException("closed");
+      bufferedChunk.write(source, byteCount);
+      if (bufferedChunk.byteCount() > maxChunkLength) {
+        writeBufferedChunkToSocket();
+      }
     }
 
     @Override public synchronized void flush() throws IOException {
-      if (closed) {
-        return; // don't throw; this stream might have been closed on the caller's behalf
-      }
+      if (closed) return; // Don't throw; this stream might have been closed on the caller's behalf.
       writeBufferedChunkToSocket();
       sink.flush();
     }
 
     @Override public synchronized void close() throws IOException {
-      if (closed) {
-        return;
-      }
+      if (closed) return;
       closed = true;
       writeBufferedChunkToSocket();
       sink.write(FINAL_CHUNK);
@@ -398,6 +366,18 @@ public final class HttpConnection {
       writeHex(size);
       sink.write(bufferedChunk, bufferedChunk.byteCount());
       sink.writeUtf8(CRLF);
+    }
+
+    /**
+     * Equivalent to, but cheaper than writing Integer.toHexString().getBytes()
+     * followed by CRLF.
+     */
+    private void writeHex(int i) throws IOException {
+      int cursor = 8;
+      do {
+        hex[--cursor] = HEX_DIGITS[i & 0xf];
+      } while ((i >>>= 4) != 0);
+      sink.write(hex, cursor, hex.length - cursor);
     }
   }
 

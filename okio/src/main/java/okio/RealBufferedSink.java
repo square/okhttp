@@ -24,6 +24,7 @@ final class RealBufferedSink implements BufferedSink {
   private boolean closed;
 
   public RealBufferedSink(Sink sink, OkBuffer buffer) {
+    if (sink == null) throw new IllegalArgumentException("sink == null");
     this.buffer = buffer;
     this.sink = sink;
   }
@@ -127,9 +128,26 @@ final class RealBufferedSink implements BufferedSink {
 
   @Override public void close() throws IOException {
     if (closed) return;
-    flush();
+
+    // If flushing throws, we still need to close the stream!
+    Throwable thrown = null;
+    try {
+      if (buffer.byteCount > 0) {
+        sink.write(buffer, buffer.byteCount);
+      }
+    } catch (IOException e) {
+      thrown = e;
+    } catch (RuntimeException e) {
+      thrown = e;
+    }
+
     sink.close();
     closed = true;
+
+    if (thrown != null) {
+      if (thrown instanceof IOException) throw (IOException) thrown;
+      else throw (RuntimeException) thrown;
+    }
   }
 
   @Override public Sink deadline(Deadline deadline) {

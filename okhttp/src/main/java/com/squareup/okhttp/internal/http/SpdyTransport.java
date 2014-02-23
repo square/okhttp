@@ -38,6 +38,7 @@ import okio.ByteString;
 import okio.Deadline;
 import okio.OkBuffer;
 import okio.Okio;
+import okio.Sink;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
@@ -58,10 +59,10 @@ public final class SpdyTransport implements Transport {
     this.spdyConnection = spdyConnection;
   }
 
-  @Override public OutputStream createRequestBody(Request request) throws IOException {
+  @Override public Sink createRequestBody(Request request) throws IOException {
     // TODO: if bufferRequestBody is set, we must buffer the whole request
     writeRequestHeaders(request);
-    return stream.getOutputStream();
+    return stream.getSink();
   }
 
   @Override public void writeRequestHeaders(Request request) throws IOException {
@@ -77,12 +78,12 @@ public final class SpdyTransport implements Transport {
     stream.setReadTimeout(httpEngine.client.getReadTimeout());
   }
 
-  @Override public void writeRequestBody(RetryableOutputStream requestBody) throws IOException {
+  @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override public void flushRequest() throws IOException {
-    stream.getOutputStream().close();
+    stream.getSink().close();
   }
 
   @Override public Response.Builder readResponseHeaders() throws IOException {

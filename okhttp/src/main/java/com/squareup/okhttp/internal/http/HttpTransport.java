@@ -19,8 +19,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.CacheRequest;
+import okio.Sink;
 import okio.Source;
 
 public final class HttpTransport implements Transport {
@@ -34,7 +34,7 @@ public final class HttpTransport implements Transport {
     this.httpConnection = httpConnection;
   }
 
-  @Override public OutputStream createRequestBody(Request request) throws IOException {
+  @Override public Sink createRequestBody(Request request) throws IOException {
     long contentLength = OkHeaders.contentLength(request);
 
     if (httpEngine.bufferRequestBody) {
@@ -46,12 +46,12 @@ public final class HttpTransport implements Transport {
       if (contentLength != -1) {
         // Buffer a request body of a known length.
         writeRequestHeaders(request);
-        return new RetryableOutputStream((int) contentLength);
+        return new RetryableSink((int) contentLength);
       } else {
         // Buffer a request body of an unknown length. Don't write request
         // headers until the entire body is ready; otherwise we can't set the
         // Content-Length header correctly.
-        return new RetryableOutputStream();
+        return new RetryableSink();
       }
     }
 
@@ -75,7 +75,7 @@ public final class HttpTransport implements Transport {
     httpConnection.flush();
   }
 
-  @Override public void writeRequestBody(RetryableOutputStream requestBody) throws IOException {
+  @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
     httpConnection.writeRequestBody(requestBody);
   }
 

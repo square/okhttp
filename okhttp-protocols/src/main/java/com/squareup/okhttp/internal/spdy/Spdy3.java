@@ -103,6 +103,10 @@ final class Spdy3 implements Variant {
     return new Writer(sink, client);
   }
 
+  @Override public int maxFrameSize() {
+    return 16383;
+  }
+
   /** Read spdy/3 frames. */
   static final class Reader implements FrameReader {
     private final BufferedSource source;
@@ -291,6 +295,7 @@ final class Spdy3 implements Variant {
     private final OkBuffer headerBlockBuffer;
     private final BufferedSink headerBlockOut;
     private final boolean client;
+    private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
@@ -317,12 +322,14 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void flush() throws IOException {
+      if (closed) throw new IOException("closed");
       sink.flush();
     }
 
     @Override public synchronized void synStream(boolean outFinished, boolean inFinished,
         int streamId, int associatedStreamId, int priority, int slot, List<Header> headerBlock)
         throws IOException {
+      if (closed) throw new IOException("closed");
       writeNameValueBlockToBuffer(headerBlock);
       int length = (int) (10 + headerBlockBuffer.byteCount());
       int type = TYPE_SYN_STREAM;
@@ -340,6 +347,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void synReply(boolean outFinished, int streamId,
         List<Header> headerBlock) throws IOException {
+      if (closed) throw new IOException("closed");
       writeNameValueBlockToBuffer(headerBlock);
       int type = TYPE_SYN_REPLY;
       int flags = (outFinished ? FLAG_FIN : 0);
@@ -354,6 +362,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void headers(int streamId, List<Header> headerBlock)
         throws IOException {
+      if (closed) throw new IOException("closed");
       writeNameValueBlockToBuffer(headerBlock);
       int flags = 0;
       int type = TYPE_HEADERS;
@@ -367,6 +376,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
         throws IOException {
+      if (closed) throw new IOException("closed");
       if (errorCode.spdyRstCode == -1) throw new IllegalArgumentException();
       int flags = 0;
       int type = TYPE_RST_STREAM;
@@ -378,26 +388,26 @@ final class Spdy3 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data)
+    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
         throws IOException {
-      data(outFinished, streamId, data, 0, data.length);
+      data(outFinished, streamId, source, (int) source.byteCount());
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, byte[] data,
-        int offset, int byteCount) throws IOException {
-      // TODO: Implement looping strategy.
+    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,
+        int byteCount) throws IOException {
       int flags = (outFinished ? FLAG_FIN : 0);
-      sendDataFrame(streamId, flags, data, offset, byteCount);
+      sendDataFrame(streamId, flags, source, byteCount);
     }
 
-    void sendDataFrame(int streamId, int flags, byte[] data, int offset, int byteCount)
+    void sendDataFrame(int streamId, int flags, OkBuffer buffer, int byteCount)
         throws IOException {
+      if (closed) throw new IOException("closed");
       if (byteCount > 0xffffffL) {
         throw new IllegalArgumentException("FRAME_TOO_LARGE max size is 16Mib: " + byteCount);
       }
       sink.writeInt(streamId & 0x7fffffff);
       sink.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
-      sink.write(data, offset, byteCount);
+      sink.write(buffer, byteCount);
     }
 
     private void writeNameValueBlockToBuffer(List<Header> headerBlock) throws IOException {
@@ -415,6 +425,7 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {
+      if (closed) throw new IOException("closed");
       int type = TYPE_SETTINGS;
       int flags = 0;
       int size = settings.size();
@@ -433,6 +444,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void ping(boolean reply, int payload1, int payload2)
         throws IOException {
+      if (closed) throw new IOException("closed");
       boolean payloadIsReply = client != ((payload1 & 1) == 1);
       if (reply != payloadIsReply) throw new IllegalArgumentException("payload != reply");
       int type = TYPE_PING;
@@ -446,6 +458,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void goAway(int lastGoodStreamId, ErrorCode errorCode,
         byte[] ignored) throws IOException {
+      if (closed) throw new IOException("closed");
       if (errorCode.spdyGoAwayCode == -1) {
         throw new IllegalArgumentException("errorCode.spdyGoAwayCode == -1");
       }
@@ -461,6 +474,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void windowUpdate(int streamId, long increment)
         throws IOException {
+      if (closed) throw new IOException("closed");
       if (increment == 0 || increment > 0x7fffffffL) {
         throw new IllegalArgumentException(
             "windowSizeIncrement must be between 1 and 0x7fffffff: " + increment);
@@ -476,6 +490,7 @@ final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void close() throws IOException {
+      closed = true;
       Util.closeAll(sink, headerBlockOut);
     }
   }

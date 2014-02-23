@@ -30,7 +30,6 @@ import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
@@ -42,8 +41,10 @@ import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
+import okio.BufferedSink;
 import okio.GzipSource;
 import okio.Okio;
+import okio.Sink;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
@@ -98,7 +99,8 @@ public class HttpEngine {
   public final boolean bufferRequestBody;
 
   private Request request;
-  private OutputStream requestBodyOut;
+  private Sink requestBodyOut;
+  private BufferedSink bufferedRequestBody;
 
   private ResponseSource responseSource;
 
@@ -131,7 +133,7 @@ public class HttpEngine {
    *     recover from a failure.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      Connection connection, RouteSelector routeSelector, RetryableOutputStream requestBodyOut) {
+      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut) {
     this.client = client;
     this.request = request;
     this.bufferRequestBody = bufferRequestBody;
@@ -257,9 +259,18 @@ public class HttpEngine {
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
-  public final OutputStream getRequestBody() {
+  public final Sink getRequestBody() {
     if (responseSource == null) throw new IllegalStateException();
     return requestBodyOut;
+  }
+
+  public final BufferedSink getBufferedRequestBody() {
+    BufferedSink result = bufferedRequestBody;
+    if (result != null) return result;
+    Sink requestBody = getRequestBody();
+    return requestBody != null
+        ? (bufferedRequestBody = Okio.buffer(requestBody))
+        : null;
   }
 
   public final boolean hasResponse() {
@@ -307,8 +318,7 @@ public class HttpEngine {
       routeSelector.connectFailed(connection, e);
     }
 
-    boolean canRetryRequestBody = requestBodyOut == null
-        || requestBodyOut instanceof RetryableOutputStream;
+    boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
     if (routeSelector == null && connection == null // No connection.
         || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
         || !isRecoverable(e)
@@ -320,7 +330,7 @@ public class HttpEngine {
 
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, request, bufferRequestBody, connection, routeSelector,
-        (RetryableOutputStream) requestBodyOut);
+        (RetryableSink) requestBodyOut);
   }
 
   private boolean isRecoverable(IOException e) {
@@ -514,11 +524,15 @@ public class HttpEngine {
     if (responseSource == null) throw new IllegalStateException("call sendRequest() first!");
     if (!responseSource.requiresConnection()) return;
 
+    // Flush the response body if there's data outstanding.
+    if (bufferedRequestBody != null && bufferedRequestBody.buffer().byteCount() > 0) {
+      bufferedRequestBody.flush();
+    }
+
     if (sentRequestMillis == -1) {
-      if (OkHeaders.contentLength(request) == -1
-          && requestBodyOut instanceof RetryableOutputStream) {
+      if (OkHeaders.contentLength(request) == -1 && requestBodyOut instanceof RetryableSink) {
         // We might not learn the Content-Length until the request body has been buffered.
-        long contentLength = ((RetryableOutputStream) requestBodyOut).contentLength();
+        long contentLength = ((RetryableSink) requestBodyOut).contentLength();
         request = request.newBuilder()
             .header("Content-Length", Long.toString(contentLength))
             .build();
@@ -528,8 +542,8 @@ public class HttpEngine {
 
     if (requestBodyOut != null) {
       requestBodyOut.close();
-      if (requestBodyOut instanceof RetryableOutputStream) {
-        transport.writeRequestBody((RetryableOutputStream) requestBodyOut);
+      if (requestBodyOut instanceof RetryableSink) {
+        transport.writeRequestBody((RetryableSink) requestBodyOut);
       }
     }
 

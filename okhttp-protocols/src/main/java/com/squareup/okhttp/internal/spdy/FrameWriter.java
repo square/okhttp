@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.spdy;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import okio.OkBuffer;
 
 /** Writes transport frames for SPDY/3 or HTTP/2. */
 public interface FrameWriter extends Closeable {
@@ -57,14 +58,9 @@ public interface FrameWriter extends Closeable {
    * {@code data.length} may be longer than the max length of the variant's data frame.
    * Implementations must send multiple frames as necessary.
    */
-  void data(boolean outFinished, int streamId, byte[] data) throws IOException;
+  void data(boolean outFinished, int streamId, OkBuffer source, int byteCount) throws IOException;
 
-  /**
-   * {@code byteCount} may be longer than the max length of the variant's data frame.
-   * Implementations must send multiple frames as necessary.
-   */
-  void data(boolean outFinished, int streamId, byte[] data, int offset, int byteCount)
-      throws IOException;
+  void data(boolean outFinished, int streamId, OkBuffer source) throws IOException;
 
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;
