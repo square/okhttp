@@ -16,7 +16,6 @@
 package com.squareup.okhttp.curl;
 
 import com.squareup.okhttp.Request;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import okio.OkBuffer;
 import org.junit.Test;
