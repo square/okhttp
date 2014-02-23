@@ -23,7 +23,6 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
-import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,8 +99,8 @@ public final class Connection implements Closeable {
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
     } else {
-      streamWrapper(true);
-      httpConnection = new HttpConnection(pool, this, source, out);
+      initSourceAndSink();
+      httpConnection = new HttpConnection(pool, this, source, sink);
     }
     connected = true;
   }
@@ -155,6 +154,7 @@ public final class Connection implements Closeable {
     out = sslSocket.getOutputStream();
     in = sslSocket.getInputStream();
     handshake = Handshake.get(sslSocket.getSession());
+    initSourceAndSink();
 
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
@@ -163,14 +163,12 @@ public final class Connection implements Closeable {
     }
 
     if (selectedProtocol.spdyVariant) {
-      streamWrapper(false);
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, source, sink)
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
-      streamWrapper(true);
-      httpConnection = new HttpConnection(pool, this, source, out);
+      httpConnection = new HttpConnection(pool, this, source, sink);
     }
   }
 
@@ -310,11 +308,13 @@ public final class Connection implements Closeable {
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
     BufferedSource tunnelSource = Okio.buffer(Okio.source(in));
-    HttpConnection tunnelConnection = new HttpConnection(pool, this, tunnelSource, out);
+    BufferedSink tunnelSink = Okio.buffer(Okio.sink(out));
+    HttpConnection tunnelConnection = new HttpConnection(pool, this, tunnelSource, tunnelSink);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {
       tunnelConnection.writeRequest(request.headers(), requestLine);
+      tunnelConnection.flush();
       Response response = tunnelConnection.readResponse().request(request).build();
       tunnelConnection.emptyResponseBody();
 
@@ -340,14 +340,8 @@ public final class Connection implements Closeable {
     }
   }
 
-  // TODO: drop the outputStream option when we use Okio's sink in HttpConnection.
-  private void streamWrapper(boolean outputStream) throws IOException {
+  private void initSourceAndSink() throws IOException {
     source = Okio.buffer(Okio.source(in));
-
-    if (outputStream) {
-      out = new BufferedOutputStream(out, 256);
-    } else {
-      sink = Okio.buffer(Okio.sink(out));
-    }
+    sink = Okio.buffer(Okio.sink(out));
   }
 }

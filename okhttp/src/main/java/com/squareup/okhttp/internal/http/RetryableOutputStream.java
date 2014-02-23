@@ -19,8 +19,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.internal.AbstractOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.ProtocolException;
+import okio.BufferedSink;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
@@ -69,7 +69,7 @@ final class RetryableOutputStream extends AbstractOutputStream {
     return content.size();
   }
 
-  public void writeToSocket(OutputStream socketOut) throws IOException {
-    content.writeTo(socketOut);
+  public void writeToSocket(BufferedSink socketOut) throws IOException {
+    content.writeTo(socketOut.outputStream());
   }
 }
