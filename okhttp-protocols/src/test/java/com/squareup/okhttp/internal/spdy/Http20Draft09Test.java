@@ -16,8 +16,6 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -27,7 +25,6 @@ import okio.OkBuffer;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -37,16 +34,15 @@ public class Http20Draft09Test {
   static final int expectedStreamId = 15;
 
   @Test public void unknownFrameTypeIgnored() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
-    dataOut.writeShort(4); // has a 4-byte field
-    dataOut.write(99); // type 99
-    dataOut.write(0); // no flags
-    dataOut.writeInt(expectedStreamId);
-    dataOut.writeInt(111111111); // custom data
+    frame.writeShort(4); // has a 4-byte field
+    frame.writeByte(99); // type 99
+    frame.writeByte(0); // no flags
+    frame.writeInt(expectedStreamId);
+    frame.writeInt(111111111); // custom data
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the unknown frame.
     fr.nextFrame(new BaseTestHandler());
@@ -55,20 +51,19 @@ public class Http20Draft09Test {
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
     final List<Header> sentHeaders = headerEntries("name", "value");
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     // Write the headers frame, specifying no more frames are expected.
     {
-      byte[] headerBytes = literalHeaders(sentHeaders);
-      dataOut.writeShort(headerBytes.length);
-      dataOut.write(Http20Draft09.TYPE_HEADERS);
-      dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.write(headerBytes);
+      OkBuffer headerBytes = literalHeaders(sentHeaders);
+      frame.writeShort((int) headerBytes.byteCount());
+      frame.writeByte(Http20Draft09.TYPE_HEADERS);
+      frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.write(headerBytes, headerBytes.byteCount());
     }
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -89,22 +84,21 @@ public class Http20Draft09Test {
   }
 
   @Test public void headersWithPriority() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final List<Header> sentHeaders = headerEntries("name", "value");
 
     { // Write the headers frame, specifying priority flag and value.
-      byte[] headerBytes = literalHeaders(sentHeaders);
-      dataOut.writeShort(headerBytes.length + 4);
-      dataOut.write(Http20Draft09.TYPE_HEADERS);
-      dataOut.write(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.writeInt(0); // Highest priority is 0.
-      dataOut.write(headerBytes);
+      OkBuffer headerBytes = literalHeaders(sentHeaders);
+      frame.writeShort((int) (headerBytes.byteCount() + 4));
+      frame.writeByte(Http20Draft09.TYPE_HEADERS);
+      frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.writeInt(0); // Highest priority is 0.
+      frame.write(headerBytes, headerBytes.byteCount());
     }
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -127,28 +121,27 @@ public class Http20Draft09Test {
   /** Headers are compressed, then framed. */
   @Test public void headersFrameThenContinuation() throws IOException {
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     // Decoding the first header will cross frame boundaries.
-    byte[] headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    OkBuffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
     { // Write the first headers frame.
-      dataOut.writeShort(headerBlock.length / 2);
-      dataOut.write(Http20Draft09.TYPE_HEADERS);
-      dataOut.write(0); // no flags
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, 0, headerBlock.length / 2);
+      frame.writeShort((int) (headerBlock.byteCount() / 2));
+      frame.writeByte(Http20Draft09.TYPE_HEADERS);
+      frame.writeByte(0); // no flags
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.write(headerBlock, headerBlock.byteCount() / 2);
     }
 
     { // Write the continuation frame, specifying no more frames are expected.
-      dataOut.writeShort(headerBlock.length / 2);
-      dataOut.write(Http20Draft09.TYPE_CONTINUATION);
-      dataOut.write(Http20Draft09.FLAG_END_HEADERS);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, headerBlock.length / 2, headerBlock.length / 2);
+      frame.writeShort((int) headerBlock.byteCount());
+      frame.writeByte(Http20Draft09.TYPE_CONTINUATION);
+      frame.writeByte(Http20Draft09.FLAG_END_HEADERS);
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.write(headerBlock, headerBlock.byteCount());
     }
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Reading the above frames should result in a concatenated headerBlock.
     fr.nextFrame(new BaseTestHandler() {
@@ -169,8 +162,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void pushPromise() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final int expectedPromisedStreamId = 11;
 
@@ -182,16 +174,16 @@ public class Http20Draft09Test {
     );
 
     { // Write the push promise frame, specifying the associated stream ID.
-      byte[] headerBytes = literalHeaders(pushPromise);
-      dataOut.writeShort(headerBytes.length + 4);
-      dataOut.write(Http20Draft09.TYPE_PUSH_PROMISE);
-      dataOut.write(Http20Draft09.FLAG_END_PUSH_PROMISE);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.writeInt(expectedPromisedStreamId & 0x7fffffff);
-      dataOut.write(headerBytes);
+      OkBuffer headerBytes = literalHeaders(pushPromise);
+      frame.writeShort((int) (headerBytes.byteCount() + 4));
+      frame.writeByte(Http20Draft09.TYPE_PUSH_PROMISE);
+      frame.writeByte(Http20Draft09.FLAG_END_PUSH_PROMISE);
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
+      frame.write(headerBytes, headerBytes.byteCount());
     }
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the headers frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -206,8 +198,7 @@ public class Http20Draft09Test {
 
   /** Headers are compressed, then framed. */
   @Test public void pushPromiseThenContinuation() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final int expectedPromisedStreamId = 11;
 
@@ -219,26 +210,26 @@ public class Http20Draft09Test {
     );
 
     // Decoding the first header will cross frame boundaries.
-    byte[] headerBlock = literalHeaders(pushPromise);
-    int firstFrameLength = headerBlock.length - 1;
+    OkBuffer headerBlock = literalHeaders(pushPromise);
+    int firstFrameLength = (int) (headerBlock.byteCount() - 1);
     { // Write the first headers frame.
-      dataOut.writeShort(firstFrameLength + 4);
-      dataOut.write(Http20Draft09.TYPE_PUSH_PROMISE);
-      dataOut.write(0); // no flags
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.writeInt(expectedPromisedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, 0, firstFrameLength);
+      frame.writeShort(firstFrameLength + 4);
+      frame.writeByte(Http20Draft09.TYPE_PUSH_PROMISE);
+      frame.writeByte(0); // no flags
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
+      frame.write(headerBlock, firstFrameLength);
     }
 
     { // Write the continuation frame, specifying no more frames are expected.
-      dataOut.writeShort(1);
-      dataOut.write(Http20Draft09.TYPE_CONTINUATION);
-      dataOut.write(Http20Draft09.FLAG_END_HEADERS);
-      dataOut.writeInt(expectedStreamId & 0x7fffffff);
-      dataOut.write(headerBlock, firstFrameLength, 1);
+      frame.writeShort(1);
+      frame.writeByte(Http20Draft09.TYPE_CONTINUATION);
+      frame.writeByte(Http20Draft09.FLAG_END_HEADERS);
+      frame.writeInt(expectedStreamId & 0x7fffffff);
+      frame.write(headerBlock, 1);
     }
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Reading the above frames should result in a concatenated headerBlock.
     fr.nextFrame(new BaseTestHandler() {
@@ -252,16 +243,15 @@ public class Http20Draft09Test {
   }
 
   @Test public void readRstStreamFrame() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
-    dataOut.writeShort(4);
-    dataOut.write(Http20Draft09.TYPE_RST_STREAM);
-    dataOut.write(0); // No flags
-    dataOut.writeInt(expectedStreamId & 0x7fffffff);
-    dataOut.writeInt(ErrorCode.COMPRESSION_ERROR.httpCode);
+    frame.writeShort(4);
+    frame.writeByte(Http20Draft09.TYPE_RST_STREAM);
+    frame.writeByte(0); // No flags
+    frame.writeInt(expectedStreamId & 0x7fffffff);
+    frame.writeInt(ErrorCode.COMPRESSION_ERROR.httpCode);
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the reset frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -273,21 +263,20 @@ public class Http20Draft09Test {
   }
 
   @Test public void readSettingsFrame() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final int reducedTableSizeBytes = 16;
 
-    dataOut.writeShort(16); // 2 settings * 4 bytes for the code and 4 for the value.
-    dataOut.write(Http20Draft09.TYPE_SETTINGS);
-    dataOut.write(0); // No flags
-    dataOut.writeInt(0 & 0x7fffffff); // Settings are always on the connection stream 0.
-    dataOut.writeInt(Settings.HEADER_TABLE_SIZE & 0xffffff);
-    dataOut.writeInt(reducedTableSizeBytes);
-    dataOut.writeInt(Settings.ENABLE_PUSH & 0xffffff);
-    dataOut.writeInt(0);
+    frame.writeShort(16); // 2 settings * 4 bytes for the code and 4 for the value.
+    frame.writeByte(Http20Draft09.TYPE_SETTINGS);
+    frame.writeByte(0); // No flags
+    frame.writeInt(0 & 0x7fffffff); // Settings are always on the connection stream 0.
+    frame.writeInt(Settings.HEADER_TABLE_SIZE & 0xffffff);
+    frame.writeInt(reducedTableSizeBytes);
+    frame.writeInt(Settings.ENABLE_PUSH & 0xffffff);
+    frame.writeInt(0);
 
-    final Http20Draft09.Reader fr = newReader(out);
+    final Http20Draft09.Reader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     // Consume the settings frame.
     fr.nextFrame(new BaseTestHandler() {
@@ -300,24 +289,23 @@ public class Http20Draft09Test {
   }
 
   @Test public void pingRoundTrip() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final int expectedPayload1 = 7;
     final int expectedPayload2 = 8;
 
     // Compose the expected PING frame.
-    dataOut.writeShort(8); // length
-    dataOut.write(Http20Draft09.TYPE_PING);
-    dataOut.write(Http20Draft09.FLAG_ACK);
-    dataOut.writeInt(0); // connection-level
-    dataOut.writeInt(expectedPayload1);
-    dataOut.writeInt(expectedPayload2);
+    frame.writeShort(8); // length
+    frame.writeByte(Http20Draft09.TYPE_PING);
+    frame.writeByte(Http20Draft09.FLAG_ACK);
+    frame.writeInt(0); // connection-level
+    frame.writeInt(expectedPayload1);
+    frame.writeInt(expectedPayload2);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), sendPingFrame(true, expectedPayload1, expectedPayload2));
+    assertEquals(frame, sendPingFrame(true, expectedPayload1, expectedPayload2));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the ping frame.
       @Override public void ping(boolean ack, int payload1, int payload2) {
@@ -329,23 +317,22 @@ public class Http20Draft09Test {
   }
 
   @Test public void maxLengthDataFrame() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final byte[] expectedData = new byte[16383];
     Arrays.fill(expectedData, (byte) 2);
 
     // Write the data frame.
-    dataOut.writeShort(expectedData.length);
-    dataOut.write(Http20Draft09.TYPE_DATA);
-    dataOut.write(0); // no flags
-    dataOut.writeInt(expectedStreamId & 0x7fffffff);
-    dataOut.write(expectedData);
+    frame.writeShort(expectedData.length);
+    frame.writeByte(Http20Draft09.TYPE_DATA);
+    frame.writeByte(0); // no flags
+    frame.writeInt(expectedStreamId & 0x7fffffff);
+    frame.write(expectedData);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), sendDataFrame(new OkBuffer().write(expectedData)));
+    assertEquals(frame, sendDataFrame(new OkBuffer().write(expectedData)));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     fr.nextFrame(new BaseTestHandler() {
       @Override public void data(
@@ -371,22 +358,21 @@ public class Http20Draft09Test {
   }
 
   @Test public void windowUpdateRoundTrip() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final long expectedWindowSizeIncrement = 0x7fffffff;
 
     // Compose the expected window update frame.
-    dataOut.writeShort(4); // length
-    dataOut.write(Http20Draft09.TYPE_WINDOW_UPDATE);
-    dataOut.write(0); // No flags.
-    dataOut.writeInt(expectedStreamId);
-    dataOut.writeInt((int) expectedWindowSizeIncrement);
+    frame.writeShort(4); // length
+    frame.writeByte(Http20Draft09.TYPE_WINDOW_UPDATE);
+    frame.writeByte(0); // No flags.
+    frame.writeInt(expectedStreamId);
+    frame.writeInt((int) expectedWindowSizeIncrement);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), windowUpdate(expectedWindowSizeIncrement));
+    assertEquals(frame, windowUpdate(expectedWindowSizeIncrement));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the window update frame.
       @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
@@ -414,24 +400,22 @@ public class Http20Draft09Test {
   }
 
   @Test public void goAwayWithoutDebugDataRoundTrip() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
 
     // Compose the expected GOAWAY frame without debug data.
-    dataOut.writeShort(8); // Without debug data there's only 2 32-bit fields.
-    dataOut.write(Http20Draft09.TYPE_GOAWAY);
-    dataOut.write(0); // no flags.
-    dataOut.writeInt(0); // connection-scope
-    dataOut.writeInt(expectedStreamId); // last good stream.
-    dataOut.writeInt(expectedError.httpCode);
+    frame.writeShort(8); // Without debug data there's only 2 32-bit fields.
+    frame.writeByte(Http20Draft09.TYPE_GOAWAY);
+    frame.writeByte(0); // no flags.
+    frame.writeInt(0); // connection-scope
+    frame.writeInt(expectedStreamId); // last good stream.
+    frame.writeInt(expectedError.httpCode);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(),
-        sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
+    assertEquals(frame, sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
       @Override public void goAway(
@@ -444,25 +428,24 @@ public class Http20Draft09Test {
   }
 
   @Test public void goAwayWithDebugDataRoundTrip() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
     final ByteString expectedData = ByteString.encodeUtf8("abcdefgh");
 
     // Compose the expected GOAWAY frame without debug data.
-    dataOut.writeShort(8 + expectedData.size());
-    dataOut.write(Http20Draft09.TYPE_GOAWAY);
-    dataOut.write(0); // no flags.
-    dataOut.writeInt(0); // connection-scope
-    dataOut.writeInt(0); // never read any stream!
-    dataOut.writeInt(expectedError.httpCode);
-    dataOut.write(expectedData.toByteArray());
+    frame.writeShort(8 + expectedData.size());
+    frame.writeByte(Http20Draft09.TYPE_GOAWAY);
+    frame.writeByte(0); // no flags.
+    frame.writeInt(0); // connection-scope
+    frame.writeInt(0); // never read any stream!
+    frame.writeInt(expectedError.httpCode);
+    frame.write(expectedData.toByteArray());
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), sendGoAway(0, expectedError, expectedData.toByteArray()));
+    assertEquals(frame, sendGoAway(0, expectedError, expectedData.toByteArray()));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the go away frame.
       @Override public void goAway(
@@ -472,11 +455,6 @@ public class Http20Draft09Test {
         assertEquals(expectedData, debugData);
       }
     });
-  }
-
-  private Http20Draft09.Reader newReader(ByteArrayOutputStream out) {
-    OkBuffer buffer = new OkBuffer().write(out.toByteArray());
-    return new Http20Draft09.Reader(buffer, 4096, false);
   }
 
   @Test public void frameSizeError() throws IOException {
@@ -503,35 +481,35 @@ public class Http20Draft09Test {
     }
   }
 
-  private byte[] literalHeaders(List<Header> sentHeaders) throws IOException {
+  private OkBuffer literalHeaders(List<Header> sentHeaders) throws IOException {
     OkBuffer out = new OkBuffer();
     new HpackDraft05.Writer(out).writeHeaders(sentHeaders);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 
-  private byte[] sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
+  private OkBuffer sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).ping(ack, payload1, payload2);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 
-  private byte[] sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
+  private OkBuffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 
-  private byte[] sendDataFrame(OkBuffer data) throws IOException {
+  private OkBuffer sendDataFrame(OkBuffer data) throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).dataFrame(expectedStreamId, Http20Draft09.FLAG_NONE, data,
         (int) data.byteCount());
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 
-  private byte[] windowUpdate(long windowSizeIncrement) throws IOException {
+  private OkBuffer windowUpdate(long windowSizeIncrement) throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 }
