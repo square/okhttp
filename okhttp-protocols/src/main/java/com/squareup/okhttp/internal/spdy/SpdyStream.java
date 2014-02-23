@@ -16,25 +16,20 @@
 
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.Util;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import okio.BufferedSource;
 import okio.Deadline;
 import okio.OkBuffer;
+import okio.Sink;
 import okio.Source;
-
-import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 
 /** A logical bidirectional stream. */
 public final class SpdyStream {
-  static final int OUTPUT_BUFFER_SIZE = 8192;
-
   // Internal state is guarded by this. No long-running or potentially
   // blocking operations are performed while the lock is held.
 
@@ -66,7 +61,7 @@ public final class SpdyStream {
   private List<Header> responseHeaders;
 
   private final SpdyDataSource source;
-  final SpdyDataOutputStream out;
+  final SpdyDataOutputStream sink;
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple
@@ -83,9 +78,9 @@ public final class SpdyStream {
     this.connection = connection;
     this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
     this.source = new SpdyDataSource(connection.okHttpSettings.getInitialWindowSize());
-    this.out = new SpdyDataOutputStream();
+    this.sink = new SpdyDataOutputStream();
     this.source.finished = inFinished;
-    this.out.finished = outFinished;
+    this.sink.finished = outFinished;
     this.priority = priority;
     this.requestHeaders = requestHeaders;
   }
@@ -105,7 +100,7 @@ public final class SpdyStream {
       return false;
     }
     if ((source.finished || source.closed)
-        && (out.finished || out.closed)
+        && (sink.finished || sink.closed)
         && responseHeaders != null) {
       return false;
     }
@@ -189,7 +184,7 @@ public final class SpdyStream {
       }
       this.responseHeaders = responseHeaders;
       if (!out) {
-        this.out.finished = true;
+        this.sink.finished = true;
         outFinished = true;
       }
     }
@@ -218,18 +213,18 @@ public final class SpdyStream {
   }
 
   /**
-   * Returns an output stream that can be used to write data to the peer.
+   * Returns a sink that can be used to write data to the peer.
    *
    * @throws IllegalStateException if this stream was initiated by the peer
-   * and a {@link #reply} has not yet been sent.
+   *     and a {@link #reply} has not yet been sent.
    */
-  public OutputStream getOutputStream() {
+  public Sink getSink() {
     synchronized (this) {
       if (responseHeaders == null && !isLocallyInitiated()) {
-        throw new IllegalStateException("reply before requesting the output stream");
+        throw new IllegalStateException("reply before requesting the sink");
       }
     }
-    return out;
+    return sink;
   }
 
   /**
@@ -261,7 +256,7 @@ public final class SpdyStream {
       if (this.errorCode != null) {
         return false;
       }
-      if (source.finished && out.finished) {
+      if (source.finished && sink.finished) {
         return false;
       }
       this.errorCode = errorCode;
@@ -490,7 +485,7 @@ public final class SpdyStream {
     boolean open;
     boolean cancel;
     synchronized (this) {
-      cancel = !source.finished && source.closed && (out.finished || out.closed);
+      cancel = !source.finished && source.closed && (sink.finished || sink.closed);
       open = isOpen();
     }
     if (cancel) {
@@ -508,12 +503,9 @@ public final class SpdyStream {
    * An output stream that writes outgoing data frames of a stream. This class
    * is not thread safe.
    */
-  final class SpdyDataOutputStream extends OutputStream {
-    private final byte[] buffer = SpdyStream.this.connection.bufferPool.getBuf(OUTPUT_BUFFER_SIZE);
-    private int pos = 0;
-
-    /** True if the caller has closed this stream. */
+  final class SpdyDataOutputStream implements Sink {
     private boolean closed;
+    private final OkBuffer buffer = new OkBuffer();
 
     /**
      * True if either side has cleanly shut down this stream. We shall send
@@ -521,27 +513,14 @@ public final class SpdyStream {
      */
     private boolean finished;
 
-    @Override public void write(int b) throws IOException {
-      Util.writeSingleByte(this, b);
-    }
-
-    @Override public void write(byte[] bytes, int offset, int count) throws IOException {
+    @Override public void write(OkBuffer source, long byteCount) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
-      checkOffsetAndCount(bytes.length, offset, count);
       synchronized (SpdyStream.this) {
         checkOutNotClosed();
       }
 
-      while (count > 0) {
-        if (pos == buffer.length) {
-          writeFrame();
-        }
-        int bytesToCopy = Math.min(count, buffer.length - pos);
-        System.arraycopy(bytes, offset, buffer, pos, bytesToCopy);
-        pos += bytesToCopy;
-        offset += bytesToCopy;
-        count -= bytesToCopy;
-      }
+      buffer.write(source, byteCount);
+      writeFrame(false, buffer.completeSegmentByteCount());
     }
 
     @Override public void flush() throws IOException {
@@ -549,50 +528,56 @@ public final class SpdyStream {
       synchronized (SpdyStream.this) {
         checkOutNotClosed();
       }
-      if (pos > 0) {
-        writeFrame();
-      }
+      writeFrame(false, buffer.byteCount());
       connection.flush();
+    }
+
+    @Override public Sink deadline(Deadline deadline) {
+      // TODO: honor deadlines.
+      return this;
     }
 
     @Override public void close() throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
       synchronized (SpdyStream.this) {
-        if (closed) {
-          return;
-        }
-        closed = true;
-        SpdyStream.this.connection.bufferPool.returnBuf(buffer);
+        if (closed) return;
       }
-      if (!out.finished) {
-        connection.writeData(id, true, buffer, 0, pos);
+      if (!sink.finished) {
+        writeFrame(true, buffer.byteCount());
+      }
+      synchronized (SpdyStream.this) {
+        closed = true;
       }
       connection.flush();
       cancelStreamIfNecessary();
     }
 
-    private void writeFrame() throws IOException {
+    private void writeFrame(boolean outFinished, long byteCount) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
-
-      int length = pos;
-      synchronized (SpdyStream.this) {
-        waitUntilWritable(length);
-        checkOutNotClosed(); // Kick out if the stream was reset or closed while waiting.
-        bytesLeftInWriteWindow -= length;
+      if (byteCount == 0 && outFinished) { // Empty data frames are not flow-controlled.
+        connection.writeData(id, true, buffer, 0);
+        return;
       }
-      connection.writeData(id, false, buffer, 0, pos);
-      pos = 0;
-    }
-  }
 
-  /** Returns once the peer is ready to receive {@code byteCount} bytes. */
-  private void waitUntilWritable(int byteCount) throws IOException {
-    try {
-      while (byteCount > bytesLeftInWriteWindow) {
-        SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+      while (byteCount > 0) {
+        long toWrite;
+        synchronized (SpdyStream.this) {
+          try {
+            while (bytesLeftInWriteWindow <= 0) {
+              SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+            }
+          } catch (InterruptedException e) {
+            throw new InterruptedIOException();
+          }
+
+          checkOutNotClosed(); // Kick out if the stream was reset or closed while waiting.
+          toWrite = Math.min(bytesLeftInWriteWindow, byteCount);
+          bytesLeftInWriteWindow -= toWrite;
+        }
+
+        byteCount -= toWrite;
+        connection.writeData(id, outFinished && byteCount == 0, buffer, toWrite);
       }
-    } catch (InterruptedException e) {
-      throw new InterruptedIOException();
     }
   }
 
@@ -606,9 +591,9 @@ public final class SpdyStream {
   }
 
   private void checkOutNotClosed() throws IOException {
-    if (out.closed) {
+    if (sink.closed) {
       throw new IOException("stream closed");
-    } else if (out.finished) {
+    } else if (sink.finished) {
       throw new IOException("stream finished");
     } else if (errorCode != null) {
       throw new IOException("stream was reset: " + errorCode);

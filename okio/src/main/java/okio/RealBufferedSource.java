@@ -27,6 +27,7 @@ final class RealBufferedSource implements BufferedSource {
   private boolean closed;
 
   public RealBufferedSource(Source source, OkBuffer buffer) {
+    if (source == null) throw new IllegalArgumentException("source == null");
     this.buffer = buffer;
     this.source = source;
   }

@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.OkBuffer;
 import okio.Okio;
 
 /**
@@ -115,6 +116,7 @@ public final class SpdyConnection implements Closeable {
   private boolean receivedInitialPeerSettings = false;
   final FrameReader frameReader;
   final FrameWriter frameWriter;
+  final long maxFrameSize;
 
   // Visible for testing
   final Reader readerRunnable;
@@ -149,6 +151,7 @@ public final class SpdyConnection implements Closeable {
     bufferPool = new ByteArrayPool(INITIAL_WINDOW_SIZE * 8); // TODO: revisit size limit!
     frameReader = variant.newReader(builder.source, client);
     frameWriter = variant.newWriter(builder.sink, client);
+    maxFrameSize = variant.maxFrameSize();
 
     readerRunnable = new Reader();
     new Thread(readerRunnable).start(); // Not a daemon thread.
@@ -259,27 +262,30 @@ public final class SpdyConnection implements Closeable {
    * will not block.  The only use case for zero {@code byteCount} is closing
    * a flushed output stream.
    */
-  public void writeData(int streamId, boolean outFinished, byte[] buffer, int offset, int byteCount)
+  public void writeData(int streamId, boolean outFinished, OkBuffer buffer, long byteCount)
       throws IOException {
     if (byteCount == 0) { // Empty data frames are not flow-controlled.
-      frameWriter.data(outFinished, streamId, buffer, offset, byteCount);
+      frameWriter.data(outFinished, streamId, buffer, 0);
       return;
     }
-    synchronized (SpdyConnection.this) {
-      waitUntilWritable(byteCount);
-      bytesLeftInWriteWindow -= byteCount;
-    }
-    frameWriter.data(outFinished, streamId, buffer, offset, byteCount);
-  }
 
-  /** Returns once the peer is ready to receive {@code byteCount} bytes. */
-  private void waitUntilWritable(int byteCount) throws IOException {
-    try {
-      while (byteCount > bytesLeftInWriteWindow) {
-        SpdyConnection.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+    while (byteCount > 0) {
+      int toWrite;
+      synchronized (SpdyConnection.this) {
+        try {
+          while (bytesLeftInWriteWindow <= 0) {
+            SpdyConnection.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+          }
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
+
+        toWrite = (int) Math.min(Math.min(byteCount, bytesLeftInWriteWindow), maxFrameSize);
+        bytesLeftInWriteWindow -= toWrite;
       }
-    } catch (InterruptedException e) {
-      throw new InterruptedIOException();
+
+      byteCount -= toWrite;
+      frameWriter.data(outFinished && byteCount == 0, streamId, buffer, toWrite);
     }
   }
 

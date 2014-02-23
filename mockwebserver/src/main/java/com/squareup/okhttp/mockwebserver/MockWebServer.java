@@ -62,6 +62,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
 
@@ -703,8 +704,9 @@ public final class MockWebServer {
             throw new AssertionError(e);
           }
         }
-        stream.getOutputStream().write(body);
-        stream.getOutputStream().close();
+        BufferedSink sink = Okio.buffer(stream.getSink());
+        sink.write(body);
+        sink.close();
       }
     }
   }

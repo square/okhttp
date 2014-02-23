@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
+import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
@@ -125,7 +126,9 @@ final class Job extends NamedRunnable {
         engine.sendRequest();
 
         if (body != null) {
-          body.writeTo(engine.getRequestBody());
+          BufferedSink sink = Okio.buffer(engine.getRequestBody());
+          body.writeTo(sink);
+          sink.flush();
         }
 
         engine.readResponse();

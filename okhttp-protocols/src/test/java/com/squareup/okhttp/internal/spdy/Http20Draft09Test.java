@@ -343,7 +343,7 @@ public class Http20Draft09Test {
     dataOut.write(expectedData);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(), sendDataFrame(expectedData));
+    assertArrayEquals(out.toByteArray(), sendDataFrame(new OkBuffer().write(expectedData)));
 
     FrameReader fr = newReader(out);
 
@@ -363,7 +363,7 @@ public class Http20Draft09Test {
 
   @Test public void tooLargeDataFrame() throws IOException {
     try {
-      sendDataFrame(new byte[0x1000000]);
+      sendDataFrame(new OkBuffer().write(new byte[0x1000000]));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("FRAME_SIZE_ERROR length > 16383: 16777216", e.getMessage());
@@ -522,14 +522,10 @@ public class Http20Draft09Test {
     return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
-  private byte[] sendDataFrame(byte[] data) throws IOException {
-    return sendDataFrame(data, 0, data.length);
-  }
-
-  private byte[] sendDataFrame(byte[] data, int offset, int byteCount) throws IOException {
+  private byte[] sendDataFrame(OkBuffer data) throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).dataFrame(expectedStreamId, Http20Draft09.FLAG_NONE, data,
-        offset, byteCount);
+        (int) data.byteCount());
     return out.readByteString((int) out.byteCount()).toByteArray();
   }
 

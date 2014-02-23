@@ -16,10 +16,10 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import okio.OkBuffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -74,17 +74,8 @@ public final class RequestTest {
   }
 
   private String bodyToHex(Request.Body body) throws IOException {
-    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-    body.writeTo(bytes);
-    return bytesToHex(bytes.toByteArray());
-  }
-
-  private String bytesToHex(byte[] bytes) {
-    StringBuilder hex = new StringBuilder();
-    for (byte b : bytes) {
-      if ((b & 0xff) < 0x10) hex.append('0');
-      hex.append(Integer.toHexString(b & 0xff));
-    }
-    return hex.toString();
+    OkBuffer buffer = new OkBuffer();
+    body.writeTo(buffer);
+    return buffer.readByteString((int) buffer.byteCount()).hex();
   }
 }

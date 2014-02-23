@@ -18,6 +18,7 @@ package com.squareup.okhttp.curl;
 import com.squareup.okhttp.Request;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import okio.OkBuffer;
 import org.junit.Test;
 
 import static com.squareup.okhttp.curl.Main.fromArgs;
@@ -85,10 +86,10 @@ public class MainTest {
 
   private static String bodyAsString(Request.Body body) {
     try {
-      int length = (int) Math.min(body.contentLength(), Integer.MAX_VALUE);
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(length);
-      body.writeTo(baos);
-      return new String(baos.toByteArray(), body.contentType().charset());
+      OkBuffer buffer = new OkBuffer();
+      body.writeTo(buffer);
+      return new String(buffer.readByteString((int) buffer.byteCount()).toByteArray(),
+          body.contentType().charset());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

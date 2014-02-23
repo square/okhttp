@@ -19,8 +19,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.CacheRequest;
+import okio.Sink;
 import okio.Source;
 
 interface Transport {
@@ -47,7 +47,7 @@ interface Transport {
    */
   // TODO: don't bother retransmitting the request body? It's quite a corner
   // case and there's uncertainty whether Firefox or Chrome do this
-  OutputStream createRequestBody(Request request) throws IOException;
+  Sink createRequestBody(Request request) throws IOException;
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;
@@ -56,7 +56,7 @@ interface Transport {
    * Sends the request body returned by {@link #createRequestBody} to the
    * remote peer.
    */
-  void writeRequestBody(RetryableOutputStream requestBody) throws IOException;
+  void writeRequestBody(RetryableSink requestBody) throws IOException;
 
   /** Flush the request body to the underlying socket. */
   void flushRequest() throws IOException;
