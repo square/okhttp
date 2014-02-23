@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.OkBuffer;
 import okio.Okio;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
@@ -40,7 +40,7 @@ public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
   private boolean client = false;
   private Variant variant = new Spdy3();
-  private final ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
+  private final OkBuffer bytesOut = new OkBuffer();
   private FrameWriter frameWriter = variant.newWriter(bytesOut, client);
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
@@ -69,7 +69,7 @@ public final class MockSpdyPeer implements Closeable {
   }
 
   public FrameWriter sendFrame() {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    outFrames.add(new OutFrame(frameCount++, bytesOut.byteCount(), Integer.MAX_VALUE));
     return frameWriter;
   }
 
@@ -78,7 +78,7 @@ public final class MockSpdyPeer implements Closeable {
    * won't be generated naturally.
    */
   public void sendFrame(byte[] frame) throws IOException {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    outFrames.add(new OutFrame(frameCount++, bytesOut.byteCount(), Integer.MAX_VALUE));
     bytesOut.write(frame);
   }
 
@@ -88,7 +88,7 @@ public final class MockSpdyPeer implements Closeable {
    * malformed.
    */
   public FrameWriter sendTruncatedFrame(int truncateToLength) {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), truncateToLength));
+    outFrames.add(new OutFrame(frameCount++, bytesOut.byteCount(), truncateToLength));
     return frameWriter;
   }
 
@@ -121,7 +121,7 @@ public final class MockSpdyPeer implements Closeable {
     FrameReader reader = variant.newReader(Okio.buffer(Okio.source(in)), client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
-    byte[] outBytes = bytesOut.toByteArray();
+    byte[] outBytes = bytesOut.readByteString((int) bytesOut.byteCount()).toByteArray();
     OutFrame nextOutFrame = null;
 
     for (int i = 0; i < frameCount; i++) {
@@ -130,9 +130,9 @@ public final class MockSpdyPeer implements Closeable {
       }
 
       if (nextOutFrame != null && nextOutFrame.sequence == i) {
-        int start = nextOutFrame.start;
+        long start = nextOutFrame.start;
         int truncateToLength = nextOutFrame.truncateToLength;
-        int end;
+        long end;
         if (outFramesIterator.hasNext()) {
           nextOutFrame = outFramesIterator.next();
           end = nextOutFrame.start;
@@ -141,8 +141,8 @@ public final class MockSpdyPeer implements Closeable {
         }
 
         // write a frame
-        int length = Math.min(end - start, truncateToLength);
-        out.write(outBytes, start, length);
+        int length = (int) Math.min(end - start, truncateToLength);
+        out.write(outBytes, (int) start, length);
       } else {
         // read a frame
         InFrame inFrame = new InFrame(i, reader);
@@ -173,10 +173,10 @@ public final class MockSpdyPeer implements Closeable {
 
   private static class OutFrame {
     private final int sequence;
-    private final int start;
+    private final long start;
     private final int truncateToLength;
 
-    private OutFrame(int sequence, int start, int truncateToLength) {
+    private OutFrame(int sequence, long start, int truncateToLength) {
       this.sequence = sequence;
       this.start = start;
       this.truncateToLength = truncateToLength;

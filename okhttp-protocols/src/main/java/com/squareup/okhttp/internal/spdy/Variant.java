@@ -16,7 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
-import java.io.OutputStream;
+import okio.BufferedSink;
 import okio.BufferedSource;
 
 /** A version and dialect of the framed socket protocol. */
@@ -33,5 +33,5 @@ interface Variant {
   /**
    * @param client true if this is the HTTP client's writer, writing frames to a server.
    */
-  FrameWriter newWriter(OutputStream out, boolean client);
+  FrameWriter newWriter(BufferedSink sink, boolean client);
 }

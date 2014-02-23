@@ -126,6 +126,7 @@ final class RealBufferedSink implements BufferedSink {
   }
 
   @Override public void close() throws IOException {
+    if (closed) return;
     flush();
     sink.close();
     closed = true;

@@ -2,7 +2,6 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.OkBuffer;
 import okio.Okio;
 import okio.Source;
 
@@ -399,9 +399,9 @@ final class HpackDraft05 {
   }
 
   static final class Writer {
-    private final OutputStream out;
+    private final OkBuffer out;
 
-    Writer(OutputStream out) {
+    Writer(OkBuffer out) {
       this.out = out;
     }
 
@@ -415,7 +415,7 @@ final class HpackDraft05 {
           writeInt(staticIndex + 1, PREFIX_6_BITS, 0x40);
           writeByteString(headerBlock.get(i).value);
         } else {
-          out.write(0x40); // Literal Header without Indexing - New Name.
+          out.writeByte(0x40); // Literal Header without Indexing - New Name.
           writeByteString(name);
           writeByteString(headerBlock.get(i).value);
         }
@@ -426,26 +426,26 @@ final class HpackDraft05 {
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
-        out.write(bits | value);
+        out.writeByte(bits | value);
         return;
       }
 
       // Write the mask to start a multibyte value.
-      out.write(bits | prefixMask);
+      out.writeByte(bits | prefixMask);
       value -= prefixMask;
 
       // Write 7 bits at a time 'til we're done.
       while (value >= 0x80) {
         int b = value & 0x7f;
-        out.write(b | 0x80);
+        out.writeByte(b | 0x80);
         value >>>= 7;
       }
-      out.write(value);
+      out.writeByte(value);
     }
 
     void writeByteString(ByteString data) throws IOException {
       writeInt(data.size(), PREFIX_8_BITS, 0);
-      data.write(out);
+      out.write(data);
     }
   }
 }
