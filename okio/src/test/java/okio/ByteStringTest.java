@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal;
+package okio;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.Arrays;
-import okio.ByteString;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -165,6 +164,20 @@ public class ByteStringTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test public void toStringOnEmptyByteString() {
+    assertEquals("ByteString[size=0]", ByteString.of().toString());
+  }
+
+  @Test public void toStringOnSmallByteStringIncludesContents() {
+    assertEquals("ByteString[size=16 data=a1b2c3d4e5f61a2b3c4d5e6f10203040]",
+        ByteString.decodeHex("a1b2c3d4e5f61a2b3c4d5e6f10203040").toString());
+  }
+
+  @Test public void toStringOnLargeByteStringIncludesMd5() {
+    assertEquals("ByteString[size=17 md5=2c9728a2138b2f25e9f89f99bdccf8db]",
+        ByteString.encodeUtf8("12345678901234567").toString());
   }
 
   private static void assertByteArraysEquals(byte[] a, byte[] b) {

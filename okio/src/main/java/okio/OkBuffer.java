@@ -578,6 +578,51 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return result;
   }
 
+  @Override public boolean equals(Object o) {
+    if (!(o instanceof OkBuffer)) return false;
+    OkBuffer that = (OkBuffer) o;
+    if (byteCount != that.byteCount) return false;
+    if (byteCount == 0) return true; // Both buffers are empty.
+
+    Segment sa = this.head;
+    Segment sb = that.head;
+    int posA = sa.pos;
+    int posB = sb.pos;
+
+    for (long pos = 0, count; pos < byteCount; pos += count) {
+      count = Math.min(sa.limit - posA, sb.limit - posB);
+
+      for (int i = 0; i < count; i++) {
+        if (sa.data[posA++] != sb.data[posB++]) return false;
+      }
+
+      if (posA == sa.limit) {
+        sa = sa.next;
+        posA = sa.pos;
+      }
+
+      if (posB == sb.limit) {
+        sb = sb.next;
+        posB = sb.pos;
+      }
+    }
+
+    return true;
+  }
+
+  @Override public int hashCode() {
+    Segment s = head;
+    if (s == null) return 0;
+    int result = 1;
+    do {
+      for (int pos = s.pos, limit = s.limit; pos < limit; pos++) {
+        result = 31 * result + s.data[pos];
+      }
+      s = s.next;
+    } while (s != head);
+    return result;
+  }
+
   @Override public String toString() {
     if (byteCount == 0) {
       return "OkBuffer[size=0]";
