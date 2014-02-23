@@ -16,14 +16,11 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import okio.ByteString;
 import okio.OkBuffer;
 import org.junit.Test;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -56,27 +53,25 @@ public class Spdy3Test {
   }
 
   @Test public void goAwayRoundTrip() throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    DataOutputStream dataOut = new DataOutputStream(out);
+    OkBuffer frame = new OkBuffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
 
     // Compose the expected GOAWAY frame without debug data
     // |C| Version(15bits) | Type(16bits) |
-    dataOut.writeInt(0x80000000 | (Spdy3.VERSION & 0x7fff) << 16 | Spdy3.TYPE_GOAWAY & 0xffff);
+    frame.writeInt(0x80000000 | (Spdy3.VERSION & 0x7fff) << 16 | Spdy3.TYPE_GOAWAY & 0xffff);
     // | Flags (8)  |  Length (24 bits)   |
-    dataOut.writeInt(8); // no flags and length is 8.
-    dataOut.writeInt(expectedStreamId); // last good stream.
-    dataOut.writeInt(expectedError.spdyGoAwayCode);
+    frame.writeInt(8); // no flags and length is 8.
+    frame.writeInt(expectedStreamId); // last good stream.
+    frame.writeInt(expectedError.spdyGoAwayCode);
 
     // Check writer sends the same bytes.
-    assertArrayEquals(out.toByteArray(),
-        sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
+    assertEquals(frame, sendGoAway(expectedStreamId, expectedError, Util.EMPTY_BYTE_ARRAY));
 
     // SPDY/3 does not send debug data, so bytes should be same!
-    assertArrayEquals(out.toByteArray(), sendGoAway(expectedStreamId, expectedError, new byte[8]));
+    assertEquals(frame, sendGoAway(expectedStreamId, expectedError, new byte[8]));
 
-    FrameReader fr = newReader(out);
+    FrameReader fr = new Spdy3.Reader(frame, false);
 
     fr.nextFrame(new BaseTestHandler() { // Consume the goAway frame.
       @Override public void goAway(
@@ -88,28 +83,19 @@ public class Spdy3Test {
     });
   }
 
-  private Spdy3.Reader newReader(ByteArrayOutputStream out) {
-    OkBuffer data = new OkBuffer().write(out.toByteArray());
-    return new Spdy3.Reader(data, false);
-  }
-
-  private byte[] sendDataFrame(OkBuffer source) throws IOException {
-    OkBuffer out = new OkBuffer();
-    Spdy3.Writer writer = new Spdy3.Writer(out, true);
+  private void sendDataFrame(OkBuffer source) throws IOException {
+    Spdy3.Writer writer = new Spdy3.Writer(new OkBuffer(), true);
     writer.sendDataFrame(expectedStreamId, 0, source, (int) source.byteCount());
-    return out.readByteString((int) out.byteCount()).toByteArray();
   }
 
-  private byte[] windowUpdate(long increment) throws IOException {
-    OkBuffer out = new OkBuffer();
-    new Spdy3.Writer(out, true).windowUpdate(expectedStreamId, increment);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+  private void windowUpdate(long increment) throws IOException {
+    new Spdy3.Writer(new OkBuffer(), true).windowUpdate(expectedStreamId, increment);
   }
 
-  private byte[] sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
+  private OkBuffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
     OkBuffer out = new OkBuffer();
     new Spdy3.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
-    return out.readByteString((int) out.byteCount()).toByteArray();
+    return out;
   }
 }
