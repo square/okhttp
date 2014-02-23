@@ -1,12 +1,23 @@
+/*
+ * Copyright (C) 2014 Square, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okio;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 
-class Util {
-  public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+final class Util {
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
@@ -16,41 +27,6 @@ class Util {
   public static void checkOffsetAndCount(long arrayLength, long offset, long count) {
     if ((offset | count) < 0 || offset > arrayLength || arrayLength - offset < count) {
       throw new ArrayIndexOutOfBoundsException();
-    }
-  }
-
-  /**
-   * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
-   */
-  public static void readFully(InputStream in, byte[] dst) throws IOException {
-    readFully(in, dst, 0, dst.length);
-  }
-
-  /**
-   * Reads exactly 'byteCount' bytes from 'in' (into 'dst' at offset 'offset'), and throws
-   * EOFException if insufficient bytes are available.
-   *
-   * Used to implement {@link java.io.DataInputStream#readFully(byte[], int, int)}.
-   */
-  public static void readFully(InputStream in, byte[] dst, int offset, int byteCount)
-      throws IOException {
-    if (byteCount == 0) {
-      return;
-    }
-    if (in == null) {
-      throw new NullPointerException("in == null");
-    }
-    if (dst == null) {
-      throw new NullPointerException("dst == null");
-    }
-    checkOffsetAndCount(dst.length, offset, byteCount);
-    while (byteCount > 0) {
-      int bytesRead = in.read(dst, offset, byteCount);
-      if (bytesRead < 0) {
-        throw new EOFException();
-      }
-      offset += bytesRead;
-      byteCount -= bytesRead;
     }
   }
 

@@ -15,9 +15,12 @@
  */
 package okio;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
 /**
@@ -35,12 +38,16 @@ public final class ByteString {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
+  /** A singleton empty {@code ByteString}. */
+  public static final ByteString EMPTY = ByteString.of();
+
   final byte[] data;
   private transient int hashCode; // Lazily computed; 0 if unknown.
   private transient String utf8; // Lazily computed.
 
-  /** A singleton empty {@code ByteString}. */
-  public static final ByteString EMPTY = new ByteString(Util.EMPTY_BYTE_ARRAY);
+  ByteString(byte[] data) {
+    this.data = data; // Trusted internal constructor doesn't clone data.
+  }
 
   /**
    * Returns a new byte string containing a clone of the bytes of {@code data}.
@@ -133,11 +140,14 @@ public final class ByteString {
    * Reads {@code count} bytes from {@code in} and returns the result.
    *
    * @throws java.io.EOFException if {@code in} has fewer than {@code count}
-   * bytes to read.
+   *     bytes to read.
    */
-  public static ByteString read(InputStream in, int count) throws IOException {
-    byte[] result = new byte[count];
-    Util.readFully(in, result);
+  public static ByteString read(InputStream in, int byteCount) throws IOException {
+    byte[] result = new byte[byteCount];
+    for (int offset = 0, read; offset < byteCount; offset += read) {
+      read = in.read(result, offset, byteCount - offset);
+      if (read == -1) throw new EOFException();
+    }
     return new ByteString(result);
   }
 
@@ -180,10 +190,6 @@ public final class ByteString {
     return new ByteString(result);
   }
 
-  ByteString(byte[] data) {
-    this.data = data; // Trusted internal constructor doesn't clone data.
-  }
-
   /**
    * Returns the number of bytes in this ByteString.
    */
@@ -210,5 +216,22 @@ public final class ByteString {
   @Override public int hashCode() {
     int result = hashCode;
     return result != 0 ? result : (hashCode = Arrays.hashCode(data));
+  }
+
+  @Override public String toString() {
+    if (data.length == 0) {
+      return "ByteString[size=0]";
+    }
+
+    if (data.length <= 16) {
+      return String.format("ByteString[size=%s data=%s]", data.length, hex());
+    }
+
+    try {
+      return String.format("ByteString[size=%s md5=%s]", data.length,
+          ByteString.of(MessageDigest.getInstance("MD5").digest(data)).hex());
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError();
+    }
   }
 }

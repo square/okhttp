@@ -17,10 +17,13 @@ package okio;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;
+import static junit.framework.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class OkBufferTest {
@@ -82,7 +85,7 @@ public final class OkBufferTest {
     assertEquals("OkBuffer[size=16 data=a1b2c3d4e5f61a2b3c4d5e6f10203040]", buffer.toString());
   }
 
-  @Test public void toStringIncludesMd5() throws Exception {
+  @Test public void toStringOnLargeBufferIncludesMd5() throws Exception {
     OkBuffer buffer = new OkBuffer();
     buffer.write(ByteString.encodeUtf8("12345678901234567"));
     assertEquals("OkBuffer[size=17 md5=2c9728a2138b2f25e9f89f99bdccf8db]", buffer.toString());
@@ -523,6 +526,65 @@ public final class OkBufferTest {
         original.readUtf8(Segment.SIZE * 6));
     assertEquals(repeat('a', Segment.SIZE * 3) + repeat('c', Segment.SIZE * 3),
         clone.readUtf8(Segment.SIZE * 6));
+  }
+
+  @Test public void testEqualsAndHashCodeEmpty() throws Exception {
+    OkBuffer a = new OkBuffer();
+    OkBuffer b = new OkBuffer();
+    assertTrue(a.equals(b));
+    assertTrue(a.hashCode() == b.hashCode());
+  }
+
+  @Test public void testEqualsAndHashCode() throws Exception {
+    OkBuffer a = new OkBuffer().writeUtf8("dog");
+    OkBuffer b = new OkBuffer().writeUtf8("hotdog");
+    assertFalse(a.equals(b));
+    assertFalse(a.hashCode() == b.hashCode());
+
+    b.readUtf8(3); // Leaves b containing 'dog'.
+    assertTrue(a.equals(b));
+    assertTrue(a.hashCode() == b.hashCode());
+  }
+
+  @Test public void testEqualsAndHashCodeSpanningSegments() throws Exception {
+    byte[] data = new byte[1024 * 1024];
+    Random dice = new Random(0);
+    dice.nextBytes(data);
+
+    OkBuffer a = bufferWithRandomSegmentLayout(dice, data);
+    OkBuffer b = bufferWithRandomSegmentLayout(dice, data);
+    assertTrue(a.equals(b));
+    assertTrue(a.hashCode() == b.hashCode());
+
+    data[data.length / 2]++; // Change a single byte.
+    OkBuffer c = bufferWithRandomSegmentLayout(dice, data);
+    assertFalse(a.equals(c));
+    assertFalse(a.hashCode() == c.hashCode());
+  }
+
+  /**
+   * Returns a new buffer containing the data in {@code data}, and a segment
+   * layout determined by {@code dice}.
+   */
+  private OkBuffer bufferWithRandomSegmentLayout(Random dice, byte[] data) {
+    OkBuffer result = new OkBuffer();
+
+    // Writing to result directly will yield packed segments. Instead, write to
+    // other buffers, then write those buffers to result.
+    for (int pos = 0, byteCount; pos < data.length; pos += byteCount) {
+      byteCount = (Segment.SIZE / 2) + dice.nextInt(Segment.SIZE / 2);
+      if (byteCount > data.length - pos) byteCount = data.length - pos;
+      int offset = dice.nextInt(Segment.SIZE - byteCount);
+
+      OkBuffer segment = new OkBuffer();
+      segment.write(new byte[offset]);
+      segment.write(data, pos, byteCount);
+      segment.skip(offset);
+
+      result.write(segment, byteCount);
+    }
+
+    return result;
   }
 
   private String repeat(char c, int count) {
