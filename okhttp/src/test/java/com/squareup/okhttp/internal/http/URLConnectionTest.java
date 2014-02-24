@@ -76,6 +76,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
@@ -2667,6 +2668,29 @@ public final class URLConnectionTest {
     HttpURLConnection connection2 = client.open(server.getUrl("/"));
     assertEquals(HttpURLConnection.HTTP_OK, connection2.getResponseCode());
     assertContent("b", connection2);
+
+    RecordedRequest requestA = server.takeRequest();
+    assertEquals(0, requestA.getSequenceNumber());
+
+    RecordedRequest requestB = server.takeRequest();
+    assertEquals(1, requestB.getSequenceNumber());
+  }
+
+  /**
+   * We had a bug where we weren't closing Gzip streams on redirects.
+   * https://github.com/square/okhttp/issues/441
+   */
+  @Test public void gzipWithRedirectAndConnectionReuse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: /foo")
+        .addHeader("Content-Encoding: gzip")
+        .setBody(gzip("Moved! Moved! Moved!".getBytes(UTF_8))));
+    server.enqueue(new MockResponse().setBody("This is the new page!"));
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertContent("This is the new page!", connection);
 
     RecordedRequest requestA = server.takeRequest();
     assertEquals(0, requestA.getSequenceNumber());
