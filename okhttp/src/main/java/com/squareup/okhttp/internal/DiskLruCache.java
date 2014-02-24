@@ -38,6 +38,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okio.BufferedSource;
+import okio.Okio;
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache
@@ -242,13 +244,13 @@ public final class DiskLruCache implements Closeable {
   }
 
   private void readJournal() throws IOException {
-    StrictLineReader reader = new StrictLineReader(new FileInputStream(journalFile), Util.US_ASCII);
+    BufferedSource source = Okio.buffer(Okio.source(new FileInputStream(journalFile)));
     try {
-      String magic = reader.readLine();
-      String version = reader.readLine();
-      String appVersionString = reader.readLine();
-      String valueCountString = reader.readLine();
-      String blank = reader.readLine();
+      String magic = source.readUtf8Line(true);
+      String version = source.readUtf8Line(true);
+      String appVersionString = source.readUtf8Line(true);
+      String valueCountString = source.readUtf8Line(true);
+      String blank = source.readUtf8Line(true);
       if (!MAGIC.equals(magic)
           || !VERSION_1.equals(version)
           || !Integer.toString(appVersion).equals(appVersionString)
@@ -261,7 +263,7 @@ public final class DiskLruCache implements Closeable {
       int lineCount = 0;
       while (true) {
         try {
-          readJournalLine(reader.readLine());
+          readJournalLine(source.readUtf8Line(true));
           lineCount++;
         } catch (EOFException endOfJournal) {
           break;
@@ -269,7 +271,7 @@ public final class DiskLruCache implements Closeable {
       }
       redundantOpCount = lineCount - lruEntries.size();
     } finally {
-      Util.closeQuietly(reader);
+      Util.closeQuietly(source);
     }
   }
 
