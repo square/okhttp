@@ -76,11 +76,11 @@ public abstract class HttpOverSpdyTest {
   };
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
-  private final MockWebServer server = new MockWebServer();
-  private final String hostName = server.getHostName();
-  private final OkHttpClient client = new OkHttpClient();
-  private HttpURLConnection connection;
-  private HttpResponseCache cache;
+  protected final MockWebServer server = new MockWebServer();
+  protected final String hostName = server.getHostName();
+  protected final OkHttpClient client = new OkHttpClient();
+  protected HttpURLConnection connection;
+  protected HttpResponseCache cache;
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
@@ -374,11 +374,11 @@ public abstract class HttpOverSpdyTest {
     assertContains(requestB.getHeaders(), "cookie: c=oreo");
   }
 
-  private <T> void assertContains(Collection<T> collection, T value) {
+  <T> void assertContains(Collection<T> collection, T value) {
     assertTrue(collection.toString(), collection.contains(value));
   }
 
-  private void assertContent(String expected, HttpURLConnection connection, int limit)
+  void assertContent(String expected, HttpURLConnection connection, int limit)
       throws IOException {
     connection.connect();
     assertEquals(expected, readAscii(connection.getInputStream(), limit));

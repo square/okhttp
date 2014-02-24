@@ -21,6 +21,7 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -695,7 +696,9 @@ public final class MockWebServer {
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
       byte[] body = response.getBody();
-      stream.reply(spdyHeaders, body.length > 0);
+      boolean closeStreamAfterHeaders = body.length > 0 || !response.getPushPromises().isEmpty();
+      stream.reply(spdyHeaders, closeStreamAfterHeaders);
+      pushPromises(stream, response.getPushPromises());
       if (body.length > 0) {
         if (response.getBodyDelayTimeMs() != 0) {
           try {
@@ -707,6 +710,35 @@ public final class MockWebServer {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sink.write(body);
         sink.close();
+      } else if (closeStreamAfterHeaders) {
+        stream.close(ErrorCode.NO_ERROR);
+      }
+    }
+
+    private void pushPromises(SpdyStream stream, List<PushPromise> promises) throws IOException {
+      for (PushPromise pushPromise : promises) {
+        List<Header> pushedHeaders = new ArrayList<Header>();
+        pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
+            ? Header.TARGET_HOST
+            : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));
+        pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
+        pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
+        for (int i = 0, size = pushPromise.getHeaders().size(); i < size; i++) {
+          String header = pushPromise.getHeaders().get(i);
+          String[] headerParts = header.split(":", 2);
+          if (headerParts.length != 2) {
+            throw new AssertionError("Unexpected header: " + header);
+          }
+          pushedHeaders.add(new Header(headerParts[0], headerParts[1]));
+        }
+        String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
+        List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
+        requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
+            Util.EMPTY_BYTE_ARRAY, sequenceNumber.getAndIncrement(), socket));
+        byte[] pushedBody = pushPromise.getResponse().getBody();
+        SpdyStream pushedStream =
+            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.length > 0);
+        writeResponse(pushedStream, pushPromise.getResponse());
       }
     }
   }

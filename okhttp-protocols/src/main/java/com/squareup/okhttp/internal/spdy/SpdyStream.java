@@ -85,6 +85,10 @@ public final class SpdyStream {
     this.requestHeaders = requestHeaders;
   }
 
+  public int getId() {
+    return id;
+  }
+
   /**
    * Returns true if this stream is open. A stream is open until either:
    * <ul>
@@ -175,9 +179,6 @@ public final class SpdyStream {
     synchronized (this) {
       if (responseHeaders == null) {
         throw new NullPointerException("responseHeaders == null");
-      }
-      if (isLocallyInitiated()) {
-        throw new IllegalStateException("cannot reply to a locally initiated stream");
       }
       if (this.responseHeaders != null) {
         throw new IllegalStateException("reply already sent");

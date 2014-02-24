@@ -46,6 +46,8 @@ public final class MockResponse implements Cloneable {
 
   private int bodyDelayTimeMs = 0;
 
+  private List<PushPromise> promises = new ArrayList<PushPromise>();
+
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
     setBody(new byte[0]);
@@ -54,7 +56,8 @@ public final class MockResponse implements Cloneable {
   @Override public MockResponse clone() {
     try {
       MockResponse result = (MockResponse) super.clone();
-      result.headers = new ArrayList<String>(result.headers);
+      result.headers = new ArrayList<String>(headers);
+      result.promises = new ArrayList<PushPromise>(promises);
       return result;
     } catch (CloneNotSupportedException e) {
       throw new AssertionError();
@@ -245,6 +248,20 @@ public final class MockResponse implements Cloneable {
 
   public int getBodyDelayTimeMs() {
     return bodyDelayTimeMs;
+  }
+
+  /**
+   * When {@link MockWebServer#setNpnProtocols(java.util.List) protocols}
+   * include a SPDY variant, this attaches a pushed stream to this response.
+   */
+  public MockResponse withPush(PushPromise promise) {
+    this.promises.add(promise);
+    return this;
+  }
+
+  /** Returns the streams the server will push with this response. */
+  public List<PushPromise> getPushPromises() {
+    return promises;
   }
 
   @Override public String toString() {

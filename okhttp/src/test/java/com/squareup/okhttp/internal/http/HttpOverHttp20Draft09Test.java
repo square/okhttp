@@ -16,11 +16,62 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.PushPromise;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import java.util.Arrays;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class HttpOverHttp20Draft09Test extends HttpOverSpdyTest {
 
   public HttpOverHttp20Draft09Test() {
     super(Protocol.HTTP_2);
     this.hostHeader = ":authority";
+  }
+
+  @Test public void serverSendsPushPromise_GET() throws Exception {
+    MockResponse response = new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet")
+        .withPush(new PushPromise("GET", "/foo/bar", Arrays.asList("foo: bar"),
+            new MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet")));
+    server.enqueue(response);
+    server.play();
+
+    connection = client.open(server.getUrl("/foo"));
+    assertContent("ABCDE", connection, Integer.MAX_VALUE);
+    assertEquals(200, connection.getResponseCode());
+    assertEquals("Sweet", connection.getResponseMessage());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    assertContains(request.getHeaders(), ":scheme: https");
+    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
+
+    RecordedRequest pushedRequest = server.takeRequest();
+    assertEquals("GET /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
+    assertEquals(Arrays.asList("foo: bar"), pushedRequest.getHeaders());
+  }
+
+  @Test public void serverSendsPushPromise_HEAD() throws Exception {
+    MockResponse response = new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet")
+        .withPush(new PushPromise("HEAD", "/foo/bar", Arrays.asList("foo: bar"),
+            new MockResponse().setStatus("HTTP/1.1 204 Sweet")));
+    server.enqueue(response);
+    server.play();
+
+    connection = client.open(server.getUrl("/foo"));
+    assertContent("ABCDE", connection, Integer.MAX_VALUE);
+    assertEquals(200, connection.getResponseCode());
+    assertEquals("Sweet", connection.getResponseMessage());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    assertContains(request.getHeaders(), ":scheme: https");
+    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
+
+    RecordedRequest pushedRequest = server.takeRequest();
+    assertEquals("HEAD /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
+    assertEquals(Arrays.asList("foo: bar"), pushedRequest.getHeaders());
   }
 }
