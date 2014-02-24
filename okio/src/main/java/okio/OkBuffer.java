@@ -139,7 +139,6 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return result;
   }
 
-  /** Removes a byte from the front of this buffer and returns it. */
   @Override public byte readByte() {
     if (byteCount == 0) throw new IllegalStateException("byteCount == 0");
 
@@ -171,7 +170,6 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     }
   }
 
-  /** Removes a Big-Endian short from the front of this buffer and returns it. */
   @Override public short readShort() {
     if (byteCount < 2) throw new IllegalArgumentException("byteCount < 2: " + byteCount);
 
@@ -201,7 +199,6 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return (short) s;
   }
 
-  /** Removes a Big-Endian int from the front of this buffer and returns it. */
   @Override public int readInt() {
     if (byteCount < 4) throw new IllegalArgumentException("byteCount < 4: " + byteCount);
 
@@ -234,22 +231,18 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return i;
   }
 
-  /** Removes a Little-Endian short from the front of this buffer and returns it. */
   public int readShortLe() {
     return Util.reverseBytesShort(readShort());
   }
 
-  /** Removes a Little-Endian int from the front of this buffer and returns it. */
   public int readIntLe() {
     return Util.reverseBytesInt(readInt());
   }
 
-  /** Removes {@code byteCount} bytes from this and returns them as a byte string. */
   public ByteString readByteString(int byteCount) {
     return new ByteString(readBytes(byteCount));
   }
 
-  /** Removes {@code byteCount} bytes from this, decodes them as UTF-8 and returns the string. */
   public String readUtf8(int byteCount) {
     checkOffsetAndCount(this.byteCount, 0, byteCount);
     if (byteCount == 0) return "";
@@ -270,6 +263,28 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     }
 
     return result;
+  }
+
+  @Override public String readUtf8Line(boolean throwOnEof) throws EOFException {
+    long newline = indexOf((byte) '\n');
+
+    if (newline == -1) {
+      if (throwOnEof) throw new EOFException();
+      return byteCount != 0 ? readUtf8((int) byteCount) : null;
+    }
+
+    if (newline > 0 && getByte(newline - 1) == '\r') {
+      // Read everything until '\r\n', then skip the '\r\n'.
+      String result = readUtf8((int) (newline - 1));
+      skip(2);
+      return result;
+
+    } else {
+      // Read everything until '\n', then skip the '\n'.
+      String result = readUtf8((int) (newline));
+      skip(1);
+      return result;
+    }
   }
 
   private byte[] readBytes(int byteCount) {

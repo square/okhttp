@@ -79,6 +79,31 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readUtf8(byteCount);
   }
 
+  @Override public String readUtf8Line(boolean throwOnEof) throws IOException {
+    long start = 0;
+    long newline;
+    while ((newline = buffer.indexOf((byte) '\n', start)) == -1) {
+      start = buffer.byteCount;
+      if (source.read(buffer, Segment.SIZE) == -1) {
+        if (throwOnEof) throw new EOFException();
+        return buffer.byteCount != 0 ? readUtf8((int) buffer.byteCount) : null;
+      }
+    }
+
+    if (newline > 0 && buffer.getByte(newline - 1) == '\r') {
+      // Read everything until '\r\n', then skip the '\r\n'.
+      String result = readUtf8((int) (newline - 1));
+      skip(2);
+      return result;
+
+    } else {
+      // Read everything until '\n', then skip the '\n'.
+      String result = readUtf8((int) (newline));
+      skip(1);
+      return result;
+    }
+  }
+
   @Override public short readShort() throws IOException {
     require(2);
     return buffer.readShort();
