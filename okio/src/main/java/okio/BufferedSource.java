@@ -40,14 +40,19 @@ public interface BufferedSource extends Source {
    */
   void require(long byteCount) throws IOException;
 
+  /** Removes a byte from the front of this buffer and returns it. */
   byte readByte() throws IOException;
 
+  /** Removes a Big-Endian short from the front of this buffer and returns it. */
   short readShort() throws IOException;
 
+  /** Removes a Little-Endian short from the front of this buffer and returns it. */
   int readShortLe() throws IOException;
 
+  /** Removes a Big-Endian int from the front of this buffer and returns it. */
   int readInt() throws IOException;
 
+  /** Removes a Little-Endian int from the front of this buffer and returns it. */
   int readIntLe() throws IOException;
 
   /**
@@ -57,9 +62,33 @@ public interface BufferedSource extends Source {
    */
   void skip(long byteCount) throws IOException;
 
+  /** Removes {@code byteCount} bytes from this and returns them as a byte string. */
   ByteString readByteString(int byteCount) throws IOException;
 
+  /**
+   * Removes {@code byteCount} bytes from this, decodes them as UTF-8 and
+   * returns the string.
+   */
   String readUtf8(int byteCount) throws IOException;
+
+  /**
+   * Removes and returns characters up to but not including the next line break.
+   * A line break is either {@code "\n"} or {@code "\r\n"}; these characters are
+   * not included in the result.
+   *
+   * <p>This method supports two ways to handle the end of the stream:
+   * <ul>
+   *   <li><strong>Throw on EOF.</strong> Every call must consume either '\r\n'
+   *       or '\n'. If these characters are absent in the stream, an {@link
+   *       java.io.EOFException} is thrown. Use this for machine-generated data
+   *       where a missing line break implies truncated input.
+   *   <li><strong>Don't throw, just like BufferedReader.</strong> If the source
+   *       doesn't end with a line break then an implicit line break is assumed.
+   *       Null is returned once the source is exhausted. Use this for
+   *       human-generated data, where a trailing line breaks are optional.
+   * </ul>
+   */
+  String readUtf8Line(boolean throwOnEof) throws IOException;
 
   /**
    * Returns the index of {@code b} in the buffer, refilling it if necessary
