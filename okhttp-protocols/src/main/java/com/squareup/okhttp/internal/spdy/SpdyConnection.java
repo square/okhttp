@@ -198,18 +198,37 @@ public final class SpdyConnection implements Closeable {
   }
 
   /**
-   * Returns a new locally-initiated stream.
+   * Returns a new server-initiated stream.
    *
+   * @param associatedStreamId the stream that triggered the sender to create
+   *     this stream.
    * @param out true to create an output stream that we can use to send data
    *     to the remote peer. Corresponds to {@code FLAG_FIN}.
-   * @param in true to create an input stream that the remote peer can use to
-   *     send data to us. Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
-  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in)
+  public SpdyStream pushStream(int associatedStreamId, List<Header> requestHeaders, boolean out)
+      throws IOException {
+    if (client) throw new IllegalStateException("Client cannot push requests.");
+    return newStream(associatedStreamId, requestHeaders, out, false);
+  }
+
+  /**
+   * Returns a new locally-initiated stream.
+   *
+   * @param out true to create an output stream that we can use to send data to the remote peer.
+   *     Corresponds to {@code FLAG_FIN}.
+   * @param in true to create an input stream that the remote peer can use to send data to us.
+   *     Corresponds to {@code FLAG_UNIDIRECTIONAL}.
+   */
+  public SpdyStream newStream(List<Header> requestHeaders, boolean out,
+      boolean in) throws IOException {
+    return newStream(0, requestHeaders, out, in);
+  }
+
+  private SpdyStream newStream(int associatedStreamId, List<Header> requestHeaders, boolean out,
+      boolean in)
       throws IOException {
     boolean outFinished = !out;
     boolean inFinished = !in;
-    int associatedStreamId = 0;  // TODO: permit the caller to specify an associated stream?
     int priority = -1; // TODO: permit the caller to specify a priority?
     int slot = 0; // TODO: permit the caller to specify a slot?
     SpdyStream stream;
@@ -228,9 +247,12 @@ public final class SpdyConnection implements Closeable {
           setIdle(false);
         }
       }
-
-      frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
-          requestHeaders);
+      if (associatedStreamId == 0) {
+        frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
+            requestHeaders);
+      } else {
+        frameWriter.pushPromise(associatedStreamId, streamId, requestHeaders);
+      }
     }
 
     if (!out) {
