@@ -18,6 +18,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
@@ -86,6 +87,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * request yet, or if the response comes from a cache.
    */
   private Route route;
+
+  /**
+   * The most recently received TLS handshake. This will be null if we haven't
+   * connected yet, or if the most recent connection was HTTP (and not HTTPS).
+   */
+  Handshake handshake;
 
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
@@ -364,6 +371,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     try {
       httpEngine.sendRequest();
       route = httpEngine.getRoute();
+      handshake = httpEngine.getConnection() != null
+          ? httpEngine.getConnection().getHandshake()
+          : null;
       if (readResponse) {
         httpEngine.readResponse();
       }
