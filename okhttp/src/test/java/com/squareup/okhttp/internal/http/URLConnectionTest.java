@@ -87,6 +87,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -528,6 +529,36 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+  }
+
+  @Test public void inspectHandshakeThroughoutRequestLifecycle() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse());
+    server.play();
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    HttpsURLConnection httpsConnection = (HttpsURLConnection) client.open(server.getUrl("/foo"));
+
+    // Prior to calling connect(), getting the cipher suite is forbidden.
+    try {
+      httpsConnection.getCipherSuite();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    // Calling connect establishes a handshake...
+    httpsConnection.connect();
+    assertNotNull(httpsConnection.getCipherSuite());
+
+    // ...which remains after we read the response body...
+    assertContent("", httpsConnection);
+    assertNotNull(httpsConnection.getCipherSuite());
+
+    // ...and after we disconnect.
+    httpsConnection.disconnect();
+    assertNotNull(httpsConnection.getCipherSuite());
   }
 
   @Test public void connectViaHttpsReusingConnections() throws IOException, InterruptedException {
