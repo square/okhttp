@@ -76,6 +76,6 @@ public final class RequestTest {
   private String bodyToHex(Request.Body body) throws IOException {
     OkBuffer buffer = new OkBuffer();
     body.writeTo(buffer);
-    return buffer.readByteString((int) buffer.byteCount()).hex();
+    return buffer.readByteString((int) buffer.size()).hex();
   }
 }

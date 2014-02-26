@@ -1073,7 +1073,7 @@ public final class SpdyConnectionTest {
     Source in = stream.getSource();
     OkBuffer buffer = new OkBuffer();
     while (in.read(buffer, 1024) != -1) {
-      if (buffer.byteCount() == 3 * windowUpdateThreshold) break;
+      if (buffer.size() == 3 * windowUpdateThreshold) break;
     }
     assertEquals(-1, in.read(buffer, 1));
 
@@ -1462,7 +1462,7 @@ public final class SpdyConnectionTest {
     OkBuffer buffer = new OkBuffer();
     while (source.read(buffer, Long.MAX_VALUE) != -1) {
     }
-    String actual = buffer.readUtf8((int) buffer.byteCount());
+    String actual = buffer.readUtf8((int) buffer.size());
     assertEquals(expected, actual);
   }
 

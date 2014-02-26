@@ -331,7 +331,7 @@ final class Spdy3 implements Variant {
         throws IOException {
       if (closed) throw new IOException("closed");
       writeNameValueBlockToBuffer(headerBlock);
-      int length = (int) (10 + headerBlockBuffer.byteCount());
+      int length = (int) (10 + headerBlockBuffer.size());
       int type = TYPE_SYN_STREAM;
       int flags = (outFinished ? FLAG_FIN : 0) | (inFinished ? FLAG_UNIDIRECTIONAL : 0);
 
@@ -341,7 +341,7 @@ final class Spdy3 implements Variant {
       sink.writeInt(streamId & 0x7fffffff);
       sink.writeInt(associatedStreamId & 0x7fffffff);
       sink.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
-      sink.write(headerBlockBuffer, headerBlockBuffer.byteCount());
+      sink.write(headerBlockBuffer, headerBlockBuffer.size());
       sink.flush();
     }
 
@@ -351,12 +351,12 @@ final class Spdy3 implements Variant {
       writeNameValueBlockToBuffer(headerBlock);
       int type = TYPE_SYN_REPLY;
       int flags = (outFinished ? FLAG_FIN : 0);
-      int length = (int) (headerBlockBuffer.byteCount() + 4);
+      int length = (int) (headerBlockBuffer.size() + 4);
 
       sink.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       sink.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       sink.writeInt(streamId & 0x7fffffff);
-      sink.write(headerBlockBuffer, headerBlockBuffer.byteCount());
+      sink.write(headerBlockBuffer, headerBlockBuffer.size());
       sink.flush();
     }
 
@@ -366,12 +366,12 @@ final class Spdy3 implements Variant {
       writeNameValueBlockToBuffer(headerBlock);
       int flags = 0;
       int type = TYPE_HEADERS;
-      int length = (int) (headerBlockBuffer.byteCount() + 4);
+      int length = (int) (headerBlockBuffer.size() + 4);
 
       sink.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       sink.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       sink.writeInt(streamId & 0x7fffffff);
-      sink.write(headerBlockBuffer, headerBlockBuffer.byteCount());
+      sink.write(headerBlockBuffer, headerBlockBuffer.size());
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
@@ -390,7 +390,7 @@ final class Spdy3 implements Variant {
 
     @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
         throws IOException {
-      data(outFinished, streamId, source, (int) source.byteCount());
+      data(outFinished, streamId, source, (int) source.size());
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,
@@ -411,7 +411,7 @@ final class Spdy3 implements Variant {
     }
 
     private void writeNameValueBlockToBuffer(List<Header> headerBlock) throws IOException {
-      if (headerBlockBuffer.byteCount() != 0) throw new IllegalStateException();
+      if (headerBlockBuffer.size() != 0) throw new IllegalStateException();
       headerBlockOut.writeInt(headerBlock.size());
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
         ByteString name = headerBlock.get(i).name;

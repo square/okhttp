@@ -34,32 +34,32 @@ public final class RealBufferedSourceTest {
 
     InputStream in = new RealBufferedSource(source).inputStream();
     assertEquals(0, in.available());
-    assertEquals(Segment.SIZE + 2, source.byteCount());
+    assertEquals(Segment.SIZE + 2, source.size());
 
     // Reading one byte buffers a full segment.
     assertEquals('a', in.read());
     assertEquals(Segment.SIZE - 1, in.available());
-    assertEquals(2, source.byteCount());
+    assertEquals(2, source.size());
 
     // Reading as much as possible reads the rest of that buffered segment.
     byte[] data = new byte[Segment.SIZE * 2];
     assertEquals(Segment.SIZE - 1, in.read(data, 0, data.length));
     assertEquals(repeat('b', Segment.SIZE - 1), new String(data, 0, Segment.SIZE - 1, UTF_8));
-    assertEquals(2, source.byteCount());
+    assertEquals(2, source.size());
 
     // Continuing to read buffers the next segment.
     assertEquals('b', in.read());
     assertEquals(1, in.available());
-    assertEquals(0, source.byteCount());
+    assertEquals(0, source.size());
 
     // Continuing to read reads from the buffer.
     assertEquals('c', in.read());
     assertEquals(0, in.available());
-    assertEquals(0, source.byteCount());
+    assertEquals(0, source.size());
 
     // Once we've exhausted the source, we're done.
     assertEquals(-1, in.read());
-    assertEquals(0, source.byteCount());
+    assertEquals(0, source.size());
   }
 
   @Test public void inputStreamFromSourceBounds() throws IOException {
@@ -81,8 +81,8 @@ public final class RealBufferedSourceTest {
     bufferedSource.buffer().writeUtf8("aa");
 
     bufferedSource.require(2);
-    assertEquals(2, bufferedSource.buffer().byteCount());
-    assertEquals(2, source.byteCount());
+    assertEquals(2, bufferedSource.buffer().size());
+    assertEquals(2, source.size());
   }
 
   @Test public void requireIncludesBufferBytes() throws Exception {
@@ -117,8 +117,8 @@ public final class RealBufferedSourceTest {
     BufferedSource bufferedSource = new RealBufferedSource(source);
 
     bufferedSource.require(2);
-    assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE, bufferedSource.buffer().byteCount());
+    assertEquals(Segment.SIZE, source.size());
+    assertEquals(Segment.SIZE, bufferedSource.buffer().size());
   }
 
   @Test public void skipInsufficientData() throws Exception {
@@ -139,8 +139,8 @@ public final class RealBufferedSourceTest {
     source.writeUtf8(repeat('b', Segment.SIZE));
     BufferedSource bufferedSource = new RealBufferedSource(source);
     bufferedSource.skip(2);
-    assertEquals(Segment.SIZE, source.byteCount());
-    assertEquals(Segment.SIZE - 2, bufferedSource.buffer().byteCount());
+    assertEquals(Segment.SIZE, source.size());
+    assertEquals(Segment.SIZE - 2, bufferedSource.buffer().size());
   }
 
   @Test public void skipTracksBufferFirst() throws Exception {
@@ -151,8 +151,8 @@ public final class RealBufferedSourceTest {
     bufferedSource.buffer().writeUtf8("aa");
 
     bufferedSource.skip(2);
-    assertEquals(0, bufferedSource.buffer().byteCount());
-    assertEquals(2, source.byteCount());
+    assertEquals(0, bufferedSource.buffer().size());
+    assertEquals(2, source.size());
   }
 
   private String repeat(char c, int count) {

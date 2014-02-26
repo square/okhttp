@@ -87,7 +87,7 @@ public class MainTest {
     try {
       OkBuffer buffer = new OkBuffer();
       body.writeTo(buffer);
-      return new String(buffer.readByteString((int) buffer.byteCount()).toByteArray(),
+      return new String(buffer.readByteString((int) buffer.size()).toByteArray(),
           body.contentType().charset());
     } catch (IOException e) {
       throw new RuntimeException(e);

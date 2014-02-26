@@ -363,10 +363,10 @@ public final class SpdyStream {
       synchronized (SpdyStream.this) {
         waitUntilReadable();
         checkNotClosed();
-        if (readBuffer.byteCount() == 0) return -1; // This source is exhausted.
+        if (readBuffer.size() == 0) return -1; // This source is exhausted.
 
         // Move bytes from the read buffer into the caller's buffer.
-        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.byteCount()));
+        read = readBuffer.read(sink, Math.min(byteCount, readBuffer.size()));
 
         // Flow control: notify the peer that we're ready for more data!
         unacknowledgedBytesRead += read;
@@ -402,7 +402,7 @@ public final class SpdyStream {
         remaining = readTimeoutMillis;
       }
       try {
-        while (readBuffer.byteCount() == 0 && !finished && !closed && errorCode == null) {
+        while (readBuffer.size() == 0 && !finished && !closed && errorCode == null) {
           if (readTimeoutMillis == 0) {
             SpdyStream.this.wait();
           } else if (remaining > 0) {
@@ -425,7 +425,7 @@ public final class SpdyStream {
         boolean flowControlError;
         synchronized (SpdyStream.this) {
           finished = this.finished;
-          flowControlError = byteCount + readBuffer.byteCount() > maxByteCount;
+          flowControlError = byteCount + readBuffer.size() > maxByteCount;
         }
 
         // If the peer sends more data than we can handle, discard it and close the connection.
@@ -448,8 +448,8 @@ public final class SpdyStream {
 
         // Move the received data to the read buffer to the reader can read it.
         synchronized (SpdyStream.this) {
-          boolean wasEmpty = readBuffer.byteCount() == 0;
-          readBuffer.write(receiveBuffer, receiveBuffer.byteCount());
+          boolean wasEmpty = readBuffer.size() == 0;
+          readBuffer.write(receiveBuffer, receiveBuffer.size());
           if (wasEmpty) {
             SpdyStream.this.notifyAll();
           }
@@ -529,7 +529,7 @@ public final class SpdyStream {
       synchronized (SpdyStream.this) {
         checkOutNotClosed();
       }
-      writeFrame(false, buffer.byteCount());
+      writeFrame(false, buffer.size());
       connection.flush();
     }
 
@@ -544,7 +544,7 @@ public final class SpdyStream {
         if (closed) return;
       }
       if (!sink.finished) {
-        writeFrame(true, buffer.byteCount());
+        writeFrame(true, buffer.size());
       }
       synchronized (SpdyStream.this) {
         closed = true;

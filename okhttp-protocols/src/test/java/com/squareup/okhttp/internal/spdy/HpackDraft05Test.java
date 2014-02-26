@@ -53,7 +53,7 @@ public class HpackDraft05Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.maxHeaderTableByteCount(1);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -88,7 +88,7 @@ public class HpackDraft05Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     // Set to only support 110 bytes (enough for 2 headers).
     hpackReader.maxHeaderTableByteCount(110);
     hpackReader.readHeaders();
@@ -127,7 +127,7 @@ public class HpackDraft05Test {
       out.writeUtf8("custom-header");
     }
 
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.maxHeaderTableByteCount(16384); // Lots of headers need more room!
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -150,7 +150,7 @@ public class HpackDraft05Test {
         (byte) 0x25, (byte) 0xba, (byte) 0x7f};
     out.write(huffmanBytes, 0, huffmanBytes.length);
 
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -175,7 +175,7 @@ public class HpackDraft05Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -207,7 +207,7 @@ public class HpackDraft05Test {
     hpackWriter.writeHeaders(headerBlock);
     assertEquals(expectedBytes, bytesOut);
 
-    bytesIn.write(bytesOut, bytesOut.byteCount());
+    bytesIn.write(bytesOut, bytesOut.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -231,7 +231,7 @@ public class HpackDraft05Test {
     hpackWriter.writeHeaders(headerBlock);
     assertEquals(expectedBytes, bytesOut);
 
-    bytesIn.write(bytesOut, bytesOut.byteCount());
+    bytesIn.write(bytesOut, bytesOut.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -306,19 +306,19 @@ public class HpackDraft05Test {
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     OkBuffer out = firstRequestWithoutHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadFirstRequestWithoutHuffman();
 
     out = secondRequestWithoutHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadSecondRequestWithoutHuffman();
 
     out = thirdRequestWithoutHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadThirdRequestWithoutHuffman();
@@ -508,19 +508,19 @@ public class HpackDraft05Test {
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     OkBuffer out = firstRequestWithHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadFirstRequestWithHuffman();
 
     out = secondRequestWithHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadSecondRequestWithHuffman();
 
     out = thirdRequestWithHuffman();
-    bytesIn.write(out, out.byteCount());
+    bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadThirdRequestWithHuffman();
@@ -800,7 +800,7 @@ public class HpackDraft05Test {
 
   private void assertBytes(int... bytes) {
     ByteString expected = intArrayToByteArray(bytes);
-    ByteString actual = bytesOut.readByteString((int) bytesOut.byteCount());
+    ByteString actual = bytesOut.readByteString((int) bytesOut.size());
     assertEquals(expected, actual);
   }
 
