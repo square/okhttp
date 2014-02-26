@@ -33,10 +33,10 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount());
+    deflaterSink.write(data, data.size());
     deflaterSink.close();
     OkBuffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
+    assertEquals(original, inflated.readUtf8((int) inflated.size()));
   }
 
   @Test public void deflateWithSyncFlush() throws Exception {
@@ -45,10 +45,10 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount());
+    deflaterSink.write(data, data.size());
     deflaterSink.flush();
     OkBuffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
+    assertEquals(original, inflated.readUtf8((int) inflated.size()));
   }
 
   @Test public void deflateWellCompressed() throws IOException {
@@ -57,10 +57,10 @@ public final class DeflaterSinkTest {
     data.writeUtf8(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount());
+    deflaterSink.write(data, data.size());
     deflaterSink.close();
     OkBuffer inflated = inflate(sink);
-    assertEquals(original, inflated.readUtf8((int) inflated.byteCount()));
+    assertEquals(original, inflated.readUtf8((int) inflated.size()));
   }
 
   @Test public void deflatePoorlyCompressed() throws IOException {
@@ -69,10 +69,10 @@ public final class DeflaterSinkTest {
     data.write(original);
     OkBuffer sink = new OkBuffer();
     DeflaterSink deflaterSink = new DeflaterSink(sink, new Deflater());
-    deflaterSink.write(data, data.byteCount());
+    deflaterSink.write(data, data.size());
     deflaterSink.close();
     OkBuffer inflated = inflate(sink);
-    assertEquals(original, inflated.readByteString((int) inflated.byteCount()));
+    assertEquals(original, inflated.readByteString((int) inflated.size()));
   }
 
   /**
@@ -85,7 +85,7 @@ public final class DeflaterSinkTest {
     InputStream inflatedIn = new InflaterInputStream(deflatedIn, inflater);
     OkBuffer result = new OkBuffer();
     byte[] buffer = new byte[8192];
-    while (!inflater.needsInput() || deflated.byteCount() > 0 || deflatedIn.available() > 0) {
+    while (!inflater.needsInput() || deflated.size() > 0 || deflatedIn.available() > 0) {
       int count = inflatedIn.read(buffer, 0, buffer.length);
       result.write(buffer, 0, count);
     }

@@ -255,7 +255,7 @@ public final class HttpConnection {
 
     @Override public void write(OkBuffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
-      checkOffsetAndCount(source.byteCount(), 0, byteCount);
+      checkOffsetAndCount(source.size(), 0, byteCount);
       if (byteCount > bytesRemaining) {
         throw new ProtocolException("expected " + bytesRemaining
             + " bytes but received " + byteCount);
@@ -323,7 +323,7 @@ public final class HttpConnection {
     @Override public void write(OkBuffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
       bufferedChunk.write(source, byteCount);
-      if (bufferedChunk.byteCount() > maxChunkLength) {
+      if (bufferedChunk.size() > maxChunkLength) {
         writeBufferedChunkToSocket();
       }
     }
@@ -343,11 +343,11 @@ public final class HttpConnection {
     }
 
     private void writeBufferedChunkToSocket() throws IOException {
-      int size = (int) bufferedChunk.byteCount();
+      int size = (int) bufferedChunk.size();
       if (size == 0) return;
 
       writeHex(size);
-      sink.write(bufferedChunk, bufferedChunk.byteCount());
+      sink.write(bufferedChunk, bufferedChunk.size());
       sink.writeUtf8(CRLF);
     }
 
@@ -383,7 +383,7 @@ public final class HttpConnection {
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
     protected final void cacheWrite(OkBuffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        Okio.copy(source, source.byteCount() - byteCount, byteCount, cacheBody);
+        Okio.copy(source, source.size() - byteCount, byteCount, cacheBody);
       }
     }
 

@@ -322,7 +322,7 @@ public final class Connection implements Closeable {
         case HTTP_OK:
           // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If that
           // happens, then we will have buffered bytes that are needed by the SSLSocket!
-          if (tunnelSource.buffer().byteCount() > 0) {
+          if (tunnelSource.buffer().size() > 0) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
           return;

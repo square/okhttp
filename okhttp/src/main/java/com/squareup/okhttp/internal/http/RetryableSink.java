@@ -46,16 +46,16 @@ final class RetryableSink implements Sink {
   @Override public void close() throws IOException {
     if (closed) return;
     closed = true;
-    if (content.byteCount() < limit) {
+    if (content.size() < limit) {
       throw new ProtocolException(
-          "content-length promised " + limit + " bytes, but received " + content.byteCount());
+          "content-length promised " + limit + " bytes, but received " + content.size());
     }
   }
 
   @Override public void write(OkBuffer source, long byteCount) throws IOException {
     if (closed) throw new IllegalStateException("closed");
-    checkOffsetAndCount(source.byteCount(), 0, byteCount);
-    if (limit != -1 && content.byteCount() > limit - byteCount) {
+    checkOffsetAndCount(source.size(), 0, byteCount);
+    if (limit != -1 && content.size() > limit - byteCount) {
       throw new ProtocolException("exceeded content-length limit of " + limit + " bytes");
     }
     content.write(source, byteCount);
@@ -69,11 +69,11 @@ final class RetryableSink implements Sink {
   }
 
   public long contentLength() throws IOException {
-    return content.byteCount();
+    return content.size();
   }
 
   public void writeToSocket(BufferedSink socketOut) throws IOException {
     // Clone the content; otherwise we won't have data to retry.
-    socketOut.write(content.clone(), content.byteCount());
+    socketOut.write(content.clone(), content.size());
   }
 }

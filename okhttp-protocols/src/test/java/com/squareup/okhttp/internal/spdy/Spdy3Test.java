@@ -85,7 +85,7 @@ public class Spdy3Test {
 
   private void sendDataFrame(OkBuffer source) throws IOException {
     Spdy3.Writer writer = new Spdy3.Writer(new OkBuffer(), true);
-    writer.sendDataFrame(expectedStreamId, 0, source, (int) source.byteCount());
+    writer.sendDataFrame(expectedStreamId, 0, source, (int) source.size());
   }
 
   private void windowUpdate(long increment) throws IOException {

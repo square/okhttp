@@ -347,24 +347,24 @@ public final class Http20Draft09 implements Variant {
     @Override public synchronized void pushPromise(int streamId, int promisedStreamId,
         List<Header> requestHeaders) throws IOException {
       if (closed) throw new IOException("closed");
-      if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
+      if (hpackBuffer.size() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(requestHeaders);
 
-      int length = (int) (4 + hpackBuffer.byteCount());
+      int length = (int) (4 + hpackBuffer.size());
       byte type = TYPE_PUSH_PROMISE;
       byte flags = FLAG_END_HEADERS;
       frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
       sink.writeInt(promisedStreamId & 0x7fffffff);
-      sink.write(hpackBuffer, hpackBuffer.byteCount());
+      sink.write(hpackBuffer, hpackBuffer.size());
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
         List<Header> headerBlock) throws IOException {
       if (closed) throw new IOException("closed");
-      if (hpackBuffer.byteCount() != 0) throw new IllegalStateException();
+      if (hpackBuffer.size() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(headerBlock);
 
-      int length = (int) hpackBuffer.byteCount();
+      int length = (int) hpackBuffer.size();
       byte type = TYPE_HEADERS;
       byte flags = FLAG_END_HEADERS;
       if (outFinished) flags |= FLAG_END_STREAM;
@@ -372,7 +372,7 @@ public final class Http20Draft09 implements Variant {
       if (priority != -1) length += 4;
       frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
       if (priority != -1) sink.writeInt(priority & 0x7fffffff);
-      sink.write(hpackBuffer, hpackBuffer.byteCount());
+      sink.write(hpackBuffer, hpackBuffer.size());
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)
@@ -390,7 +390,7 @@ public final class Http20Draft09 implements Variant {
 
     @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
         throws IOException {
-      data(outFinished, streamId, source, (int) source.byteCount());
+      data(outFinished, streamId, source, (int) source.size());
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,

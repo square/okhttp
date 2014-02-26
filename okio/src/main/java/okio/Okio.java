@@ -36,7 +36,7 @@ public final class Okio {
   /** Copies bytes from {@code source} to {@code sink}. */
   public static void copy(OkBuffer source, long offset, long byteCount, OutputStream sink)
       throws IOException {
-    checkOffsetAndCount(source.byteCount, offset, byteCount);
+    checkOffsetAndCount(source.size, offset, byteCount);
 
     // Skip segments that we aren't copying from.
     Segment s = source.head;
@@ -62,7 +62,7 @@ public final class Okio {
 
       @Override public void write(OkBuffer source, long byteCount)
           throws IOException {
-        checkOffsetAndCount(source.byteCount, 0, byteCount);
+        checkOffsetAndCount(source.size, 0, byteCount);
         while (byteCount > 0) {
           deadline.throwIfReached();
           Segment head = source.head;
@@ -71,7 +71,7 @@ public final class Okio {
 
           head.pos += toCopy;
           byteCount -= toCopy;
-          source.byteCount -= toCopy;
+          source.size -= toCopy;
 
           if (head.pos == head.limit) {
             source.head = head.pop();
@@ -113,7 +113,7 @@ public final class Okio {
         int bytesRead = in.read(tail.data, tail.limit, maxToCopy);
         if (bytesRead == -1) return -1;
         tail.limit += bytesRead;
-        sink.byteCount += bytesRead;
+        sink.size += bytesRead;
         return bytesRead;
       }
 

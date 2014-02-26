@@ -274,7 +274,7 @@ public final class SpdyTransport implements Transport {
       }
 
       if (cacheBody != null) {
-        Okio.copy(sink, sink.byteCount() - read, read, cacheBody);
+        Okio.copy(sink, sink.size() - read, read, cacheBody);
       }
 
       return read;

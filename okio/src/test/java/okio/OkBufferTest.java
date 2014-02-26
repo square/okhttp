@@ -30,13 +30,13 @@ public final class OkBufferTest {
   @Test public void readAndWriteUtf8() throws Exception {
     OkBuffer buffer = new OkBuffer();
     buffer.writeUtf8("ab");
-    assertEquals(2, buffer.byteCount());
+    assertEquals(2, buffer.size());
     buffer.writeUtf8("cdef");
-    assertEquals(6, buffer.byteCount());
+    assertEquals(6, buffer.size());
     assertEquals("abcd", buffer.readUtf8(4));
-    assertEquals(2, buffer.byteCount());
+    assertEquals(2, buffer.size());
     assertEquals("ef", buffer.readUtf8(2));
-    assertEquals(0, buffer.byteCount());
+    assertEquals(0, buffer.size());
     try {
       buffer.readUtf8(1);
       fail();
@@ -112,7 +112,7 @@ public final class OkBufferTest {
     assertEquals("c" + repeat('d', 10000) + "e", buffer.readUtf8(10002)); // cd...de
     assertEquals(repeat('e', 24998), buffer.readUtf8(24998)); // e...e
     assertEquals("e" + repeat('f', 50000), buffer.readUtf8(50001)); // ef...f
-    assertEquals(0, buffer.byteCount());
+    assertEquals(0, buffer.size());
   }
 
   @Test public void fillAndDrainPool() throws Exception {
@@ -165,7 +165,7 @@ public final class OkBufferTest {
     for (String s : contents) {
       OkBuffer source = new OkBuffer();
       source.writeUtf8(s);
-      buffer.write(source, source.byteCount());
+      buffer.write(source, source.size());
       expected.append(s);
     }
     List<Integer> segmentSizes = buffer.segmentSizes();
@@ -213,8 +213,8 @@ public final class OkBufferTest {
 
     assertEquals(asList(30), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
-    assertEquals(30, sink.byteCount());
-    assertEquals(Segment.SIZE * 2 - 20, source.byteCount());
+    assertEquals(30, sink.size());
+    assertEquals(Segment.SIZE * 2 - 20, source.size());
   }
 
   @Test public void writePrefixDoesntSplitButRequiresCompact() throws Exception {
@@ -228,8 +228,8 @@ public final class OkBufferTest {
 
     assertEquals(asList(30), sink.segmentSizes());
     assertEquals(asList(Segment.SIZE - 20, Segment.SIZE), source.segmentSizes());
-    assertEquals(30, sink.byteCount());
-    assertEquals(Segment.SIZE * 2 - 20, source.byteCount());
+    assertEquals(30, sink.size());
+    assertEquals(Segment.SIZE * 2 - 20, source.size());
   }
 
   @Test public void readExhaustedSource() throws Exception {
@@ -239,8 +239,8 @@ public final class OkBufferTest {
     OkBuffer source = new OkBuffer();
 
     assertEquals(-1, source.read(sink, 10));
-    assertEquals(10, sink.byteCount());
-    assertEquals(0, source.byteCount());
+    assertEquals(10, sink.size());
+    assertEquals(0, source.size());
   }
 
   @Test public void readZeroBytesFromSource() throws Exception {
@@ -252,8 +252,8 @@ public final class OkBufferTest {
     // Either 0 or -1 is reasonable here. For consistency with Android's
     // ByteArrayInputStream we return 0.
     assertEquals(-1, source.read(sink, 0));
-    assertEquals(10, sink.byteCount());
-    assertEquals(0, source.byteCount());
+    assertEquals(10, sink.size());
+    assertEquals(0, source.size());
   }
 
   @Test public void moveAllRequestedBytesWithRead() throws Exception {
@@ -264,8 +264,8 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('b', 15));
 
     assertEquals(10, source.read(sink, 10));
-    assertEquals(20, sink.byteCount());
-    assertEquals(5, source.byteCount());
+    assertEquals(20, sink.size());
+    assertEquals(5, source.size());
     assertEquals(repeat('a', 10) + repeat('b', 10), sink.readUtf8(20));
   }
 
@@ -277,8 +277,8 @@ public final class OkBufferTest {
     source.writeUtf8(repeat('b', 20));
 
     assertEquals(20, source.read(sink, 25));
-    assertEquals(30, sink.byteCount());
-    assertEquals(0, source.byteCount());
+    assertEquals(30, sink.size());
+    assertEquals(0, source.size());
     assertEquals(repeat('a', 10) + repeat('b', 20), sink.readUtf8(30));
   }
 
@@ -397,7 +397,7 @@ public final class OkBufferTest {
     data.write(new byte[] { (byte) 0xab, (byte) 0xcd });
     assertEquals(0xab, data.readByte() & 0xff);
     assertEquals(0xcd, data.readByte() & 0xff);
-    assertEquals(0, data.byteCount());
+    assertEquals(0, data.size());
   }
 
   @Test public void readShort() throws Exception {
@@ -407,7 +407,7 @@ public final class OkBufferTest {
     });
     assertEquals((short) 0xabcd, data.readShort());
     assertEquals((short) 0xef01, data.readShort());
-    assertEquals(0, data.byteCount());
+    assertEquals(0, data.size());
   }
 
   @Test public void readShortSplitAcrossMultipleSegments() throws Exception {
@@ -416,7 +416,7 @@ public final class OkBufferTest {
     data.write(new byte[] { (byte) 0xab, (byte) 0xcd });
     data.readUtf8(Segment.SIZE - 1);
     assertEquals((short) 0xabcd, data.readShort());
-    assertEquals(0, data.byteCount());
+    assertEquals(0, data.size());
   }
 
   @Test public void readInt() throws Exception {
@@ -427,7 +427,7 @@ public final class OkBufferTest {
     });
     assertEquals(0xabcdef01, data.readInt());
     assertEquals(0x87654321, data.readInt());
-    assertEquals(0, data.byteCount());
+    assertEquals(0, data.size());
   }
 
   @Test public void readIntSplitAcrossMultipleSegments() throws Exception {
@@ -438,7 +438,7 @@ public final class OkBufferTest {
     });
     data.readUtf8(Segment.SIZE - 3);
     assertEquals(0xabcdef01, data.readInt());
-    assertEquals(0, data.byteCount());
+    assertEquals(0, data.size());
   }
 
   @Test public void byteAt() throws Exception {
@@ -448,9 +448,9 @@ public final class OkBufferTest {
     buffer.writeUtf8("c");
     assertEquals('a', buffer.getByte(0));
     assertEquals('a', buffer.getByte(0)); // getByte doesn't mutate!
-    assertEquals('c', buffer.getByte(buffer.byteCount - 1));
-    assertEquals('b', buffer.getByte(buffer.byteCount - 2));
-    assertEquals('b', buffer.getByte(buffer.byteCount - 3));
+    assertEquals('c', buffer.getByte(buffer.size - 1));
+    assertEquals('b', buffer.getByte(buffer.size - 2));
+    assertEquals('b', buffer.getByte(buffer.size - 3));
   }
 
   @Test public void getByteOfEmptyBuffer() throws Exception {
@@ -472,7 +472,7 @@ public final class OkBufferTest {
     buffer.skip(Segment.SIZE - 2);
     assertEquals('b', buffer.readByte() & 0xff);
     buffer.skip(1);
-    assertEquals(0, buffer.byteCount());
+    assertEquals(0, buffer.size());
   }
 
   @Test public void testWritePrefixToEmptyBuffer() {
@@ -487,7 +487,7 @@ public final class OkBufferTest {
     OkBuffer original = new OkBuffer();
     OkBuffer clone = original.clone();
     original.writeUtf8("abc");
-    assertEquals(0, clone.byteCount());
+    assertEquals(0, clone.size());
   }
 
   @Test public void cloneDoesNotObserveReadsFromOriginal() throws Exception {
@@ -495,7 +495,7 @@ public final class OkBufferTest {
     original.writeUtf8("abc");
     OkBuffer clone = original.clone();
     assertEquals("abc", original.readUtf8(3));
-    assertEquals(3, clone.byteCount());
+    assertEquals(3, clone.size());
     assertEquals("ab", clone.readUtf8(2));
   }
 
@@ -503,7 +503,7 @@ public final class OkBufferTest {
     OkBuffer original = new OkBuffer();
     OkBuffer clone = original.clone();
     clone.writeUtf8("abc");
-    assertEquals(0, original.byteCount());
+    assertEquals(0, original.size());
   }
 
   @Test public void originalDoesNotObserveReadsFromClone() throws Exception {
@@ -511,7 +511,7 @@ public final class OkBufferTest {
     original.writeUtf8("abc");
     OkBuffer clone = original.clone();
     assertEquals("abc", clone.readUtf8(3));
-    assertEquals(3, original.byteCount());
+    assertEquals(3, original.size());
     assertEquals("ab", original.readUtf8(2));
   }
 

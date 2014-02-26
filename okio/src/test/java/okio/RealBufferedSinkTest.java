@@ -49,35 +49,35 @@ public final class RealBufferedSinkTest {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE - 1));
-    assertEquals(0, sink.byteCount());
+    assertEquals(0, sink.size());
     bufferedSink.writeByte(0);
-    assertEquals(Segment.SIZE, sink.byteCount());
-    assertEquals(0, bufferedSink.buffer().byteCount());
+    assertEquals(Segment.SIZE, sink.size());
+    assertEquals(0, bufferedSink.buffer().size());
   }
 
   @Test public void bufferedSinkEmitZero() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8("");
-    assertEquals(0, sink.byteCount());
+    assertEquals(0, sink.size());
   }
 
   @Test public void bufferedSinkEmitMultipleSegments() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 4 - 1));
-    assertEquals(Segment.SIZE * 3, sink.byteCount());
-    assertEquals(Segment.SIZE - 1, bufferedSink.buffer().byteCount());
+    assertEquals(Segment.SIZE * 3, sink.size());
+    assertEquals(Segment.SIZE - 1, bufferedSink.buffer().size());
   }
 
   @Test public void bufferedSinkFlush() throws IOException {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeByte('a');
-    assertEquals(0, sink.byteCount());
+    assertEquals(0, sink.size());
     bufferedSink.flush();
-    assertEquals(0, bufferedSink.buffer().byteCount());
-    assertEquals(1, sink.byteCount());
+    assertEquals(0, bufferedSink.buffer().size());
+    assertEquals(1, sink.size());
   }
 
   @Test public void bytesEmittedToSinkWithFlush() throws Exception {
@@ -85,28 +85,28 @@ public final class RealBufferedSinkTest {
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8("abc");
     bufferedSink.flush();
-    assertEquals(3, sink.byteCount());
+    assertEquals(3, sink.size());
   }
 
   @Test public void bytesNotEmittedToSinkWithoutFlush() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8("abc");
-    assertEquals(0, sink.byteCount());
+    assertEquals(0, sink.size());
   }
 
   @Test public void completeSegmentsEmitted() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3));
-    assertEquals(Segment.SIZE * 3, sink.byteCount());
+    assertEquals(Segment.SIZE * 3, sink.size());
   }
 
   @Test public void incompleteSegmentsNotEmitted() throws Exception {
     OkBuffer sink = new OkBuffer();
     BufferedSink bufferedSink = new RealBufferedSink(sink);
     bufferedSink.writeUtf8(repeat('a', Segment.SIZE * 3 - 1));
-    assertEquals(Segment.SIZE * 2, sink.byteCount());
+    assertEquals(Segment.SIZE * 2, sink.size());
   }
 
   private String repeat(char c, int count) {

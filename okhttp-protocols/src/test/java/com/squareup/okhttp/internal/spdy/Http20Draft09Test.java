@@ -56,11 +56,11 @@ public class Http20Draft09Test {
     // Write the headers frame, specifying no more frames are expected.
     {
       OkBuffer headerBytes = literalHeaders(sentHeaders);
-      frame.writeShort((int) headerBytes.byteCount());
+      frame.writeShort((int) headerBytes.size());
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
       frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
       frame.writeInt(expectedStreamId & 0x7fffffff);
-      frame.write(headerBytes, headerBytes.byteCount());
+      frame.write(headerBytes, headerBytes.size());
     }
 
     FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
@@ -90,12 +90,12 @@ public class Http20Draft09Test {
 
     { // Write the headers frame, specifying priority flag and value.
       OkBuffer headerBytes = literalHeaders(sentHeaders);
-      frame.writeShort((int) (headerBytes.byteCount() + 4));
+      frame.writeShort((int) (headerBytes.size() + 4));
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
       frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeInt(0); // Highest priority is 0.
-      frame.write(headerBytes, headerBytes.byteCount());
+      frame.write(headerBytes, headerBytes.size());
     }
 
     FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
@@ -126,19 +126,19 @@ public class Http20Draft09Test {
     // Decoding the first header will cross frame boundaries.
     OkBuffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
     { // Write the first headers frame.
-      frame.writeShort((int) (headerBlock.byteCount() / 2));
+      frame.writeShort((int) (headerBlock.size() / 2));
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
       frame.writeByte(0); // no flags
       frame.writeInt(expectedStreamId & 0x7fffffff);
-      frame.write(headerBlock, headerBlock.byteCount() / 2);
+      frame.write(headerBlock, headerBlock.size() / 2);
     }
 
     { // Write the continuation frame, specifying no more frames are expected.
-      frame.writeShort((int) headerBlock.byteCount());
+      frame.writeShort((int) headerBlock.size());
       frame.writeByte(Http20Draft09.TYPE_CONTINUATION);
       frame.writeByte(Http20Draft09.FLAG_END_HEADERS);
       frame.writeInt(expectedStreamId & 0x7fffffff);
-      frame.write(headerBlock, headerBlock.byteCount());
+      frame.write(headerBlock, headerBlock.size());
     }
 
     FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
@@ -175,12 +175,12 @@ public class Http20Draft09Test {
 
     { // Write the push promise frame, specifying the associated stream ID.
       OkBuffer headerBytes = literalHeaders(pushPromise);
-      frame.writeShort((int) (headerBytes.byteCount() + 4));
+      frame.writeShort((int) (headerBytes.size() + 4));
       frame.writeByte(Http20Draft09.TYPE_PUSH_PROMISE);
       frame.writeByte(Http20Draft09.FLAG_END_PUSH_PROMISE);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
-      frame.write(headerBytes, headerBytes.byteCount());
+      frame.write(headerBytes, headerBytes.size());
     }
 
     FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
@@ -211,7 +211,7 @@ public class Http20Draft09Test {
 
     // Decoding the first header will cross frame boundaries.
     OkBuffer headerBlock = literalHeaders(pushPromise);
-    int firstFrameLength = (int) (headerBlock.byteCount() - 1);
+    int firstFrameLength = (int) (headerBlock.size() - 1);
     { // Write the first headers frame.
       frame.writeShort(firstFrameLength + 4);
       frame.writeByte(Http20Draft09.TYPE_PUSH_PROMISE);
@@ -503,7 +503,7 @@ public class Http20Draft09Test {
   private OkBuffer sendDataFrame(OkBuffer data) throws IOException {
     OkBuffer out = new OkBuffer();
     new Http20Draft09.Writer(out, true).dataFrame(expectedStreamId, Http20Draft09.FLAG_NONE, data,
-        (int) data.byteCount());
+        (int) data.size());
     return out;
   }
 

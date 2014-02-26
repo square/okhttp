@@ -44,14 +44,14 @@ import static okio.Util.checkOffsetAndCount;
  */
 public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   Segment head;
-  long byteCount;
+  long size;
 
   public OkBuffer() {
   }
 
   /** Returns the number of bytes currently in this buffer. */
-  public long byteCount() {
-    return byteCount;
+  public long size() {
+    return size;
   }
 
   @Override public OkBuffer buffer() {
@@ -85,11 +85,11 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public boolean exhausted() {
-    return byteCount == 0;
+    return size == 0;
   }
 
   @Override public void require(long byteCount) throws EOFException {
-    if (this.byteCount < byteCount) throw new EOFException();
+    if (this.size < byteCount) throw new EOFException();
   }
 
   @Override public long seek(byte b) throws EOFException {
@@ -109,7 +109,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       }
 
       @Override public int available() {
-        return (int) Math.min(byteCount, Integer.MAX_VALUE);
+        return (int) Math.min(size, Integer.MAX_VALUE);
       }
 
       @Override public void close() {
@@ -127,7 +127,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
    * without harming throughput.
    */
   public long completeSegmentByteCount() {
-    long result = byteCount;
+    long result = size;
     if (result == 0) return 0;
 
     // Omit the tail if it's still writable.
@@ -140,7 +140,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public byte readByte() {
-    if (byteCount == 0) throw new IllegalStateException("byteCount == 0");
+    if (size == 0) throw new IllegalStateException("size == 0");
 
     Segment segment = head;
     int pos = segment.pos;
@@ -148,7 +148,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
     byte[] data = segment.data;
     byte b = data[pos++];
-    byteCount -= 1;
+    size -= 1;
 
     if (pos == limit) {
       head = segment.pop();
@@ -162,7 +162,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
   /** Returns the byte at {@code i}. */
   public byte getByte(long i) {
-    checkOffsetAndCount(byteCount, i, 1);
+    checkOffsetAndCount(size, i, 1);
     for (Segment s = head; true; s = s.next) {
       int segmentByteCount = s.limit - s.pos;
       if (i < segmentByteCount) return s.data[s.pos + (int) i];
@@ -171,7 +171,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public short readShort() {
-    if (byteCount < 2) throw new IllegalArgumentException("byteCount < 2: " + byteCount);
+    if (size < 2) throw new IllegalArgumentException("size < 2: " + size);
 
     Segment segment = head;
     int pos = segment.pos;
@@ -187,7 +187,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     byte[] data = segment.data;
     int s = (data[pos++] & 0xff) << 8
         |   (data[pos++] & 0xff);
-    byteCount -= 2;
+    size -= 2;
 
     if (pos == limit) {
       head = segment.pop();
@@ -200,7 +200,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public int readInt() {
-    if (byteCount < 4) throw new IllegalArgumentException("byteCount < 4: " + byteCount);
+    if (size < 4) throw new IllegalArgumentException("size < 4: " + size);
 
     Segment segment = head;
     int pos = segment.pos;
@@ -219,7 +219,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
         |   (data[pos++] & 0xff) << 16
         |   (data[pos++] & 0xff) << 8
         |   (data[pos++] & 0xff);
-    byteCount -= 4;
+    size -= 4;
 
     if (pos == limit) {
       head = segment.pop();
@@ -244,7 +244,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   public String readUtf8(int byteCount) {
-    checkOffsetAndCount(this.byteCount, 0, byteCount);
+    checkOffsetAndCount(this.size, 0, byteCount);
     if (byteCount == 0) return "";
 
     Segment head = this.head;
@@ -255,7 +255,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
     String result = new String(head.data, head.pos, byteCount, UTF_8);
     head.pos += byteCount;
-    this.byteCount -= byteCount;
+    this.size -= byteCount;
 
     if (head.pos == head.limit) {
       this.head = head.pop();
@@ -270,7 +270,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
     if (newline == -1) {
       if (throwOnEof) throw new EOFException();
-      return byteCount != 0 ? readUtf8((int) byteCount) : null;
+      return size != 0 ? readUtf8((int) size) : null;
     }
 
     if (newline > 0 && getByte(newline - 1) == '\r') {
@@ -288,7 +288,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   private byte[] readBytes(int byteCount) {
-    checkOffsetAndCount(this.byteCount, 0, byteCount);
+    checkOffsetAndCount(this.size, 0, byteCount);
 
     int offset = 0;
     byte[] result = new byte[byteCount];
@@ -307,7 +307,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       }
     }
 
-    this.byteCount -= byteCount;
+    this.size -= byteCount;
     return result;
   }
 
@@ -320,7 +320,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     System.arraycopy(s.data, s.pos, sink, offset, toCopy);
 
     s.pos += toCopy;
-    this.byteCount -= toCopy;
+    this.size -= toCopy;
 
     if (s.pos == s.limit) {
       this.head = s.pop();
@@ -335,14 +335,14 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
    * with a buffer will return its segments to the pool.
    */
   public void clear() {
-    skip(byteCount);
+    skip(size);
   }
 
   /** Discards {@code byteCount} bytes from the head of this buffer. */
   public void skip(long byteCount) {
-    checkOffsetAndCount(this.byteCount, 0, byteCount);
+    checkOffsetAndCount(this.size, 0, byteCount);
 
-    this.byteCount -= byteCount;
+    this.size -= byteCount;
     while (byteCount > 0) {
       int toSkip = (int) Math.min(byteCount, head.limit - head.pos);
       byteCount -= toSkip;
@@ -383,7 +383,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       tail.limit += toCopy;
     }
 
-    this.byteCount += byteCount;
+    this.size += byteCount;
     return this;
   }
 
@@ -391,7 +391,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   @Override public OkBuffer writeByte(int b) {
     Segment tail = writableSegment(1);
     tail.data[tail.limit++] = (byte) b;
-    byteCount += 1;
+    size += 1;
     return this;
   }
 
@@ -403,7 +403,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     data[limit++] = (byte) ((s >> 8) & 0xff);
     data[limit++] = (byte)  (s       & 0xff);
     tail.limit = limit;
-    byteCount += 2;
+    size += 2;
     return this;
   }
 
@@ -417,7 +417,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     data[limit++] = (byte) ((i >>  8) & 0xff);
     data[limit++] = (byte)  (i        & 0xff);
     tail.limit = limit;
-    byteCount += 4;
+    size += 4;
     return this;
   }
 
@@ -494,7 +494,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     if (source == this) {
       throw new IllegalArgumentException("source == this");
     }
-    checkOffsetAndCount(source.byteCount, 0, byteCount);
+    checkOffsetAndCount(source.size, 0, byteCount);
 
     while (byteCount > 0) {
       // Is a prefix of the source's head segment all that we need to move?
@@ -507,8 +507,8 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
         } else {
           // Our existing segments are sufficient. Move bytes from source's head to our tail.
           source.head.writeTo(tail, (int) byteCount);
-          source.byteCount -= byteCount;
-          this.byteCount += byteCount;
+          source.size -= byteCount;
+          this.size += byteCount;
           return;
         }
       }
@@ -525,15 +525,15 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
         tail = tail.push(segmentToMove);
         tail.compact();
       }
-      source.byteCount -= movedByteCount;
-      this.byteCount += movedByteCount;
+      source.size -= movedByteCount;
+      this.size += movedByteCount;
       byteCount -= movedByteCount;
     }
   }
 
   @Override public long read(OkBuffer sink, long byteCount) {
-    if (this.byteCount == 0) return -1L;
-    if (byteCount > this.byteCount) byteCount = this.byteCount;
+    if (this.size == 0) return -1L;
+    if (byteCount > this.size) byteCount = this.size;
     sink.write(this, byteCount);
     return byteCount;
   }
@@ -596,15 +596,15 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   @Override public boolean equals(Object o) {
     if (!(o instanceof OkBuffer)) return false;
     OkBuffer that = (OkBuffer) o;
-    if (byteCount != that.byteCount) return false;
-    if (byteCount == 0) return true; // Both buffers are empty.
+    if (size != that.size) return false;
+    if (size == 0) return true; // Both buffers are empty.
 
     Segment sa = this.head;
     Segment sb = that.head;
     int posA = sa.pos;
     int posB = sb.pos;
 
-    for (long pos = 0, count; pos < byteCount; pos += count) {
+    for (long pos = 0, count; pos < size; pos += count) {
       count = Math.min(sa.limit - posA, sb.limit - posB);
 
       for (int i = 0; i < count; i++) {
@@ -639,13 +639,13 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public String toString() {
-    if (byteCount == 0) {
+    if (size == 0) {
       return "OkBuffer[size=0]";
     }
 
-    if (byteCount <= 16) {
-      ByteString data = clone().readByteString((int) byteCount);
-      return String.format("OkBuffer[size=%s data=%s]", byteCount, data.hex());
+    if (size <= 16) {
+      ByteString data = clone().readByteString((int) size);
+      return String.format("OkBuffer[size=%s data=%s]", size, data.hex());
     }
 
     try {
@@ -655,7 +655,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
         md5.update(s.data, s.pos, s.limit - s.pos);
       }
       return String.format("OkBuffer[size=%s md5=%s]",
-          byteCount, ByteString.of(md5.digest()).hex());
+          size, ByteString.of(md5.digest()).hex());
     } catch (NoSuchAlgorithmException e) {
       throw new AssertionError();
     }
@@ -664,7 +664,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   /** Returns a deep copy of this buffer. */
   @Override public OkBuffer clone() {
     OkBuffer result = new OkBuffer();
-    if (byteCount() == 0) return result;
+    if (size() == 0) return result;
 
     result.write(head.data, head.pos, head.limit - head.pos);
     for (Segment s = head.next; s != head; s = s.next) {

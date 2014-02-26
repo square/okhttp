@@ -45,12 +45,12 @@ final class RealBufferedSource implements BufferedSource {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (closed) throw new IllegalStateException("closed");
 
-    if (buffer.byteCount == 0) {
+    if (buffer.size == 0) {
       long read = source.read(buffer, Segment.SIZE);
       if (read == -1) return -1;
     }
 
-    long toRead = Math.min(byteCount, buffer.byteCount);
+    long toRead = Math.min(byteCount, buffer.size);
     return buffer.read(sink, toRead);
   }
 
@@ -59,7 +59,7 @@ final class RealBufferedSource implements BufferedSource {
   }
 
   @Override public void require(long byteCount) throws IOException {
-    while (buffer.byteCount < byteCount) {
+    while (buffer.size < byteCount) {
       if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
     }
   }
@@ -83,10 +83,10 @@ final class RealBufferedSource implements BufferedSource {
     long start = 0;
     long newline;
     while ((newline = buffer.indexOf((byte) '\n', start)) == -1) {
-      start = buffer.byteCount;
+      start = buffer.size;
       if (source.read(buffer, Segment.SIZE) == -1) {
         if (throwOnEof) throw new EOFException();
-        return buffer.byteCount != 0 ? readUtf8((int) buffer.byteCount) : null;
+        return buffer.size != 0 ? readUtf8((int) buffer.size) : null;
       }
     }
 
@@ -126,10 +126,10 @@ final class RealBufferedSource implements BufferedSource {
 
   @Override public void skip(long byteCount) throws IOException {
     while (byteCount > 0) {
-      if (buffer.byteCount == 0 && source.read(buffer, Segment.SIZE) == -1) {
+      if (buffer.size == 0 && source.read(buffer, Segment.SIZE) == -1) {
         throw new EOFException();
       }
-      long toSkip = Math.min(byteCount, buffer.byteCount());
+      long toSkip = Math.min(byteCount, buffer.size());
       buffer.skip(toSkip);
       byteCount -= toSkip;
     }
@@ -139,7 +139,7 @@ final class RealBufferedSource implements BufferedSource {
     long start = 0;
     long index;
     while ((index = buffer.indexOf(b, start)) == -1) {
-      start = buffer.byteCount;
+      start = buffer.size;
       if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
     }
     return index;
@@ -148,7 +148,7 @@ final class RealBufferedSource implements BufferedSource {
   @Override public InputStream inputStream() {
     return new InputStream() {
       @Override public int read() throws IOException {
-        if (buffer.byteCount == 0) {
+        if (buffer.size == 0) {
           long count = source.read(buffer, Segment.SIZE);
           if (count == -1) return -1;
         }
@@ -158,7 +158,7 @@ final class RealBufferedSource implements BufferedSource {
       @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
         checkOffsetAndCount(data.length, offset, byteCount);
 
-        if (buffer.byteCount == 0) {
+        if (buffer.size == 0) {
           long count = source.read(buffer, Segment.SIZE);
           if (count == -1) return -1;
         }
@@ -167,7 +167,7 @@ final class RealBufferedSource implements BufferedSource {
       }
 
       @Override public int available() throws IOException {
-        return (int) Math.min(buffer.byteCount, Integer.MAX_VALUE);
+        return (int) Math.min(buffer.size, Integer.MAX_VALUE);
       }
 
       @Override public void close() throws IOException {

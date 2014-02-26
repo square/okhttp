@@ -525,7 +525,7 @@ public class HttpEngine {
     if (!responseSource.requiresConnection()) return;
 
     // Flush the response body if there's data outstanding.
-    if (bufferedRequestBody != null && bufferedRequestBody.buffer().byteCount() > 0) {
+    if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
       bufferedRequestBody.flush();
     }
 
