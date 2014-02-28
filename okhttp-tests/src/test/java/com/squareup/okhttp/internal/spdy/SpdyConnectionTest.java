@@ -16,16 +16,16 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import com.squareup.okhttp.internal.okio.BufferedSink;
 import com.squareup.okhttp.internal.okio.ByteString;
 import com.squareup.okhttp.internal.okio.OkBuffer;
 import com.squareup.okhttp.internal.okio.Okio;
 import com.squareup.okhttp.internal.okio.Source;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Test;
 

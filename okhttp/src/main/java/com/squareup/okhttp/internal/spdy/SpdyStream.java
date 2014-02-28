@@ -16,17 +16,17 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.Deadline;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import com.squareup.okhttp.internal.okio.BufferedSource;
-import com.squareup.okhttp.internal.okio.Deadline;
-import com.squareup.okhttp.internal.okio.OkBuffer;
-import com.squareup.okhttp.internal.okio.Sink;
-import com.squareup.okhttp.internal.okio.Source;
 
 /** A logical bidirectional stream. */
 public final class SpdyStream {

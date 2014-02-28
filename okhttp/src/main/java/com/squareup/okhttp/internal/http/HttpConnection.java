@@ -18,15 +18,8 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.CacheRequest;
-import java.net.ProtocolException;
-import java.net.Socket;
 import com.squareup.okhttp.internal.okio.BufferedSink;
 import com.squareup.okhttp.internal.okio.BufferedSource;
 import com.squareup.okhttp.internal.okio.Deadline;
@@ -34,6 +27,11 @@ import com.squareup.okhttp.internal.okio.OkBuffer;
 import com.squareup.okhttp.internal.okio.Okio;
 import com.squareup.okhttp.internal.okio.Sink;
 import com.squareup.okhttp.internal.okio.Source;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.CacheRequest;
+import java.net.ProtocolException;
+import java.net.Socket;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;

@@ -16,11 +16,14 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Deadline;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
@@ -34,12 +37,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import com.squareup.okhttp.internal.okio.ByteString;
-import com.squareup.okhttp.internal.okio.Deadline;
-import com.squareup.okhttp.internal.okio.OkBuffer;
-import com.squareup.okhttp.internal.okio.Okio;
-import com.squareup.okhttp.internal.okio.Sink;
-import com.squareup.okhttp.internal.okio.Source;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;

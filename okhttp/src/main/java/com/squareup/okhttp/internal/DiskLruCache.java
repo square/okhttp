@@ -16,6 +16,8 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.Okio;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -38,8 +40,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.squareup.okhttp.internal.okio.BufferedSource;
-import com.squareup.okhttp.internal.okio.Okio;
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache

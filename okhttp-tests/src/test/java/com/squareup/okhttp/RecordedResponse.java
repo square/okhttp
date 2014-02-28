@@ -15,6 +15,10 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.Failure;
+import com.squareup.okhttp.internal.http.Headers;
+import com.squareup.okhttp.internal.http.Request;
+import com.squareup.okhttp.internal.http.Response;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Handshake;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpDate;
-import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -32,8 +34,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import com.squareup.okhttp.internal.okio.Okio;
-import com.squareup.okhttp.internal.okio.Source;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.Util.equal;

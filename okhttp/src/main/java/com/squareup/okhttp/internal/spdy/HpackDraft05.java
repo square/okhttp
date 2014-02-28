@@ -1,6 +1,11 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.BitArray;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,11 +13,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import com.squareup.okhttp.internal.okio.BufferedSource;
-import com.squareup.okhttp.internal.okio.ByteString;
-import com.squareup.okhttp.internal.okio.OkBuffer;
-import com.squareup.okhttp.internal.okio.Okio;
-import com.squareup.okhttp.internal.okio.Source;
 
 /**
  * Read and write HPACK v05.

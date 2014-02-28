@@ -16,12 +16,12 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 import com.squareup.okhttp.internal.okio.BufferedSource;
 import com.squareup.okhttp.internal.okio.ByteString;
 import com.squareup.okhttp.internal.okio.OkBuffer;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
