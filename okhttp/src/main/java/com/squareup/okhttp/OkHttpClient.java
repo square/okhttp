@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.okio.ByteString;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -37,13 +38,11 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import com.squareup.okhttp.internal.okio.ByteString;
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   private final RouteDatabase routeDatabase;
-  private Dispatcher dispatcher;
   private Proxy proxy;
   private List<Protocol> protocols;
   private ProxySelector proxySelector;
@@ -59,7 +58,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
-    dispatcher = new Dispatcher();
   }
 
   /**
@@ -165,7 +163,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * <p>If unset, the {@link ResponseCache#getDefault() system-wide default}
    * response cache will be used.
    *
-   * @deprecated OkHttp 2 dropped support for java.net.ResponseCache. That API
+   * @deprecated OkHttp 1.5 dropped support for java.net.ResponseCache. That API
    *     is broken for many reasons: URI instead of URL, no conditional updates,
    *     no invalidation, and no mechanism for tracking hit rates. Use
    *     {@link #setOkResponseCache} instead.
@@ -180,7 +178,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * @deprecated OkHttp 2 dropped support for java.net.ResponseCache. That API
+   * @deprecated OkHttp 1.5 dropped support for java.net.ResponseCache. That API
    *     is broken for many reasons: URI instead of URL, no conditional updates,
    *     no invalidation, and no mechanism for tracking hit rates. Use
    *     {@link #setOkResponseCache} instead.
@@ -283,21 +281,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Sets the dispatcher used to set policy and execute asynchronous requests.
-   * Must not be null.
-   */
-  public OkHttpClient setDispatcher(Dispatcher dispatcher) {
-    if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
-    this.dispatcher = dispatcher;
-    return this;
-  }
-
-  public Dispatcher getDispatcher() {
-    return dispatcher;
-  }
-
-  /**
-   * @deprecated OkHttp 2 enforces an enumeration of {@link Protocol protocols}
+   * @deprecated OkHttp 1.5 enforces an enumeration of {@link Protocol protocols}
    * that can be selected. Please switch to {@link #setProtocols(java.util.List)}.
    */
   @Deprecated
@@ -305,7 +289,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     List<Protocol> protocols = new ArrayList<Protocol>(transports.size());
     for (int i = 0, size = transports.size(); i < size; i++) {
       try {
-        Protocol protocol = Protocol.find(ByteString.encodeUtf8(transports.get(i)));
+        Protocol protocol = Util.findProtocol(ByteString.encodeUtf8(transports.get(i)));
         protocols.add(protocol);
       } catch (IOException e) {
         throw new IllegalArgumentException(e);
@@ -369,68 +353,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   public List<Protocol> getProtocols() {
     return protocols;
-  }
-
-  /**
-   * Invokes {@code request} immediately, and blocks until the response can be
-   * processed or is in error.
-   *
-   * <p>The caller may read the response body with the response's
-   * {@link Response#body} method.  To facilitate connection recycling, callers
-   * should always {@link Response.Body#close() close the response body}.
-   *
-   * <p>Note that transport-layer success (receiving a HTTP response code,
-   * headers and body) does not necessarily indicate application-layer
-   * success: {@code response} may still indicate an unhappy HTTP response
-   * code like 404 or 500.
-   *
-   * <h3>Non-blocking responses</h3>
-   *
-   * <p>Receivers do not need to block while waiting for the response body to
-   * download. Instead, they can get called back as data arrives. Use {@link
-   * Response.Body#ready} to check if bytes should be read immediately. While
-   * there is data ready, read it.
-   *
-   * <p>The current implementation of {@link Response.Body#ready} always
-   * returns true when the underlying transport is HTTP/1. This results in
-   * blocking on that transport. For effective non-blocking your server must
-   * support {@link Protocol#SPDY_3} or {@link Protocol#HTTP_2}.
-   *
-   * @throws IOException when the request could not be executed due to a
-   * connectivity problem or timeout. Because networks can fail during an
-   * exchange, it is possible that the remote server accepted the request
-   * before the failure.
-   */
-  public Response execute(Request request) throws IOException {
-    // Copy the client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is executed.
-    OkHttpClient client = copyWithDefaults();
-    Job job = new Job(dispatcher, client, request, null);
-    Response result = job.getResponse(); // Since we don't cancel, this won't be null.
-    job.engine.releaseConnection(); // Transfer ownership of the body to the caller.
-    return result;
-  }
-
-  /**
-   * Schedules {@code request} to be executed at some point in the future. The
-   * {@link #getDispatcher dispatcher} defines when the request will run:
-   * usually immediately unless there are several other requests currently being
-   * executed.
-   *
-   * <p>This client will later call back {@code responseReceiver} with either an
-   * HTTP response or a failure exception. If you {@link #cancel} a request
-   * before it completes the receiver will not be called back.
-   */
-  public void enqueue(Request request, Response.Receiver responseReceiver) {
-    dispatcher.enqueue(this, request, responseReceiver);
-  }
-
-  /**
-   * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
-   * complete cannot be canceled.
-   */
-  public void cancel(Object tag) {
-    dispatcher.cancel(tag);
   }
 
   public HttpURLConnection open(URL url) {

@@ -16,6 +16,11 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -39,10 +44,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import com.squareup.okhttp.internal.okio.ByteString;
-import com.squareup.okhttp.internal.okio.OkBuffer;
-import com.squareup.okhttp.internal.okio.Sink;
-import com.squareup.okhttp.internal.okio.Source;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -335,5 +336,18 @@ public final class Util {
       result.add(new Header(elements[i], elements[i + 1]));
     }
     return result;
+  }
+
+  /**
+   * Returns the protocol matching {@code input} or {@link Protocol#HTTP_11} on
+   * {@code null}. Throws an {@link java.io.IOException} when {@code input}
+   * doesn't match the name of a supported protocol.
+   */
+  public static Protocol findProtocol(ByteString input) throws IOException {
+    if (input == null) return Protocol.HTTP_11;
+    for (Protocol protocol : Protocol.values()) {
+      if (protocol.name.equals(input)) return protocol;
+    }
+    throw new IOException("Unexpected protocol: " + input.utf8());
   }
 }

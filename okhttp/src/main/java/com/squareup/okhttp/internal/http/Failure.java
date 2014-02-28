@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.http;
 
 /**
  * A failure attempting to retrieve an HTTP response.

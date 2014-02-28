@@ -15,10 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.IOException;
 import java.util.List;

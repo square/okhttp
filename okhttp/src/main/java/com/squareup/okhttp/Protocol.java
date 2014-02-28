@@ -16,10 +16,9 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
+import com.squareup.okhttp.internal.okio.ByteString;
 import java.util.Arrays;
 import java.util.List;
-import com.squareup.okhttp.internal.okio.ByteString;
 
 /**
  * Contains protocols that OkHttp supports
@@ -58,18 +57,5 @@ public enum Protocol {
   Protocol(String name, boolean spdyVariant) {
     this.name = ByteString.encodeUtf8(name);
     this.spdyVariant = spdyVariant;
-  }
-
-  /**
-   * Returns the protocol matching {@code input} or {@link #HTTP_11} is on
-   * {@code null}. Throws an {@link IOException} when {@code input} doesn't
-   * match the {@link #name} of a supported protocol.
-   */
-  public static Protocol find(ByteString input) throws IOException {
-    if (input == null) return HTTP_11;
-    for (Protocol protocol : values()) {
-      if (protocol.name.equals(input)) return protocol;
-    }
-    throw new IOException("Unexpected protocol: " + input.utf8());
   }
 }

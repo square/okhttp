@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.http;
 
 import java.util.ArrayList;
 import java.util.Arrays;

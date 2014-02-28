@@ -17,11 +17,18 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
+import com.squareup.okhttp.internal.http.Request;
+import com.squareup.okhttp.internal.http.Response;
 import com.squareup.okhttp.internal.http.SpdyTransport;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Okio;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,10 +38,6 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import javax.net.ssl.SSLSocket;
-import com.squareup.okhttp.internal.okio.BufferedSink;
-import com.squareup.okhttp.internal.okio.BufferedSource;
-import com.squareup.okhttp.internal.okio.ByteString;
-import com.squareup.okhttp.internal.okio.Okio;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
@@ -159,7 +162,7 @@ public final class Connection implements Closeable {
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      selectedProtocol = Protocol.find(maybeProtocol); // Throws IOE on unknown.
+      selectedProtocol = Util.findProtocol(maybeProtocol); // Throws IOE on unknown.
     }
 
     if (selectedProtocol.spdyVariant) {

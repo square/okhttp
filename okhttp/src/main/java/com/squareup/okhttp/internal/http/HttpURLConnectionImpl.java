@@ -19,14 +19,14 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Handshake;
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Sink;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,9 +45,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import com.squareup.okhttp.internal.okio.BufferedSink;
-import com.squareup.okhttp.internal.okio.ByteString;
-import com.squareup.okhttp.internal.okio.Sink;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -562,7 +559,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
     for (String protocol : protocolsString.split(",", -1)) {
       try {
-        protocolsList.add(Protocol.find(ByteString.encodeUtf8(protocol)));
+        protocolsList.add(Util.findProtocol(ByteString.encodeUtf8(protocol)));
       } catch (IOException e) {
         throw new IllegalStateException(e);
       }
