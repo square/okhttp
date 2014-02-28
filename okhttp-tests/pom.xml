@@ -9,8 +9,8 @@
     <version>2.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>okhttp-protocols</artifactId>
-  <name>OkHttp SPDY and HTTP/2.0 internals</name>
+  <artifactId>okhttp-tests</artifactId>
+  <name>OkHttp Tests</name>
 
   <dependencies>
     <dependency>
@@ -19,13 +19,25 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.mortbay.jetty.npn</groupId>
       <artifactId>npn-boot</artifactId>
-      <optional>true</optional>
+      <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>mockwebserver</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
