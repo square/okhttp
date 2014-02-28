@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import okio.ByteString;
+import com.squareup.okhttp.internal.okio.ByteString;
 
 /** Configures and creates HTTP connections. */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {

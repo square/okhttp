@@ -27,7 +27,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
-import okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSink;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}

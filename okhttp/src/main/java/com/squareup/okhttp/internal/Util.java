@@ -39,10 +39,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Sink;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 

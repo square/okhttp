@@ -22,11 +22,11 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import okio.BufferedSource;
-import okio.Deadline;
-import okio.OkBuffer;
-import okio.Sink;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.Deadline;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 
 /** A logical bidirectional stream. */
 public final class SpdyStream {

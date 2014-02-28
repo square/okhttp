@@ -34,12 +34,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import okio.ByteString;
-import okio.Deadline;
-import okio.OkBuffer;
-import okio.Okio;
-import okio.Sink;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Deadline;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;

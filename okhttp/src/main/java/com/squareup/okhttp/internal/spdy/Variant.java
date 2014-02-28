@@ -16,8 +16,8 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
-import okio.BufferedSink;
-import okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
 
 /** A version and dialect of the framed socket protocol. */
 interface Variant {

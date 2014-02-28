@@ -32,8 +32,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import okio.Okio;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.Util.equal;

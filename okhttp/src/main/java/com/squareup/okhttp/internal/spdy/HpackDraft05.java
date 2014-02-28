@@ -8,11 +8,11 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Okio;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 
 /**
  * Read and write HPACK v05.

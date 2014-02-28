@@ -17,7 +17,7 @@ package com.squareup.okhttp.curl;
 
 import com.squareup.okhttp.Request;
 import java.io.IOException;
-import okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.OkBuffer;
 import org.junit.Test;
 
 import static com.squareup.okhttp.curl.Main.fromArgs;

@@ -18,7 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import okio.ByteString;
+import com.squareup.okhttp.internal.okio.ByteString;
 
 /**
  * This class was originally composed from the following classes in
