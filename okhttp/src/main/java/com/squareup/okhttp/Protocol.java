@@ -19,7 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import okio.ByteString;
+import com.squareup.okhttp.internal.okio.ByteString;
 
 /**
  * Contains protocols that OkHttp supports

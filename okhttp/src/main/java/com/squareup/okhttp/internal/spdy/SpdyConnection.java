@@ -30,11 +30,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Okio;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
 
 /**
  * A socket connection to a remote peer. A connection hosts streams which can

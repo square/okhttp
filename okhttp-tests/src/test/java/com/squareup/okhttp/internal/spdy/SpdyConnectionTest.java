@@ -21,11 +21,11 @@ import java.io.InterruptedIOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import okio.BufferedSink;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Okio;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 import org.junit.After;
 import org.junit.Test;
 

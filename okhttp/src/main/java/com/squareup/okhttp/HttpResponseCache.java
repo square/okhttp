@@ -41,9 +41,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Okio;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Okio;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 

@@ -20,8 +20,8 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.net.CacheRequest;
-import okio.Sink;
-import okio.Source;
+import com.squareup.okhttp.internal.okio.Sink;
+import com.squareup.okhttp.internal.okio.Source;
 
 interface Transport {
   /**

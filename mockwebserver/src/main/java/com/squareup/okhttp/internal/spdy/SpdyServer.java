@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import okio.BufferedSink;
-import okio.Okio;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.Okio;
 import org.eclipse.jetty.npn.NextProtoNego;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;

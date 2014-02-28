@@ -20,7 +20,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.List;
-import okio.ByteString;
+import com.squareup.okhttp.internal.okio.ByteString;
 
 /**
  * Responds to authentication challenges from the remote web or proxy server by
