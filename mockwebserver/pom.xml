@@ -15,7 +15,7 @@
   <dependencies>
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp-protocols</artifactId>
+      <artifactId>okhttp</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

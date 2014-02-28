@@ -39,7 +39,7 @@ public final class SettingsTest {
     // WARNING: clash on flags between spdy/3 and http/2!
     assertEquals(-3, settings.getUploadBandwidth(-3));
     assertEquals(-1, settings.getHeaderTableSize());
-    settings.set(Settings.UPLOAD_BANDWIDTH, 0, 42);
+    settings.set(UPLOAD_BANDWIDTH, 0, 42);
     assertEquals(42, settings.getUploadBandwidth(-3));
     settings.set(Settings.HEADER_TABLE_SIZE, 0, 8096);
     assertEquals(8096, settings.getHeaderTableSize());
@@ -47,7 +47,7 @@ public final class SettingsTest {
     // WARNING: clash on flags between spdy/3 and http/2!
     assertEquals(-3, settings.getDownloadBandwidth(-3));
     assertEquals(true, settings.getEnablePush(true));
-    settings.set(Settings.DOWNLOAD_BANDWIDTH, 0, 53);
+    settings.set(DOWNLOAD_BANDWIDTH, 0, 53);
     assertEquals(53, settings.getDownloadBandwidth(-3));
     settings.set(Settings.ENABLE_PUSH, 0, 0);
     assertEquals(false, settings.getEnablePush(true));
@@ -57,7 +57,7 @@ public final class SettingsTest {
     assertEquals(64, settings.getRoundTripTime(-3));
 
     assertEquals(-3, settings.getMaxConcurrentStreams(-3));
-    settings.set(Settings.MAX_CONCURRENT_STREAMS, 0, 75);
+    settings.set(MAX_CONCURRENT_STREAMS, 0, 75);
     assertEquals(75, settings.getMaxConcurrentStreams(-3));
 
     assertEquals(-3, settings.getCurrentCwnd(-3));
@@ -65,7 +65,7 @@ public final class SettingsTest {
     assertEquals(86, settings.getCurrentCwnd(-3));
 
     assertEquals(-3, settings.getDownloadRetransRate(-3));
-    settings.set(Settings.DOWNLOAD_RETRANS_RATE, 0, 97);
+    settings.set(DOWNLOAD_RETRANS_RATE, 0, 97);
     assertEquals(97, settings.getDownloadRetransRate(-3));
 
     assertEquals(-1, settings.getInitialWindowSize());
