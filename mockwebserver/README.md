@@ -4,8 +4,7 @@ MockWebServer
 A scriptable web server for testing HTTP clients
 
 
-Motivation
-----------
+### Motivation
 
 This library makes it easy to test that your app Does The Right Thing when it
 makes HTTP and HTTPS calls. It lets you specify which responses to return and
@@ -17,33 +16,7 @@ server to create representative test cases. Or test that your code survives in
 awkward-to-reproduce situations like 500 errors or slow-loading responses.
 
 
-Hello World
------------
-
-```
-  public static void main(String[] args) throws Exception {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody("hello, world!"));
-    server.play();
-
-    URL url = server.getUrl("/hello.json");
-    URLConnection connection = url.openConnection();
-    connection.setRequestProperty("Accept", "text/plain; charset=utf-8");
-    InputStream in = connection.getInputStream();
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-    assertEquals("hello, world!", reader.readLine());
-
-    RecordedRequest request = server.takeRequest();
-    assertEquals("GET /hello.json HTTP/1.1", request.getRequestLine());
-    assertTrue(request.getHeaders().contains("Accept: text/plain; charset=utf-8"));
-
-    server.shutdown();
-  }
-```
-
-
-Walking through a MockWebServer test
-------------------------------------
+### Example
 
 Use MockWebServer the same way that you use mocking frameworks like
 [Mockito](https://code.google.com/p/mockito/):
@@ -104,9 +77,9 @@ Here's a complete example:
 Your unit tests might move the `server` into a field so you can shut it down
 from your test's `tearDown()`.
 
+### API
 
-MockResponse
-------------
+#### MockResponse
 
 Mock responses default to an empty response body and a `200` status code.
 You can set a custom body with a string, input stream or byte array. Also
@@ -114,9 +87,9 @@ add headers with a fluent builder API.
 
 ```
     MockResponse response = new MockResponse()
-        .setBody("{}")
+        .addHeader("Content-Type", "application/json; charset=utf-8")
         .addHeader("Cache-Control", "no-cache")
-        .addHeader("Content-Type", "application/json; charset=utf-8");
+        .setBody("{}");
 ```
 
 MockResponse can be used to simulate a slow network. This is useful for
@@ -127,28 +100,25 @@ testing timeouts and interactive testing.
 ```
 
 
-RecordedRequest
----------------
+#### RecordedRequest
 
 Verify requests by their method, path, HTTP version, body, and headers.
 
 ```
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /v1/chat/send HTTP/1.1", request.getRequestLine());
-    assertEquals("{}", request.getUtf8Body());
     assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"));
+    assertEquals("{}", request.getUtf8Body());
 ```
 
-Dispatcher
-----------
+#### Dispatcher
 
 By default MockWebServer uses a queue to specify a series of responses. Use a
 Dispatcher to handle requests using another policy. One natural policy is to
 dispatch on the request path.
 
 
-Download
---------
+### Download
 
 The best way to get MockWebServer is via Maven:
 
@@ -161,8 +131,7 @@ The best way to get MockWebServer is via Maven:
 </dependency>
 ```
 
-License
--------
+### License
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
