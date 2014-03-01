@@ -275,6 +275,7 @@ public abstract class HttpOverSpdyTest {
     assertEquals(-1, in.read());
   }
 
+  @Ignore // See https://github.com/square/okhttp/issues/578
   @Test(timeout = 3000) public void readResponseHeaderTimeout() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
     server.enqueue(new MockResponse().setBody("A"));
