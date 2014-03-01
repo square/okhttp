@@ -17,7 +17,11 @@ package okio;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import org.junit.Test;
 
 import static okio.Util.UTF_8;
@@ -109,9 +113,97 @@ public final class RealBufferedSinkTest {
     assertEquals(Segment.SIZE * 2, sink.size());
   }
 
+  @Test public void closeEmitsBufferedBytes() throws IOException {
+    OkBuffer sink = new OkBuffer();
+    BufferedSink bufferedSink = new RealBufferedSink(sink);
+    bufferedSink.writeByte('a');
+    bufferedSink.close();
+    assertEquals('a', sink.readByte());
+  }
+
+  @Test public void closeWithExceptionWhenWriting() throws IOException {
+    MockSink mockSink = new MockSink();
+    mockSink.scheduleThrow(0, new IOException());
+    BufferedSink bufferedSink = new RealBufferedSink(mockSink);
+    bufferedSink.writeByte('a');
+    try {
+      bufferedSink.close();
+      fail();
+    } catch (IOException expected) {
+    }
+    mockSink.assertLog("write(OkBuffer[size=1 data=61], 1)", "close()");
+  }
+
+  @Test public void closeWithExceptionWhenClosing() throws IOException {
+    MockSink mockSink = new MockSink();
+    mockSink.scheduleThrow(1, new IOException());
+    BufferedSink bufferedSink = new RealBufferedSink(mockSink);
+    bufferedSink.writeByte('a');
+    try {
+      bufferedSink.close();
+      fail();
+    } catch (IOException expected) {
+    }
+    mockSink.assertLog("write(OkBuffer[size=1 data=61], 1)", "close()");
+  }
+
+  @Test public void closeWithExceptionWhenWritingAndClosing() throws IOException {
+    MockSink mockSink = new MockSink();
+    mockSink.scheduleThrow(0, new IOException("first"));
+    mockSink.scheduleThrow(1, new IOException("second"));
+    BufferedSink bufferedSink = new RealBufferedSink(mockSink);
+    bufferedSink.writeByte('a');
+    try {
+      bufferedSink.close();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("first", expected.getMessage());
+    }
+    mockSink.assertLog("write(OkBuffer[size=1 data=61], 1)", "close()");
+  }
+
   private String repeat(char c, int count) {
     char[] array = new char[count];
     Arrays.fill(array, c);
     return new String(array);
+  }
+
+  /** A scriptable sink. Like Mockito, but worse and requiring less configuration. */
+  private static class MockSink implements Sink {
+    private final List<String> log = new ArrayList<String>();
+    private final Map<Integer, IOException> callThrows = new LinkedHashMap<Integer, IOException>();
+
+    public void assertLog(String... messages) {
+      assertEquals(Arrays.asList(messages), log);
+    }
+
+    public void scheduleThrow(int call, IOException e) {
+      callThrows.put(call, e);
+    }
+
+    private void throwIfScheduled() throws IOException {
+      IOException exception = callThrows.get(log.size() - 1);
+      if (exception != null) throw exception;
+    }
+
+    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+      log.add("write(" + source + ", " + byteCount + ")");
+      throwIfScheduled();
+    }
+
+    @Override public void flush() throws IOException {
+      log.add("flush()");
+      throwIfScheduled();
+    }
+
+    @Override public Sink deadline(Deadline deadline) {
+      log.add("deadline()");
+      return this;
+    }
+
+    @Override public void close() throws IOException {
+      log.add("close()");
+      throwIfScheduled();
+    }
   }
 }
