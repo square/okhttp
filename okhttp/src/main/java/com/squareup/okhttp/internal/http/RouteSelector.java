@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -154,7 +155,9 @@ public final class RouteSelector {
     // If the previously returned route's problem was not related to TLS, and
     // the next route only changes the TLS mode, we shouldn't even attempt it.
     // This suppresses it in both this selector and also in the route database.
-    if (hasNextTlsMode() && !(failure instanceof SSLHandshakeException)) {
+    if (hasNextTlsMode()
+        && !(failure instanceof SSLHandshakeException)
+        && !(failure instanceof SSLProtocolException)) {
       boolean modernTls = nextTlsMode() == TLS_MODE_MODERN;
       Route routeToSuppress = new Route(address, lastProxy, lastInetSocketAddress, modernTls);
       routeDatabase.failed(routeToSuppress);
