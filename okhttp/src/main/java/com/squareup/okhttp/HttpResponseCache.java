@@ -19,6 +19,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.Headers;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.Request;
 import com.squareup.okhttp.internal.http.Response;
 import com.squareup.okhttp.internal.okio.BufferedSource;
@@ -198,8 +199,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
   }
 
   @Override public boolean maybeRemove(Request request) {
-    String method = request.method();
-    if (method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
+    if (HttpMethod.invalidatesCache(request.method())) {
       try {
         cache.remove(urlToKey(request));
       } catch (IOException ignored) {

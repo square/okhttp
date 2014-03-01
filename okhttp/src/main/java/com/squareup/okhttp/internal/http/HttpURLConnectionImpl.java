@@ -262,7 +262,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         if (method.equals("GET")) {
           // they are requesting a stream to write to. This implies a POST method
           method = "POST";
-        } else if (!method.equals("POST") && !method.equals("PUT") && !method.equals("PATCH")) {
+        } else if (!HttpMethod.hasRequestBody(method)) {
           // If the request method is neither POST nor PUT nor PATCH, then you're not writing
           throw new ProtocolException(method + " does not support writing");
         }
@@ -565,6 +565,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
     }
     client.setProtocols(protocolsList);
+  }
+
+  @Override public void setRequestMethod(String method) throws ProtocolException {
+    if (!HttpMethod.METHODS.contains(method)) {
+      throw new ProtocolException(
+          "Expected one of " + HttpMethod.METHODS + " but was " + method);
+    }
+    this.method = method;
   }
 
   @Override public void setFixedLengthStreamingMode(int contentLength) {
