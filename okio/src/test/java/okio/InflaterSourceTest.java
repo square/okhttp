@@ -71,7 +71,7 @@ public final class InflaterSourceTest {
     ByteString original = randomBytes(1024 * 1024);
     OkBuffer deflated = deflate(original);
     OkBuffer inflated = inflate(deflated);
-    assertEquals(original, inflated.readByteString((int) inflated.size()));
+    assertEquals(original, inflated.readByteString(inflated.size()));
   }
 
   private OkBuffer decodeBase64(String s) {
@@ -79,7 +79,7 @@ public final class InflaterSourceTest {
   }
 
   private String readUtf8(OkBuffer buffer) {
-    return buffer.readUtf8((int) buffer.size());
+    return buffer.readUtf8(buffer.size());
   }
 
   /** Use DeflaterOutputStream to deflate source. */

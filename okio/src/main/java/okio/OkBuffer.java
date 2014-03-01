@@ -239,12 +239,15 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return Util.reverseBytesInt(readInt());
   }
 
-  public ByteString readByteString(int byteCount) {
+  public ByteString readByteString(long byteCount) {
     return new ByteString(readBytes(byteCount));
   }
 
-  public String readUtf8(int byteCount) {
+  public String readUtf8(long byteCount) {
     checkOffsetAndCount(this.size, 0, byteCount);
+    if (byteCount > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("byteCount > Integer.MAX_VALUE: " + byteCount);
+    }
     if (byteCount == 0) return "";
 
     Segment head = this.head;
@@ -253,7 +256,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       return new String(readBytes(byteCount), Util.UTF_8);
     }
 
-    String result = new String(head.data, head.pos, byteCount, UTF_8);
+    String result = new String(head.data, head.pos, (int) byteCount, UTF_8);
     head.pos += byteCount;
     this.size -= byteCount;
 
@@ -270,31 +273,34 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
     if (newline == -1) {
       if (throwOnEof) throw new EOFException();
-      return size != 0 ? readUtf8((int) size) : null;
+      return size != 0 ? readUtf8(size) : null;
     }
 
     if (newline > 0 && getByte(newline - 1) == '\r') {
       // Read everything until '\r\n', then skip the '\r\n'.
-      String result = readUtf8((int) (newline - 1));
+      String result = readUtf8((newline - 1));
       skip(2);
       return result;
 
     } else {
       // Read everything until '\n', then skip the '\n'.
-      String result = readUtf8((int) (newline));
+      String result = readUtf8(newline);
       skip(1);
       return result;
     }
   }
 
-  private byte[] readBytes(int byteCount) {
+  private byte[] readBytes(long byteCount) {
     checkOffsetAndCount(this.size, 0, byteCount);
+    if (byteCount > Integer.MAX_VALUE) {
+      throw new IllegalArgumentException("byteCount > Integer.MAX_VALUE: " + byteCount);
+    }
 
     int offset = 0;
-    byte[] result = new byte[byteCount];
+    byte[] result = new byte[(int) byteCount];
 
     while (offset < byteCount) {
-      int toCopy = Math.min(byteCount - offset, head.limit - head.pos);
+      int toCopy = (int) Math.min(byteCount - offset, head.limit - head.pos);
       System.arraycopy(head.data, head.pos, result, offset, toCopy);
 
       offset += toCopy;
@@ -644,7 +650,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     }
 
     if (size <= 16) {
-      ByteString data = clone().readByteString((int) size);
+      ByteString data = clone().readByteString(size);
       return String.format("OkBuffer[size=%s data=%s]", size, data.hex());
     }
 

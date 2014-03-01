@@ -63,13 +63,13 @@ public interface BufferedSource extends Source {
   void skip(long byteCount) throws IOException;
 
   /** Removes {@code byteCount} bytes from this and returns them as a byte string. */
-  ByteString readByteString(int byteCount) throws IOException;
+  ByteString readByteString(long byteCount) throws IOException;
 
   /**
    * Removes {@code byteCount} bytes from this, decodes them as UTF-8 and
    * returns the string.
    */
-  String readUtf8(int byteCount) throws IOException;
+  String readUtf8(long byteCount) throws IOException;
 
   /**
    * Removes and returns characters up to but not including the next line break.

@@ -800,7 +800,7 @@ public class HpackDraft05Test {
 
   private void assertBytes(int... bytes) {
     ByteString expected = intArrayToByteArray(bytes);
-    ByteString actual = bytesOut.readByteString((int) bytesOut.size());
+    ByteString actual = bytesOut.readByteString(bytesOut.size());
     assertEquals(expected, actual);
   }
 

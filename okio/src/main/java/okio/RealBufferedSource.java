@@ -69,12 +69,12 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readByte();
   }
 
-  @Override public ByteString readByteString(int byteCount) throws IOException {
+  @Override public ByteString readByteString(long byteCount) throws IOException {
     require(byteCount);
     return buffer.readByteString(byteCount);
   }
 
-  @Override public String readUtf8(int byteCount) throws IOException {
+  @Override public String readUtf8(long byteCount) throws IOException {
     require(byteCount);
     return buffer.readUtf8(byteCount);
   }
@@ -86,19 +86,19 @@ final class RealBufferedSource implements BufferedSource {
       start = buffer.size;
       if (source.read(buffer, Segment.SIZE) == -1) {
         if (throwOnEof) throw new EOFException();
-        return buffer.size != 0 ? readUtf8((int) buffer.size) : null;
+        return buffer.size != 0 ? readUtf8(buffer.size) : null;
       }
     }
 
     if (newline > 0 && buffer.getByte(newline - 1) == '\r') {
       // Read everything until '\r\n', then skip the '\r\n'.
-      String result = readUtf8((int) (newline - 1));
+      String result = readUtf8((newline - 1));
       skip(2);
       return result;
 
     } else {
       // Read everything until '\n', then skip the '\n'.
-      String result = readUtf8((int) (newline));
+      String result = readUtf8((newline));
       skip(1);
       return result;
     }

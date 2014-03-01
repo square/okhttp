@@ -1462,7 +1462,7 @@ public final class SpdyConnectionTest {
     OkBuffer buffer = new OkBuffer();
     while (source.read(buffer, Long.MAX_VALUE) != -1) {
     }
-    String actual = buffer.readUtf8((int) buffer.size());
+    String actual = buffer.readUtf8(buffer.size());
     assertEquals(expected, actual);
   }
 

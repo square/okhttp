@@ -124,11 +124,11 @@ public final class OkBufferTest {
     assertEquals(0, SegmentPool.INSTANCE.byteCount);
 
     // Recycle MAX_SIZE segments. They're all in the pool.
-    buffer.readByteString((int) SegmentPool.MAX_SIZE);
+    buffer.readByteString(SegmentPool.MAX_SIZE);
     assertEquals(SegmentPool.MAX_SIZE, SegmentPool.INSTANCE.byteCount);
 
     // Recycle MAX_SIZE more segments. The pool is full so they get garbage collected.
-    buffer.readByteString((int) SegmentPool.MAX_SIZE);
+    buffer.readByteString(SegmentPool.MAX_SIZE);
     assertEquals(SegmentPool.MAX_SIZE, SegmentPool.INSTANCE.byteCount);
 
     // Take MAX_SIZE segments to drain the pool.
