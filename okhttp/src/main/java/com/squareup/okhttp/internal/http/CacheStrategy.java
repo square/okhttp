@@ -97,9 +97,11 @@ public final class CacheStrategy {
 
     /** The server's time when the cached response was served, if known. */
     private Date servedDate;
+    private String servedDateString;
 
     /** The last modified date of the cached response, if known. */
     private Date lastModified;
+    private String lastModifiedString;
 
     /**
      * The expiration date of the cached response, if known. If both this field
@@ -136,10 +138,12 @@ public final class CacheStrategy {
           String value = cacheResponse.headers().value(i);
           if ("Date".equalsIgnoreCase(fieldName)) {
             servedDate = HttpDate.parse(value);
+            servedDateString = value;
           } else if ("Expires".equalsIgnoreCase(fieldName)) {
             expires = HttpDate.parse(value);
           } else if ("Last-Modified".equalsIgnoreCase(fieldName)) {
             lastModified = HttpDate.parse(value);
+            lastModifiedString = value;
           } else if ("ETag".equalsIgnoreCase(fieldName)) {
             etag = value;
           } else if ("Age".equalsIgnoreCase(fieldName)) {
@@ -232,9 +236,9 @@ public final class CacheStrategy {
       Request.Builder conditionalRequestBuilder = request.newBuilder();
 
       if (lastModified != null) {
-        conditionalRequestBuilder.header("If-Modified-Since", HttpDate.format(lastModified));
+        conditionalRequestBuilder.header("If-Modified-Since", lastModifiedString);
       } else if (servedDate != null) {
-        conditionalRequestBuilder.header("If-Modified-Since", HttpDate.format(servedDate));
+        conditionalRequestBuilder.header("If-Modified-Since", servedDateString);
       }
 
       if (etag != null) {

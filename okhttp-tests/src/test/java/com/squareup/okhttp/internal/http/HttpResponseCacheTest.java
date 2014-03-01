@@ -1183,6 +1183,40 @@ public final class HttpResponseCacheTest {
     assertEquals("Sat, 01 Mar 2014 09:30:00 GMT", ifModifiedSinceHeader);
   }
 
+  /**
+   * For Last-Modified and Date headers, we should echo the date back in the
+   * exact format we were served.
+   */
+  @Test public void retainServedDateFormat() throws Exception {
+    // Serve a response with a non-standard date format that OkHttp supports.
+    Date lastModifiedDate = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(-1));
+    Date servedDate = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(-2));
+    DateFormat dateFormat = new SimpleDateFormat("EEE dd-MMM-yyyy HH:mm:ss z", Locale.US);
+    dateFormat.setTimeZone(TimeZone.getTimeZone("EDT"));
+    String lastModifiedString = dateFormat.format(lastModifiedDate);
+    String servedString = dateFormat.format(servedDate);
+
+    // This response should be conditionally cached.
+    server.enqueue(new MockResponse()
+        .addHeader("Last-Modified: " + lastModifiedString)
+        .addHeader("Expires: " + servedString)
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.play();
+
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+
+    // The first request has no conditions.
+    RecordedRequest request1 = server.takeRequest();
+    assertNull(request1.getHeader("If-Modified-Since"));
+
+    // The 2nd request uses the server's date format.
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals(lastModifiedString, request2.getHeader("If-Modified-Since"));
+  }
+
   @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.play();
