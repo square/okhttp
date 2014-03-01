@@ -129,25 +129,25 @@ final class RealBufferedSink implements BufferedSink {
   @Override public void close() throws IOException {
     if (closed) return;
 
-    // If flushing throws, we still need to close the stream!
+    // Emit buffered data to the underlying sink. If this fails, we still need
+    // to close the sink; otherwise we risk leaking resources.
     Throwable thrown = null;
     try {
       if (buffer.size > 0) {
         sink.write(buffer, buffer.size);
       }
-    } catch (IOException e) {
-      thrown = e;
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       thrown = e;
     }
 
-    sink.close();
+    try {
+      sink.close();
+    } catch (Throwable e) {
+      if (thrown == null) thrown = e;
+    }
     closed = true;
 
-    if (thrown != null) {
-      if (thrown instanceof IOException) throw (IOException) thrown;
-      else throw (RuntimeException) thrown;
-    }
+    if (thrown != null) Util.sneakyRethrow(thrown);
   }
 
   @Override public Sink deadline(Deadline deadline) {
