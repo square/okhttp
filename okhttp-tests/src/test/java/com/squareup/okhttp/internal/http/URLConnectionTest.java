@@ -1340,6 +1340,7 @@ public final class URLConnectionTest {
     assertValidRequestMethod("POST");
     assertValidRequestMethod("PUT");
     assertValidRequestMethod("TRACE");
+    assertValidRequestMethod("PATCH");
   }
 
   private void assertValidRequestMethod(String requestMethod) throws Exception {

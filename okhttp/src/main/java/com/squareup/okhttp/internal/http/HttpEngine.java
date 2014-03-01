@@ -254,8 +254,7 @@ public class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    String method = request.method();
-    return method.equals("POST") || method.equals("PUT") || method.equals("PATCH");
+    return HttpMethod.hasRequestBody(request.method());
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
