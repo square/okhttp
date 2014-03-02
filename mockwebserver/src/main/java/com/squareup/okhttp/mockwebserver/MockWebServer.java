@@ -729,7 +729,7 @@ public final class MockWebServer {
           if (headerParts.length != 2) {
             throw new AssertionError("Unexpected header: " + header);
           }
-          pushedHeaders.add(new Header(headerParts[0], headerParts[1]));
+          pushedHeaders.add(new Header(headerParts[0], headerParts[1].trim()));
         }
         String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.

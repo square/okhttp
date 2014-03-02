@@ -30,7 +30,7 @@ import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
 
 public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
-    URL url = new URL("https://twitter.com/");
+    URL url = new URL("https://http2.iijplus.jp/push/test1");
     HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient()
         .setProtocols(Protocol.HTTP2_AND_HTTP_11).open(url);
 
@@ -48,6 +48,7 @@ public final class ExternalHttp2Example {
     if (protocolValues != null && !protocolValues.isEmpty()) {
       System.out.println("PROTOCOL " + protocolValues.get(0));
     }
+
     BufferedReader reader =
         new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
     String line;
