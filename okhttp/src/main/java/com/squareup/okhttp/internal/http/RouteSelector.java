@@ -144,6 +144,9 @@ public final class RouteSelector {
    * failure on a connection returned by this route selector.
    */
   public void connectFailed(Connection connection, IOException failure) {
+    // If this is a recycled connection, don't count its failure against the route.
+    if (connection.recycleCount() > 0) return;
+
     Route failedRoute = connection.getRoute();
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
