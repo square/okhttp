@@ -61,7 +61,7 @@ public final class SpdyStream {
   private List<Header> responseHeaders;
 
   private final SpdyDataSource source;
-  final SpdyDataOutputStream sink;
+  final SpdyDataSink sink;
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple
@@ -78,7 +78,7 @@ public final class SpdyStream {
     this.connection = connection;
     this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
     this.source = new SpdyDataSource(connection.okHttpSettings.getInitialWindowSize());
-    this.sink = new SpdyDataOutputStream();
+    this.sink = new SpdyDataSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
     this.priority = priority;
@@ -501,12 +501,11 @@ public final class SpdyStream {
   }
 
   /**
-   * An output stream that writes outgoing data frames of a stream. This class
-   * is not thread safe.
+   * A sink that writes outgoing data frames of a stream. This class is not
+   * thread safe.
    */
-  final class SpdyDataOutputStream implements Sink {
+  final class SpdyDataSink implements Sink {
     private boolean closed;
-    private final OkBuffer buffer = new OkBuffer();
 
     /**
      * True if either side has cleanly shut down this stream. We shall send
@@ -516,50 +515,6 @@ public final class SpdyStream {
 
     @Override public void write(OkBuffer source, long byteCount) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
-      synchronized (SpdyStream.this) {
-        checkOutNotClosed();
-      }
-
-      buffer.write(source, byteCount);
-      writeFrame(false, buffer.completeSegmentByteCount());
-    }
-
-    @Override public void flush() throws IOException {
-      assert (!Thread.holdsLock(SpdyStream.this));
-      synchronized (SpdyStream.this) {
-        checkOutNotClosed();
-      }
-      writeFrame(false, buffer.size());
-      connection.flush();
-    }
-
-    @Override public Sink deadline(Deadline deadline) {
-      // TODO: honor deadlines.
-      return this;
-    }
-
-    @Override public void close() throws IOException {
-      assert (!Thread.holdsLock(SpdyStream.this));
-      synchronized (SpdyStream.this) {
-        if (closed) return;
-      }
-      if (!sink.finished) {
-        writeFrame(true, buffer.size());
-      }
-      synchronized (SpdyStream.this) {
-        closed = true;
-      }
-      connection.flush();
-      cancelStreamIfNecessary();
-    }
-
-    private void writeFrame(boolean outFinished, long byteCount) throws IOException {
-      assert (!Thread.holdsLock(SpdyStream.this));
-      if (byteCount == 0 && outFinished) { // Empty data frames are not flow-controlled.
-        connection.writeData(id, true, buffer, 0);
-        return;
-      }
-
       while (byteCount > 0) {
         long toWrite;
         synchronized (SpdyStream.this) {
@@ -577,8 +532,36 @@ public final class SpdyStream {
         }
 
         byteCount -= toWrite;
-        connection.writeData(id, outFinished && byteCount == 0, buffer, toWrite);
+        connection.writeData(id, false, source, toWrite);
       }
+    }
+
+    @Override public void flush() throws IOException {
+      assert (!Thread.holdsLock(SpdyStream.this));
+      synchronized (SpdyStream.this) {
+        checkOutNotClosed();
+      }
+      connection.flush();
+    }
+
+    @Override public Sink deadline(Deadline deadline) {
+      // TODO: honor deadlines.
+      return this;
+    }
+
+    @Override public void close() throws IOException {
+      assert (!Thread.holdsLock(SpdyStream.this));
+      synchronized (SpdyStream.this) {
+        if (closed) return;
+      }
+      if (!sink.finished) {
+        connection.writeData(id, true, null, 0);
+      }
+      synchronized (SpdyStream.this) {
+        closed = true;
+      }
+      connection.flush();
+      cancelStreamIfNecessary();
     }
   }
 

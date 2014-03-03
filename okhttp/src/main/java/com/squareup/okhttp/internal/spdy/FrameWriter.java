@@ -57,6 +57,8 @@ public interface FrameWriter extends Closeable {
   /**
    * {@code data.length} may be longer than the max length of the variant's data frame.
    * Implementations must send multiple frames as necessary.
+   *
+   * @param source the buffer to draw bytes from. May be null if byteCount is 0.
    */
   void data(boolean outFinished, int streamId, OkBuffer source, int byteCount) throws IOException;
 
