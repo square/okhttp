@@ -24,8 +24,6 @@ import okio.Sink;
 import okio.Source;
 
 public final class HttpTransport implements Transport {
-  public static final int DEFAULT_CHUNK_LENGTH = 1024;
-
   private final HttpEngine httpEngine;
   private final HttpConnection httpConnection;
 
@@ -58,13 +56,13 @@ public final class HttpTransport implements Transport {
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.
       writeRequestHeaders(request);
-      return httpConnection.newChunkedOutputStream(DEFAULT_CHUNK_LENGTH);
+      return httpConnection.newChunkedSink();
     }
 
     if (contentLength != -1) {
       // Stream a request body of a known length.
       writeRequestHeaders(request);
-      return httpConnection.newFixedLengthOutputStream(contentLength);
+      return httpConnection.newFixedLengthSink(contentLength);
     }
 
     throw new IllegalStateException(
