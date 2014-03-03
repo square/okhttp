@@ -80,6 +80,7 @@ public final class Connection implements Closeable {
   private int httpMinorVersion = 1; // Assume HTTP/1.1
   private long idleStartTimeNs;
   private Handshake handshake;
+  private int recycleCount;
 
   public Connection(ConnectionPool pool, Route route) {
     this.pool = pool;
@@ -299,6 +300,18 @@ public final class Connection implements Closeable {
   public void updateReadTimeout(int newTimeout) throws IOException {
     if (!connected) throw new IllegalStateException("updateReadTimeout - not connected");
     socket.setSoTimeout(newTimeout);
+  }
+
+  public void incrementRecycleCount() {
+    recycleCount++;
+  }
+
+  /**
+   * Returns the number of times this connection has been returned to the
+   * connection pool.
+   */
+  public int recycleCount() {
+    return recycleCount;
   }
 
   /**

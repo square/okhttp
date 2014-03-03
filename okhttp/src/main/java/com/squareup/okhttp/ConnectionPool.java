@@ -234,6 +234,7 @@ public class ConnectionPool {
 
     synchronized (this) {
       connections.addFirst(connection);
+      connection.incrementRecycleCount();
       connection.resetIdleStartTime();
     }
 
