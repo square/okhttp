@@ -401,10 +401,12 @@ public final class Http20Draft09 implements Variant {
       dataFrame(streamId, flags, source, byteCount);
     }
 
-    void dataFrame(int streamId, byte flags, OkBuffer buffer, int length) throws IOException {
+    void dataFrame(int streamId, byte flags, OkBuffer buffer, int byteCount) throws IOException {
       byte type = TYPE_DATA;
-      frameHeader(length, type, flags, streamId);
-      sink.write(buffer, length);
+      frameHeader(byteCount, type, flags, streamId);
+      if (byteCount > 0) {
+        sink.write(buffer, byteCount);
+      }
     }
 
     @Override public synchronized void settings(Settings settings) throws IOException {

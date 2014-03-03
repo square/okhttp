@@ -407,7 +407,9 @@ final class Spdy3 implements Variant {
       }
       sink.writeInt(streamId & 0x7fffffff);
       sink.writeInt((flags & 0xff) << 24 | byteCount & 0xffffff);
-      sink.write(buffer, byteCount);
+      if (byteCount > 0) {
+        sink.write(buffer, byteCount);
+      }
     }
 
     private void writeNameValueBlockToBuffer(List<Header> headerBlock) throws IOException {
