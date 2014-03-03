@@ -24,6 +24,7 @@ import java.io.InputStream;
  * buffering as much as necessary before consuming input.
  */
 public interface BufferedSource extends Source {
+  /** Returns this source's internal buffer. */
   OkBuffer buffer();
 
   /**

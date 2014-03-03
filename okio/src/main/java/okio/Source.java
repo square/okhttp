@@ -19,7 +19,45 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * An alternative to InputStream.
+ * Supplies a stream of bytes. Use this interface to read data from wherever
+ * it's located: from the network, storage, or a buffer in memory. Sources may
+ * be layered to transform supplied data, such as to decompress, decrypt, or
+ * remove protocol framing.
+ *
+ * <p>Most applications shouldn't operate on a source directly, but rather
+ * {@link BufferedSource} which is both more efficient and more convenient. Use
+ * {@link Okio#buffer(Source)} to wrap any source with a buffer.
+ *
+ * <p>Sources are easy to test: just use an {@link OkBuffer} in your tests, and
+ * fill it with the data your application is to read.
+ *
+ * <h3>Comparison with InputStream</h3>
+ * This interface is functionally equivalent to {@link java.io.InputStream}.
+ *
+ * <p>{@code InputStream} requires multiple layers when consumed data is
+ * heterogeneous: a {@code DataOutputStream} for primitive values, a {@code
+ * BufferedInputStream} for buffering, and {@code InputStreamReader} for
+ * strings. This class uses {@code BufferedSource} for all of the above.
+ *
+ * <p>Source avoids the impossible-to-implement {@link
+ * java.io.InputStream#available available()} method. Instead callers specify
+ * how many bytes they {@link BufferedSource#require require}.
+ *
+ * <p>Source omits the unsafe-to-compose {@link java.io.InputStream#mark mark
+ * and reset} state that's tracked by {@code InputStream}; callers instead just
+ * buffer what they need.
+ *
+ * <p>When implementing a source, you need not worry about the {@link
+ * java.io.InputStream#read single-byte read} method that is awkward to
+ * implement efficiently and that returns one of 257 possible values.
+ *
+ * <p>And source has a stronger {@code skip} method: {@link BufferedSource#skip}
+ * won't return prematurely.
+ *
+ * <h3>Interop with InputStream</h3>
+ * Use {@link Okio#source} to adapt an {@code InputStream} to a source. Use
+ * {@link BufferedSource#inputStream} to adapt a source to an {@code
+ * InputStream}.
  */
 public interface Source extends Closeable {
   /**
