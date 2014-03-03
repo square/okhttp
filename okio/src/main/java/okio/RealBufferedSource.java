@@ -40,8 +40,7 @@ final class RealBufferedSource implements BufferedSource {
     return buffer;
   }
 
-  @Override public long read(OkBuffer sink, long byteCount)
-      throws IOException {
+  @Override public long read(OkBuffer sink, long byteCount) throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
     if (closed) throw new IllegalStateException("closed");
 

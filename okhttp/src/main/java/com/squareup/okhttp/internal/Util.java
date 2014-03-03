@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -253,19 +251,13 @@ public final class Util {
     }
   }
 
-  /** Returns the remainder of 'reader' as a string, closing it when done. */
-  public static String readFully(Reader reader) throws IOException {
-    try {
-      StringWriter writer = new StringWriter();
-      char[] buffer = new char[1024];
-      int count;
-      while ((count = reader.read(buffer)) != -1) {
-        writer.write(buffer, 0, count);
-      }
-      return writer.toString();
-    } finally {
-      reader.close();
+  /** Returns the remainder of 'source' as a buffer, closing it when done. */
+  public static OkBuffer readFully(Source source) throws IOException {
+    OkBuffer result = new OkBuffer();
+    while (source.read(result, 2048) != -1) {
     }
+    source.close();
+    return result;
   }
 
   /** Reads until {@code in} is exhausted or the timeout has elapsed. */
