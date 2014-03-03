@@ -19,7 +19,33 @@ import java.io.Closeable;
 import java.io.IOException;
 
 /**
- * An alternative to OutputStream.
+ * Receives a stream of bytes. Use this interface to write data wherever it's
+ * needed: to the network, storage, or a buffer in memory. Sinks may be layered
+ * to transform received data, such as to compress, encrypt, throttle, or add
+ * protocol framing.
+ *
+ * <p>Most application code shouldn't operate on a sink directly, but rather
+ * {@link BufferedSink} which is both more efficient and more convenient. Use
+ * {@link Okio#buffer(Sink)} to wrap any sink with a buffer.
+ *
+ * <p>Sinks are easy to test: just use an {@link OkBuffer} in your tests, and
+ * read from it to confirm it received the data that was expected.
+ *
+ * <h3>Comparison with OutputStream</h3>
+ * This interface is functionally equivalent to {@link java.io.OutputStream}.
+ *
+ * <p>{@code OutputStream} requires multiple layers when emitted data is
+ * heterogeneous: a {@code DataOutputStream} for primitive values, a {@code
+ * BufferedOutputStream} for buffering, and {@code OutputStreamWriter} for
+ * charset encoding. This class uses {@code BufferedSink} for all of the above.
+ *
+ * <p>Sink is also easier to layer: there is no {@link
+ * java.io.OutputStream#write(int) single-byte write} method that is awkward to
+ * implement efficiently.
+ *
+ * <h3>Interop with OutputStream</h3>
+ * Use {@link Okio#sink} to adapt an {@code OutputStream} to a sink. Use {@link
+ * BufferedSink#outputStream} to adapt a sink to an {@code OutputStream}.
  */
 public interface Sink extends Closeable {
   /** Removes {@code byteCount} bytes from {@code source} and appends them to this. */
