@@ -22,7 +22,6 @@ import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,16 +32,11 @@ import java.net.ProtocolException;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
-import java.net.URL;
-import java.security.Permission;
-import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -159,7 +153,7 @@ public class ResponseCacheAdapter implements OkResponseCache {
     Request request = okResponse.request();
     // Create an object of the correct class in case the ResponseCache uses instanceof.
     if (request.isHttps()) {
-      return new CacheHttpsURLConnection(okResponse);
+      return new CacheHttpsURLConnection(new CacheHttpURLConnection(okResponse));
     } else {
       return new CacheHttpURLConnection(okResponse);
     }
@@ -497,368 +491,48 @@ public class ResponseCacheAdapter implements OkResponseCache {
     public void setDefaultUseCaches(boolean defaultUseCaches) {
       super.setDefaultUseCaches(defaultUseCaches);
     }
-
   }
 
-  /**
-   * An HttpsURLConnection to offer to the cache. HttpsURLConnection is concrete; rather than
-   * completely duplicate CacheHttpURLConnection all methods that can be are delegated to a
-   * CacheHttpURLConnection instead. The intent is that all real logic (besides HTTPS-specific
-   * calls) exists in CacheHttpURLConnection.
-   */
-  private static final class CacheHttpsURLConnection extends HttpsURLConnection {
-
+  /** An HttpsURLConnection to offer to the cache. */
+  private static final class CacheHttpsURLConnection extends DelegatingHttpsURLConnection {
     private final CacheHttpURLConnection delegate;
-    private final Response response;
 
-    public CacheHttpsURLConnection(Response response) {
-      super(response.request().url());
-      this.response = response;
-      this.delegate = new CacheHttpURLConnection(response);
+    public CacheHttpsURLConnection(CacheHttpURLConnection delegate) {
+      super(delegate);
+      this.delegate = delegate;
     }
 
-    // HttpsURLConnection methods.
-
-    @Override
-    public String getCipherSuite() {
-      if (response == null || response.handshake() == null) {
-        return null;
-      }
-      return response.handshake().cipherSuite();
+    @Override protected Handshake handshake() {
+      return delegate.response.handshake();
     }
 
-    @Override
-    public Certificate[] getLocalCertificates() {
-      if (response == null || response.handshake() == null) {
-        return null;
-      }
-      List<Certificate> localCertificates = response.handshake().localCertificates();
-      if (localCertificates == null || localCertificates.size() == 0) {
-        return null;
-      }
-      return localCertificates.toArray(new Certificate[localCertificates.size()]);
-    }
-
-    @Override
-    public Certificate[] getServerCertificates() throws SSLPeerUnverifiedException {
-      if (response == null || response.handshake() == null) {
-        return null;
-      }
-      List<Certificate> peerCertificates = response.handshake().peerCertificates();
-      if (peerCertificates == null || peerCertificates.size() == 0) {
-        return null;
-      }
-      return peerCertificates.toArray(new Certificate[peerCertificates.size()]);
-    }
-
-    @Override
-    public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
-      if (response == null || response.handshake() == null) {
-        return null;
-      }
-      return response.handshake().peerPrincipal();
-    }
-
-    @Override
-    public Principal getLocalPrincipal() {
-      if (response == null || response.handshake() == null) {
-        return null;
-      }
-      return response.handshake().localPrincipal();
-    }
-
-    @Override
-    public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+    @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
       throw throwRequestModificationException();
     }
 
-    @Override
-    public HostnameVerifier getHostnameVerifier() {
+    @Override public HostnameVerifier getHostnameVerifier() {
       throw throwRequestSslAccessException();
     }
 
-    @Override
-    public void setSSLSocketFactory(SSLSocketFactory socketFactory) {
+    @Override public void setSSLSocketFactory(SSLSocketFactory socketFactory) {
       throw throwRequestModificationException();
     }
 
-    @Override
-    public SSLSocketFactory getSSLSocketFactory() {
+    @Override public SSLSocketFactory getSSLSocketFactory() {
       throw throwRequestSslAccessException();
     }
 
-    // Delegated methods.
-
-    @Override
-    public void connect() throws IOException {
-      delegate.connect();
-    }
-
-    @Override
-    public void disconnect() {
-      delegate.disconnect();
-    }
-
-    @Override
-    public void setRequestProperty(String key, String value) {
-      delegate.setRequestProperty(key, value);
-    }
-
-    @Override
-    public void addRequestProperty(String key, String value) {
-      delegate.addRequestProperty(key, value);
-    }
-
-    @Override
-    public String getRequestProperty(String key) {
-      return delegate.getRequestProperty(key);
-    }
-
-    @Override
-    public Map<String, List<String>> getRequestProperties() {
-      return delegate.getRequestProperties();
-    }
-
-    @Override
-    public void setFixedLengthStreamingMode(int contentLength) {
-      delegate.setFixedLengthStreamingMode(contentLength);
-    }
-
-    @Override
-    public void setFixedLengthStreamingMode(long contentLength) {
-      delegate.setFixedLengthStreamingMode(contentLength);
-    }
-
-    @Override
-    public void setChunkedStreamingMode(int chunkLength) {
-      delegate.setChunkedStreamingMode(chunkLength);
-    }
-
-    @Override
-    public void setInstanceFollowRedirects(boolean followRedirects) {
-      delegate.setInstanceFollowRedirects(followRedirects);
-    }
-
-    @Override
-    public boolean getInstanceFollowRedirects() {
-      return delegate.getInstanceFollowRedirects();
-    }
-
-    @Override
-    public void setRequestMethod(String method) throws ProtocolException {
-      delegate.setRequestMethod(method);
-    }
-
-    @Override
-    public String getRequestMethod() {
-      return delegate.getRequestMethod();
-    }
-
-    @Override
-    public String getHeaderFieldKey(int position) {
-      return delegate.getHeaderFieldKey(position);
-    }
-
-    @Override
-    public String getHeaderField(int position) {
-      return delegate.getHeaderField(position);
-    }
-
-    @Override
-    public String getHeaderField(String fieldName) {
-      return delegate.getHeaderField(fieldName);
-    }
-
-    @Override
-    public int getResponseCode() throws IOException {
-      return delegate.getResponseCode();
-    }
-
-    @Override
-    public String getResponseMessage() throws IOException {
-      return delegate.getResponseMessage();
-    }
-
-    @Override
-    public InputStream getErrorStream() {
-      return delegate.getErrorStream();
-    }
-
-    @Override
-    public boolean usingProxy() {
-      return delegate.usingProxy();
-    }
-
-    @Override
-    public void setConnectTimeout(int timeout) {
-      delegate.setConnectTimeout(timeout);
-    }
-
-    @Override
-    public int getConnectTimeout() {
-      return delegate.getConnectTimeout();
-    }
-
-    @Override
-    public void setReadTimeout(int timeout) {
-      delegate.setReadTimeout(timeout);
-    }
-
-    @Override
-    public int getReadTimeout() {
-      return delegate.getReadTimeout();
-    }
-
-    @Override
-    public Map<String, List<String>> getHeaderFields() {
-      return delegate.getHeaderFields();
-    }
-
-    @Override
-    public Object getContent() throws IOException {
-      return delegate.getContent();
-    }
-
-    @Override
-    public Object getContent(Class[] classes) throws IOException {
-      return delegate.getContent(classes);
-    }
-
-    @Override
-    public InputStream getInputStream() throws IOException {
-      return delegate.getInputStream();
-    }
-
-    @Override
-    public OutputStream getOutputStream() throws IOException {
-      return delegate.getOutputStream();
-    }
-
-    @Override
-    public void setDoInput(boolean doInput) {
-      delegate.setDoInput(doInput);
-    }
-
-    @Override
-    public boolean getDoInput() {
-      return delegate.getDoInput();
-    }
-
-    @Override
-    public void setDoOutput(boolean doOutput) {
-      delegate.setDoOutput(doOutput);
-    }
-
-    @Override
-    public boolean getDoOutput() {
-      return delegate.getDoOutput();
-    }
-
-    @Override
-    public void setAllowUserInteraction(boolean allowUserInteraction) {
-      delegate.setAllowUserInteraction(allowUserInteraction);
-    }
-
-    @Override
-    public boolean getAllowUserInteraction() {
-      return delegate.getAllowUserInteraction();
-    }
-
-    @Override
-    public void setUseCaches(boolean useCaches) {
-      delegate.setUseCaches(useCaches);
-    }
-
-    @Override
-    public boolean getUseCaches() {
-      return delegate.getUseCaches();
-    }
-
-    @Override
-    public void setIfModifiedSince(long ifModifiedSince) {
-      delegate.setIfModifiedSince(ifModifiedSince);
-    }
-
-    @Override
-    public long getIfModifiedSince() {
-      return delegate.getIfModifiedSince();
-    }
-
-    @Override
-    public boolean getDefaultUseCaches() {
-      return delegate.getDefaultUseCaches();
-    }
-
-    @Override
-    public void setDefaultUseCaches(boolean defaultUseCaches) {
-      delegate.setDefaultUseCaches(defaultUseCaches);
-    }
-
-    @Override
-    public long getHeaderFieldDate(String name, long defaultValue) {
-      return delegate.getHeaderFieldDate(name, defaultValue);
-    }
-
-    @Override
-    public Permission getPermission() throws IOException {
-      return delegate.getPermission();
-    }
-
-    @Override
-    public URL getURL() {
-      return delegate.getURL();
-    }
-
-    @Override
-    public int getContentLength() {
-      return delegate.getContentLength();
-    }
-
-    @Override
-    public long getContentLengthLong() {
+    @Override public long getContentLengthLong() {
       return delegate.getContentLengthLong();
     }
 
-    @Override
-    public String getContentType() {
-      return delegate.getContentType();
+    @Override public void setFixedLengthStreamingMode(long contentLength) {
+      delegate.setFixedLengthStreamingMode(contentLength);
     }
 
-    @Override
-    public String getContentEncoding() {
-      return delegate.getContentEncoding();
+    @Override public long getHeaderFieldLong(String field, long defaultValue) {
+      return delegate.getHeaderFieldLong(field, defaultValue);
     }
-
-    @Override
-    public long getExpiration() {
-      return delegate.getExpiration();
-    }
-
-    @Override
-    public long getDate() {
-      return delegate.getDate();
-    }
-
-    @Override
-    public long getLastModified() {
-      return delegate.getLastModified();
-    }
-
-    @Override
-    public int getHeaderFieldInt(String name, int defaultValue) {
-      return delegate.getHeaderFieldInt(name, defaultValue);
-    }
-
-    @Override
-    public long getHeaderFieldLong(String name, long defaultValue) {
-      return delegate.getHeaderFieldLong(name, defaultValue);
-    }
-
-    @Override
-    public String toString() {
-      return delegate.toString();
-    }
-
   }
 
   private static RuntimeException throwRequestModificationException() {
