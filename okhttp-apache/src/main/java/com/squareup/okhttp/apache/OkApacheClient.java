@@ -161,6 +161,12 @@ public class OkApacheClient implements HttpClient {
     for (int i = 0; true; i++) {
       String name = connection.getHeaderFieldKey(i);
       if (name == null) {
+        // Header zero is permitted to be the status line and is defined as having a null key.
+        // Skip it if it is encountered and continue collecting headers.
+        if (i == 0) {
+          continue;
+        }
+        // Other null keys are interpreted as having run out of response headers.
         break;
       }
       BasicHeader header = new BasicHeader(name, connection.getHeaderField(i));

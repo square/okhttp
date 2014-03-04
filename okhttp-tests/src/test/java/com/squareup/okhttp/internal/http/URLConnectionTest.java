@@ -196,7 +196,8 @@ public final class URLConnectionTest {
   }
 
   @Test public void responseHeaders() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setStatus("HTTP/1.0 200 Fantastic")
+    String statusLine = "HTTP/1.0 200 Fantastic";
+    server.enqueue(new MockResponse().setStatus(statusLine)
         .addHeader("A: c")
         .addHeader("B: d")
         .addHeader("A: e")
@@ -206,11 +207,26 @@ public final class URLConnectionTest {
     connection = client.open(server.getUrl("/"));
     assertEquals(200, connection.getResponseCode());
     assertEquals("Fantastic", connection.getResponseMessage());
-    assertEquals("HTTP/1.0 200 Fantastic", connection.getHeaderField(null));
+
+    // Check retrieval by string key.
+    assertEquals(statusLine, connection.getHeaderField(null));
+    assertEquals("e", connection.getHeaderField("A"));
+    // The RI and OkHttp supports case-insensitive matching for this method.
+    assertEquals("e", connection.getHeaderField("a"));
+
+    // Check retrieval using a Map.
     Map<String, List<String>> responseHeaders = connection.getHeaderFields();
-    assertEquals(Arrays.asList("HTTP/1.0 200 Fantastic"), responseHeaders.get(null));
+    assertEquals(Arrays.asList(statusLine), responseHeaders.get(null));
     assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("A")));
+    // OkHttp supports case-insensitive matching here. The RI does not.
     assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("a")));
+
+    // Check the Map iterator contains the expected mappings.
+    assertHeadersContainsMapping(responseHeaders, null, statusLine);
+    assertHeadersContainsMapping(responseHeaders, "A", "c", "e");
+    assertHeadersContainsMapping(responseHeaders, "B", "d");
+
+    // Check immutability of the headers Map.
     try {
       responseHeaders.put("N", Arrays.asList("o"));
       fail("Modified an unmodifiable view.");
@@ -221,12 +237,41 @@ public final class URLConnectionTest {
       fail("Modified an unmodifiable view.");
     } catch (UnsupportedOperationException expected) {
     }
-    assertEquals("A", connection.getHeaderFieldKey(0));
-    assertEquals("c", connection.getHeaderField(0));
-    assertEquals("B", connection.getHeaderFieldKey(1));
-    assertEquals("d", connection.getHeaderField(1));
-    assertEquals("A", connection.getHeaderFieldKey(2));
-    assertEquals("e", connection.getHeaderField(2));
+
+    // Check retrieval of headers by index.
+    assertEquals(null, connection.getHeaderFieldKey(0));
+    assertEquals(statusLine, connection.getHeaderField(0));
+    // After header zero there may be additional entries provided at the beginning or end by the
+    // implementation. It's probably important that the relative ordering of the headers is
+    // preserved, particularly if there are multiple value for the same key.
+    int i = 1;
+    while (!connection.getHeaderFieldKey(i).equals("A")) {
+      i++;
+    }
+    // Check the ordering of the headers set by app code.
+    assertResponseHeaderAtIndex(connection, i++, "A", "c");
+    assertResponseHeaderAtIndex(connection, i++, "B", "d");
+    assertResponseHeaderAtIndex(connection, i++, "A", "e");
+    // There may be some additional headers provided by the implementation.
+    while (connection.getHeaderField(i) != null) {
+      assertNotNull(connection.getHeaderFieldKey(i));
+      i++;
+    }
+    // Confirm the correct behavior when the index is out-of-range.
+    assertNull(connection.getHeaderFieldKey(i));
+  }
+
+  private static void assertResponseHeaderAtIndex(HttpURLConnection httpUrlConnection, int headerIndex,
+      String expectedKey, String expectedValue) {
+    assertEquals(expectedKey, httpUrlConnection.getHeaderFieldKey(headerIndex));
+    assertEquals(expectedValue, httpUrlConnection.getHeaderField(headerIndex));
+  }
+
+  private void assertHeadersContainsMapping(Map<String, List<String>> headers, String expectedKey,
+      String... expectedValues) {
+    assertTrue(headers.containsKey(expectedKey));
+    // The RI and OkHttp disagree on ordering here when there is more than one header.
+    assertEquals(newSet(expectedValues), new HashSet<String>(headers.get(expectedKey)));
   }
 
   @Test public void serverSendsInvalidResponseHeaders() throws Exception {
@@ -2793,7 +2838,7 @@ public final class URLConnectionTest {
     }
   }
 
-  private Set<String> newSet(String... elements) {
+  private static Set<String> newSet(String... elements) {
     return new HashSet<String>(Arrays.asList(elements));
   }
 
