@@ -179,10 +179,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           "Cannot access request header fields after connection is set");
     }
 
-    // For the request line property assigned to the null key, just use no proxy and HTTP 1.1.
-    Request request = new Request.Builder().url(getURL()).method(method, null).build();
-    String requestLine = RequestLine.get(request, null, 1);
-    return OkHeaders.toMultimap(requestHeaders.build(), requestLine);
+    return OkHeaders.toMultimap(requestHeaders.build(), null);
   }
 
   @Override public final InputStream getInputStream() throws IOException {

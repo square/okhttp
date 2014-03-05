@@ -495,8 +495,14 @@ public class HttpEngine {
 
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      Map<String, List<String>> cookies = cookieHandler.get(
-          request.uri(), OkHeaders.toMultimap(request.getHeaders(), null));
+      // Capture the request headers added so far so that they can be offered to the CookieHandler.
+      // This is mostly to stay close to the RI; it is unlikely any of the headers above would
+      // affect cookie choice besides "Host".
+      Map<String, List<String>> headers = OkHeaders.toMultimap(result.build().headers(), null);
+
+      Map<String, List<String>> cookies = cookieHandler.get(request.uri(), headers);
+
+      // Add any new cookies to the request.
       OkHeaders.addCookies(result, cookies);
     }
 
