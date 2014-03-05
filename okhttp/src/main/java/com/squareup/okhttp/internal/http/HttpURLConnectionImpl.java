@@ -135,8 +135,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * are fewer than {@code position} headers.
    */
   @Override public final String getHeaderField(int position) {
+    if (position < 0) {
+      throw new IllegalArgumentException("Invalid position: " + position);
+    }
     try {
-      return getResponse().getResponse().headers().value(position);
+      Response response = getResponse().getResponse();
+      return position == 0 ? response.statusLine() : response.headers().value(position - 1);
     } catch (IOException e) {
       return null;
     }
@@ -157,8 +161,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public final String getHeaderFieldKey(int position) {
+    if (position < 0) {
+      throw new IllegalArgumentException("Invalid position: " + position);
+    }
     try {
-      return getResponse().getResponse().headers().name(position);
+      Response response = getResponse().getResponse();
+      return position == 0 ? null : response.headers().name(position - 1);
     } catch (IOException e) {
       return null;
     }
