@@ -1,8 +1,51 @@
 Change Log
 ==========
 
-Version 1.3.0 *(2014-01-11)*
-----------------------------
+## Version 1.5.0
+
+_2014-03-05_
+
+
+##### OkHttp no longer uses the default SSL context.
+
+Applications that want to use the global SSL context with OkHttp should configure their
+OkHttpClient instances with the following:
+
+```
+    okHttpClient.setSslSocketFactory(HttpsURLConnection.getDefaultSSLSocketFactory());
+```
+
+A simpler solution is to avoid the shared default SSL socket factory. Instead, if you
+need to customize SSL, do so for your specific OkHttpClient instance only.
+
+##### Synthetic headers have changed
+
+Previously OkHttp added a synthetic response header, `OkHttp-Selected-Transport`. It
+has been replaced with a new synthetic header, `OkHttp-Selected-Protocol`.
+
+##### Changes
+
+ * New: Support for `HTTP-draft-09/2.0`.
+ * New: Support for `spdy/3.1`. Dropped support for `spdy/3`.
+ * New: Use ALPN on Android platforms that support it (4.4+)
+ * New: CacheControl model and parser.
+ * New: Protocol selection in MockWebServer.
+ * Fix: Route selection shouldn't use TLS modes that we know will fail.
+ * Fix: Cache SPDY responses even if the response body is closed prematurely.
+ * Fix: Use strict timeouts when aborting a download.
+ * Fix: Support Shoutcast HTTP responses like `ICY 200 OK`.
+ * Fix: Don't unzip if there isn't a response body.
+ * Fix: Don't leak gzip streams on redirects.
+ * Fix: Don't do DNS lookups on invalid hosts.
+ * Fix: Exhaust the underlying stream when reading gzip streams.
+ * Fix: Support the `PATCH` method.
+ * Fix: Drop the `okhttp-protocols` module.
+ * Internal: Replaced internal byte array buffers with pooled buffers ("OkBuffer").
+
+
+## Version 1.3.0
+
+_2014-01-11_
 
  * New: Support for "PATCH" HTTP method in client and MockWebServer.
  * Fix: Drop `Content-Length` header when redirected from POST to GET.
@@ -20,15 +63,17 @@ Version 1.3.0 *(2014-01-11)*
  * Fix: Honor read timeout when parsing SPDY headers.
 
 
-Version 1.2.1 *(2013-08-23)*
-----------------------------
+## Version 1.2.1
+
+_2013-08-23_
 
  * Resolve issue with 'jar-with-dependencies' artifact creation.
  * Fix: Support empty SPDY header values.
 
 
-Version 1.2.0 *(2013-08-11)*
-----------------------------
+## Version 1.2.0
+
+_2013-08-11_
 
  *  New APIs on OkHttpClient to set default timeouts for connect and read.
  *  Fix bug when caching SPDY responses.
@@ -53,15 +98,17 @@ Version 1.2.0 *(2013-08-11)*
  *  Bring MockWebServer into OkHttp and teach it SPDY.
 
 
-Version 1.1.1 *(2013-06-23)*
-----------------------------
+## Version 1.1.1
+
+_2013-06-23_
 
  * Fix: ClassCastException when caching responses that were redirected from
    HTTP to HTTPS.
 
 
-Version 1.1.0 *(2013-06-15)*
-----------------------------
+## Version 1.1.0
+
+_2013-06-15_
 
  * Fix: Connection reuse was broken for most HTTPS connections due to a bug in
    the way the hostname verifier was selected.
@@ -73,22 +120,26 @@ Version 1.1.0 *(2013-06-15)*
    Use `X-Android-Transports` to write the preferred transports and
    `X-Android-Selected-Transport` to read the negotiated transport.
 
-Version 1.0.2 *(2013-05-11)*
-----------------------------
+
+## Version 1.0.2
+
+_2013-05-11_
 
  * Fix: Remove use of Java 6-only APIs.
  * Fix: Properly handle exceptions from `NetworkInterface` when querying MTU.
  * Fix: Ensure MTU has a reasonable default and upper-bound.
 
 
-Version 1.0.1 *(2013-05-06)*
-----------------------------
+## Version 1.0.1
+
+_2013-05-06_
 
  * Correct casing of SSL in method names (`getSslSocketFactory`/`setSslSocketFactory`).
 
 
-Version 1.0.0 *(2013-05-06)*
-----------------------------
+## Version 1.0.0
+
+_2013-05-06_
 
 Initial release.
 
