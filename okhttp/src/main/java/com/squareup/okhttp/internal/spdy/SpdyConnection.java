@@ -255,8 +255,9 @@ public final class SpdyConnection implements Closeable {
       if (associatedStreamId == 0) {
         frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
             requestHeaders);
+      } else if (client) {
+        throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
       } else { // HTTP/2 has a PUSH_PROMISE frame.
-        if (client) throw new IOException("Client attempted to push stream: " + associatedStreamId);
         frameWriter.pushPromise(associatedStreamId, streamId, requestHeaders);
       }
     }

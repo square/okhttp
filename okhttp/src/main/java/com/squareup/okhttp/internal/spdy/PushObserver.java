@@ -21,7 +21,7 @@ import okio.BufferedSource;
 
 /**
  * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} only.
- * Processes server-initiated HTTP requestd on the client.
+ * Processes server-initiated HTTP requests on the client.
  *
  * <p>Use the stream ID to correlate response headers and data.
  *
