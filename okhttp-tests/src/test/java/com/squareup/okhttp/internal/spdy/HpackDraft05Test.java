@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.spdy;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import okio.ByteString;
 import okio.OkBuffer;
@@ -37,6 +38,27 @@ public class HpackDraft05Test {
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
     hpackWriter = new HpackDraft05.Writer(bytesOut);
+  }
+
+  /**
+   * Variable-length quantity special cases strings which are longer than 127
+   * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
+   *
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
+   */
+  @Test public void largeHeaderValue() throws IOException {
+    char[] value = new char[4096];
+    Arrays.fill(value, '!');
+    List<Header> headerBlock = headerEntries("cookie", new String(value));
+
+    hpackWriter.writeHeaders(headerBlock);
+    bytesIn.write(bytesOut, bytesOut.size());
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+
+    assertEquals(0, hpackReader.headerCount);
+
+    assertEquals(headerBlock, hpackReader.getAndReset());
   }
 
   /**
