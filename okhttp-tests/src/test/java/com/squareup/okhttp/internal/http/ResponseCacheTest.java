@@ -22,11 +22,6 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,7 +47,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -63,18 +57,21 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.GZIPOutputStream;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -96,6 +93,7 @@ public final class ResponseCacheTest {
   private OkHttpClient client;
   private MockWebServer server;
   private MockWebServer server2;
+  private ResponseCache cache;
 
   @Before public void setUp() throws Exception {
     server =  new MockWebServer();
@@ -103,8 +101,8 @@ public final class ResponseCacheTest {
     server2 =  new MockWebServer();
 
     client = new OkHttpClient();
-    ResponseCache cache = new InMemoryResponseCache();
-    client.setResponseCache(cache);
+    cache = new InMemoryResponseCache();
+    ResponseCache.setDefault(cache);
   }
 
   @After public void tearDown() throws Exception {
@@ -115,6 +113,20 @@ public final class ResponseCacheTest {
 
   private HttpURLConnection openConnection(URL url) {
     return client.open(url);
+  }
+
+  @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
+    ResponseCache.setDefault(null);
+    client.setResponseCache(cache);
+    assertSame(cache, client.getResponseCache());
+    assertTrue(client.getOkResponseCache() instanceof ResponseCacheAdapter);
+  }
+
+  @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
+    ResponseCache.setDefault(cache);
+    client.setResponseCache(null);
+    assertNull(client.getOkResponseCache());
+    assertNull(client.getResponseCache());
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
