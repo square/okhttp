@@ -1075,14 +1075,15 @@ public final class SpdyConnectionTest {
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     for (int i = 0; i < 3; i++) {
-      MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
-      assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
-      assertEquals(1, windowUpdate.streamId);
-      assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
-      windowUpdate = peer.takeFrame();
-      assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
-      assertEquals(0, windowUpdate.streamId); // connection window update
-      assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
+      List<Integer> windowUpdateStreamIds = new ArrayList(2);
+      for (int j = 0; j < 2; j++) {
+        MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
+        assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
+        windowUpdateStreamIds.add(windowUpdate.streamId);
+        assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
+      }
+      assertTrue(windowUpdateStreamIds.contains(0)); // connection
+      assertTrue(windowUpdateStreamIds.contains(1)); // stream
     }
   }
 
