@@ -409,7 +409,7 @@ public final class SpdyStream {
             SpdyStream.this.wait(remaining);
             remaining = start + readTimeoutMillis - (System.nanoTime() / 1000000);
           } else {
-            throw new SocketTimeoutException();
+            throw new SocketTimeoutException("Read timed out");
           }
         }
       } catch (InterruptedException e) {
