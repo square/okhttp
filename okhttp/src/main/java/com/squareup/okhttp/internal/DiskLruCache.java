@@ -790,13 +790,9 @@ public final class DiskLruCache implements Closeable {
 
     /** Sets the value at {@code index} to {@code value}. */
     public void set(int index, String value) throws IOException {
-      BufferedSink writer = null;
-      try {
-        writer = Okio.buffer(Okio.sink(newOutputStream(index)));
-        writer.writeUtf8(value);
-      } finally {
-        Util.closeQuietly(writer);
-      }
+      BufferedSink writer = Okio.buffer(Okio.sink(newOutputStream(index)));
+      writer.writeUtf8(value);
+      writer.close();
     }
 
     /**
