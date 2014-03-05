@@ -363,13 +363,8 @@ final class HpackDraft05 {
      */
     ByteString readByteString(boolean asciiLowercase) throws IOException {
       int firstByte = readByte();
-      int length = readInt(firstByte, PREFIX_8_BITS);
-
-      boolean huffmanDecode = false;
-      if ((length & 0x80) == 0x80) { // 1NNNNNNN
-        length &= ~0x80;
-        huffmanDecode = true;
-      }
+      boolean huffmanDecode = (firstByte & 0x80) == 0x80; // 1NNNNNNN
+      int length = readInt(firstByte, PREFIX_7_BITS);
 
       ByteString byteString = source.readByteString(length);
 
@@ -444,7 +439,7 @@ final class HpackDraft05 {
     }
 
     void writeByteString(ByteString data) throws IOException {
-      writeInt(data.size(), PREFIX_8_BITS, 0);
+      writeInt(data.size(), PREFIX_7_BITS, 0);
       out.write(data);
     }
   }
