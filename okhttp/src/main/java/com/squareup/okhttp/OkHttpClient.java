@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.http.ResponseCacheAdapter;
 import com.squareup.okhttp.internal.okio.ByteString;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
@@ -159,34 +160,18 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   /**
    * Sets the response cache to be used to read and write cached responses.
-   *
-   * <p>If unset, the {@link ResponseCache#getDefault() system-wide default}
-   * response cache will be used.
-   *
-   * @deprecated OkHttp 1.5 dropped support for java.net.ResponseCache. That API
-   *     is broken for many reasons: URI instead of URL, no conditional updates,
-   *     no invalidation, and no mechanism for tracking hit rates. Use
-   *     {@link #setOkResponseCache} instead.
    */
-  @Deprecated
   public OkHttpClient setResponseCache(ResponseCache responseCache) {
     if (responseCache instanceof OkResponseCache) {
       return setOkResponseCache((OkResponseCache) responseCache);
     }
-    throw new UnsupportedOperationException("OkHttp 2 dropped support for java.net.ResponseCache. "
-        + "Use setOkResponseCache() instead.");
+    return setOkResponseCache(new ResponseCacheAdapter(responseCache));
   }
 
-  /**
-   * @deprecated OkHttp 1.5 dropped support for java.net.ResponseCache. That API
-   *     is broken for many reasons: URI instead of URL, no conditional updates,
-   *     no invalidation, and no mechanism for tracking hit rates. Use
-   *     {@link #setOkResponseCache} instead.
-   */
-  @Deprecated
   public ResponseCache getResponseCache() {
-    throw new UnsupportedOperationException("OkHttp 2 dropped support for java.net.ResponseCache. "
-        + "Use setOkResponseCache() instead.");
+    return responseCache instanceof ResponseCacheAdapter
+        ? ((ResponseCacheAdapter) responseCache).getDelegate()
+        : null;
   }
 
   public OkHttpClient setOkResponseCache(OkResponseCache responseCache) {

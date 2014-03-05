@@ -53,11 +53,15 @@ public final class OkHeaders {
   }
 
   public static long contentLength(Request request) {
-    return stringToLong(request.header("Content-Length"));
+    return contentLength(request.headers());
   }
 
   public static long contentLength(Response response) {
-    return stringToLong(response.header("Content-Length"));
+    return contentLength(response.headers());
+  }
+
+  public static long contentLength(Headers headers) {
+    return stringToLong(headers.get("Content-Length"));
   }
 
   private static long stringToLong(String s) {
