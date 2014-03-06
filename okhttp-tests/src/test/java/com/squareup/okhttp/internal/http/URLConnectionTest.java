@@ -951,7 +951,7 @@ public final class URLConnectionTest {
     try {
       in.read();
       fail("Expected a connection closed exception");
-    } catch (IllegalStateException expected) {
+    } catch (IOException expected) {
     }
   }
 
@@ -2169,9 +2169,8 @@ public final class URLConnectionTest {
     out.flush(); // Dubious but permitted.
     try {
       out.write("ghi".getBytes("UTF-8"));
-      out.flush();
       fail();
-    } catch (IllegalStateException expected) {
+    } catch (IOException expected) {
     }
   }
 

@@ -380,6 +380,13 @@ public class HttpEngine {
    * this engine, it is returned.
    */
   public final Connection close() {
+    if (bufferedRequestBody != null) {
+      // This also closes the wrapped requestBodyOut.
+      closeQuietly(bufferedRequestBody);
+    } else if (requestBodyOut != null) {
+      closeQuietly(requestBodyOut);
+    }
+
     // If this engine never achieved a response body, its connection cannot be reused.
     if (responseBody == null) {
       closeQuietly(connection);
@@ -529,7 +536,7 @@ public class HttpEngine {
     if (responseSource == null) throw new IllegalStateException("call sendRequest() first!");
     if (!responseSource.requiresConnection()) return;
 
-    // Flush the response body if there's data outstanding.
+    // Flush the request body if there's data outstanding.
     if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
       bufferedRequestBody.flush();
     }
@@ -546,7 +553,12 @@ public class HttpEngine {
     }
 
     if (requestBodyOut != null) {
-      requestBodyOut.close();
+      if (bufferedRequestBody != null) {
+        // This also closes the wrapped requestBodyOut.
+        bufferedRequestBody.close();
+      } else {
+        requestBodyOut.close();
+      }
       if (requestBodyOut instanceof RetryableSink) {
         transport.writeRequestBody((RetryableSink) requestBodyOut);
       }
