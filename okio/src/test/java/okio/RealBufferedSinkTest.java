@@ -162,6 +162,55 @@ public final class RealBufferedSinkTest {
     mockSink.assertLog("write(OkBuffer[size=1 data=61], 1)", "close()");
   }
 
+  @Test public void operationsAfterClose() throws IOException {
+    MockSink mockSink = new MockSink();
+    BufferedSink bufferedSink = new RealBufferedSink(mockSink);
+    bufferedSink.writeByte('a');
+    bufferedSink.close();
+
+    // Test a sample set of methods.
+    try {
+      bufferedSink.writeByte('a');
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSink.write(new byte[10]);
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSink.emitCompleteSegments();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSink.flush();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    // Test a sample set of methods on the OutputStream.
+    OutputStream os = bufferedSink.outputStream();
+    try {
+      os.write('a');
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      os.write(new byte[10]);
+      fail();
+    } catch (IOException expected) {
+    }
+
+    // Permitted
+    os.flush();
+  }
+
   private String repeat(char c, int count) {
     char[] array = new char[count];
     Arrays.fill(array, c);

@@ -18,6 +18,7 @@ package okio;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import org.junit.Test;
 
@@ -153,6 +154,51 @@ public final class RealBufferedSourceTest {
     bufferedSource.skip(2);
     assertEquals(0, bufferedSource.buffer().size());
     assertEquals(2, source.size());
+  }
+
+  @Test public void operationsAfterClose() throws IOException {
+    OkBuffer source = new OkBuffer();
+    BufferedSource bufferedSource = new RealBufferedSource(source);
+    bufferedSource.close();
+
+    // Test a sample set of methods.
+    try {
+      bufferedSource.seek((byte) 1);
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSource.skip(1);
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSource.readByte();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    try {
+      bufferedSource.readByteString(10);
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+
+    // Test a sample set of methods on the InputStream.
+    InputStream is = bufferedSource.inputStream();
+    try {
+      is.read();
+      fail();
+    } catch (IOException expected) {
+    }
+
+    try {
+      is.read(new byte[10]);
+      fail();
+    } catch (IOException expected) {
+    }
   }
 
   private String repeat(char c, int count) {

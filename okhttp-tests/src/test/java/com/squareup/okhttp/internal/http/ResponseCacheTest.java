@@ -405,8 +405,8 @@ public final class ResponseCacheTest {
     in.close();
     try {
       in.read();
-      fail("Expected an IllegalStateException because the stream is closed.");
-    } catch (IllegalStateException expected) {
+      fail("Expected an IOException because the stream is closed.");
+    } catch (IOException expected) {
     }
 
     connection = openConnection(server.getUrl("/"));
