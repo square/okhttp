@@ -37,14 +37,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CacheRequest;
-import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
-import java.net.SecureCacheResponse;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -58,7 +55,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +75,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -120,6 +117,20 @@ public final class HttpResponseCacheTest {
 
   private HttpURLConnection openConnection(URL url) {
     return client.open(url);
+  }
+
+  @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
+    ResponseCache.setDefault(null);
+    client.setResponseCache(cache);
+    assertSame(cache, client.getOkResponseCache());
+    assertNull(client.getResponseCache());
+  }
+
+  @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
+    ResponseCache.setDefault(cache);
+    client.setResponseCache(null);
+    assertNull(client.getOkResponseCache());
+    assertNull(client.getResponseCache());
   }
 
   /**
@@ -361,26 +372,6 @@ public final class HttpResponseCacheTest {
     assertEquals(serverCerts, toListOrNull(c2.getServerCertificates()));
     assertEquals(peerPrincipal, c2.getPeerPrincipal());
     assertEquals(localPrincipal, c2.getLocalPrincipal());
-  }
-
-  @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
-    server.enqueue(new MockResponse().setBody("ABC"));
-    server.enqueue(new MockResponse().setBody("DEF"));
-    server.play();
-
-    ResponseCache.setDefault(new InsecureResponseCache());
-
-    HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
-    connection1.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    assertEquals("ABC", readAscii(connection1));
-
-    // Not cached!
-    HttpsURLConnection connection2 = (HttpsURLConnection) client.open(server.getUrl("/"));
-    connection2.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    assertEquals("DEF", readAscii(connection2));
   }
 
   @Test public void responseCachingAndRedirects() throws Exception {
@@ -2041,28 +2032,6 @@ public final class HttpResponseCacheTest {
     gzippedOut.write(bytes);
     gzippedOut.close();
     return bytesOut.toByteArray();
-  }
-
-  private class InsecureResponseCache extends ResponseCache {
-    @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-      return cache.put(uri, connection);
-    }
-
-    @Override public CacheResponse get(URI uri, String requestMethod,
-        Map<String, List<String>> requestHeaders) throws IOException {
-      final CacheResponse response = cache.get(uri, requestMethod, requestHeaders);
-      if (response instanceof SecureCacheResponse) {
-        return new CacheResponse() {
-          @Override public InputStream getBody() throws IOException {
-            return response.getBody();
-          }
-          @Override public Map<String, List<String>> getHeaders() throws IOException {
-            return response.getHeaders();
-          }
-        };
-      }
-      return response;
-    }
   }
 
   static abstract class AbstractOkResponseCache implements OkResponseCache {

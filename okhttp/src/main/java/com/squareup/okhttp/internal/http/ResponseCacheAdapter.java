@@ -52,6 +52,10 @@ public class ResponseCacheAdapter implements OkResponseCache {
     this.delegate = delegate;
   }
 
+  public ResponseCache getDelegate() {
+    return delegate;
+  }
+
   @Override
   public Response get(Request request) throws IOException {
     CacheResponse javaResponse = getJavaCachedResponse(request);
