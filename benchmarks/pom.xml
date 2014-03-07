@@ -6,7 +6,7 @@
   <parent>
     <groupId>com.squareup.okhttp</groupId>
     <artifactId>parent</artifactId>
-    <version>1.5.0-SNAPSHOT</version>
+    <version>1.5.0</version>
   </parent>
 
   <artifactId>benchmarks</artifactId>
@@ -88,7 +88,7 @@
           <argument>-Xmx512m</argument>
           <commandlineArgs>-Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</commandlineArgs>
           <argument>-classpath</argument>
-          <classpath/>
+          <classpath />
           <argument>com.squareup.okhttp.benchmarks.Benchmark</argument>
         </arguments>
       </configuration>
