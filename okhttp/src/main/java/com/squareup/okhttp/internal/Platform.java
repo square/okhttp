@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.okio.ByteString;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
@@ -37,7 +38,6 @@ import java.util.logging.Logger;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import javax.net.ssl.SSLSocket;
-import okio.ByteString;
 
 /**
  * Access to Platform-specific features necessary for SPDY and advanced TLS.

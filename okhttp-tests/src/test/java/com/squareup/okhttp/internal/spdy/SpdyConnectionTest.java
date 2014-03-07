@@ -16,6 +16,12 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -23,12 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Okio;
-import okio.Source;
 import org.junit.After;
 import org.junit.Test;
 

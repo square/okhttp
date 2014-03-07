@@ -1,17 +1,17 @@
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Deadline;
+import com.squareup.okhttp.internal.okio.InflaterSource;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
+import com.squareup.okhttp.internal.okio.Source;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Deadline;
-import okio.InflaterSource;
-import okio.OkBuffer;
-import okio.Okio;
-import okio.Source;
 
 /**
  * Reads a SPDY/3 Name/Value header block. This class is made complicated by the

@@ -16,6 +16,10 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -34,10 +38,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.OkBuffer;
-import okio.Okio;
 
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache

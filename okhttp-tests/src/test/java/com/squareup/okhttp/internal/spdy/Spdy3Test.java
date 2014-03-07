@@ -16,9 +16,9 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
 import java.io.IOException;
-import okio.ByteString;
-import okio.OkBuffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

@@ -1,6 +1,5 @@
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Request;
 import java.net.Proxy;
 import java.net.URL;
 

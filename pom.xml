@@ -22,8 +22,6 @@
     <module>okhttp</module>
     <module>okhttp-apache</module>
     <module>okhttp-tests</module>
-    <module>okcurl</module>
-    <module>okio</module>
     <module>mockwebserver</module>
     <module>samples</module>
     <module>benchmarks</module>

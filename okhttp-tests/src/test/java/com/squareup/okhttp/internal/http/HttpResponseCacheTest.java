@@ -19,8 +19,6 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
