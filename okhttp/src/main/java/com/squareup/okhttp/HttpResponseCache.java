@@ -18,7 +18,13 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.Headers;
 import com.squareup.okhttp.internal.http.HttpMethod;
+import com.squareup.okhttp.internal.http.Request;
+import com.squareup.okhttp.internal.http.Response;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.Okio;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -42,9 +48,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.Okio;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 

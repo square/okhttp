@@ -16,10 +16,11 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.Request;
+import com.squareup.okhttp.internal.okio.OkBuffer;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import okio.OkBuffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

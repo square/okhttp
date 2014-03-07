@@ -23,6 +23,12 @@
       <artifactId>okhttp-protocols</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.codehaus.mojo</groupId>
+      <artifactId>animal-sniffer-annotations</artifactId>
+      <version>1.10</version>
+      <optional>true</optional>
+    </dependency>
   </dependencies>
 
   <build>

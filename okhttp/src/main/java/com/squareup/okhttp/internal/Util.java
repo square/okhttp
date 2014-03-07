@@ -16,6 +16,10 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Source;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -37,9 +41,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import okio.ByteString;
-import okio.OkBuffer;
-import okio.Source;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -54,6 +55,12 @@ public final class Util {
 
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
+  public static final List<Protocol> HTTP2_SPDY3_AND_HTTP =
+      immutableList(Arrays.asList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_11));
+  public static final List<Protocol> SPDY3_AND_HTTP11 =
+      immutableList(Arrays.asList(Protocol.SPDY_3, Protocol.HTTP_11));
+  public static final List<Protocol> HTTP2_AND_HTTP_11 =
+      immutableList(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_11));
 
   private Util() {
   }
@@ -285,5 +292,18 @@ public final class Util {
       result.add(new Header(elements[i], elements[i + 1]));
     }
     return result;
+  }
+
+  /**
+   * Returns the protocol matching {@code input} or {@link #HTTP_11} is on
+   * {@code null}. Throws an {@link java.io.IOException} when {@code input} doesn't
+   * match the {@link #name} of a supported protocol.
+   */
+  public static Protocol getProtocol(ByteString input) throws IOException {
+    if (input == null) return Protocol.HTTP_11;
+    for (Protocol protocol : Protocol.values()) {
+      if (protocol.name.equals(input)) return protocol;
+    }
+    throw new IOException("Unexpected protocol: " + input.utf8());
   }
 }

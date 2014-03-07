@@ -17,7 +17,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.Util;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -32,7 +32,7 @@ public final class ExternalSpdyExample {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://www.google.ca/");
     HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient()
-        .setProtocols(Protocol.SPDY3_AND_HTTP11).open(url);
+        .setProtocols(Util.SPDY3_AND_HTTP11).open(url);
 
     connection.setHostnameVerifier(new HostnameVerifier() {
       @Override public boolean verify(String s, SSLSession sslSession) {

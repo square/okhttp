@@ -17,17 +17,17 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.BufferedSource;
+import com.squareup.okhttp.internal.okio.ByteString;
+import com.squareup.okhttp.internal.okio.DeflaterSink;
+import com.squareup.okhttp.internal.okio.OkBuffer;
+import com.squareup.okhttp.internal.okio.Okio;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
 import java.util.zip.Deflater;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.ByteString;
-import okio.DeflaterSink;
-import okio.OkBuffer;
-import okio.Okio;
 
 /**
  * Read and write spdy/3.1 frames.

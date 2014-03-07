@@ -16,11 +16,8 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.OkAuthenticator.Challenge;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.InetAddress;
