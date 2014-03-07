@@ -65,6 +65,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.BufferedSink;
 import okio.ByteString;
+import okio.OkBuffer;
 import okio.Okio;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -695,11 +696,14 @@ public final class MockWebServer {
         }
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
-      byte[] body = response.getBody();
-      boolean closeStreamAfterHeaders = body.length > 0 || !response.getPushPromises().isEmpty();
+      OkBuffer body = new OkBuffer();
+      if (response.getBody() != null) {
+        body.write(response.getBody());
+      }
+      boolean closeStreamAfterHeaders = body.size() > 0 || !response.getPushPromises().isEmpty();
       stream.reply(spdyHeaders, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
-      if (body.length > 0) {
+      if (body.size() > 0) {
         if (response.getBodyDelayTimeMs() != 0) {
           try {
             Thread.sleep(response.getBodyDelayTimeMs());
@@ -708,7 +712,22 @@ public final class MockWebServer {
           }
         }
         BufferedSink sink = Okio.buffer(stream.getSink());
-        sink.write(body);
+        if (response.getThrottleBytesPerPeriod() == Integer.MAX_VALUE) {
+          sink.write(body, body.size());
+          sink.flush();
+        } else {
+          while (body.size() > 0) {
+            long toWrite = Math.min(body.size(), response.getThrottleBytesPerPeriod());
+            sink.write(body, toWrite);
+            sink.flush();
+            try {
+              long delayMs = response.getThrottleUnit().toMillis(response.getThrottlePeriod());
+              if (delayMs != 0) Thread.sleep(delayMs);
+            } catch (InterruptedException e) {
+              throw new AssertionError();
+            }
+          }
+        }
         sink.close();
       } else if (closeStreamAfterHeaders) {
         stream.close(ErrorCode.NO_ERROR);
