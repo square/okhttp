@@ -3,7 +3,7 @@ Change Log
 
 ## Version 1.5.0
 
-_2014-03-05_
+_2014-03-07_
 
 
 ##### OkHttp no longer uses the default SSL context.
@@ -11,8 +11,8 @@ _2014-03-05_
 Applications that want to use the global SSL context with OkHttp should configure their
 OkHttpClient instances with the following:
 
-```
-    okHttpClient.setSslSocketFactory(HttpsURLConnection.getDefaultSSLSocketFactory());
+```java
+okHttpClient.setSslSocketFactory(HttpsURLConnection.getDefaultSSLSocketFactory());
 ```
 
 A simpler solution is to avoid the shared default SSL socket factory. Instead, if you
@@ -39,6 +39,7 @@ has been replaced with a new synthetic header, `OkHttp-Selected-Protocol`.
  * Fix: Don't do DNS lookups on invalid hosts.
  * Fix: Exhaust the underlying stream when reading gzip streams.
  * Fix: Support the `PATCH` method.
+ * Fix: Support request bodies on `DELETE` method.
  * Fix: Drop the `okhttp-protocols` module.
  * Internal: Replaced internal byte array buffers with pooled buffers ("OkBuffer").
 
