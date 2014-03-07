@@ -494,7 +494,6 @@ public final class MockWebServer {
     if (request.startsWith("OPTIONS ")
         || request.startsWith("GET ")
         || request.startsWith("HEAD ")
-        || request.startsWith("DELETE ")
         || request.startsWith("TRACE ")
         || request.startsWith("CONNECT ")) {
       if (hasBody) {
@@ -502,7 +501,8 @@ public final class MockWebServer {
       }
     } else if (!request.startsWith("POST ")
         && !request.startsWith("PUT ")
-        && !request.startsWith("PATCH ")) {
+        && !request.startsWith("PATCH ")
+        && !request.startsWith("DELETE ")) { // Permitted as spec is ambiguous.
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 

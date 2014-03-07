@@ -33,7 +33,8 @@ public final class HttpMethod {
   public static boolean hasRequestBody(String method) {
     return method.equals("POST")
         || method.equals("PUT")
-        || method.equals("PATCH");
+        || method.equals("PATCH")
+        || method.equals("DELETE"); // Permitted as spec is ambiguous.
   }
 
   private HttpMethod() {

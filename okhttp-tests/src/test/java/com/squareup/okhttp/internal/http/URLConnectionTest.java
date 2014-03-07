@@ -2121,7 +2121,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void singleByteReadIsSigned() throws IOException {
-    server.enqueue(new MockResponse().setBody(new byte[] { -2, -1 }));
+    server.enqueue(new MockResponse().setBody(new byte[] {-2, -1}));
     server.play();
 
     connection = client.open(server.getUrl("/"));
@@ -2304,7 +2304,7 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    assertNull(connection.getContent(new Class[] { getClass() }));
+    assertNull(connection.getContent(new Class[] {getClass()}));
   }
 
   @Test public void getOutputStreamOnGetFails() throws Exception {
@@ -2769,6 +2769,25 @@ public final class URLConnectionTest {
 
     RecordedRequest requestB = server.takeRequest();
     assertEquals(1, requestB.getSequenceNumber());
+  }
+
+  /**
+   * The RFC is unclear in this regard as it only specifies that this should
+   * invalidate the cache entry (if any).
+   */
+  @Test public void bodyPermittedOnDelete() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    connection.setRequestMethod("DELETE");
+    connection.setDoOutput(true);
+    connection.getOutputStream().write("BODY".getBytes(UTF_8));
+    assertEquals(200, connection.getResponseCode());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("DELETE", request.getMethod());
+    assertEquals("BODY", new String(request.getBody(), UTF_8));
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
