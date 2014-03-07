@@ -1,6 +1,6 @@
 package com.squareup.okhttp.internal.spdy;
 
-import okio.ByteString;
+import com.squareup.okhttp.internal.okio.ByteString;
 
 /** HTTP header: the name is an ASCII string, but the value can be UTF-8. */
 public final class Header {

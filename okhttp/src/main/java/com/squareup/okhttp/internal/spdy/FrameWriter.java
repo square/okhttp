@@ -16,10 +16,10 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.okio.OkBuffer;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
-import okio.OkBuffer;
 
 /** Writes transport frames for SPDY/3 or HTTP/2. */
 public interface FrameWriter extends Closeable {

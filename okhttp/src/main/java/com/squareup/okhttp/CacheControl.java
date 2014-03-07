@@ -1,6 +1,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HeaderParser;
+import com.squareup.okhttp.internal.http.Headers;
 
 /**
  * A Cache-Control header with cache directives from a server or client. These

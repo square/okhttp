@@ -15,6 +15,8 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.Failure;
+import com.squareup.okhttp.internal.http.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;

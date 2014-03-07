@@ -19,6 +19,8 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.okio.BufferedSink;
+import com.squareup.okhttp.internal.okio.Okio;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -29,8 +31,6 @@ import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import okio.BufferedSink;
-import okio.Okio;
 import org.eclipse.jetty.npn.NextProtoNego;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
