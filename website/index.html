@@ -210,8 +210,7 @@ limitations under the License.</pre>
         // Look up the latest version of the library.
         $.fn.artifactVersion({
           'groupId': 'com.squareup.okhttp',
-          'artifactId': 'okhttp',
-          'classifier': 'jar-with-dependencies'
+          'artifactId': 'okhttp'
         }, function(version, url) {
           $('.version').text(version);
           $('.version-tag').text('v' + version);
