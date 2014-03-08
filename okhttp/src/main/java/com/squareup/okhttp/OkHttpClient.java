@@ -279,8 +279,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * @deprecated OkHttp 2 enforces an enumeration of {@link Protocol protocols}
-   * that can be selected. Please switch to {@link #setProtocols(java.util.List)}.
+   * @deprecated OkHttp 1.5 enforces an enumeration of {@link Protocol
+   *     protocols} that can be selected. Please switch to {@link
+   *     #setProtocols(java.util.List)}.
    */
   @Deprecated
   public OkHttpClient setTransports(List<String> transports) {
@@ -337,8 +338,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * @deprecated OkHttp 2 enforces an enumeration of {@link Protocol protocols}
-   * that can be selected. Please switch to {@link #getProtocols()}.
+   * @deprecated OkHttp 1.5 enforces an enumeration of {@link Protocol
+   *     protocols} that can be selected. Please switch to {@link
+   *     #getProtocols()}.
    */
   @Deprecated
   public List<String> getTransports() {
