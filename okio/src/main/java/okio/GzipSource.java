@@ -15,6 +15,7 @@
  */
 package okio;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.zip.CRC32;
 import java.util.zip.Inflater;
@@ -121,7 +122,7 @@ public final class GzipSource implements Source {
     if (((flags >> FEXTRA) & 1) == 1) {
       source.require(2);
       if (fhcrc) updateCrc(source.buffer(), 0, 2);
-      int xlen = source.buffer().readShortLe() & 0xffff;
+      int xlen = source.buffer().readShortLe();
       source.require(xlen);
       if (fhcrc) updateCrc(source.buffer(), 0, xlen);
       source.skip(xlen);
@@ -132,7 +133,8 @@ public final class GzipSource implements Source {
     // |...original file name, zero-terminated...| (more-->)
     // +=========================================+
     if (((flags >> FNAME) & 1) == 1) {
-      long index = source.seek((byte) 0);
+      long index = source.indexOf((byte) 0);
+      if (index == -1) throw new EOFException();
       if (fhcrc) updateCrc(source.buffer(), 0, index + 1);
       source.skip(index + 1);
     }
@@ -142,7 +144,8 @@ public final class GzipSource implements Source {
     // |...file comment, zero-terminated...| (more-->)
     // +===================================+
     if (((flags >> FCOMMENT) & 1) == 1) {
-      long index = source.seek((byte) 0);
+      long index = source.indexOf((byte) 0);
+      if (index == -1) throw new EOFException();
       if (fhcrc) updateCrc(source.buffer(), 0, index + 1);
       source.skip(index + 1);
     }

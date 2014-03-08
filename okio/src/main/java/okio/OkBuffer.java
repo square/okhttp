@@ -16,6 +16,7 @@
 package okio;
 
 import java.io.EOFException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.MessageDigest;
@@ -26,13 +27,14 @@ import java.util.List;
 
 import static okio.Util.UTF_8;
 import static okio.Util.checkOffsetAndCount;
+import static okio.Util.reverseBytesLong;
 
 /**
  * A collection of bytes in memory.
  *
  * <p><strong>Moving data from one OkBuffer to another is fast.</strong> Instead
  * of copying bytes from one place in memory to another, this class just changes
- * ownership of the underlying bytes.
+ * ownership of the underlying byte arrays.
  *
  * <p><strong>This buffer grows with your data.</strong> Just like ArrayList,
  * each OkBuffer starts small. It consumes only the memory it needs to.
@@ -90,12 +92,6 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
   @Override public void require(long byteCount) throws EOFException {
     if (this.size < byteCount) throw new EOFException();
-  }
-
-  @Override public long seek(byte b) throws EOFException {
-    long index = indexOf(b);
-    if (index == -1) throw new EOFException();
-    return index;
   }
 
   @Override public InputStream inputStream() {
@@ -160,18 +156,18 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return b;
   }
 
-  /** Returns the byte at {@code i}. */
-  public byte getByte(long i) {
-    checkOffsetAndCount(size, i, 1);
+  /** Returns the byte at {@code pos}. */
+  public byte getByte(long pos) {
+    checkOffsetAndCount(size, pos, 1);
     for (Segment s = head; true; s = s.next) {
       int segmentByteCount = s.limit - s.pos;
-      if (i < segmentByteCount) return s.data[s.pos + (int) i];
-      i -= segmentByteCount;
+      if (pos < segmentByteCount) return s.data[s.pos + (int) pos];
+      pos -= segmentByteCount;
     }
   }
 
   @Override public short readShort() {
-    if (size < 2) throw new IllegalArgumentException("size < 2: " + size);
+    if (size < 2) throw new IllegalStateException("size < 2: " + size);
 
     Segment segment = head;
     int pos = segment.pos;
@@ -200,7 +196,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   @Override public int readInt() {
-    if (size < 4) throw new IllegalArgumentException("size < 4: " + size);
+    if (size < 4) throw new IllegalStateException("size < 4: " + size);
 
     Segment segment = head;
     int pos = segment.pos;
@@ -210,14 +206,14 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     if (limit - pos < 4) {
       return (readByte() & 0xff) << 24
           |  (readByte() & 0xff) << 16
-          |  (readByte() & 0xff) << 8
+          |  (readByte() & 0xff) <<  8
           |  (readByte() & 0xff);
     }
 
     byte[] data = segment.data;
     int i = (data[pos++] & 0xff) << 24
         |   (data[pos++] & 0xff) << 16
-        |   (data[pos++] & 0xff) << 8
+        |   (data[pos++] & 0xff) <<  8
         |   (data[pos++] & 0xff);
     size -= 4;
 
@@ -231,19 +227,57 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return i;
   }
 
-  public int readShortLe() {
+  @Override public long readLong() {
+    if (size < 8) throw new IllegalStateException("size < 8: " + size);
+
+    Segment segment = head;
+    int pos = segment.pos;
+    int limit = segment.limit;
+
+    // If the long is split across multiple segments, delegate to readInt().
+    if (limit - pos < 8) {
+      return (readInt() & 0xffffffffL) << 32
+          |  (readInt() & 0xffffffffL);
+    }
+
+    byte[] data = segment.data;
+    long v = (data[pos++] & 0xffL) << 56
+        |    (data[pos++] & 0xffL) << 48
+        |    (data[pos++] & 0xffL) << 40
+        |    (data[pos++] & 0xffL) << 32
+        |    (data[pos++] & 0xffL) << 24
+        |    (data[pos++] & 0xffL) << 16
+        |    (data[pos++] & 0xffL) <<  8
+        |    (data[pos++] & 0xffL);
+    size -= 8;
+
+    if (pos == limit) {
+      head = segment.pop();
+      SegmentPool.INSTANCE.recycle(segment);
+    } else {
+      segment.pos = pos;
+    }
+
+    return v;
+  }
+
+  @Override public short readShortLe() {
     return Util.reverseBytesShort(readShort());
   }
 
-  public int readIntLe() {
+  @Override public int readIntLe() {
     return Util.reverseBytesInt(readInt());
   }
 
-  public ByteString readByteString(long byteCount) {
+  @Override public long readLongLe() {
+    return Util.reverseBytesLong(readLong());
+  }
+
+  @Override public ByteString readByteString(long byteCount) {
     return new ByteString(readBytes(byteCount));
   }
 
-  public String readUtf8(long byteCount) {
+  @Override public String readUtf8(long byteCount) {
     checkOffsetAndCount(this.size, 0, byteCount);
     if (byteCount > Integer.MAX_VALUE) {
       throw new IllegalArgumentException("byteCount > Integer.MAX_VALUE: " + byteCount);
@@ -268,14 +302,23 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return result;
   }
 
-  @Override public String readUtf8Line(boolean throwOnEof) throws EOFException {
+  @Override public String readUtf8Line() throws IOException {
     long newline = indexOf((byte) '\n');
 
     if (newline == -1) {
-      if (throwOnEof) throw new EOFException();
       return size != 0 ? readUtf8(size) : null;
     }
 
+    return readUtf8Line(newline);
+  }
+
+  @Override public String readUtf8LineStrict() throws IOException {
+    long newline = indexOf((byte) '\n');
+    if (newline == -1) throw new EOFException();
+    return readUtf8Line(newline);
+  }
+
+  String readUtf8Line(long newline) {
     if (newline > 0 && getByte(newline - 1) == '\r') {
       // Read everything until '\r\n', then skip the '\r\n'.
       String result = readUtf8((newline - 1));
@@ -345,7 +388,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
   }
 
   /** Discards {@code byteCount} bytes from the head of this buffer. */
-  public void skip(long byteCount) {
+  @Override public void skip(long byteCount) {
     checkOffsetAndCount(this.size, 0, byteCount);
 
     this.size -= byteCount;
@@ -362,13 +405,12 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     }
   }
 
-  /** Appends {@code byteString} to this. */
   @Override public OkBuffer write(ByteString byteString) {
     return write(byteString.data, 0, byteString.data.length);
   }
 
-  /** Encodes {@code string} as UTF-8 and appends the bytes to this. */
   @Override public OkBuffer writeUtf8(String string) {
+    // TODO: inline UTF-8 encoding to save allocating a byte[]?
     byte[] data = string.getBytes(Util.UTF_8);
     return write(data, 0, data.length);
   }
@@ -393,7 +435,6 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return this;
   }
 
-  /** Appends a Big-Endian byte to the end of this buffer. */
   @Override public OkBuffer writeByte(int b) {
     Segment tail = writableSegment(1);
     tail.data[tail.limit++] = (byte) b;
@@ -401,30 +442,57 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return this;
   }
 
-  /** Appends a Big-Endian short to the end of this buffer. */
   @Override public OkBuffer writeShort(int s) {
     Segment tail = writableSegment(2);
     byte[] data = tail.data;
     int limit = tail.limit;
-    data[limit++] = (byte) ((s >> 8) & 0xff);
-    data[limit++] = (byte)  (s       & 0xff);
+    data[limit++] = (byte) ((s >>> 8) & 0xff);
+    data[limit++] = (byte)  (s        & 0xff);
     tail.limit = limit;
     size += 2;
     return this;
   }
 
-  /** Appends a Big-Endian int to the end of this buffer. */
+  @Override public BufferedSink writeShortLe(int s) {
+    return writeShort(Util.reverseBytesShort((short) s));
+  }
+
   @Override public OkBuffer writeInt(int i) {
     Segment tail = writableSegment(4);
     byte[] data = tail.data;
     int limit = tail.limit;
-    data[limit++] = (byte) ((i >> 24) & 0xff);
-    data[limit++] = (byte) ((i >> 16) & 0xff);
-    data[limit++] = (byte) ((i >>  8) & 0xff);
-    data[limit++] = (byte)  (i        & 0xff);
+    data[limit++] = (byte) ((i >>> 24) & 0xff);
+    data[limit++] = (byte) ((i >>> 16) & 0xff);
+    data[limit++] = (byte) ((i >>>  8) & 0xff);
+    data[limit++] = (byte)  (i         & 0xff);
     tail.limit = limit;
     size += 4;
     return this;
+  }
+
+  @Override public BufferedSink writeIntLe(int i) {
+    return writeInt(Util.reverseBytesInt(i));
+  }
+
+  @Override public OkBuffer writeLong(long v) {
+    Segment tail = writableSegment(8);
+    byte[] data = tail.data;
+    int limit = tail.limit;
+    data[limit++] = (byte) ((v >>> 56L) & 0xff);
+    data[limit++] = (byte) ((v >>> 48L) & 0xff);
+    data[limit++] = (byte) ((v >>> 40L) & 0xff);
+    data[limit++] = (byte) ((v >>> 32L) & 0xff);
+    data[limit++] = (byte) ((v >>> 24L) & 0xff);
+    data[limit++] = (byte) ((v >>> 16L) & 0xff);
+    data[limit++] = (byte) ((v >>>  8L) & 0xff);
+    data[limit++] = (byte)  (v          & 0xff);
+    tail.limit = limit;
+    size += 8;
+    return this;
+  }
+
+  @Override public BufferedSink writeLongLe(long v) {
+    return writeLong(reverseBytesLong(v));
   }
 
   /**
@@ -549,11 +617,7 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     return this;
   }
 
-  /**
-   * Returns the index of {@code b} in this, or -1 if this buffer does not
-   * contain {@code b}.
-   */
-  public long indexOf(byte b) {
+  @Override public long indexOf(byte b) {
     return indexOf(b, 0);
   }
 

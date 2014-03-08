@@ -18,7 +18,6 @@ package okio;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Arrays;
 import org.junit.Test;
 
@@ -163,7 +162,7 @@ public final class RealBufferedSourceTest {
 
     // Test a sample set of methods.
     try {
-      bufferedSource.seek((byte) 1);
+      bufferedSource.indexOf((byte) 1);
       fail();
     } catch (IllegalStateException expected) {
     }

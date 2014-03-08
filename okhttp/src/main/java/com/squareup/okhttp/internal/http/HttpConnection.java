@@ -144,7 +144,7 @@ public final class HttpConnection {
     }
 
     while (true) {
-      String statusLineString = source.readUtf8Line(true);
+      String statusLineString = source.readUtf8LineStrict();
       StatusLine statusLine = new StatusLine(statusLineString);
 
       Response.Builder responseBuilder = new Response.Builder()
@@ -165,7 +165,7 @@ public final class HttpConnection {
   /** Reads headers or trailers into {@code builder}. */
   public void readHeaders(Headers.Builder builder) throws IOException {
     // parse the result headers until the first blank line
-    for (String line; (line = source.readUtf8Line(true)).length() != 0; ) {
+    for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
       builder.addLine(line);
     }
   }
@@ -478,9 +478,9 @@ public final class HttpConnection {
     private void readChunkSize() throws IOException {
       // read the suffix of the previous chunk
       if (bytesRemainingInChunk != NO_CHUNK_YET) {
-        source.readUtf8Line(true);
+        source.readUtf8LineStrict();
       }
-      String chunkSizeString = source.readUtf8Line(true);
+      String chunkSizeString = source.readUtf8LineStrict();
       int index = chunkSizeString.indexOf(";");
       if (index != -1) {
         chunkSizeString = chunkSizeString.substring(0, index);

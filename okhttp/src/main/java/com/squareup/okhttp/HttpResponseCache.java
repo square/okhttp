@@ -413,29 +413,29 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     public Entry(InputStream in) throws IOException {
       try {
         BufferedSource source = Okio.buffer(Okio.source(in));
-        url = source.readUtf8Line(true);
-        requestMethod = source.readUtf8Line(true);
+        url = source.readUtf8LineStrict();
+        requestMethod = source.readUtf8LineStrict();
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = readInt(source);
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
-          varyHeadersBuilder.addLine(source.readUtf8Line(true));
+          varyHeadersBuilder.addLine(source.readUtf8LineStrict());
         }
         varyHeaders = varyHeadersBuilder.build();
 
-        statusLine = source.readUtf8Line(true);
+        statusLine = source.readUtf8LineStrict();
         Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = readInt(source);
         for (int i = 0; i < responseHeaderLineCount; i++) {
-          responseHeadersBuilder.addLine(source.readUtf8Line(true));
+          responseHeadersBuilder.addLine(source.readUtf8LineStrict());
         }
         responseHeaders = responseHeadersBuilder.build();
 
         if (isHttps()) {
-          String blank = source.readUtf8Line(true);
+          String blank = source.readUtf8LineStrict();
           if (blank.length() > 0) {
             throw new IOException("expected \"\" but was \"" + blank + "\"");
           }
-          String cipherSuite = source.readUtf8Line(true);
+          String cipherSuite = source.readUtf8LineStrict();
           List<Certificate> peerCertificates = readCertificateList(source);
           List<Certificate> localCertificates = readCertificateList(source);
           handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
@@ -494,7 +494,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
         List<Certificate> result = new ArrayList<Certificate>(length);
         for (int i = 0; i < length; i++) {
-          String line = source.readUtf8Line(true);
+          String line = source.readUtf8LineStrict();
           byte[] bytes = ByteString.decodeBase64(line).toByteArray();
           result.add(certificateFactory.generateCertificate(new ByteArrayInputStream(bytes)));
         }
@@ -537,7 +537,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
   }
 
   private static int readInt(BufferedSource source) throws IOException {
-    String line = source.readUtf8Line(true);
+    String line = source.readUtf8LineStrict();
     try {
       return Integer.parseInt(line);
     } catch (NumberFormatException e) {

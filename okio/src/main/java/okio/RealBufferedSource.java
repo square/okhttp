@@ -42,7 +42,7 @@ final class RealBufferedSource implements BufferedSource {
 
   @Override public long read(OkBuffer sink, long byteCount) throws IOException {
     if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
 
     if (buffer.size == 0) {
       long read = source.read(buffer, Segment.SIZE);
@@ -54,12 +54,12 @@ final class RealBufferedSource implements BufferedSource {
   }
 
   @Override public boolean exhausted() throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     return buffer.exhausted() && source.read(buffer, Segment.SIZE) == -1;
   }
 
   @Override public void require(long byteCount) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     while (buffer.size < byteCount) {
       if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
     }
@@ -80,30 +80,20 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readUtf8(byteCount);
   }
 
-  @Override public String readUtf8Line(boolean throwOnEof) throws IOException {
-    checkNotClosed();
-    long start = 0;
-    long newline;
-    while ((newline = buffer.indexOf((byte) '\n', start)) == -1) {
-      start = buffer.size;
-      if (source.read(buffer, Segment.SIZE) == -1) {
-        if (throwOnEof) throw new EOFException();
-        return buffer.size != 0 ? readUtf8(buffer.size) : null;
-      }
+  @Override public String readUtf8Line() throws IOException {
+    long newline = indexOf((byte) '\n');
+
+    if (newline == -1) {
+      return buffer.size != 0 ? readUtf8(buffer.size) : null;
     }
 
-    if (newline > 0 && buffer.getByte(newline - 1) == '\r') {
-      // Read everything until '\r\n', then skip the '\r\n'.
-      String result = readUtf8((newline - 1));
-      skip(2);
-      return result;
+    return buffer.readUtf8Line(newline);
+  }
 
-    } else {
-      // Read everything until '\n', then skip the '\n'.
-      String result = readUtf8((newline));
-      skip(1);
-      return result;
-    }
+  @Override public String readUtf8LineStrict() throws IOException {
+    long newline = indexOf((byte) '\n');
+    if (newline == -1L) throw new EOFException();
+    return buffer.readUtf8Line(newline);
   }
 
   @Override public short readShort() throws IOException {
@@ -111,7 +101,7 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readShort();
   }
 
-  @Override public int readShortLe() throws IOException {
+  @Override public short readShortLe() throws IOException {
     require(2);
     return buffer.readShortLe();
   }
@@ -126,8 +116,18 @@ final class RealBufferedSource implements BufferedSource {
     return buffer.readIntLe();
   }
 
+  @Override public long readLong() throws IOException {
+    require(8);
+    return buffer.readLong();
+  }
+
+  @Override public long readLongLe() throws IOException {
+    require(8);
+    return buffer.readLongLe();
+  }
+
   @Override public void skip(long byteCount) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     while (byteCount > 0) {
       if (buffer.size == 0 && source.read(buffer, Segment.SIZE) == -1) {
         throw new EOFException();
@@ -138,13 +138,13 @@ final class RealBufferedSource implements BufferedSource {
     }
   }
 
-  @Override public long seek(byte b) throws IOException {
-    checkNotClosed();
+  @Override public long indexOf(byte b) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
     long start = 0;
     long index;
     while ((index = buffer.indexOf(b, start)) == -1) {
       start = buffer.size;
-      if (source.read(buffer, Segment.SIZE) == -1) throw new EOFException();
+      if (source.read(buffer, Segment.SIZE) == -1) return -1L;
     }
     return index;
   }
@@ -152,7 +152,7 @@ final class RealBufferedSource implements BufferedSource {
   @Override public InputStream inputStream() {
     return new InputStream() {
       @Override public int read() throws IOException {
-        checkNotClosed();
+        if (closed) throw new IOException("closed");
         if (buffer.size == 0) {
           long count = source.read(buffer, Segment.SIZE);
           if (count == -1) return -1;
@@ -161,7 +161,7 @@ final class RealBufferedSource implements BufferedSource {
       }
 
       @Override public int read(byte[] data, int offset, int byteCount) throws IOException {
-        checkNotClosed();
+        if (closed) throw new IOException("closed");
         checkOffsetAndCount(data.length, offset, byteCount);
 
         if (buffer.size == 0) {
@@ -173,7 +173,7 @@ final class RealBufferedSource implements BufferedSource {
       }
 
       @Override public int available() throws IOException {
-        checkNotClosed();
+        if (closed) throw new IOException("closed");
         return (int) Math.min(buffer.size, Integer.MAX_VALUE);
       }
 
@@ -184,14 +184,6 @@ final class RealBufferedSource implements BufferedSource {
       @Override public String toString() {
         return RealBufferedSource.this + ".inputStream()";
       }
-
-      private void checkNotClosed() throws IOException {
-        if (RealBufferedSource.this.closed) {
-          // By convention in java.io, IOException and not IllegalStateException is used.
-          throw new IOException("closed");
-        }
-      }
-
     };
   }
 
@@ -209,11 +201,5 @@ final class RealBufferedSource implements BufferedSource {
 
   @Override public String toString() {
     return "buffer(" + source + ")";
-  }
-
-  private void checkNotClosed() {
-    if (closed) {
-      throw new IllegalStateException("closed");
-    }
   }
 }

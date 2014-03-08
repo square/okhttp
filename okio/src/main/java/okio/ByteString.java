@@ -120,23 +120,6 @@ public final class ByteString {
   }
 
   /**
-   * Returns true when {@code ascii} is not null and equals the bytes wrapped
-   * by this byte string.
-   */
-  public boolean equalsAscii(String ascii) {
-    if (ascii == null || data.length != ascii.length()) {
-      return false;
-    }
-    if (ascii == this.utf8) { // not using String.equals to avoid looping twice.
-      return true;
-    }
-    for (int i = 0; i < data.length; i++) {
-      if (data[i] != ascii.charAt(i)) return false;
-    }
-    return true;
-  }
-
-  /**
    * Reads {@code count} bytes from {@code in} and returns the result.
    *
    * @throws java.io.EOFException if {@code in} has fewer than {@code count}
@@ -176,18 +159,9 @@ public final class ByteString {
     return this;
   }
 
-  public static ByteString concat(ByteString... byteStrings) {
-    int size = 0;
-    for (ByteString byteString : byteStrings) {
-      size += byteString.size();
-    }
-    byte[] result = new byte[size];
-    int pos = 0;
-    for (ByteString byteString : byteStrings) {
-      System.arraycopy(byteString.data, 0, result, pos, byteString.size());
-      pos += byteString.size();
-    }
-    return new ByteString(result);
+  /** Returns the byte at {@code pos}. */
+  public byte getByte(int pos) {
+    return data[pos];
   }
 
   /**

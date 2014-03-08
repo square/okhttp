@@ -29,6 +29,21 @@ import static org.junit.Assert.fail;
 
 public class ByteStringTest {
 
+  @Test public void getByte() throws Exception {
+    ByteString byteString = ByteString.decodeHex("ab12");
+    assertEquals(-85, byteString.getByte(0));
+    assertEquals(18, byteString.getByte(1));
+  }
+
+  @Test public void getByteOutOfBounds() throws Exception {
+    ByteString byteString = ByteString.decodeHex("ab12");
+    try {
+      byteString.getByte(2);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
   @Test public void equals() throws Exception {
     ByteString byteString = ByteString.decodeHex("000102");
     assertTrue(byteString.equals(byteString));
@@ -46,15 +61,6 @@ public class ByteStringTest {
     assertByteArraysEquals(byteString.toByteArray(), bronzeHorseman.getBytes(Util.UTF_8));
     assertTrue(byteString.equals(ByteString.of(bronzeHorseman.getBytes(Util.UTF_8))));
     assertEquals(byteString.utf8(), bronzeHorseman);
-  }
-
-  @Test public void equalsAscii() throws Exception {
-    ByteString byteString = ByteString.encodeUtf8("Content-Length");
-    assertTrue(byteString.equalsAscii("Content-Length"));
-    assertFalse(byteString.equalsAscii("content-length"));
-    assertFalse(ByteString.of((byte) 0x63).equalsAscii(null));
-    assertFalse(byteString.equalsAscii(bronzeHorseman));
-    assertFalse(ByteString.encodeUtf8("Content-Length").equalsAscii("content-length"));
   }
 
   @Test public void testHashCode() throws Exception {
@@ -94,16 +100,6 @@ public class ByteStringTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     ByteString.decodeHex("616263").write(out);
     assertByteArraysEquals(new byte[] { 0x61, 0x62, 0x63 }, out.toByteArray());
-  }
-
-  @Test public void concat() {
-    assertEquals(ByteString.of(), ByteString.concat());
-    assertEquals(ByteString.of(), ByteString.concat(ByteString.EMPTY));
-    assertEquals(ByteString.of(), ByteString.concat(ByteString.EMPTY, ByteString.EMPTY));
-    ByteString foo = ByteString.encodeUtf8("foo");
-    ByteString bar = ByteString.encodeUtf8("bar");
-    assertEquals(foo, ByteString.concat(foo));
-    assertEquals(ByteString.encodeUtf8("foobar"), ByteString.concat(foo, bar));
   }
 
   @Test public void encodeBase64() {

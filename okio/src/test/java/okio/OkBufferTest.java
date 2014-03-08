@@ -365,6 +365,13 @@ public final class OkBufferTest {
     assertEquals("OkBuffer[size=4 data=abcd4321]", data.toString());
   }
 
+  @Test public void writeShortLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeShortLe(0xabcd);
+    data.writeShortLe(0x4321);
+    assertEquals("OkBuffer[size=4 data=cdab2143]", data.toString());
+  }
+
   @Test public void writeInt() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeInt(0xabcdef01);
@@ -392,6 +399,27 @@ public final class OkBufferTest {
     assertEquals("OkBuffer[size=8 data=abcdef0187654321]", data.toString());
   }
 
+  @Test public void writeIntLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeIntLe(0xabcdef01);
+    data.writeIntLe(0x87654321);
+    assertEquals("OkBuffer[size=8 data=01efcdab21436587]", data.toString());
+  }
+
+  @Test public void writeLong() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeLong(0xabcdef0187654321L);
+    data.writeLong(0xcafebabeb0b15c00L);
+    assertEquals("OkBuffer[size=16 data=abcdef0187654321cafebabeb0b15c00]", data.toString());
+  }
+
+  @Test public void writeLongLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeLongLe(0xabcdef0187654321L);
+    data.writeLongLe(0xcafebabeb0b15c00L);
+    assertEquals("OkBuffer[size=16 data=2143658701efcdab005cb1b0bebafeca]", data.toString());
+  }
+
   @Test public void readByte() throws Exception {
     OkBuffer data = new OkBuffer();
     data.write(new byte[] { (byte) 0xab, (byte) 0xcd });
@@ -407,6 +435,16 @@ public final class OkBufferTest {
     });
     assertEquals((short) 0xabcd, data.readShort());
     assertEquals((short) 0xef01, data.readShort());
+    assertEquals(0, data.size());
+  }
+
+  @Test public void readShortLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.write(new byte[] {
+        (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x10
+    });
+    assertEquals((short) 0xcdab, data.readShortLe());
+    assertEquals((short) 0x10ef, data.readShortLe());
     assertEquals(0, data.size());
   }
 
@@ -430,6 +468,17 @@ public final class OkBufferTest {
     assertEquals(0, data.size());
   }
 
+  @Test public void readIntLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.write(new byte[] {
+        (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x10,
+        (byte) 0x87, (byte) 0x65, (byte) 0x43, (byte) 0x21
+    });
+    assertEquals(0x10efcdab, data.readIntLe());
+    assertEquals(0x21436587, data.readIntLe());
+    assertEquals(0, data.size());
+  }
+
   @Test public void readIntSplitAcrossMultipleSegments() throws Exception {
     OkBuffer data = new OkBuffer();
     data.writeUtf8(repeat('a', Segment.SIZE - 3));
@@ -438,6 +487,44 @@ public final class OkBufferTest {
     });
     data.readUtf8(Segment.SIZE - 3);
     assertEquals(0xabcdef01, data.readInt());
+    assertEquals(0, data.size());
+  }
+
+  @Test public void readLong() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.write(new byte[] {
+        (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x10,
+        (byte) 0x87, (byte) 0x65, (byte) 0x43, (byte) 0x21,
+        (byte) 0x36, (byte) 0x47, (byte) 0x58, (byte) 0x69,
+        (byte) 0x12, (byte) 0x23, (byte) 0x34, (byte) 0x45
+    });
+    assertEquals(0xabcdef1087654321L, data.readLong());
+    assertEquals(0x3647586912233445L, data.readLong());
+    assertEquals(0, data.size());
+  }
+
+  @Test public void readLongLe() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.write(new byte[] {
+        (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x10,
+        (byte) 0x87, (byte) 0x65, (byte) 0x43, (byte) 0x21,
+        (byte) 0x36, (byte) 0x47, (byte) 0x58, (byte) 0x69,
+        (byte) 0x12, (byte) 0x23, (byte) 0x34, (byte) 0x45
+    });
+    assertEquals(0x2143658710efcdabL, data.readLongLe());
+    assertEquals(0x4534231269584736L, data.readLongLe());
+    assertEquals(0, data.size());
+  }
+
+  @Test public void readLongSplitAcrossMultipleSegments() throws Exception {
+    OkBuffer data = new OkBuffer();
+    data.writeUtf8(repeat('a', Segment.SIZE - 7));
+    data.write(new byte[] {
+        (byte) 0xab, (byte) 0xcd, (byte) 0xef, (byte) 0x01,
+        (byte) 0x87, (byte) 0x65, (byte) 0x43, (byte) 0x21,
+    });
+    data.readUtf8(Segment.SIZE - 7);
+    assertEquals(0xabcdef0187654321L, data.readLong());
     assertEquals(0, data.size());
   }
 
