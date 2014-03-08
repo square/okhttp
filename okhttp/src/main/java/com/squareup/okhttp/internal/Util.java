@@ -265,7 +265,7 @@ public final class Util {
   }
 
   /** Returns an immutable list containing {@code elements}. */
-  public static <T> List<T> immutableList(T[] elements) {
+  public static <T> List<T> immutableList(T... elements) {
     return Collections.unmodifiableList(Arrays.asList(elements.clone()));
   }
 

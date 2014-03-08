@@ -39,55 +39,79 @@ final class RealBufferedSink implements BufferedSink {
 
   @Override public void write(OkBuffer source, long byteCount)
       throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.write(source, byteCount);
     emitCompleteSegments();
   }
 
   @Override public BufferedSink write(ByteString byteString) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.write(byteString);
     return emitCompleteSegments();
   }
 
   @Override public BufferedSink writeUtf8(String string) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.writeUtf8(string);
     return emitCompleteSegments();
   }
 
   @Override public BufferedSink write(byte[] source) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.write(source);
     return emitCompleteSegments();
   }
 
   @Override public BufferedSink write(byte[] source, int offset, int byteCount) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.write(source, offset, byteCount);
     return emitCompleteSegments();
   }
 
   @Override public BufferedSink writeByte(int b) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.writeByte(b);
     return emitCompleteSegments();
   }
 
   @Override public BufferedSink writeShort(int s) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.writeShort(s);
     return emitCompleteSegments();
   }
 
+  @Override public BufferedSink writeShortLe(int s) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    buffer.writeShortLe(s);
+    return emitCompleteSegments();
+  }
+
   @Override public BufferedSink writeInt(int i) throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     buffer.writeInt(i);
     return emitCompleteSegments();
   }
 
+  @Override public BufferedSink writeIntLe(int i) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    buffer.writeIntLe(i);
+    return emitCompleteSegments();
+  }
+
+  @Override public BufferedSink writeLong(long v) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    buffer.writeLong(v);
+    return emitCompleteSegments();
+  }
+
+  @Override public BufferedSink writeLongLe(long v) throws IOException {
+    if (closed) throw new IllegalStateException("closed");
+    buffer.writeLongLe(v);
+    return emitCompleteSegments();
+  }
+
   @Override public BufferedSink emitCompleteSegments() throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     long byteCount = buffer.completeSegmentByteCount();
     if (byteCount > 0) sink.write(buffer, byteCount);
     return this;
@@ -96,20 +120,20 @@ final class RealBufferedSink implements BufferedSink {
   @Override public OutputStream outputStream() {
     return new OutputStream() {
       @Override public void write(int b) throws IOException {
-        checkNotClosed();
+        if (closed) throw new IOException("closed");
         buffer.writeByte((byte) b);
         emitCompleteSegments();
       }
 
       @Override public void write(byte[] data, int offset, int byteCount) throws IOException {
-        checkNotClosed();
+        if (closed) throw new IOException("closed");
         buffer.write(data, offset, byteCount);
         emitCompleteSegments();
       }
 
       @Override public void flush() throws IOException {
         // For backwards compatibility, a flush() on a closed stream is a no-op.
-        if (!RealBufferedSink.this.closed) {
+        if (!closed) {
           RealBufferedSink.this.flush();
         }
       }
@@ -121,18 +145,11 @@ final class RealBufferedSink implements BufferedSink {
       @Override public String toString() {
         return RealBufferedSink.this + ".outputStream()";
       }
-
-      private void checkNotClosed() throws IOException {
-        // By convention in java.io, IOException and not IllegalStateException is used.
-        if (RealBufferedSink.this.closed) {
-          throw new IOException("closed");
-        }
-      }
     };
   }
 
   @Override public void flush() throws IOException {
-    checkNotClosed();
+    if (closed) throw new IllegalStateException("closed");
     if (buffer.size > 0) {
       sink.write(buffer, buffer.size);
     }
@@ -170,11 +187,5 @@ final class RealBufferedSink implements BufferedSink {
 
   @Override public String toString() {
     return "buffer(" + sink + ")";
-  }
-
-  private void checkNotClosed() {
-    if (closed) {
-      throw new IllegalStateException("closed");
-    }
   }
 }

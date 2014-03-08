@@ -28,10 +28,10 @@ public abstract class ReadUtf8LineTest {
 
   @Test public void readLines() throws IOException {
     BufferedSource source = newSource("abc\ndef\n");
-    assertEquals("abc", source.readUtf8Line(true));
-    assertEquals("def", source.readUtf8Line(true));
+    assertEquals("abc", source.readUtf8LineStrict());
+    assertEquals("def", source.readUtf8LineStrict());
     try {
-      source.readUtf8Line(true);
+      source.readUtf8LineStrict();
       fail();
     } catch (EOFException expected) {
     }
@@ -39,30 +39,30 @@ public abstract class ReadUtf8LineTest {
 
   @Test public void emptyLines() throws IOException {
     BufferedSource source = newSource("\n\n\n");
-    assertEquals("", source.readUtf8Line(true));
-    assertEquals("", source.readUtf8Line(true));
-    assertEquals("", source.readUtf8Line(true));
+    assertEquals("", source.readUtf8LineStrict());
+    assertEquals("", source.readUtf8LineStrict());
+    assertEquals("", source.readUtf8LineStrict());
     assertTrue(source.exhausted());
   }
 
   @Test public void crDroppedPrecedingLf() throws IOException {
     BufferedSource source = newSource("abc\r\ndef\r\nghi\rjkl\r\n");
-    assertEquals("abc", source.readUtf8Line(true));
-    assertEquals("def", source.readUtf8Line(true));
-    assertEquals("ghi\rjkl", source.readUtf8Line(true));
+    assertEquals("abc", source.readUtf8LineStrict());
+    assertEquals("def", source.readUtf8LineStrict());
+    assertEquals("ghi\rjkl", source.readUtf8LineStrict());
   }
 
   @Test public void bufferedReaderCompatible() throws IOException {
     BufferedSource source = newSource("abc\ndef");
-    assertEquals("abc", source.readUtf8Line(false));
-    assertEquals("def", source.readUtf8Line(false));
-    assertEquals(null, source.readUtf8Line(false));
+    assertEquals("abc", source.readUtf8Line());
+    assertEquals("def", source.readUtf8Line());
+    assertEquals(null, source.readUtf8Line());
   }
 
   @Test public void bufferedReaderCompatibleWithTrailingNewline() throws IOException {
     BufferedSource source = newSource("abc\ndef\n");
-    assertEquals("abc", source.readUtf8Line(false));
-    assertEquals("def", source.readUtf8Line(false));
-    assertEquals(null, source.readUtf8Line(false));
+    assertEquals("abc", source.readUtf8Line());
+    assertEquals("def", source.readUtf8Line());
+    assertEquals(null, source.readUtf8Line());
   }
 }

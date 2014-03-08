@@ -28,9 +28,8 @@ public interface BufferedSource extends Source {
   OkBuffer buffer();
 
   /**
-   * Returns true if there are no more bytes in the buffer or the source. This
-   * will block until there are bytes to read or the source is definitely
-   * exhausted.
+   * Returns true if there are no more bytes in this source. This will block
+   * until there are bytes to read or the source is definitely exhausted.
    */
   boolean exhausted() throws IOException;
 
@@ -41,25 +40,31 @@ public interface BufferedSource extends Source {
    */
   void require(long byteCount) throws IOException;
 
-  /** Removes a byte from the front of this buffer and returns it. */
+  /** Removes a byte from this source and returns it. */
   byte readByte() throws IOException;
 
-  /** Removes a Big-Endian short from the front of this buffer and returns it. */
+  /** Removes two bytes from this source and returns a big-endian short. */
   short readShort() throws IOException;
 
-  /** Removes a Little-Endian short from the front of this buffer and returns it. */
-  int readShortLe() throws IOException;
+  /** Removes two bytes from this source and returns a little-endian short. */
+  short readShortLe() throws IOException;
 
-  /** Removes a Big-Endian int from the front of this buffer and returns it. */
+  /** Removes four bytes from this source and returns a big-endian int. */
   int readInt() throws IOException;
 
-  /** Removes a Little-Endian int from the front of this buffer and returns it. */
+  /** Removes four bytes from this source and returns a little-endian int. */
   int readIntLe() throws IOException;
 
+  /** Removes eight bytes from this source and returns a big-endian long. */
+  long readLong() throws IOException;
+
+  /** Removes eight bytes from this source and returns a little-endian long. */
+  long readLongLe() throws IOException;
+
   /**
-   * Reads and discards {@code byteCount} bytes from {@code source} using {@code
-   * buffer} as a buffer. Throws an {@link java.io.EOFException} if the source
-   * is exhausted before the requested bytes can be skipped.
+   * Reads and discards {@code byteCount} bytes from this source. Throws an
+   * {@link java.io.EOFException} if the source is exhausted before the
+   * requested bytes can be skipped.
    */
   void skip(long byteCount) throws IOException;
 
@@ -77,28 +82,32 @@ public interface BufferedSource extends Source {
    * A line break is either {@code "\n"} or {@code "\r\n"}; these characters are
    * not included in the result.
    *
-   * <p>This method supports two ways to handle the end of the stream:
-   * <ul>
-   *   <li><strong>Throw on EOF.</strong> Every call must consume either '\r\n'
-   *       or '\n'. If these characters are absent in the stream, an {@link
-   *       java.io.EOFException} is thrown. Use this for machine-generated data
-   *       where a missing line break implies truncated input.
-   *   <li><strong>Don't throw, just like BufferedReader.</strong> If the source
-   *       doesn't end with a line break then an implicit line break is assumed.
-   *       Null is returned once the source is exhausted. Use this for
-   *       human-generated data, where a trailing line breaks are optional.
-   * </ul>
+   * <p><strong>On the end of the stream this method returns null,</strong> just
+   * like {@link java.io.BufferedReader}. If the source doesn't end with a line
+   * break then an implicit line break is assumed. Null is returned once the
+   * source is exhausted. Use this for human-generated data, where a trailing
+   * line break is optional.
    */
-  String readUtf8Line(boolean throwOnEof) throws IOException;
+  String readUtf8Line() throws IOException;
+
+  /**
+   * Removes and returns characters up to but not including the next line break.
+   * A line break is either {@code "\n"} or {@code "\r\n"}; these characters are
+   * not included in the result.
+   *
+   * <p><strong>On the end of the stream this method throws.</strong> Every call
+   * must consume either '\r\n' or '\n'. If these characters are absent in the
+   * stream, an {@link java.io.EOFException} is thrown. Use this for
+   * machine-generated data where a missing line break implies truncated input.
+   */
+  String readUtf8LineStrict() throws IOException;
 
   /**
    * Returns the index of {@code b} in the buffer, refilling it if necessary
    * until it is found. This reads an unbounded number of bytes into the buffer.
-   *
-   * @throws java.io.EOFException if the stream is exhausted before the
-   *     requested byte is found.
+   * Returns -1 if the stream is exhausted before the requested byte is found.
    */
-  long seek(byte b) throws IOException;
+  long indexOf(byte b) throws IOException;
 
   /** Returns an input stream that reads from this source. */
   InputStream inputStream();

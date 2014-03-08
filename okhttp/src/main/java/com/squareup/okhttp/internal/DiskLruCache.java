@@ -243,11 +243,11 @@ public final class DiskLruCache implements Closeable {
   private void readJournal() throws IOException {
     BufferedSource source = Okio.buffer(Okio.source(new FileInputStream(journalFile)));
     try {
-      String magic = source.readUtf8Line(true);
-      String version = source.readUtf8Line(true);
-      String appVersionString = source.readUtf8Line(true);
-      String valueCountString = source.readUtf8Line(true);
-      String blank = source.readUtf8Line(true);
+      String magic = source.readUtf8LineStrict();
+      String version = source.readUtf8LineStrict();
+      String appVersionString = source.readUtf8LineStrict();
+      String valueCountString = source.readUtf8LineStrict();
+      String blank = source.readUtf8LineStrict();
       if (!MAGIC.equals(magic)
           || !VERSION_1.equals(version)
           || !Integer.toString(appVersion).equals(appVersionString)
@@ -260,7 +260,7 @@ public final class DiskLruCache implements Closeable {
       int lineCount = 0;
       while (true) {
         try {
-          readJournalLine(source.readUtf8Line(true));
+          readJournalLine(source.readUtf8LineStrict());
           lineCount++;
         } catch (EOFException endOfJournal) {
           break;

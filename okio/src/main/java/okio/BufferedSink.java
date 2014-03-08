@@ -43,16 +43,28 @@ public interface BufferedSink extends Sink {
   /** Encodes {@code string} in UTF-8 and writes it to this sink. */
   BufferedSink writeUtf8(String string) throws IOException;
 
-  /** Writes byte to the end of this sink. */
+  /** Writes a byte to this sink. */
   BufferedSink writeByte(int b) throws IOException;
 
-  /** Writes a Big-Endian short to the end of this sink. */
+  /** Writes a big-endian short to this sink using two bytes. */
   BufferedSink writeShort(int s) throws IOException;
 
-  /** Writes a Big-Endian int to the end of this sink. */
+  /** Writes a little-endian short to this sink using two bytes. */
+  BufferedSink writeShortLe(int s) throws IOException;
+
+  /** Writes a big-endian int to this sink using four bytes. */
   BufferedSink writeInt(int i) throws IOException;
 
-  /** Writes complete segments to the sink. Like {@link #flush}, but weaker. */
+  /** Writes a little-endian int to this sink using four bytes. */
+  BufferedSink writeIntLe(int i) throws IOException;
+
+  /** Writes a big-endian long to this sink using eight bytes. */
+  BufferedSink writeLong(long v) throws IOException;
+
+  /** Writes a little-endian long to this sink using eight bytes. */
+  BufferedSink writeLongLe(long v) throws IOException;
+
+  /** Writes complete segments to this sink. Like {@link #flush}, but weaker. */
   BufferedSink emitCompleteSegments() throws IOException;
 
   /** Returns an output stream that writes to this sink. */

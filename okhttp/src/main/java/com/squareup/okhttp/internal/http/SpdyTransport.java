@@ -50,6 +50,25 @@ import static com.squareup.okhttp.internal.spdy.Header.TARGET_SCHEME;
 import static com.squareup.okhttp.internal.spdy.Header.VERSION;
 
 public final class SpdyTransport implements Transport {
+  /** See http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-3.2.1-Request. */
+  private static final List<ByteString> SPDY_3_PROHIBITED_HEADERS = Util.immutableList(
+      ByteString.encodeUtf8("connection"),
+      ByteString.encodeUtf8("host"),
+      ByteString.encodeUtf8("keep-alive"),
+      ByteString.encodeUtf8("proxy-connection"),
+      ByteString.encodeUtf8("transfer-encoding"));
+
+  /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
+  private static final List<ByteString> HTTP_2_PROHIBITED_HEADERS = Util.immutableList(
+      ByteString.encodeUtf8("connection"),
+      ByteString.encodeUtf8("host"),
+      ByteString.encodeUtf8("keep-alive"),
+      ByteString.encodeUtf8("proxy-connection"),
+      ByteString.encodeUtf8("te"),
+      ByteString.encodeUtf8("transfer-encoding"),
+      ByteString.encodeUtf8("encoding"),
+      ByteString.encodeUtf8("upgrade"));
+
   private final HttpEngine httpEngine;
   private final SpdyConnection spdyConnection;
   private SpdyStream stream;
@@ -206,32 +225,13 @@ public final class SpdyTransport implements Transport {
 
   /** When true, this header should not be emitted or consumed. */
   private static boolean isProhibitedHeader(Protocol protocol, ByteString name) {
-    boolean prohibited = false;
     if (protocol == Protocol.SPDY_3) {
-      // http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-3.2.1-Request
-      if (name.equalsAscii("connection")
-          || name.equalsAscii("host")
-          || name.equalsAscii("keep-alive")
-          || name.equalsAscii("proxy-connection")
-          || name.equalsAscii("transfer-encoding")) {
-        prohibited = true;
-      }
+      return SPDY_3_PROHIBITED_HEADERS.contains(name);
     } else if (protocol == Protocol.HTTP_2) {
-      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-      if (name.equalsAscii("connection")
-          || name.equalsAscii("host")
-          || name.equalsAscii("keep-alive")
-          || name.equalsAscii("proxy-connection")
-          || name.equalsAscii("te")
-          || name.equalsAscii("transfer-encoding")
-          || name.equalsAscii("encoding")
-          || name.equalsAscii("upgrade")) {
-        prohibited = true;
-      }
+      return HTTP_2_PROHIBITED_HEADERS.contains(name);
     } else {
       throw new AssertionError(protocol);
     }
-    return prohibited;
   }
 
   /** An HTTP message body terminated by the end of the underlying stream. */
