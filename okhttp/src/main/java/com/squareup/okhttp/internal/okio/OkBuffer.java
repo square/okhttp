@@ -265,16 +265,16 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       String result = new String(head.data, head.pos, (int) byteCount, UTF_8);
       head.pos += byteCount;
       this.size -= byteCount;
-  
+
       if (head.pos == head.limit) {
         this.head = head.pop();
         SegmentPool.INSTANCE.recycle(head);
       }
-  
+
       return result;
     } catch (UnsupportedEncodingException e) {
       throw new AssertionError(e);
-    } 
+    }
   }
 
   @Override public String readUtf8Line(boolean throwOnEof) throws EOFException {
