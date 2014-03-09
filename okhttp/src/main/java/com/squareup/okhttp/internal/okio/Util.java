@@ -15,11 +15,10 @@
  */
 package com.squareup.okhttp.internal.okio;
 
-import java.nio.charset.Charset;
 
 final class Util {
   /** A cheap and type-safe constant for the UTF-8 Charset. */
-  public static final Charset UTF_8 = Charset.forName("UTF-8");
+  public static final String UTF_8 = "UTF-8";
 
   private Util() {
   }
