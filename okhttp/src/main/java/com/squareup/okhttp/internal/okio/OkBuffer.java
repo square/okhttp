@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp.internal.okio;
 
-import static com.squareup.okhttp.internal.okio.Util.*;
-
 import java.io.EOFException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -26,6 +24,9 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.squareup.okhttp.internal.okio.Util.UTF_8;
+import static com.squareup.okhttp.internal.okio.Util.checkOffsetAndCount;
 
 /**
  * A collection of bytes in memory.
@@ -255,8 +256,8 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       // If the string spans multiple segments, delegate to readBytes().
       try {
         return new String(readBytes(byteCount), UTF_8);
-      } catch (UnsupportedEncodingException ignore) {
-        return null;
+      } catch (UnsupportedEncodingException e) {
+        throw new AssertionError(e);
       }
     }
 
@@ -271,8 +272,8 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
       }
   
       return result;
-    } catch (UnsupportedEncodingException ignore) {
-      return null;
+    } catch (UnsupportedEncodingException e) {
+      throw new AssertionError(e);
     } 
   }
 
@@ -380,8 +381,8 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     try {
       byte[] data = string.getBytes(UTF_8);
       return write(data, 0, data.length);
-    } catch (UnsupportedEncodingException ignore) {
-      return null;
+    } catch (UnsupportedEncodingException e) {
+      throw new AssertionError(e);
     }
   }
 

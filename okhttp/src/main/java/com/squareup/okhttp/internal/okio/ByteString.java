@@ -63,8 +63,8 @@ public final class ByteString {
       ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
       byteString.utf8 = s;
       return byteString;
-    } catch (UnsupportedEncodingException ignore) {
-      return null;
+    } catch (UnsupportedEncodingException e) {
+      throw new AssertionError(e);
     }
   }
 
@@ -74,8 +74,8 @@ public final class ByteString {
     // We don't care if we double-allocate in racy code.
     try {
       return result != null ? result : (utf8 = new String(data, Util.UTF_8));
-    } catch (UnsupportedEncodingException ignore) {
-      return null;
+    } catch (UnsupportedEncodingException e) {
+      throw new AssertionError(e);
     }
   }
 
