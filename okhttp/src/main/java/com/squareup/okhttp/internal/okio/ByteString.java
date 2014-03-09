@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -58,16 +59,24 @@ public final class ByteString {
 
   /** Returns a new byte string containing the {@code UTF-8} bytes of {@code s}. */
   public static ByteString encodeUtf8(String s) {
-    ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
-    byteString.utf8 = s;
-    return byteString;
+    try {
+      ByteString byteString = new ByteString(s.getBytes(Util.UTF_8));
+      byteString.utf8 = s;
+      return byteString;
+    } catch (UnsupportedEncodingException ignore) {
+      return null;
+    }
   }
 
   /** Constructs a new {@code String} by decoding the bytes as {@code UTF-8}. */
   public String utf8() {
     String result = utf8;
     // We don't care if we double-allocate in racy code.
-    return result != null ? result : (utf8 = new String(data, Util.UTF_8));
+    try {
+      return result != null ? result : (utf8 = new String(data, Util.UTF_8));
+    } catch (UnsupportedEncodingException ignore) {
+      return null;
+    }
   }
 
   /**

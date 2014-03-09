@@ -15,17 +15,17 @@
  */
 package com.squareup.okhttp.internal.okio;
 
+import static com.squareup.okhttp.internal.okio.Util.*;
+
 import java.io.EOFException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.squareup.okhttp.internal.okio.Util.UTF_8;
-import static com.squareup.okhttp.internal.okio.Util.checkOffsetAndCount;
 
 /**
  * A collection of bytes in memory.
@@ -253,19 +253,27 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
     Segment head = this.head;
     if (head.pos + byteCount > head.limit) {
       // If the string spans multiple segments, delegate to readBytes().
-      return new String(readBytes(byteCount), UTF_8);
+      try {
+        return new String(readBytes(byteCount), UTF_8);
+      } catch (UnsupportedEncodingException ignore) {
+        return null;
+      }
     }
 
-    String result = new String(head.data, head.pos, (int) byteCount, UTF_8);
-    head.pos += byteCount;
-    this.size -= byteCount;
-
-    if (head.pos == head.limit) {
-      this.head = head.pop();
-      SegmentPool.INSTANCE.recycle(head);
-    }
-
-    return result;
+    try {
+      String result = new String(head.data, head.pos, (int) byteCount, UTF_8);
+      head.pos += byteCount;
+      this.size -= byteCount;
+  
+      if (head.pos == head.limit) {
+        this.head = head.pop();
+        SegmentPool.INSTANCE.recycle(head);
+      }
+  
+      return result;
+    } catch (UnsupportedEncodingException ignore) {
+      return null;
+    } 
   }
 
   @Override public String readUtf8Line(boolean throwOnEof) throws EOFException {
@@ -369,8 +377,12 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
   /** Encodes {@code string} as UTF-8 and appends the bytes to this. */
   @Override public OkBuffer writeUtf8(String string) {
-    byte[] data = string.getBytes(UTF_8);
-    return write(data, 0, data.length);
+    try {
+      byte[] data = string.getBytes(UTF_8);
+      return write(data, 0, data.length);
+    } catch (UnsupportedEncodingException ignore) {
+      return null;
+    }
   }
 
   @Override public OkBuffer write(byte[] source) {
