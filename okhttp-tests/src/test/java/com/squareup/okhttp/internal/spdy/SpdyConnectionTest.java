@@ -1061,7 +1061,6 @@ public final class SpdyConnectionTest {
 
     // Play it back.
     SpdyConnection connection = connection(peer, variant);
-    connection.okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, INITIAL_WINDOW_SIZE);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), false, true);
     assertEquals(0, stream.unacknowledgedBytesRead);
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
