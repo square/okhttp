@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 1.5.1
+
+_In Development_
+
+ * Fix: Restore compatibility with Android 2.2.
+ * Fix: Correctly use peer settings for window updates in SPDY.
+
+
 ## Version 1.5.0
 
 _2014-03-07_
