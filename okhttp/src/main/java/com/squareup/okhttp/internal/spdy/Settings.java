@@ -22,6 +22,12 @@ import java.util.Arrays;
  * Settings are {@link com.squareup.okhttp.internal.spdy.SpdyConnection connection} scoped.
  */
 final class Settings {
+  /**
+   * From the SPDY/3 and HTTP/2 specs, the default initial window size for all
+   * streams is 64 KiB. (Chrome 25 uses 10 MiB).
+   */
+  static final int DEFAULT_INITIAL_WINDOW_SIZE = 64 * 1024;
+
   /** Peer request to clear durable settings. */
   static final int FLAG_CLEAR_PREVIOUSLY_PERSISTED_SETTINGS = 0x1;
 
@@ -171,11 +177,9 @@ final class Settings {
     return (bit & set) != 0 ? values[DOWNLOAD_RETRANS_RATE] : defaultValue;
   }
 
-  // TODO: honor this setting in http/2.
-  /** Returns -1 if unset. */
-  int getInitialWindowSize() {
+  int getInitialWindowSize(int defaultValue) {
     int bit = 1 << INITIAL_WINDOW_SIZE;
-    return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : -1;
+    return (bit & set) != 0 ? values[INITIAL_WINDOW_SIZE] : defaultValue;
   }
 
   /** spdy/3 only. */

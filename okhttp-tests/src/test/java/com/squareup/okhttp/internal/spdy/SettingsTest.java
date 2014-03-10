@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.spdy;
 
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static com.squareup.okhttp.internal.spdy.Settings.DOWNLOAD_BANDWIDTH;
 import static com.squareup.okhttp.internal.spdy.Settings.DOWNLOAD_RETRANS_RATE;
 import static com.squareup.okhttp.internal.spdy.Settings.MAX_CONCURRENT_STREAMS;
@@ -68,9 +69,10 @@ public final class SettingsTest {
     settings.set(DOWNLOAD_RETRANS_RATE, 0, 97);
     assertEquals(97, settings.getDownloadRetransRate(-3));
 
-    assertEquals(-1, settings.getInitialWindowSize());
+    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE,
+        settings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));
     settings.set(Settings.INITIAL_WINDOW_SIZE, 0, 108);
-    assertEquals(108, settings.getInitialWindowSize());
+    assertEquals(108, settings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));
 
     assertEquals(-3, settings.getClientCertificateVectorSize(-3));
     settings.set(Settings.CLIENT_CERTIFICATE_VECTOR_SIZE, 0, 117);
