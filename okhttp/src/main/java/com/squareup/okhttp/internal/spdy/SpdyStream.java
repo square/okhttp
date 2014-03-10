@@ -28,6 +28,8 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
+
 /** A logical bidirectional stream. */
 public final class SpdyStream {
   // Internal state is guarded by this. No long-running or potentially
@@ -76,8 +78,10 @@ public final class SpdyStream {
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
     this.connection = connection;
-    this.bytesLeftInWriteWindow = connection.peerSettings.getInitialWindowSize();
-    this.source = new SpdyDataSource(connection.okHttpSettings.getInitialWindowSize());
+    this.bytesLeftInWriteWindow =
+        connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
+    this.source = new SpdyDataSource(
+        connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));
     this.sink = new SpdyDataSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
@@ -370,7 +374,8 @@ public final class SpdyStream {
 
         // Flow control: notify the peer that we're ready for more data!
         unacknowledgedBytesRead += read;
-        if (unacknowledgedBytesRead >= connection.peerSettings.getInitialWindowSize() / 2) {
+        if (unacknowledgedBytesRead
+            >= connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
           connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
           unacknowledgedBytesRead = 0;
         }
@@ -380,7 +385,7 @@ public final class SpdyStream {
       synchronized (connection) { // Multiple application threads may hit this section.
         connection.unacknowledgedBytesRead += read;
         if (connection.unacknowledgedBytesRead
-            >= connection.peerSettings.getInitialWindowSize() / 2) {
+            >= connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
           connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
           connection.unacknowledgedBytesRead = 0;
         }

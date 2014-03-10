@@ -39,6 +39,7 @@ import static com.squareup.okhttp.internal.spdy.ErrorCode.INVALID_STREAM;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.REFUSED_STREAM;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.STREAM_IN_USE;
+import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 import static com.squareup.okhttp.internal.spdy.Settings.PERSIST_VALUE;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_DATA;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_GOAWAY;
@@ -47,7 +48,6 @@ import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_PING;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_RST_STREAM;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_SETTINGS;
 import static com.squareup.okhttp.internal.spdy.Spdy3.TYPE_WINDOW_UPDATE;
-import static com.squareup.okhttp.internal.spdy.SpdyConnection.INITIAL_WINDOW_SIZE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -301,7 +301,7 @@ public final class SpdyConnectionTest {
     // This stream was created *after* the connection settings were adjusted.
     SpdyStream stream = connection.newStream(headerEntries("a", "android"), false, true);
 
-    assertEquals(3368, connection.peerSettings.getInitialWindowSize());
+    assertEquals(3368, connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));
     assertEquals(1684, connection.bytesLeftInWriteWindow); // initial wasn't affected.
     // New Stream is has the most recent initial window size.
     assertEquals(3368, stream.bytesLeftInWriteWindow);
@@ -402,6 +402,35 @@ public final class SpdyConnectionTest {
       assertEquals(PERSIST_VALUE, connection.peerSettings.flags(Settings.DOWNLOAD_RETRANS_RATE));
       assertEquals(600, connection.peerSettings.getMaxConcurrentStreams(-1));
       assertEquals(PERSIST_VALUE, connection.peerSettings.flags(Settings.MAX_CONCURRENT_STREAMS));
+    }
+  }
+
+  @Test public void clearSettingsBeforeMerge() throws Exception {
+    // write the mocking script
+    Settings settings1 = new Settings();
+    settings1.set(Settings.UPLOAD_BANDWIDTH, PERSIST_VALUE, 100);
+    settings1.set(Settings.DOWNLOAD_BANDWIDTH, PERSIST_VALUE, 200);
+    settings1.set(Settings.DOWNLOAD_RETRANS_RATE, 0, 300);
+    peer.sendFrame().settings(settings1);
+    peer.sendFrame().ping(false, 2, 0);
+    peer.acceptFrame();
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = connection(peer, SPDY3);
+
+    peer.takeFrame(); // Guarantees that the Settings frame has been processed.
+
+    // fake a settings frame with clear flag set.
+    Settings settings2 = new Settings();
+    settings2.set(Settings.MAX_CONCURRENT_STREAMS, PERSIST_VALUE, 600);
+    connection.readerRunnable.settings(true, settings2);
+
+    synchronized (connection) {
+      assertEquals(-1, connection.peerSettings.getUploadBandwidth(-1));
+      assertEquals(-1, connection.peerSettings.getDownloadBandwidth(-1));
+      assertEquals(-1, connection.peerSettings.getDownloadRetransRate(-1));
+      assertEquals(600, connection.peerSettings.getMaxConcurrentStreams(-1));
     }
   }
 
@@ -1042,7 +1071,7 @@ public final class SpdyConnectionTest {
       throws IOException, InterruptedException {
     peer.setVariantAndClient(variant, false);
 
-    int windowUpdateThreshold = INITIAL_WINDOW_SIZE / 2;
+    int windowUpdateThreshold = DEFAULT_INITIAL_WINDOW_SIZE / 2;
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
@@ -1152,7 +1181,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void writeAwaitsWindowUpdate() throws Exception {
-    int framesThatFillWindow = roundUp(INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
+    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
@@ -1166,7 +1195,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = connection(peer, SPDY3);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     BufferedSink out = Okio.buffer(stream.getSink());
-    out.write(new byte[INITIAL_WINDOW_SIZE]);
+    out.write(new byte[DEFAULT_INITIAL_WINDOW_SIZE]);
     out.flush();
 
     // Check that we've filled the window for both the stream and also the connection.
@@ -1194,7 +1223,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void initialSettingsWithWindowSizeAdjustsConnection() throws Exception {
-    int framesThatFillWindow = roundUp(INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
+    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
@@ -1208,7 +1237,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = connection(peer, SPDY3);
     SpdyStream stream = connection.newStream(headerEntries("a", "apple"), true, true);
     BufferedSink out = Okio.buffer(stream.getSink());
-    out.write(new byte[INITIAL_WINDOW_SIZE]);
+    out.write(new byte[DEFAULT_INITIAL_WINDOW_SIZE]);
     out.flush();
 
     // write 1 more than the window size
@@ -1221,7 +1250,7 @@ public final class SpdyConnectionTest {
 
     // Receiving a Settings with a larger window size will unblock the streams.
     Settings initial = new Settings();
-    initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, INITIAL_WINDOW_SIZE + 1);
+    initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, DEFAULT_INITIAL_WINDOW_SIZE + 1);
     connection.readerRunnable.settings(false, initial);
 
     assertEquals(1, connection.bytesLeftInWriteWindow);
@@ -1235,7 +1264,7 @@ public final class SpdyConnectionTest {
 
     // Settings after the initial do not affect the connection window size.
     Settings next = new Settings();
-    next.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, INITIAL_WINDOW_SIZE + 2);
+    next.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, DEFAULT_INITIAL_WINDOW_SIZE + 2);
     connection.readerRunnable.settings(false, next);
 
     assertEquals(0, connection.bytesLeftInWriteWindow); // connection wasn't affected.
@@ -1263,7 +1292,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void blockedStreamDoesntStarveNewStream() throws Exception {
-    int framesThatFillWindow = roundUp(INITIAL_WINDOW_SIZE, SPDY3.maxFrameSize());
+    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, SPDY3.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM on stream 1
@@ -1278,7 +1307,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = connection(peer, SPDY3);
     SpdyStream stream1 = connection.newStream(headerEntries("a", "apple"), true, true);
     BufferedSink out1 = Okio.buffer(stream1.getSink());
-    out1.write(new byte[INITIAL_WINDOW_SIZE]);
+    out1.write(new byte[DEFAULT_INITIAL_WINDOW_SIZE]);
     out1.flush();
 
     // Check that we've filled the window for both the stream and also the connection.
@@ -1299,7 +1328,7 @@ public final class SpdyConnectionTest {
 
     assertEquals(0, connection.bytesLeftInWriteWindow);
     assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
-    assertEquals(INITIAL_WINDOW_SIZE - 3, connection.getStream(3).bytesLeftInWriteWindow);
+    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE - 3, connection.getStream(3).bytesLeftInWriteWindow);
   }
 
   @Test public void maxFrameSizeHonored() throws Exception {
