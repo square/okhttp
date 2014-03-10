@@ -76,7 +76,9 @@ public final class InflaterSource implements Source {
         }
         if (sourceExhausted) throw new EOFException("source exhausted prematurely");
       } catch (DataFormatException e) {
-        throw new IOException(e);
+        IOException io = new IOException();
+        io.initCause(e);
+        throw io;
       }
     }
   }
