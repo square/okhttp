@@ -12,6 +12,7 @@ _2014-03-11_
  * Fix problems with spdy/3.1 and http/2 where the wrong window size was being
    used.
 
+
 ## Version 1.5.0
 
 _2014-03-07_
