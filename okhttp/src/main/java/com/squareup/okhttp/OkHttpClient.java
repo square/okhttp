@@ -41,9 +41,9 @@ import javax.net.ssl.SSLSocketFactory;
 import okio.ByteString;
 
 /**
- * Configures and creates HTTP connections. Designed to be treated as a singleton - by
- * using a single instance you are afforded a shared response cache, thread pool, connection
- * re-use, etc.
+ * Configures and creates HTTP connections. Most applications can use a single
+ * OkHttpClient for all of their HTTP requests - benefiting from a shared
+ * response cache, thread pool, connection re-use, etc.
  */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
