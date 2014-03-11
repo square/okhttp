@@ -356,7 +356,7 @@ public final class HttpConnection {
      * Closes the cache entry and makes the socket available for reuse. This
      * should be invoked when the end of the body has been reached.
      */
-    protected final void endOfInput() throws IOException {
+    protected final void endOfInput(boolean recyclable) throws IOException {
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
 
       if (cacheRequest != null) {
@@ -364,7 +364,7 @@ public final class HttpConnection {
       }
 
       state = STATE_IDLE;
-      if (onIdle == ON_IDLE_POOL) {
+      if (recyclable && onIdle == ON_IDLE_POOL) {
         onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
         pool.recycle(connection);
       } else if (onIdle == ON_IDLE_CLOSE) {
@@ -402,7 +402,7 @@ public final class HttpConnection {
       super(cacheRequest);
       bytesRemaining = length;
       if (bytesRemaining == 0) {
-        endOfInput();
+        endOfInput(true);
       }
     }
 
@@ -421,7 +421,7 @@ public final class HttpConnection {
       bytesRemaining -= read;
       cacheWrite(sink, read);
       if (bytesRemaining == 0) {
-        endOfInput();
+        endOfInput(true);
       }
       return read;
     }
@@ -495,7 +495,7 @@ public final class HttpConnection {
         Headers.Builder trailersBuilder = new Headers.Builder();
         readHeaders(trailersBuilder);
         httpEngine.receiveHeaders(trailersBuilder.build());
-        endOfInput();
+        endOfInput(true);
       }
     }
 
@@ -530,7 +530,7 @@ public final class HttpConnection {
       long read = source.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
-        endOfInput();
+        endOfInput(false);
         return -1;
       }
       cacheWrite(sink, read);
