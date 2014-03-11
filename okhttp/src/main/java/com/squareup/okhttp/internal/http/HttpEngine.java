@@ -95,6 +95,7 @@ public class HttpEngine {
    */
   public final boolean bufferRequestBody;
 
+  private Request originalRequest;
   private Request request;
   private Sink requestBodyOut;
   private BufferedSink bufferedRequestBody;
@@ -132,6 +133,7 @@ public class HttpEngine {
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut) {
     this.client = client;
+    this.originalRequest = request;
     this.request = request;
     this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
@@ -325,7 +327,7 @@ public class HttpEngine {
     Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, request, bufferRequestBody, connection, routeSelector,
+    return new HttpEngine(client, originalRequest, bufferRequestBody, connection, routeSelector,
         (RetryableSink) requestBodyOut);
   }
 
