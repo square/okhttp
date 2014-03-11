@@ -3,10 +3,14 @@ Change Log
 
 ## Version 1.5.1
 
-_In Development_
+_2014-03-11_
 
- * Fix: Restore compatibility with Android 2.2.
- * Fix: Correctly use peer settings for window updates in SPDY.
+ * Fix 1.5.0 regression where connections should not have been recycled.
+ * Fix 1.5.0 regression where transparent Gzip was broken by attempting to
+   recover from another I/O failure.
+ * Fix problems where spdy/3.1 headers may not have been compressed properly.
+ * Fix problems with spdy/3.1 and http/2 where the wrong window size was being
+   used.
 
 
 ## Version 1.5.0
