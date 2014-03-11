@@ -44,6 +44,12 @@ import okio.ByteString;
  * Configures and creates HTTP connections. Most applications can use a single
  * OkHttpClient for all of their HTTP requests - benefiting from a shared
  * response cache, thread pool, connection re-use, etc.
+ *
+ * Instances of OkHttpClient are intended to be fully configured before they're
+ * shared - once shared they should be treated as immutable and can safely be used
+ * to concurrently open new connections. If required, threads can call
+ * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
+ * safely modified with further configuration changes.
  */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
@@ -421,9 +427,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     dispatcher.cancel(tag);
   }
 
-  /**
-   * This method is thread-safe.
-   */
   public HttpURLConnection open(URL url) {
     return open(url, proxy);
   }
