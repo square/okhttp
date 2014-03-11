@@ -38,6 +38,7 @@ import static okio.Util.checkOffsetAndCount;
 public final class DeflaterSink implements Sink {
   private final BufferedSink sink;
   private final Deflater deflater;
+  private boolean closed;
 
   public DeflaterSink(Sink sink, Deflater deflater) {
     this.sink = Okio.buffer(sink);
@@ -82,10 +83,13 @@ public final class DeflaterSink implements Sink {
           ? deflater.deflate(s.data, s.limit, Segment.SIZE - s.limit, Deflater.SYNC_FLUSH)
           : deflater.deflate(s.data, s.limit, Segment.SIZE - s.limit);
 
-      if (deflated == 0) return;
-      s.limit += deflated;
-      buffer.size += deflated;
-      sink.emitCompleteSegments();
+      if (deflated > 0) {
+        s.limit += deflated;
+        buffer.size += deflated;
+        sink.emitCompleteSegments();
+      } else if (deflater.needsInput()) {
+        return;
+      }
     }
   }
 
@@ -95,9 +99,32 @@ public final class DeflaterSink implements Sink {
   }
 
   @Override public void close() throws IOException {
-    deflater.finish();
-    deflate(false);
-    sink.close();
+    if (closed) return;
+
+    // Emit deflated data to the underlying sink. If this fails, we still need
+    // to close the deflater and the sink; otherwise we risk leaking resources.
+    Throwable thrown = null;
+    try {
+      deflater.finish();
+      deflate(false);
+    } catch (Throwable e) {
+      thrown = e;
+    }
+
+    try {
+      deflater.end();
+    } catch (Throwable e) {
+      if (thrown == null) thrown = e;
+    }
+
+    try {
+      sink.close();
+    } catch (Throwable e) {
+      if (thrown == null) thrown = e;
+    }
+    closed = true;
+
+    if (thrown != null) Util.sneakyRethrow(thrown);
   }
 
   @Override public Sink deadline(Deadline deadline) {

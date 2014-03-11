@@ -362,9 +362,8 @@ public final class OkBuffer implements BufferedSource, BufferedSink, Cloneable {
 
   /** Like {@link InputStream#read}. */
   int read(byte[] sink, int offset, int byteCount) {
-    if (byteCount == 0) return -1;
-
     Segment s = this.head;
+    if (s == null) return -1;
     int toCopy = Math.min(byteCount, s.limit - s.pos);
     System.arraycopy(s.data, s.pos, sink, offset, toCopy);
 
