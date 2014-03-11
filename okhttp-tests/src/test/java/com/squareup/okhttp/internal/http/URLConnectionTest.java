@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkAuthenticator.Credential;
 import com.squareup.okhttp.OkHttpClient;
@@ -1170,6 +1171,41 @@ public final class URLConnectionTest {
     HttpURLConnection connection2 = client.open(server.getUrl("/"));
     assertEquals("two (identity)", readAscii(connection2.getInputStream(), Integer.MAX_VALUE));
     assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void transparentGzipWorksAfterExceptionRecovery() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("a")
+        .setSocketPolicy(SHUTDOWN_INPUT_AT_END));
+    server.enqueue(new MockResponse()
+        .addHeader("Content-Encoding: gzip")
+        .setBody(gzip("b".getBytes(UTF_8))));
+    server.play();
+
+    // Seed the pool with a bad connection.
+    assertContent("a", client.open(server.getUrl("/")));
+
+    // This connection will need to be recovered. When it is, transparent gzip should still work!
+    assertContent("b", client.open(server.getUrl("/")));
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // Connection is not pooled.
+  }
+
+  @Test public void endOfStreamResponseIsNotPooled() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody("{}")
+        .clearHeaders()
+        .setSocketPolicy(DISCONNECT_AT_END));
+    server.play();
+
+    ConnectionPool pool = ConnectionPool.getDefault();
+    pool.evictAll();
+    client.setConnectionPool(pool);
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertContent("{}", connection);
+    assertEquals(0, client.getConnectionPool().getConnectionCount());
   }
 
   @Test public void earlyDisconnectDoesntHarmPoolingWithChunkedEncoding() throws Exception {
