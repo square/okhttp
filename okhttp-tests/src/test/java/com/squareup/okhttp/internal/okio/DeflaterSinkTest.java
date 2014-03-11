@@ -25,6 +25,7 @@ import java.util.zip.InflaterInputStream;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public final class DeflaterSinkTest {
   @Test public void deflateWithClose() throws Exception {
@@ -73,6 +74,39 @@ public final class DeflaterSinkTest {
     deflaterSink.close();
     OkBuffer inflated = inflate(sink);
     assertEquals(original, inflated.readByteString(inflated.size()));
+  }
+
+  @Test public void multipleSegmentsWithoutCompression() throws IOException {
+    OkBuffer buffer = new OkBuffer();
+    Deflater deflater = new Deflater();
+    deflater.setLevel(Deflater.NO_COMPRESSION);
+    DeflaterSink deflaterSink = new DeflaterSink(buffer, deflater);
+    int byteCount = Segment.SIZE * 4;
+    deflaterSink.write(new OkBuffer().writeUtf8(repeat('a', byteCount)), byteCount);
+    deflaterSink.close();
+    assertEquals(repeat('a', byteCount), inflate(buffer).readUtf8(byteCount));
+  }
+
+  /**
+   * This test deflates a single segment of without compression because that's
+   * the easiest way to force close() to emit a large amount of data to the
+   * underlying sink.
+   */
+  @Test public void closeWithExceptionWhenWritingAndClosing() throws IOException {
+    MockSink mockSink = new MockSink();
+    mockSink.scheduleThrow(0, new IOException("first"));
+    mockSink.scheduleThrow(1, new IOException("second"));
+    Deflater deflater = new Deflater();
+    deflater.setLevel(Deflater.NO_COMPRESSION);
+    DeflaterSink deflaterSink = new DeflaterSink(mockSink, deflater);
+    deflaterSink.write(new OkBuffer().writeUtf8(repeat('a', Segment.SIZE)), Segment.SIZE);
+    try {
+      deflaterSink.close();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("first", expected.getMessage());
+    }
+    mockSink.assertLogContains("close()");
   }
 
   /**
