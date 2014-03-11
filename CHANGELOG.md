@@ -1,6 +1,17 @@
 Change Log
 ==========
 
+## Version 1.5.1
+
+_2014-03-11_
+
+ * Fix 1.5.0 regression where connections should not have been recycled.
+ * Fix 1.5.0 regression where transparent Gzip was broken by attempting to
+   recover from another I/O failure.
+ * Fix problems where spdy/3.1 headers may not have been compressed properly.
+ * Fix problems with spdy/3.1 and http/2 where the wrong window size was being
+   used.
+
 ## Version 1.5.0
 
 _2014-03-07_
