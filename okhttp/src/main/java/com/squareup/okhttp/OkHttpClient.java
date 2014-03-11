@@ -40,7 +40,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import okio.ByteString;
 
-/** Configures and creates HTTP connections. */
+/**
+ * Configures and creates HTTP connections. Designed to be treated as a singleton - by
+ * using a single instance you are afforded a shared response cache, thread pool, connection
+ * re-use, etc.
+ */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   private final RouteDatabase routeDatabase;
@@ -417,6 +421,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     dispatcher.cancel(tag);
   }
 
+  /**
+   * This method is thread-safe.
+   */
   public HttpURLConnection open(URL url) {
     return open(url, proxy);
   }
