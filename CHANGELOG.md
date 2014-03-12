@@ -11,6 +11,8 @@ _2014-03-11_
  * Fix problems where spdy/3.1 headers may not have been compressed properly.
  * Fix problems with spdy/3.1 and http/2 where the wrong window size was being
    used.
+ * Fix 1.5.0 regression where conditional cache responses could corrupt the
+   connection pool.
 
 
 ## Version 1.5.0
