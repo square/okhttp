@@ -16,6 +16,7 @@
 
   <modules>
     <module>guide</module>
+    <module>crawler</module>
     <module>simple-client</module>
     <module>static-server</module>
   </modules>
