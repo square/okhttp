@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Deadline;
@@ -72,18 +73,20 @@ public final class HttpConnection {
 
   private final ConnectionPool pool;
   private final Connection connection;
+  private final Socket socket;
   private final BufferedSource source;
   private final BufferedSink sink;
 
   private int state = STATE_IDLE;
   private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(ConnectionPool pool, Connection connection, BufferedSource source,
-      BufferedSink sink) {
+  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket)
+      throws IOException {
     this.pool = pool;
     this.connection = connection;
-    this.source = source;
-    this.sink = sink;
+    this.socket = socket;
+    this.source = Okio.buffer(Okio.source(socket.getInputStream()));
+    this.sink = Okio.buffer(Okio.sink(socket.getOutputStream()));
   }
 
   /**
@@ -121,6 +124,31 @@ public final class HttpConnection {
 
   public void flush() throws IOException {
     sink.flush();
+  }
+
+  /** Returns the number of buffered bytes immediately readable. */
+  public long bufferSize() {
+    return source.buffer().size();
+  }
+
+  /** Test for a stale socket. */
+  public boolean isReadable() {
+    try {
+      int readTimeout = socket.getSoTimeout();
+      try {
+        socket.setSoTimeout(1);
+        if (source.exhausted()) {
+          return false; // Stream is exhausted; socket is closed.
+        }
+        return true;
+      } finally {
+        socket.setSoTimeout(readTimeout);
+      }
+    } catch (SocketTimeoutException ignored) {
+      return true; // Read timed out; socket is good.
+    } catch (IOException e) {
+      return false; // Couldn't read; socket is closed.
+    }
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
@@ -177,7 +205,6 @@ public final class HttpConnection {
    * that may never occur.
    */
   public boolean discard(Source in, int timeoutMillis) {
-    Socket socket = connection.getSocket();
     try {
       int socketTimeout = socket.getSoTimeout();
       socket.setSoTimeout(timeoutMillis);

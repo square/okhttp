@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -499,19 +500,18 @@ public final class SpdyConnection implements Closeable {
     private boolean client;
 
     public Builder(boolean client, Socket socket) throws IOException {
-      this("", client, Okio.buffer(Okio.source(socket.getInputStream())),
-          Okio.buffer(Okio.sink(socket.getOutputStream())));
+      this(((InetSocketAddress) socket.getRemoteSocketAddress()).getHostName(), client, socket);
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
      *     peer accepted the connection.
      */
-    public Builder(String hostName, boolean client, BufferedSource source, BufferedSink sink) {
+    public Builder(String hostName, boolean client, Socket socket) throws IOException {
       this.hostName = hostName;
       this.client = client;
-      this.source = source;
-      this.sink = sink;
+      this.source = Okio.buffer(Okio.source(socket.getInputStream()));
+      this.sink = Okio.buffer(Okio.sink(socket.getOutputStream()));
     }
 
     public Builder handler(IncomingStreamHandler handler) {

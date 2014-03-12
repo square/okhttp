@@ -25,16 +25,10 @@ import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Proxy;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import javax.net.ssl.SSLSocket;
-import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.ByteString;
-import okio.Okio;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
@@ -70,10 +64,6 @@ public final class Connection implements Closeable {
   private final Route route;
 
   private Socket socket;
-  private InputStream in;
-  private OutputStream out;
-  private BufferedSource source;
-  private BufferedSink sink;
   private boolean connected = false;
   private HttpConnection httpConnection;
   private SpdyConnection spdyConnection;
@@ -94,14 +84,11 @@ public final class Connection implements Closeable {
     socket = (route.proxy.type() != Proxy.Type.HTTP) ? new Socket(route.proxy) : new Socket();
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
     socket.setSoTimeout(readTimeout);
-    in = socket.getInputStream();
-    out = socket.getOutputStream();
 
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest);
     } else {
-      initSourceAndSink();
-      httpConnection = new HttpConnection(pool, this, source, sink);
+      httpConnection = new HttpConnection(pool, this, socket);
     }
     connected = true;
   }
@@ -128,19 +115,19 @@ public final class Connection implements Closeable {
       platform.supportTlsIntolerantServer(sslSocket);
     }
 
-    boolean useNpn = route.modernTls && (// Contains a spdy variant.
-        route.address.protocols.contains(Protocol.HTTP_2)
-     || route.address.protocols.contains(Protocol.SPDY_3)
-    );
-
-    if (useNpn) {
-      if (route.address.protocols.contains(Protocol.HTTP_2) // Contains both spdy variants.
-          && route.address.protocols.contains(Protocol.SPDY_3)) {
+    boolean useNpn = false;
+    if (route.modernTls) {
+      boolean http2 = route.address.protocols.contains(Protocol.HTTP_2);
+      boolean spdy3 = route.address.protocols.contains(Protocol.SPDY_3);
+      if (http2 && spdy3) {
         platform.setNpnProtocols(sslSocket, Protocol.HTTP2_SPDY3_AND_HTTP);
-      } else if (route.address.protocols.contains(Protocol.HTTP_2)) {
+        useNpn = true;
+      } else if (http2) {
         platform.setNpnProtocols(sslSocket, Protocol.HTTP2_AND_HTTP_11);
-      } else {
+        useNpn = true;
+      } else if (spdy3) {
         platform.setNpnProtocols(sslSocket, Protocol.SPDY3_AND_HTTP11);
+        useNpn = true;
       }
     }
 
@@ -152,10 +139,7 @@ public final class Connection implements Closeable {
       throw new IOException("Hostname '" + route.address.uriHost + "' was not verified");
     }
 
-    out = sslSocket.getOutputStream();
-    in = sslSocket.getInputStream();
     handshake = Handshake.get(sslSocket.getSession());
-    initSourceAndSink();
 
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
@@ -165,11 +149,11 @@ public final class Connection implements Closeable {
 
     if (selectedProtocol.spdyVariant) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, source, sink)
+      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
-      httpConnection = new HttpConnection(pool, this, source, sink);
+      httpConnection = new HttpConnection(pool, this, socket);
     }
   }
 
@@ -206,28 +190,8 @@ public final class Connection implements Closeable {
    * #isAlive()}; callers should check {@link #isAlive()} first.
    */
   public boolean isReadable() {
-    if (source == null) {
-      return true; // Optimistic.
-    }
-    if (isSpdy()) {
-      return true; // Optimistic. We can't test SPDY because its streams are in use.
-    }
-    try {
-      int readTimeout = socket.getSoTimeout();
-      try {
-        socket.setSoTimeout(1);
-        if (source.exhausted()) {
-          return false; // Stream is exhausted; socket is closed.
-        }
-        return true;
-      } finally {
-        socket.setSoTimeout(readTimeout);
-      }
-    } catch (SocketTimeoutException ignored) {
-      return true; // Read timed out; socket is good.
-    } catch (IOException e) {
-      return false; // Couldn't read; socket is closed.
-    }
+    if (httpConnection != null) return httpConnection.isReadable();
+    return true; // SPDY connections, and connections before connect() are both optimistic.
   }
 
   public void resetIdleStartTime() {
@@ -320,9 +284,7 @@ public final class Connection implements Closeable {
    * retried if the proxy requires authorization.
    */
   private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    BufferedSource tunnelSource = Okio.buffer(Okio.source(in));
-    BufferedSink tunnelSink = Okio.buffer(Okio.sink(out));
-    HttpConnection tunnelConnection = new HttpConnection(pool, this, tunnelSource, tunnelSink);
+    HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {
@@ -335,7 +297,7 @@ public final class Connection implements Closeable {
         case HTTP_OK:
           // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If that
           // happens, then we will have buffered bytes that are needed by the SSLSocket!
-          if (tunnelSource.buffer().size() > 0) {
+          if (tunnelConnection.bufferSize() > 0) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
           return;
@@ -351,10 +313,5 @@ public final class Connection implements Closeable {
               "Unexpected response code for CONNECT: " + response.code());
       }
     }
-  }
-
-  private void initSourceAndSink() throws IOException {
-    source = Okio.buffer(Okio.source(in));
-    sink = Okio.buffer(Okio.sink(out));
   }
 }
