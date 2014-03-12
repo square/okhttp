@@ -45,7 +45,7 @@ public final class MockSpdyPeer implements Closeable {
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
   private int port;
-  private final ExecutorService executor = Executors.newCachedThreadPool(
+  private final ExecutorService executor = Executors.newSingleThreadExecutor(
       Util.threadFactory("MockSpdyPeer", false));
   private ServerSocket serverSocket;
   private Socket socket;
