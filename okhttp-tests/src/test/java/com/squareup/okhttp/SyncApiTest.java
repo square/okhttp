@@ -138,9 +138,11 @@ public final class SyncApiTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void cache() throws Exception {
+  @Test public void conditionalCacheHit() throws Exception {
     server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
-    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.play();
 
     client.setOkResponseCache(cache);
@@ -151,6 +153,22 @@ public final class SyncApiTest {
 
     onSuccess(new Request.Builder().url(server.getUrl("/")).build())
         .assertCode(200).assertBody("A");
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+  }
+
+  @Test public void conditionalCacheMiss() throws Exception {
+    server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
+    server.enqueue(new MockResponse().setBody("B"));
+    server.play();
+
+    client.setOkResponseCache(cache);
+
+    onSuccess(new Request.Builder().url(server.getUrl("/")).build())
+        .assertCode(200).assertBody("A");
+    assertNull(server.takeRequest().getHeader("If-None-Match"));
+
+    onSuccess(new Request.Builder().url(server.getUrl("/")).build())
+        .assertCode(200).assertBody("B");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
