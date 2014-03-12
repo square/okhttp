@@ -149,10 +149,7 @@ final class Job extends NamedRunnable {
       if (redirect == null) {
         engine.releaseConnection();
         return response.newBuilder()
-            // Cache body includes original content-length and content-type data.
-            .body(engine.responseSource().usesCache()
-                ? engine.getResponse().body()
-                : new RealResponseBody(response, engine.getResponseBody()))
+            .body(new RealResponseBody(response, engine.getResponseBody()))
             .redirectedBy(redirectedBy)
             .build();
       }

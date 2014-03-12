@@ -19,6 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +74,10 @@ public class RecordingReceiver implements Response.Receiver {
   public synchronized RecordedResponse await(URL url) throws Exception {
     long timeoutMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) + TIMEOUT_MILLIS;
     while (true) {
-      for (RecordedResponse recordedResponse : responses) {
+      for (Iterator<RecordedResponse> i = responses.iterator(); i.hasNext(); ) {
+        RecordedResponse recordedResponse = i.next();
         if (recordedResponse.request.url().equals(url)) {
+          i.remove();
           return recordedResponse;
         }
       }
