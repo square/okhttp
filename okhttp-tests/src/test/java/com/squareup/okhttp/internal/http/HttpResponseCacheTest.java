@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
@@ -962,6 +963,22 @@ public final class HttpResponseCacheTest {
     assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     assertEquals("ABCABCABC", readAscii(openConnection(server.getUrl("/"))));
     assertEquals("DEFDEFDEF", readAscii(openConnection(server.getUrl("/"))));
+  }
+
+  @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
+    server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
+    server.enqueue(new MockResponse()
+        .clearHeaders()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.play();
+
+    ConnectionPool pool = ConnectionPool.getDefault();
+    pool.evictAll();
+    client.setConnectionPool(pool);
+
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
+    assertEquals(1, client.getConnectionPool().getConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {

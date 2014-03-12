@@ -368,7 +368,7 @@ public class HttpEngine {
    * be released immediately.
    */
   public final void releaseConnection() throws IOException {
-    if (transport != null) {
+    if (transport != null && connection != null) {
       transport.releaseConnectionOnIdle();
     }
     connection = null;
