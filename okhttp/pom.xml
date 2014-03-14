@@ -18,11 +18,6 @@
       <artifactId>okio</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp-protocols</artifactId>
-      <version>${project.version}</version>
-    </dependency>
   </dependencies>
 
   <build>
