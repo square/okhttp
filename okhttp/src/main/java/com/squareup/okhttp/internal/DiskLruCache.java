@@ -376,8 +376,9 @@ public final class DiskLruCache implements Closeable {
   }
 
   private static void deleteIfExists(File file) throws IOException {
-    if (file.exists() && !file.delete()) {
-      throw new IOException();
+    // If delete() fails, make sure it's because the file didn't exist!
+    if (!file.delete() && file.exists()) {
+      throw new IOException("failed to delete " + file);
     }
   }
 
@@ -477,7 +478,7 @@ public final class DiskLruCache implements Closeable {
    * Returns the maximum number of bytes that this cache should use to store
    * its data.
    */
-  public long getMaxSize() {
+  public synchronized long getMaxSize() {
     return maxSize;
   }
 
@@ -580,9 +581,7 @@ public final class DiskLruCache implements Closeable {
 
     for (int i = 0; i < valueCount; i++) {
       File file = entry.getCleanFile(i);
-      if (!file.delete()) {
-        throw new IOException("failed to delete " + file);
-      }
+      deleteIfExists(file);
       size -= entry.lengths[i];
       entry.lengths[i] = 0;
     }
