@@ -306,6 +306,48 @@ public class HpackDraft05Test {
     assertTrue(hpackReader.getAndReset().isEmpty());
   }
 
+  /** Ensure a later toggle of the same index emits! */
+  @Test public void toggleIndexOffOn() throws IOException {
+
+    bytesIn.writeByte(0x82); // Copy static header 1 to the header table as index 1.
+    bytesIn.writeByte(0x81); // Remove index 1 from the reference set.
+
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+    assertEquals(1, hpackReader.headerCount);
+    assertTrue(hpackReader.getAndReset().isEmpty());
+
+    bytesIn.writeByte(0x81); // Add index 1 back to the reference set.
+
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+    assertEquals(1, hpackReader.headerCount);
+    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
+  }
+
+  /** Check later toggle of the same index for large header sets. */
+  @Test public void toggleIndexOffBeyond64Entries() throws IOException {
+    int expectedHeaderCount = 65;
+
+    for (int i = 0; i < expectedHeaderCount; i++) {
+      bytesIn.writeByte(0x82 + i); // Copy static header 1 to the header table as index 1.
+      bytesIn.writeByte(0x81); // Remove index 1 from the reference set.
+    }
+
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+    assertEquals(expectedHeaderCount, hpackReader.headerCount);
+    assertTrue(hpackReader.getAndReset().isEmpty());
+
+    bytesIn.writeByte(0x81); // Add index 1 back to the reference set.
+
+    hpackReader.readHeaders();
+    hpackReader.emitReferenceSet();
+    assertEquals(expectedHeaderCount, hpackReader.headerCount);
+    assertHeaderReferenced(headerTableLength() - expectedHeaderCount);
+    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
+  }
+
   /**
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.4
    */

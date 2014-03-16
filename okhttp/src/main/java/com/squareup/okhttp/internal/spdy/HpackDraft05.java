@@ -115,6 +115,11 @@ final class HpackDraft05 {
     BitArray referencedHeaders = new BitArray.FixedCapacity();
 
     /**
+     * Set bit positions indicate {@code headerTable[pos]} was already emitted.
+     */
+    BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
+
+    /**
      * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
      * emitted.
      */
@@ -168,6 +173,7 @@ final class HpackDraft05 {
           entriesToEvict++;
         }
         referencedHeaders.shiftLeft(entriesToEvict);
+        emittedReferencedHeaders.shiftLeft(entriesToEvict);
         System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
         nextHeaderIndex += entriesToEvict;
@@ -209,6 +215,7 @@ final class HpackDraft05 {
     private void clearReferenceSet() {
       referencedStaticHeaders = 0L;
       referencedHeaders.clear();
+      emittedReferencedHeaders.clear();
     }
 
     void emitReferenceSet() {
@@ -218,7 +225,7 @@ final class HpackDraft05 {
         }
       }
       for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
-        if (referencedHeaders.get(i)) {
+        if (referencedHeaders.get(i) && !emittedReferencedHeaders.get(i)) {
           emittedHeaders.add(headerTable[i]);
         }
       }
@@ -231,6 +238,7 @@ final class HpackDraft05 {
     List<Header> getAndReset() {
       List<Header> result = new ArrayList<Header>(emittedHeaders);
       emittedHeaders.clear();
+      emittedReferencedHeaders.clear();
       return result;
     }
 
@@ -243,7 +251,12 @@ final class HpackDraft05 {
           insertIntoHeaderTable(-1, staticEntry);
         }
       } else {
-        referencedHeaders.toggle(headerTableIndex(index));
+        int headerTableIndex = headerTableIndex(index);
+        if (!referencedHeaders.get(headerTableIndex)) { // When re-referencing, emit immediately.
+          emittedHeaders.add(headerTable[headerTableIndex]);
+          emittedReferencedHeaders.set(headerTableIndex);
+        }
+        referencedHeaders.toggle(headerTableIndex);
       }
     }
 
@@ -308,14 +321,17 @@ final class HpackDraft05 {
       int bytesToRecover = (headerTableByteCount + delta) - maxHeaderTableByteCount;
       int entriesEvicted = evictToRecoverBytes(bytesToRecover);
 
-      if (index == -1) {
-        if (headerCount + 1 > headerTable.length) {
+      if (index == -1) { // Adding a value to the header table.
+        if (headerCount + 1 > headerTable.length) { // Need to grow the header table.
           Header[] doubled = new Header[headerTable.length * 2];
           System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
           if (doubled.length == 64) {
             referencedHeaders = ((BitArray.FixedCapacity) referencedHeaders).toVariableCapacity();
+            emittedReferencedHeaders =
+                ((BitArray.FixedCapacity) emittedReferencedHeaders).toVariableCapacity();
           }
           referencedHeaders.shiftLeft(headerTable.length);
+          emittedReferencedHeaders.shiftLeft(headerTable.length);
           nextHeaderIndex = headerTable.length - 1;
           headerTable = doubled;
         }
