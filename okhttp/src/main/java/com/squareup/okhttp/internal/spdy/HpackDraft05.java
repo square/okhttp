@@ -26,7 +26,6 @@ import java.util.Map;
 final class HpackDraft05 {
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
-  private static final int PREFIX_8_BITS = 0xff;
 
   private static final Header[] STATIC_HEADER_TABLE = new Header[] {
       new Header(Header.TARGET_AUTHORITY, ""),
@@ -118,13 +117,6 @@ final class HpackDraft05 {
      * Set bit positions indicate {@code headerTable[pos]} was already emitted.
      */
     BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
-
-    /**
-     * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
-     * emitted.
-     */
-    // Using a long since the static table < 64 entries.
-    long referencedStaticHeaders = 0L;
     int headerTableByteCount = 0;
 
     Reader(boolean client, int maxHeaderTableByteCount, Source source) {
@@ -213,17 +205,11 @@ final class HpackDraft05 {
     }
 
     private void clearReferenceSet() {
-      referencedStaticHeaders = 0L;
       referencedHeaders.clear();
       emittedReferencedHeaders.clear();
     }
 
     void emitReferenceSet() {
-      for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
-        if (((referencedStaticHeaders >> i) & 1L) == 1) {
-          emittedHeaders.add(STATIC_HEADER_TABLE[i]);
-        }
-      }
       for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
         if (referencedHeaders.get(i) && !emittedReferencedHeaders.get(i)) {
           emittedHeaders.add(headerTable[i]);
@@ -244,10 +230,10 @@ final class HpackDraft05 {
 
     private void readIndexedHeader(int index) {
       if (isStaticHeader(index)) {
+        Header staticEntry = STATIC_HEADER_TABLE[index - headerCount];
         if (maxHeaderTableByteCount == 0) {
-          referencedStaticHeaders |= (1L << (index - headerCount));
+          emittedHeaders.add(staticEntry);
         } else {
-          Header staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
         }
       } else {
