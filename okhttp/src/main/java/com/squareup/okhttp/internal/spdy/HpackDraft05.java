@@ -26,7 +26,6 @@ import okio.Source;
 final class HpackDraft05 {
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
-  private static final int PREFIX_8_BITS = 0xff;
 
   private static final Header[] STATIC_HEADER_TABLE = new Header[] {
       new Header(Header.TARGET_AUTHORITY, ""),
@@ -115,11 +114,9 @@ final class HpackDraft05 {
     BitArray referencedHeaders = new BitArray.FixedCapacity();
 
     /**
-     * Set bit positions indicate {@code STATIC_HEADER_TABLE[pos]} should be
-     * emitted.
+     * Set bit positions indicate {@code headerTable[pos]} was already emitted.
      */
-    // Using a long since the static table < 64 entries.
-    long referencedStaticHeaders = 0L;
+    BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
     int headerTableByteCount = 0;
 
     Reader(boolean client, int maxHeaderTableByteCount, Source source) {
@@ -168,6 +165,7 @@ final class HpackDraft05 {
           entriesToEvict++;
         }
         referencedHeaders.shiftLeft(entriesToEvict);
+        emittedReferencedHeaders.shiftLeft(entriesToEvict);
         System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
         nextHeaderIndex += entriesToEvict;
@@ -207,18 +205,13 @@ final class HpackDraft05 {
     }
 
     private void clearReferenceSet() {
-      referencedStaticHeaders = 0L;
       referencedHeaders.clear();
+      emittedReferencedHeaders.clear();
     }
 
     void emitReferenceSet() {
-      for (int i = 0; i < STATIC_HEADER_TABLE.length; ++i) {
-        if (((referencedStaticHeaders >> i) & 1L) == 1) {
-          emittedHeaders.add(STATIC_HEADER_TABLE[i]);
-        }
-      }
       for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
-        if (referencedHeaders.get(i)) {
+        if (referencedHeaders.get(i) && !emittedReferencedHeaders.get(i)) {
           emittedHeaders.add(headerTable[i]);
         }
       }
@@ -231,19 +224,25 @@ final class HpackDraft05 {
     List<Header> getAndReset() {
       List<Header> result = new ArrayList<Header>(emittedHeaders);
       emittedHeaders.clear();
+      emittedReferencedHeaders.clear();
       return result;
     }
 
     private void readIndexedHeader(int index) {
       if (isStaticHeader(index)) {
+        Header staticEntry = STATIC_HEADER_TABLE[index - headerCount];
         if (maxHeaderTableByteCount == 0) {
-          referencedStaticHeaders |= (1L << (index - headerCount));
+          emittedHeaders.add(staticEntry);
         } else {
-          Header staticEntry = STATIC_HEADER_TABLE[index - headerCount];
           insertIntoHeaderTable(-1, staticEntry);
         }
       } else {
-        referencedHeaders.toggle(headerTableIndex(index));
+        int headerTableIndex = headerTableIndex(index);
+        if (!referencedHeaders.get(headerTableIndex)) { // When re-referencing, emit immediately.
+          emittedHeaders.add(headerTable[headerTableIndex]);
+          emittedReferencedHeaders.set(headerTableIndex);
+        }
+        referencedHeaders.toggle(headerTableIndex);
       }
     }
 
@@ -308,14 +307,17 @@ final class HpackDraft05 {
       int bytesToRecover = (headerTableByteCount + delta) - maxHeaderTableByteCount;
       int entriesEvicted = evictToRecoverBytes(bytesToRecover);
 
-      if (index == -1) {
-        if (headerCount + 1 > headerTable.length) {
+      if (index == -1) { // Adding a value to the header table.
+        if (headerCount + 1 > headerTable.length) { // Need to grow the header table.
           Header[] doubled = new Header[headerTable.length * 2];
           System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
           if (doubled.length == 64) {
             referencedHeaders = ((BitArray.FixedCapacity) referencedHeaders).toVariableCapacity();
+            emittedReferencedHeaders =
+                ((BitArray.FixedCapacity) emittedReferencedHeaders).toVariableCapacity();
           }
           referencedHeaders.shiftLeft(headerTable.length);
+          emittedReferencedHeaders.shiftLeft(headerTable.length);
           nextHeaderIndex = headerTable.length - 1;
           headerTable = doubled;
         }
