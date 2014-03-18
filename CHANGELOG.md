@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 1.5.2
+
+_2014-03-17_
+
+ * Fix bug where deleting a file that was absent from the `HttpResponseCache`
+   caused an IOException.
+ * Fix bug in HTTP/2 where our HPACK decoder wasn't emitting entries in
+   certain eviction scenarios, leading to dropped response headers.
+
 ## Version 1.5.1
 
 _2014-03-11_
