@@ -1861,6 +1861,30 @@ public final class HttpResponseCacheTest {
     assertEquals("foo", connection.getHeaderField("etag"));
   }
 
+  // For compatibility with Java HttpURLConnections, and when Android-bundled and and older
+  // app-bundled OkHttp library are in use at the same time in an Android app, the HttpResponseCache
+  // must behave as a working, Java compliant, ResponseCache.
+  @Test public void testHttpResponseCacheIsValidResponseCache() throws Exception {
+    assertSame(cache, ResponseCache.getDefault());
+
+    String body = "Body";
+    server.enqueue(new MockResponse().setBody(body));
+    server.play();
+
+    // Use a standard Java HttpURLConnection, which will pick up the default ResponseCache.
+    URL url = server.getUrl("/");
+    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    assertEquals(body, readAscii(connection));
+    connection.disconnect();
+
+    // Next request should be cached.
+    HttpURLConnection connection2 = (HttpURLConnection) url.openConnection();
+    assertEquals(body, readAscii(connection2));
+    connection2.disconnect();
+
+    assertEquals(1, server.getRequestCount());
+  }
+
   private void writeFile(File directory, String file, String content) throws IOException {
     OutputStream out = new FileOutputStream(new File(directory, file));
     out.write(content.getBytes(Util.UTF_8));

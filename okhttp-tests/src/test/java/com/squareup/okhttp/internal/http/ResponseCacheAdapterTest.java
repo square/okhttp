@@ -19,7 +19,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,12 +33,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -55,8 +51,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * A white-box test for {@link ResponseCacheAdapter}. See also {@link ResponseCacheTest} for
- * black-box tests that check that {@link ResponseCache} classes are called correctly by OkHttp.
+ * A white-box test for {@link ResponseCacheAdapter}. See also:
+ * <ul>
+ *   <li>{@link ResponseCacheTest} for black-box tests that check that {@link ResponseCache}
+ *   classes are called correctly by OkHttp.</li>
+ *   <li>{@link JavaApiConverterTest} for tests that check Java API classes <-> OkHttp conversion logic.
+ *   </li>
+ * </ul>
  */
 public class ResponseCacheAdapterTest {
 
@@ -73,21 +74,19 @@ public class ResponseCacheAdapterTest {
 
   private HttpURLConnection connection;
 
-  @Before
-  public void setUp() throws Exception {
+  @Before public void setUp() throws Exception {
     server = new MockWebServer();
     client = new OkHttpClient();
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @After public void tearDown() throws Exception {
     if (connection != null) {
       connection.disconnect();
     }
     server.shutdown();
   }
 
-  @Test public void get_allParameters() throws Exception {
+  @Test public void get_httpGet() throws Exception {
     final URL serverUrl = configureServer(new MockResponse());
     assertEquals("http", serverUrl.getProtocol());
 
@@ -109,308 +108,14 @@ public class ResponseCacheAdapterTest {
     executeGet(connection);
   }
 
-  @Test public void put_uriAndClass() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        assertTrue(urlConnection instanceof HttpURLConnection);
-        assertFalse(urlConnection instanceof HttpsURLConnection);
-        assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, urlConnection.getURL());
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-    executeGet(connection);
-  }
-
-  @Test public void put_requestHeadersPartlyUnavailable() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        // This is to be compatible with OkHttp's HttpURLConnectionImpl and the RI.
-        try {
-          urlConnection.getRequestProperties();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-
-        assertEquals("value", urlConnection.getRequestProperty("key"));
-
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-    connection.setRequestProperty("key", "value");
-
-    executeGet(connection);
-  }
-
-  @Test public void put_requestChangesForbidden() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        // Check an arbitrary (not complete) set of methods that can be used to modify the
-        // request.
-        try {
-          httpUrlConnection.setRequestProperty("key", "value");
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.setFixedLengthStreamingMode(1234);
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.setRequestMethod("PUT");
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.getHeaderFields().put("key", Collections.singletonList("value"));
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.getOutputStream();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executeGet(connection);
-  }
-
-  @Test public void connectionChangesForbidden() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        try {
-          httpUrlConnection.connect();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.disconnect();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executeGet(connection);
-  }
-
-  @Test public void put_responseChangesForbidden() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        // Check an arbitrary (not complete) set of methods that can be used to access the response
-        // body.
-        try {
-          httpUrlConnection.getInputStream();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.getContent();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.setFixedLengthStreamingMode(1234);
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpUrlConnection.setRequestMethod("PUT");
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          urlConnection.getHeaderFields().put("key", Collections.singletonList("value"));
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executeGet(connection);
-  }
-
-  @Test public void put_responseHeadersOk() throws Exception {
-    final String statusLine = "HTTP/1.1 200 Fantastic";
-    final URL serverUrl = configureServer(
-        new MockResponse()
-            .setStatus(statusLine)
-            .addHeader("A", "c")
-            .addHeader("B", "d")
-            .addHeader("A", "e"));
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        assertEquals(200, httpUrlConnection.getResponseCode());
-        assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
-        assertEquals(0, urlConnection.getContentLength());
-
-        // Check retrieval by string key.
-        assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
-        assertEquals("e", httpUrlConnection.getHeaderField("A"));
-        // The RI and OkHttp supports case-insensitive matching for this method.
-        assertEquals("e", httpUrlConnection.getHeaderField("a"));
-
-        // Check retrieval using a Map.
-        Map<String, List<String>> responseHeaders = httpUrlConnection.getHeaderFields();
-        assertEquals(Arrays.asList(statusLine), responseHeaders.get(null));
-        assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("A")));
-        // OkHttp supports case-insensitive matching here. The RI does not.
-        assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("a")));
-
-        // Check the Map iterator contains the expected mappings.
-        assertHeadersContainsMapping(responseHeaders, null, statusLine);
-        assertHeadersContainsMapping(responseHeaders, "A", "c", "e");
-        assertHeadersContainsMapping(responseHeaders, "B", "d");
-
-        // Check immutability of the headers Map.
-        try {
-          responseHeaders.put("N", Arrays.asList("o"));
-          fail("Modified an unmodifiable view.");
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          responseHeaders.get("A").add("f");
-          fail("Modified an unmodifiable view.");
-        } catch (UnsupportedOperationException expected) {
-        }
-
-        // Check retrieval of headers by index.
-        assertEquals(null, httpUrlConnection.getHeaderFieldKey(0));
-        assertEquals(statusLine, httpUrlConnection.getHeaderField(0));
-        // After header zero there may be additional entries provided at the beginning or end by the
-        // implementation. It's probably important that the relative ordering of the headers is
-        // preserved, particularly if there are multiple value for the same key.
-        int i = 1;
-        while (!httpUrlConnection.getHeaderFieldKey(i).equals("A")) {
-          i++;
-        }
-        // Check the ordering of the headers set by app code.
-        assertResponseHeaderAtIndex(httpUrlConnection, i++, "A", "c");
-        assertResponseHeaderAtIndex(httpUrlConnection, i++, "B", "d");
-        assertResponseHeaderAtIndex(httpUrlConnection, i++, "A", "e");
-        // There may be some additional headers provided by the implementation.
-        while (httpUrlConnection.getHeaderField(i) != null) {
-          assertNotNull(httpUrlConnection.getHeaderFieldKey(i));
-          i++;
-        }
-        // Confirm the correct behavior when the index is out-of-range.
-        assertNull(httpUrlConnection.getHeaderFieldKey(i));
-
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executeGet(connection);
-  }
-
-  private static void assertResponseHeaderAtIndex(HttpURLConnection httpUrlConnection, int headerIndex,
-      String expectedKey, String expectedValue) {
-    assertEquals(expectedKey, httpUrlConnection.getHeaderFieldKey(headerIndex));
-    assertEquals(expectedValue, httpUrlConnection.getHeaderField(headerIndex));
-
-  }
-
-  private void assertHeadersContainsMapping(Map<String, List<String>> headers, String expectedKey,
-      String... expectedValues) {
-    assertTrue(headers.containsKey(expectedKey));
-    assertEquals(newSet(expectedValues), new HashSet<String>(headers.get(expectedKey)));
-  }
-
-  @Test public void put_accessibleRequestInfo_GET() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        // Status Line is treated as a special header by the Java APIs.
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        assertEquals("GET", httpUrlConnection.getRequestMethod());
-        assertTrue(httpUrlConnection.getDoInput());
-        assertFalse(httpUrlConnection.getDoOutput());
-
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executeGet(connection);
-  }
-
-  @Test public void put_accessibleRequestInfo_POST() throws Exception {
-    final URL serverUrl = configureServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        // Status Line is treated as a special header by the Java APIs.
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
-        assertEquals("POST", httpUrlConnection.getRequestMethod());
-        assertTrue(httpUrlConnection.getDoInput());
-        assertTrue(httpUrlConnection.getDoOutput());
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-
-    connection = client.open(serverUrl);
-
-    executePost(connection);
-  }
-
-  @Test public void get_https_allParameters() throws Exception {
+  @Test public void get_httpsGet() throws Exception {
     final URL serverUrl = configureHttpsServer(new MockResponse());
     assertEquals("https", serverUrl.getProtocol());
 
     ResponseCache responseCache = new NoOpResponseCache() {
       @Override
-      public CacheResponse get(URI uri, String method, Map<String, List<String>> headers) throws IOException {
+      public CacheResponse get(URI uri, String method, Map<String, List<String>> headers)
+          throws IOException {
         assertEquals("https", uri.getScheme());
         assertEquals(toUri(serverUrl), uri);
         assertEquals("GET", method);
@@ -429,7 +134,87 @@ public class ResponseCacheAdapterTest {
     executeGet(connection);
   }
 
-  @Test public void put_https_uriAndClass() throws Exception {
+  @Test public void put_httpGet() throws Exception {
+    final String statusLine = "HTTP/1.1 200 Fantastic";
+    final URL serverUrl = configureServer(
+        new MockResponse()
+            .setStatus(statusLine)
+            .addHeader("A", "c"));
+
+    ResponseCache responseCache = new NoOpResponseCache() {
+      @Override
+      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
+        assertTrue(urlConnection instanceof HttpURLConnection);
+        assertFalse(urlConnection instanceof HttpsURLConnection);
+
+        assertEquals(0, urlConnection.getContentLength());
+
+        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
+        assertEquals("GET", httpUrlConnection.getRequestMethod());
+        assertTrue(httpUrlConnection.getDoInput());
+        assertFalse(httpUrlConnection.getDoOutput());
+
+        assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
+        assertEquals(toUri(serverUrl), uri);
+        assertEquals(serverUrl, urlConnection.getURL());
+        assertEquals("value", urlConnection.getRequestProperty("key"));
+
+        // Check retrieval by string key.
+        assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
+        assertEquals("c", httpUrlConnection.getHeaderField("A"));
+        // The RI and OkHttp supports case-insensitive matching for this method.
+        assertEquals("c", httpUrlConnection.getHeaderField("a"));
+        return null;
+      }
+    };
+    client.setResponseCache(responseCache);
+
+    connection = client.open(serverUrl);
+    connection.setRequestProperty("key", "value");
+    executeGet(connection);
+  }
+
+  @Test public void put_httpPost() throws Exception {
+    final String statusLine = "HTTP/1.1 200 Fantastic";
+    final URL serverUrl = configureServer(
+        new MockResponse()
+            .setStatus(statusLine)
+            .addHeader("A", "c"));
+
+    ResponseCache responseCache = new NoOpResponseCache() {
+      @Override
+      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
+        assertTrue(urlConnection instanceof HttpURLConnection);
+        assertFalse(urlConnection instanceof HttpsURLConnection);
+
+        assertEquals(0, urlConnection.getContentLength());
+
+        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
+        assertEquals("POST", httpUrlConnection.getRequestMethod());
+        assertTrue(httpUrlConnection.getDoInput());
+        assertTrue(httpUrlConnection.getDoOutput());
+
+        assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
+        assertEquals(toUri(serverUrl), uri);
+        assertEquals(serverUrl, urlConnection.getURL());
+        assertEquals("value", urlConnection.getRequestProperty("key"));
+
+        // Check retrieval by string key.
+        assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
+        assertEquals("c", httpUrlConnection.getHeaderField("A"));
+        // The RI and OkHttp supports case-insensitive matching for this method.
+        assertEquals("c", httpUrlConnection.getHeaderField("a"));
+        return null;
+      }
+    };
+    client.setResponseCache(responseCache);
+
+    connection = client.open(serverUrl);
+
+    executePost(connection);
+  }
+
+  @Test public void put_httpsGet() throws Exception {
     final URL serverUrl = configureHttpsServer(new MockResponse());
     assertEquals("https", serverUrl.getProtocol());
 
@@ -439,24 +224,7 @@ public class ResponseCacheAdapterTest {
         assertTrue(urlConnection instanceof HttpsURLConnection);
         assertEquals(toUri(serverUrl), uri);
         assertEquals(serverUrl, urlConnection.getURL());
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
-    connection = client.open(serverUrl);
-    executeGet(connection);
-  }
-
-  @Test public void put_https_extraHttpsMethods() throws Exception {
-    final URL serverUrl = configureHttpsServer(new MockResponse());
-    assertEquals("https", serverUrl.getProtocol());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
         HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) urlConnection;
         HttpsURLConnection realHttpsUrlConnection = (HttpsURLConnection) connection;
         assertEquals(realHttpsUrlConnection.getCipherSuite(),
@@ -478,40 +246,6 @@ public class ResponseCacheAdapterTest {
 
     connection = client.open(serverUrl);
     executeGet(connection);
-
-    RecordedRequest recordedRequest = server.takeRequest();
-    recordedRequest.getSslProtocol();
-  }
-
-  @Test public void put_https_forbiddenFields() throws Exception {
-    final URL serverUrl = configureHttpsServer(new MockResponse());
-
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) urlConnection;
-        try {
-          httpsUrlConnection.getHostnameVerifier();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        try {
-          httpsUrlConnection.getSSLSocketFactory();
-          fail();
-        } catch (UnsupportedOperationException expected) {
-        }
-        return null;
-      }
-    };
-    client.setResponseCache(responseCache);
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-
-    connection = client.open(serverUrl);
-    executeGet(connection);
-
-    RecordedRequest recordedRequest = server.takeRequest();
-    recordedRequest.getSslProtocol();
   }
 
   private void executeGet(HttpURLConnection connection) throws IOException {
@@ -561,9 +295,5 @@ public class ResponseCacheAdapterTest {
       fail(e.getMessage());
       return null;
     }
-  }
-
-  private static Set<String> newSet(String... elements) {
-    return new HashSet<String>(Arrays.asList(elements));
   }
 }
