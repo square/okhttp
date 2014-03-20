@@ -53,6 +53,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -1861,28 +1862,60 @@ public final class HttpResponseCacheTest {
     assertEquals("foo", connection.getHeaderField("etag"));
   }
 
-  // For compatibility with Java HttpURLConnections, and when Android-bundled and and older
-  // app-bundled OkHttp library are in use at the same time in an Android app, the HttpResponseCache
-  // must behave as a working, Java compliant, ResponseCache.
-  @Test public void testHttpResponseCacheIsValidResponseCache() throws Exception {
+  // Older versions of OkHttp use ResponseCache.get() and ResponseCache.put(). For compatibility
+  // with Android apps when the Android-bundled and and an older app-bundled OkHttp library are in
+  // use at the same time the HttpResponseCache must behave as it always used to. That's not the
+  // same as a fully API-compliant {@link ResponseCache}: That means that the cache
+  // doesn't throw an exception from get() or put() and also does not cache requests/responses from
+  // anything other than the variant of OkHttp that it comes with. It does still return values from
+  // get() and it is not expected to implement any cache-control logic.
+  @Test public void testHttpResponseCacheBackwardsCompatible() throws Exception {
     assertSame(cache, ResponseCache.getDefault());
+    assertEquals(0, cache.getRequestCount());
 
     String body = "Body";
-    server.enqueue(new MockResponse().setBody(body));
+    server.enqueue(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .setBody(body));
     server.play();
 
-    // Use a standard Java HttpURLConnection, which will pick up the default ResponseCache.
     URL url = server.getUrl("/");
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-    assertEquals(body, readAscii(connection));
-    connection.disconnect();
 
-    // Next request should be cached.
-    HttpURLConnection connection2 = (HttpURLConnection) url.openConnection();
-    assertEquals(body, readAscii(connection2));
-    connection2.disconnect();
+    // Here we use a HttpURLConnection from URL to represent a non-OkHttp HttpURLConnection. In
+    // Android this would be com.android.okhttp.internal.http.HttpURLConnectionImpl. In tests this
+    // is some other implementation.
+    HttpURLConnection javaConnection = (HttpURLConnection) url.openConnection();
+    assertFalse("This test relies on url.openConnection() not returning an OkHttp connection",
+        javaConnection instanceof HttpURLConnectionImpl);
+    javaConnection.disconnect();
+
+    // This should simply be discarded. It doesn't matter the connection is not useful.
+    cache.put(url.toURI(), javaConnection);
+
+    // Confirm the initial cache state.
+    assertNull(cache.get(url.toURI(), "GET", new HashMap<String, List<String>>()));
+
+    // Now cache a response
+    HttpURLConnection okHttpConnection = openConnection(url);
+    assertEquals(body, readAscii(okHttpConnection));
+    okHttpConnection.disconnect();
 
     assertEquals(1, server.getRequestCount());
+    assertEquals(0, cache.getHitCount());
+
+    // OkHttp should now find the result cached.
+    HttpURLConnection okHttpConnection2 = openConnection(url);
+    assertEquals(body, readAscii(okHttpConnection2));
+    okHttpConnection2.disconnect();
+
+    assertEquals(1, server.getRequestCount());
+    assertEquals(1, cache.getHitCount());
+
+    // Confirm the unfortunate get() behavior.
+    assertNotNull(cache.get(url.toURI(), "GET", new HashMap<String, List<String>>()));
+    // Only OkHttp makes the necessary callbacks to increment the cache stats.
+    assertEquals(1, cache.getHitCount());
   }
 
   private void writeFile(File directory, String file, String content) throws IOException {

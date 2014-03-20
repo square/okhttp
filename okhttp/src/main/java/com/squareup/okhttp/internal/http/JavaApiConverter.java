@@ -52,10 +52,6 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp {@link Response} using the supplied {@link URI} and {@link URLConnection}
    * to supply the data. The URLConnection is assumed to already be connected.
-   *
-   * <p>Note: Because this method is used by HttpResponseCache, this class is intended for use with
-   * any Java-API compliant HttpURLConnection / HttpsURLConnection and not just ones implemented by
-   * OkHttp.
    */
   public static Response createOkResponse(URI uri, URLConnection urlConnection) throws IOException {
     HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
