@@ -55,8 +55,8 @@ import static org.junit.Assert.fail;
  * <ul>
  *   <li>{@link ResponseCacheTest} for black-box tests that check that {@link ResponseCache}
  *   classes are called correctly by OkHttp.</li>
- *   <li>{@link JavaApiConverterTest} for tests that check Java API classes <-> OkHttp conversion logic.
- *   </li>
+ *   <li>{@link JavaApiConverterTest} for tests that check Java API classes / OkHttp conversion
+ *   logic. </li>
  * </ul>
  */
 public class ResponseCacheAdapterTest {

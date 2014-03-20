@@ -49,7 +49,7 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -432,9 +432,9 @@ public class JavaApiConverterTest {
     // Check retrieval using a Map.
     Map<String, List<String>> responseHeaders = httpUrlConnection.getHeaderFields();
     assertEquals(Arrays.asList(statusLine), responseHeaders.get(null));
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("A")));
+    assertEquals(newSet("c", "e"), newSet(responseHeaders.get("A")));
     // OkHttp supports case-insensitive matching here. The RI does not.
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("a")));
+    assertEquals(newSet("c", "e"), newSet(responseHeaders.get("a")));
 
     // Check the Map iterator contains the expected mappings.
     assertHeadersContainsMapping(responseHeaders, null, statusLine);
@@ -485,7 +485,7 @@ public class JavaApiConverterTest {
   private void assertHeadersContainsMapping(Map<String, List<String>> headers, String expectedKey,
       String... expectedValues) {
     assertTrue(headers.containsKey(expectedKey));
-    assertEquals(newSet(expectedValues), new HashSet<String>(headers.get(expectedKey)));
+    assertEquals(newSet(expectedValues), newSet(headers.get(expectedKey)));
   }
 
   @Test public void createJavaUrlConnection_accessibleRequestInfo_GET() throws Exception {
@@ -717,8 +717,12 @@ public class JavaApiConverterTest {
     }
   }
 
-  private static Set<String> newSet(String... elements) {
-    return new HashSet<String>(Arrays.asList(elements));
+  private static <T> Set<T> newSet(T... elements) {
+    return newSet(Arrays.asList(elements));
+  }
+
+  private static <T> Set<T> newSet(List<T> elements) {
+    return new LinkedHashSet<T>(elements);
   }
 
   private static Request createArbitraryOkRequest() {
