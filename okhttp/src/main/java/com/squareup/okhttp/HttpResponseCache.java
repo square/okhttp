@@ -19,6 +19,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpMethod;
+import com.squareup.okhttp.internal.http.JavaApiConverter;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -125,13 +126,16 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
-  @Override public CacheResponse get(URI uri, String s, Map<String, List<String>> stringListMap)
+  @Override public CacheResponse get(
+      URI uri, String requestMethod, Map<String, List<String>> requestHeaders)
       throws IOException {
-    throw new UnsupportedOperationException("This is not a general purpose response cache.");
-  }
 
-  @Override public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-    throw new UnsupportedOperationException("This is not a general purpose response cache.");
+    Request request = JavaApiConverter.createOkRequest(uri, requestMethod, requestHeaders);
+    Response response = get(request);
+    if (response == null) {
+      return null;
+    }
+    return JavaApiConverter.createJavaCacheResponse(response);
   }
 
   private static String urlToKey(Request requst) {
@@ -161,6 +165,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     }
 
     return response;
+  }
+
+  @Override public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
+    return put(JavaApiConverter.createOkResponse(uri, urlConnection));
   }
 
   @Override public CacheRequest put(Response response) throws IOException {
