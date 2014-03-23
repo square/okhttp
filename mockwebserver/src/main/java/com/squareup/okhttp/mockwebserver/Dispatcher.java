@@ -24,11 +24,18 @@ public abstract class Dispatcher {
   public abstract MockResponse dispatch(RecordedRequest request) throws InterruptedException;
 
   /**
-   * Returns the socket policy of the next request.  Default implementation
-   * returns {@link SocketPolicy#KEEP_OPEN}. Mischievous implementations can
-   * return other values to test HTTP edge cases.
+   * Returns an early guess of the next response, used for policy on how an
+   * incoming request should be received. The default implementation returns an
+   * empty response. Mischievous implementations can return other values to test
+   * HTTP edge cases, such as unhappy socket policies or throttled request
+   * bodies.
    */
-  public SocketPolicy peekSocketPolicy() {
-    return SocketPolicy.KEEP_OPEN;
+  public MockResponse peek() {
+    return new MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN);
+  }
+
+  /** @deprecated replaced with {@link #peek}. */
+  protected final SocketPolicy peekSocketPolicy() {
+    throw new UnsupportedOperationException("This API is obsolete. Override peek() instead!");
   }
 }
