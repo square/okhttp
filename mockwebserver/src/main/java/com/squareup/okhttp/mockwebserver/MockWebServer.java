@@ -276,7 +276,7 @@ public final class MockWebServer {
           } catch (SocketException e) {
             return;
           }
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == DISCONNECT_AT_START) {
             dispatchBookkeepingRequest(0, socket);
             socket.close();
@@ -314,7 +314,7 @@ public final class MockWebServer {
           if (tunnelProxy) {
             createTunnel();
           }
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == FAIL_HANDSHAKE) {
             dispatchBookkeepingRequest(sequenceNumber, raw);
             processHandshakeFailure(raw);
@@ -373,7 +373,7 @@ public final class MockWebServer {
        */
       private void createTunnel() throws IOException, InterruptedException {
         while (true) {
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (!processOneRequest(raw, raw.getInputStream(), raw.getOutputStream())) {
             throw new IllegalStateException("Tunnel without any CONNECT!");
           }
@@ -414,9 +414,8 @@ public final class MockWebServer {
     SSLContext context = SSLContext.getInstance("TLS");
     context.init(null, new TrustManager[] { UNTRUSTED_TRUST_MANAGER }, new SecureRandom());
     SSLSocketFactory sslSocketFactory = context.getSocketFactory();
-    SSLSocket socket =
-        (SSLSocket) sslSocketFactory.createSocket(raw, raw.getInetAddress().getHostAddress(),
-            raw.getPort(), true);
+    SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket(
+        raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
     try {
       socket.startHandshake(); // we're testing a handshake failure
       throw new AssertionError();
@@ -475,9 +474,10 @@ public final class MockWebServer {
     boolean hasBody = false;
     TruncatingOutputStream requestBody = new TruncatingOutputStream();
     List<Integer> chunkSizes = new ArrayList<Integer>();
+    MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
       hasBody = true;
-      transfer(contentLength, in, requestBody);
+      throttledTransfer(throttlePolicy, in, requestBody, contentLength);
     } else if (chunked) {
       hasBody = true;
       while (true) {
@@ -487,7 +487,7 @@ public final class MockWebServer {
           break;
         }
         chunkSizes.add(chunkSize);
-        transfer(chunkSize, in, requestBody);
+        throttledTransfer(throttlePolicy, in, requestBody, chunkSize);
         readEmptyLine(in);
       }
     }
@@ -523,40 +523,39 @@ public final class MockWebServer {
 
     InputStream in = response.getBodyStream();
     if (in == null) return;
+    throttledTransfer(response, in, out, Long.MAX_VALUE);
+  }
 
-    // Stream data in MTU-sized increments, sleeping every bytesPerPeriod bytes.
-    byte[] buffer = new byte[1452];
+  /**
+   * Transfer bytes from {@code in} to {@code out} until either {@code length}
+   * bytes have been transferred or {@code in} is exhausted. The transfer is
+   * throttled according to {@code throttlePolicy}.
+   */
+  private void throttledTransfer(MockResponse throttlePolicy, InputStream in, OutputStream out,
+      long limit) throws IOException {
+    byte[] buffer = new byte[1024];
+    int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
+    long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
+
     while (true) {
-      int bytesPerPeriod = response.getThrottleBytesPerPeriod();
       for (int b = 0; b < bytesPerPeriod; ) {
-        int read = in.read(buffer, 0, Math.min(buffer.length, bytesPerPeriod - b));
+        int toRead = (int) Math.min(Math.min(buffer.length, limit), bytesPerPeriod - b);
+        int read = in.read(buffer, 0, toRead);
         if (read == -1) return;
 
         out.write(buffer, 0, read);
         out.flush();
         b += read;
+        limit -= read;
+
+        if (limit == 0) return;
       }
 
       try {
-        long delayMs = response.getThrottleUnit().toMillis(response.getThrottlePeriod());
         if (delayMs != 0) Thread.sleep(delayMs);
       } catch (InterruptedException e) {
         throw new AssertionError();
       }
-    }
-  }
-
-  /**
-   * Transfer bytes from {@code in} to {@code out} until either {@code length}
-   * bytes have been transferred or {@code in} is exhausted.
-   */
-  private void transfer(long length, InputStream in, OutputStream out) throws IOException {
-    byte[] buffer = new byte[1024];
-    while (length > 0) {
-      int count = in.read(buffer, 0, (int) Math.min(buffer.length, length));
-      if (count == -1) return;
-      out.write(buffer, 0, count);
-      length -= count;
     }
   }
 
