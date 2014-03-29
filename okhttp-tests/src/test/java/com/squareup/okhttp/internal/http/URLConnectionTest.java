@@ -1840,22 +1840,31 @@ public final class URLConnectionTest {
 
   @Test public void response300MultipleChoiceWithPost() throws Exception {
     // Chrome doesn't follow the redirect, but Firefox and the RI both do
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MULT_CHOICE);
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MULT_CHOICE, TransferKind.END_OF_STREAM);
   }
 
   @Test public void response301MovedPermanentlyWithPost() throws Exception {
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_PERM);
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_PERM, TransferKind.END_OF_STREAM);
   }
 
   @Test public void response302MovedTemporarilyWithPost() throws Exception {
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_TEMP);
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_TEMP, TransferKind.END_OF_STREAM);
   }
 
   @Test public void response303SeeOtherWithPost() throws Exception {
-    testResponseRedirectedWithPost(HttpURLConnection.HTTP_SEE_OTHER);
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_SEE_OTHER, TransferKind.END_OF_STREAM);
   }
 
-  private void testResponseRedirectedWithPost(int redirectCode) throws Exception {
+  @Test public void postRedirectToGetWithChunkedRequest() throws Exception {
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_TEMP, TransferKind.CHUNKED);
+  }
+
+  @Test public void postRedirectToGetWithStreamedRequest() throws Exception {
+    testResponseRedirectedWithPost(HttpURLConnection.HTTP_MOVED_TEMP, TransferKind.FIXED_LENGTH);
+  }
+
+  private void testResponseRedirectedWithPost(int redirectCode, TransferKind transferKind)
+      throws Exception {
     server.enqueue(new MockResponse().setResponseCode(redirectCode)
         .addHeader("Location: /page2")
         .setBody("This page has moved!"));
@@ -1864,6 +1873,7 @@ public final class URLConnectionTest {
 
     connection = client.open(server.getUrl("/page1"));
     connection.setDoOutput(true);
+    transferKind.setForRequest(connection, 4);
     byte[] requestBody = { 'A', 'B', 'C', 'D' };
     OutputStream outputStream = connection.getOutputStream();
     outputStream.write(requestBody);
