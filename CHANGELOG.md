@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 1.5.3
+
+_2014-03-29_
+
+ * Fix bug where the Content-Length header was not always dropped when
+   following a redirect from a POST to a GET.
+ * Implement basic support for `Thread.interrupt()`. OkHttp now checks
+   for an interruption before doing a blocking call. If it is interrupted,
+   it throws an `InterruptedIOException`.
+
 ## Version 1.5.2
 
 _2014-03-17_
