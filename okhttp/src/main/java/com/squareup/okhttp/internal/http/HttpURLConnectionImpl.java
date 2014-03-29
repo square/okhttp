@@ -284,15 +284,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       builder.addHeader(headers.name(i), headers.value(i));
     }
 
-    boolean bufferRequestBody;
-    if (fixedContentLength != -1) {
-      bufferRequestBody = false;
-      builder.header("Content-Length", Long.toString(fixedContentLength));
-    } else if (chunkLength > 0) {
-      bufferRequestBody = false;
-      builder.header("Transfer-Encoding", "chunked");
-    } else {
-      bufferRequestBody = true;
+    boolean bufferRequestBody = false;
+    if (HttpMethod.hasRequestBody(method)) {
+      if (fixedContentLength != -1) {
+        builder.header("Content-Length", Long.toString(fixedContentLength));
+      } else if (chunkLength > 0) {
+        builder.header("Transfer-Encoding", "chunked");
+      } else {
+        bufferRequestBody = true;
+      }
     }
 
     Request request = builder.build();
