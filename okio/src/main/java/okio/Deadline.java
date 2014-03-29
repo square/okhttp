@@ -16,6 +16,7 @@
 package okio;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,8 +48,11 @@ public class Deadline {
     return System.nanoTime() - deadlineNanos >= 0; // Subtract to avoid overflow!
   }
 
-  public void throwIfReached() throws IOException {
+  public final void throwIfReached() throws IOException {
     // TODO: a more catchable exception type?
     if (reached()) throw new IOException("Deadline reached");
+
+    // If the thread is interrupted, do not proceed with further I/O.
+    if (Thread.interrupted()) throw new InterruptedIOException();
   }
 }
