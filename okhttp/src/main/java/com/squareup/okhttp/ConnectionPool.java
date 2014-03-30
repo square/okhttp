@@ -218,6 +218,10 @@ public class ConnectionPool {
       return;
     }
 
+    if (!connection.clearOwner()) {
+      return; // This connection isn't eligible for reuse.
+    }
+
     if (!connection.isAlive()) {
       Util.closeQuietly(connection);
       return;
