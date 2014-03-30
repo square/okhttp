@@ -138,8 +138,14 @@ public class HttpEngine {
     this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
     this.routeSelector = routeSelector;
-    this.route = connection != null ? connection.getRoute() : null;
     this.requestBodyOut = requestBodyOut;
+
+    if (connection != null) {
+      connection.setOwner(this);
+      this.route = connection.getRoute();
+    } else {
+      this.route = null;
+    }
   }
 
   /**
@@ -179,6 +185,9 @@ public class HttpEngine {
       if (connection == null) {
         connect();
       }
+
+      // Blow up if we aren't the current owner of the connection.
+      if (connection.getOwner() != this && !connection.isSpdy()) throw new AssertionError();
 
       transport = (Transport) connection.newTransport(this);
 
@@ -231,6 +240,7 @@ public class HttpEngine {
     }
 
     connection = routeSelector.next(request.method());
+    connection.setOwner(this);
 
     if (!connection.isConnected()) {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
@@ -404,6 +414,11 @@ public class HttpEngine {
       closeQuietly(connection);
       connection = null;
       return null;
+    }
+
+    // Prevent this engine from disconnecting a connection it no longer owns.
+    if (connection != null && !connection.clearOwner()) {
+      connection = null;
     }
 
     Connection result = connection;

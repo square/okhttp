@@ -85,9 +85,66 @@ public final class Connection implements Closeable {
   private Handshake handshake;
   private int recycleCount;
 
+  /**
+   * The object that owns this connection. Null if it is shared (for SPDY),
+   * belongs to a pool, or has been discarded. Guarded by {@code pool}, which
+   * clears the owner when an incoming connection is recycled.
+   */
+  private Object owner;
+
   public Connection(ConnectionPool pool, Route route) {
     this.pool = pool;
     this.route = route;
+  }
+
+  public Object getOwner() {
+    synchronized (pool) {
+      return owner;
+    }
+  }
+
+  public void setOwner(Object owner) {
+    if (isSpdy()) return; // SPDY connections are shared.
+    synchronized (pool) {
+      if (this.owner != null) throw new IllegalStateException("Connection already has an owner!");
+      this.owner = owner;
+    }
+  }
+
+  /**
+   * Attempts to clears the owner of this connection. Returns true if the owner
+   * was cleared and the connection can be pooled or reused. This will return
+   * false if the connection cannot be pooled or reused, such as if it was
+   * closed with {@link #closeIfOwnedBy}.
+   */
+  public boolean clearOwner() {
+    synchronized (pool) {
+      if (owner == null) {
+        // No owner? Don't reuse this connection.
+        return false;
+      }
+
+      owner = null;
+      return true;
+    }
+  }
+
+  /**
+   * Closes this connection if it is currently owned by {@code owner}. This also
+   * strips the ownership of the connection so it cannot be pooled or reused.
+   */
+  public void closeIfOwnedBy(Object owner) throws IOException {
+    if (isSpdy()) throw new IllegalStateException();
+    synchronized (pool) {
+      if (this.owner != owner) {
+        return; // Wrong owner. Perhaps a late disconnect?
+      }
+
+      this.owner = null; // Drop the owner so the connection won't be reused.
+    }
+
+    // Don't close() inside the synchronized block.
+    socket.close();
   }
 
   public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
