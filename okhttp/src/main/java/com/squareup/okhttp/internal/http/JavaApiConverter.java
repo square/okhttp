@@ -164,7 +164,7 @@ public final class JavaApiConverter {
         .method(requestMethod, null);
 
     if (requestHeaders != null) {
-      Headers headers = extractOkRequestHeaders(requestHeaders);
+      Headers headers = extractOkHeaders(requestHeaders);
       builder.headers(headers);
     }
     return builder.build();
@@ -264,25 +264,12 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Extracts an OkHttp {@link Headers} object from the supplied request header {@link Map}.
-   */
-  private static Headers extractOkRequestHeaders(Map<String, List<String>> requestHeaders) {
-    Headers.Builder headersBuilder = new Headers.Builder();
-    for (Map.Entry<String, List<String>> headerEntry : requestHeaders.entrySet()) {
-      for (String value : headerEntry.getValue()) {
-        headersBuilder.add(headerEntry.getKey(), value);
-      }
-    }
-    return headersBuilder.build();
-  }
-
-  /**
    * Extracts OkHttp headers from the supplied {@link java.net.CacheResponse}. Only real headers are
    * extracted. See {@link #extractStatusLine(java.net.CacheResponse)}.
    */
   private static Headers extractOkHeaders(CacheResponse javaResponse) throws IOException {
     Map<String, List<String>> javaResponseHeaders = javaResponse.getHeaders();
-    return extractOkResponseHeaders(javaResponseHeaders);
+    return extractOkHeaders(javaResponseHeaders);
   }
 
   /**
@@ -291,23 +278,26 @@ public final class JavaApiConverter {
    */
   private static Headers extractOkResponseHeaders(HttpURLConnection httpUrlConnection) {
     Map<String, List<String>> javaResponseHeaders = httpUrlConnection.getHeaderFields();
-    return extractOkResponseHeaders(javaResponseHeaders);
+    return extractOkHeaders(javaResponseHeaders);
   }
 
   /**
    * Extracts OkHttp headers from the supplied {@link Map}. Only real headers are
-   * extracted. Any status line entry (one with a {@code null} key) is discarded.
+   * extracted. Any entry (one with a {@code null} key) is discarded.
    */
   // @VisibleForTesting
-  static Headers extractOkResponseHeaders(Map<String, List<String>> javaResponseHeaders) {
+  static Headers extractOkHeaders(Map<String, List<String>> javaHeaders) {
     Headers.Builder okHeadersBuilder = new Headers.Builder();
-    for (Map.Entry<String, List<String>> cachedHeader : javaResponseHeaders.entrySet()) {
-      String name = cachedHeader.getKey();
+    for (Map.Entry<String, List<String>> javaHeader : javaHeaders.entrySet()) {
+      String name = javaHeader.getKey();
       if (name == null) {
-        // The Java API uses the null key to store the status line.
+        // The Java API uses the null key to store the status line in responses.
+        // Earlier versions of OkHttp would use the null key to store the "request line" in
+        // requests. e.g. "GET / HTTP 1.1". Although this is no longer the case it must be
+        // explicitly ignored because Headers.Builder does not support null keys.
         continue;
       }
-      for (String value : cachedHeader.getValue()) {
+      for (String value : javaHeader.getValue()) {
         okHeadersBuilder.add(name, value);
       }
     }
