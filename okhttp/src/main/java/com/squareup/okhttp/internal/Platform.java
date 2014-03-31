@@ -49,13 +49,16 @@ import okio.ByteString;
  *
  * <p>NPN (Next Protocol Negotiation) was developed for SPDY. It is widely
  * available and we support it on both Android (4.1+) and OpenJDK 7 (via the
- * Jetty NPN-boot library).
+ * Jetty NPN-boot library). NPN is not yet available on Java 8.
  *
  * <p>ALPN (Application Layer Protocol Negotiation) is the successor to NPN. It
- * has some technical advantages over NPN. We support it on Android (4.4+) only.
+ * has some technical advantages over NPN. ALPN first arrived in Android 4.4,
+ * but that release suffers a <a href="http://goo.gl/y5izPP">concurrency bug</a>
+ * so we don't use it. ALPN will be supported in the future.
  *
  * <p>On platforms that support both extensions, OkHttp will use both,
- * preferring ALPN's result. Future versions of OkHttp will drop support NPN.
+ * preferring ALPN's result. Future versions of OkHttp will drop support for
+ * NPN.
  *
  * <h3>Deflater Sync Flush</h3>
  * SPDY header compression requires a recent version of {@code
@@ -170,21 +173,14 @@ public class Platform {
       // Attempt to find Android 4.1+ APIs.
       Method setNpnProtocols = null;
       Method getNpnSelectedProtocol = null;
-      Method setAlpnProtocols = null;
-      Method getAlpnSelectedProtocol = null;
       try {
         setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
         getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
-        try {
-          setAlpnProtocols = openSslSocketClass.getMethod("setAlpnProtocols", byte[].class);
-          getAlpnSelectedProtocol = openSslSocketClass.getMethod("getAlpnSelectedProtocol");
-        } catch (NoSuchMethodException ignored) {
-        }
       } catch (NoSuchMethodException ignored) {
       }
 
       return new Android(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
-          getNpnSelectedProtocol, setAlpnProtocols, getAlpnSelectedProtocol);
+          getNpnSelectedProtocol);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     } catch (NoSuchMethodException ignored) {
@@ -225,21 +221,13 @@ public class Platform {
     private final Method setNpnProtocols;
     private final Method getNpnSelectedProtocol;
 
-    // Non-null on Android 4.4+.
-    private final Method setAlpnProtocols;
-    private final Method getAlpnSelectedProtocol;
-
-    private Android(
-        Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method setNpnProtocols, Method getNpnSelectedProtocol, Method setAlpnProtocols,
-        Method getAlpnSelectedProtocol) {
+    private Android(Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
+        Method setNpnProtocols, Method getNpnSelectedProtocol) {
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
       this.setNpnProtocols = setNpnProtocols;
       this.getNpnSelectedProtocol = getNpnSelectedProtocol;
-      this.setAlpnProtocols = setAlpnProtocols;
-      this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
     }
 
     @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -273,9 +261,6 @@ public class Platform {
       if (!openSslSocketClass.isInstance(socket)) return;
       try {
         Object[] parameters = { concatLengthPrefixed(npnProtocols) };
-        if (setAlpnProtocols != null) {
-          setAlpnProtocols.invoke(socket, parameters);
-        }
         setNpnProtocols.invoke(socket, parameters);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
@@ -288,11 +273,6 @@ public class Platform {
       if (getNpnSelectedProtocol == null) return null;
       if (!openSslSocketClass.isInstance(socket)) return null;
       try {
-        if (getAlpnSelectedProtocol != null) {
-          // Prefer ALPN's result if it is present.
-          byte[] alpnResult = (byte[]) getAlpnSelectedProtocol.invoke(socket);
-          if (alpnResult != null) return ByteString.of(alpnResult);
-        }
         byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
         if (npnResult == null) return null;
         return ByteString.of(npnResult);
