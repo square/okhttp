@@ -325,6 +325,26 @@ public class JavaApiConverterTest {
     assertEquals("POST", request.method());
   }
 
+  // Older versions of OkHttp would store the "request line" as a header with a
+  // null key. To support the Android usecase where an old version of OkHttp uses
+  // a newer, Android-bundled, version of HttpResponseCache the null key must be
+  // explicitly ignored.
+  @Test public void createOkRequest_nullRequestHeaderKey() throws Exception {
+    URI uri = new URI("https://foo/bar");
+
+    Map<String,List<String>> javaRequestHeaders = new HashMap<String, List<String>>();
+    javaRequestHeaders.put(null, Arrays.asList("GET / HTTP 1.1"));
+    javaRequestHeaders.put("Foo", Arrays.asList("Bar"));
+    Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
+    assertTrue(request.isHttps());
+    assertEquals(uri, request.uri());
+    assertNull(request.body());
+    Headers okRequestHeaders = request.headers();
+    assertEquals(1, okRequestHeaders.size());
+    assertEquals("Bar", okRequestHeaders.get("Foo"));
+    assertEquals("POST", request.method());
+  }
+
   @Test public void createJavaUrlConnection_requestChangesForbidden() throws Exception {
     Response okResponse = createArbitraryOkResponse();
     HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
@@ -643,13 +663,13 @@ public class JavaApiConverterTest {
     assertEquals(Arrays.asList("value2"), javaHeaders.get("key2"));
   }
 
-  @Test public void extractOkResponseHeaders() {
+  @Test public void extractOkHeaders() {
     Map<String, List<String>> javaResponseHeaders = new HashMap<String, List<String>>();
     javaResponseHeaders.put(null, Arrays.asList("StatusLine"));
     javaResponseHeaders.put("key1", Arrays.asList("value1_1", "value1_2"));
     javaResponseHeaders.put("key2", Arrays.asList("value2"));
 
-    Headers okHeaders = JavaApiConverter.extractOkResponseHeaders(javaResponseHeaders);
+    Headers okHeaders = JavaApiConverter.extractOkHeaders(javaResponseHeaders);
     assertEquals(3, okHeaders.size()); // null entry should be stripped out
     assertEquals(Arrays.asList("value1_1", "value1_2"), okHeaders.values("key1"));
     assertEquals(Arrays.asList("value2"), okHeaders.values("key2"));
