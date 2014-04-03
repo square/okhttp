@@ -117,6 +117,10 @@ public final class HttpConnection {
     return state == STATE_CLOSED;
   }
 
+  public void closeIfOwnedBy(Object owner) throws IOException {
+    connection.closeIfOwnedBy(owner);
+  }
+
   public void flush() throws IOException {
     sink.flush();
   }

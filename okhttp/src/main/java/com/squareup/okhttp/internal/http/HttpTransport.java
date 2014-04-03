@@ -148,4 +148,8 @@ public final class HttpTransport implements Transport {
     // reference escapes.
     return httpConnection.newUnknownLengthSource(cacheRequest);
   }
+
+  @Override public void disconnect(HttpEngine engine) throws IOException {
+    httpConnection.closeIfOwnedBy(engine);
+  }
 }

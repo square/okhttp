@@ -385,6 +385,18 @@ public class HttpEngine {
   }
 
   /**
+   * Immediately closes the socket connection if it's currently held by this
+   * engine. Use this to interrupt an in-flight request from any thread. It's
+   * the caller's responsibility to close the request body and response body
+   * streams; otherwise resources may be leaked.
+   */
+  public final void disconnect() throws IOException {
+    if (transport != null) {
+      transport.disconnect(this);
+    }
+  }
+
+  /**
    * Release any resources held by this engine. If a connection is still held by
    * this engine, it is returned.
    */
