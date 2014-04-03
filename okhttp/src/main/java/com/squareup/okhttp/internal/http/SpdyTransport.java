@@ -219,6 +219,10 @@ public final class SpdyTransport implements Transport {
   @Override public void releaseConnectionOnIdle() {
   }
 
+  @Override public void disconnect(HttpEngine engine) throws IOException {
+    stream.close(ErrorCode.CANCEL);
+  }
+
   @Override public boolean canReuseConnection() {
     return true; // TODO: spdyConnection.isClosed() ?
   }
