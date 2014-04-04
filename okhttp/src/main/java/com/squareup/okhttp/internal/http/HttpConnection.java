@@ -176,11 +176,11 @@ public final class HttpConnection {
       StatusLine statusLine = new StatusLine(statusLineString);
 
       Response.Builder responseBuilder = new Response.Builder()
-          .statusLine(statusLine)
-          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.name.utf8());
+          .statusLine(statusLine);
 
       Headers.Builder headersBuilder = new Headers.Builder();
       readHeaders(headersBuilder);
+      headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.name.utf8());
       responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) {
