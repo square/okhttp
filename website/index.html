@@ -57,8 +57,9 @@
             <p>OkHttp perseveres when the network is troublesome: it will silently recover from
                 common connection problems. If your service has multiple IP addresses OkHttp will
                 attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
-                and for services hosted in redundant data centers. OkHttp also recovers from problematic
-                proxy servers and failed SSL handshakes.</p>
+                and for services hosted in redundant data centers. OkHttp initiates new connections
+                with modern TLS features (SNI, NPN), and falls back to SSLv3 if the handshake
+                fails.</p>
 
             <p>You can try OkHttp without rewriting your network code. The core module implements
                 the familiar <code>java.net.HttpURLConnection</code> API. And the optional
