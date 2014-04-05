@@ -109,9 +109,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final void disconnect() {
     // Calling disconnect() before a connection exists should have no effect.
-    if (httpEngine != null) {
-      httpEngine.close();
+    if (httpEngine == null) return;
+
+    try {
+      httpEngine.disconnect();
+    } catch (IOException ignored) {
     }
+
+    // This doesn't close the stream because doing so would require all stream
+    // access to be synchronized. It's expected that the thread using the
+    // connection will close its streams directly. If it doesn't, the worst
+    // case is that the GzipSource's Inflater won't be released until it's
+    // finalized. (This logs a warning on Android.)
   }
 
   /**
