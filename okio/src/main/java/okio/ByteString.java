@@ -40,7 +40,7 @@ public final class ByteString implements Serializable {
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
   /** A singleton empty {@code ByteString}. */
-  public static final ByteString EMPTY = ByteString.of();
+  public static final ByteString EMPTY = new ByteString(new byte[0]);
   static final long serialVersionUID = 1L;
 
   final byte[] data;
@@ -55,6 +55,7 @@ public final class ByteString implements Serializable {
    * Returns a new byte string containing a clone of the bytes of {@code data}.
    */
   public static ByteString of(byte... data) {
+    if (data.length == 0) return EMPTY;
     return new ByteString(data.clone());
   }
 
