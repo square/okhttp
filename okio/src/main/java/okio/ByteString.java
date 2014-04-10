@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -34,12 +35,13 @@ import java.util.Arrays;
  * and other environments that run both trusted and untrusted code in the same
  * process.
  */
-public final class ByteString {
+public final class ByteString implements Serializable {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
   /** A singleton empty {@code ByteString}. */
   public static final ByteString EMPTY = ByteString.of();
+  static final long serialVersionUID = 1L;
 
   final byte[] data;
   private transient int hashCode; // Lazily computed; 0 if unknown.
@@ -54,6 +56,16 @@ public final class ByteString {
    */
   public static ByteString of(byte... data) {
     return new ByteString(data.clone());
+  }
+
+  /**
+   * Ensures java serialization can't make multiple copies of {@code EMPTY}.
+   *
+   * @see Serializable
+   */
+  Object readResolve() {
+    if (data.length == 0) return EMPTY;
+    return this;
   }
 
   /** Returns a new byte string containing the {@code UTF-8} bytes of {@code s}. */
