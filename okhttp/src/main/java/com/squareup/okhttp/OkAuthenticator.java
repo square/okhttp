@@ -88,7 +88,7 @@ public interface OkAuthenticator {
   public final class Credential {
     private final String headerValue;
 
-    private Credential(String headerValue) {
+    public Credential(String headerValue) {
       this.headerValue = headerValue;
     }
 
@@ -102,6 +102,10 @@ public interface OkAuthenticator {
       } catch (UnsupportedEncodingException e) {
         throw new AssertionError();
       }
+    }
+
+    public static Credential oauth(String bearer, String token) {
+      return new Credential(bearer + " " + token);
     }
 
     public String getHeaderValue() {
