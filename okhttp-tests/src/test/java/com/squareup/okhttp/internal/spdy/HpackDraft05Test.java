@@ -18,8 +18,8 @@ package com.squareup.okhttp.internal.spdy;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import okio.Buffer;
 import okio.ByteString;
-import okio.OkBuffer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,9 +30,9 @@ import static org.junit.Assert.assertTrue;
 
 public class HpackDraft05Test {
 
-  private final OkBuffer bytesIn = new OkBuffer();
+  private final Buffer bytesIn = new Buffer();
   private HpackDraft05.Reader hpackReader;
-  private OkBuffer bytesOut = new OkBuffer();
+  private Buffer bytesOut = new Buffer();
   private HpackDraft05.Writer hpackWriter;
 
   @Before public void reset() {
@@ -66,7 +66,7 @@ public class HpackDraft05Test {
    * Ensure the larger header content is not lost.
    */
   @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
 
     out.writeByte(0x00); // Literal indexed
     out.writeByte(0x0a); // Literal name (len = 10)
@@ -87,7 +87,7 @@ public class HpackDraft05Test {
 
   /** Oldest entries are evicted to support newer ones. */
   @Test public void testEviction() throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
 
     out.writeByte(0x00); // Literal indexed
     out.writeByte(0x0a); // Literal name (len = 10)
@@ -138,7 +138,7 @@ public class HpackDraft05Test {
 
   /** Header table backing array is initially 8 long, let's ensure it grows. */
   @Test public void dynamicallyGrowsBeyond64Entries() throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
 
     for (int i = 0; i < 256; i++) {
       out.writeByte(0x00); // Literal indexed
@@ -160,7 +160,7 @@ public class HpackDraft05Test {
   }
 
   @Test public void huffmanDecodingSupported() throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
 
     out.writeByte(0x04); // == Literal indexed ==
                          // Indexed name (idx = 4) -> :path
@@ -188,7 +188,7 @@ public class HpackDraft05Test {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
 
     out.writeByte(0x00); // Literal indexed
     out.writeByte(0x0a); // Literal name (len = 10)
@@ -217,7 +217,7 @@ public class HpackDraft05Test {
   @Test public void literalHeaderFieldWithoutIndexingNewName() throws IOException {
     List<Header> headerBlock = headerEntries("custom-key", "custom-header");
 
-    OkBuffer expectedBytes = new OkBuffer();
+    Buffer expectedBytes = new Buffer();
 
     expectedBytes.writeByte(0x40); // Not indexed
     expectedBytes.writeByte(0x0a); // Literal name (len = 10)
@@ -244,7 +244,7 @@ public class HpackDraft05Test {
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
 
-    OkBuffer expectedBytes = new OkBuffer();
+    Buffer expectedBytes = new Buffer();
     expectedBytes.writeByte(0x44); // == Literal not indexed ==
                                    // Indexed name (idx = 4) -> :path
     expectedBytes.writeByte(0x0c); // Literal value (len = 12)
@@ -369,7 +369,7 @@ public class HpackDraft05Test {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
-    OkBuffer out = firstRequestWithoutHuffman();
+    Buffer out = firstRequestWithoutHuffman();
     bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -388,8 +388,8 @@ public class HpackDraft05Test {
     checkReadThirdRequestWithoutHuffman();
   }
 
-  private OkBuffer firstRequestWithoutHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer firstRequestWithoutHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x82); // == Indexed - Add ==
                          // idx = 2 -> :method: GET
@@ -439,8 +439,8 @@ public class HpackDraft05Test {
         ":authority", "www.example.com"), hpackReader.getAndReset());
   }
 
-  private OkBuffer secondRequestWithoutHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer secondRequestWithoutHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x1b); // == Literal indexed ==
                          // Indexed name (idx = 27) -> cache-control
@@ -490,8 +490,8 @@ public class HpackDraft05Test {
         "cache-control", "no-cache"), hpackReader.getAndReset());
   }
 
-  private OkBuffer thirdRequestWithoutHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer thirdRequestWithoutHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x80); // == Empty reference set ==
     out.writeByte(0x85); // == Indexed - Add ==
@@ -571,7 +571,7 @@ public class HpackDraft05Test {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.3
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
-    OkBuffer out = firstRequestWithHuffman();
+    Buffer out = firstRequestWithHuffman();
     bytesIn.write(out, out.size());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -590,8 +590,8 @@ public class HpackDraft05Test {
     checkReadThirdRequestWithHuffman();
   }
 
-  private OkBuffer firstRequestWithHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer firstRequestWithHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x82); // == Indexed - Add ==
                          // idx = 2 -> :method: GET
@@ -646,8 +646,8 @@ public class HpackDraft05Test {
         ":authority", "www.example.com"), hpackReader.getAndReset());
   }
 
-  private OkBuffer secondRequestWithHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer secondRequestWithHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x1b); // == Literal indexed ==
                          // Indexed name (idx = 27) -> cache-control
@@ -701,8 +701,8 @@ public class HpackDraft05Test {
         "cache-control", "no-cache"), hpackReader.getAndReset());
   }
 
-  private OkBuffer thirdRequestWithHuffman() {
-    OkBuffer out = new OkBuffer();
+  private Buffer thirdRequestWithHuffman() {
+    Buffer out = new Buffer();
 
     out.writeByte(0x80); // == Empty reference set ==
     out.writeByte(0x85); // == Indexed - Add ==
@@ -848,12 +848,12 @@ public class HpackDraft05Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
   }
 
-  private HpackDraft05.Reader newReader(OkBuffer source) {
+  private HpackDraft05.Reader newReader(Buffer source) {
     return new HpackDraft05.Reader(false, 4096, source);
   }
 
-  private OkBuffer byteStream(int... bytes) {
-    return new OkBuffer().write(intArrayToByteArray(bytes));
+  private Buffer byteStream(int... bytes) {
+    return new Buffer().write(intArrayToByteArray(bytes));
   }
 
   private void checkEntry(Header entry, String name, String value, int size) {

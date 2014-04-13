@@ -19,9 +19,9 @@ import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffer;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
@@ -34,7 +34,7 @@ public class Http20Draft09Test {
   static final int expectedStreamId = 15;
 
   @Test public void unknownFrameTypeIgnored() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     frame.writeShort(4); // has a 4-byte field
     frame.writeByte(99); // type 99
@@ -51,11 +51,11 @@ public class Http20Draft09Test {
   @Test public void onlyOneLiteralHeadersFrame() throws IOException {
     final List<Header> sentHeaders = headerEntries("name", "value");
 
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     // Write the headers frame, specifying no more frames are expected.
     {
-      OkBuffer headerBytes = literalHeaders(sentHeaders);
+      Buffer headerBytes = literalHeaders(sentHeaders);
       frame.writeShort((int) headerBytes.size());
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
       frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_END_STREAM);
@@ -84,12 +84,12 @@ public class Http20Draft09Test {
   }
 
   @Test public void headersWithPriority() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final List<Header> sentHeaders = headerEntries("name", "value");
 
     { // Write the headers frame, specifying priority flag and value.
-      OkBuffer headerBytes = literalHeaders(sentHeaders);
+      Buffer headerBytes = literalHeaders(sentHeaders);
       frame.writeShort((int) (headerBytes.size() + 4));
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
       frame.writeByte(Http20Draft09.FLAG_END_HEADERS | Http20Draft09.FLAG_PRIORITY);
@@ -121,10 +121,10 @@ public class Http20Draft09Test {
   /** Headers are compressed, then framed. */
   @Test public void headersFrameThenContinuation() throws IOException {
 
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     // Decoding the first header will cross frame boundaries.
-    OkBuffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
     { // Write the first headers frame.
       frame.writeShort((int) (headerBlock.size() / 2));
       frame.writeByte(Http20Draft09.TYPE_HEADERS);
@@ -162,7 +162,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void pushPromise() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final int expectedPromisedStreamId = 11;
 
@@ -174,7 +174,7 @@ public class Http20Draft09Test {
     );
 
     { // Write the push promise frame, specifying the associated stream ID.
-      OkBuffer headerBytes = literalHeaders(pushPromise);
+      Buffer headerBytes = literalHeaders(pushPromise);
       frame.writeShort((int) (headerBytes.size() + 4));
       frame.writeByte(Http20Draft09.TYPE_PUSH_PROMISE);
       frame.writeByte(Http20Draft09.FLAG_END_PUSH_PROMISE);
@@ -198,7 +198,7 @@ public class Http20Draft09Test {
 
   /** Headers are compressed, then framed. */
   @Test public void pushPromiseThenContinuation() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final int expectedPromisedStreamId = 11;
 
@@ -210,7 +210,7 @@ public class Http20Draft09Test {
     );
 
     // Decoding the first header will cross frame boundaries.
-    OkBuffer headerBlock = literalHeaders(pushPromise);
+    Buffer headerBlock = literalHeaders(pushPromise);
     int firstFrameLength = (int) (headerBlock.size() - 1);
     { // Write the first headers frame.
       frame.writeShort(firstFrameLength + 4);
@@ -243,7 +243,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void readRstStreamFrame() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     frame.writeShort(4);
     frame.writeByte(Http20Draft09.TYPE_RST_STREAM);
@@ -263,7 +263,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void readSettingsFrame() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final int reducedTableSizeBytes = 16;
 
@@ -289,7 +289,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void pingRoundTrip() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final int expectedPayload1 = 7;
     final int expectedPayload2 = 8;
@@ -317,7 +317,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void maxLengthDataFrame() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final byte[] expectedData = new byte[16383];
     Arrays.fill(expectedData, (byte) 2);
@@ -330,7 +330,7 @@ public class Http20Draft09Test {
     frame.write(expectedData);
 
     // Check writer sends the same bytes.
-    assertEquals(frame, sendDataFrame(new OkBuffer().write(expectedData)));
+    assertEquals(frame, sendDataFrame(new Buffer().write(expectedData)));
 
     FrameReader fr = new Http20Draft09.Reader(frame, 4096, false);
 
@@ -350,7 +350,7 @@ public class Http20Draft09Test {
 
   @Test public void tooLargeDataFrame() throws IOException {
     try {
-      sendDataFrame(new OkBuffer().write(new byte[0x1000000]));
+      sendDataFrame(new Buffer().write(new byte[0x1000000]));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("FRAME_SIZE_ERROR length > 16383: 16777216", e.getMessage());
@@ -358,7 +358,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void windowUpdateRoundTrip() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final long expectedWindowSizeIncrement = 0x7fffffff;
 
@@ -400,7 +400,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void goAwayWithoutDebugDataRoundTrip() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
 
@@ -428,7 +428,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void goAwayWithDebugDataRoundTrip() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
     final ByteString expectedData = ByteString.encodeUtf8("abcdefgh");
@@ -458,7 +458,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void frameSizeError() throws IOException {
-    Http20Draft09.Writer writer = new Http20Draft09.Writer(new OkBuffer(), true);
+    Http20Draft09.Writer writer = new Http20Draft09.Writer(new Buffer(), true);
 
     try {
       writer.frameHeader(16384, Http20Draft09.TYPE_DATA, Http20Draft09.FLAG_NONE, 0);
@@ -469,7 +469,7 @@ public class Http20Draft09Test {
   }
 
   @Test public void streamIdHasReservedBit() throws IOException {
-      Http20Draft09.Writer writer = new Http20Draft09.Writer(new OkBuffer(), true);
+      Http20Draft09.Writer writer = new Http20Draft09.Writer(new Buffer(), true);
 
       try {
       int streamId = 3;
@@ -481,34 +481,34 @@ public class Http20Draft09Test {
     }
   }
 
-  private OkBuffer literalHeaders(List<Header> sentHeaders) throws IOException {
-    OkBuffer out = new OkBuffer();
+  private Buffer literalHeaders(List<Header> sentHeaders) throws IOException {
+    Buffer out = new Buffer();
     new HpackDraft05.Writer(out).writeHeaders(sentHeaders);
     return out;
   }
 
-  private OkBuffer sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
-    OkBuffer out = new OkBuffer();
+  private Buffer sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
+    Buffer out = new Buffer();
     new Http20Draft09.Writer(out, true).ping(ack, payload1, payload2);
     return out;
   }
 
-  private OkBuffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
+  private Buffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
     new Http20Draft09.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
     return out;
   }
 
-  private OkBuffer sendDataFrame(OkBuffer data) throws IOException {
-    OkBuffer out = new OkBuffer();
+  private Buffer sendDataFrame(Buffer data) throws IOException {
+    Buffer out = new Buffer();
     new Http20Draft09.Writer(out, true).dataFrame(expectedStreamId, Http20Draft09.FLAG_NONE, data,
         (int) data.size());
     return out;
   }
 
-  private OkBuffer windowUpdate(long windowSizeIncrement) throws IOException {
-    OkBuffer out = new OkBuffer();
+  private Buffer windowUpdate(long windowSizeIncrement) throws IOException {
+    Buffer out = new Buffer();
     new Http20Draft09.Writer(out, true).windowUpdate(expectedStreamId, windowSizeIncrement);
     return out;
   }

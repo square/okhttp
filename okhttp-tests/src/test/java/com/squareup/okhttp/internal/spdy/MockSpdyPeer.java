@@ -30,9 +30,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffer;
 import okio.Okio;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
@@ -40,7 +40,7 @@ public final class MockSpdyPeer implements Closeable {
   private int frameCount = 0;
   private boolean client = false;
   private Variant variant = new Spdy3();
-  private final OkBuffer bytesOut = new OkBuffer();
+  private final Buffer bytesOut = new Buffer();
   private FrameWriter frameWriter = variant.newWriter(bytesOut, client);
   private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();

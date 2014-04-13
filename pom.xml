@@ -23,7 +23,6 @@
     <module>okhttp-apache</module>
     <module>okhttp-tests</module>
     <module>okcurl</module>
-    <module>okio</module>
     <module>mockwebserver</module>
     <module>samples</module>
     <module>benchmarks</module>
@@ -34,6 +33,7 @@
 
     <!-- Compilation -->
     <java.version>1.6</java.version>
+    <okio.version>0.6.0</okio.version>
     <npn.version>8.1.2.v20120308</npn.version>
     <bouncycastle.version>1.48</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
@@ -66,6 +66,11 @@
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>com.squareup.okio</groupId>
+        <artifactId>okio</artifactId>
+        <version>${okio.version}</version>
+      </dependency>
       <dependency>
         <groupId>org.mortbay.jetty.npn</groupId>
         <artifactId>npn-boot</artifactId>

@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import okio.ByteString;
-import okio.OkBuffer;
+import okio.Buffer;
 import okio.Source;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -210,8 +210,8 @@ public final class Util {
   }
 
   /** Returns the remainder of 'source' as a buffer, closing it when done. */
-  public static OkBuffer readFully(Source source) throws IOException {
-    OkBuffer result = new OkBuffer();
+  public static Buffer readFully(Source source) throws IOException {
+    Buffer result = new Buffer();
     while (source.read(result, 2048) != -1) {
     }
     source.close();
@@ -222,7 +222,7 @@ public final class Util {
   public static boolean skipAll(Source in, int timeoutMillis) throws IOException {
     // TODO: Implement deadlines everywhere so they can do this work.
     long startNanos = System.nanoTime();
-    OkBuffer skipBuffer = new OkBuffer();
+    Buffer skipBuffer = new Buffer();
     while (NANOSECONDS.toMillis(System.nanoTime() - startNanos) < timeoutMillis) {
       long read = in.read(skipBuffer, 2048);
       if (read == -1) return true; // Successfully exhausted the stream.

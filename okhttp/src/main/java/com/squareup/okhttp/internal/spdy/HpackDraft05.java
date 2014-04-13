@@ -8,9 +8,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffer;
 import okio.Okio;
 import okio.Source;
 
@@ -396,9 +396,9 @@ final class HpackDraft05 {
   }
 
   static final class Writer {
-    private final OkBuffer out;
+    private final Buffer out;
 
-    Writer(OkBuffer out) {
+    Writer(Buffer out) {
       this.out = out;
     }
 

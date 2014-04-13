@@ -17,8 +17,8 @@ package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
+import okio.Buffer;
 import okio.ByteString;
-import okio.OkBuffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -29,7 +29,7 @@ public class Spdy3Test {
 
   @Test public void tooLargeDataFrame() throws IOException {
     try {
-      sendDataFrame(new OkBuffer().write(new byte[0x1000000]));
+      sendDataFrame(new Buffer().write(new byte[0x1000000]));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("FRAME_TOO_LARGE max size is 16Mib: " + 0x1000000L, e.getMessage());
@@ -53,7 +53,7 @@ public class Spdy3Test {
   }
 
   @Test public void goAwayRoundTrip() throws IOException {
-    OkBuffer frame = new OkBuffer();
+    Buffer frame = new Buffer();
 
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
 
@@ -83,18 +83,18 @@ public class Spdy3Test {
     });
   }
 
-  private void sendDataFrame(OkBuffer source) throws IOException {
-    Spdy3.Writer writer = new Spdy3.Writer(new OkBuffer(), true);
+  private void sendDataFrame(Buffer source) throws IOException {
+    Spdy3.Writer writer = new Spdy3.Writer(new Buffer(), true);
     writer.sendDataFrame(expectedStreamId, 0, source, (int) source.size());
   }
 
   private void windowUpdate(long increment) throws IOException {
-    new Spdy3.Writer(new OkBuffer(), true).windowUpdate(expectedStreamId, increment);
+    new Spdy3.Writer(new Buffer(), true).windowUpdate(expectedStreamId, increment);
   }
 
-  private OkBuffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
+  private Buffer sendGoAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData)
       throws IOException {
-    OkBuffer out = new OkBuffer();
+    Buffer out = new Buffer();
     new Spdy3.Writer(out, true).goAway(lastGoodStreamId, errorCode, debugData);
     return out;
   }

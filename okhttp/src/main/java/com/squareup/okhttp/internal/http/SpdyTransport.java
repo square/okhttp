@@ -34,12 +34,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import okio.Buffer;
 import okio.ByteString;
-import okio.Deadline;
-import okio.OkBuffer;
-import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;
@@ -262,7 +261,7 @@ public final class SpdyTransport implements Transport {
       this.cacheRequest = cacheRequest;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount)
+    @Override public long read(Buffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
@@ -278,15 +277,14 @@ public final class SpdyTransport implements Transport {
       }
 
       if (cacheBody != null) {
-        Okio.copy(sink, sink.size() - read, read, cacheBody);
+        sink.copyTo(cacheBody, sink.size() - read, read);
       }
 
       return read;
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      source.deadline(deadline);
-      return this;
+    @Override public Timeout timeout() {
+      return source.timeout();
     }
 
     @Override public void close() throws IOException {
