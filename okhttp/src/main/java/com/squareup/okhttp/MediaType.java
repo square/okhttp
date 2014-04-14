@@ -57,7 +57,11 @@ public final class MediaType {
     Matcher parameter = PARAMETER.matcher(string);
     for (int s = typeSubtype.end(); s < string.length(); s = parameter.end()) {
       parameter.region(s, string.length());
-      if (!parameter.lookingAt()) return null; // This is not a well-formed media type.
+      if (!parameter.lookingAt()) {
+        // This is not a well-formed media type. Permit a dangling semicolon but no more.
+        if (string.substring(s).matches(";\\s*")) break;
+        return null;
+      }
 
       String name = parameter.group(1);
       if (name == null || !name.equalsIgnoreCase("charset")) continue;
