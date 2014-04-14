@@ -54,6 +54,13 @@ public class MediaTypeTest {
     assertMediaType("text/plain; a=1; a=2; b=3");
     assertMediaType("text/plain; charset=utf-16");
     assertMediaType("text/plain; \t \n \r a=b");
+    assertMediaType("text/plain;");
+    assertMediaType("text/plain; ");
+    assertMediaType("text/plain; a=1;");
+    assertMediaType("text/plain; a=1; ");
+    assertMediaType("text/plain; a=1;; b=2");
+    assertMediaType("text/plain;;");
+    assertMediaType("text/plain; ;");
   }
 
   @Test public void testInvalidParse() throws Exception {
@@ -64,14 +71,10 @@ public class MediaTypeTest {
     assertInvalid("text/");
     assertInvalid("te<t/plain");
     assertInvalid("text/pl@in");
-    assertInvalid("text/plain;");
-    assertInvalid("text/plain; ");
     assertInvalid("text/plain; a");
     assertInvalid("text/plain; a=");
     assertInvalid("text/plain; a=@");
     assertInvalid("text/plain; a=\"@");
-    assertInvalid("text/plain; a=1;");
-    assertInvalid("text/plain; a=1; ");
     assertInvalid("text/plain; a=1; b");
     assertInvalid("text/plain; a=1; b=");
     assertInvalid("text/plain; a=\u2025");
@@ -138,6 +141,14 @@ public class MediaTypeTest {
     MediaType charset = MediaType.parse("text/plain; charset=iso-8859-1");
     assertEquals("ISO-8859-1", charset.charset(Util.UTF_8).name());
     assertEquals("ISO-8859-1", charset.charset(Charset.forName("US-ASCII")).name());
+  }
+
+  @Test public void testParseDanglingSemicolon() throws Exception {
+    MediaType mediaType = MediaType.parse("text/plain;");
+    assertEquals("text", mediaType.type());
+    assertEquals("plain", mediaType.subtype());
+    assertEquals(null, mediaType.charset());
+    assertEquals("text/plain;", mediaType.toString());
   }
 
   private void assertMediaType(String string) {
