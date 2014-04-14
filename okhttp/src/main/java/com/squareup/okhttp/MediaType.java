@@ -29,7 +29,7 @@ public final class MediaType {
   private static final String QUOTED = "\"([^\"]*)\"";
   private static final Pattern TYPE_SUBTYPE = Pattern.compile(TOKEN + "/" + TOKEN);
   private static final Pattern PARAMETER = Pattern.compile(
-      ";\\s*" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + ")");
+      ";\\s*(?:" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + "))?");
 
   private final String mediaType;
   private final String type;
