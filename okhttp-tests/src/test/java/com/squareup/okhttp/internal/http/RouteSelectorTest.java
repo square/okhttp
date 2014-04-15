@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
+import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -60,14 +61,16 @@ public final class RouteSelectorTest {
   private static final String uriHost = "hostA";
   private static final int uriPort = 80;
 
+  private static final SocketFactory socketFactory;
   private static final SSLContext sslContext = SslContextBuilder.localhost();
-  private static final SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+  private static final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
   private static final HostnameVerifier hostnameVerifier;
   private static final ConnectionPool pool;
 
   static {
     try {
       uri = new URI("http://" + uriHost + ":" + uriPort + "/path");
+      socketFactory = SocketFactory.getDefault();
       pool = ConnectionPool.getDefault();
       hostnameVerifier = HttpsURLConnectionImpl.getDefaultHostnameVerifier();
     } catch (Exception e) {
@@ -81,7 +84,8 @@ public final class RouteSelectorTest {
   private final FakeProxySelector proxySelector = new FakeProxySelector();
 
   @Test public void singleRoute() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         new RouteDatabase());
 
@@ -100,7 +104,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void singleRouteReturnsFailedRoute() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         new RouteDatabase());
 
@@ -121,7 +126,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void explicitProxyTriesThatProxiesAddressesOnly() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, proxyA, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator,
+        proxyA, protocols);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         new RouteDatabase());
 
@@ -138,8 +144,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void explicitDirectProxy() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, NO_PROXY,
-        protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator,
+        NO_PROXY, protocols);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         new RouteDatabase());
 
@@ -156,7 +162,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxySelectorReturnsNull() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
 
     proxySelector.proxies = null;
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
@@ -173,7 +180,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxySelectorReturnsNoProxies() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         new RouteDatabase());
 
@@ -190,7 +198,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxySelectorReturnsMultipleProxies() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
 
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
@@ -225,7 +234,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxySelectorDirectConnectionsAreSkipped() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
 
     proxySelector.proxies.add(NO_PROXY);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
@@ -243,7 +253,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxyDnsFailureContinuesToNextProxy() throws Exception {
-    Address address = new Address(uriHost, uriPort, null, null, authenticator, null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
+        protocols);
 
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
@@ -284,8 +295,8 @@ public final class RouteSelectorTest {
 
   // https://github.com/square/okhttp/issues/442
   @Test public void nonSslErrorAddsAllTlsModesToFailedRoute() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, hostnameVerifier, authenticator,
-        Proxy.NO_PROXY, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
+        hostnameVerifier, authenticator, Proxy.NO_PROXY, protocols);
     RouteDatabase routeDatabase = new RouteDatabase();
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         routeDatabase);
@@ -298,8 +309,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void sslErrorAddsOnlyFailedTlsModeToFailedRoute() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, hostnameVerifier, authenticator,
-        Proxy.NO_PROXY, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
+        hostnameVerifier, authenticator, Proxy.NO_PROXY, protocols);
     RouteDatabase routeDatabase = new RouteDatabase();
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
         routeDatabase);
@@ -312,8 +323,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void multipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, hostnameVerifier, authenticator,
-        null, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
+        hostnameVerifier, authenticator, null, protocols);
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,
@@ -359,8 +370,8 @@ public final class RouteSelectorTest {
   }
 
   @Test public void failedRoutesAreLast() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, hostnameVerifier, authenticator,
-        Proxy.NO_PROXY, protocols);
+    Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
+        hostnameVerifier, authenticator, Proxy.NO_PROXY, protocols);
 
     RouteDatabase routeDatabase = new RouteDatabase();
     RouteSelector routeSelector = new RouteSelector(address, uri, proxySelector, pool, dns,

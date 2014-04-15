@@ -35,6 +35,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -60,6 +61,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
   private OkResponseCache responseCache;
+  private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
   private OkAuthenticator authenticator;
@@ -190,6 +192,21 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   public OkResponseCache getOkResponseCache() {
     return responseCache;
+  }
+
+  /**
+   * Sets the socket factory used to create connections.
+   *
+   * <p>If unset, the {@link SocketFactory#getDefault() system-wide default}
+   * socket factory will be used.
+   */
+  public OkHttpClient setSocketFactory(SocketFactory socketFactory) {
+    this.socketFactory = socketFactory;
+    return this;
+  }
+
+  public SocketFactory getSocketFactory() {
+    return socketFactory;
   }
 
   /**
@@ -455,6 +472,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     }
     if (result.responseCache == null) {
       result.responseCache = toOkResponseCache(ResponseCache.getDefault());
+    }
+    if (result.socketFactory == null) {
+      result.socketFactory = SocketFactory.getDefault();
     }
     if (result.sslSocketFactory == null) {
       result.sslSocketFactory = getDefaultSSLSocketFactory();
