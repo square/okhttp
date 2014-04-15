@@ -37,7 +37,9 @@ import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
@@ -168,6 +170,7 @@ public class Main extends HelpOption implements Runnable {
     }
     if (allowInsecure) {
       client.setSslSocketFactory(createInsecureSslSocketFactory());
+      client.setHostnameVerifier(createInsecureHostnameVerifier());
     }
     // If we don't set this reference, there's no way to clean shutdown persistent connections.
     client.setConnectionPool(ConnectionPool.getDefault());
@@ -250,5 +253,13 @@ public class Main extends HelpOption implements Runnable {
     } catch (Exception e) {
       throw new AssertionError(e);
     }
+  }
+
+  private static HostnameVerifier createInsecureHostnameVerifier() {
+    return new HostnameVerifier() {
+      @Override public boolean verify(String s, SSLSession sslSession) {
+        return true;
+      }
+    };
   }
 }
