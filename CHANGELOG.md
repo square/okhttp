@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 1.5.4
+
+_2014-04-14_
+
+ * Drop ALPN support in Android. There's a concurrency bug in all
+   currently-shipping versions.
+ * Support asynchronous disconnects by breaking the socket only. This should
+   prevent flakiness from multiple threads concurrently accessing a stream.
+
 ## Version 1.5.3
 
 _2014-03-29_
