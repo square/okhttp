@@ -32,7 +32,7 @@ public final class DisconnectTest {
   private final OkHttpClient client = new OkHttpClient();
 
   @Test public void interruptWritingRequestBody() throws Exception {
-    int requestBodySize = 2 * 1024 * 1024; // 2 MiB
+    int requestBodySize = 200 * 1024 * 1024; // 2 MiB
 
     server.enqueue(new MockResponse()
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
