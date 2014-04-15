@@ -236,8 +236,9 @@ public class HttpEngine {
         sslSocketFactory = client.getSslSocketFactory();
         hostnameVerifier = client.getHostnameVerifier();
       }
-      Address address = new Address(uriHost, getEffectivePort(request.url()), sslSocketFactory,
-          hostnameVerifier, client.getAuthenticator(), client.getProxy(), client.getProtocols());
+      Address address = new Address(uriHost, getEffectivePort(request.url()),
+          client.getSocketFactory(), sslSocketFactory, hostnameVerifier, client.getAuthenticator(),
+          client.getProxy(), client.getProtocols());
       routeSelector = new RouteSelector(address, request.uri(), client.getProxySelector(),
           client.getConnectionPool(), Dns.DEFAULT, client.getRoutesDatabase());
     }

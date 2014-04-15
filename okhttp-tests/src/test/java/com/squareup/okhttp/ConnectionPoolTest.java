@@ -25,6 +25,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
+import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
 import org.junit.Before;
@@ -65,18 +66,20 @@ public final class ConnectionPoolTest {
   }
 
   private void setUp(int poolSize) throws Exception {
+    SocketFactory socketFactory = SocketFactory.getDefault();
+
     spdyServer = new MockWebServer();
     httpServer = new MockWebServer();
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
 
     httpServer.play();
-    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), null, null,
-        HttpAuthenticator.SYSTEM_DEFAULT, null, Protocol.SPDY3_AND_HTTP11);
+    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
+        null, HttpAuthenticator.SYSTEM_DEFAULT, null, Protocol.SPDY3_AND_HTTP11);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.play();
-    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(),
+    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(),
         HttpAuthenticator.SYSTEM_DEFAULT, null,Protocol.SPDY3_AND_HTTP11);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
