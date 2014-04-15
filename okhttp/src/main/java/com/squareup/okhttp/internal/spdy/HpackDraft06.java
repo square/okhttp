@@ -15,15 +15,15 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v05.
+ * Read and write HPACK v06.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06
  *
  * This implementation uses an array for the header table with a bitset for
  * references.  Dynamic entries are added to the array, starting in the last
  * position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft05 {
+final class HpackDraft06 {
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
 
@@ -90,12 +90,11 @@ final class HpackDraft05 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft05() {
+  private HpackDraft06() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-3.2
   static final class Reader {
-    private final Huffman.Codec huffmanCodec;
 
     private final List<Header> emittedHeaders = new ArrayList<Header>();
     private final BufferedSource source;
@@ -119,8 +118,7 @@ final class HpackDraft05 {
     BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
     int headerTableByteCount = 0;
 
-    Reader(boolean client, int maxHeaderTableByteCount, Source source) {
-      this.huffmanCodec = client ? Huffman.Codec.RESPONSE : Huffman.Codec.REQUEST;
+    Reader(int maxHeaderTableByteCount, Source source) {
       this.maxHeaderTableByteCount = maxHeaderTableByteCount;
       this.source = Okio.buffer(source);
     }
@@ -181,7 +179,22 @@ final class HpackDraft05 {
       while (!source.exhausted()) {
         int b = source.readByte() & 0xff;
         if (b == 0x80) { // 10000000
-          clearReferenceSet();
+          b = source.readByte();
+          if ((b & 0x80) == 0x80) { // 1NNNNNNN
+            if ((b & PREFIX_7_BITS) == 0) {
+              clearReferenceSet();
+            } else {
+              throw new IOException("Invalid header table state change " + b);
+            }
+          } else {
+            int headerTableByteCount = b != PREFIX_7_BITS ? b : readInt(b, PREFIX_7_BITS);
+            if (headerTableByteCount < 0) {
+              throw new IOException("Invalid header table byte count " + headerTableByteCount);
+            }
+            maxHeaderTableByteCount = Math.min(headerTableByteCount, maxHeaderTableByteCount);
+            int toEvict = headerTableByteCount - maxHeaderTableByteCount;
+            if (toEvict > 0) evictToRecoverBytes(toEvict);
+          }
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
           int index = readInt(b, PREFIX_7_BITS);
           readIndexedHeader(index - 1);
@@ -228,9 +241,13 @@ final class HpackDraft05 {
       return result;
     }
 
-    private void readIndexedHeader(int index) {
+    private void readIndexedHeader(int index) throws IOException {
       if (isStaticHeader(index)) {
-        Header staticEntry = STATIC_HEADER_TABLE[index - headerCount];
+        index -= headerCount;
+        if (index > STATIC_HEADER_TABLE.length - 1) {
+          throw new IOException("Header index too large " + (index + 1));
+        }
+        Header staticEntry = STATIC_HEADER_TABLE[index];
         if (maxHeaderTableByteCount == 0) {
           emittedHeaders.add(staticEntry);
         } else {
@@ -371,7 +388,7 @@ final class HpackDraft05 {
       ByteString byteString = source.readByteString(length);
 
       if (huffmanDecode) {
-        byteString = huffmanCodec.decode(byteString); // TODO: streaming Huffman!
+        byteString = Huffman.get().decode(byteString); // TODO: streaming Huffman!
       }
 
       if (asciiLowercase) {
@@ -419,7 +436,7 @@ final class HpackDraft05 {
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

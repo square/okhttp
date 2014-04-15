@@ -9,7 +9,7 @@ public final class Header {
   public static final ByteString TARGET_METHOD = ByteString.encodeUtf8(":method");
   public static final ByteString TARGET_PATH = ByteString.encodeUtf8(":path");
   public static final ByteString TARGET_SCHEME = ByteString.encodeUtf8(":scheme");
-  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(":authority"); // http/2
+  public static final ByteString TARGET_AUTHORITY = ByteString.encodeUtf8(":authority"); // HTTP/2
   public static final ByteString TARGET_HOST = ByteString.encodeUtf8(":host"); // spdy/3
   public static final ByteString VERSION = ByteString.encodeUtf8(":version"); // spdy/3
 

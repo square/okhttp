@@ -43,18 +43,13 @@ public class HuffmanTest {
   }
 
   private void assertRoundTrip(byte[] buf) throws IOException {
-    assertRoundTrip(Huffman.Codec.REQUEST, buf);
-    assertRoundTrip(Huffman.Codec.RESPONSE, buf);
-  }
-
-  private static void assertRoundTrip(Huffman.Codec codec, byte[] buf) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream dos = new DataOutputStream(baos);
 
-    codec.encode(buf, dos);
-    assertEquals(baos.size(), codec.encodedLength(buf));
+    Huffman.get().encode(buf, dos);
+    assertEquals(baos.size(), Huffman.get().encodedLength(buf));
 
-    byte[] decodedBytes = codec.decode(baos.toByteArray());
+    byte[] decodedBytes = Huffman.get().decode(baos.toByteArray());
     assertTrue(Arrays.equals(buf, decodedBytes));
   }
 }

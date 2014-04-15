@@ -55,7 +55,7 @@ import static org.junit.Assert.fail;
 
 public final class SpdyConnectionTest {
   private static final Variant SPDY3 = new Spdy3();
-  private static final Variant HTTP_20_DRAFT_09 = new Http20Draft09();
+  private static final Variant HTTP_20_DRAFT_09 = new Http20Draft10();
   private final MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
@@ -336,7 +336,7 @@ public final class SpdyConnectionTest {
     // verify the peer's settings were read and applied.
     synchronized (connection) {
       assertEquals(0, connection.peerSettings.getHeaderTableSize());
-      Http20Draft09.Reader frameReader = (Http20Draft09.Reader) connection.frameReader;
+      Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.frameReader;
       assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
       // TODO: when supported, check the frameWriter's compression table is unaffected.
     }

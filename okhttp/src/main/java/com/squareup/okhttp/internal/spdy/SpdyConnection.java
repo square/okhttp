@@ -143,7 +143,7 @@ public final class SpdyConnection implements Closeable {
 
     Variant variant;
     if (protocol == Protocol.HTTP_2) {
-      variant = new Http20Draft09();
+      variant = new Http20Draft10();
     } else if (protocol == Protocol.SPDY_3) {
       variant = new Spdy3();
     } else {

@@ -76,7 +76,7 @@ public interface FrameReader extends Closeable {
      *     sending this message. If {@code lastGoodStreamId} is zero, the peer
      *     processed no frames.
      * @param errorCode reason for closing the connection.
-     * @param debugData only valid for http/2; opaque debug data to send.
+     * @param debugData only valid for HTTP/2; opaque debug data to send.
      */
     void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData);
 
