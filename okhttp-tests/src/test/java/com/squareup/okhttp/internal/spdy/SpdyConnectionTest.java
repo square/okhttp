@@ -66,8 +66,8 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame()
-        .synReply(false, 1, headerEntries("a", "android"));
-    peer.sendFrame().data(true, 1, new Buffer().writeUtf8("robot"));
+        .synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"));
     peer.acceptFrame(); // DATA
     peer.play();
 
@@ -87,7 +87,7 @@ public final class SpdyConnectionTest {
     assertEquals(HeadersMode.SPDY_SYN_STREAM, synStream.headersMode);
     assertFalse(synStream.inFinished);
     assertFalse(synStream.outFinished);
-    assertEquals(1, synStream.streamId);
+    assertEquals(3, synStream.streamId);
     assertEquals(0, synStream.associatedStreamId);
     assertEquals(headerEntries("b", "banana"), synStream.headerBlock);
     MockSpdyPeer.InFrame requestData = peer.takeFrame();
@@ -96,7 +96,7 @@ public final class SpdyConnectionTest {
 
   @Test public void headersOnlyStreamIsClosedAfterReplyHeaders() throws Exception {
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
+    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
     peer.play();
 
     SpdyConnection connection = connection(peer, SPDY3);
@@ -110,7 +110,7 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(true, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(true, 3, headerEntries("a", "android"));
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -477,7 +477,7 @@ public final class SpdyConnectionTest {
   @Test public void clientClosesClientOutputStream() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
+    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
     peer.acceptFrame(); // TYPE_DATA
     peer.acceptFrame(); // TYPE_DATA with FLAG_FIN
     peer.acceptFrame(); // PING
@@ -522,7 +522,7 @@ public final class SpdyConnectionTest {
   @Test public void serverClosesClientOutputStream() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().rstStream(1, CANCEL);
+    peer.sendFrame().rstStream(3, CANCEL);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
@@ -650,8 +650,8 @@ public final class SpdyConnectionTest {
   @Test public void serverClosesClientInputStream() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
-    peer.sendFrame().data(true, 1, new Buffer().writeUtf8("square"));
+    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("square"));
     peer.play();
 
     // play it back
@@ -672,9 +672,9 @@ public final class SpdyConnectionTest {
   @Test public void remoteDoubleSynReply() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
+    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // RST_STREAM
     peer.play();
@@ -699,7 +699,7 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_PING, ping.type);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
-    assertEquals(1, rstStream.streamId);
+    assertEquals(3, rstStream.streamId);
     assertEquals(STREAM_IN_USE, rstStream.errorCode);
   }
 
@@ -737,9 +737,9 @@ public final class SpdyConnectionTest {
   @Test public void remoteSendsDataAfterInFinished() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.sendFrame().data(true, 1, new Buffer().writeUtf8("robot"));
-    peer.sendFrame().data(true, 1, new Buffer().writeUtf8("c3po")); // Ignored.
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"));
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("c3po")); // Ignored.
     peer.sendFrame().ping(false, 2, 0); // Ping just to make sure the stream was fastforwarded.
     peer.acceptFrame(); // PING
     peer.play();
@@ -762,8 +762,8 @@ public final class SpdyConnectionTest {
   @Test public void clientDoesNotLimitFlowControl() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("b", "banana"));
-    peer.sendFrame().data(false, 1, new Buffer().write(new byte[64 * 1024 + 1]));
+    peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.sendFrame().data(false, 3, new Buffer().write(new byte[64 * 1024 + 1]));
     peer.sendFrame().ping(false, 2, 0); // Ping just to make sure the stream was fastforwarded.
     peer.acceptFrame(); // PING
     peer.play();
@@ -785,7 +785,7 @@ public final class SpdyConnectionTest {
   @Test public void remoteSendsRefusedStreamBeforeReplyHeaders() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().rstStream(1, REFUSED_STREAM);
+    peer.sendFrame().rstStream(3, REFUSED_STREAM);
     peer.sendFrame().ping(false, 2, 0);
     peer.acceptFrame(); // PING
     peer.play();
@@ -823,12 +823,12 @@ public final class SpdyConnectionTest {
     peer.setVariantAndClient(variant, false);
 
     // write the mocking script
-    peer.acceptFrame(); // SYN_STREAM 1
     peer.acceptFrame(); // SYN_STREAM 3
-    peer.sendFrame().goAway(1, PROTOCOL_ERROR, Util.EMPTY_BYTE_ARRAY);
+    peer.acceptFrame(); // SYN_STREAM 5
+    peer.sendFrame().goAway(3, PROTOCOL_ERROR, Util.EMPTY_BYTE_ARRAY);
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
-    peer.acceptFrame(); // DATA STREAM 1
+    peer.acceptFrame(); // DATA STREAM 3
     peer.play();
 
     // play it back
@@ -865,13 +865,13 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_PING, ping.type);
     MockSpdyPeer.InFrame data1 = peer.takeFrame();
     assertEquals(TYPE_DATA, data1.type);
-    assertEquals(1, data1.streamId);
+    assertEquals(3, data1.streamId);
     assertTrue(Arrays.equals("abcdef".getBytes("UTF-8"), data1.data));
   }
 
   @Test public void sendGoAway() throws Exception {
     // write the mocking script
-    peer.acceptFrame(); // SYN_STREAM 1
+    peer.acceptFrame(); // SYN_STREAM 3
     peer.acceptFrame(); // GOAWAY
     peer.acceptFrame(); // PING
     peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("b", "b")); // Should be ignored!
@@ -960,7 +960,7 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_GOAWAY, goaway.type);
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
     assertEquals(TYPE_RST_STREAM, rstStream.type);
-    assertEquals(1, rstStream.streamId);
+    assertEquals(3, rstStream.streamId);
   }
 
   @Test public void closeCancelsPings() throws Exception {
@@ -979,7 +979,7 @@ public final class SpdyConnectionTest {
   @Test public void readTimeoutExpires() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
     peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
@@ -1009,8 +1009,8 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.sendFrame().headers(1, headerEntries("c", "c3po"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().headers(3, headerEntries("c", "c3po"));
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
@@ -1032,7 +1032,7 @@ public final class SpdyConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // PING
-    peer.sendFrame().headers(1, headerEntries("c", "c3po"));
+    peer.sendFrame().headers(3, headerEntries("c", "c3po"));
     peer.acceptFrame(); // RST_STREAM
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
@@ -1075,17 +1075,17 @@ public final class SpdyConnectionTest {
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
     for (int i = 0; i < 3; i++) {
       // Send frames summing to windowUpdateThreshold.
       for (int sent = 0, count; sent < windowUpdateThreshold; sent += count) {
         count = Math.min(variant.maxFrameSize(), windowUpdateThreshold - sent);
-        peer.sendFrame().data(false, 1, data(count));
+        peer.sendFrame().data(false, 3, data(count));
       }
       peer.acceptFrame(); // connection WINDOW UPDATE
       peer.acceptFrame(); // stream WINDOW UPDATE
     }
-    peer.sendFrame().data(true, 1, data(0));
+    peer.sendFrame().data(true, 3, data(0));
     peer.play();
 
     // Play it back.
@@ -1111,7 +1111,7 @@ public final class SpdyConnectionTest {
         assertEquals(windowUpdateThreshold, windowUpdate.windowSizeIncrement);
       }
       assertTrue(windowUpdateStreamIds.contains(0)); // connection
-      assertTrue(windowUpdateStreamIds.contains(1)); // stream
+      assertTrue(windowUpdateStreamIds.contains(3)); // stream
     }
   }
 
@@ -1133,8 +1133,8 @@ public final class SpdyConnectionTest {
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.sendFrame().data(true, 1, data(0));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendFrame().data(true, 3, data(0));
     peer.play();
 
     // Play it back.
@@ -1163,7 +1163,7 @@ public final class SpdyConnectionTest {
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
     peer.acceptFrame(); // DATA
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
     peer.play();
 
     // Play it back.
@@ -1200,7 +1200,7 @@ public final class SpdyConnectionTest {
 
     // Check that we've filled the window for both the stream and also the connection.
     assertEquals(0, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
     out.writeByte('a');
     assertFlushBlocks(out);
@@ -1210,7 +1210,7 @@ public final class SpdyConnectionTest {
     assertFlushBlocks(out);
 
     // receiving a window update on the stream will unblock the stream.
-    connection.readerRunnable.windowUpdate(1, 1);
+    connection.readerRunnable.windowUpdate(3, 1);
     out.flush();
 
     // Verify the peer received what was expected.
@@ -1228,7 +1228,7 @@ public final class SpdyConnectionTest {
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
     for (int i = 0; i < framesThatFillWindow; i++) {
-      peer.acceptFrame(); // DATA on stream 1
+      peer.acceptFrame(); // DATA on stream 3
     }
     peer.acceptFrame(); // DATA on stream 2
     peer.play();
@@ -1246,7 +1246,7 @@ public final class SpdyConnectionTest {
 
     // Check that we've filled the window for both the stream and also the connection.
     assertEquals(0, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
     // Receiving a Settings with a larger window size will unblock the streams.
     Settings initial = new Settings();
@@ -1254,13 +1254,13 @@ public final class SpdyConnectionTest {
     connection.readerRunnable.settings(false, initial);
 
     assertEquals(1, connection.bytesLeftInWriteWindow);
-    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(1, connection.getStream(3).bytesLeftInWriteWindow);
 
     // The stream should no longer be blocked.
     out.flush();
 
     assertEquals(0, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
     // Settings after the initial do not affect the connection window size.
     Settings next = new Settings();
@@ -1268,14 +1268,14 @@ public final class SpdyConnectionTest {
     connection.readerRunnable.settings(false, next);
 
     assertEquals(0, connection.bytesLeftInWriteWindow); // connection wasn't affected.
-    assertEquals(1, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(1, connection.getStream(3).bytesLeftInWriteWindow);
   }
 
   @Test public void testTruncatedDataFrame() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.sendTruncatedFrame(8 + 100).data(false, 1, data(1024));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.sendTruncatedFrame(8 + 100).data(false, 3, data(1024));
     peer.play();
 
     // play it back
@@ -1295,12 +1295,12 @@ public final class SpdyConnectionTest {
     int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, SPDY3.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
-    peer.acceptFrame(); // SYN_STREAM on stream 1
+    peer.acceptFrame(); // SYN_STREAM on stream 3
     for (int i = 0; i < framesThatFillWindow; i++) {
-      peer.acceptFrame(); // DATA on stream 1
+      peer.acceptFrame(); // DATA on stream 3
     }
-    peer.acceptFrame(); // SYN_STREAM on stream 2
-    peer.acceptFrame(); // DATA on stream 2
+    peer.acceptFrame(); // SYN_STREAM on stream 5
+    peer.acceptFrame(); // DATA on stream 5
     peer.play();
 
     // Play it back.
@@ -1312,13 +1312,13 @@ public final class SpdyConnectionTest {
 
     // Check that we've filled the window for both the stream and also the connection.
     assertEquals(0, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
     // receiving a window update on the the connection will unblock new streams.
     connection.readerRunnable.windowUpdate(0, 3);
 
     assertEquals(3, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
 
     // Another stream should be able to send data even though 1 is blocked.
     SpdyStream stream2 = connection.newStream(headerEntries("b", "banana"), true, true);
@@ -1327,8 +1327,8 @@ public final class SpdyConnectionTest {
     out2.flush();
 
     assertEquals(0, connection.bytesLeftInWriteWindow);
-    assertEquals(0, connection.getStream(1).bytesLeftInWriteWindow);
-    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE - 3, connection.getStream(3).bytesLeftInWriteWindow);
+    assertEquals(0, connection.getStream(3).bytesLeftInWriteWindow);
+    assertEquals(DEFAULT_INITIAL_WINDOW_SIZE - 3, connection.getStream(5).bytesLeftInWriteWindow);
   }
 
   @Test public void maxFrameSizeHonored() throws Exception {
@@ -1339,9 +1339,9 @@ public final class SpdyConnectionTest {
 
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.acceptFrame(); // DATA 1
-    peer.acceptFrame(); // DATA 2
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.acceptFrame(); // DATA
+    peer.acceptFrame(); // DATA
     peer.play();
 
     // play it back
@@ -1415,8 +1415,10 @@ public final class SpdyConnectionTest {
   private void headerBlockHasTrailingCompressedBytes(String frame, int length) throws IOException {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame(ByteString.decodeBase64(frame).toByteArray());
-    peer.sendFrame().data(true, 1, new Buffer().writeUtf8("robot"));
+    byte[] trailingCompressedBytes = ByteString.decodeBase64(frame).toByteArray();
+    trailingCompressedBytes[11] = 3; // Set SPDY/3 stream ID to 3.
+    peer.sendFrame(trailingCompressedBytes);
+    peer.sendFrame().data(true, 3, new Buffer().writeUtf8("robot"));
     peer.acceptFrame(); // DATA
     peer.play();
 
@@ -1433,19 +1435,19 @@ public final class SpdyConnectionTest {
 
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
     final List<Header> expectedRequestHeaders = Arrays.asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
         new Header(Header.TARGET_PATH, "/cached")
     );
-    peer.sendFrame().pushPromise(1, 2, expectedRequestHeaders);
+    peer.sendFrame().pushPromise(3, 2, expectedRequestHeaders);
     final List<Header> expectedResponseHeaders = Arrays.asList(
         new Header(Header.RESPONSE_STATUS, "200")
     );
     peer.sendFrame().synReply(true, 2, expectedResponseHeaders);
-    peer.sendFrame().data(true, 1, data(0));
+    peer.sendFrame().data(true, 3, data(0));
     peer.play();
 
     RecordingPushObserver observer = new RecordingPushObserver();
@@ -1467,9 +1469,9 @@ public final class SpdyConnectionTest {
     peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     // write the mocking script
-    peer.sendFrame().pushPromise(1,2, headerEntries("a", "android"));
+    peer.sendFrame().pushPromise(3, 2, headerEntries("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
-    peer.sendFrame().pushPromise(1, 2, headerEntries("b", "banana"));
+    peer.sendFrame().pushPromise(3, 2, headerEntries("b", "banana"));
     peer.acceptFrame(); // RST_STREAM
     peer.play();
 
@@ -1486,7 +1488,7 @@ public final class SpdyConnectionTest {
     peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
 
     // write the mocking script
-    peer.sendFrame().pushPromise(1, 2, Arrays.asList(
+    peer.sendFrame().pushPromise(3, 2, Arrays.asList(
         new Header(Header.TARGET_METHOD, "GET"),
         new Header(Header.TARGET_SCHEME, "https"),
         new Header(Header.TARGET_AUTHORITY, "squareup.com"),
