@@ -1448,32 +1448,7 @@ public final class SpdyConnectionTest {
     peer.sendFrame().data(true, 1, data(0));
     peer.play();
 
-    final List events = new ArrayList();
-    PushObserver observer = new PushObserver() {
-
-      @Override public boolean onRequest(int streamId, List<Header> requestHeaders) {
-        assertEquals(2, streamId);
-        events.add(requestHeaders);
-        return false;
-      }
-
-      @Override public boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last) {
-        assertEquals(2, streamId);
-        assertTrue(last);
-        events.add(responseHeaders);
-        return false;
-      }
-
-      @Override public boolean onData(int streamId, BufferedSource source, int byteCount,
-          boolean last) throws IOException {
-        events.add(new AssertionError("onData"));
-        return false;
-      }
-
-      @Override public void onReset(int streamId, ErrorCode errorCode) {
-        events.add(new AssertionError("onReset"));
-      }
-    };
+    RecordingPushObserver observer = new RecordingPushObserver();
 
     // play it back
     SpdyConnection connection = connectionBuilder(peer, HTTP_20_DRAFT_09)
@@ -1484,9 +1459,8 @@ public final class SpdyConnectionTest {
     // verify the peer received what was expected
     assertEquals(TYPE_HEADERS, peer.takeFrame().type);
 
-    assertEquals(2, events.size());
-    assertEquals(expectedRequestHeaders, events.get(0));
-    assertEquals(expectedResponseHeaders, events.get(1));
+    assertEquals(expectedRequestHeaders, observer.takeEvent());
+    assertEquals(expectedResponseHeaders, observer.takeEvent());
   }
 
   @Test public void doublePushPromise() throws Exception {
@@ -1619,4 +1593,43 @@ public final class SpdyConnectionTest {
     @Override public void onReset(int streamId, ErrorCode errorCode) {
     }
   };
+
+  private static class RecordingPushObserver implements PushObserver {
+    final List<Object> events = new ArrayList<Object>();
+
+    public synchronized Object takeEvent() throws InterruptedException {
+      while (events.isEmpty()) {
+        wait();
+      }
+      return events.remove(0);
+    }
+
+    @Override public synchronized boolean onRequest(int streamId, List<Header> requestHeaders) {
+      assertEquals(2, streamId);
+      events.add(requestHeaders);
+      notifyAll();
+      return false;
+    }
+
+    @Override public synchronized boolean onHeaders(
+        int streamId, List<Header> responseHeaders, boolean last) {
+      assertEquals(2, streamId);
+      assertTrue(last);
+      events.add(responseHeaders);
+      notifyAll();
+      return false;
+    }
+
+    @Override public synchronized boolean onData(
+        int streamId, BufferedSource source, int byteCount, boolean last) {
+      events.add(new AssertionError("onData"));
+      notifyAll();
+      return false;
+    }
+
+    @Override public synchronized void onReset(int streamId, ErrorCode errorCode) {
+      events.add(new AssertionError("onReset"));
+      notifyAll();
+    }
+  }
 }
