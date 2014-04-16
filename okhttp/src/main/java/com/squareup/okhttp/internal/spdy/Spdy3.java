@@ -22,11 +22,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
 import java.util.zip.Deflater;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.DeflaterSink;
-import okio.OkBuffer;
 import okio.Okio;
 
 /**
@@ -292,7 +292,7 @@ final class Spdy3 implements Variant {
   /** Write spdy/3 frames. */
   static final class Writer implements FrameWriter {
     private final BufferedSink sink;
-    private final OkBuffer headerBlockBuffer;
+    private final Buffer headerBlockBuffer;
     private final BufferedSink headerBlockOut;
     private final boolean client;
     private boolean closed;
@@ -303,7 +303,7 @@ final class Spdy3 implements Variant {
 
       Deflater deflater = new Deflater();
       deflater.setDictionary(DICTIONARY);
-      headerBlockBuffer = new OkBuffer();
+      headerBlockBuffer = new Buffer();
       headerBlockOut = Okio.buffer(new DeflaterSink(headerBlockBuffer, deflater));
     }
 
@@ -388,18 +388,18 @@ final class Spdy3 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
+    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source)
         throws IOException {
       data(outFinished, streamId, source, (int) source.size());
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,
+    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source,
         int byteCount) throws IOException {
       int flags = (outFinished ? FLAG_FIN : 0);
       sendDataFrame(streamId, flags, source, byteCount);
     }
 
-    void sendDataFrame(int streamId, int flags, OkBuffer buffer, int byteCount)
+    void sendDataFrame(int streamId, int flags, Buffer buffer, int byteCount)
         throws IOException {
       if (closed) throw new IOException("closed");
       if (byteCount > 0xffffffL) {

@@ -22,11 +22,11 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import okio.Buffer;
 import okio.BufferedSource;
-import okio.Deadline;
-import okio.OkBuffer;
 import okio.Sink;
 import okio.Source;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 
@@ -338,10 +338,10 @@ public final class SpdyStream {
    */
   private final class SpdyDataSource implements Source {
     /** Buffer to receive data from the network into. Only accessed by the reader thread. */
-    private final OkBuffer receiveBuffer = new OkBuffer();
+    private final Buffer receiveBuffer = new Buffer();
 
     /** Buffer with readable data. Guarded by SpdyStream.this. */
-    private final OkBuffer readBuffer = new OkBuffer();
+    private final Buffer readBuffer = new Buffer();
 
     /** Maximum number of bytes to buffer before reporting a flow control error. */
     private final long maxByteCount;
@@ -359,7 +359,7 @@ public final class SpdyStream {
       this.maxByteCount = maxByteCount;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount)
+    @Override public long read(Buffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
 
@@ -462,9 +462,9 @@ public final class SpdyStream {
       }
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      // TODO: honor deadlines.
-      return this;
+    @Override public Timeout timeout() {
+      // TODO: honor timeouts.
+      return Timeout.NONE;
     }
 
     @Override public void close() throws IOException {
@@ -518,7 +518,7 @@ public final class SpdyStream {
      */
     private boolean finished;
 
-    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+    @Override public void write(Buffer source, long byteCount) throws IOException {
       assert (!Thread.holdsLock(SpdyStream.this));
       while (byteCount > 0) {
         long toWrite;
@@ -549,9 +549,9 @@ public final class SpdyStream {
       connection.flush();
     }
 
-    @Override public Sink deadline(Deadline deadline) {
-      // TODO: honor deadlines.
-      return this;
+    @Override public Timeout timeout() {
+      // TODO: honor timeouts.
+      return Timeout.NONE;
     }
 
     @Override public void close() throws IOException {

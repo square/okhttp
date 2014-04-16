@@ -33,10 +33,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.OkBuffer;
 import okio.Okio;
 
 import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
@@ -287,7 +287,7 @@ public final class SpdyConnection implements Closeable {
    * will not block.  The only use case for zero {@code byteCount} is closing
    * a flushed output stream.
    */
-  public void writeData(int streamId, boolean outFinished, OkBuffer buffer, long byteCount)
+  public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount)
       throws IOException {
     if (byteCount == 0) { // Empty data frames are not flow-controlled.
       frameWriter.data(outFinished, streamId, buffer, 0);
@@ -809,7 +809,7 @@ public final class SpdyConnection implements Closeable {
    */
   private void pushDataLater(final int streamId, final BufferedSource source, final int byteCount,
       final boolean inFinished) throws IOException {
-    final OkBuffer buffer = new OkBuffer();
+    final Buffer buffer = new Buffer();
     source.require(byteCount); // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount);
     if (buffer.size() != byteCount) throw new IOException(buffer.size() + " != " + byteCount);

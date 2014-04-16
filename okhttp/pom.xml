@@ -16,7 +16,6 @@
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
-      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

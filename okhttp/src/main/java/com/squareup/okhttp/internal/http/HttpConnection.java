@@ -28,13 +28,13 @@ import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import okio.Deadline;
-import okio.OkBuffer;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
@@ -277,11 +277,11 @@ public final class HttpConnection {
       this.bytesRemaining = bytesRemaining;
     }
 
-    @Override public Sink deadline(Deadline deadline) {
-      return this; // TODO: honor deadline.
+    @Override public Timeout timeout() {
+      return sink.timeout();
     }
 
-    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+    @Override public void write(Buffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
       checkOffsetAndCount(source.size(), 0, byteCount);
       if (byteCount > bytesRemaining) {
@@ -322,11 +322,11 @@ public final class HttpConnection {
 
     private boolean closed;
 
-    @Override public Sink deadline(Deadline deadline) {
-      return this; // TODO: honor deadline.
+    @Override public Timeout timeout() {
+      return sink.timeout();
     }
 
-    @Override public void write(OkBuffer source, long byteCount) throws IOException {
+    @Override public void write(Buffer source, long byteCount) throws IOException {
       if (closed) throw new IllegalStateException("closed");
       if (byteCount == 0) return;
 
@@ -377,9 +377,9 @@ public final class HttpConnection {
     }
 
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
-    protected final void cacheWrite(OkBuffer source, long byteCount) throws IOException {
+    protected final void cacheWrite(Buffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        Okio.copy(source, source.size() - byteCount, byteCount, cacheBody);
+        source.copyTo(cacheBody, source.size() - byteCount, byteCount);
       }
     }
 
@@ -437,7 +437,7 @@ public final class HttpConnection {
       }
     }
 
-    @Override public long read(OkBuffer sink, long byteCount)
+    @Override public long read(Buffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
@@ -457,9 +457,8 @@ public final class HttpConnection {
       return read;
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      source.deadline(deadline);
-      return this;
+    @Override public Timeout timeout() {
+      return source.timeout();
     }
 
     @Override public void close() throws IOException {
@@ -486,7 +485,7 @@ public final class HttpConnection {
     }
 
     @Override public long read(
-        OkBuffer sink, long byteCount) throws IOException {
+        Buffer sink, long byteCount) throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (!hasMoreChunks) return -1;
@@ -530,9 +529,8 @@ public final class HttpConnection {
       }
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      source.deadline(deadline);
-      return this;
+    @Override public Timeout timeout() {
+      return source.timeout();
     }
 
     @Override public void close() throws IOException {
@@ -552,7 +550,7 @@ public final class HttpConnection {
       super(cacheRequest);
     }
 
-    @Override public long read(OkBuffer sink, long byteCount)
+    @Override public long read(Buffer sink, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
@@ -568,9 +566,8 @@ public final class HttpConnection {
       return read;
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      source.deadline(deadline);
-      return this;
+    @Override public Timeout timeout() {
+      return source.timeout();
     }
 
     @Override public void close() throws IOException {

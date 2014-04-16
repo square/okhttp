@@ -5,13 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.Deadline;
 import okio.InflaterSource;
-import okio.OkBuffer;
 import okio.Okio;
 import okio.Source;
+import okio.Timeout;
 
 /**
  * Reads a SPDY/3 Name/Value header block. This class is made complicated by the
@@ -37,7 +37,7 @@ class NameValueBlockReader {
     // block. We cut the inflater off at its source because we can't predict the
     // ratio of compressed bytes to uncompressed bytes.
     Source throttleSource = new Source() {
-      @Override public long read(OkBuffer sink, long byteCount)
+      @Override public long read(Buffer sink, long byteCount)
           throws IOException {
         if (compressedLimit == 0) return -1; // Out of data for the current block.
         long read = source.read(sink, Math.min(byteCount, compressedLimit));
@@ -50,9 +50,8 @@ class NameValueBlockReader {
         source.close();
       }
 
-      @Override public Source deadline(Deadline deadline) {
-        source.deadline(deadline);
-        return this;
+      @Override public Timeout timeout() {
+        return source.timeout();
       }
     };
 

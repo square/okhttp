@@ -19,7 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import okio.OkBuffer;
+import okio.Buffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -74,7 +74,7 @@ public final class RequestTest {
   }
 
   private String bodyToHex(Request.Body body) throws IOException {
-    OkBuffer buffer = new OkBuffer();
+    Buffer buffer = new Buffer();
     body.writeTo(buffer);
     return buffer.readByteString(buffer.size()).hex();
   }

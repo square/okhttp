@@ -46,7 +46,7 @@ import okio.ByteString;
  * OkHttpClient for all of their HTTP requests - benefiting from a shared
  * response cache, thread pool, connection re-use, etc.
  *
- * Instances of OkHttpClient are intended to be fully configured before they're
+ * <p>Instances of OkHttpClient are intended to be fully configured before they're
  * shared - once shared they should be treated as immutable and can safely be used
  * to concurrently open new connections. If required, threads can call
  * {@link #clone()} to make a shallow copy of the OkHttpClient that can be

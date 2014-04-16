@@ -17,7 +17,7 @@ package com.squareup.okhttp.curl;
 
 import com.squareup.okhttp.Request;
 import java.io.IOException;
-import okio.OkBuffer;
+import okio.Buffer;
 import org.junit.Test;
 
 import static com.squareup.okhttp.curl.Main.fromArgs;
@@ -85,7 +85,7 @@ public class MainTest {
 
   private static String bodyAsString(Request.Body body) {
     try {
-      OkBuffer buffer = new OkBuffer();
+      Buffer buffer = new Buffer();
       body.writeTo(buffer);
       return new String(buffer.readByteString(buffer.size()).toByteArray(),
           body.contentType().charset());

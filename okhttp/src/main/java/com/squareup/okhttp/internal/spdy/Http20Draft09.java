@@ -18,12 +18,12 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.util.List;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.Deadline;
-import okio.OkBuffer;
 import okio.Source;
+import okio.Timeout;
 
 /**
  * Read and write http/2 v09 frames.
@@ -291,14 +291,14 @@ public final class Http20Draft09 implements Variant {
   static final class Writer implements FrameWriter {
     private final BufferedSink sink;
     private final boolean client;
-    private final OkBuffer hpackBuffer;
+    private final Buffer hpackBuffer;
     private final HpackDraft05.Writer hpackWriter;
     private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
       this.client = client;
-      this.hpackBuffer = new OkBuffer();
+      this.hpackBuffer = new Buffer();
       this.hpackWriter = new HpackDraft05.Writer(hpackBuffer);
     }
 
@@ -388,12 +388,12 @@ public final class Http20Draft09 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source)
+    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source)
         throws IOException {
       data(outFinished, streamId, source, (int) source.size());
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, OkBuffer source,
+    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source,
         int byteCount) throws IOException {
       if (closed) throw new IOException("closed");
       byte flags = FLAG_NONE;
@@ -401,7 +401,7 @@ public final class Http20Draft09 implements Variant {
       dataFrame(streamId, flags, source, byteCount);
     }
 
-    void dataFrame(int streamId, byte flags, OkBuffer buffer, int byteCount) throws IOException {
+    void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount) throws IOException {
       byte type = TYPE_DATA;
       frameHeader(byteCount, type, flags, streamId);
       if (byteCount > 0) {
@@ -508,7 +508,7 @@ public final class Http20Draft09 implements Variant {
       this.source = source;
     }
 
-    @Override public long read(OkBuffer sink, long byteCount) throws IOException {
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
       while (left == 0) {
         if ((flags & FLAG_END_HEADERS) != 0) return -1;
         readContinuationHeader();
@@ -521,9 +521,8 @@ public final class Http20Draft09 implements Variant {
       return read;
     }
 
-    @Override public Source deadline(Deadline deadline) {
-      source.deadline(deadline);
-      return this;
+    @Override public Timeout timeout() {
+      return source.timeout();
     }
 
     @Override public void close() throws IOException {

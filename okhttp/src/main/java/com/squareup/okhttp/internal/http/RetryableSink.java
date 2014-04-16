@@ -18,9 +18,9 @@ package com.squareup.okhttp.internal.http;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import okio.Buffer;
 import okio.BufferedSink;
-import okio.Deadline;
-import okio.OkBuffer;
+import okio.Timeout;
 import okio.Sink;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
@@ -33,7 +33,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 final class RetryableSink implements Sink {
   private boolean closed;
   private final int limit;
-  private final OkBuffer content = new OkBuffer();
+  private final Buffer content = new Buffer();
 
   public RetryableSink(int limit) {
     this.limit = limit;
@@ -52,7 +52,7 @@ final class RetryableSink implements Sink {
     }
   }
 
-  @Override public void write(OkBuffer source, long byteCount) throws IOException {
+  @Override public void write(Buffer source, long byteCount) throws IOException {
     if (closed) throw new IllegalStateException("closed");
     checkOffsetAndCount(source.size(), 0, byteCount);
     if (limit != -1 && content.size() > limit - byteCount) {
@@ -64,8 +64,8 @@ final class RetryableSink implements Sink {
   @Override public void flush() throws IOException {
   }
 
-  @Override public Sink deadline(Deadline deadline) {
-    return this;
+  @Override public Timeout timeout() {
+    return Timeout.NONE;
   }
 
   public long contentLength() throws IOException {

@@ -63,9 +63,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
-import okio.OkBuffer;
 import okio.Okio;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -695,7 +695,7 @@ public final class MockWebServer {
         }
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
-      OkBuffer body = new OkBuffer();
+      Buffer body = new Buffer();
       if (response.getBody() != null) {
         body.write(response.getBody());
       }
