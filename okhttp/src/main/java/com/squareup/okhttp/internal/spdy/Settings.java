@@ -38,11 +38,11 @@ final class Settings {
 
   /** spdy/3: Sender's estimate of max incoming kbps. */
   static final int UPLOAD_BANDWIDTH = 1;
-  /** http/2: Size in bytes of the table used to decode the sender's header blocks. */
+  /** HTTP/2: Size in bytes of the table used to decode the sender's header blocks. */
   static final int HEADER_TABLE_SIZE = 1;
   /** spdy/3: Sender's estimate of max outgoing kbps. */
   static final int DOWNLOAD_BANDWIDTH = 2;
-  /** http/2: An endpoint must not send a PUSH_PROMISE frame when this is 0. */
+  /** HTTP/2: An endpoint must not send a PUSH_PROMISE frame when this is 0. */
   static final int ENABLE_PUSH = 2;
   /** spdy/3: Sender's estimate of millis between sending a request and receiving a response. */
   static final int ROUND_TRIP_TIME = 3;
@@ -134,7 +134,7 @@ final class Settings {
     return (bit & set) != 0 ? values[UPLOAD_BANDWIDTH] : defaultValue;
   }
 
-  /** http/2 only. Returns -1 if unset. */
+  /** HTTP/2 only. Returns -1 if unset. */
   int getHeaderTableSize() {
     int bit = 1 << HEADER_TABLE_SIZE;
     return (bit & set) != 0 ? values[HEADER_TABLE_SIZE] : -1;
@@ -146,8 +146,8 @@ final class Settings {
     return (bit & set) != 0 ? values[DOWNLOAD_BANDWIDTH] : defaultValue;
   }
 
-  /** http/2 only. */
-  // TODO: honor this setting in http/2.
+  /** HTTP/2 only. */
+  // TODO: honor this setting in HTTP/2.
   boolean getEnablePush(boolean defaultValue) {
     int bit = 1 << ENABLE_PUSH;
     return ((bit & set) != 0 ? values[ENABLE_PUSH] : defaultValue ? 1 : 0) == 1;
@@ -159,7 +159,7 @@ final class Settings {
     return (bit & set) != 0 ? values[ROUND_TRIP_TIME] : defaultValue;
   }
 
-  // TODO: honor this setting in spdy/3 and http/2.
+  // TODO: honor this setting in spdy/3 and HTTP/2.
   int getMaxConcurrentStreams(int defaultValue) {
     int bit = 1 << MAX_CONCURRENT_STREAMS;
     return (bit & set) != 0 ? values[MAX_CONCURRENT_STREAMS] : defaultValue;
@@ -188,7 +188,7 @@ final class Settings {
     return (bit & set) != 0 ? values[CLIENT_CERTIFICATE_VECTOR_SIZE] : defaultValue;
   }
 
-  // TODO: honor this setting in spdy/3 and http/2.
+  // TODO: honor this setting in spdy/3 and HTTP/2.
   boolean isFlowControlDisabled() {
     int bit = 1 << FLOW_CONTROL_OPTIONS;
     int value = (bit & set) != 0 ? values[FLOW_CONTROL_OPTIONS] : 0;

@@ -87,7 +87,7 @@ public interface FrameWriter extends Closeable {
    * @param lastGoodStreamId the last stream ID processed, or zero if no
    * streams were processed.
    * @param errorCode reason for closing the connection.
-   * @param debugData only valid for http/2; opaque debug data to send.
+   * @param debugData only valid for HTTP/2; opaque debug data to send.
    */
   void goAway(int lastGoodStreamId, ErrorCode errorCode, byte[] debugData) throws IOException;
 

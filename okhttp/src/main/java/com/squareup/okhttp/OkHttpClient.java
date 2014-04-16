@@ -340,7 +340,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    *
    * <p><strong>This is an evolving set.</strong> Future releases may drop
    * support for transitional protocols (like spdy/3.1), in favor of their
-   * successors (spdy/4 or http/2.0). The http/1.1 transport will never be
+   * successors (spdy/4 or hTTP/2). The http/1.1 transport will never be
    * dropped.
    *
    * <p>If multiple protocols are specified, <a

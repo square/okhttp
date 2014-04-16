@@ -125,7 +125,7 @@ public final class SpdyTransport implements Transport {
       result.add(new Header(VERSION, version));
       result.add(new Header(TARGET_HOST, host));
     } else if (Protocol.HTTP_2 == protocol) {
-      result.add(new Header(TARGET_AUTHORITY, host));
+      result.add(new Header(TARGET_AUTHORITY, host)); // Optional in HTTP/2
     } else {
       throw new AssertionError();
     }

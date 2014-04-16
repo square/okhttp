@@ -27,24 +27,25 @@ import static com.squareup.okhttp.internal.Util.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-public class HpackDraft05Test {
+public class HpackDraft06Test {
 
   private final Buffer bytesIn = new Buffer();
-  private HpackDraft05.Reader hpackReader;
+  private HpackDraft06.Reader hpackReader;
   private Buffer bytesOut = new Buffer();
-  private HpackDraft05.Writer hpackWriter;
+  private HpackDraft06.Writer hpackWriter;
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new HpackDraft05.Writer(bytesOut);
+    hpackWriter = new HpackDraft06.Writer(bytesOut);
   }
 
   /**
    * Variable-length quantity special cases strings which are longer than 127
    * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
    *
-   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-4.1.2
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-4.1.2
    */
   @Test public void largeHeaderValue() throws IOException {
     char[] value = new char[4096];
@@ -185,7 +186,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.1.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     Buffer out = new Buffer();
@@ -239,7 +240,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.1.2
    */
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
@@ -263,7 +264,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.3
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.1.3
    */
   @Test public void readIndexedHeaderField() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -282,8 +283,69 @@ public class HpackDraft05Test {
     assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
   }
 
+  // Example taken from twitter/hpack DecoderTest.testIllegalIndex
+  @Test public void readIndexedHeaderFieldTooLargeIndex() throws IOException {
+    bytesIn.writeByte(0xff); // == Indexed - Add ==
+    bytesIn.writeByte(0x00); // idx = 127
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("Header index too large 127", e.getMessage());
+    }
+  }
+
+  // Example taken from twitter/hpack DecoderTest.testInsidiousIndex
+  @Test public void readIndexedHeaderFieldInsidiousIndex() throws IOException {
+    bytesIn.writeByte(0xff); // == Indexed - Add ==
+    bytesIn.writeByte(0x80); // idx = -2147483521
+    bytesIn.writeByte(0x80);
+    bytesIn.writeByte(0x80);
+    bytesIn.writeByte(0x80);
+    bytesIn.writeByte(0x08);
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("input must be between 0 and 63: -2147483514", e.getMessage());
+    }
+  }
+
+  // Example taken from twitter/hpack DecoderTest.testIllegalEncodeContextUpdate
+  @Test public void readHeaderTableStateChangeInvalid() throws IOException {
+    bytesIn.writeByte(0x80); // header table state change
+    bytesIn.writeByte(0x81); // should be 0x80 for empty!
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("Invalid header table state change -127", e.getMessage());
+    }
+  }
+
+  // Example taken from twitter/hpack DecoderTest.testInsidiousMaxHeaderSize
+  @Test public void readHeaderTableStateChangeInsidiousMaxHeaderByteCount() throws IOException {
+    bytesIn.writeByte(0x80); // header table state change
+    bytesIn.writeByte(0x7F); // encoded -1879048193
+    bytesIn.writeByte(0x80);
+    bytesIn.writeByte(0xFF);
+    bytesIn.writeByte(0xFF);
+    bytesIn.writeByte(0xFF);
+    bytesIn.writeByte(0x08);
+
+    try {
+      hpackReader.readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("Invalid header table byte count -1879048193", e.getMessage());
+    }
+  }
+
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#section-3.2.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-3.2.1
    */
   @Test public void toggleIndex() throws IOException {
     // Static table entries are copied to the top of the reference set.
@@ -349,7 +411,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.1.4
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.1.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -366,7 +428,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     Buffer out = firstRequestWithoutHuffman();
@@ -494,6 +556,7 @@ public class HpackDraft05Test {
     Buffer out = new Buffer();
 
     out.writeByte(0x80); // == Empty reference set ==
+    out.writeByte(0x80); // idx = 0, flag = 1
     out.writeByte(0x85); // == Indexed - Add ==
                          // idx = 5 -> :method: GET
     out.writeByte(0x8c); // == Indexed - Add ==
@@ -568,7 +631,7 @@ public class HpackDraft05Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-05#appendix-E.3
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.3
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     Buffer out = firstRequestWithHuffman();
@@ -705,6 +768,7 @@ public class HpackDraft05Test {
     Buffer out = new Buffer();
 
     out.writeByte(0x80); // == Empty reference set ==
+    out.writeByte(0x80); // idx = 0, flag = 1
     out.writeByte(0x85); // == Indexed - Add ==
                          // idx = 5 -> :method: GET
     out.writeByte(0x8c); // == Indexed - Add ==
@@ -848,8 +912,8 @@ public class HpackDraft05Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
   }
 
-  private HpackDraft05.Reader newReader(Buffer source) {
-    return new HpackDraft05.Reader(false, 4096, source);
+  private HpackDraft06.Reader newReader(Buffer source) {
+    return new HpackDraft06.Reader(4096, source);
   }
 
   private Buffer byteStream(int... bytes) {

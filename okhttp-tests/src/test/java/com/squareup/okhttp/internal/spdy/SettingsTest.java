@@ -37,7 +37,7 @@ public final class SettingsTest {
   @Test public void setFields() {
     Settings settings = new Settings();
 
-    // WARNING: clash on flags between spdy/3 and http/2!
+    // WARNING: clash on flags between spdy/3 and HTTP/2!
     assertEquals(-3, settings.getUploadBandwidth(-3));
     assertEquals(-1, settings.getHeaderTableSize());
     settings.set(UPLOAD_BANDWIDTH, 0, 42);
@@ -45,7 +45,7 @@ public final class SettingsTest {
     settings.set(Settings.HEADER_TABLE_SIZE, 0, 8096);
     assertEquals(8096, settings.getHeaderTableSize());
 
-    // WARNING: clash on flags between spdy/3 and http/2!
+    // WARNING: clash on flags between spdy/3 and HTTP/2!
     assertEquals(-3, settings.getDownloadBandwidth(-3));
     assertEquals(true, settings.getEnablePush(true));
     settings.set(DOWNLOAD_BANDWIDTH, 0, 53);
