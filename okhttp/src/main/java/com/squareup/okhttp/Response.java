@@ -50,6 +50,7 @@ public final class Response {
   private final Headers headers;
   private final Body body;
   private final Response redirectedBy;
+  private final ResponseSource responseSource;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -62,6 +63,7 @@ public final class Response {
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.redirectedBy = builder.redirectedBy;
+    this.responseSource = builder.responseSource;
   }
 
   /**
@@ -153,6 +155,10 @@ public final class Response {
    */
   public Response redirectedBy() {
     return redirectedBy;
+  }
+
+  public ResponseSource responseSource() {
+    return responseSource;
   }
 
   /**
@@ -282,6 +288,7 @@ public final class Response {
     private Headers.Builder headers;
     private Body body;
     private Response redirectedBy;
+    private ResponseSource responseSource = ResponseSource.NETWORK;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -296,6 +303,8 @@ public final class Response {
       this.headers = response.headers.newBuilder();
       this.body = response.body;
       this.redirectedBy = response.redirectedBy;
+      this.responseSource = response.responseSource;
+      this.protocol = response.protocol;
     }
 
     public Builder request(Request request) {
@@ -357,13 +366,14 @@ public final class Response {
       return this;
     }
 
-    // TODO: move out of public API
-    public Builder setResponseSource(ResponseSource responseSource) {
-      return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + code);
-    }
-
     public Builder redirectedBy(Response redirectedBy) {
       this.redirectedBy = redirectedBy;
+      return this;
+    }
+
+    public Builder responseSource(ResponseSource responseSource) {
+      if (responseSource == null) throw new IllegalArgumentException("responseSource == null");
+      this.responseSource = responseSource;
       return this;
     }
 

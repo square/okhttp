@@ -49,18 +49,6 @@ public final class OkHeaders {
    */
   public static final String RECEIVED_MILLIS = PREFIX + "-Received-Millis";
 
-  /**
-   * Synthetic response header: the response source and status code like
-   * "CONDITIONAL_CACHE 304".
-   */
-  public static final String RESPONSE_SOURCE = PREFIX + "-Response-Source";
-
-  /**
-   * Synthetic response header: the selected
-   * {@link com.squareup.okhttp.Protocol protocol} ("spdy/3.1", "http/1.1", etc).
-   */
-  public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
-
   private OkHeaders() {
   }
 

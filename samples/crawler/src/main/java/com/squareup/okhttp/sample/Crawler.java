@@ -19,7 +19,7 @@ import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.ResponseSource;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -81,7 +81,7 @@ public final class Crawler {
         .url(url)
         .build();
     Response response = client.execute(request);
-    String responseSource = response.header(OkHeaders.RESPONSE_SOURCE);
+    ResponseSource responseSource = response.responseSource();
     int responseCode = response.code();
 
     System.out.printf("%03d: %s %s%n", responseCode, url, responseSource);
