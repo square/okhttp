@@ -1,51 +1,24 @@
 package com.squareup.okhttp.guide;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
-import java.io.BufferedReader;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class PostExample {
   OkHttpClient client = new OkHttpClient();
 
   void run() throws IOException {
-    byte[] body = bowlingJson("Jesse", "Jake").getBytes("UTF-8");
-    String result = post(new URL("http://www.roundsapp.com/post"), body);
-    System.out.println(result);
-  }
+    String json = bowlingJson("Jesse", "Jake");
+    Request.Body body = Request.Body.create(MediaType.parse("application/json"), json);
+    Request request = new Request.Builder()
+        .url("http://www.roundsapp.com/post")
+        .method("POST", body)
+        .build();
 
-  String post(URL url, byte[] body) throws IOException {
-    HttpURLConnection connection = client.open(url);
-    OutputStream out = null;
-    InputStream in = null;
-    try {
-      // Write the request.
-      connection.setRequestMethod("POST");
-      out = connection.getOutputStream();
-      out.write(body);
-      out.close();
-
-      // Read the response.
-      if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new IOException("Unexpected HTTP response: "
-            + connection.getResponseCode() + " " + connection.getResponseMessage());
-      }
-      in = connection.getInputStream();
-      return readFirstLine(in);
-    } finally {
-      // Clean up.
-      if (out != null) out.close();
-      if (in != null) in.close();
-    }
-  }
-
-  String readFirstLine(InputStream in) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-    return reader.readLine();
+    Response response = client.execute(request);
+    System.out.println(response.body().string());
   }
 
   String bowlingJson(String player1, String player2) {
