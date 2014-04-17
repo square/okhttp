@@ -26,11 +26,6 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -58,6 +53,11 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import okio.Buffer;
+import okio.BufferedSource;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -426,8 +426,7 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_responseHeadersOk() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
-    Response.Body responseBody =
-        createResponseBody("text/plain", "BodyText".getBytes(StandardCharsets.UTF_8));
+    Response.Body responseBody = createResponseBody("BodyText");
     Response okResponse = new Response.Builder()
         .request(createArbitraryOkRequest())
         .statusLine(statusLine)
@@ -599,11 +598,10 @@ public class JavaApiConverterTest {
     Request okRequest =
         createArbitraryOkRequest().newBuilder()
             .url("http://insecure/request")
-            .method("POST", createRequestBody("RequestBody") )
+            .method("POST", createRequestBody("RequestBody"))
             .build();
     String statusLine = "HTTP/1.1 200 Fantastic";
-    Response.Body responseBody =
-        createResponseBody("text/plain", "ResponseBody".getBytes(StandardCharsets.UTF_8));
+    Response.Body responseBody = createResponseBody("ResponseBody");
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .statusLine(statusLine)
         .addHeader("key1", "value1_1")
@@ -616,7 +614,7 @@ public class JavaApiConverterTest {
     Map<String, List<String>> javaHeaders = javaCacheResponse.getHeaders();
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
     assertEquals(Arrays.asList(statusLine), javaHeaders.get(null));
-    assertArrayEquals(responseBody.bytes(), readAll(javaCacheResponse.getBody()));
+    assertEquals("ResponseBody", readAll(javaCacheResponse.getBody()));
   }
 
   @Test public void createJavaCacheResponse_httpsPost() throws Exception {
@@ -626,8 +624,7 @@ public class JavaApiConverterTest {
             .method("POST", createRequestBody("RequestBody") )
             .build();
     String statusLine = "HTTP/1.1 200 Fantastic";
-    Response.Body responseBody =
-        createResponseBody("text/plain", "ResponseBody".getBytes(StandardCharsets.UTF_8));
+    Response.Body responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
         Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
@@ -643,7 +640,7 @@ public class JavaApiConverterTest {
     Map<String, List<String>> javaHeaders = javaCacheResponse.getHeaders();
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
     assertEquals(Arrays.asList(statusLine), javaHeaders.get(null));
-    assertArrayEquals(responseBody.bytes(), readAll(javaCacheResponse.getBody()));
+    assertEquals("ResponseBody", readAll(javaCacheResponse.getBody()));
     assertEquals(handshake.cipherSuite(), javaCacheResponse.getCipherSuite());
     assertEquals(handshake.localCertificates(), javaCacheResponse.getLocalCertificateChain());
     assertEquals(handshake.peerCertificates(), javaCacheResponse.getServerCertificateChain());
@@ -767,39 +764,35 @@ public class JavaApiConverterTest {
     return Request.Body.create(MediaType.parse("text/plain"), bodyText);
   }
 
-  private static Response.Body createResponseBody(final String contentType, final byte[] bytes) {
+  private static Response.Body createResponseBody(String bodyText) {
+    final Buffer source = new Buffer().writeUtf8(bodyText);
+    final long contentLength = source.size();
     return new Response.Body() {
-
-      @Override
-      public boolean ready() throws IOException {
+      @Override public boolean ready() throws IOException {
         return true;
       }
 
-      @Override
-      public MediaType contentType() {
-        return MediaType.parse(contentType);
+      @Override public MediaType contentType() {
+        return MediaType.parse("text/plain; charset=utf-8");
       }
 
-      @Override
-      public long contentLength() {
-        return bytes.length;
+      @Override public long contentLength() {
+        return contentLength;
       }
 
-      @Override
-      public InputStream byteStream() {
-        return new ByteArrayInputStream(bytes);
+      @Override public BufferedSource source() {
+        return source;
       }
     };
   }
 
-  private byte[] readAll(InputStream in) throws IOException {
+  private String readAll(InputStream in) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     int value;
     while ((value = in.read()) != -1) {
       buffer.write(value);
     }
     in.close();
-    return buffer.toByteArray();
+    return buffer.toString("UTF-8");
   }
-
 }

@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -24,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import okio.Buffer;
 
 /**
  * Records received HTTP responses so they can be later retrieved by tests.
@@ -31,8 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class RecordingReceiver implements Response.Receiver {
   public static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
-  private final Map<Response, ByteArrayOutputStream> inFlightResponses
-      = new LinkedHashMap<Response, ByteArrayOutputStream>();
+  private final Map<Response, Buffer> inFlightResponses = new LinkedHashMap<Response, Buffer>();
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();
 
   @Override public synchronized void onFailure(Failure failure) {
@@ -41,27 +40,23 @@ public class RecordingReceiver implements Response.Receiver {
   }
 
   @Override public synchronized boolean onResponse(Response response) throws IOException {
-    ByteArrayOutputStream out = inFlightResponses.get(response);
-    if (out == null) {
-      out = new ByteArrayOutputStream();
-      inFlightResponses.put(response, out);
+    Buffer buffer = inFlightResponses.get(response);
+    if (buffer == null) {
+      buffer = new Buffer();
+      inFlightResponses.put(response, buffer);
     }
 
-    byte[] buffer = new byte[1024];
     Response.Body body = response.body();
-
     while (body.ready()) {
-      int c = body.byteStream().read(buffer);
+      long c = body.source().read(buffer, 2048);
 
       if (c == -1) {
         inFlightResponses.remove(response);
         responses.add(new RecordedResponse(
-            response.request(), response, out.toString("UTF-8"), null));
+            response.request(), response, buffer.readUtf8(buffer.size()), null));
         notifyAll();
         return true;
       }
-
-      out.write(buffer, 0, c);
     }
 
     return false;

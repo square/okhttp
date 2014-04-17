@@ -42,6 +42,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.GzipSource;
 import okio.Okio;
 import okio.Sink;
@@ -108,7 +109,7 @@ public class HttpEngine {
   /** Null until a response is received from the network or the cache. */
   private Response response;
   private Source responseTransferSource;
-  private Source responseBody;
+  private BufferedSource responseBody;
   private InputStream responseBodyBytes;
 
   /**
@@ -304,7 +305,7 @@ public class HttpEngine {
     return response;
   }
 
-  public final Source getResponseBody() {
+  public final BufferedSource getResponseBody() {
     if (response == null) throw new IllegalStateException();
     return responseBody;
   }
@@ -465,9 +466,9 @@ public class HttpEngine {
           .removeHeader("Content-Encoding")
           .removeHeader("Content-Length")
           .build();
-      responseBody = new GzipSource(transferSource);
+      responseBody = Okio.buffer(new GzipSource(transferSource));
     } else {
-      responseBody = transferSource;
+      responseBody = Okio.buffer(transferSource);
     }
   }
 
@@ -630,7 +631,7 @@ public class HttpEngine {
     if (!hasResponseBody()) {
       // Don't call initContentStream() when the response doesn't have any content.
       responseTransferSource = transport.getTransferStream(cacheRequest);
-      responseBody = responseTransferSource;
+      responseBody = Okio.buffer(responseTransferSource);
       return;
     }
 

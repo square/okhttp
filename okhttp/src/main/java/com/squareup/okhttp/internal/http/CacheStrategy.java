@@ -5,12 +5,13 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.Date;
+import okio.BufferedSource;
+import okio.Okio;
 
-import static com.squareup.okhttp.internal.Util.EMPTY_INPUT_STREAM;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -32,8 +33,8 @@ public final class CacheStrategy {
     @Override public long contentLength() {
       return 0;
     }
-    @Override public InputStream byteStream() {
-      return EMPTY_INPUT_STREAM;
+    @Override public BufferedSource source() {
+      return Okio.buffer(Util.EMPTY_SOURCE);
     }
   };
 
