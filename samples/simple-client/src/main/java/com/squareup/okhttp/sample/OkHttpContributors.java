@@ -3,10 +3,9 @@ package com.squareup.okhttp.sample;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.OkHttpClient;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import java.io.Reader;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -27,12 +26,16 @@ public class OkHttpContributors {
     OkHttpClient client = new OkHttpClient();
 
     // Create request for remote resource.
-    HttpURLConnection connection = client.open(new URL(ENDPOINT));
-    InputStream is = connection.getInputStream();
-    InputStreamReader isr = new InputStreamReader(is);
+    Request request = new Request.Builder()
+        .url(ENDPOINT)
+        .build();
+
+    // Execute the request and retrieve the response.
+    Response response = client.execute(request);
 
     // Deserialize HTTP response to concrete type.
-    List<Contributor> contributors = GSON.fromJson(isr, CONTRIBUTORS.getType());
+    Reader body = response.body().charStream();
+    List<Contributor> contributors = GSON.fromJson(body, CONTRIBUTORS.getType());
 
     // Sort list by the most contributions.
     Collections.sort(contributors, new Comparator<Contributor>() {

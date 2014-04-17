@@ -16,16 +16,14 @@
 package com.squareup.okhttp.sample;
 
 import com.squareup.okhttp.HttpResponseCache;
-import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -40,8 +38,6 @@ import org.jsoup.nodes.Element;
  * Fetches HTML from a requested URL, follows the links, and repeats.
  */
 public final class Crawler {
-  public static final Charset UTF_8 = Charset.forName("UTF-8");
-
   private final OkHttpClient client;
   private final Set<URL> fetchedUrls = Collections.synchronizedSet(new LinkedHashSet<URL>());
   private final LinkedBlockingQueue<URL> queue = new LinkedBlockingQueue<URL>();
@@ -81,33 +77,27 @@ public final class Crawler {
   }
 
   public void fetch(URL url) throws IOException {
-    HttpURLConnection connection = client.open(url);
-    String responseSource = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    String contentType = connection.getHeaderField("Content-Type");
-    int responseCode = connection.getResponseCode();
+    Request request = new Request.Builder()
+        .url(url)
+        .build();
+    Response response = client.execute(request);
+    String responseSource = response.header(OkHeaders.RESPONSE_SOURCE);
+    int responseCode = response.code();
 
     System.out.printf("%03d: %s %s%n", responseCode, url, responseSource);
 
-    if (responseCode >= 400) {
-      connection.getErrorStream().close();
-      return;
-    }
-
-    InputStream in = connection.getInputStream();
+    String contentType = response.header("Content-Type");
     if (responseCode != 200 || contentType == null) {
-      in.close();
+      response.body().close();
       return;
     }
 
-    MediaType mediaType = MediaType.parse(contentType);
-    Document document = Jsoup.parse(in, mediaType.charset(UTF_8).name(), url.toString());
+    Document document = Jsoup.parse(response.body().string(), url.toString());
     for (Element element : document.select("a[href]")) {
       String href = element.attr("href");
       URL link = parseUrl(url, href);
       if (link != null) queue.add(link);
     }
-
-    in.close();
   }
 
   private URL parseUrl(URL url, String href) {
