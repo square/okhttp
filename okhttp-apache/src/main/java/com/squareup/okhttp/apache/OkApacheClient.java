@@ -1,13 +1,13 @@
 // Copyright 2013 Square, Inc.
 package com.squareup.okhttp.apache;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.URL;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -21,7 +21,6 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnRouteParams;
 import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.params.AbstractHttpParams;
 import org.apache.http.params.HttpParams;
@@ -37,8 +36,59 @@ import static org.apache.http.HttpVersion.HTTP_1_1;
  * API. This includes the keep-alive strategy, cookie store, credentials provider, route planner
  * and others.
  */
-public class OkApacheClient implements HttpClient {
-  protected final OkHttpClient client;
+public final class OkApacheClient implements HttpClient {
+  private static Request transformRequest(HttpRequest request) {
+    Request.Builder builder = new Request.Builder();
+
+    RequestLine requestLine = request.getRequestLine();
+    String method = requestLine.getMethod();
+    builder.url(requestLine.getUri());
+
+    for (Header header : request.getAllHeaders()) {
+      builder.header(header.getName(), header.getValue());
+    }
+
+    Request.Body body = null;
+    if (request instanceof HttpEntityEnclosingRequest) {
+      HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+      if (entity != null) {
+        // Wrap the entity in a custom Body which takes care of the content, length, and type.
+        body = new HttpEntityBody(entity);
+
+        Header encoding = entity.getContentEncoding();
+        if (encoding != null) {
+          builder.header(encoding.getName(), encoding.getValue());
+        }
+      }
+    }
+    builder.method(method, body);
+
+    return builder.build();
+  }
+
+  private static HttpResponse transformResponse(Response response) {
+    int code = response.code();
+    String message = response.statusMessage();
+    BasicHttpResponse httpResponse = new BasicHttpResponse(HTTP_1_1, code, message);
+
+    Response.Body body = response.body();
+    InputStreamEntity entity = new InputStreamEntity(body.byteStream(), body.contentLength());
+    httpResponse.setEntity(entity);
+
+    Headers headers = response.headers();
+    for (int i = 0; i < headers.size(); i++) {
+      String name = headers.name(i);
+      String value = headers.value(i);
+      httpResponse.addHeader(name, value);
+      if ("Content-Type".equalsIgnoreCase(name)) {
+        entity.setContentType(value);
+      } else if ("Content-Encoding".equalsIgnoreCase(name)) {
+        entity.setContentEncoding(value);
+      }
+    }
+
+    return httpResponse;
+  }
 
   private final HttpParams params = new AbstractHttpParams() {
     @Override public Object getParameter(String name) {
@@ -75,20 +125,14 @@ public class OkApacheClient implements HttpClient {
     }
   };
 
+  private final OkHttpClient client;
+
   public OkApacheClient() {
     this(new OkHttpClient());
   }
 
   public OkApacheClient(OkHttpClient client) {
     this.client = client;
-  }
-
-  /**
-   * Returns a new HttpURLConnection customized for this application. Subclasses should override
-   * this to customize the connection.
-   */
-  protected HttpURLConnection openConnection(URL url) {
-    return client.open(url);
   }
 
   @Override public HttpParams getParams() {
@@ -114,66 +158,9 @@ public class OkApacheClient implements HttpClient {
 
   @Override public HttpResponse execute(HttpHost host, HttpRequest request, HttpContext context)
       throws IOException {
-    // Prepare the request headers.
-    RequestLine requestLine = request.getRequestLine();
-    URL url = new URL(requestLine.getUri());
-    HttpURLConnection connection = openConnection(url);
-    connection.setRequestMethod(requestLine.getMethod());
-    for (Header header : request.getAllHeaders()) {
-      connection.addRequestProperty(header.getName(), header.getValue());
-    }
-
-    // Stream the request body.
-    if (request instanceof HttpEntityEnclosingRequest) {
-      HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-      if (entity != null) {
-        connection.setDoOutput(true);
-        Header type = entity.getContentType();
-        if (type != null) {
-          connection.addRequestProperty(type.getName(), type.getValue());
-        }
-        Header encoding = entity.getContentEncoding();
-        if (encoding != null) {
-          connection.addRequestProperty(encoding.getName(), encoding.getValue());
-        }
-        if (entity.isChunked() || entity.getContentLength() < 0) {
-          connection.setChunkedStreamingMode(0);
-        } else if (entity.getContentLength() <= 8192) {
-          // Buffer short, fixed-length request bodies. This costs memory, but permits the request
-          // to be transparently retried if there is a connection failure.
-          connection.addRequestProperty("Content-Length", Long.toString(entity.getContentLength()));
-        } else {
-          connection.setFixedLengthStreamingMode((int) entity.getContentLength());
-        }
-        entity.writeTo(connection.getOutputStream());
-      }
-    }
-
-    // Read the response headers.
-    int responseCode = connection.getResponseCode();
-    String message = connection.getResponseMessage();
-    BasicHttpResponse response = new BasicHttpResponse(HTTP_1_1, responseCode, message);
-    // Get the response body ready to stream.
-    InputStream responseBody =
-        responseCode < HttpURLConnection.HTTP_BAD_REQUEST ? connection.getInputStream()
-            : connection.getErrorStream();
-    InputStreamEntity entity = new InputStreamEntity(responseBody, connection.getContentLength());
-    for (int i = 0; true; i++) {
-      String name = connection.getHeaderFieldKey(i);
-      if (name == null) {
-        break;
-      }
-      BasicHeader header = new BasicHeader(name, connection.getHeaderField(i));
-      response.addHeader(header);
-      if (name.equalsIgnoreCase("Content-Type")) {
-          entity.setContentType(header);
-      } else if (name.equalsIgnoreCase("Content-Encoding")) {
-          entity.setContentEncoding(header);
-      }
-    }
-    response.setEntity(entity);
-
-    return response;
+    Request okRequest = transformRequest(request);
+    Response okResponse = client.execute(okRequest);
+    return transformResponse(okResponse);
   }
 
   @Override public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> handler)
