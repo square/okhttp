@@ -695,10 +695,8 @@ public final class MockWebServer {
         }
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
-      Buffer body = new Buffer();
-      if (response.getBody() != null) {
-        body.write(response.getBody());
-      }
+      Buffer body = response.getBody();
+      if (body == null) body = new Buffer();
       boolean closeStreamAfterHeaders = body.size() > 0 || !response.getPushPromises().isEmpty();
       stream.reply(spdyHeaders, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
@@ -753,9 +751,9 @@ public final class MockWebServer {
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
             Util.EMPTY_BYTE_ARRAY, sequenceNumber.getAndIncrement(), socket));
-        byte[] pushedBody = pushPromise.getResponse().getBody();
+        Buffer pushedBody = pushPromise.getResponse().getBody();
         SpdyStream pushedStream =
-            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.length > 0);
+            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.size() > 0);
         writeResponse(pushedStream, pushPromise.getResponse());
       }
     }

@@ -29,7 +29,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,7 +65,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -74,6 +72,10 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.GzipSink;
+import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -710,10 +712,10 @@ public final class URLConnectionTest {
   @Test public void contentDisagreesWithChunkedHeader() throws IOException {
     MockResponse mockResponse = new MockResponse();
     mockResponse.setChunkedBody("abc", 3);
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    bytesOut.write(mockResponse.getBody());
-    bytesOut.write("\r\nYOU SHOULD NOT SEE THIS".getBytes("UTF-8"));
-    mockResponse.setBody(bytesOut.toByteArray());
+    Buffer buffer = new Buffer();
+    buffer.writeAll(mockResponse.getBody());
+    buffer.write("\r\nYOU SHOULD NOT SEE THIS".getBytes("UTF-8"));
+    mockResponse.setBody(buffer);
     mockResponse.clearHeaders();
     mockResponse.addHeader("Transfer-encoding: chunked");
 
@@ -1086,7 +1088,8 @@ public final class URLConnectionTest {
    * imply a bug in the implementation.
    */
   @Test public void gzipEncodingEnabledByDefault() throws IOException, InterruptedException {
-    server.enqueue(new MockResponse().setBody(gzip("ABCABCABC".getBytes("UTF-8")))
+    server.enqueue(new MockResponse()
+        .setBody(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip"));
     server.play();
 
@@ -1100,7 +1103,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void clientConfiguredGzipContentEncoding() throws Exception {
-    byte[] bodyBytes = gzip("ABCDEFGHIJKLMNOPQRSTUVWXYZ".getBytes("UTF-8"));
+    Buffer bodyBytes = gzip("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     server.enqueue(new MockResponse()
         .setBody(bodyBytes)
         .addHeader("Content-Encoding: gzip"));
@@ -1110,7 +1113,7 @@ public final class URLConnectionTest {
     connection.addRequestProperty("Accept-Encoding", "gzip");
     InputStream gunzippedIn = new GZIPInputStream(connection.getInputStream());
     assertEquals("ABCDEFGHIJKLMNOPQRSTUVWXYZ", readAscii(gunzippedIn, Integer.MAX_VALUE));
-    assertEquals(bodyBytes.length, connection.getContentLength());
+    assertEquals(bodyBytes.size(), connection.getContentLength());
 
     RecordedRequest request = server.takeRequest();
     assertContains(request.getHeaders(), "Accept-Encoding: gzip");
@@ -1162,7 +1165,7 @@ public final class URLConnectionTest {
 
     MockResponse responseOne = new MockResponse();
     responseOne.addHeader("Content-Encoding: gzip");
-    transferKind.setBody(responseOne, gzip("one (gzipped)".getBytes("UTF-8")), 5);
+    transferKind.setBody(responseOne, gzip("one (gzipped)"), 5);
     server.enqueue(responseOne);
     MockResponse responseTwo = new MockResponse();
     transferKind.setBody(responseTwo, "two (identity)", 5);
@@ -1186,7 +1189,7 @@ public final class URLConnectionTest {
         .setSocketPolicy(SHUTDOWN_INPUT_AT_END));
     server.enqueue(new MockResponse()
         .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("b".getBytes(UTF_8))));
+        .setBody(gzip("b")));
     server.play();
 
     // Seed the pool with a bad connection.
@@ -1253,7 +1256,7 @@ public final class URLConnectionTest {
   @Test public void streamDiscardingIsTimely() throws Exception {
     // This response takes at least a full second to serve: 10,000 bytes served 100 bytes at a time.
     server.enqueue(new MockResponse()
-        .setBody(new byte[10000])
+        .setBody(new Buffer().write(new byte[10000]))
         .throttleBody(100, 10, MILLISECONDS));
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
@@ -2176,7 +2179,7 @@ public final class URLConnectionTest {
   }
 
   @Test public void singleByteReadIsSigned() throws IOException {
-    server.enqueue(new MockResponse().setBody(new byte[] {-2, -1}));
+    server.enqueue(new MockResponse().setBody(new Buffer().writeByte(-2).writeByte(-1)));
     server.play();
 
     connection = client.open(server.getUrl("/"));
@@ -2836,7 +2839,7 @@ public final class URLConnectionTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("Moved! Moved! Moved!".getBytes(UTF_8))));
+        .setBody(gzip("Moved! Moved! Moved!")));
     server.enqueue(new MockResponse().setBody("This is the new page!"));
     server.play();
 
@@ -2870,12 +2873,12 @@ public final class URLConnectionTest {
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
-  public byte[] gzip(byte[] bytes) throws IOException {
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    OutputStream gzippedOut = new GZIPOutputStream(bytesOut);
-    gzippedOut.write(bytes);
-    gzippedOut.close();
-    return bytesOut.toByteArray();
+  public Buffer gzip(String data) throws IOException {
+    Buffer result = new Buffer();
+    BufferedSink gzipSink = Okio.buffer(new GzipSink(result));
+    gzipSink.writeUtf8(data);
+    gzipSink.close();
+    return result;
   }
 
   /**
@@ -2910,7 +2913,7 @@ public final class URLConnectionTest {
 
   enum TransferKind {
     CHUNKED() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize)
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
           throws IOException {
         response.setChunkedBody(content, chunkSize);
       }
@@ -2919,7 +2922,7 @@ public final class URLConnectionTest {
       }
     },
     FIXED_LENGTH() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize) {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
       @Override void setForRequest(HttpURLConnection connection, int contentLength) {
@@ -2927,7 +2930,7 @@ public final class URLConnectionTest {
       }
     },
     END_OF_STREAM() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize) {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(DISCONNECT_AT_END);
         for (Iterator<String> h = response.getHeaders().iterator(); h.hasNext(); ) {
@@ -2941,12 +2944,12 @@ public final class URLConnectionTest {
       }
     };
 
-    abstract void setBody(MockResponse response, byte[] content, int chunkSize) throws IOException;
+    abstract void setBody(MockResponse response, Buffer content, int chunkSize) throws IOException;
 
     abstract void setForRequest(HttpURLConnection connection, int contentLength);
 
     void setBody(MockResponse response, String content, int chunkSize) throws IOException {
-      setBody(response, content.getBytes("UTF-8"), chunkSize);
+      setBody(response, new Buffer().writeUtf8(content), chunkSize);
     }
   }
 

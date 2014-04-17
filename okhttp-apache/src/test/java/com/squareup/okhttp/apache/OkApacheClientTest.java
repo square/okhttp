@@ -219,10 +219,10 @@ public class OkApacheClientTest {
     assertEquals(text, EntityUtils.toString(entity, UTF_8));
   }
 
-  private static byte[] gzip(String body) throws IOException {
+  private static Buffer gzip(String body) throws IOException {
     Buffer buffer = new Buffer();
     Okio.buffer(new GzipSink(buffer)).writeUtf8(body).close();
-    return buffer.readByteString(buffer.size()).toByteArray();
+    return buffer;
   }
 
   private static String gunzip(HttpEntity body) throws IOException {

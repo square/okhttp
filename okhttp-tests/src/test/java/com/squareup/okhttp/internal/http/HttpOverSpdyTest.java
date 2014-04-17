@@ -25,11 +25,9 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
@@ -43,10 +41,13 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.GzipSink;
+import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -224,8 +225,9 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void gzippedResponseBody() throws Exception {
-    server.enqueue(new MockResponse().addHeader("Content-Encoding: gzip")
-        .setBody(gzip("ABCABCABC".getBytes(Util.UTF_8))));
+    server.enqueue(new MockResponse()
+        .addHeader("Content-Encoding: gzip")
+        .setBody(gzip("ABCABCABC")));
     server.play();
     assertContent("ABCABCABC", client.open(server.getUrl("/r1")), Integer.MAX_VALUE);
   }
@@ -453,12 +455,12 @@ public abstract class HttpOverSpdyTest {
     return result.toString();
   }
 
-  public byte[] gzip(byte[] bytes) throws IOException {
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    OutputStream gzippedOut = new GZIPOutputStream(bytesOut);
-    gzippedOut.write(bytes);
-    gzippedOut.close();
-    return bytesOut.toByteArray();
+  public Buffer gzip(String bytes) throws IOException {
+    Buffer bytesOut = new Buffer();
+    BufferedSink sink = Okio.buffer(new GzipSink(bytesOut));
+    sink.writeUtf8(bytes);
+    sink.close();
+    return bytesOut;
   }
 
   class SpdyRequest implements Runnable {
