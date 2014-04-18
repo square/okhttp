@@ -32,10 +32,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
+import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
@@ -608,7 +610,7 @@ public class HttpEngine {
     receiveHeaders(response.headers());
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
-      if (validatingResponse.validate(response)) {
+      if (validate(validatingResponse, response)) {
         transport.emptyTransferStream();
         releaseConnection();
         response = combine(validatingResponse, response);
@@ -637,6 +639,30 @@ public class HttpEngine {
 
     maybeCache();
     initContentStream(transport.getTransferStream(cacheRequest));
+  }
+
+  /**
+   * Returns true if {@code cached} should be used; false if {@code network}
+   * response should be used.
+   */
+  private static boolean validate(Response cached, Response network) {
+    if (network.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+      return true;
+    }
+
+    // The HTTP spec says that if the network's response is older than our
+    // cached response, we may return the cache's response. Like Chrome (but
+    // unlike Firefox), this client prefers to return the newer response.
+    Date lastModified = cached.headers().getDate("Last-Modified");
+    if (lastModified != null) {
+      Date networkLastModified = network.headers().getDate("Last-Modified");
+      if (networkLastModified != null
+          && networkLastModified.getTime() < lastModified.getTime()) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

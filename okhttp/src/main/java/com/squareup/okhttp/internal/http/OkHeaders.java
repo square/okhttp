@@ -9,7 +9,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
+import static com.squareup.okhttp.internal.Util.equal;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class OkHeaders {
@@ -124,5 +128,42 @@ public final class OkHeaders {
       sb.append(cookies.get(i));
     }
     return sb.toString();
+  }
+
+  /**
+   * Returns true if none of the Vary headers have changed between {@code
+   * cachedRequest} and {@code newRequest}.
+   */
+  public static boolean varyMatches(
+      Response cachedResponse, Headers cachedRequest, Request newRequest) {
+    for (String field : varyFields(cachedResponse)) {
+      if (!equal(cachedRequest.values(field), newRequest.headers(field))) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Returns true if a Vary header contains an asterisk. Such responses cannot
+   * be cached.
+   */
+  public static boolean hasVaryAll(Response response) {
+    return varyFields(response).contains("*");
+  }
+
+  public static Set<String> varyFields(Response response) {
+    Set<String> result = Collections.emptySet();
+    Headers headers = response.headers();
+    for (int i = 0; i < headers.size(); i++) {
+      if (!"Vary".equalsIgnoreCase(headers.name(i))) continue;
+
+      String value = headers.value(i);
+      if (result.isEmpty()) {
+        result = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+      }
+      for (String varyField : value.split(",")) {
+        result.add(varyField.trim());
+      }
+    }
+    return result;
   }
 }

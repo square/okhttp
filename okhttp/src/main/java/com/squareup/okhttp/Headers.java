@@ -17,9 +17,11 @@
 
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.HttpDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -52,6 +54,16 @@ public final class Headers {
   /** Returns the last value corresponding to the specified field, or null. */
   public String get(String fieldName) {
     return get(namesAndValues, fieldName);
+  }
+
+  /**
+   * Returns the last value corresponding to the specified field parsed as an
+   * HTTP date, or null if either the field is absent or cannot be parsed as a
+   * date.
+   */
+  public Date getDate(String fieldName) {
+    String value = get(fieldName);
+    return value != null ? HttpDate.parse(value) : null;
   }
 
   /** Returns the number of field values. */
