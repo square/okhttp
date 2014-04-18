@@ -134,8 +134,8 @@ public final class Connection implements Closeable {
     socket.close();
   }
 
-  public void connect(int connectTimeout, int readTimeout, TunnelRequest tunnelRequest)
-      throws IOException {
+  public void connect(int connectTimeout, int readTimeout, int writeTimeout,
+      TunnelRequest tunnelRequest) throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
     if (route.proxy.type() != Proxy.Type.HTTP) {
@@ -148,9 +148,9 @@ public final class Connection implements Closeable {
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
 
     if (route.address.sslSocketFactory != null) {
-      upgradeToTls(tunnelRequest);
+      upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
     } else {
-      httpConnection = new HttpConnection(pool, this, socket);
+      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
     }
     connected = true;
   }
@@ -159,12 +159,13 @@ public final class Connection implements Closeable {
    * Create an {@code SSLSocket} and perform the TLS handshake and certificate
    * validation.
    */
-  private void upgradeToTls(TunnelRequest tunnelRequest) throws IOException {
+  private void upgradeToTls(TunnelRequest tunnelRequest, int readTimeout, int writeTimeout)
+      throws IOException {
     Platform platform = Platform.get();
 
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     if (requiresTunnel()) {
-      makeTunnel(tunnelRequest);
+      makeTunnel(tunnelRequest, readTimeout, writeTimeout);
     }
 
     // Create the wrapper over connected socket.
@@ -215,7 +216,7 @@ public final class Connection implements Closeable {
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
-      httpConnection = new HttpConnection(pool, this, socket);
+      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
     }
   }
 
@@ -345,8 +346,10 @@ public final class Connection implements Closeable {
    * CONNECT request to create the proxy connection. This may need to be
    * retried if the proxy requires authorization.
    */
-  private void makeTunnel(TunnelRequest tunnelRequest) throws IOException {
-    HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
+  private void makeTunnel(TunnelRequest tunnelRequest, int readTimeout, int writeTimeout)
+      throws IOException {
+    HttpConnection tunnelConnection = new HttpConnection(
+        pool, this, socket, readTimeout, writeTimeout);
     Request request = tunnelRequest.getRequest();
     String requestLine = tunnelRequest.requestLine();
     while (true) {

@@ -69,6 +69,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private boolean followProtocolRedirects = true;
   private int connectTimeout;
   private int readTimeout;
+  private int writeTimeout;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -81,16 +82,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * @see URLConnection#setConnectTimeout(int)
    */
   public void setConnectTimeout(long timeout, TimeUnit unit) {
-    if (timeout < 0) {
-      throw new IllegalArgumentException("timeout < 0");
-    }
-    if (unit == null) {
-      throw new IllegalArgumentException("unit == null");
-    }
+    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+    if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
-    if (millis > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("Timeout too large.");
-    }
+    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     connectTimeout = (int) millis;
   }
 
@@ -105,22 +100,32 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * @see URLConnection#setReadTimeout(int)
    */
   public void setReadTimeout(long timeout, TimeUnit unit) {
-    if (timeout < 0) {
-      throw new IllegalArgumentException("timeout < 0");
-    }
-    if (unit == null) {
-      throw new IllegalArgumentException("unit == null");
-    }
+    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+    if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
-    if (millis > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("Timeout too large.");
-    }
+    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     readTimeout = (int) millis;
   }
 
   /** Default read timeout (in milliseconds). */
   public int getReadTimeout() {
     return readTimeout;
+  }
+
+  /**
+   * Sets the default write timeout for new connections. A value of 0 means no timeout.
+   */
+  public void setWriteTimeout(long timeout, TimeUnit unit) {
+    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+    if (unit == null) throw new IllegalArgumentException("unit == null");
+    long millis = unit.toMillis(timeout);
+    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
+    writeTimeout = (int) millis;
+  }
+
+  /** Default write timeout (in milliseconds). */
+  public int getWriteTimeout() {
+    return writeTimeout;
   }
 
   /**

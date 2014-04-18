@@ -89,17 +89,17 @@ public final class ConnectionPoolTest {
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, true);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
     httpA = new Connection(pool, httpRoute);
-    httpA.connect(200, 200, null);
+    httpA.connect(200, 200, 200, null);
     httpB = new Connection(pool, httpRoute);
-    httpB.connect(200, 200, null);
+    httpB.connect(200, 200, 200, null);
     httpC = new Connection(pool, httpRoute);
-    httpC.connect(200, 200, null);
+    httpC.connect(200, 200, 200, null);
     httpD = new Connection(pool, httpRoute);
-    httpD.connect(200, 200, null);
+    httpD.connect(200, 200, 200, null);
     httpE = new Connection(pool, httpRoute);
-    httpE.connect(200, 200, null);
+    httpE.connect(200, 200, 200, null);
     spdyA = new Connection(pool, spdyRoute);
-    spdyA.connect(20000, 20000, null);
+    spdyA.connect(20000, 20000, 2000, null);
 
     owner = new Object();
     httpA.setOwner(owner);
@@ -133,7 +133,7 @@ public final class ConnectionPoolTest {
 
     connection = new Connection(
         pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, true));
-    connection.connect(200, 200, null);
+    connection.connect(200, 200, 200, null);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
 

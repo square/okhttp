@@ -2087,6 +2087,25 @@ public final class URLConnectionTest {
     }
   }
 
+  /** Confirm that an unacknowledged write times out. */
+  @Test public void writeTimeouts() throws IOException {
+    server.enqueue(new MockResponse()
+        .throttleBody(1, 3600, TimeUnit.SECONDS)); // Prevent the server from reading!
+    server.play();
+
+    client.setWriteTimeout(500, TimeUnit.MILLISECONDS);
+    connection = client.open(server.getUrl("/"));
+    connection.setDoOutput(true);
+    connection.setChunkedStreamingMode(0);
+    OutputStream out = connection.getOutputStream();
+    try {
+      byte[] data = new byte[1024 * 1024]; // 1 MiB.
+      out.write(data);
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   @Test public void setChunkedEncodingAsRequestProperty() throws IOException, InterruptedException {
     server.enqueue(new MockResponse());
     server.play();
