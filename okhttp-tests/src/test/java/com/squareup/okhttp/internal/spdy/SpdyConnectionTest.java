@@ -97,12 +97,15 @@ public final class SpdyConnectionTest {
   @Test public void headersOnlyStreamIsClosedAfterReplyHeaders() throws Exception {
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
     SpdyConnection connection = connection(peer, SPDY3);
     SpdyStream stream = connection.newStream(headerEntries("a", "android"), false, false);
     assertEquals(1, connection.openStreamCount());
     assertEquals(headerEntries("b", "banana"), stream.getResponseHeaders());
+    connection.ping().roundTripTime(); // Ensure that inFinished has been received.
     assertEquals(0, connection.openStreamCount());
   }
 
@@ -334,12 +337,10 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
 
     // verify the peer's settings were read and applied.
-    synchronized (connection) {
-      assertEquals(0, connection.peerSettings.getHeaderTableSize());
-      Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.frameReader;
-      assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
-      // TODO: when supported, check the frameWriter's compression table is unaffected.
-    }
+    assertEquals(0, connection.peerSettings.getHeaderTableSize());
+    Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.frameReader;
+    assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
+    // TODO: when supported, check the frameWriter's compression table is unaffected.
   }
 
   @Test public void peerHttp2ClientDisablesPush() throws Exception {
@@ -350,9 +351,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = sendHttp2SettingsAndCheckForAck(client, settings);
 
     // verify the peer's settings were read and applied.
-    synchronized (connection) {
-      assertFalse(connection.peerSettings.getEnablePush(true));
-    }
+    assertFalse(connection.peerSettings.getEnablePush(true));
   }
 
   @Test public void serverSendsSettingsToClient() throws Exception {
@@ -652,6 +651,8 @@ public final class SpdyConnectionTest {
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 3, headerEntries("b", "banana"));
     peer.sendFrame().data(true, 3, new Buffer().writeUtf8("square"));
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
     // play it back
@@ -659,6 +660,7 @@ public final class SpdyConnectionTest {
     SpdyStream stream = connection.newStream(headerEntries("a", "android"), false, true);
     Source source = stream.getSource();
     assertStreamData("square", source);
+    connection.ping().roundTripTime(); // Ensure that inFinished has been received.
     assertEquals(0, connection.openStreamCount());
 
     // verify the peer received what was expected
@@ -1516,6 +1518,8 @@ public final class SpdyConnectionTest {
     peer.setVariantAndClient(HTTP_20_DRAFT_09, client);
     peer.sendFrame().settings(settings);
     peer.acceptFrame(); // ACK
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0);
     peer.play();
 
     // play it back
@@ -1526,6 +1530,8 @@ public final class SpdyConnectionTest {
     assertEquals(TYPE_SETTINGS, ackFrame.type);
     assertEquals(0, ackFrame.streamId);
     assertTrue(ackFrame.ack);
+
+    connection.ping().roundTripTime(); // Ensure that settings have been applied before returning.
     return connection;
   }
 
