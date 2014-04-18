@@ -2503,7 +2503,7 @@ public final class URLConnectionTest {
 
   private void reusedConnectionFailsWithPost(TransferKind transferKind, int requestSize)
       throws Exception {
-    server.enqueue(new MockResponse().setBody("A").setSocketPolicy(SHUTDOWN_INPUT_AT_END));
+    server.enqueue(new MockResponse().setBody("A").setSocketPolicy(DISCONNECT_AT_END));
     server.enqueue(new MockResponse().setBody("B"));
     server.enqueue(new MockResponse().setBody("C"));
     server.play();
