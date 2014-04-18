@@ -34,7 +34,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
-import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
@@ -116,14 +115,15 @@ public final class SpdyConnection implements Closeable {
   final Settings peerSettings = new Settings();
 
   private boolean receivedInitialPeerSettings = false;
-  final FrameReader frameReader;
+  final Variant variant;
+  final Socket socket;
   final FrameWriter frameWriter;
   final long maxFrameSize;
 
   // Visible for testing
   final Reader readerRunnable;
 
-  private SpdyConnection(Builder builder) {
+  private SpdyConnection(Builder builder) throws IOException {
     protocol = builder.protocol;
     pushObserver = builder.pushObserver;
     client = builder.client;
@@ -142,7 +142,6 @@ public final class SpdyConnection implements Closeable {
 
     hostName = builder.hostName;
 
-    Variant variant;
     if (protocol == Protocol.HTTP_2) {
       variant = new Http20Draft10();
     } else if (protocol == Protocol.SPDY_3) {
@@ -151,8 +150,8 @@ public final class SpdyConnection implements Closeable {
       throw new AssertionError(protocol);
     }
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
-    frameReader = variant.newReader(builder.source, client);
-    frameWriter = variant.newWriter(builder.sink, client);
+    socket = builder.socket;
+    frameWriter = variant.newWriter(Okio.buffer(Okio.sink(builder.socket)), client);
     maxFrameSize = variant.maxFrameSize();
 
     readerRunnable = new Reader();
@@ -468,15 +467,18 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    try {
-      frameReader.close();
-    } catch (IOException e) {
-      thrown = e;
-    }
+    // Close the writer to release its resources (such as deflaters).
     try {
       frameWriter.close();
     } catch (IOException e) {
       if (thrown == null) thrown = e;
+    }
+
+    // Close the socket to break out the reader thread, which will clean up after itself.
+    try {
+      socket.close();
+    } catch (IOException e) {
+      thrown = e;
     }
 
     if (thrown != null) throw thrown;
@@ -493,8 +495,7 @@ public final class SpdyConnection implements Closeable {
 
   public static class Builder {
     private String hostName;
-    private BufferedSource source;
-    private BufferedSink sink;
+    private Socket socket;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
     private Protocol protocol = Protocol.SPDY_3;
     private PushObserver pushObserver = PushObserver.CANCEL;
@@ -511,8 +512,7 @@ public final class SpdyConnection implements Closeable {
     public Builder(String hostName, boolean client, Socket socket) throws IOException {
       this.hostName = hostName;
       this.client = client;
-      this.source = Okio.buffer(Okio.source(socket.getInputStream()));
-      this.sink = Okio.buffer(Okio.sink(socket.getOutputStream()));
+      this.socket = socket;
     }
 
     public Builder handler(IncomingStreamHandler handler) {
@@ -530,7 +530,7 @@ public final class SpdyConnection implements Closeable {
       return this;
     }
 
-    public SpdyConnection build() {
+    public SpdyConnection build() throws IOException {
       return new SpdyConnection(this);
     }
   }
@@ -540,6 +540,8 @@ public final class SpdyConnection implements Closeable {
    * write a frame, create an async task to do so.
    */
   class Reader extends NamedRunnable implements FrameReader.Handler {
+    FrameReader frameReader;
+
     private Reader() {
       super("OkHttp %s", hostName);
     }
@@ -548,6 +550,7 @@ public final class SpdyConnection implements Closeable {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
+        frameReader = variant.newReader(Okio.buffer(Okio.source(socket)), client);
         if (!client) {
           frameReader.readConnectionHeader();
         }
@@ -563,6 +566,7 @@ public final class SpdyConnection implements Closeable {
           close(connectionErrorCode, streamErrorCode);
         } catch (IOException ignored) {
         }
+        Util.closeQuietly(frameReader);
       }
     }
 

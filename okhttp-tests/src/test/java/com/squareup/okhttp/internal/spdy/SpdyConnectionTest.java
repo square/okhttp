@@ -338,7 +338,7 @@ public final class SpdyConnectionTest {
 
     // verify the peer's settings were read and applied.
     assertEquals(0, connection.peerSettings.getHeaderTableSize());
-    Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.frameReader;
+    Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.readerRunnable.frameReader;
     assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
     // TODO: when supported, check the frameWriter's compression table is unaffected.
   }
