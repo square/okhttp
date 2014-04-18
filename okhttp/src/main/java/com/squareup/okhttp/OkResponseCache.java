@@ -28,12 +28,10 @@ public interface OkResponseCache {
   CacheRequest put(Response response) throws IOException;
 
   /**
-   * Remove any cache entries for the supplied {@code uri}. Returns true if the
-   * supplied {@code requestMethod} potentially invalidates an entry in the
-   * cache.
+   * Remove any cache entries for the supplied {@code request}. This is invoked
+   * when the client invalidates the cache, such as when making POST requests.
    */
-  // TODO: this shouldn't return a boolean.
-  boolean maybeRemove(Request request) throws IOException;
+  void remove(Request request) throws IOException;
 
   /**
    * Handles a conditional request hit by updating the stored cache response

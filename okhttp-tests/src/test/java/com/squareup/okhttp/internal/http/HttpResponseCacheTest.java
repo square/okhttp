@@ -2121,8 +2121,7 @@ public final class HttpResponseCacheTest {
       return null;
     }
 
-    @Override public boolean maybeRemove(Request request) throws IOException {
-      return false;
+    @Override public void remove(Request request) throws IOException {
     }
 
     @Override public void update(Response cached, Response network) throws IOException {

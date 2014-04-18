@@ -185,4 +185,19 @@ public final class OkHeaders {
     }
     return result.build();
   }
+
+  /**
+   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
+   * defined by RFC 2616, 13.5.1.
+   */
+  static boolean isEndToEnd(String fieldName) {
+    return !"Connection".equalsIgnoreCase(fieldName)
+        && !"Keep-Alive".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
+        && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
+        && !"TE".equalsIgnoreCase(fieldName)
+        && !"Trailers".equalsIgnoreCase(fieldName)
+        && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
+        && !"Upgrade".equalsIgnoreCase(fieldName);
+  }
 }
