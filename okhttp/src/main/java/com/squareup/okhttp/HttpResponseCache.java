@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.JavaApiConverter;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -208,7 +209,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       return null;
     }
 
-    if (response.hasVaryAll()) {
+    if (OkHeaders.hasVaryAll(response)) {
       return null;
     }
 
@@ -481,7 +482,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
     public Entry(Response response) {
       this.url = response.request().urlString();
-      this.varyHeaders = response.request().headers().getAll(response.getVaryFields());
+      this.varyHeaders = response.request().headers().getAll(OkHeaders.varyFields(response));
       this.requestMethod = response.request().method();
       this.statusLine = response.statusLine();
       this.responseHeaders = response.headers();
@@ -552,7 +553,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     public boolean matches(Request request, Response response) {
       return url.equals(request.urlString())
           && requestMethod.equals(request.method())
-          && response.varyMatches(varyHeaders, request);
+          && OkHeaders.varyMatches(response, varyHeaders, request);
     }
 
     public Response response(Request request, DiskLruCache.Snapshot snapshot) {

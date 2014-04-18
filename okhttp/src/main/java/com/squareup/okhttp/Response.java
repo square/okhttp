@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.ByteArrayOutputStream;
@@ -25,17 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.net.HttpURLConnection;
 import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
-import static com.squareup.okhttp.internal.Util.equal;
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response
@@ -50,7 +43,6 @@ public final class Response {
   private final Body body;
   private final Response redirectedBy;
 
-  private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Response(Builder builder) {
@@ -137,55 +129,6 @@ public final class Response {
     return redirectedBy;
   }
 
-  // TODO: move out of public API
-  public Set<String> getVaryFields() {
-    return parsedHeaders().varyFields;
-  }
-
-  /**
-   * Returns true if a Vary header contains an asterisk. Such responses cannot
-   * be cached.
-   */
-  // TODO: move out of public API
-  public boolean hasVaryAll() {
-    return parsedHeaders().varyFields.contains("*");
-  }
-
-  /**
-   * Returns true if none of the Vary headers on this response have changed
-   * between {@code cachedRequest} and {@code newRequest}.
-   */
-  // TODO: move out of public API
-  public boolean varyMatches(Headers varyHeaders, Request newRequest) {
-    for (String field : parsedHeaders().varyFields) {
-      if (!equal(varyHeaders.values(field), newRequest.headers(field))) return false;
-    }
-    return true;
-  }
-
-  /**
-   * Returns true if this cached response should be used; false if the
-   * network response should be used.
-   */
-  // TODO: move out of public API
-  public boolean validate(Response network) {
-    if (network.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
-      return true;
-    }
-
-    // The HTTP spec says that if the network's response is older than our
-    // cached response, we may return the cache's response. Like Chrome (but
-    // unlike Firefox), this client prefers to return the newer response.
-    ParsedHeaders networkHeaders = network.parsedHeaders();
-    if (parsedHeaders().lastModified != null
-        && networkHeaders.lastModified != null
-        && networkHeaders.lastModified.getTime() < parsedHeaders().lastModified.getTime()) {
-      return true;
-    }
-
-    return false;
-  }
-
   public abstract static class Body implements Closeable {
     /** Multiple calls to {@link #charStream()} must return the same instance. */
     private Reader reader;
@@ -253,11 +196,6 @@ public final class Response {
     }
   }
 
-  private ParsedHeaders parsedHeaders() {
-    ParsedHeaders result = parsedHeaders;
-    return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
-  }
-
   /**
    * Returns the cache control directives for this response. This is never null,
    * even if this response contains no {@code Cache-Control} header.
@@ -265,33 +203,6 @@ public final class Response {
   public CacheControl cacheControl() {
     CacheControl result = cacheControl;
     return result != null ? result : (cacheControl = CacheControl.parse(headers));
-  }
-
-  /** Parsed response headers, computed on-demand and cached. */
-  private static class ParsedHeaders {
-    /** The last modified date of the response, if known. */
-    Date lastModified;
-
-    /** Case-insensitive set of field names. */
-    private Set<String> varyFields = Collections.emptySet();
-
-    private ParsedHeaders(Headers headers) {
-      for (int i = 0; i < headers.size(); i++) {
-        String fieldName = headers.name(i);
-        String value = headers.value(i);
-        if ("Last-Modified".equalsIgnoreCase(fieldName)) {
-          lastModified = HttpDate.parse(value);
-        } else if ("Vary".equalsIgnoreCase(fieldName)) {
-          // Replace the immutable empty set with something we can mutate.
-          if (varyFields.isEmpty()) {
-            varyFields = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
-          }
-          for (String varyField : value.split(",")) {
-            varyFields.add(varyField.trim());
-          }
-        }
-      }
-    }
   }
 
   public interface Receiver {
