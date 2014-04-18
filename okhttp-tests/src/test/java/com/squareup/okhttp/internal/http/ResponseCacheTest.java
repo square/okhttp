@@ -56,12 +56,15 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.GzipSink;
+import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -734,7 +737,7 @@ public final class ResponseCacheTest {
 
   private void assertNonIdentityEncodingCached(MockResponse response) throws Exception {
     server.enqueue(
-        response.setBody(gzip("ABCABCABC".getBytes("UTF-8"))).addHeader("Content-Encoding: gzip"));
+        response.setBody(gzip("ABCABCABC")).addHeader("Content-Encoding: gzip"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
@@ -750,7 +753,7 @@ public final class ResponseCacheTest {
 
   @Test public void notModifiedSpecifiesEncoding() throws Exception {
     server.enqueue(new MockResponse()
-        .setBody(gzip("ABCABCABC".getBytes("UTF-8")))
+        .setBody(gzip("ABCABCABC"))
         .addHeader("Content-Encoding: gzip")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
@@ -1420,7 +1423,9 @@ public final class ResponseCacheTest {
   private MockResponse truncateViolently(MockResponse response, int numBytesToKeep) {
     response.setSocketPolicy(DISCONNECT_AT_END);
     List<String> headers = new ArrayList<String>(response.getHeaders());
-    response.setBody(Arrays.copyOfRange(response.getBody(), 0, numBytesToKeep));
+    Buffer truncatedBody = new Buffer();
+    truncatedBody.write(response.getBody(), numBytesToKeep);
+    response.setBody(truncatedBody);
     response.getHeaders().clear();
     response.getHeaders().addAll(headers);
     return response;
@@ -1471,18 +1476,18 @@ public final class ResponseCacheTest {
 
   enum TransferKind {
     CHUNKED() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize)
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize)
           throws IOException {
         response.setChunkedBody(content, chunkSize);
       }
     },
     FIXED_LENGTH() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize) {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
     },
     END_OF_STREAM() {
-      @Override void setBody(MockResponse response, byte[] content, int chunkSize) {
+      @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
         response.setSocketPolicy(DISCONNECT_AT_END);
         for (Iterator<String> h = response.getHeaders().iterator(); h.hasNext(); ) {
@@ -1494,10 +1499,10 @@ public final class ResponseCacheTest {
       }
     };
 
-    abstract void setBody(MockResponse response, byte[] content, int chunkSize) throws IOException;
+    abstract void setBody(MockResponse response, Buffer content, int chunkSize) throws IOException;
 
     void setBody(MockResponse response, String content, int chunkSize) throws IOException {
-      setBody(response, content.getBytes("UTF-8"), chunkSize);
+      setBody(response, new Buffer().writeUtf8(content), chunkSize);
     }
   }
 
@@ -1506,12 +1511,12 @@ public final class ResponseCacheTest {
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
-  public byte[] gzip(byte[] bytes) throws IOException {
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    OutputStream gzippedOut = new GZIPOutputStream(bytesOut);
-    gzippedOut.write(bytes);
-    gzippedOut.close();
-    return bytesOut.toByteArray();
+  public Buffer gzip(String data) throws IOException {
+    Buffer result = new Buffer();
+    BufferedSink sink = Okio.buffer(new GzipSink(result));
+    sink.writeUtf8(data);
+    sink.close();
+    return result;
   }
 
   private static class InsecureResponseCache extends ResponseCache {

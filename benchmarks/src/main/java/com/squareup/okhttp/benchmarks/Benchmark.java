@@ -37,6 +37,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLContext;
+import okio.Buffer;
 
 /**
  * This benchmark is fake, but may be useful for certain relative comparisons.
@@ -191,7 +192,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
     }
 
     if (chunked) {
-      result.setChunkedBody(body, 1024);
+      result.setChunkedBody(new Buffer().write(body), 1024);
     } else {
       result.setBody(body);
     }

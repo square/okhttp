@@ -15,16 +15,12 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
-import com.squareup.okhttp.internal.Util;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
@@ -34,7 +30,7 @@ public final class MockResponse implements Cloneable {
   private List<String> headers = new ArrayList<String>();
 
   /** The response body content, or null if {@code bodyStream} is set. */
-  private byte[] body;
+  private Buffer body;
   /** The response body content, or null if {@code body} is set. */
   private InputStream bodyStream;
 
@@ -50,7 +46,7 @@ public final class MockResponse implements Cloneable {
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
-    setBody(new byte[0]);
+    setBody(new Buffer());
   }
 
   @Override public MockResponse clone() {
@@ -132,18 +128,22 @@ public final class MockResponse implements Cloneable {
   }
 
   /** Returns the raw HTTP payload, or null if this response is streamed. */
-  public byte[] getBody() {
-    return body;
+  public Buffer getBody() {
+    return body != null ? body.clone() : null; // Defensive copy.
   }
 
   /** Returns an input stream containing the raw HTTP payload. */
   InputStream getBodyStream() {
-    return bodyStream != null ? bodyStream : new ByteArrayInputStream(body);
+    return bodyStream != null ? bodyStream : getBody().inputStream();
   }
 
   public MockResponse setBody(byte[] body) {
-    setHeader("Content-Length", body.length);
-    this.body = body;
+    return setBody(new Buffer().write(body));
+  }
+
+  public MockResponse setBody(Buffer body) {
+    setHeader("Content-Length", body.size());
+    this.body = body.clone(); // Defensive copy.
     this.bodyStream = null;
     return this;
   }
@@ -157,39 +157,29 @@ public final class MockResponse implements Cloneable {
 
   /** Sets the response body to the UTF-8 encoded bytes of {@code body}. */
   public MockResponse setBody(String body) {
-    try {
-      return setBody(body.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new AssertionError();
-    }
+    return setBody(new Buffer().writeUtf8(body));
   }
 
   /**
    * Sets the response body to {@code body}, chunked every {@code maxChunkSize}
    * bytes.
    */
-  public MockResponse setChunkedBody(byte[] body, int maxChunkSize) {
+  public MockResponse setChunkedBody(Buffer body, int maxChunkSize) {
     removeHeader("Content-Length");
     headers.add(CHUNKED_BODY_HEADER);
 
-    try {
-      ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-      int pos = 0;
-      while (pos < body.length) {
-        int chunkSize = Math.min(body.length - pos, maxChunkSize);
-        bytesOut.write(Integer.toHexString(chunkSize).getBytes(Util.US_ASCII));
-        bytesOut.write("\r\n".getBytes(Util.US_ASCII));
-        bytesOut.write(body, pos, chunkSize);
-        bytesOut.write("\r\n".getBytes(Util.US_ASCII));
-        pos += chunkSize;
-      }
-      bytesOut.write("0\r\n\r\n".getBytes(Util.US_ASCII)); // Last chunk + empty trailer + crlf.
-
-      this.body = bytesOut.toByteArray();
-      return this;
-    } catch (IOException e) {
-      throw new AssertionError(); // In-memory I/O doesn't throw IOExceptions.
+    Buffer bytesOut = new Buffer();
+    while (!body.exhausted()) {
+      long chunkSize = Math.min(body.size(), maxChunkSize);
+      bytesOut.writeUtf8(Long.toHexString(chunkSize));
+      bytesOut.writeUtf8("\r\n");
+      bytesOut.write(body, chunkSize);
+      bytesOut.writeUtf8("\r\n");
     }
+    bytesOut.writeUtf8("0\r\n\r\n"); // Last chunk + empty trailer + CRLF.
+
+    this.body = bytesOut;
+    return this;
   }
 
   /**
@@ -197,11 +187,7 @@ public final class MockResponse implements Cloneable {
    * every {@code maxChunkSize} bytes.
    */
   public MockResponse setChunkedBody(String body, int maxChunkSize) {
-    try {
-      return setChunkedBody(body.getBytes("UTF-8"), maxChunkSize);
-    } catch (UnsupportedEncodingException e) {
-      throw new AssertionError();
-    }
+    return setChunkedBody(new Buffer().writeUtf8(body), maxChunkSize);
   }
 
   public SocketPolicy getSocketPolicy() {

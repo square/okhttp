@@ -16,6 +16,8 @@ import java.security.SecureRandom;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import okio.Buffer;
+import okio.Okio;
 
 public class SampleServer extends Dispatcher {
   private final SSLContext sslContext;
@@ -82,9 +84,9 @@ public class SampleServer extends Dispatcher {
         .addHeader("content-type: " + contentType(path));
   }
 
-  private byte[] fileToBytes(File file) throws IOException {
-    byte[] result = new byte[(int) file.length()];
-    Util.readFully(new FileInputStream(file), result);
+  private Buffer fileToBytes(File file) throws IOException {
+    Buffer result = new Buffer();
+    result.writeAll(Okio.source(new FileInputStream(file)));
     return result;
   }
 
