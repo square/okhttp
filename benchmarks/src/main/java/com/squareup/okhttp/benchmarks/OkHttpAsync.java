@@ -68,7 +68,7 @@ class OkHttpAsync implements HttpClient {
         System.out.println("Failed: " + failure.exception());
       }
 
-      @Override public boolean onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws IOException {
         Response.Body body = response.body();
         long total = SynchronousHttpClient.readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
@@ -78,7 +78,6 @@ class OkHttpAsync implements HttpClient {
               total, TimeUnit.NANOSECONDS.toMillis(finish - start));
         }
         requestsInFlight.decrementAndGet();
-        return true;
       }
     };
   }

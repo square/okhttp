@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -28,6 +27,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import okio.BufferedSink;
+import okio.Okio;
+import okio.Source;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
@@ -40,7 +41,6 @@ public final class Request {
   private final Body body;
   private final Object tag;
 
-  private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
   private volatile URI uri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -101,19 +101,6 @@ public final class Request {
     return headers;
   }
 
-  public String getUserAgent() {
-    return parsedHeaders().userAgent;
-  }
-
-  public String getProxyAuthorization() {
-    return parsedHeaders().proxyAuthorization;
-  }
-
-  private ParsedHeaders parsedHeaders() {
-    ParsedHeaders result = parsedHeaders;
-    return result != null ? result : (parsedHeaders = new ParsedHeaders(headers));
-  }
-
   /**
    * Returns the cache control directives for this response. This is never null,
    * even if this response contains no {@code Cache-Control} header.
@@ -125,24 +112,6 @@ public final class Request {
 
   public boolean isHttps() {
     return url().getProtocol().equals("https");
-  }
-
-  /** Parsed request headers, computed on-demand and cached. */
-  private static class ParsedHeaders {
-    private String userAgent;
-    private String proxyAuthorization;
-
-    public ParsedHeaders(Headers headers) {
-      for (int i = 0; i < headers.size(); i++) {
-        String fieldName = headers.name(i);
-        String value = headers.value(i);
-        if ("User-Agent".equalsIgnoreCase(fieldName)) {
-          userAgent = value;
-        } else if ("Proxy-Authorization".equalsIgnoreCase(fieldName)) {
-          proxyAuthorization = value;
-        }
-      }
-    }
   }
 
   public abstract static class Body {
@@ -211,18 +180,12 @@ public final class Request {
         }
 
         @Override public void writeTo(BufferedSink sink) throws IOException {
-          long length = contentLength();
-          if (length == 0) return;
-
-          InputStream in = null;
+          Source source = null;
           try {
-            in = new FileInputStream(file);
-            byte[] buffer = new byte[(int) Math.min(8192, length)];
-            for (int c; (c = in.read(buffer)) != -1; ) {
-              sink.write(buffer, 0, c);
-            }
+            source = Okio.source(new FileInputStream(file));
+            sink.writeAll(source);
           } finally {
-            Util.closeQuietly(in);
+            Util.closeQuietly(source);
           }
         }
       };
@@ -290,10 +253,6 @@ public final class Request {
     public Builder headers(Headers headers) {
       this.headers = headers.newBuilder();
       return this;
-    }
-
-    public Builder setUserAgent(String userAgent) {
-      return header("User-Agent", userAgent);
     }
 
     public Builder get() {

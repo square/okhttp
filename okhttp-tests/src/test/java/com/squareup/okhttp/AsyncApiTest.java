@@ -322,11 +322,10 @@ public final class AsyncApiTest {
         throw new AssertionError();
       }
 
-      @Override public boolean onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws IOException {
         client.cancel("request A");
         bodyRef.set(response.body().string());
         latch.countDown();
-        return true;
       }
     });
 
@@ -344,7 +343,7 @@ public final class AsyncApiTest {
       @Override public void onFailure(Failure failure) {
         throw new AssertionError();
       }
-      @Override public boolean onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws IOException {
         InputStream bytes = response.body().byteStream();
         assertEquals('a', bytes.read());
         assertEquals('b', bytes.read());
@@ -352,7 +351,6 @@ public final class AsyncApiTest {
 
         // This request will share a connection with 'A' cause it's all done.
         client.enqueue(new Request.Builder().url(server.getUrl("/b")).build(), receiver);
-        return true;
       }
     });
 

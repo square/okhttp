@@ -19,9 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 
@@ -31,7 +29,6 @@ import okio.Buffer;
 public class RecordingReceiver implements Response.Receiver {
   public static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
-  private final Map<Response, Buffer> inFlightResponses = new LinkedHashMap<Response, Buffer>();
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();
 
   @Override public synchronized void onFailure(Failure failure) {
@@ -39,27 +36,14 @@ public class RecordingReceiver implements Response.Receiver {
     notifyAll();
   }
 
-  @Override public synchronized boolean onResponse(Response response) throws IOException {
-    Buffer buffer = inFlightResponses.get(response);
-    if (buffer == null) {
-      buffer = new Buffer();
-      inFlightResponses.put(response, buffer);
-    }
-
+  @Override public synchronized void onResponse(Response response) throws IOException {
+    Buffer buffer = new Buffer();
     Response.Body body = response.body();
-    while (body.ready()) {
-      long c = body.source().read(buffer, 2048);
+    body.source().readAll(buffer);
 
-      if (c == -1) {
-        inFlightResponses.remove(response);
-        responses.add(new RecordedResponse(
-            response.request(), response, buffer.readUtf8(buffer.size()), null));
-        notifyAll();
-        return true;
-      }
-    }
-
-    return false;
+    responses.add(new RecordedResponse(
+        response.request(), response, buffer.readUtf8(buffer.size()), null));
+    notifyAll();
   }
 
   /**

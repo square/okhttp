@@ -509,8 +509,8 @@ public class HttpEngine {
   private void prepareRawRequestHeaders() throws IOException {
     Request.Builder result = request.newBuilder();
 
-    if (request.getUserAgent() == null) {
-      result.setUserAgent(getDefaultUserAgent());
+    if (request.header("User-Agent") == null) {
+      result.header("User-Agent", getDefaultUserAgent());
     }
 
     if (request.header("Host") == null) {
@@ -687,12 +687,12 @@ public class HttpEngine {
   private TunnelRequest getTunnelConfig() {
     if (!request.isHttps()) return null;
 
-    String userAgent = request.getUserAgent();
+    String userAgent = request.header("User-Agent");
     if (userAgent == null) userAgent = getDefaultUserAgent();
 
     URL url = request.url();
     return new TunnelRequest(url.getHost(), getEffectivePort(url), userAgent,
-        request.getProxyAuthorization());
+        request.header("Proxy-Authorization"));
   }
 
   public void receiveHeaders(Headers headers) throws IOException {

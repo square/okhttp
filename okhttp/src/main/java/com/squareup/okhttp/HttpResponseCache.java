@@ -605,10 +605,6 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       });
     }
 
-    @Override public boolean ready() throws IOException {
-      return true;
-    }
-
     @Override public MediaType contentType() {
       return contentType != null ? MediaType.parse(contentType) : null;
     }
