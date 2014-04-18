@@ -21,13 +21,12 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.Okio;
-import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.HttpURLConnectionImpl.HTTP_MOVED_PERM;
@@ -233,12 +232,9 @@ final class Job extends NamedRunnable {
 
   static class RealResponseBody extends Response.Body {
     private final Response response;
-    private final Source source;
+    private final BufferedSource source;
 
-    /** Multiple calls to {@link #byteStream} must return the same instance. */
-    private InputStream in;
-
-    RealResponseBody(Response response, Source source) {
+    RealResponseBody(Response response, BufferedSource source) {
       this.response = response;
       this.source = source;
     }
@@ -256,15 +252,8 @@ final class Job extends NamedRunnable {
       return OkHeaders.contentLength(response);
     }
 
-    @Override public Source source() {
+    @Override public BufferedSource source() {
       return source;
-    }
-
-    @Override public InputStream byteStream() {
-      InputStream result = in;
-      return result != null
-          ? result
-          : (in = Okio.buffer(source).inputStream());
     }
   }
 }

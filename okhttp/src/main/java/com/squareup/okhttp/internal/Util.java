@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.internal.spdy.Header;
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -37,9 +36,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
-import okio.ByteString;
 import okio.Buffer;
+import okio.ByteString;
 import okio.Source;
+import okio.Timeout;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -47,7 +47,16 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
-  public static final InputStream EMPTY_INPUT_STREAM = new ByteArrayInputStream(EMPTY_BYTE_ARRAY);
+  public static final Source EMPTY_SOURCE = new Source() {
+    @Override public long read(Buffer sink, long byteCount) throws IOException {
+      return -1;
+    }
+    @Override public Timeout timeout() {
+      return Timeout.NONE;
+    }
+    @Override public void close() throws IOException {
+    }
+  };
 
   /** A cheap and type-safe constant for the US-ASCII Charset. */
   public static final Charset US_ASCII = Charset.forName("US-ASCII");

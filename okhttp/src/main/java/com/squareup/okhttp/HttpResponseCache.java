@@ -25,7 +25,6 @@ import com.squareup.okhttp.internal.http.JavaApiConverter;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FilterInputStream;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -45,9 +44,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
+import okio.Source;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 
@@ -577,7 +579,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
   private static class CacheResponseBody extends Response.Body {
     private final DiskLruCache.Snapshot snapshot;
-    private final InputStream bodyIn;
+    private final BufferedSource bodySource;
     private final String contentType;
     private final String contentLength;
 
@@ -587,13 +589,20 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       this.contentType = contentType;
       this.contentLength = contentLength;
 
-      // This input stream closes the snapshot when the stream is closed.
-      this.bodyIn = new FilterInputStream(snapshot.getInputStream(ENTRY_BODY)) {
+      // This source closes the snapshot when it is closed.
+      bodySource = Okio.buffer(new Source() {
+        Source in = Okio.source(snapshot.getInputStream(ENTRY_BODY));
+        @Override public long read(Buffer sink, long byteCount) throws IOException {
+          return in.read(sink, byteCount);
+        }
+        @Override public Timeout timeout() {
+          return in.timeout();
+        }
         @Override public void close() throws IOException {
           snapshot.close();
-          super.close();
+          in.close();
         }
-      };
+      });
     }
 
     @Override public boolean ready() throws IOException {
@@ -612,8 +621,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       }
     }
 
-    @Override public InputStream byteStream() {
-      return bodyIn;
+    @Override public BufferedSource source() {
+      return bodySource;
     }
   }
 }

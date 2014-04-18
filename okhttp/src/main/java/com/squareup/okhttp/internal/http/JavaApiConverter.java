@@ -40,6 +40,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
+import okio.BufferedSource;
+import okio.Okio;
 
 /**
  * Helper methods that convert between Java and OkHttp representations.
@@ -336,28 +338,21 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static Response.Body createOkBody(final Headers okHeaders, final InputStream body) {
+  private static Response.Body createOkBody(final Headers okHeaders, InputStream body) {
+    final BufferedSource source = Okio.buffer(Okio.source(body));
     return new Response.Body() {
-
-      @Override
-      public boolean ready() throws IOException {
+      @Override public boolean ready() throws IOException {
         return true;
       }
-
-      @Override
-      public MediaType contentType() {
+      @Override public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
       }
-
-      @Override
-      public long contentLength() {
+      @Override public long contentLength() {
         return OkHeaders.contentLength(okHeaders);
       }
-
-      @Override
-      public InputStream byteStream() {
-        return body;
+      @Override public BufferedSource source() {
+        return source;
       }
     };
   }
