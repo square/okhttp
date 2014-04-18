@@ -191,6 +191,7 @@ public final class Connection {
     handshake = Handshake.get(sslSocket.getSession());
 
     String maybeProtocol;
+    protocol = route.address.protocols.get(0);
     if (useNpn && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
     }
