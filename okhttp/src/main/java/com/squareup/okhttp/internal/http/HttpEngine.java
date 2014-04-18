@@ -250,7 +250,8 @@ public class HttpEngine {
     connection.setOwner(this);
 
     if (!connection.isConnected()) {
-      connection.connect(client.getConnectTimeout(), client.getReadTimeout(), getTunnelConfig());
+      connection.connect(client.getConnectTimeout(), client.getReadTimeout(),
+          client.getWriteTimeout(), getTunnelConfig());
       if (connection.isSpdy()) client.getConnectionPool().share(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     } else if (!connection.isSpdy()) {

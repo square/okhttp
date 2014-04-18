@@ -28,6 +28,7 @@ import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -80,13 +81,20 @@ public final class HttpConnection {
   private int state = STATE_IDLE;
   private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket)
+  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket,
+      int readTimeout, int writeTimeout)
       throws IOException {
     this.pool = pool;
     this.connection = connection;
     this.socket = socket;
-    this.source = Okio.buffer(Okio.source(socket.getInputStream()));
-    this.sink = Okio.buffer(Okio.sink(socket.getOutputStream()));
+    this.source = Okio.buffer(Okio.source(socket));
+    if (readTimeout != 0) {
+      source.timeout().timeout(readTimeout, TimeUnit.MILLISECONDS);
+    }
+    this.sink = Okio.buffer(Okio.sink(socket));
+    if (writeTimeout != 0) {
+      sink.timeout().timeout(writeTimeout, TimeUnit.MILLISECONDS);
+    }
   }
 
   /**
