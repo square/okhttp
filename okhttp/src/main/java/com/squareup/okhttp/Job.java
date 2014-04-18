@@ -239,10 +239,6 @@ final class Job extends NamedRunnable {
       this.source = source;
     }
 
-    @Override public boolean ready() throws IOException {
-      return true;
-    }
-
     @Override public MediaType contentType() {
       String contentType = response.header("Content-Type");
       return contentType != null ? MediaType.parse(contentType) : null;

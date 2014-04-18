@@ -341,9 +341,6 @@ public final class JavaApiConverter {
   private static Response.Body createOkBody(final Headers okHeaders, InputStream body) {
     final BufferedSource source = Okio.buffer(Okio.source(body));
     return new Response.Body() {
-      @Override public boolean ready() throws IOException {
-        return true;
-      }
       @Override public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);

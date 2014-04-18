@@ -24,9 +24,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class CacheStrategy {
   private static final Response.Body EMPTY_BODY = new Response.Body() {
-    @Override public boolean ready() throws IOException {
-      return true;
-    }
     @Override public MediaType contentType() {
       return null;
     }

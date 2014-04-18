@@ -190,20 +190,6 @@ public final class Response {
     /** Multiple calls to {@link #charStream()} must return the same instance. */
     private Reader reader;
 
-    /**
-     * Returns true if further data from this response body should be read at
-     * this time. For asynchronous protocols like SPDY and HTTP/2, this will
-     * return false once all locally-available body bytes have been read.
-     *
-     * <p>Clients with many concurrent downloads can use this method to reduce
-     * the number of idle threads blocking on reads. See {@link
-     * Receiver#onResponse} for details.
-     */
-    // <h3>Body.ready() vs. InputStream.available()</h3>
-    // TODO: Can we fix response bodies to implement InputStream.available well?
-    // The deflater implementation is broken by default but we could do better.
-    public abstract boolean ready() throws IOException;
-
     public abstract MediaType contentType();
 
     /**
@@ -325,28 +311,8 @@ public final class Response {
      * headers and body) does not necessarily indicate application-layer
      * success: {@code response} may still indicate an unhappy HTTP response
      * code like 404 or 500.
-     *
-     * <h3>Non-blocking responses</h3>
-     *
-     * <p>Receivers do not need to block while waiting for the response body to
-     * download. Instead, they can get called back as data arrives. Use {@link
-     * Body#ready} to check if bytes should be read immediately. While there is
-     * data ready, read it. If there isn't, return false: receivers will be
-     * called back with {@code onResponse()} as additional data is downloaded.
-     *
-     * <p>Return true to indicate that the receiver has finished handling the
-     * response body. If the response body has unread data, it will be
-     * discarded.
-     *
-     * <p>When the response body has been fully consumed the returned value is
-     * undefined.
-     *
-     * <p>The current implementation of {@link Body#ready} always returns true
-     * when the underlying transport is HTTP/1. This results in blocking on that
-     * transport. For effective non-blocking your server must support SPDY or
-     * HTTP/2.
      */
-    boolean onResponse(Response response) throws IOException;
+    void onResponse(Response response) throws IOException;
   }
 
   public static class Builder {

@@ -768,10 +768,6 @@ public class JavaApiConverterTest {
     final Buffer source = new Buffer().writeUtf8(bodyText);
     final long contentLength = source.size();
     return new Response.Body() {
-      @Override public boolean ready() throws IOException {
-        return true;
-      }
-
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain; charset=utf-8");
       }

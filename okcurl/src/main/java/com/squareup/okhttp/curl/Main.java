@@ -43,7 +43,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import okio.Buffer;
+import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -143,14 +143,9 @@ public class Main extends HelpOption implements Runnable {
         System.out.println();
       }
 
-      Response.Body body = response.body();
-      Buffer buffer = new Buffer();
-      while (body.ready()) {
-        long c = body.source().read(buffer, 2048);
-        if (c == -1) return;
-        System.out.print(buffer.readUtf8(buffer.size()));
-      }
-      body.close();
+      response.body().source().readAll(Okio.sink(System.out));
+      response.body().close();
+      System.out.flush();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
