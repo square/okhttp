@@ -241,7 +241,7 @@ public final class DiskLruCache implements Closeable {
   }
 
   private void readJournal() throws IOException {
-    BufferedSource source = Okio.buffer(Okio.source(new FileInputStream(journalFile)));
+    BufferedSource source = Okio.buffer(Okio.source(journalFile));
     try {
       String magic = source.readUtf8LineStrict();
       String version = source.readUtf8LineStrict();

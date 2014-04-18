@@ -86,7 +86,7 @@ public class SampleServer extends Dispatcher {
 
   private Buffer fileToBytes(File file) throws IOException {
     Buffer result = new Buffer();
-    result.writeAll(Okio.source(new FileInputStream(file)));
+    result.writeAll(Okio.source(file));
     return result;
   }
 

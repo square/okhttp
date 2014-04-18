@@ -45,7 +45,6 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -2083,7 +2082,7 @@ public final class URLConnectionTest {
     try {
       in.read(); // if Content-Length was accurate, this would return -1 immediately
       fail();
-    } catch (SocketTimeoutException expected) {
+    } catch (IOException expected) {
     }
   }
 
