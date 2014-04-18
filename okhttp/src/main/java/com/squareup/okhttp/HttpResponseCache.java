@@ -199,7 +199,12 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
   @Override public CacheRequest put(Response response) throws IOException {
     String requestMethod = response.request().method();
 
-    if (maybeRemove(response.request())) {
+    if (HttpMethod.invalidatesCache(response.request().method())) {
+      try {
+        remove(response.request());
+      } catch (IOException ignored) {
+        // The cache cannot be written.
+      }
       return null;
     }
     if (!requestMethod.equals("GET")) {
@@ -228,16 +233,8 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     }
   }
 
-  @Override public boolean maybeRemove(Request request) {
-    if (HttpMethod.invalidatesCache(request.method())) {
-      try {
-        cache.remove(urlToKey(request));
-      } catch (IOException ignored) {
-        // The cache cannot be written.
-      }
-      return true;
-    }
-    return false;
+  @Override public void remove(Request request) throws IOException {
+    cache.remove(urlToKey(request));
   }
 
   @Override public void update(Response cached, Response network) {

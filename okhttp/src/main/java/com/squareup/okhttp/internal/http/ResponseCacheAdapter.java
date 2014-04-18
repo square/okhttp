@@ -28,10 +28,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-/**
- * An adapter from {@link ResponseCache} to {@link com.squareup.okhttp.OkResponseCache}. This class
- * enables OkHttp to continue supporting Java standard response cache implementations.
- */
+/** Adapts {@link ResponseCache} to {@link OkResponseCache}. */
 public class ResponseCacheAdapter implements OkResponseCache {
 
   private final ResponseCache delegate;
@@ -61,13 +58,12 @@ public class ResponseCacheAdapter implements OkResponseCache {
   }
 
   @Override
-  public boolean maybeRemove(Request request) throws IOException {
+  public void remove(Request request) throws IOException {
     // This method is treated as optional and there is no obvious way of implementing it with
     // ResponseCache. Removing items from the cache due to modifications made from this client is
     // not essential given that modifications could be made from any other client. We have to assume
     // that it's ok to keep using the cached data. Otherwise the server shouldn't declare it as
     // cacheable or the client should be careful about caching it.
-    return false;
   }
 
   @Override

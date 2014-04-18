@@ -56,7 +56,7 @@ public final class CacheStrategy {
   }
 
   /**
-   * Returns true if this response can be stored to later serve another
+   * Returns true if {@code response} can be stored to later serve another
    * request.
    */
   public static boolean isCacheable(Response response, Request request) {

@@ -371,7 +371,13 @@ public class HttpEngine {
 
     // Should we cache this response for this request?
     if (!CacheStrategy.isCacheable(response, request)) {
-      responseCache.maybeRemove(request);
+      if (HttpMethod.invalidatesCache(request.method())) {
+        try {
+          responseCache.remove(request);
+        } catch (IOException ignored) {
+          // The cache cannot be written.
+        }
+      }
       return;
     }
 
@@ -679,7 +685,7 @@ public class HttpEngine {
       if ("Warning".equals(fieldName) && value.startsWith("1")) {
         continue; // drop 100-level freshness warnings
       }
-      if (!isEndToEnd(fieldName) || network.header(fieldName) == null) {
+      if (!OkHeaders.isEndToEnd(fieldName) || network.header(fieldName) == null) {
         result.add(fieldName, value);
       }
     }
@@ -687,27 +693,12 @@ public class HttpEngine {
     Headers networkHeaders = network.headers();
     for (int i = 0; i < networkHeaders.size(); i++) {
       String fieldName = networkHeaders.name(i);
-      if (isEndToEnd(fieldName)) {
+      if (OkHeaders.isEndToEnd(fieldName)) {
         result.add(fieldName, networkHeaders.value(i));
       }
     }
 
     return cached.newBuilder().headers(result.build()).build();
-  }
-
-  /**
-   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
-   * defined by RFC 2616, 13.5.1.
-   */
-  private static boolean isEndToEnd(String fieldName) {
-    return !"Connection".equalsIgnoreCase(fieldName)
-        && !"Keep-Alive".equalsIgnoreCase(fieldName)
-        && !"Proxy-Authenticate".equalsIgnoreCase(fieldName)
-        && !"Proxy-Authorization".equalsIgnoreCase(fieldName)
-        && !"TE".equalsIgnoreCase(fieldName)
-        && !"Trailers".equalsIgnoreCase(fieldName)
-        && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
-        && !"Upgrade".equalsIgnoreCase(fieldName);
   }
 
   private TunnelRequest getTunnelConfig() {
