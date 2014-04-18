@@ -20,9 +20,7 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
@@ -31,6 +29,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
 import okio.Okio;
+import okio.Source;
 import org.eclipse.jetty.npn.NextProtoNego;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
@@ -128,20 +127,16 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveFile(SpdyStream stream, File file) throws IOException {
-    byte[] buffer = new byte[8192];
     stream.reply(
         headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
         true);
-    InputStream in = new FileInputStream(file);
-    BufferedSink out = Okio.buffer(stream.getSink());
+    Source source = Okio.source(file);
     try {
-      int count;
-      while ((count = in.read(buffer)) != -1) {
-        out.write(buffer, 0, count);
-      }
+      BufferedSink out = Okio.buffer(stream.getSink());
+      out.writeAll(source);
+      out.close();
     } finally {
-      Util.closeQuietly(in);
-      Util.closeQuietly(out);
+      Util.closeQuietly(source);
     }
   }
 

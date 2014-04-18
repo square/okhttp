@@ -18,7 +18,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -182,7 +181,7 @@ public final class Request {
         @Override public void writeTo(BufferedSink sink) throws IOException {
           Source source = null;
           try {
-            source = Okio.source(new FileInputStream(file));
+            source = Okio.source(file);
             sink.writeAll(source);
           } finally {
             Util.closeQuietly(source);
