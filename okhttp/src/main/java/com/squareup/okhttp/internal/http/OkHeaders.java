@@ -150,7 +150,7 @@ public final class OkHeaders {
     return varyFields(response).contains("*");
   }
 
-  public static Set<String> varyFields(Response response) {
+  private static Set<String> varyFields(Response response) {
     Set<String> result = Collections.emptySet();
     Headers headers = response.headers();
     for (int i = 0; i < headers.size(); i++) {
@@ -165,5 +165,24 @@ public final class OkHeaders {
       }
     }
     return result;
+  }
+
+  /**
+   * Returns the subset of the headers in {@code response}'s request that
+   * impact the content of response's body.
+   */
+  public static Headers varyHeaders(Response response) {
+    Set<String> varyFields = varyFields(response);
+    if (varyFields.isEmpty()) return new Headers.Builder().build();
+
+    Headers.Builder result = new Headers.Builder();
+    Headers requestHeaders = response.request().headers();
+    for (int i = 0; i < requestHeaders.size(); i++) {
+      String fieldName = requestHeaders.name(i);
+      if (varyFields.contains(fieldName)) {
+        result.add(fieldName, requestHeaders.value(i));
+      }
+    }
+    return result.build();
   }
 }

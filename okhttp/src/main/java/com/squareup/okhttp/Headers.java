@@ -112,19 +112,6 @@ public final class Headers {
         : Collections.<String>emptyList();
   }
 
-  /** @param fieldNames a case-insensitive set of HTTP header field names. */
-  // TODO: it is very weird to request a case-insensitive set as a parameter.
-  public Headers getAll(Set<String> fieldNames) {
-    Builder result = new Builder();
-    for (int i = 0; i < namesAndValues.length; i += 2) {
-      String fieldName = namesAndValues[i];
-      if (fieldNames.contains(fieldName)) {
-        result.add(fieldName, namesAndValues[i + 1]);
-      }
-    }
-    return result.build();
-  }
-
   public Builder newBuilder() {
     Builder result = new Builder();
     result.namesAndValues.addAll(Arrays.asList(namesAndValues));

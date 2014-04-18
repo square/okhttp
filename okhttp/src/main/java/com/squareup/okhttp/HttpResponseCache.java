@@ -482,7 +482,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
     public Entry(Response response) {
       this.url = response.request().urlString();
-      this.varyHeaders = response.request().headers().getAll(OkHeaders.varyFields(response));
+      this.varyHeaders = OkHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
       this.statusLine = response.statusLine();
       this.responseHeaders = response.headers();
