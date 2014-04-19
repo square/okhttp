@@ -490,22 +490,34 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       OutputStream out = editor.newOutputStream(ENTRY_METADATA);
       Writer writer = new BufferedWriter(new OutputStreamWriter(out, UTF_8));
 
-      writer.write(url + '\n');
-      writer.write(requestMethod + '\n');
-      writer.write(Integer.toString(varyHeaders.size()) + '\n');
+      writer.write(url);
+      writer.write('\n');
+      writer.write(requestMethod);
+      writer.write('\n');
+      writer.write(Integer.toString(varyHeaders.size()));
+      writer.write('\n');
       for (int i = 0; i < varyHeaders.size(); i++) {
-        writer.write(varyHeaders.name(i) + ": " + varyHeaders.value(i) + '\n');
+        writer.write(varyHeaders.name(i));
+        writer.write(": ");
+        writer.write(varyHeaders.value(i));
+        writer.write('\n');
       }
 
-      writer.write(statusLine + '\n');
-      writer.write(Integer.toString(responseHeaders.size()) + '\n');
+      writer.write(statusLine);
+      writer.write('\n');
+      writer.write(Integer.toString(responseHeaders.size()));
+      writer.write('\n');
       for (int i = 0; i < responseHeaders.size(); i++) {
-        writer.write(responseHeaders.name(i) + ": " + responseHeaders.value(i) + '\n');
+        writer.write(responseHeaders.name(i));
+        writer.write(": ");
+        writer.write(responseHeaders.value(i));
+        writer.write('\n');
       }
 
       if (isHttps()) {
         writer.write('\n');
-        writer.write(handshake.cipherSuite() + '\n');
+        writer.write(handshake.cipherSuite());
+        writer.write('\n');
         writeCertArray(writer, handshake.peerCertificates());
         writeCertArray(writer, handshake.localCertificates());
       }
@@ -536,11 +548,13 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
 
     private void writeCertArray(Writer writer, List<Certificate> certificates) throws IOException {
       try {
-        writer.write(Integer.toString(certificates.size()) + '\n');
+        writer.write(Integer.toString(certificates.size()));
+        writer.write('\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
           String line = ByteString.of(bytes).base64();
-          writer.write(line + '\n');
+          writer.write(line);
+          writer.write('\n');
         }
       } catch (CertificateEncodingException e) {
         throw new IOException(e.getMessage());
