@@ -29,9 +29,40 @@ import java.io.IOException;
  * to identify how HTTP messages are framed.
  */
 public enum Protocol {
-  HTTP_2("h2-10"),
+  /**
+   * A plaintext framing that includes persistent connections.
+   *
+   * <p>This version of OkHttp implements <a
+   * href="http://www.ietf.org/rfc/rfc2616.txt">RFC 2616</a>, and tracks
+   * revisions to that spec.
+   */
+  HTTP_1_1("http/1.1"),
+
+  /**
+   * Chromium's binary-framed protocol that includes header compression,
+   * multiplexing multiple requests on the same socket, and server-push.
+   * HTTP/1.1 semantics are layered on SPDY/3.
+   *
+   * <p>This version of OkHttp implements SPDY 3 <a
+   * href="http://dev.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">draft
+   * 3.1</a>. Future releases of OkHttp may use this identifier for a newer draft
+   * of the SPDY spec.
+   */
   SPDY_3("spdy/3.1"),
-  HTTP_1_1("http/1.1");
+
+  /**
+   * The IETF's binary-framed protocol that includes header compression,
+   * multiplexing multiple requests on the same socket, and server-push.
+   * HTTP/1.1 semantics are layered on HTTP/2.
+   *
+   * <p>This version of OkHttp implements HTTP/2 <a
+   * href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-10">draft 10</a>
+   * with HPACK <a
+   * href="http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06">draft
+   * 6</a>. Future releases of OkHttp may use this identifier for a newer draft
+   * of these specs.
+   */
+  HTTP_2("h2-10");
 
   private final String protocol;
 
