@@ -22,6 +22,7 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkResponseCache;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
@@ -526,7 +527,7 @@ public class HttpEngine {
       result.header("Host", hostHeader(request.url()));
     }
 
-    if ((connection == null || connection.getHttpMinorVersion() != 0)
+    if ((connection == null || connection.getProtocol() != Protocol.HTTP_1_0)
         && request.header("Connection") == null) {
       result.header("Connection", "Keep-Alive");
     }
@@ -613,7 +614,7 @@ public class HttpEngine {
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .setResponseSource(responseSource)
         .build();
-    connection.setHttpMinorVersion(response.httpMinorVersion());
+    connection.setProtocol(response.protocol());
     receiveHeaders(response.headers());
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {

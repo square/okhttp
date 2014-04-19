@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
 import javax.net.ssl.SSLSocket;
-import okio.ByteString;
 
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
@@ -67,7 +66,7 @@ public final class Connection implements Closeable {
   private boolean connected = false;
   private HttpConnection httpConnection;
   private SpdyConnection spdyConnection;
-  private int httpMinorVersion = 1; // Assume HTTP/1.1
+  private Protocol protocol = Protocol.HTTP_1_1;
   private long idleStartTimeNs;
   private Handshake handshake;
   private int recycleCount;
@@ -194,16 +193,15 @@ public final class Connection implements Closeable {
 
     handshake = Handshake.get(sslSocket.getSession());
 
-    ByteString maybeProtocol;
-    Protocol selectedProtocol = Protocol.HTTP_1_1;
+    String maybeProtocol;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      selectedProtocol = Protocol.get(maybeProtocol.utf8()); // Throws IOE on unknown.
+      protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
     }
 
-    if (selectedProtocol == Protocol.SPDY_3 || selectedProtocol == Protocol.HTTP_2) {
+    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-          .protocol(selectedProtocol).build();
+          .protocol(protocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
       httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
@@ -293,16 +291,20 @@ public final class Connection implements Closeable {
   }
 
   /**
-   * Returns the minor HTTP version that should be used for future requests on
-   * this connection. Either 0 for HTTP/1.0, or 1 for HTTP/1.1. The default
-   * value is 1 for new connections.
+   * Returns the protocol negotiated by this connection, or {@link
+   * Protocol#HTTP_1_1} if no protocol has been negotiated.
    */
-  public int getHttpMinorVersion() {
-    return httpMinorVersion;
+  public Protocol getProtocol() {
+    return protocol;
   }
 
-  public void setHttpMinorVersion(int httpMinorVersion) {
-    this.httpMinorVersion = httpMinorVersion;
+  /**
+   * Sets the protocol negotiated by this connection. Typically this is used
+   * when an HTTP/1.1 request is sent and an HTTP/1.0 response is received.
+   */
+  public void setProtocol(Protocol protocol) {
+    if (protocol == null) throw new IllegalArgumentException("protocol == null");
+    this.protocol = protocol;
   }
 
   /**

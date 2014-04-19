@@ -334,9 +334,9 @@ public final class MockWebServer {
           sslSocket.startHandshake();
 
           if (npnEnabled) {
-            ByteString protocolBytes = Platform.get().getNpnSelectedProtocol(sslSocket);
-            protocol = protocolBytes != null
-                ? Protocol.get(protocolBytes.utf8())
+            String protocolString = Platform.get().getNpnSelectedProtocol(sslSocket);
+            protocol = protocolString != null
+                ? Protocol.get(protocolString)
                 : Protocol.HTTP_1_1;
           }
           openClientSockets.remove(raw);

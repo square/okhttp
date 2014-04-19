@@ -191,7 +191,7 @@ public final class HttpConnection {
 
       Headers.Builder headersBuilder = new Headers.Builder();
       readHeaders(headersBuilder);
-      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.getProtocol().toString());
+      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol().toString());
       responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) {

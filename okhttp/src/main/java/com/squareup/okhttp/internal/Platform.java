@@ -38,7 +38,6 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
-import okio.ByteString;
 
 /**
  * Access to Platform-specific features necessary for SPDY and advanced TLS.
@@ -111,7 +110,7 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public ByteString getNpnSelectedProtocol(SSLSocket socket) {
+  public String getNpnSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
@@ -270,13 +269,13 @@ public class Platform {
       }
     }
 
-    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public String getNpnSelectedProtocol(SSLSocket socket) {
       if (getNpnSelectedProtocol == null) return null;
       if (!openSslSocketClass.isInstance(socket)) return null;
       try {
         byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
         if (npnResult == null) return null;
-        return ByteString.of(npnResult);
+        return new String(npnResult, Util.UTF_8);
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
@@ -318,7 +317,7 @@ public class Platform {
       }
     }
 
-    @Override public ByteString getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public String getNpnSelectedProtocol(SSLSocket socket) {
       try {
         JettyNpnProvider provider =
             (JettyNpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
@@ -328,7 +327,7 @@ public class Platform {
               "NPN callback dropped so SPDY is disabled. Is npn-boot on the boot class path?");
           return null;
         }
-        return provider.unsupported ? null : ByteString.encodeUtf8(provider.selected);
+        return provider.unsupported ? null : provider.selected;
       } catch (InvocationTargetException e) {
         throw new AssertionError();
       } catch (IllegalAccessException e) {
