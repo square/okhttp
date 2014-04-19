@@ -808,7 +808,7 @@ public class Http20Draft10Test {
       assertEquals("PROTOCOL_ERROR padding > 16383: 65535", e.getMessage());
     }
   }  
-  
+
   @Test public void tooLargeDataFrame() throws IOException {
     try {
       sendDataFrame(new Buffer().write(new byte[0x1000000]));
@@ -922,7 +922,7 @@ public class Http20Draft10Test {
     Http20Draft10.Writer writer = new Http20Draft10.Writer(new Buffer(), true);
 
     try {
-      writer.frameHeader(16384, Http20Draft10.TYPE_DATA, FLAG_NONE, 0);
+      writer.frameHeader(0, 16384, Http20Draft10.TYPE_DATA, FLAG_NONE);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("FRAME_SIZE_ERROR length > 16383: 16384", e.getMessage());
@@ -935,7 +935,7 @@ public class Http20Draft10Test {
     try {
       int streamId = 3;
       streamId |= 1L << 31; // set reserved bit
-      writer.frameHeader(16383, Http20Draft10.TYPE_DATA, FLAG_NONE, streamId);
+      writer.frameHeader(streamId, 16383, Http20Draft10.TYPE_DATA, FLAG_NONE);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("reserved bit set: -2147483645", e.getMessage());
