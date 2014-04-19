@@ -15,10 +15,7 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Protocols that OkHttp implements for <a
@@ -32,37 +29,21 @@ import java.util.List;
  * to identify how HTTP messages are framed.
  */
 public enum Protocol {
-  HTTP_2("h2-10", true),
-  SPDY_3("spdy/3.1", true),
-  HTTP_11("http/1.1", false);
+  HTTP_2("h2-10"),
+  SPDY_3("spdy/3.1"),
+  HTTP_11("http/1.1");
 
-  public static final List<Protocol> HTTP2_SPDY3_AND_HTTP =
-      Util.immutableList(Arrays.asList(HTTP_2, SPDY_3, HTTP_11));
-  public static final List<Protocol> SPDY3_AND_HTTP11 =
-      Util.immutableList(Arrays.asList(SPDY_3, HTTP_11));
-  public static final List<Protocol> HTTP2_AND_HTTP_11 =
-      Util.immutableList(Arrays.asList(HTTP_2, HTTP_11));
-
-  /** Identifier string used in NPN or ALPN selection. */
   private final String protocol;
 
-  /**
-   * When true the protocol is binary framed and derived from SPDY.
-   *
-   * @see com.squareup.okhttp.internal.spdy.Variant
-   */
-  public final boolean spdyVariant;
-
-  Protocol(String protocol, boolean spdyVariant) {
+  Protocol(String protocol) {
     this.protocol = protocol;
-    this.spdyVariant = spdyVariant;
   }
 
   /**
    * Returns the protocol identified by {@code protocol}.
    * @throws IOException if {@code protocol} is unknown.
    */
-  public static Protocol find(String protocol) throws IOException {
+  public static Protocol get(String protocol) throws IOException {
     // Unroll the loop over values() to save an allocation.
     if (protocol.equals(HTTP_11.protocol)) return HTTP_11;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;

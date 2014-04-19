@@ -179,19 +179,9 @@ public final class Connection implements Closeable {
     }
 
     boolean useNpn = false;
-    if (route.modernTls) {
-      boolean http2 = route.address.protocols.contains(Protocol.HTTP_2);
-      boolean spdy3 = route.address.protocols.contains(Protocol.SPDY_3);
-      if (http2 && spdy3) {
-        platform.setNpnProtocols(sslSocket, Protocol.HTTP2_SPDY3_AND_HTTP);
-        useNpn = true;
-      } else if (http2) {
-        platform.setNpnProtocols(sslSocket, Protocol.HTTP2_AND_HTTP_11);
-        useNpn = true;
-      } else if (spdy3) {
-        platform.setNpnProtocols(sslSocket, Protocol.SPDY3_AND_HTTP11);
-        useNpn = true;
-      }
+    if (route.modernTls && route.address.protocols.size() > 1) {
+      platform.setNpnProtocols(sslSocket, route.address.protocols);
+      useNpn = true;
     }
 
     // Force handshake. This can throw!
@@ -207,16 +197,16 @@ public final class Connection implements Closeable {
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      selectedProtocol = Protocol.find(maybeProtocol.utf8()); // Throws IOE on unknown.
+      selectedProtocol = Protocol.get(maybeProtocol.utf8()); // Throws IOE on unknown.
     }
 
-    if (selectedProtocol.spdyVariant) {
+    if (selectedProtocol == Protocol.HTTP_11) {
+      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
+    } else {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
     }
   }
 
