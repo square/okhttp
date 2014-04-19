@@ -192,7 +192,7 @@ final class Job extends NamedRunnable {
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
       case HTTP_TEMP_REDIRECT:
-        if (!client.getFollowProtocolRedirects()) {
+        if (!client.getFollowSslRedirects()) {
           return null; // This client has is configured to not follow redirects.
         }
 

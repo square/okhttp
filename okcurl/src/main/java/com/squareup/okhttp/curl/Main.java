@@ -147,7 +147,7 @@ public class Main extends HelpOption implements Runnable {
 
   private OkHttpClient createClient() {
     OkHttpClient client = new OkHttpClient();
-    client.setFollowProtocolRedirects(followRedirects);
+    client.setFollowSslRedirects(followRedirects);
     if (connectTimeout != DEFAULT_TIMEOUT) {
       client.setConnectTimeout(connectTimeout, SECONDS);
     }

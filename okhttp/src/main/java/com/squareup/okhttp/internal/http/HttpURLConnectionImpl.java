@@ -453,7 +453,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           return Retry.NONE; // Don't follow redirects to unsupported protocols.
         }
         boolean sameProtocol = previousUrl.getProtocol().equals(url.getProtocol());
-        if (!sameProtocol && !client.getFollowProtocolRedirects()) {
+        if (!sameProtocol && !client.getFollowSslRedirects()) {
           return Retry.NONE; // This client doesn't follow redirects across protocols.
         }
         boolean sameHost = previousUrl.getHost().equals(url.getHost());

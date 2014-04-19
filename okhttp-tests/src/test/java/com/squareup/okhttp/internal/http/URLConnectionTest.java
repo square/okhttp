@@ -1715,7 +1715,7 @@ public final class URLConnectionTest {
         .setBody("This page has moved!"));
     server.play();
 
-    client.setFollowProtocolRedirects(false);
+    client.setFollowSslRedirects(false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.getUrl("/"));
@@ -1728,7 +1728,7 @@ public final class URLConnectionTest {
         .setBody("This page has moved!"));
     server.play();
 
-    client.setFollowProtocolRedirects(false);
+    client.setFollowSslRedirects(false);
     connection = client.open(server.getUrl("/"));
     assertEquals("This page has moved!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
   }
@@ -1746,7 +1746,7 @@ public final class URLConnectionTest {
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setFollowProtocolRedirects(true);
+    client.setFollowSslRedirects(true);
     HttpsURLConnection connection = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertContent("This is insecure HTTP!", connection);
     assertNull(connection.getCipherSuite());
@@ -1769,7 +1769,7 @@ public final class URLConnectionTest {
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setFollowProtocolRedirects(true);
+    client.setFollowSslRedirects(true);
     connection = client.open(server.getUrl("/"));
     assertContent("This is secure HTTPS!", connection);
     assertFalse(connection instanceof HttpsURLConnection);
