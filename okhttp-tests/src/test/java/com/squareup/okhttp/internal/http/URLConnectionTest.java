@@ -2723,7 +2723,7 @@ public final class URLConnectionTest {
     client.setProtocols(Arrays.asList(Protocol.HTTP_11, protocol));
     connection = client.open(server.getUrl("/"));
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
-    assertEquals(Arrays.asList(protocol.name.utf8()), protocolValues);
+    assertEquals(Arrays.asList(protocol.toString()), protocolValues);
     assertContent("A", connection);
   }
 

@@ -39,7 +39,6 @@ import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import okio.ByteString;
 
 /**
  * Configures and creates HTTP connections. Most applications can use a single
@@ -320,8 +319,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     List<Protocol> protocols = new ArrayList<Protocol>(transports.size());
     for (int i = 0, size = transports.size(); i < size; i++) {
       try {
-        Protocol protocol = Protocol.find(ByteString.encodeUtf8(transports.get(i)));
-        protocols.add(protocol);
+        protocols.add(Protocol.find(transports.get(i)));
       } catch (IOException e) {
         throw new IllegalArgumentException(e);
       }
@@ -378,7 +376,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   public List<String> getTransports() {
     List<String> transports = new ArrayList<String>(protocols.size());
     for (int i = 0, size = protocols.size(); i < size; i++) {
-      transports.add(protocols.get(i).name.utf8());
+      transports.add(protocols.get(i).toString());
     }
     return transports;
   }

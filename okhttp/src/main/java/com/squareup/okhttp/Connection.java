@@ -207,7 +207,7 @@ public final class Connection implements Closeable {
     ByteString maybeProtocol;
     Protocol selectedProtocol = Protocol.HTTP_11;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
-      selectedProtocol = Protocol.find(maybeProtocol); // Throws IOE on unknown.
+      selectedProtocol = Protocol.find(maybeProtocol.utf8()); // Throws IOE on unknown.
     }
 
     if (selectedProtocol.spdyVariant) {

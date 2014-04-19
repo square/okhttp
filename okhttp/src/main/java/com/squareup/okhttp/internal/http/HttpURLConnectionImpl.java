@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
-import okio.ByteString;
 import okio.Sink;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
@@ -568,7 +567,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
     for (String protocol : protocolsString.split(",", -1)) {
       try {
-        protocolsList.add(Protocol.find(ByteString.encodeUtf8(protocol)));
+        protocolsList.add(Protocol.find(protocol));
       } catch (IOException e) {
         throw new IllegalStateException(e);
       }

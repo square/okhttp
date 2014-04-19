@@ -333,8 +333,10 @@ public final class MockWebServer {
           sslSocket.startHandshake();
 
           if (npnEnabled) {
-            ByteString selectedProtocol = Platform.get().getNpnSelectedProtocol(sslSocket);
-            protocol = Protocol.find(selectedProtocol);
+            ByteString protocolBytes = Platform.get().getNpnSelectedProtocol(sslSocket);
+            protocol = protocolBytes != null
+                ? Protocol.find(protocolBytes.utf8())
+                : Protocol.HTTP_11;
           }
           openClientSockets.remove(raw);
         } else {
@@ -634,7 +636,7 @@ public final class MockWebServer {
       writeResponse(stream, response);
       if (logger.isLoggable(Level.INFO)) {
         logger.info("Received request: " + request + " and responded: " + response
-            + " protocol is " + protocol.name.utf8());
+            + " protocol is " + protocol.toString());
       }
     }
 
