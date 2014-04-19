@@ -345,21 +345,22 @@ public final class DiskLruCache implements Closeable {
 
     BufferedSink writer = Okio.buffer(Okio.sink(new FileOutputStream(journalFileTmp)));
     try {
-      writer.writeUtf8(MAGIC);
-      writer.writeUtf8("\n");
-      writer.writeUtf8(VERSION_1);
-      writer.writeUtf8("\n");
-      writer.writeUtf8(Integer.toString(appVersion));
-      writer.writeUtf8("\n");
-      writer.writeUtf8(Integer.toString(valueCount));
-      writer.writeUtf8("\n");
-      writer.writeUtf8("\n");
+      writer.writeUtf8(MAGIC).writeByte('\n');
+      writer.writeUtf8(VERSION_1).writeByte('\n');
+      writer.writeUtf8(Integer.toString(appVersion)).writeByte('\n');
+      writer.writeUtf8(Integer.toString(valueCount)).writeByte('\n');
+      writer.writeByte('\n');
 
       for (Entry entry : lruEntries.values()) {
         if (entry.currentEditor != null) {
-          writer.writeUtf8(DIRTY + ' ' + entry.key + '\n');
+          writer.writeUtf8(DIRTY).writeByte(' ');
+          writer.writeUtf8(entry.key);
+          writer.writeByte('\n');
         } else {
-          writer.writeUtf8(CLEAN + ' ' + entry.key + entry.getLengths() + '\n');
+          writer.writeUtf8(CLEAN).writeByte(' ');
+          writer.writeUtf8(entry.key);
+          writer.writeUtf8(entry.getLengths());
+          writer.writeByte('\n');
         }
       }
     } finally {
@@ -429,7 +430,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     redundantOpCount++;
-    journalWriter.writeUtf8(READ + ' ' + key + '\n');
+    journalWriter.writeUtf8(READ).writeByte(' ').writeUtf8(key).writeByte('\n');
     if (journalRebuildRequired()) {
       executorService.execute(cleanupRunnable);
     }
@@ -464,7 +465,7 @@ public final class DiskLruCache implements Closeable {
     entry.currentEditor = editor;
 
     // Flush the journal before creating files to prevent file leaks.
-    journalWriter.writeUtf8(DIRTY + ' ' + key + '\n');
+    journalWriter.writeUtf8(DIRTY).writeByte(' ').writeUtf8(key).writeByte('\n');
     journalWriter.flush();
     return editor;
   }
@@ -540,13 +541,18 @@ public final class DiskLruCache implements Closeable {
     entry.currentEditor = null;
     if (entry.readable | success) {
       entry.readable = true;
-      journalWriter.writeUtf8(CLEAN + ' ' + entry.key + entry.getLengths() + '\n');
+      journalWriter.writeUtf8(CLEAN).writeByte(' ');
+      journalWriter.writeUtf8(entry.key);
+      journalWriter.writeUtf8(entry.getLengths());
+      journalWriter.writeByte('\n');
       if (success) {
         entry.sequenceNumber = nextSequenceNumber++;
       }
     } else {
       lruEntries.remove(entry.key);
-      journalWriter.writeUtf8(REMOVE + ' ' + entry.key + '\n');
+      journalWriter.writeUtf8(REMOVE).writeByte(' ');
+      journalWriter.writeUtf8(entry.key);
+      journalWriter.writeByte('\n');
     }
     journalWriter.flush();
 
@@ -587,7 +593,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     redundantOpCount++;
-    journalWriter.writeUtf8(REMOVE + ' ' + key + '\n');
+    journalWriter.writeUtf8(REMOVE).writeByte(' ').writeUtf8(key).writeByte('\n');
     lruEntries.remove(key);
 
     if (journalRebuildRequired()) {
