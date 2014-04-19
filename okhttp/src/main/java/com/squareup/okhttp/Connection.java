@@ -195,12 +195,12 @@ public final class Connection implements Closeable {
     handshake = Handshake.get(sslSocket.getSession());
 
     ByteString maybeProtocol;
-    Protocol selectedProtocol = Protocol.HTTP_11;
+    Protocol selectedProtocol = Protocol.HTTP_1_1;
     if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
       selectedProtocol = Protocol.get(maybeProtocol.utf8()); // Throws IOE on unknown.
     }
 
-    if (selectedProtocol == Protocol.HTTP_11) {
+    if (selectedProtocol == Protocol.HTTP_1_1) {
       httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
     } else {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.

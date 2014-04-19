@@ -189,7 +189,7 @@ public final class HttpConnection {
 
       Response.Builder responseBuilder = new Response.Builder()
           .statusLine(statusLine)
-          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_11.toString());
+          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_1_1.toString());
 
       Headers.Builder headersBuilder = new Headers.Builder();
       readHeaders(headersBuilder);

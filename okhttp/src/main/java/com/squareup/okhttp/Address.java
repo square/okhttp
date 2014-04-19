@@ -108,7 +108,7 @@ public final class Address {
   /**
    * Returns the protocols the client supports. This method always returns a
    * non-null list that contains minimally
-   * {@link Protocol#HTTP_11}.
+   * {@link Protocol#HTTP_1_1}.
    */
   public List<Protocol> getProtocols() {
     return protocols;

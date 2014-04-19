@@ -33,7 +33,7 @@ public final class ExternalSpdyExample {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://www.google.ca/");
     HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient()
-        .setProtocols(Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_11)).open(url);
+        .setProtocols(Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1)).open(url);
 
     connection.setHostnameVerifier(new HostnameVerifier() {
       @Override public boolean verify(String s, SSLSession sslSession) {

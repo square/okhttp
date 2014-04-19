@@ -338,7 +338,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    */
   public OkHttpClient setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
-    if (!protocols.contains(Protocol.HTTP_11)) {
+    if (!protocols.contains(Protocol.HTTP_1_1)) {
       throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
     }
     if (protocols.contains(null)) {
@@ -447,7 +447,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       result.connectionPool = ConnectionPool.getDefault();
     }
     if (result.protocols == null) {
-      result.protocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_11);
+      result.protocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
     }
     return result;
   }

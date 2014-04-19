@@ -86,7 +86,7 @@ public abstract class HttpOverSpdyTest {
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_11));
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");

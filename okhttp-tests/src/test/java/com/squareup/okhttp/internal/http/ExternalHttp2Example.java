@@ -33,7 +33,7 @@ public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://http2.iijplus.jp/push/test1");
     HttpsURLConnection connection = (HttpsURLConnection) new OkHttpClient()
-        .setProtocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_11))
+        .setProtocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .open(url);
 
     connection.setHostnameVerifier(new HostnameVerifier() {
