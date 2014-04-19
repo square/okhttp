@@ -18,11 +18,8 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -183,46 +180,10 @@ public final class Util {
     }
   }
 
-  /**
-   * Fills 'dst' with bytes from 'in', throwing EOFException if insufficient bytes are available.
-   */
-  public static void readFully(InputStream in, byte[] dst) throws IOException {
-    readFully(in, dst, 0, dst.length);
-  }
-
-  /**
-   * Reads exactly 'byteCount' bytes from 'in' (into 'dst' at offset 'offset'), and throws
-   * EOFException if insufficient bytes are available.
-   *
-   * Used to implement {@link java.io.DataInputStream#readFully(byte[], int, int)}.
-   */
-  public static void readFully(InputStream in, byte[] dst, int offset, int byteCount)
-      throws IOException {
-    if (byteCount == 0) {
-      return;
-    }
-    if (in == null) {
-      throw new NullPointerException("in == null");
-    }
-    if (dst == null) {
-      throw new NullPointerException("dst == null");
-    }
-    checkOffsetAndCount(dst.length, offset, byteCount);
-    while (byteCount > 0) {
-      int bytesRead = in.read(dst, offset, byteCount);
-      if (bytesRead < 0) {
-        throw new EOFException();
-      }
-      offset += bytesRead;
-      byteCount -= bytesRead;
-    }
-  }
-
   /** Returns the remainder of 'source' as a buffer, closing it when done. */
   public static Buffer readFully(Source source) throws IOException {
     Buffer result = new Buffer();
-    while (source.read(result, 2048) != -1) {
-    }
+    result.writeAll(source);
     source.close();
     return result;
   }
@@ -238,21 +199,6 @@ public final class Util {
       skipBuffer.clear();
     }
     return false; // Ran out of time.
-  }
-
-  /**
-   * Copies all of the bytes from {@code in} to {@code out}. Neither stream is closed.
-   * Returns the total number of bytes transferred.
-   */
-  public static int copy(InputStream in, OutputStream out) throws IOException {
-    int total = 0;
-    byte[] buffer = new byte[8192];
-    int c;
-    while ((c = in.read(buffer)) != -1) {
-      total += c;
-      out.write(buffer, 0, c);
-    }
-    return total;
   }
 
   /** Returns a 32 character string containing a hash of {@code s}. */
