@@ -79,7 +79,7 @@ public final class RouteSelectorTest {
   }
 
   private final OkAuthenticator authenticator = HttpAuthenticator.SYSTEM_DEFAULT;
-  private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_11);
+  private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
   private final FakeProxySelector proxySelector = new FakeProxySelector();
 

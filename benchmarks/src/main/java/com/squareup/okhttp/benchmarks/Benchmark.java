@@ -84,7 +84,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
   int headerCount;
 
   /** Which ALPN/NPN protocols are in use. Only useful with TLS. */
-  List<Protocol> protocols = Arrays.asList(Protocol.HTTP_11);
+  List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
 
   public static void main(String[] args) {
     List<String> allArgs = new ArrayList<String>();

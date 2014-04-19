@@ -2720,7 +2720,7 @@ public final class URLConnectionTest {
     enableNpn(protocol);
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
-    client.setProtocols(Arrays.asList(Protocol.HTTP_11, protocol));
+    client.setProtocols(Arrays.asList(Protocol.HTTP_1_1, protocol));
     connection = client.open(server.getUrl("/"));
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
     assertEquals(Arrays.asList(protocol.toString()), protocolValues);
@@ -2776,7 +2776,7 @@ public final class URLConnectionTest {
   @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
-    client.setProtocols(Arrays.asList(Protocol.HTTP_11));
+    client.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
     assertContent("A", client.open(server.getUrl("/")));
   }
 
@@ -2790,7 +2790,7 @@ public final class URLConnectionTest {
 
   @Test public void setProtocolsWithNull() throws Exception {
     try {
-      client.setProtocols(Arrays.asList(Protocol.HTTP_11, null));
+      client.setProtocols(Arrays.asList(Protocol.HTTP_1_1, null));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -3065,7 +3065,7 @@ public final class URLConnectionTest {
   private void enableNpn(Protocol protocol) {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_11));
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setNpnEnabled(true);
     server.setNpnProtocols(client.getProtocols());

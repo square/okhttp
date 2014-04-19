@@ -31,7 +31,7 @@ import java.io.IOException;
 public enum Protocol {
   HTTP_2("h2-10"),
   SPDY_3("spdy/3.1"),
-  HTTP_11("http/1.1");
+  HTTP_1_1("http/1.1");
 
   private final String protocol;
 
@@ -45,7 +45,7 @@ public enum Protocol {
    */
   public static Protocol get(String protocol) throws IOException {
     // Unroll the loop over values() to save an allocation.
-    if (protocol.equals(HTTP_11.protocol)) return HTTP_11;
+    if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
     throw new IOException("Unexpected protocol: " + protocol);
