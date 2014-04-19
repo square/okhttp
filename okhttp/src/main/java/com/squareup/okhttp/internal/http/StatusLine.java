@@ -1,5 +1,6 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.net.ProtocolException;
 
@@ -75,6 +76,10 @@ public final class StatusLine {
    */
   public int httpMinorVersion() {
     return httpMinorVersion != -1 ? httpMinorVersion : 1;
+  }
+
+  public Protocol getProtocol() {
+    return httpMinorVersion == 0 ? Protocol.HTTP_1_0 : Protocol.HTTP_1_1;
   }
 
   /** Returns the HTTP status code or -1 if it is unknown. */

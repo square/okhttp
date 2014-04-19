@@ -200,13 +200,13 @@ public final class Connection implements Closeable {
       selectedProtocol = Protocol.get(maybeProtocol.utf8()); // Throws IOE on unknown.
     }
 
-    if (selectedProtocol == Protocol.HTTP_1_1) {
-      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
-    } else {
+    if (selectedProtocol == Protocol.SPDY_3 || selectedProtocol == Protocol.HTTP_2) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
           .protocol(selectedProtocol).build();
       spdyConnection.sendConnectionHeader();
+    } else {
+      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
     }
   }
 

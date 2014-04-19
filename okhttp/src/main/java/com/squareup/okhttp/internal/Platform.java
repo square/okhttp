@@ -304,7 +304,9 @@ public class Platform {
       try {
         List<String> names = new ArrayList<String>(npnProtocols.size());
         for (int i = 0, size = npnProtocols.size(); i < size; i++) {
-          names.add(npnProtocols.get(i).toString());
+          Protocol protocol = npnProtocols.get(i);
+          if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN.
+          names.add(protocol.toString());
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
             new Class[] { clientProviderClass, serverProviderClass }, new JettyNpnProvider(names));
@@ -392,7 +394,9 @@ public class Platform {
    */
   static byte[] concatLengthPrefixed(List<Protocol> protocols) {
     Buffer result = new Buffer();
-    for (Protocol protocol : protocols) {
+    for (int i = 0, size = protocols.size(); i < size; i++) {
+      Protocol protocol = protocols.get(i);
+      if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN.
       result.writeByte(protocol.toString().length());
       result.writeUtf8(protocol.toString());
     }

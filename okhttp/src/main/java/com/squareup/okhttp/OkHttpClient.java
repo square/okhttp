@@ -334,7 +334,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * to negotiate a transport.
    *
    * @param protocols the protocols to use, in order of preference. The list
-   *     must contain "http/1.1". It must not contain null.
+   *     must contain {@link Protocol#HTTP_1_1}. It must not contain null.
    */
   public OkHttpClient setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);

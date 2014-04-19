@@ -19,7 +19,6 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
@@ -188,11 +187,11 @@ public final class HttpConnection {
       StatusLine statusLine = new StatusLine(statusLineString);
 
       Response.Builder responseBuilder = new Response.Builder()
-          .statusLine(statusLine)
-          .header(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_1_1.toString());
+          .statusLine(statusLine);
 
       Headers.Builder headersBuilder = new Headers.Builder();
       readHeaders(headersBuilder);
+      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.getProtocol().toString());
       responseBuilder.headers(headersBuilder.build());
 
       if (statusLine.code() != HTTP_CONTINUE) {
