@@ -37,6 +37,7 @@ import java.util.logging.Logger;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import javax.net.ssl.SSLSocket;
+import okio.Buffer;
 import okio.ByteString;
 
 /**
@@ -303,7 +304,7 @@ public class Platform {
       try {
         List<String> names = new ArrayList<String>(npnProtocols.size());
         for (int i = 0, size = npnProtocols.size(); i < size; i++) {
-          names.add(npnProtocols.get(i).name.utf8());
+          names.add(npnProtocols.get(i).toString());
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
             new Class[] { clientProviderClass, serverProviderClass }, new JettyNpnProvider(names));
@@ -386,24 +387,15 @@ public class Platform {
   }
 
   /**
-   * Concatenation of 8-bit, length prefixed protocol names.
-   *
+   * Returns the concatenation of 8-bit, length prefixed protocol names.
    * http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04#page-4
    */
   static byte[] concatLengthPrefixed(List<Protocol> protocols) {
-    int size = 0;
+    Buffer result = new Buffer();
     for (Protocol protocol : protocols) {
-      size += protocol.name.size() + 1; // add a byte for 8-bit length prefix.
+      result.writeByte(protocol.toString().length());
+      result.writeUtf8(protocol.toString());
     }
-    byte[] result = new byte[size];
-    int pos = 0;
-    for (Protocol protocol : protocols) {
-      int nameSize = protocol.name.size();
-      result[pos++] = (byte) nameSize;
-      // toByteArray allocates an array, but this is only called on new connections.
-      System.arraycopy(protocol.name.toByteArray(), 0, result, pos, nameSize);
-      pos += nameSize;
-    }
-    return result;
+    return result.readByteArray(result.size());
   }
 }

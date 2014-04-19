@@ -15,9 +15,7 @@
  */
 package com.squareup.okhttp.curl;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
@@ -34,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import javax.net.ssl.HostnameVerifier;
@@ -73,12 +70,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static String protocols() {
-    return Joiner.on(", ").join(Lists.transform(Arrays.asList(Protocol.values()),
-        new Function<Protocol, String>() {
-          @Override public String apply(Protocol protocol) {
-            return protocol.name.utf8();
-          }
-        }));
+    return Joiner.on(", ").join(Protocol.values());
   }
 
   @Option(name = { "-X", "--request" }, description = "Specify request command to use")

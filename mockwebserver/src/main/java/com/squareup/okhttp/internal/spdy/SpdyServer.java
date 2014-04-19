@@ -70,7 +70,7 @@ public final class SpdyServer implements IncomingStreamHandler {
         System.out.println("UNSUPPORTED");
       }
       @Override public List<String> protocols() {
-        return Arrays.asList(Protocol.SPDY_3.name.utf8());
+        return Arrays.asList(Protocol.SPDY_3.toString());
       }
       @Override public void protocolSelected(String protocol) {
         System.out.println("PROTOCOL SELECTED: " + protocol);

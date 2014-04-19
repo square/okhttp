@@ -43,9 +43,9 @@ public final class HeadersTest {
     assertEquals("HTTP/1.1 200 OK", response.statusLine());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
     assertEquals("Cookie2", headers.get("set-cookie"));
-    assertEquals(Protocol.SPDY_3.name.utf8(), headers.get(OkHeaders.SELECTED_PROTOCOL));
+    assertEquals(Protocol.SPDY_3.toString(), headers.get(OkHeaders.SELECTED_PROTOCOL));
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.SPDY_3.name.utf8(), headers.value(0));
+    assertEquals(Protocol.SPDY_3.toString(), headers.value(0));
     assertEquals("cache-control", headers.name(1));
     assertEquals("no-cache, no-store", headers.value(1));
     assertEquals("set-cookie", headers.name(2));
@@ -67,7 +67,7 @@ public final class HeadersTest {
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.SPDY_3.name.utf8(), headers.value(0));
+    assertEquals(Protocol.SPDY_3.toString(), headers.value(0));
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
@@ -81,7 +81,7 @@ public final class HeadersTest {
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.HTTP_2.name.utf8(), headers.value(0));
+    assertEquals(Protocol.HTTP_2.toString(), headers.value(0));
   }
 
   @Test public void toNameValueBlock() {

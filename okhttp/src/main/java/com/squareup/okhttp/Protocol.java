@@ -19,18 +19,17 @@ import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import okio.ByteString;
 
 /**
- * Contains protocols that OkHttp supports
- * <a href="http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04">NPN</a> or
- * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> selection.
+ * Protocols that OkHttp implements for <a
+ * href="http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04">NPN</a> and
+ * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>.
  *
  * <h3>Protocol vs Scheme</h3>
  * Despite its name, {@link java.net.URL#getProtocol()} returns the
  * {@link java.net.URI#getScheme() scheme} (http, https, etc.) of the URL, not
- * the protocol (http/1.1, spdy/3.1, etc.).  OkHttp uses the word protocol to
- * indicate how HTTP messages are framed.
+ * the protocol (http/1.1, spdy/3.1, etc.). OkHttp uses the word <i>protocol</i>
+ * to identify how HTTP messages are framed.
  */
 public enum Protocol {
   HTTP_2("h2-10", true),
@@ -45,7 +44,7 @@ public enum Protocol {
       Util.immutableList(Arrays.asList(HTTP_2, HTTP_11));
 
   /** Identifier string used in NPN or ALPN selection. */
-  public final ByteString name;
+  private final String protocol;
 
   /**
    * When true the protocol is binary framed and derived from SPDY.
@@ -54,21 +53,28 @@ public enum Protocol {
    */
   public final boolean spdyVariant;
 
-  Protocol(String name, boolean spdyVariant) {
-    this.name = ByteString.encodeUtf8(name);
+  Protocol(String protocol, boolean spdyVariant) {
+    this.protocol = protocol;
     this.spdyVariant = spdyVariant;
   }
 
   /**
-   * Returns the protocol matching {@code input} or {@link #HTTP_11} is on
-   * {@code null}. Throws an {@link IOException} when {@code input} doesn't
-   * match the {@link #name} of a supported protocol.
+   * Returns the protocol identified by {@code protocol}.
+   * @throws IOException if {@code protocol} is unknown.
    */
-  public static Protocol find(ByteString input) throws IOException {
-    if (input == null) return HTTP_11;
-    for (Protocol protocol : values()) {
-      if (protocol.name.equals(input)) return protocol;
-    }
-    throw new IOException("Unexpected protocol: " + input.utf8());
+  public static Protocol find(String protocol) throws IOException {
+    // Unroll the loop over values() to save an allocation.
+    if (protocol.equals(HTTP_11.protocol)) return HTTP_11;
+    if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
+    if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
+    throw new IOException("Unexpected protocol: " + protocol);
+  }
+
+  /**
+   * Returns the string used to identify this protocol for ALPN and NPN, like
+   * "http/1.1", "spdy/3.1" or "h2-10".
+   */
+  @Override public String toString() {
+    return protocol;
   }
 }
