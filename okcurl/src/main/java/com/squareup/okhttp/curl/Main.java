@@ -23,6 +23,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.http.StatusLine;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
 import io.airlift.command.HelpOption;
@@ -127,7 +128,7 @@ public class Main extends HelpOption implements Runnable {
     try {
       Response response = client.execute(request);
       if (showHeaders) {
-        System.out.println(response.statusLine());
+        System.out.println(StatusLine.get(response));
         Headers headers = response.headers();
         for (int i = 0, count = headers.size(); i < count; i++) {
           System.out.println(headers.name(i) + ": " + headers.value(i));

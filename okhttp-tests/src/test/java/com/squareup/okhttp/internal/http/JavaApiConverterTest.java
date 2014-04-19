@@ -20,6 +20,7 @@ import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -183,7 +184,9 @@ public class JavaApiConverterTest {
     assertEquals("GET", request.method());
 
     // Check the response
-    assertEquals(statusLine, response.statusLine());
+    assertEquals(Protocol.HTTP_1_1, response.protocol());
+    assertEquals(200, response.code());
+    assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
     assertEquals(body, response.body().string());
@@ -225,7 +228,9 @@ public class JavaApiConverterTest {
     Response response = JavaApiConverter.createOkResponse(request, cacheResponse);
     assertSame(request, response.request());
 
-    assertNotNullAndEquals(statusLine, response.statusLine());
+    assertEquals(Protocol.HTTP_1_1, response.protocol());
+    assertEquals(200, response.code());
+    assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
     assertEquals("HelloWorld", response.body().string());
@@ -283,7 +288,9 @@ public class JavaApiConverterTest {
     Response response = JavaApiConverter.createOkResponse(request, cacheResponse);
     assertSame(request, response.request());
 
-    assertNotNullAndEquals(statusLine, response.statusLine());
+    assertEquals(Protocol.HTTP_1_1, response.protocol());
+    assertEquals(200, response.code());
+    assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
     assertEquals("HelloWorld", response.body().string());
@@ -425,11 +432,12 @@ public class JavaApiConverterTest {
   }
 
   @Test public void createJavaUrlConnection_responseHeadersOk() throws Exception {
-    final String statusLine = "HTTP/1.1 200 Fantastic";
     Response.Body responseBody = createResponseBody("BodyText");
     Response okResponse = new Response.Builder()
         .request(createArbitraryOkRequest())
-        .statusLine(statusLine)
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("Fantastic")
         .addHeader("A", "c")
         .addHeader("B", "d")
         .addHeader("A", "e")
@@ -443,20 +451,20 @@ public class JavaApiConverterTest {
     assertEquals(responseBody.contentLength(), httpUrlConnection.getContentLength());
 
     // Check retrieval by string key.
-    assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
+    assertEquals("HTTP/1.1 200 Fantastic", httpUrlConnection.getHeaderField(null));
     assertEquals("e", httpUrlConnection.getHeaderField("A"));
     // The RI and OkHttp supports case-insensitive matching for this method.
     assertEquals("e", httpUrlConnection.getHeaderField("a"));
 
     // Check retrieval using a Map.
     Map<String, List<String>> responseHeaders = httpUrlConnection.getHeaderFields();
-    assertEquals(Arrays.asList(statusLine), responseHeaders.get(null));
+    assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"), responseHeaders.get(null));
     assertEquals(newSet("c", "e"), newSet(responseHeaders.get("A")));
     // OkHttp supports case-insensitive matching here. The RI does not.
     assertEquals(newSet("c", "e"), newSet(responseHeaders.get("a")));
 
     // Check the Map iterator contains the expected mappings.
-    assertHeadersContainsMapping(responseHeaders, null, statusLine);
+    assertHeadersContainsMapping(responseHeaders, null, "HTTP/1.1 200 Fantastic");
     assertHeadersContainsMapping(responseHeaders, "A", "c", "e");
     assertHeadersContainsMapping(responseHeaders, "B", "d");
 
@@ -474,7 +482,7 @@ public class JavaApiConverterTest {
 
     // Check retrieval of headers by index.
     assertEquals(null, httpUrlConnection.getHeaderFieldKey(0));
-    assertEquals(statusLine, httpUrlConnection.getHeaderField(0));
+    assertEquals("HTTP/1.1 200 Fantastic", httpUrlConnection.getHeaderField(0));
     // After header zero there may be additional entries provided at the beginning or end by the
     // implementation. It's probably important that the relative ordering of the headers is
     // preserved, particularly if there are multiple value for the same key.
@@ -578,9 +586,10 @@ public class JavaApiConverterTest {
             .url("http://insecure/request")
             .method("GET", null)
             .build();
-    String statusLine = "HTTP/1.1 200 Fantastic";
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
-        .statusLine(statusLine)
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("Fantastic")
         .addHeader("key1", "value1_1")
         .addHeader("key2", "value2")
         .addHeader("key1", "value1_2")
@@ -590,7 +599,7 @@ public class JavaApiConverterTest {
     assertFalse(javaCacheResponse instanceof SecureCacheResponse);
     Map<String, List<String>> javaHeaders = javaCacheResponse.getHeaders();
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
-    assertEquals(Arrays.asList(statusLine), javaHeaders.get(null));
+    assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"), javaHeaders.get(null));
     assertNull(javaCacheResponse.getBody());
   }
 
@@ -600,10 +609,11 @@ public class JavaApiConverterTest {
             .url("http://insecure/request")
             .method("POST", createRequestBody("RequestBody"))
             .build();
-    String statusLine = "HTTP/1.1 200 Fantastic";
     Response.Body responseBody = createResponseBody("ResponseBody");
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
-        .statusLine(statusLine)
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("Fantastic")
         .addHeader("key1", "value1_1")
         .addHeader("key2", "value2")
         .addHeader("key1", "value1_2")
@@ -613,7 +623,7 @@ public class JavaApiConverterTest {
     assertFalse(javaCacheResponse instanceof SecureCacheResponse);
     Map<String, List<String>> javaHeaders = javaCacheResponse.getHeaders();
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
-    assertEquals(Arrays.asList(statusLine), javaHeaders.get(null));
+    assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"), javaHeaders.get(null));
     assertEquals("ResponseBody", readAll(javaCacheResponse.getBody()));
   }
 
@@ -623,12 +633,13 @@ public class JavaApiConverterTest {
             .url("https://secure/request")
             .method("POST", createRequestBody("RequestBody") )
             .build();
-    String statusLine = "HTTP/1.1 200 Fantastic";
     Response.Body responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
         Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
-        .statusLine(statusLine)
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("Fantastic")
         .addHeader("key1", "value1_1")
         .addHeader("key2", "value2")
         .addHeader("key1", "value1_2")
@@ -639,7 +650,7 @@ public class JavaApiConverterTest {
         (SecureCacheResponse) JavaApiConverter.createJavaCacheResponse(okResponse);
     Map<String, List<String>> javaHeaders = javaCacheResponse.getHeaders();
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
-    assertEquals(Arrays.asList(statusLine), javaHeaders.get(null));
+    assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"), javaHeaders.get(null));
     assertEquals("ResponseBody", readAll(javaCacheResponse.getBody()));
     assertEquals(handshake.cipherSuite(), javaCacheResponse.getCipherSuite());
     assertEquals(handshake.localCertificates(), javaCacheResponse.getLocalCertificateChain());
@@ -752,7 +763,9 @@ public class JavaApiConverterTest {
   private static Response createArbitraryOkResponse(Request request) {
     return new Response.Builder()
         .request(request)
-        .statusLine("HTTP/1.1 200 Arbitrary")
+        .protocol(Protocol.HTTP_1_1)
+        .code(200)
+        .message("Arbitrary")
         .build();
   }
 

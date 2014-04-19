@@ -202,8 +202,11 @@ public final class SpdyTransport implements Transport {
     if (status == null) throw new ProtocolException("Expected ':status' header not present");
     if (version == null) throw new ProtocolException("Expected ':version' header not present");
 
+    StatusLine statusLine = StatusLine.parse(version + " " + status);
     return new Response.Builder()
-        .statusLine(new StatusLine(version + " " + status))
+        .protocol(statusLine.protocol)
+        .code(statusLine.code)
+        .message(statusLine.message)
         .headers(headersBuilder.build());
   }
 

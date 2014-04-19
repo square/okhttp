@@ -1,21 +1,31 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
 import java.net.ProtocolException;
 
+/** An HTTP response status line like "HTTP/1.1 200 OK". */
 public final class StatusLine {
   /** Numeric status code, 307: Temporary Redirect. */
   public static final int HTTP_TEMP_REDIRECT = 307;
   public static final int HTTP_CONTINUE = 100;
 
-  private final String statusLine;
-  private final Protocol protocol;
-  private final int responseCode;
-  private final String responseMessage;
+  public final Protocol protocol;
+  public final int code;
+  public final String message;
 
-  /** Sets the response status line (like "HTTP/1.0 200 OK"). */
-  public StatusLine(String statusLine) throws IOException {
+  public StatusLine(Protocol protocol, int code, String message) {
+    this.protocol = protocol;
+    this.code = code;
+    this.message = message;
+  }
+
+  public static StatusLine get(Response response) {
+    return new StatusLine(response.protocol(), response.code(), response.message());
+  }
+
+  public static StatusLine parse(String statusLine) throws IOException {
     // H T T P / 1 . 1   2 0 0   T e m p o r a r y   R e d i r e c t
     // 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0
 
@@ -47,45 +57,33 @@ public final class StatusLine {
     if (statusLine.length() < codeStart + 3) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
-    int responseCode;
+    int code;
     try {
-      responseCode = Integer.parseInt(statusLine.substring(codeStart, codeStart + 3));
+      code = Integer.parseInt(statusLine.substring(codeStart, codeStart + 3));
     } catch (NumberFormatException e) {
       throw new ProtocolException("Unexpected status line: " + statusLine);
     }
 
     // Parse an optional response message like "OK" or "Not Modified". If it
     // exists, it is separated from the response code by a space.
-    String responseMessage = "";
+    String message = "";
     if (statusLine.length() > codeStart + 3) {
       if (statusLine.charAt(codeStart + 3) != ' ') {
         throw new ProtocolException("Unexpected status line: " + statusLine);
       }
-      responseMessage = statusLine.substring(codeStart + 4);
+      message = statusLine.substring(codeStart + 4);
     }
 
-    this.responseMessage = responseMessage;
-    this.responseCode = responseCode;
-    this.statusLine = statusLine;
-    this.protocol = protocol;
+    return new StatusLine(protocol, code, message);
   }
 
-  public String getStatusLine() {
-    return statusLine;
-  }
-
-  /** Returns either {@link Protocol#HTTP_1_1} or {@link Protocol#HTTP_1_0}. */
-  public Protocol protocol() {
-    return protocol;
-  }
-
-  /** Returns the HTTP status code or -1 if it is unknown. */
-  public int code() {
-    return responseCode;
-  }
-
-  /** Returns the HTTP status message or null if it is unknown. */
-  public String message() {
-    return responseMessage;
+  @Override public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(protocol == Protocol.HTTP_1_0 ? "HTTP/1.0" : "HTTP/1.1");
+    result.append(" ").append(code);
+    if (message != null) {
+      result.append(" ").append(message);
+    }
+    return result.toString();
   }
 }

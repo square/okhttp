@@ -2,11 +2,11 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.CacheControl;
 import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.Date;
 import okio.BufferedSource;
@@ -34,15 +34,6 @@ public final class CacheStrategy {
       return Okio.buffer(Util.EMPTY_SOURCE);
     }
   };
-
-  private static final StatusLine GATEWAY_TIMEOUT_STATUS_LINE;
-  static {
-    try {
-      GATEWAY_TIMEOUT_STATUS_LINE = new StatusLine("HTTP/1.1 504 Gateway Timeout");
-    } catch (IOException e) {
-      throw new AssertionError();
-    }
-  }
 
   public final Request request;
   public final Response response;
@@ -166,7 +157,9 @@ public final class CacheStrategy {
         // We're forbidden from using the network, but the cache is insufficient.
         Response noneResponse = new Response.Builder()
             .request(candidate.request)
-            .statusLine(GATEWAY_TIMEOUT_STATUS_LINE)
+            .protocol(Protocol.HTTP_1_1)
+            .code(504)
+            .message("Gateway Timeout")
             .setResponseSource(ResponseSource.NONE)
             .body(EMPTY_BODY)
             .build();

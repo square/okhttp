@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +35,9 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  */
 public final class Response {
   private final Request request;
-  private final StatusLine statusLine;
+  private final Protocol protocol;
+  private final int code;
+  private final String message;
   private final Handshake handshake;
   private final Headers headers;
   private final Body body;
@@ -46,7 +47,9 @@ public final class Response {
 
   private Response(Builder builder) {
     this.request = builder.request;
-    this.statusLine = builder.statusLine;
+    this.protocol = builder.protocol;
+    this.code = builder.code;
+    this.message = builder.message;
     this.handshake = builder.handshake;
     this.headers = builder.headers.build();
     this.body = builder.body;
@@ -69,20 +72,22 @@ public final class Response {
     return request;
   }
 
-  public String statusLine() {
-    return statusLine.getStatusLine();
-  }
-
-  public int code() {
-    return statusLine.code();
-  }
-
-  public String statusMessage() {
-    return statusLine.message();
-  }
-
+  /**
+   * Returns the HTTP protocol, such as {@link Protocol#HTTP_1_1} or {@link
+   * Protocol#HTTP_1_0}.
+   */
   public Protocol protocol() {
-    return statusLine.protocol();
+    return protocol;
+  }
+
+  /** Returns the HTTP status code or -1 if it is unknown. */
+  public int code() {
+    return code;
+  }
+
+  /** Returns the HTTP status message or null if it is unknown. */
+  public String message() {
+    return message;
   }
 
   /**
@@ -229,7 +234,9 @@ public final class Response {
 
   public static class Builder {
     private Request request;
-    private StatusLine statusLine;
+    private Protocol protocol;
+    private int code = -1;
+    private String message;
     private Handshake handshake;
     private Headers.Builder headers;
     private Body body;
@@ -241,7 +248,9 @@ public final class Response {
 
     private Builder(Response response) {
       this.request = response.request;
-      this.statusLine = response.statusLine;
+      this.protocol = response.protocol;
+      this.code = response.code;
+      this.message = response.message;
       this.handshake = response.handshake;
       this.headers = response.headers.newBuilder();
       this.body = response.body;
@@ -253,18 +262,19 @@ public final class Response {
       return this;
     }
 
-    public Builder statusLine(StatusLine statusLine) {
-      if (statusLine == null) throw new IllegalArgumentException("statusLine == null");
-      this.statusLine = statusLine;
+    public Builder protocol(Protocol protocol) {
+      this.protocol = protocol;
       return this;
     }
 
-    public Builder statusLine(String statusLine) {
-      try {
-        return statusLine(new StatusLine(statusLine));
-      } catch (IOException e) {
-        throw new IllegalArgumentException(e);
-      }
+    public Builder code(int code) {
+      this.code = code;
+      return this;
+    }
+
+    public Builder message(String message) {
+      this.message = message;
+      return this;
     }
 
     public Builder handshake(Handshake handshake) {
@@ -308,7 +318,7 @@ public final class Response {
 
     // TODO: move out of public API
     public Builder setResponseSource(ResponseSource responseSource) {
-      return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
+      return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + code);
     }
 
     public Builder redirectedBy(Response redirectedBy) {
@@ -318,7 +328,8 @@ public final class Response {
 
     public Response build() {
       if (request == null) throw new IllegalStateException("request == null");
-      if (statusLine == null) throw new IllegalStateException("statusLine == null");
+      if (protocol == null) throw new IllegalStateException("protocol == null");
+      if (code < 0) throw new IllegalStateException("code < 0: " + code);
       return new Response(this);
     }
   }
