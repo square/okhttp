@@ -30,6 +30,12 @@ import java.io.IOException;
  */
 public enum Protocol {
   /**
+   * An obsolete plaintext framing that does not use persistent sockets by
+   * default.
+   */
+  HTTP_1_0("http/1.0"),
+
+  /**
    * A plaintext framing that includes persistent connections.
    *
    * <p>This version of OkHttp implements <a
@@ -76,6 +82,7 @@ public enum Protocol {
    */
   public static Protocol get(String protocol) throws IOException {
     // Unroll the loop over values() to save an allocation.
+    if (protocol.equals(HTTP_1_0.protocol)) return HTTP_1_0;
     if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;

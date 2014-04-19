@@ -2727,6 +2727,22 @@ public final class URLConnectionTest {
     assertContent("A", connection);
   }
 
+  @Test public void http10SelectedProtocol() throws Exception {
+    server.enqueue(new MockResponse().setStatus("HTTP/1.0 200 OK"));
+    server.play();
+    connection = client.open(server.getUrl("/"));
+    List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
+    assertEquals(Arrays.asList("http/1.0"), protocolValues);
+  }
+
+  @Test public void http11SelectedProtocol() throws Exception {
+    server.enqueue(new MockResponse().setStatus("HTTP/1.1 200 OK"));
+    server.play();
+    connection = client.open(server.getUrl("/"));
+    List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
+    assertEquals(Arrays.asList("http/1.1"), protocolValues);
+  }
+
   /** For example, empty Protobuf RPC messages end up as a zero-length POST. */
   @Test public void zeroLengthPost() throws IOException, InterruptedException {
     zeroLengthPayload("POST");
