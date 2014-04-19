@@ -110,7 +110,8 @@ public final class MockWebServer {
 
   private int port = -1;
   private boolean npnEnabled = true;
-  private List<Protocol> npnProtocols = Protocol.HTTP2_SPDY3_AND_HTTP;
+  private List<Protocol> npnProtocols
+      = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_11);
 
   public int getPort() {
     if (port == -1) throw new IllegalStateException("Cannot retrieve port before calling play()");
@@ -335,7 +336,7 @@ public final class MockWebServer {
           if (npnEnabled) {
             ByteString protocolBytes = Platform.get().getNpnSelectedProtocol(sslSocket);
             protocol = protocolBytes != null
-                ? Protocol.find(protocolBytes.utf8())
+                ? Protocol.get(protocolBytes.utf8())
                 : Protocol.HTTP_11;
           }
           openClientSockets.remove(raw);
@@ -343,7 +344,7 @@ public final class MockWebServer {
           socket = raw;
         }
 
-        if (protocol.spdyVariant) {
+        if (protocol != Protocol.HTTP_11) {
           SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, protocol);
           SpdyConnection spdyConnection = new SpdyConnection.Builder(false, socket)
               .protocol(protocol)

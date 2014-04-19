@@ -319,7 +319,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     List<Protocol> protocols = new ArrayList<Protocol>(transports.size());
     for (int i = 0, size = transports.size(); i < size; i++) {
       try {
-        protocols.add(Protocol.find(transports.get(i)));
+        protocols.add(Protocol.get(transports.get(i)));
       } catch (IOException e) {
         throw new IllegalArgumentException(e);
       }
@@ -480,7 +480,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       result.connectionPool = ConnectionPool.getDefault();
     }
     if (result.protocols == null) {
-      result.protocols = Protocol.HTTP2_SPDY3_AND_HTTP;
+      result.protocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_11);
     }
     return result;
   }
