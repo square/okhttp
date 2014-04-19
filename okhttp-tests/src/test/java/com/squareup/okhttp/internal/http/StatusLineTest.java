@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.net.ProtocolException;
 import org.junit.Test;
@@ -29,7 +30,7 @@ public final class StatusLineTest {
     int code = 200;
     StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code + " " + message);
     assertEquals(message, statusLine.message());
-    assertEquals(version, statusLine.httpMinorVersion());
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
     assertEquals(code, statusLine.code());
   }
 
@@ -38,7 +39,7 @@ public final class StatusLineTest {
     int code = 503;
     StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code + " ");
     assertEquals("", statusLine.message());
-    assertEquals(version, statusLine.httpMinorVersion());
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
     assertEquals(code, statusLine.code());
   }
 
@@ -52,7 +53,7 @@ public final class StatusLineTest {
     int code = 503;
     StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code);
     assertEquals("", statusLine.message());
-    assertEquals(version, statusLine.httpMinorVersion());
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
     assertEquals(code, statusLine.code());
   }
 
@@ -60,7 +61,7 @@ public final class StatusLineTest {
   @Test public void shoutcast() throws IOException {
     StatusLine statusLine = new StatusLine("ICY 200 OK");
     assertEquals("OK", statusLine.message());
-    assertEquals(0, statusLine.httpMinorVersion());
+    assertEquals(Protocol.HTTP_1_0, statusLine.protocol());
     assertEquals(200, statusLine.code());
   }
 

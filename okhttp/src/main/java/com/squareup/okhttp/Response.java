@@ -81,8 +81,8 @@ public final class Response {
     return statusLine.message();
   }
 
-  public int httpMinorVersion() {
-    return statusLine.httpMinorVersion();
+  public Protocol protocol() {
+    return statusLine.protocol();
   }
 
   /**

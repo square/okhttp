@@ -93,7 +93,7 @@ public final class HttpTransport implements Transport {
     httpEngine.writingRequestHeaders();
     String requestLine = RequestLine.get(request,
         httpEngine.getConnection().getRoute().getProxy().type(),
-        httpEngine.getConnection().getHttpMinorVersion());
+        httpEngine.getConnection().getProtocol());
     httpConnection.writeRequest(request.getHeaders(), requestLine);
   }
 

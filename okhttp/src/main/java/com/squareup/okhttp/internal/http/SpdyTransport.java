@@ -89,7 +89,7 @@ public final class SpdyTransport implements Transport {
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
-    String version = RequestLine.version(httpEngine.getConnection().getHttpMinorVersion());
+    String version = RequestLine.version(httpEngine.getConnection().getProtocol());
     stream = spdyConnection.newStream(
         writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
         hasResponseBody);

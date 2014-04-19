@@ -10,7 +10,7 @@ public final class StatusLine {
   public static final int HTTP_CONTINUE = 100;
 
   private final String statusLine;
-  private final int httpMinorVersion;
+  private final Protocol protocol;
   private final int responseCode;
   private final String responseMessage;
 
@@ -21,19 +21,23 @@ public final class StatusLine {
 
     // Parse protocol like "HTTP/1.1" followed by a space.
     int codeStart;
-    int httpMinorVersion;
+    Protocol protocol;
     if (statusLine.startsWith("HTTP/1.")) {
       if (statusLine.length() < 9 || statusLine.charAt(8) != ' ') {
         throw new ProtocolException("Unexpected status line: " + statusLine);
       }
-      httpMinorVersion = statusLine.charAt(7) - '0';
+      int httpMinorVersion = statusLine.charAt(7) - '0';
       codeStart = 9;
-      if (httpMinorVersion < 0 || httpMinorVersion > 9) {
+      if (httpMinorVersion == 0) {
+        protocol = Protocol.HTTP_1_0;
+      } else if (httpMinorVersion == 1) {
+        protocol = Protocol.HTTP_1_1;
+      } else {
         throw new ProtocolException("Unexpected status line: " + statusLine);
       }
     } else if (statusLine.startsWith("ICY ")) {
       // Shoutcast uses ICY instead of "HTTP/1.0".
-      httpMinorVersion = 0;
+      protocol = Protocol.HTTP_1_0;
       codeStart = 4;
     } else {
       throw new ProtocolException("Unexpected status line: " + statusLine);
@@ -63,23 +67,16 @@ public final class StatusLine {
     this.responseMessage = responseMessage;
     this.responseCode = responseCode;
     this.statusLine = statusLine;
-    this.httpMinorVersion = httpMinorVersion;
+    this.protocol = protocol;
   }
 
   public String getStatusLine() {
     return statusLine;
   }
 
-  /**
-   * Returns the status line's HTTP minor version. This returns 0 for HTTP/1.0
-   * and 1 for HTTP/1.1. This returns 1 if the HTTP version is unknown.
-   */
-  public int httpMinorVersion() {
-    return httpMinorVersion != -1 ? httpMinorVersion : 1;
-  }
-
-  public Protocol getProtocol() {
-    return httpMinorVersion == 0 ? Protocol.HTTP_1_0 : Protocol.HTTP_1_1;
+  /** Returns either {@link Protocol#HTTP_1_1} or {@link Protocol#HTTP_1_0}. */
+  public Protocol protocol() {
+    return protocol;
   }
 
   /** Returns the HTTP status code or -1 if it is unknown. */
