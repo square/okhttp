@@ -231,7 +231,7 @@ public final class AsyncApiTest {
   }
 
   @Test public void redirectWithRedirectsDisabled() throws Exception {
-    client.setFollowProtocolRedirects(false);
+    client.setFollowSslRedirects(false);
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")

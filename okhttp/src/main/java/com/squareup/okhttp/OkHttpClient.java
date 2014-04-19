@@ -32,7 +32,6 @@ import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -65,7 +64,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private HostnameVerifier hostnameVerifier;
   private OkAuthenticator authenticator;
   private ConnectionPool connectionPool;
-  private boolean followProtocolRedirects = true;
+  private boolean followSslRedirects = true;
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
@@ -282,13 +281,13 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * <p>If unset, protocol redirects will be followed. This is different than
    * the built-in {@code HttpURLConnection}'s default.
    */
-  public OkHttpClient setFollowProtocolRedirects(boolean followProtocolRedirects) {
-    this.followProtocolRedirects = followProtocolRedirects;
+  public OkHttpClient setFollowSslRedirects(boolean followProtocolRedirects) {
+    this.followSslRedirects = followProtocolRedirects;
     return this;
   }
 
-  public boolean getFollowProtocolRedirects() {
-    return followProtocolRedirects;
+  public boolean getFollowSslRedirects() {
+    return followSslRedirects;
   }
 
   public RouteDatabase getRoutesDatabase() {
@@ -307,24 +306,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   public Dispatcher getDispatcher() {
     return dispatcher;
-  }
-
-  /**
-   * @deprecated OkHttp 1.5 enforces an enumeration of {@link Protocol
-   *     protocols} that can be selected. Please switch to {@link
-   *     #setProtocols(java.util.List)}.
-   */
-  @Deprecated
-  public OkHttpClient setTransports(List<String> transports) {
-    List<Protocol> protocols = new ArrayList<Protocol>(transports.size());
-    for (int i = 0, size = transports.size(); i < size; i++) {
-      try {
-        protocols.add(Protocol.get(transports.get(i)));
-      } catch (IOException e) {
-        throw new IllegalArgumentException(e);
-      }
-    }
-    return setProtocols(protocols);
   }
 
   /**
@@ -365,20 +346,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     }
     this.protocols = Util.immutableList(protocols);
     return this;
-  }
-
-  /**
-   * @deprecated OkHttp 1.5 enforces an enumeration of {@link Protocol
-   *     protocols} that can be selected. Please switch to {@link
-   *     #getProtocols()}.
-   */
-  @Deprecated
-  public List<String> getTransports() {
-    List<String> transports = new ArrayList<String>(protocols.size());
-    for (int i = 0, size = protocols.size(); i < size; i++) {
-      transports.add(protocols.get(i).toString());
-    }
-    return transports;
   }
 
   public List<Protocol> getProtocols() {
