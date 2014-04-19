@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -25,11 +26,16 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
+import static com.squareup.okhttp.internal.spdy.Http20Draft10.FrameLogger.formatHeader;
+import static java.lang.String.format;
+import static java.util.logging.Level.FINE;
+
 /**
  * Read and write HTTP/2 v10 frames.
- * http://tools.ietf.org/html/draft-ietf-httpbis-http2-10
+ * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-10
  */
 public final class Http20Draft10 implements Variant {
+  private static final Logger logger = Logger.getLogger(Http20Draft10.class.getName());
 
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
@@ -50,14 +56,14 @@ public final class Http20Draft10 implements Variant {
   static final byte TYPE_CONTINUATION = 0x9;
 
   static final byte FLAG_NONE = 0x0;
-  static final byte FLAG_ACK = 0x1;
-  static final byte FLAG_END_STREAM = 0x1;
+  static final byte FLAG_ACK = 0x1; // Used for settings and ping.
+  static final byte FLAG_END_STREAM = 0x1; // Used for headers and data.
   static final byte FLAG_END_SEGMENT = 0x2;
   static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
   static final byte FLAG_END_PUSH_PROMISE = 0x4;
-  static final byte FLAG_PRIORITY = 0x8;
-  static final byte FLAG_PAD_LOW = 0x10;
-  static final byte FLAG_PAD_HIGH = 0x20;
+  static final byte FLAG_PRIORITY = 0x8; // Used for headers
+  static final byte FLAG_PAD_LOW = 0x10; // Used for headers, data, and continuation
+  static final byte FLAG_PAD_HIGH = 0x20; // Used for headers, data, and continuation
 
   @Override public FrameReader newReader(BufferedSource source, boolean client) {
     return new Reader(source, 4096, client);
@@ -89,6 +95,7 @@ public final class Http20Draft10 implements Variant {
     @Override public void readConnectionHeader() throws IOException {
       if (client) return; // Nothing to read; servers don't send connection headers!
       ByteString connectionHeader = source.readByteString(CONNECTION_HEADER.size());
+      if (logger.isLoggable(FINE)) logger.fine(format("<< CONNECTION %s", connectionHeader.hex()));
       if (!CONNECTION_HEADER.equals(connectionHeader)) {
         throw ioException("Expected a connection header but was %s", connectionHeader.utf8());
       }
@@ -110,6 +117,7 @@ public final class Http20Draft10 implements Variant {
       byte flags = (byte) (w1 & 0xff);
       // boolean r = (w2 & 0x80000000) != 0; // Reserved: Ignore first bit.
       int streamId = (w2 & 0x7fffffff); // 31-bit opaque identifier.
+      if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
 
       switch (type) {
         case TYPE_DATA:
@@ -346,13 +354,14 @@ public final class Http20Draft10 implements Variant {
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_ACK;
       int streamId = 0;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       sink.flush();
     }
 
     @Override public synchronized void connectionHeader() throws IOException {
       if (closed) throw new IOException("closed");
       if (!client) return; // Nothing to write; servers don't send connection headers!
+      if (logger.isLoggable(FINE)) logger.fine(format(">> CONNECTION %s", CONNECTION_HEADER.hex()));
       sink.write(CONNECTION_HEADER.toByteArray());
       sink.flush();
     }
@@ -386,7 +395,7 @@ public final class Http20Draft10 implements Variant {
       int length = (int) (4 + hpackBuffer.size());
       byte type = TYPE_PUSH_PROMISE;
       byte flags = FLAG_END_HEADERS;
-      frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
+      frameHeader(streamId, length, type, flags); // TODO: CONTINUATION
       sink.writeInt(promisedStreamId & 0x7fffffff);
       sink.write(hpackBuffer, hpackBuffer.size());
     }
@@ -403,7 +412,7 @@ public final class Http20Draft10 implements Variant {
       if (outFinished) flags |= FLAG_END_STREAM;
       if (priority != -1) flags |= FLAG_PRIORITY;
       if (priority != -1) length += 4;
-      frameHeader(length, type, flags, streamId); // TODO: CONTINUATION
+      frameHeader(streamId, length, type, flags); // TODO: CONTINUATION
       if (priority != -1) sink.writeInt(priority & 0x7fffffff);
       sink.write(hpackBuffer, hpackBuffer.size());
     }
@@ -416,7 +425,7 @@ public final class Http20Draft10 implements Variant {
       int length = 4;
       byte type = TYPE_RST_STREAM;
       byte flags = FLAG_NONE;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       sink.writeInt(errorCode.httpCode);
       sink.flush();
     }
@@ -436,7 +445,7 @@ public final class Http20Draft10 implements Variant {
 
     void dataFrame(int streamId, byte flags, Buffer buffer, int byteCount) throws IOException {
       byte type = TYPE_DATA;
-      frameHeader(byteCount, type, flags, streamId);
+      frameHeader(streamId, byteCount, type, flags);
       if (byteCount > 0) {
         sink.write(buffer, byteCount);
       }
@@ -448,7 +457,7 @@ public final class Http20Draft10 implements Variant {
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_NONE;
       int streamId = 0;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       for (int i = 0; i < Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
         int id = i;
@@ -467,7 +476,7 @@ public final class Http20Draft10 implements Variant {
       byte type = TYPE_PING;
       byte flags = ack ? FLAG_ACK : FLAG_NONE;
       int streamId = 0;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       sink.writeInt(payload1);
       sink.writeInt(payload2);
       sink.flush();
@@ -481,7 +490,7 @@ public final class Http20Draft10 implements Variant {
       byte type = TYPE_GOAWAY;
       byte flags = FLAG_NONE;
       int streamId = 0;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       sink.writeInt(lastGoodStreamId);
       sink.writeInt(errorCode.httpCode);
       if (debugData.length > 0) {
@@ -500,7 +509,7 @@ public final class Http20Draft10 implements Variant {
       int length = 4;
       byte type = TYPE_WINDOW_UPDATE;
       byte flags = FLAG_NONE;
-      frameHeader(length, type, flags, streamId);
+      frameHeader(streamId, length, type, flags);
       sink.writeInt((int) windowSizeIncrement);
       sink.flush();
     }
@@ -510,7 +519,8 @@ public final class Http20Draft10 implements Variant {
       sink.close();
     }
 
-    void frameHeader(int length, byte type, byte flags, int streamId) throws IOException {
+    void frameHeader(int streamId, int length, byte type, byte flags) throws IOException {
+      if (logger.isLoggable(FINE)) logger.fine(formatHeader(false, streamId, length, type, flags));
       if (length > 16383) throw illegalArgument("FRAME_SIZE_ERROR length > 16383: %s", length);
       if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
       sink.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
@@ -519,11 +529,11 @@ public final class Http20Draft10 implements Variant {
   }
 
   private static IllegalArgumentException illegalArgument(String message, Object... args) {
-    throw new IllegalArgumentException(String.format(message, args));
+    throw new IllegalArgumentException(format(message, args));
   }
 
   private static IOException ioException(String message, Object... args) throws IOException {
-    throw new IOException(String.format(message, args));
+    throw new IOException(format(message, args));
   }
 
   /**
@@ -574,6 +584,7 @@ public final class Http20Draft10 implements Variant {
       length = (short) ((w1 & 0x3fff0000) >> 16);
       byte type = (byte) ((w1 & 0xff00) >> 8);
       flags = (byte) (w1 & 0xff);
+      if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
       padding = readPadding(source, flags);
       length = left = lengthWithoutPadding(length, flags, padding);
       streamId = (w2 & 0x7fffffff);
@@ -607,5 +618,119 @@ public final class Http20Draft10 implements Variant {
       throw ioException("PROTOCOL_ERROR padding %s > remaining length %s", padding, length);
     }
     return (short) (length - padding);
+  }
+
+  /**
+   * Logs a human-readable representation of HTTP/2 frame headers.
+   *
+   * <p>The format is:
+   *
+   * <pre>
+   *   direction streamID length type flags
+   * </pre>
+   * Where direction is {@code <<} for inbound and {@code >>} for outbound.
+   *
+   * <p> For example, the following would indicate a HEAD request sent from
+   * the client.
+   * <pre>
+   * {@code
+   *   << 0x0000000f    12 HEADERS       END_HEADERS|END_STREAM
+   * }
+   * </pre>
+   */
+  static final class FrameLogger {
+
+    static String formatHeader(boolean inbound, int streamId, int length, byte type, byte flags) {
+      String formattedType = type < TYPES.length ? TYPES[type] : format("0x%02x", type);
+      String formattedFlags = formatFlags(type, flags);
+      return format("%s 0x%08x %5d %-13s %s", inbound ? "<<" : ">>", streamId, length,
+          formattedType, formattedFlags);
+    }
+
+    /**
+     * Looks up valid string representing flags from the table. Invalid
+     * combinations are represented in binary.
+     */
+    // Visible for testing.
+    static String formatFlags(byte type, byte flags) {
+      if (flags == 0) return "";
+      switch (type) { // Special case types that have 0 or 1 flag.
+        case TYPE_PUSH_PROMISE:
+          return flags == FLAG_END_PUSH_PROMISE ? "END_PUSH_PROMISE" : BINARY[flags];
+        case TYPE_SETTINGS:
+        case TYPE_PING:
+          return flags == FLAG_ACK ? "ACK" : BINARY[flags];
+        case TYPE_PRIORITY:
+        case TYPE_RST_STREAM:
+        case TYPE_GOAWAY:
+        case TYPE_WINDOW_UPDATE:
+          return BINARY[flags];
+      }
+      return flags < FLAGS.length ? FLAGS[flags] : BINARY[flags];
+    }
+
+    /** Lookup table for valid frame types. */
+    private static final String[] TYPES = new String[] {
+        "DATA",
+        "HEADERS",
+        "PRIORITY",
+        "RST_STREAM",
+        "SETTINGS",
+        "PUSH_PROMISE",
+        "PING",
+        "GOAWAY",
+        "WINDOW_UPDATE",
+        "CONTINUATION"
+    };
+
+    /**
+     * Lookup table for valid flags for DATA, HEADERS, CONTINUATION. Invalid
+     * combinations are represented in binary.
+     */
+    private static final String[] FLAGS = new String[0x40]; // Highest bit flag is 0x20.
+    private static final String[] BINARY = new String[256];
+
+    static {
+      for (int i = 0; i < BINARY.length; i++) {
+        BINARY[i] = format("%8s", Integer.toBinaryString(i)).replace(' ', '0');
+      }
+
+      FLAGS[FLAG_NONE] = "";
+      FLAGS[FLAG_END_STREAM] = "END_STREAM";
+      FLAGS[FLAG_END_SEGMENT] = "END_SEGMENT";
+      FLAGS[FLAG_END_STREAM | FLAG_END_SEGMENT] = "END_STREAM|END_SEGMENT";
+      int[] prefixFlags =
+          new int[] {FLAG_END_STREAM, FLAG_END_SEGMENT, FLAG_END_SEGMENT | FLAG_END_STREAM};
+
+      FLAGS[FLAG_PAD_LOW] = "PAD_LOW";
+      FLAGS[FLAG_PAD_LOW | FLAG_PAD_HIGH] = "PAD_LOW|PAD_HIGH";
+      int[] suffixFlags = new int[] {FLAG_PAD_LOW, FLAG_PAD_LOW | FLAG_PAD_HIGH};
+
+      for (int prefixFlag : prefixFlags) {
+        for (int suffixFlag : suffixFlags) {
+          FLAGS[prefixFlag | suffixFlag] = FLAGS[prefixFlag] + '|' + FLAGS[suffixFlag];
+        }
+      }
+
+      FLAGS[FLAG_END_HEADERS] = "END_HEADERS";
+      FLAGS[FLAG_PRIORITY] = "PRIORITY";
+      FLAGS[FLAG_END_HEADERS | FLAG_PRIORITY] = "END_HEADERS|PRIORITY";
+      int[] frameFlags =
+          new int[] {FLAG_END_HEADERS, FLAG_PRIORITY, FLAG_END_HEADERS | FLAG_PRIORITY};
+
+      for (int frameFlag : frameFlags) {
+        for (int prefixFlag : prefixFlags) {
+          FLAGS[prefixFlag | frameFlag] = FLAGS[prefixFlag] + '|' + FLAGS[frameFlag];
+          for (int suffixFlag : suffixFlags) {
+            FLAGS[prefixFlag | frameFlag | suffixFlag] =
+                FLAGS[prefixFlag] + '|' + FLAGS[frameFlag] + '|' + FLAGS[suffixFlag];
+          }
+        }
+      }
+
+      for (int i = 0; i < FLAGS.length; i++) { // Fill in holes with binary representation.
+        if (FLAGS[i] == null) FLAGS[i] = BINARY[i];
+      }
+    }
   }
 }
