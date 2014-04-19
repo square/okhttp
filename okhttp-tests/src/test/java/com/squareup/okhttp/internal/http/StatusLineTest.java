@@ -28,19 +28,19 @@ public final class StatusLineTest {
     String message = "Temporary Redirect";
     int version = 1;
     int code = 200;
-    StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code + " " + message);
-    assertEquals(message, statusLine.message());
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
-    assertEquals(code, statusLine.code());
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " " + message);
+    assertEquals(message, statusLine.message);
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
+    assertEquals(code, statusLine.code);
   }
 
   @Test public void emptyMessage() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code + " ");
-    assertEquals("", statusLine.message());
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
-    assertEquals(code, statusLine.code());
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code + " ");
+    assertEquals("", statusLine.message);
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
+    assertEquals(code, statusLine.code);
   }
 
   /**
@@ -51,18 +51,18 @@ public final class StatusLineTest {
   @Test public void emptyMessageAndNoLeadingSpace() throws IOException {
     int version = 1;
     int code = 503;
-    StatusLine statusLine = new StatusLine("HTTP/1." + version + " " + code);
-    assertEquals("", statusLine.message());
-    assertEquals(Protocol.HTTP_1_1, statusLine.protocol());
-    assertEquals(code, statusLine.code());
+    StatusLine statusLine = StatusLine.parse("HTTP/1." + version + " " + code);
+    assertEquals("", statusLine.message);
+    assertEquals(Protocol.HTTP_1_1, statusLine.protocol);
+    assertEquals(code, statusLine.code);
   }
 
   // https://github.com/square/okhttp/issues/386
   @Test public void shoutcast() throws IOException {
-    StatusLine statusLine = new StatusLine("ICY 200 OK");
-    assertEquals("OK", statusLine.message());
-    assertEquals(Protocol.HTTP_1_0, statusLine.protocol());
-    assertEquals(200, statusLine.code());
+    StatusLine statusLine = StatusLine.parse("ICY 200 OK");
+    assertEquals("OK", statusLine.message);
+    assertEquals(Protocol.HTTP_1_0, statusLine.protocol);
+    assertEquals(200, statusLine.code);
   }
 
   @Test public void missingProtocol() throws IOException {
@@ -110,7 +110,7 @@ public final class StatusLineTest {
 
   private void assertInvalid(String statusLine) throws IOException {
     try {
-      new StatusLine(statusLine);
+      StatusLine.parse(statusLine);
       fail();
     } catch (ProtocolException expected) {
     }

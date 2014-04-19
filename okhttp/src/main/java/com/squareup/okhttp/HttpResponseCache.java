@@ -23,6 +23,7 @@ import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.http.JavaApiConverter;
 import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -387,7 +388,9 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
     private final String url;
     private final Headers varyHeaders;
     private final String requestMethod;
-    private final String statusLine;
+    private final Protocol protocol;
+    private final int code;
+    private final String message;
     private final Headers responseHeaders;
     private final Handshake handshake;
 
@@ -452,7 +455,10 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         }
         varyHeaders = varyHeadersBuilder.build();
 
-        statusLine = source.readUtf8LineStrict();
+        StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
+        protocol = statusLine.protocol;
+        code = statusLine.code;
+        message = statusLine.message;
         Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = readInt(source);
         for (int i = 0; i < responseHeaderLineCount; i++) {
@@ -481,7 +487,9 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       this.url = response.request().urlString();
       this.varyHeaders = OkHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
-      this.statusLine = response.statusLine();
+      this.protocol = response.protocol();
+      this.code = response.code();
+      this.message = response.message();
       this.responseHeaders = response.headers();
       this.handshake = response.handshake();
     }
@@ -503,7 +511,7 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
         writer.write('\n');
       }
 
-      writer.write(statusLine);
+      writer.write(new StatusLine(protocol, code, message).toString());
       writer.write('\n');
       writer.write(Integer.toString(responseHeaders.size()));
       writer.write('\n');
@@ -572,7 +580,9 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       String contentLength = responseHeaders.get("Content-Length");
       return new Response.Builder()
           .request(request)
-          .statusLine(statusLine)
+          .protocol(protocol)
+          .code(code)
+          .message(message)
           .headers(responseHeaders)
           .body(new CacheResponseBody(snapshot, contentType, contentLength))
           .handshake(handshake)

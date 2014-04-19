@@ -158,7 +158,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final String getHeaderField(String fieldName) {
     try {
       Response response = getResponse().getResponse();
-      return fieldName == null ? response.statusLine() : response.headers().get(fieldName);
+      return fieldName == null
+          ? StatusLine.get(response).toString()
+          : response.headers().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -175,7 +177,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
       Response response = getResponse().getResponse();
-      return OkHeaders.toMultimap(response.headers(), response.statusLine());
+      return OkHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -488,7 +490,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().getResponse().statusMessage();
+    return getResponse().getResponse().message();
   }
 
   @Override public final int getResponseCode() throws IOException {

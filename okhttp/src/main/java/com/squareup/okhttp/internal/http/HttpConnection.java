@@ -183,18 +183,19 @@ public final class HttpConnection {
     }
 
     while (true) {
-      String statusLineString = source.readUtf8LineStrict();
-      StatusLine statusLine = new StatusLine(statusLineString);
+      StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
 
       Response.Builder responseBuilder = new Response.Builder()
-          .statusLine(statusLine);
+          .protocol(statusLine.protocol)
+          .code(statusLine.code)
+          .message(statusLine.message);
 
       Headers.Builder headersBuilder = new Headers.Builder();
       readHeaders(headersBuilder);
-      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol().toString());
+      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol.toString());
       responseBuilder.headers(headersBuilder.build());
 
-      if (statusLine.code() != HTTP_CONTINUE) {
+      if (statusLine.code != HTTP_CONTINUE) {
         state = STATE_OPEN_RESPONSE_BODY;
         return responseBuilder;
       }

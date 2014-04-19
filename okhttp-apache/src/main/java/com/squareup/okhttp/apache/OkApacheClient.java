@@ -68,7 +68,7 @@ public final class OkApacheClient implements HttpClient {
 
   private static HttpResponse transformResponse(Response response) {
     int code = response.code();
-    String message = response.statusMessage();
+    String message = response.message();
     BasicHttpResponse httpResponse = new BasicHttpResponse(HTTP_1_1, code, message);
 
     Response.Body body = response.body();

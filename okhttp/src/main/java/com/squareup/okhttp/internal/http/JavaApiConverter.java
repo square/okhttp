@@ -67,8 +67,10 @@ public final class JavaApiConverter {
     okResponseBuilder.request(okRequest);
 
     // Status line
-    String statusLine = extractStatusLine(httpUrlConnection);
-    okResponseBuilder.statusLine(statusLine);
+    StatusLine statusLine = StatusLine.parse(extractStatusLine(httpUrlConnection));
+    okResponseBuilder.protocol(statusLine.protocol);
+    okResponseBuilder.code(statusLine.code);
+    okResponseBuilder.message(statusLine.message);
 
     // Response headers
     Headers okHeaders = extractOkResponseHeaders(httpUrlConnection);
@@ -115,7 +117,10 @@ public final class JavaApiConverter {
     okResponseBuilder.request(request);
 
     // Status line: Java has this as one of the headers.
-    okResponseBuilder.statusLine(extractStatusLine(javaResponse));
+    StatusLine statusLine = StatusLine.parse(extractStatusLine(javaResponse));
+    okResponseBuilder.protocol(statusLine.protocol);
+    okResponseBuilder.code(statusLine.code);
+    okResponseBuilder.message(statusLine.message);
 
     // Response headers
     Headers okHeaders = extractOkHeaders(javaResponse);
@@ -218,7 +223,7 @@ public final class JavaApiConverter {
         @Override
         public Map<String, List<String>> getHeaders() throws IOException {
           // Java requires that the entry with a null key be the status line.
-          return OkHeaders.toMultimap(headers, response.statusLine());
+          return OkHeaders.toMultimap(headers, StatusLine.get(response).toString());
         }
 
         @Override
@@ -232,7 +237,7 @@ public final class JavaApiConverter {
         @Override
         public Map<String, List<String>> getHeaders() throws IOException {
           // Java requires that the entry with a null key be the status line.
-          return OkHeaders.toMultimap(headers, response.statusLine());
+          return OkHeaders.toMultimap(headers, StatusLine.get(response).toString());
         }
 
         @Override
@@ -474,19 +479,21 @@ public final class JavaApiConverter {
         throw new IllegalArgumentException("Invalid header index: " + position);
       }
       if (position == 0) {
-        return response.statusLine();
+        return StatusLine.get(response).toString();
       }
       return response.headers().value(position - 1);
     }
 
     @Override
     public String getHeaderField(String fieldName) {
-      return fieldName == null ? response.statusLine() : response.headers().get(fieldName);
+      return fieldName == null
+          ? StatusLine.get(response).toString()
+          : response.headers().get(fieldName);
     }
 
     @Override
     public Map<String, List<String>> getHeaderFields() {
-      return OkHeaders.toMultimap(response.headers(), response.statusLine());
+      return OkHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
     }
 
     @Override
@@ -496,7 +503,7 @@ public final class JavaApiConverter {
 
     @Override
     public String getResponseMessage() throws IOException {
-      return response.statusMessage();
+      return response.message();
     }
 
     @Override
