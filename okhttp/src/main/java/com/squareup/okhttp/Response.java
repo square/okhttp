@@ -15,10 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.List;
+import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -153,18 +152,20 @@ public final class Response {
         throw new IOException("Cannot buffer entire body for content length: " + contentLength);
       }
 
-      if (contentLength != -1) {
-        byte[] content = new byte[(int) contentLength];
-        InputStream in = byteStream();
-        Util.readFully(in, content);
-        if (in.read() != -1) throw new IOException("Content-Length and stream length disagree");
-        return content;
+      // TODO once https://github.com/square/okio/pull/41 is released.
+      // byte[] bytes = source.readByteArray();
+      // if (contentLength != -1 && contentLength != bytes.length) {
+      //   throw new IOException("Content-Length and stream length disagree");
+      // }
+      // return bytes;
 
-      } else {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Util.copy(byteStream(), out);
-        return out.toByteArray();
+      Buffer buffer = new Buffer();
+      long contentRead = buffer.writeAll(source());
+      if (contentLength != -1 && contentLength != contentRead) {
+        throw new IOException("Content-Length and stream length disagree");
       }
+
+      return buffer.readByteArray(buffer.size());
     }
 
     /**
