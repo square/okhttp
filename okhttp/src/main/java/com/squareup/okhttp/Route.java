@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.http.RouteSelector;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
@@ -28,8 +29,8 @@ import java.net.Proxy;
  *   <li><strong>IP address:</strong> whether connecting directly to an origin
  *       server or a proxy, opening a socket requires an IP address. The DNS
  *       server may return multiple IP addresses to attempt.
- *   <li><strong>Modern TLS:</strong> whether to include advanced TLS options
- *       when attempting a HTTPS connection.
+ *   <li><strong>TLS version:</strong> which TLS version to attempt with the
+ *       HTTPS connection.
  * </ul>
  * Each route is a specific selection of these options.
  */
@@ -37,20 +38,20 @@ public class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;
-  final boolean modernTls;
+  final String tlsVersion;
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      boolean modernTls) {
+      String tlsVersion) {
     if (address == null) throw new NullPointerException("address == null");
     if (proxy == null) throw new NullPointerException("proxy == null");
     if (inetSocketAddress == null) throw new NullPointerException("inetSocketAddress == null");
+    if (tlsVersion == null) throw new NullPointerException("tlsVersion == null");
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;
-    this.modernTls = modernTls;
+    this.tlsVersion = tlsVersion;
   }
 
-  /** Returns the {@link Address} of this route. */
   public Address getAddress() {
     return address;
   }
@@ -65,23 +66,25 @@ public class Route {
     return proxy;
   }
 
-  /** Returns the {@link InetSocketAddress} of this route. */
   public InetSocketAddress getSocketAddress() {
     return inetSocketAddress;
   }
 
-  /** Returns true if this route uses modern TLS. */
-  public boolean isModernTls() {
-    return modernTls;
+  public String getTlsVersion() {
+    return tlsVersion;
+  }
+
+  boolean supportsNpn() {
+    return !tlsVersion.equals(RouteSelector.SSL_V3);
   }
 
   @Override public boolean equals(Object obj) {
     if (obj instanceof Route) {
       Route other = (Route) obj;
-      return (address.equals(other.address)
+      return address.equals(other.address)
           && proxy.equals(other.proxy)
           && inetSocketAddress.equals(other.inetSocketAddress)
-          && modernTls == other.modernTls);
+          && tlsVersion.equals(other.tlsVersion);
     }
     return false;
   }
@@ -91,7 +94,7 @@ public class Route {
     result = 31 * result + address.hashCode();
     result = 31 * result + proxy.hashCode();
     result = 31 * result + inetSocketAddress.hashCode();
-    result = result + (modernTls ? (31 * result) : 0);
+    result = 31 * result + tlsVersion.hashCode();
     return result;
   }
 }
