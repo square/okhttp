@@ -27,7 +27,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.TunnelRequest;
 import com.squareup.okhttp.internal.Dns;
 import java.io.IOException;
 import java.io.InputStream;
@@ -252,7 +251,7 @@ public class HttpEngine {
 
     if (!connection.isConnected()) {
       connection.connect(client.getConnectTimeout(), client.getReadTimeout(),
-          client.getWriteTimeout(), getTunnelConfig());
+          client.getWriteTimeout(), tunnelRequest(connection, request));
       if (connection.isSpdy()) client.getConnectionPool().share(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     } else if (!connection.isSpdy()) {
@@ -703,15 +702,35 @@ public class HttpEngine {
     return cached.newBuilder().headers(result.build()).build();
   }
 
-  private TunnelRequest getTunnelConfig() {
-    if (!request.isHttps()) return null;
+  /**
+   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
+   * no tunnel is necessary. Everything in the tunnel request is sent
+   * unencrypted to the proxy server, so tunnels include only the minimum set of
+   * headers. This avoids sending potentially sensitive data like HTTP cookies
+   * to the proxy unencrypted.
+   */
+  private Request tunnelRequest(Connection connection, Request request) throws IOException {
+    if (!connection.getRoute().requiresTunnel()) return null;
 
     String userAgent = request.header("User-Agent");
     if (userAgent == null) userAgent = getDefaultUserAgent();
 
-    URL url = request.url();
-    return new TunnelRequest(url.getHost(), getEffectivePort(url), userAgent,
-        request.header("Proxy-Authorization"));
+    String host = request.url().getHost();
+    int port = getEffectivePort(request.url());
+    String authority = (port == getDefaultPort("https")) ? host : (host + ":" + port);
+    Request.Builder result = new Request.Builder()
+        .url(new URL("https", host, port, "/"))
+        .header("Host", authority)
+        .header("User-Agent", userAgent)
+        .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
+
+    // Copy over the Proxy-Authorization header if it exists.
+    String proxyAuthorization = request.header("Proxy-Authorization");
+    if (proxyAuthorization != null) {
+      result.header("Proxy-Authorization", proxyAuthorization);
+    }
+
+    return result.build();
   }
 
   public void receiveHeaders(Headers headers) throws IOException {
