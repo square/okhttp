@@ -171,14 +171,10 @@ public final class Connection implements Closeable {
     socket = route.address.sslSocketFactory
         .createSocket(socket, route.address.uriHost, route.address.uriPort, true /* autoClose */);
     SSLSocket sslSocket = (SSLSocket) socket;
-    if (route.modernTls) {
-      platform.enableTlsExtensions(sslSocket, route.address.uriHost);
-    } else {
-      platform.supportTlsIntolerantServer(sslSocket);
-    }
+    platform.configureTls(sslSocket, route.address.uriHost, route.tlsVersion);
 
     boolean useNpn = false;
-    if (route.modernTls && route.address.protocols.size() > 1) {
+    if (route.supportsNpn() && route.address.protocols.size() > 1) {
       platform.setNpnProtocols(sslSocket, route.address.protocols);
       useNpn = true;
     }

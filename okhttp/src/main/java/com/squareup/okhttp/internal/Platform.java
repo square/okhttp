@@ -94,19 +94,17 @@ public class Platform {
   }
 
   /**
-   * Attempt a TLS connection with useful extensions enabled. This mode
-   * supports more features, but is less likely to be compatible with older
-   * HTTPS servers.
+   * Configure the TLS connection to use {@code tlsVersion}. We also bundle
+   * certain extensions with certain versions. In particular, we enable Server
+   * Name Indication (SNI) and Next Protocol Negotiation (NPN) with TLSv1 on
+   * platforms that support them.
    */
-  public void enableTlsExtensions(SSLSocket socket, String uriHost) {
-  }
-
-  /**
-   * Attempt a secure connection with basic functionality to maximize
-   * compatibility. Currently this uses SSL 3.0.
-   */
-  public void supportTlsIntolerantServer(SSLSocket socket) {
-    socket.setEnabledProtocols(new String[] {"SSLv3"});
+  public void configureTls(SSLSocket socket, String uriHost, String tlsVersion) {
+    // We don't call setEnabledProtocols("TLSv1") on the assumption that that's
+    // the default. TODO: confirm this and support more TLS versions.
+    if (tlsVersion.equals("SSLv3")) {
+      socket.setEnabledProtocols(new String[] {"SSLv3"});
+    }
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
@@ -243,16 +241,18 @@ public class Platform {
       }
     }
 
-    @Override public void enableTlsExtensions(SSLSocket socket, String uriHost) {
-      super.enableTlsExtensions(socket, uriHost);
-      if (!openSslSocketClass.isInstance(socket)) return;
-      try {
-        setUseSessionTickets.invoke(socket, true);
-        setHostname.invoke(socket, uriHost);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
+    @Override public void configureTls(SSLSocket socket, String uriHost, String tlsVersion) {
+      super.configureTls(socket, uriHost, tlsVersion);
+
+      if (tlsVersion.equals("TLSv1") && openSslSocketClass.isInstance(socket)) {
+        try {
+          setUseSessionTickets.invoke(socket, true);
+          setHostname.invoke(socket, uriHost);
+        } catch (InvocationTargetException e) {
+          throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+          throw new AssertionError(e);
+        }
       }
     }
 
