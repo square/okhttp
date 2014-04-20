@@ -16,7 +16,6 @@
 package com.squareup.okhttp.benchmarks;
 
 import com.squareup.okhttp.internal.SslContextBuilder;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -24,6 +23,7 @@ import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
@@ -41,8 +41,8 @@ class UrlConnection extends SynchronousHttpClient {
           return true;
         }
       };
-      HttpsURLConnectionImpl.setDefaultHostnameVerifier(hostnameVerifier);
-      HttpsURLConnectionImpl.setDefaultSSLSocketFactory(socketFactory);
+      HttpsURLConnection.setDefaultHostnameVerifier(hostnameVerifier);
+      HttpsURLConnection.setDefaultSSLSocketFactory(socketFactory);
     }
   }
 

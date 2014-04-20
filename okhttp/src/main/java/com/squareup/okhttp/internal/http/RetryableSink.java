@@ -30,7 +30,7 @@ import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
  * the post body to be transparently re-sent if the HTTP request must be
  * sent multiple times.
  */
-final class RetryableSink implements Sink {
+public final class RetryableSink implements Sink {
   private boolean closed;
   private final int limit;
   private final Buffer content = new Buffer();

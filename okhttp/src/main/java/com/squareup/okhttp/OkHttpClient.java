@@ -17,9 +17,9 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpAuthenticator;
-import com.squareup.okhttp.internal.http.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.http.HttpsURLConnectionImpl;
-import com.squareup.okhttp.internal.http.ResponseCacheAdapter;
+import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
+import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
+import com.squareup.okhttp.internal.huc.ResponseCacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;

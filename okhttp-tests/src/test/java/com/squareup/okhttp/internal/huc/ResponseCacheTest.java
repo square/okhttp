@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -80,7 +81,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Tests for interaction between OkHttp and the ResponseCache. This test is based on
- * {@link com.squareup.okhttp.internal.http.HttpResponseCacheTest}. Some tests for the
+ * {@link HttpResponseCacheTest}. Some tests for the
  * {@link com.squareup.okhttp.OkResponseCache} found in HttpResponseCacheTest provide
  * coverage for ResponseCache as well.
  */
