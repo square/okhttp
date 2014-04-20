@@ -27,6 +27,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.URL;
 import javax.net.ssl.SSLSocket;
 
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -133,8 +134,8 @@ public final class Connection implements Closeable {
     socket.close();
   }
 
-  public void connect(int connectTimeout, int readTimeout, int writeTimeout,
-      TunnelRequest tunnelRequest) throws IOException {
+  public void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
+      throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
     if (route.proxy.type() != Proxy.Type.HTTP) {
@@ -158,12 +159,12 @@ public final class Connection implements Closeable {
    * Create an {@code SSLSocket} and perform the TLS handshake and certificate
    * validation.
    */
-  private void upgradeToTls(TunnelRequest tunnelRequest, int readTimeout, int writeTimeout)
+  private void upgradeToTls(Request tunnelRequest, int readTimeout, int writeTimeout)
       throws IOException {
     Platform platform = Platform.get();
 
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    if (requiresTunnel()) {
+    if (tunnelRequest != null) {
       makeTunnel(tunnelRequest, readTimeout, writeTimeout);
     }
 
@@ -303,15 +304,6 @@ public final class Connection implements Closeable {
     this.protocol = protocol;
   }
 
-  /**
-   * Returns true if the HTTP connection needs to tunnel one protocol over
-   * another, such as when using HTTPS through an HTTP proxy. When doing so,
-   * we must avoid buffering bytes intended for the higher-level protocol.
-   */
-  public boolean requiresTunnel() {
-    return route.address.sslSocketFactory != null && route.proxy.type() == Proxy.Type.HTTP;
-  }
-
   public void updateReadTimeout(int newTimeout) throws IOException {
     if (!connected) throw new IllegalStateException("updateReadTimeout - not connected");
     socket.setSoTimeout(newTimeout);
@@ -334,12 +326,12 @@ public final class Connection implements Closeable {
    * CONNECT request to create the proxy connection. This may need to be
    * retried if the proxy requires authorization.
    */
-  private void makeTunnel(TunnelRequest tunnelRequest, int readTimeout, int writeTimeout)
+  private void makeTunnel(Request request, int readTimeout, int writeTimeout)
       throws IOException {
     HttpConnection tunnelConnection = new HttpConnection(
         pool, this, socket, readTimeout, writeTimeout);
-    Request request = tunnelRequest.getRequest();
-    String requestLine = tunnelRequest.requestLine();
+    URL url = request.url();
+    String requestLine = "CONNECT " + url.getHost() + ":" + url.getPort() + " HTTP/1.1";
     while (true) {
       tunnelConnection.writeRequest(request.headers(), requestLine);
       tunnelConnection.flush();
