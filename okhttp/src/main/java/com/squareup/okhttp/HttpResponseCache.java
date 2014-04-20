@@ -169,9 +169,15 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       if (snapshot == null) {
         return null;
       }
-      entry = new Entry(snapshot.getInputStream(ENTRY_METADATA));
     } catch (IOException e) {
       // Give up because the cache cannot be read.
+      return null;
+    }
+
+    try {
+      entry = new Entry(snapshot.getInputStream(ENTRY_METADATA));
+    } catch (IOException e) {
+      Util.closeQuietly(snapshot);
       return null;
     }
 
