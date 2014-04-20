@@ -74,11 +74,11 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  * <h3>Cache Optimization</h3>
  * To measure cache effectiveness, this class tracks three statistics:
  * <ul>
- *     <li><strong>{@link #getRequestCount() Request Count:}</strong> the number
- *         of HTTP requests issued since this cache was created.
- *     <li><strong>{@link #getNetworkCount() Network Count:}</strong> the
+ *     <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the
+ *         number of HTTP requests issued since this cache was created.
+ *     <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the
  *         number of those requests that required network use.
- *     <li><strong>{@link #getHitCount() Hit Count:}</strong> the number of
+ *     <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of
  *         those requests whose responses were served by the cache.
  * </ul>
  * Sometimes a request will result in a conditional cache hit. If the cache

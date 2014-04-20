@@ -24,7 +24,7 @@ import java.net.Proxy;
  * When creating a connection the client has many options:
  * <ul>
  *   <li><strong>HTTP proxy:</strong> a proxy server may be explicitly
- *       configured for the client. Otherwise the {@link java.net.ProxySelector
+ *       configured for the client. Otherwise the {@linkplain java.net.ProxySelector
  *       proxy selector} is used. It may return multiple proxies to attempt.
  *   <li><strong>IP address:</strong> whether connecting directly to an origin
  *       server or a proxy, opening a socket requires an IP address. The DNS
