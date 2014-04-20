@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -33,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.DeflaterOutputStream;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
 
@@ -65,8 +63,6 @@ import okio.Buffer;
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
-
-  private Constructor<DeflaterOutputStream> deflaterConstructor;
 
   public static Platform get() {
     return PLATFORM;
