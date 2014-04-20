@@ -34,7 +34,7 @@ import java.net.Proxy;
  * </ul>
  * Each route is a specific selection of these options.
  */
-public class Route {
+public final class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;

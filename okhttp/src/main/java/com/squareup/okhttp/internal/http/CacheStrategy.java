@@ -6,11 +6,10 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
-import com.squareup.okhttp.internal.Util;
 import java.net.HttpURLConnection;
 import java.util.Date;
+import okio.Buffer;
 import okio.BufferedSource;
-import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -31,7 +30,7 @@ public final class CacheStrategy {
       return 0;
     }
     @Override public BufferedSource source() {
-      return Okio.buffer(Util.EMPTY_SOURCE);
+      return new Buffer();
     }
   };
 
