@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -34,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
@@ -122,32 +120,6 @@ public class Platform {
   public void connectSocket(Socket socket, InetSocketAddress address,
       int connectTimeout) throws IOException {
     socket.connect(address, connectTimeout);
-  }
-
-  /**
-   * Returns a deflater output stream that supports SYNC_FLUSH for SPDY name
-   * value blocks. This throws an {@link UnsupportedOperationException} on
-   * Java 6 and earlier where there is no built-in API to do SYNC_FLUSH.
-   */
-  public OutputStream newDeflaterOutputStream(OutputStream out, Deflater deflater,
-      boolean syncFlush) {
-    try {
-      Constructor<DeflaterOutputStream> constructor = deflaterConstructor;
-      if (constructor == null) {
-        constructor = deflaterConstructor = DeflaterOutputStream.class.getConstructor(
-            OutputStream.class, Deflater.class, boolean.class);
-      }
-      return constructor.newInstance(out, deflater, syncFlush);
-    } catch (NoSuchMethodException e) {
-      throw new UnsupportedOperationException("Cannot SPDY; no SYNC_FLUSH available");
-    } catch (InvocationTargetException e) {
-      throw e.getCause() instanceof RuntimeException ? (RuntimeException) e.getCause()
-          : new RuntimeException(e.getCause());
-    } catch (InstantiationException e) {
-      throw new RuntimeException(e);
-    } catch (IllegalAccessException e) {
-      throw new AssertionError();
-    }
   }
 
   /** Attempt to match the host runtime to a capable Platform implementation. */

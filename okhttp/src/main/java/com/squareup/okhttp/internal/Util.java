@@ -180,14 +180,6 @@ public final class Util {
     }
   }
 
-  /** Returns the remainder of 'source' as a buffer, closing it when done. */
-  public static Buffer readFully(Source source) throws IOException {
-    Buffer result = new Buffer();
-    result.writeAll(source);
-    source.close();
-    return result;
-  }
-
   /** Reads until {@code in} is exhausted or the timeout has elapsed. */
   public static boolean skipAll(Source in, int timeoutMillis) throws IOException {
     // TODO: Implement deadlines everywhere so they can do this work.
