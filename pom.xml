@@ -34,7 +34,8 @@
     <!-- Compilation -->
     <java.version>1.6</java.version>
     <okio.version>0.7.0</okio.version>
-    <npn.version>8.1.2.v20120308</npn.version>
+    <!-- Targetted to jdk7u60-b13; Oracle jdk7u55-b13. -->
+    <npn.version>1.1.7.v20140316</npn.version>
     <bouncycastle.version>1.48</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
