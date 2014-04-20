@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  * Policy on when async requests are executed.
  *
  * <p>Each dispatcher uses an {@link ExecutorService} to run jobs internally. If you
- * supply your own executor, it should be able to run {@link #getMaxRequests the
+ * supply your own executor, it should be able to run {@linkplain #getMaxRequests the
  * configured maximum} number of jobs concurrently.
  */
 public final class Dispatcher {

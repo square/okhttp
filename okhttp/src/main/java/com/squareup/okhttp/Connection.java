@@ -39,7 +39,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  *
  * <p>Typically instances of this class are created, connected and exercised
  * automatically by the HTTP client. Applications may use this class to monitor
- * HTTP connections as members of a {@link ConnectionPool connection pool}.
+ * HTTP connections as members of a {@linkplain ConnectionPool connection pool}.
  *
  * <p>Do not confuse this class with the misnamed {@code HttpURLConnection},
  * which isn't so much a connection as a single request/response exchange.

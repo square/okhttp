@@ -24,7 +24,7 @@ import java.io.IOException;
  *
  * <h3>Protocol vs Scheme</h3>
  * Despite its name, {@link java.net.URL#getProtocol()} returns the
- * {@link java.net.URI#getScheme() scheme} (http, https, etc.) of the URL, not
+ * {@linkplain java.net.URI#getScheme() scheme} (http, https, etc.) of the URL, not
  * the protocol (http/1.1, spdy/3.1, etc.). OkHttp uses the word <i>protocol</i>
  * to identify how HTTP messages are framed.
  */

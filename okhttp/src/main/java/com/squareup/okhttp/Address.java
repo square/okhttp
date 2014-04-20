@@ -28,7 +28,7 @@ import static com.squareup.okhttp.internal.Util.equal;
 /**
  * A specification for a connection to an origin server. For simple connections,
  * this is the server's hostname and port. If an explicit proxy is requested (or
- * {@link Proxy#NO_PROXY no proxy} is explicitly requested), this also includes
+ * {@linkplain Proxy#NO_PROXY no proxy} is explicitly requested), this also includes
  * that proxy information. For secure connections the address also includes the
  * SSL socket factory and hostname verifier.
  *
