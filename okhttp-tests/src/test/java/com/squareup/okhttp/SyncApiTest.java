@@ -25,7 +25,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
+import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,6 +92,35 @@ public final class SyncApiTest {
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
     assertEquals(2, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void timeoutsUpdatedOnReusedConnections() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
+    server.play();
+
+    // First request: time out after 1000ms.
+    client.setReadTimeout(1000, TimeUnit.MILLISECONDS);
+    onSuccess(new Request.Builder().url(server.getUrl("/a")).build()).assertBody("abc");
+
+    // Second request: time out after 250ms.
+    client.setReadTimeout(250, TimeUnit.MILLISECONDS);
+    Request request = new Request.Builder().url(server.getUrl("/b")).build();
+    Response response = client.execute(request);
+    BufferedSource bodySource = response.body().source();
+    assertEquals('d', bodySource.readByte());
+
+    // The second byte of this request will be delayed by 750ms so we should time out after 250ms.
+    long startNanos = System.nanoTime();
+    try {
+      bodySource.readByte();
+      fail();
+    } catch (IOException expected) {
+      // Timed out as expected.
+      long elapsedNanos = System.nanoTime() - startNanos;
+      long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
+      assertTrue(String.format("Timed out: %sms", elapsedMillis), elapsedMillis < 500);
+    }
   }
 
   @Test public void tls() throws Exception {
