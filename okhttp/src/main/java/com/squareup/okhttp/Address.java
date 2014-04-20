@@ -97,7 +97,6 @@ public final class Address {
     return hostnameVerifier;
   }
 
-
   /**
    * Returns the client's authenticator. This method never returns null.
    */
@@ -141,7 +140,7 @@ public final class Address {
     result = 31 * result + uriPort;
     result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
-    result = 31 * result + (authenticator != null ? authenticator.hashCode() : 0);
+    result = 31 * result + authenticator.hashCode();
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     result = 31 * result + protocols.hashCode();
     return result;
