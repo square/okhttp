@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  * parameters do so before making HTTP connections, and that this class is
  * initialized lazily.
  */
-public class ConnectionPool {
+public final class ConnectionPool {
   private static final int MAX_CONNECTIONS_TO_CLEANUP = 2;
   private static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
 
