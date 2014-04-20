@@ -56,7 +56,9 @@
     <module name="IllegalImport"/>
     <!-- defaults to sun.* packages -->
     <module name="RedundantImport"/>
-    <module name="UnusedImports"/>
+    <module name="UnusedImports">
+      <property name="processJavadoc" value="true"/>
+    </module>
 
 
     <!-- Checks for Size Violations.                    -->

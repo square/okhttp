@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
@@ -22,6 +22,8 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

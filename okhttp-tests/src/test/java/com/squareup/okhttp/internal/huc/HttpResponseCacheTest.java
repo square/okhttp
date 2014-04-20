@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.HttpResponseCache;
@@ -25,6 +25,7 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;

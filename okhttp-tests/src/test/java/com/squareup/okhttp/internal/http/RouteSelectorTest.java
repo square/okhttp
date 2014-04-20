@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
@@ -74,7 +75,7 @@ public final class RouteSelectorTest {
       uri = new URI("http://" + uriHost + ":" + uriPort + "/path");
       socketFactory = SocketFactory.getDefault();
       pool = ConnectionPool.getDefault();
-      hostnameVerifier = HttpsURLConnectionImpl.getDefaultHostnameVerifier();
+      hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
     } catch (Exception e) {
       throw new AssertionError(e);
     }

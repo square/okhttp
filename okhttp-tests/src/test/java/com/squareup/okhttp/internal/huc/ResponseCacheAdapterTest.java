@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -36,17 +31,17 @@ import java.net.URLConnection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 

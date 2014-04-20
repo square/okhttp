@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Handshake;
@@ -27,6 +27,13 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.http.HttpDate;
+import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpMethod;
+import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.RetryableSink;
+import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,6 +76,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * How many redirects should we follow? Chrome follows 21; Firefox, curl,
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
+  // TODO find a better location for this constant
   public static final int MAX_REDIRECTS = 20;
 
   final OkHttpClient client;
