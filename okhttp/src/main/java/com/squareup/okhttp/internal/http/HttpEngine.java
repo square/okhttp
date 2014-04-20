@@ -254,10 +254,8 @@ public class HttpEngine {
           client.getWriteTimeout(), tunnelRequest(connection, request));
       if (connection.isSpdy()) client.getConnectionPool().share(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
-    } else if (!connection.isSpdy()) {
-      connection.updateReadTimeout(client.getReadTimeout());
     }
-
+    connection.setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
     route = connection.getRoute();
   }
 

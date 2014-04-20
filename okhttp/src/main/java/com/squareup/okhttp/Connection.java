@@ -150,7 +150,7 @@ public final class Connection implements Closeable {
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
     } else {
-      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
+      httpConnection = new HttpConnection(pool, this, socket);
     }
     connected = true;
   }
@@ -201,7 +201,7 @@ public final class Connection implements Closeable {
           .protocol(protocol).build();
       spdyConnection.sendConnectionHeader();
     } else {
-      httpConnection = new HttpConnection(pool, this, socket, readTimeout, writeTimeout);
+      httpConnection = new HttpConnection(pool, this, socket);
     }
   }
 
@@ -304,9 +304,14 @@ public final class Connection implements Closeable {
     this.protocol = protocol;
   }
 
-  public void updateReadTimeout(int newTimeout) throws IOException {
-    if (!connected) throw new IllegalStateException("updateReadTimeout - not connected");
-    socket.setSoTimeout(newTimeout);
+  public void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) throws IOException {
+    if (!connected) throw new IllegalStateException("setTimeouts - not connected");
+
+    // Don't set timeouts on shared SPDY connections.
+    if (httpConnection != null) {
+      socket.setSoTimeout(readTimeoutMillis);
+      httpConnection.setTimeouts(readTimeoutMillis, writeTimeoutMillis);
+    }
   }
 
   public void incrementRecycleCount() {
@@ -328,8 +333,8 @@ public final class Connection implements Closeable {
    */
   private void makeTunnel(Request request, int readTimeout, int writeTimeout)
       throws IOException {
-    HttpConnection tunnelConnection = new HttpConnection(
-        pool, this, socket, readTimeout, writeTimeout);
+    HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
+    tunnelConnection.setTimeouts(readTimeout, writeTimeout);
     URL url = request.url();
     String requestLine = "CONNECT " + url.getHost() + ":" + url.getPort() + " HTTP/1.1";
     while (true) {

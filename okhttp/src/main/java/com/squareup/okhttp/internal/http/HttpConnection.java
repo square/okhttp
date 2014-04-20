@@ -80,19 +80,21 @@ public final class HttpConnection {
   private int state = STATE_IDLE;
   private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket,
-      int readTimeout, int writeTimeout)
+  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket)
       throws IOException {
     this.pool = pool;
     this.connection = connection;
     this.socket = socket;
     this.source = Okio.buffer(Okio.source(socket));
-    if (readTimeout != 0) {
-      source.timeout().timeout(readTimeout, TimeUnit.MILLISECONDS);
-    }
     this.sink = Okio.buffer(Okio.sink(socket));
-    if (writeTimeout != 0) {
-      sink.timeout().timeout(writeTimeout, TimeUnit.MILLISECONDS);
+  }
+
+  public void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) {
+    if (readTimeoutMillis != 0) {
+      source.timeout().timeout(readTimeoutMillis, TimeUnit.MILLISECONDS);
+    }
+    if (writeTimeoutMillis != 0) {
+      sink.timeout().timeout(writeTimeoutMillis, TimeUnit.MILLISECONDS);
     }
   }
 
