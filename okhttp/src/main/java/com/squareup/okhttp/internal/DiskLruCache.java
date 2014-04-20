@@ -663,8 +663,13 @@ public final class DiskLruCache implements Closeable {
   }
 
   private static String inputStreamToString(InputStream in) throws IOException {
-    Buffer buffer = Util.readFully(Okio.source(in));
-    return buffer.readUtf8(buffer.size());
+    try {
+      Buffer buffer = new Buffer();
+      buffer.writeAll(Okio.source(in));
+      return buffer.readUtf8();
+    } finally {
+      Util.closeQuietly(in);
+    }
   }
 
   /** A snapshot of the values for an entry. */
