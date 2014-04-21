@@ -2468,6 +2468,18 @@ public final class URLConnectionTest {
     assertEquals("GET /?query HTTP/1.1", request.getRequestLine());
   }
 
+  @Test public void doOutputForMethodThatDoesntSupportOutput() throws Exception {
+    server.play();
+    connection = client.open(server.getUrl("/"));
+    connection.setRequestMethod("HEAD");
+    connection.setDoOutput(true);
+    try {
+      connection.connect();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   // http://code.google.com/p/android/issues/detail?id=20442
   @Test public void inputStreamAvailableWithChunkedEncoding() throws Exception {
     testInputStreamAvailable(TransferKind.CHUNKED);
