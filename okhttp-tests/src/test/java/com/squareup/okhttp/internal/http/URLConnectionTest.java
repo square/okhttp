@@ -17,8 +17,8 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.HttpResponseCache;
-import com.squareup.okhttp.OkAuthenticator.Credential;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
@@ -2668,14 +2668,14 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
 
-    Credential credential = Credential.basic("jesse", "peanutbutter");
+    String credential = Credentials.basic("jesse", "peanutbutter");
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
     client.setAuthenticator(authenticator);
     assertContent("A", client.open(server.getUrl("/private")));
 
     assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
     assertContains(server.takeRequest().getHeaders(),
-        "Authorization: " + credential.getHeaderValue());
+        "Authorization: " + credential);
 
     assertEquals(1, authenticator.calls.size());
     String call = authenticator.calls.get(0);
@@ -2692,14 +2692,12 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
 
-    Credential credential = Credential.oauth("oauthed", "abc123");
-    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator("oauthed abc123");
     client.setAuthenticator(authenticator);
     assertContent("A", client.open(server.getUrl("/private")));
 
     assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
-    assertContains(server.takeRequest().getHeaders(),
-            "Authorization: " + credential.getHeaderValue());
+    assertContains(server.takeRequest().getHeaders(), "Authorization: oauthed abc123");
 
     assertEquals(1, authenticator.calls.size());
     String call = authenticator.calls.get(0);

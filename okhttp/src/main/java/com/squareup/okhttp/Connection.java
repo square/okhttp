@@ -17,10 +17,10 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.Closeable;
@@ -353,7 +353,7 @@ public final class Connection implements Closeable {
           return;
 
         case HTTP_PROXY_AUTH:
-          request = HttpAuthenticator.processAuthHeader(
+          request = OkHeaders.processAuthHeader(
               route.address.authenticator, response, route.proxy);
           if (request != null) continue;
           throw new IOException("Failed to authenticate with proxy");

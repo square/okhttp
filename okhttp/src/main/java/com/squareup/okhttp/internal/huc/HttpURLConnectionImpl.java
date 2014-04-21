@@ -27,7 +27,6 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
@@ -431,7 +430,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        Request successorRequest = HttpAuthenticator.processAuthHeader(client.getAuthenticator(),
+        Request successorRequest = OkHeaders.processAuthHeader(client.getAuthenticator(),
             httpEngine.getResponse(), selectedProxy);
         if (successorRequest == null) return Retry.NONE;
         requestHeaders = successorRequest.getHeaders().newBuilder();

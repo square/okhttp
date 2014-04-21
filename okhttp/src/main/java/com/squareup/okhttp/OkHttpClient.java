@@ -16,7 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.ResponseCacheAdapter;
@@ -441,7 +441,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
     }
     if (result.authenticator == null) {
-      result.authenticator = HttpAuthenticator.SYSTEM_DEFAULT;
+      result.authenticator = AuthenticatorAdapter.INSTANCE;
     }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();
