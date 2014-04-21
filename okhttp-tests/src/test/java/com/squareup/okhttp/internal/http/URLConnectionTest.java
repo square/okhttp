@@ -3086,7 +3086,7 @@ public final class URLConnectionTest {
 
   /**
    * Tests that use this will fail unless boot classpath is set. Ex. {@code
-   * -Xbootclasspath/p:/tmp/npn-boot-8.1.2.v20120308.jar}
+   * -Xbootclasspath/p:/tmp/npn-boot-1.1.7.v20140316.jar}
    */
   private void enableNpn(Protocol protocol) {
     client.setSslSocketFactory(sslContext.getSocketFactory());

@@ -49,7 +49,7 @@ public final class Ping {
   /**
    * Returns the round trip time for this ping in nanoseconds, waiting for the
    * response to arrive if necessary. Returns -1 if the response was
-   * cancelled.
+   * canceled.
    */
   public long roundTripTime() throws InterruptedException {
     latch.await();
@@ -58,7 +58,7 @@ public final class Ping {
 
   /**
    * Returns the round trip time for this ping in nanoseconds, or -1 if the
-   * response was cancelled, or -2 if the timeout elapsed before the round
+   * response was canceled, or -2 if the timeout elapsed before the round
    * trip completed.
    */
   public long roundTripTime(long timeout, TimeUnit unit) throws InterruptedException {

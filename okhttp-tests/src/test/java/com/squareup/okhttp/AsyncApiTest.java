@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -261,58 +262,118 @@ public final class AsyncApiTest {
     receiver.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
   }
 
-  @Test public void canceledBeforeResponseReadIsNeverDelivered() throws Exception {
+  /**
+   * This test puts a request in front of one that is to be canceled, so that it is canceled
+   * before I/O takes place.
+   */
+  @Test public void canceledBeforeIOSignalsOnFailure() throws Exception {
     client.getDispatcher().setMaxRequests(1); // Force requests to be executed serially.
     server.setDispatcher(new Dispatcher() {
       char nextResponse = 'A';
       @Override public MockResponse dispatch(RecordedRequest request) {
-        client.cancel("request A");
+        client.cancel("request B");
         return new MockResponse().setBody(Character.toString(nextResponse++));
       }
     });
     server.play();
 
-    // Canceling a request after the server has received a request but before
-    // it has delivered the response. That request will never be received to the
-    // client.
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     client.enqueue(requestA, receiver);
     assertEquals("/a", server.takeRequest().getPath());
 
-    // We then make a second request (not canceled) to make sure the receiver
-    // has nothing left to wait for.
     Request requestB = new Request.Builder().url(server.getUrl("/b")).tag("request B").build();
     client.enqueue(requestB, receiver);
     assertEquals("/b", server.takeRequest().getPath());
-    receiver.await(requestB.url()).assertBody("B");
 
-    // At this point we know the receiver is ready: if it hasn't received 'A'
-    // yet it never will.
-    receiver.assertNoResponse(requestA.url());
+    receiver.await(requestA.url()).assertBody("A");
+    // At this point we know the receiver is ready, and that it will receive a cancel failure.
+    receiver.await(requestB.url()).assertFailure("Canceled");
   }
 
-  @Test public void canceledAfterResponseIsDeliveredDoesNothing() throws Exception {
+  @Test public void canceledBeforeIOSignalsOnFailure_HTTP_2() throws Exception {
+    enableNpn(Protocol.HTTP_2);
+    canceledBeforeIOSignalsOnFailure();
+  }
+
+  @Test public void canceledBeforeIOSignalsOnFailure_SPDY_3() throws Exception {
+    enableNpn(Protocol.SPDY_3);
+    canceledBeforeIOSignalsOnFailure();
+  }
+
+
+  @Test public void canceledBeforeResponseReadSignalsOnFailure() throws Exception {
+    server.setDispatcher(new Dispatcher() {
+      @Override public MockResponse dispatch(RecordedRequest request) {
+        client.cancel("request A");
+        return new MockResponse().setBody("A");
+      }
+    });
+    server.play();
+
+    Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
+    client.enqueue(requestA, receiver);
+    assertEquals("/a", server.takeRequest().getPath());
+
+    receiver.await(requestA.url()).assertFailure("Canceled");
+  }
+
+  @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
+    enableNpn(Protocol.HTTP_2);
+    canceledBeforeResponseReadSignalsOnFailure();
+  }
+
+  @Test public void canceledBeforeResponseReadSignalsOnFailure_SPDY_3() throws Exception {
+    enableNpn(Protocol.SPDY_3);
+    canceledBeforeResponseReadSignalsOnFailure();
+  }
+
+  /**
+   * There's a race condition where the cancel may apply after the stream has already been
+   * processed.
+   */
+  @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
 
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<String> bodyRef = new AtomicReference<String>();
+    final AtomicReference<Failure> failureRef = new AtomicReference<Failure>();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     client.enqueue(request, new Response.Receiver() {
       @Override public void onFailure(Failure failure) {
-        throw new AssertionError();
+        latch.countDown();
+        failureRef.set(failure); // This should never occur as we don't signal twice.
       }
 
       @Override public void onResponse(Response response) throws IOException {
         client.cancel("request A");
-        bodyRef.set(response.body().string());
-        latch.countDown();
+        try {
+          bodyRef.set(response.body().string());
+        } catch (IOException e) { // It is ok if this broke the stream.
+          bodyRef.set("A");
+          throw e; // We expect to not loop into onFailure in this case.
+        } finally {
+          latch.countDown();
+        }
       }
     });
 
     latch.await();
     assertEquals("A", bodyRef.get());
+    assertNull(failureRef.get());
+  }
+
+  @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTP_2()
+      throws Exception {
+    enableNpn(Protocol.HTTP_2);
+    canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
+  }
+
+  @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_SPDY_3()
+      throws Exception {
+    enableNpn(Protocol.SPDY_3);
+    canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
   }
 
   @Test public void connectionReuseWhenResponseBodyConsumed() throws Exception {
@@ -371,5 +432,19 @@ public final class AsyncApiTest {
     assertEquals("5", request2.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", request2.getHeader("Content-Type"));
     assertEquals(1, request2.getSequenceNumber());
+  }
+
+
+  /**
+   * Tests that use this will fail unless boot classpath is set. Ex. {@code
+   * -Xbootclasspath/p:/tmp/npn-boot-1.1.7.v20140316.jar}
+   */
+  private void enableNpn(Protocol protocol) {
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.setNpnEnabled(true);
+    server.setNpnProtocols(client.getProtocols());
   }
 }

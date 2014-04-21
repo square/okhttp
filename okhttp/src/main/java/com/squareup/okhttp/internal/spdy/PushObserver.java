@@ -60,7 +60,7 @@ public interface PushObserver {
   boolean onData(int streamId, BufferedSource source, int byteCount, boolean last)
       throws IOException;
 
-  /** Indicates the reason why this stream was cancelled. */
+  /** Indicates the reason why this stream was canceled. */
   void onReset(int streamId, ErrorCode errorCode);
 
   PushObserver CANCEL = new PushObserver() {
