@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.http.HttpAuthenticator;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
@@ -184,8 +183,7 @@ final class Job extends NamedRunnable {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        return HttpAuthenticator.processAuthHeader(
-            client.getAuthenticator(), response, selectedProxy);
+        return OkHeaders.processAuthHeader(client.getAuthenticator(), response, selectedProxy);
 
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:

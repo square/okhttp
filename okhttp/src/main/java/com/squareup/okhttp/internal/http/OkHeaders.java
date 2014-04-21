@@ -1,9 +1,13 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Platform;
+import java.io.IOException;
+import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,6 +18,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import static com.squareup.okhttp.internal.Util.equal;
+import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class OkHeaders {
@@ -199,5 +204,63 @@ public final class OkHeaders {
         && !"Trailers".equalsIgnoreCase(fieldName)
         && !"Transfer-Encoding".equalsIgnoreCase(fieldName)
         && !"Upgrade".equalsIgnoreCase(fieldName);
+  }
+
+  /**
+   * Parse RFC 2617 challenges. This API is only interested in the scheme
+   * name and realm.
+   */
+  public static List<Challenge> parseChallenges(Headers responseHeaders, String challengeHeader) {
+    // auth-scheme = token
+    // auth-param  = token "=" ( token | quoted-string )
+    // challenge   = auth-scheme 1*SP 1#auth-param
+    // realm       = "realm" "=" realm-value
+    // realm-value = quoted-string
+    List<Challenge> result = new ArrayList<Challenge>();
+    for (int h = 0; h < responseHeaders.size(); h++) {
+      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
+        continue;
+      }
+      String value = responseHeaders.value(h);
+      int pos = 0;
+      while (pos < value.length()) {
+        int tokenStart = pos;
+        pos = HeaderParser.skipUntil(value, pos, " ");
+
+        String scheme = value.substring(tokenStart, pos).trim();
+        pos = HeaderParser.skipWhitespace(value, pos);
+
+        // TODO: This currently only handles schemes with a 'realm' parameter;
+        //       It needs to be fixed to handle any scheme and any parameters
+        //       http://code.google.com/p/android/issues/detail?id=11140
+
+        if (!value.regionMatches(true, pos, "realm=\"", 0, "realm=\"".length())) {
+          break; // Unexpected challenge parameter; give up!
+        }
+
+        pos += "realm=\"".length();
+        int realmStart = pos;
+        pos = HeaderParser.skipUntil(value, pos, "\"");
+        String realm = value.substring(realmStart, pos);
+        pos++; // Consume '"' close quote.
+        pos = HeaderParser.skipUntil(value, pos, ",");
+        pos++; // Consume ',' comma.
+        pos = HeaderParser.skipWhitespace(value, pos);
+        result.add(new Challenge(scheme, realm));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * React to a failed authorization response by looking up new credentials.
+   * Returns a request for a subsequent attempt, or null if no further attempts
+   * should be made.
+   */
+  public static Request processAuthHeader(OkAuthenticator authenticator, Response response,
+      Proxy proxy) throws IOException {
+    return response.code() == HTTP_PROXY_AUTH
+        ? authenticator.authenticateProxy(proxy, response)
+        : authenticator.authenticate(proxy, response);
   }
 }

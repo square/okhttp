@@ -16,112 +16,45 @@
 package com.squareup.okhttp;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
-import java.net.URL;
-import java.util.List;
-import okio.ByteString;
 
 /**
- * Responds to authentication challenges from the remote web or proxy server by
- * returning credentials.
+ * Responds to authentication challenges from the remote web or proxy server.
  */
 public interface OkAuthenticator {
   /**
-   * Returns a credential that satisfies the authentication challenge made by
-   * {@code url}. Returns null if the challenge cannot be satisfied. This method
-   * is called in response to an HTTP 401 unauthorized status code sent by the
-   * origin server.
+   * Returns a request that includes a credential to satisfy an authentication
+   * challenge in {@code response}. Returns null if the challenge cannot be
+   * satisfied. This method is called in response to an HTTP 401 unauthorized
+   * status code sent by the origin server.
    *
-   * @param challenges parsed "WWW-Authenticate" challenge headers from the HTTP
-   *     response.
+   * <p>Typical implementations will look up a credential and create a request
+   * derived from the initial request by setting the "Authorization" header.
+   * <pre>   {@code
+   *
+   *    String credential = Credentials.basic(...)
+   *    return response.request().newBuilder()
+   *        .header("Authorization", credential)
+   *        .build();
+   * }</pre>
    */
-  Credential authenticate(Proxy proxy, URL url, List<Challenge> challenges) throws IOException;
+  Request authenticate(Proxy proxy, Response response) throws IOException;
 
   /**
-   * Returns a credential that satisfies the authentication challenge made by
-   * {@code proxy}. Returns null if the challenge cannot be satisfied. This
-   * method is called in response to an HTTP 401 unauthorized status code sent
-   * by the proxy server.
+   * Returns a request that includes a credential to satisfy an authentication
+   * challenge made by {@code response}. Returns null if the challenge cannot be
+   * satisfied. This method is called in response to an HTTP 407 unauthorized
+   * status code sent by the proxy server.
    *
-   * @param challenges parsed "Proxy-Authenticate" challenge headers from the
-   *     HTTP response.
+   * <p>Typical implementations will look up a credential and create a request
+   * derived from the initial request by setting the "Proxy-Authorization"
+   * header. <pre>   {@code
+   *
+   *    String credential = Credentials.basic(...)
+   *    return response.request().newBuilder()
+   *        .header("Proxy-Authorization", credential)
+   *        .build();
+   * }</pre>
    */
-  Credential authenticateProxy(Proxy proxy, URL url, List<Challenge> challenges) throws IOException;
-
-  /** An RFC 2617 challenge. */
-  public final class Challenge {
-    private final String scheme;
-    private final String realm;
-
-    public Challenge(String scheme, String realm) {
-      this.scheme = scheme;
-      this.realm = realm;
-    }
-
-    /** Returns the authentication scheme, like {@code Basic}. */
-    public String getScheme() {
-      return scheme;
-    }
-
-    /** Returns the protection space. */
-    public String getRealm() {
-      return realm;
-    }
-
-    @Override public boolean equals(Object o) {
-      return o instanceof Challenge
-          && ((Challenge) o).scheme.equals(scheme)
-          && ((Challenge) o).realm.equals(realm);
-    }
-
-    @Override public int hashCode() {
-      return scheme.hashCode() + 31 * realm.hashCode();
-    }
-
-    @Override public String toString() {
-      return scheme + " realm=\"" + realm + "\"";
-    }
-  }
-
-  /** An RFC 2617 credential. */
-  public final class Credential {
-    private final String headerValue;
-
-    public Credential(String headerValue) {
-      this.headerValue = headerValue;
-    }
-
-    /** Returns an auth credential for the Basic scheme. */
-    public static Credential basic(String userName, String password) {
-      try {
-        String usernameAndPassword = userName + ":" + password;
-        byte[] bytes = usernameAndPassword.getBytes("ISO-8859-1");
-        String encoded = ByteString.of(bytes).base64();
-        return new Credential("Basic " + encoded);
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError();
-      }
-    }
-
-    public static Credential oauth(String bearer, String token) {
-      return new Credential(bearer + " " + token);
-    }
-
-    public String getHeaderValue() {
-      return headerValue;
-    }
-
-    @Override public boolean equals(Object o) {
-      return o instanceof Credential && ((Credential) o).headerValue.equals(headerValue);
-    }
-
-    @Override public int hashCode() {
-      return headerValue.hashCode();
-    }
-
-    @Override public String toString() {
-      return headerValue;
-    }
-  }
+  Request authenticateProxy(Proxy proxy, Response response) throws IOException;
 }

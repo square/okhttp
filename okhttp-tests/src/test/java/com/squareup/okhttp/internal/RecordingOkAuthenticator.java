@@ -16,35 +16,37 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.OkAuthenticator;
-import java.io.IOException;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.net.Proxy;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class RecordingOkAuthenticator implements OkAuthenticator {
   public final List<String> calls = new ArrayList<String>();
-  public final Credential credential;
+  public final String credential;
 
-  public RecordingOkAuthenticator(Credential credential) {
+  public RecordingOkAuthenticator(String credential) {
     this.credential = credential;
   }
 
-  @Override public Credential authenticate(Proxy proxy, URL url, List<Challenge> challenges)
-      throws IOException {
+  @Override public Request authenticate(Proxy proxy, Response response) {
     calls.add("authenticate"
         + " proxy=" + proxy.type()
-        + " url=" + url
-        + " challenges=" + challenges);
-    return credential;
+        + " url=" + response.request().url()
+        + " challenges=" + response.challenges());
+    return response.request().newBuilder()
+        .addHeader("Authorization", credential)
+        .build();
   }
 
-  @Override public Credential authenticateProxy(Proxy proxy, URL url, List<Challenge> challenges)
-      throws IOException {
+  @Override public Request authenticateProxy(Proxy proxy, Response response) {
     calls.add("authenticateProxy"
         + " proxy=" + proxy.type()
-        + " url=" + url
-        + " challenges=" + challenges);
-    return credential;
+        + " url=" + response.request().url()
+        + " challenges=" + response.challenges());
+    return response.request().newBuilder()
+        .addHeader("Proxy-Authorization", credential)
+        .build();
   }
 }

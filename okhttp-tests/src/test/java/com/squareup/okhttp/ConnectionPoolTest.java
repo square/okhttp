@@ -18,7 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.HttpAuthenticator;
+import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -75,7 +75,7 @@ public final class ConnectionPoolTest {
 
     httpServer.play();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
-        null, HttpAuthenticator.SYSTEM_DEFAULT, null,
+        null, AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1));
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
@@ -83,7 +83,7 @@ public final class ConnectionPoolTest {
     spdyServer.play();
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(),
-        HttpAuthenticator.SYSTEM_DEFAULT, null,
+        AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1));
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());

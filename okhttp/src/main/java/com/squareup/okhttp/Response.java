@@ -22,11 +22,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.List;
 import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
+import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response
@@ -124,13 +127,32 @@ public final class Response {
   }
 
   /**
-   * Returns the response for the HTTP redirect that triggered this response, or
-   * null if this response wasn't triggered by an automatic redirect. The body
-   * of the returned response should not be read because it has already been
-   * consumed by the redirecting client.
+   * Returns the response for the HTTP redirect or authorization challenge that
+   * triggered this response, or null if this response wasn't triggered by an
+   * automatic retry. The body of the returned response should not be read
+   * because it has already been consumed by the redirecting client.
    */
   public Response redirectedBy() {
     return redirectedBy;
+  }
+
+  /**
+   * Returns the authorization challenges appropriate for this response's code.
+   * If the response code is 401 unauthorized, this returns the
+   * "WWW-Authenticate" challenges. If the response code is 407 proxy
+   * unauthorized, this returns the "Proxy-Authenticate" challenges. Otherwise
+   * this returns an empty list of challenges.
+   */
+  public List<Challenge> challenges() {
+    String responseField;
+    if (code == HTTP_UNAUTHORIZED) {
+      responseField = "WWW-Authenticate";
+    } else if (code == HTTP_PROXY_AUTH) {
+      responseField = "Proxy-Authenticate";
+    } else {
+      return Collections.emptyList();
+    }
+    return OkHeaders.parseChallenges(headers(), responseField);
   }
 
   public abstract static class Body implements Closeable {
