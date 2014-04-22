@@ -416,9 +416,12 @@ public final class HttpEngine {
    * the caller's responsibility to close the request body and response body
    * streams; otherwise resources may be leaked.
    */
-  public void disconnect() throws IOException {
+  public void disconnect() {
     if (transport != null) {
-      transport.disconnect(this);
+      try {
+        transport.disconnect(this);
+      } catch (IOException ignored) {
+      }
     }
   }
 

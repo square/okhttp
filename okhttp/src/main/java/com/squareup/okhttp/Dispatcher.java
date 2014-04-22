@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpEngine;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -113,17 +114,18 @@ public final class Dispatcher {
     }
   }
 
-  /**
-   * Cancel all jobs with the tag {@code tag}. If a canceled job is running it
-   * may continue running until it reaches a safe point to finish.
-   */
+  /** Cancel all jobs with the tag {@code tag}. */
   public synchronized void cancel(Object tag) {
     for (Iterator<Job> i = readyJobs.iterator(); i.hasNext(); ) {
       if (Util.equal(tag, i.next().tag())) i.remove();
     }
 
     for (Job job : runningJobs) {
-      if (Util.equal(tag, job.tag())) job.canceled = true;
+      if (Util.equal(tag, job.tag())) {
+        job.canceled = true;
+        HttpEngine engine = job.engine;
+        if (engine != null) engine.disconnect();
+      }
     }
   }
 

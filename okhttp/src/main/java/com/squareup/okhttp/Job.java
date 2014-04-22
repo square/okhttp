@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.util.concurrent.CancellationException;
 import okio.BufferedSink;
 import okio.BufferedSource;
 
@@ -59,12 +60,21 @@ final class Job extends NamedRunnable {
   }
 
   @Override protected void execute() {
+    boolean signalledReceiver = false;
     try {
       Response response = getResponse();
-      if (response != null && !canceled) {
+      if (canceled) {
+        signalledReceiver = true;
+        responseReceiver.onFailure(new Failure.Builder()
+            .request(request)
+            .exception(new CancellationException("Canceled"))
+            .build());
+      } else {
+        signalledReceiver = true;
         responseReceiver.onResponse(response);
       }
     } catch (IOException e) {
+      if (signalledReceiver) return; // Do not signal the receiver twice!
       responseReceiver.onFailure(new Failure.Builder()
           .request(request)
           .exception(e)
