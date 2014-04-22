@@ -230,24 +230,6 @@ public final class AsyncApiTest {
     assertEquals(2, server.takeRequest().getSequenceNumber()); // Connection reused again!
   }
 
-  @Test public void redirectWithRedirectsDisabled() throws Exception {
-    client.setFollowSslRedirects(false);
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .addHeader("Test", "Redirect from /a to /b")
-        .setBody("/a has moved!"));
-    server.play();
-
-    Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.enqueue(request, receiver);
-
-    receiver.await(server.getUrl("/a"))
-        .assertCode(301)
-        .assertBody("/a has moved!")
-        .assertContainsHeaders("Location: /b");
-  }
-
   @Test public void follow20Redirects() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse()
