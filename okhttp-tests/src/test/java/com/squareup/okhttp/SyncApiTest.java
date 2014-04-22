@@ -150,6 +150,22 @@ public final class SyncApiTest {
         .assertBody("abc");
   }
 
+  @Test public void setFollowSslRedirectsFalse() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location: http://square.com"));
+    server.play();
+
+    client.setFollowSslRedirects(false);
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    Response response = client.execute(request);
+    assertEquals(301, response.code());
+  }
+
   @Test public void post() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.play();
@@ -230,21 +246,6 @@ public final class SyncApiTest {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reused.
     assertEquals(2, server.takeRequest().getSequenceNumber()); // Connection reused again!
-  }
-
-  @Test public void redirectWithRedirectsDisabled() throws Exception {
-    client.setFollowSslRedirects(false);
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: /b")
-        .addHeader("Test", "Redirect from /a to /b")
-        .setBody("/a has moved!"));
-    server.play();
-
-    onSuccess(new Request.Builder().url(server.getUrl("/a")).build())
-        .assertCode(301)
-        .assertBody("/a has moved!")
-        .assertContainsHeaders("Location: /b");
   }
 
   @Test public void follow20Redirects() throws Exception {

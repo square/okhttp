@@ -25,7 +25,6 @@ import java.net.Proxy;
 import java.net.URL;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import okio.Okio;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -124,7 +123,7 @@ final class Job extends NamedRunnable {
         engine.sendRequest();
 
         if (body != null) {
-          BufferedSink sink = Okio.buffer(engine.getRequestBody());
+          BufferedSink sink = engine.getBufferedRequestBody();
           body.writeTo(sink);
           sink.flush();
         }
@@ -185,34 +184,28 @@ final class Job extends NamedRunnable {
       case HTTP_UNAUTHORIZED:
         return OkHeaders.processAuthHeader(client.getAuthenticator(), response, selectedProxy);
 
+      case HTTP_TEMP_REDIRECT:
+        // "If the 307 status code is received in response to a request other than GET or HEAD,
+        // the user agent MUST NOT automatically redirect the request"
+        if (!request.method().equals("GET") && !request.method().equals("HEAD")) return null;
+        // fall-through
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
-      case HTTP_TEMP_REDIRECT:
-        if (!client.getFollowSslRedirects()) {
-          return null; // This client has is configured to not follow redirects.
-        }
+        String location = response.header("Location");
+        if (location == null) return null;
+        URL url = new URL(request.url(), location);
+
+        // Don't follow redirects to unsupported protocols.
+        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) return null;
+
+        // If configured, don't follow redirects between SSL and non-SSL.
+        boolean sameProtocol = url.getProtocol().equals(request.url().getProtocol());
+        if (!sameProtocol && !client.getFollowSslRedirects()) return null;
 
         if (++redirectionCount > HttpURLConnectionImpl.MAX_REDIRECTS) {
           throw new ProtocolException("Too many redirects: " + redirectionCount);
-        }
-
-        String method = request.method();
-        if (responseCode == HTTP_TEMP_REDIRECT && !method.equals("GET") && !method.equals("HEAD")) {
-          // "If the 307 status code is received in response to a request other than GET or HEAD,
-          // the user agent MUST NOT automatically redirect the request"
-          return null;
-        }
-
-        String location = response.header("Location");
-        if (location == null) {
-          return null;
-        }
-
-        URL url = new URL(request.url(), location);
-        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) {
-          return null; // Don't follow redirects to unsupported protocols.
         }
 
         return this.request.newBuilder().url(url).build();
