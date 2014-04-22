@@ -34,6 +34,7 @@ import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
@@ -54,8 +55,15 @@ import static com.squareup.okhttp.internal.Util.closeQuietly;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 /**
  * Handles a single HTTP request/response pair. Each HTTP engine follows this
@@ -75,7 +83,13 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
  * <p>The request and response may be served by the HTTP response cache, by the
  * network, or by both in the event of a conditional GET.
  */
-public class HttpEngine {
+public final class HttpEngine {
+  /**
+   * How many redirects should we follow? Chrome follows 21; Firefox, curl,
+   * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
+   */
+  public static final int MAX_REDIRECTS = 20;
+
   final OkHttpClient client;
 
   private Connection connection;
@@ -159,7 +173,7 @@ public class HttpEngine {
    * source if necessary. Prepares the request headers and gets ready to start
    * writing the request body if it exists.
    */
-  public final void sendRequest() throws IOException {
+  public void sendRequest() throws IOException {
     if (responseSource != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
 
@@ -273,12 +287,12 @@ public class HttpEngine {
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
-  public final Sink getRequestBody() {
+  public Sink getRequestBody() {
     if (responseSource == null) throw new IllegalStateException();
     return requestBodyOut;
   }
 
-  public final BufferedSink getBufferedRequestBody() {
+  public BufferedSink getBufferedRequestBody() {
     BufferedSink result = bufferedRequestBody;
     if (result != null) return result;
     Sink requestBody = getRequestBody();
@@ -287,38 +301,38 @@ public class HttpEngine {
         : null;
   }
 
-  public final boolean hasResponse() {
+  public boolean hasResponse() {
     return response != null;
   }
 
-  public final ResponseSource responseSource() {
+  public ResponseSource responseSource() {
     return responseSource;
   }
 
-  public final Request getRequest() {
+  public Request getRequest() {
     return request;
   }
 
   /** Returns the engine's response. */
   // TODO: the returned body will always be null.
-  public final Response getResponse() {
+  public Response getResponse() {
     if (response == null) throw new IllegalStateException();
     return response;
   }
 
-  public final BufferedSource getResponseBody() {
+  public BufferedSource getResponseBody() {
     if (response == null) throw new IllegalStateException();
     return responseBody;
   }
 
-  public final InputStream getResponseBodyBytes() {
+  public InputStream getResponseBodyBytes() {
     InputStream result = responseBodyBytes;
     return result != null
         ? result
         : (responseBodyBytes = Okio.buffer(getResponseBody()).inputStream());
   }
 
-  public final Connection getConnection() {
+  public Connection getConnection() {
     return connection;
   }
 
@@ -389,7 +403,7 @@ public class HttpEngine {
    * either exhausted or closed. If it is unneeded when this is called, it will
    * be released immediately.
    */
-  public final void releaseConnection() throws IOException {
+  public void releaseConnection() throws IOException {
     if (transport != null && connection != null) {
       transport.releaseConnectionOnIdle();
     }
@@ -402,7 +416,7 @@ public class HttpEngine {
    * the caller's responsibility to close the request body and response body
    * streams; otherwise resources may be leaked.
    */
-  public final void disconnect() throws IOException {
+  public void disconnect() throws IOException {
     if (transport != null) {
       transport.disconnect(this);
     }
@@ -412,7 +426,7 @@ public class HttpEngine {
    * Release any resources held by this engine. If a connection is still held by
    * this engine, it is returned.
    */
-  public final Connection close() {
+  public Connection close() {
     if (bufferedRequestBody != null) {
       // This also closes the wrapped requestBodyOut.
       closeQuietly(bufferedRequestBody);
@@ -483,7 +497,7 @@ public class HttpEngine {
    * Returns true if the response must have a (possibly 0-length) body.
    * See RFC 2616 section 4.3.
    */
-  public final boolean hasResponseBody() {
+  public boolean hasResponseBody() {
     // HEAD requests never yield a body regardless of the response headers.
     if (request.method().equals("HEAD")) {
       return false;
@@ -569,7 +583,7 @@ public class HttpEngine {
    * Flushes the remaining request header and body, parses the HTTP response
    * headers and starts reading the HTTP response body if it exists.
    */
-  public final void readResponse() throws IOException {
+  public void readResponse() throws IOException {
     if (response != null) return;
     if (responseSource == null) throw new IllegalStateException("call sendRequest() first!");
     if (!responseSource.requiresConnection()) return;
@@ -736,5 +750,65 @@ public class HttpEngine {
     if (cookieHandler != null) {
       cookieHandler.put(request.uri(), OkHeaders.toMultimap(headers, null));
     }
+  }
+
+  /**
+   * Figures out the HTTP request to make in response to receiving this engine's
+   * response. This will either add authentication headers or follow redirects.
+   * If a follow-up is either unnecessary or not applicable, this returns null.
+   */
+  public Request followUpRequest() throws IOException {
+    if (response == null) throw new IllegalStateException();
+    Proxy selectedProxy = getRoute() != null
+        ? getRoute().getProxy()
+        : client.getProxy();
+    int responseCode = response.code();
+
+    switch (responseCode) {
+      case HTTP_PROXY_AUTH:
+        if (selectedProxy.type() != Proxy.Type.HTTP) {
+          throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
+        }
+        // fall-through
+      case HTTP_UNAUTHORIZED:
+        return OkHeaders.processAuthHeader(client.getAuthenticator(), response, selectedProxy);
+
+      case HTTP_TEMP_REDIRECT:
+        // "If the 307 status code is received in response to a request other than GET or HEAD,
+        // the user agent MUST NOT automatically redirect the request"
+        if (!request.method().equals("GET") && !request.method().equals("HEAD")) return null;
+        // fall-through
+      case HTTP_MULT_CHOICE:
+      case HTTP_MOVED_PERM:
+      case HTTP_MOVED_TEMP:
+      case HTTP_SEE_OTHER:
+        String location = response.header("Location");
+        if (location == null) return null;
+        URL url = new URL(request.url(), location);
+
+        // Don't follow redirects to unsupported protocols.
+        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) return null;
+
+        // If configured, don't follow redirects between SSL and non-SSL.
+        boolean sameProtocol = url.getProtocol().equals(request.url().getProtocol());
+        if (!sameProtocol && !client.getFollowSslRedirects()) return null;
+
+        return request.newBuilder().url(url).build();
+
+      default:
+        return null;
+    }
+  }
+
+  /**
+   * Returns true if an HTTP request for {@code followUp} can use the same
+   * engine as this connection.
+   */
+  public boolean sameConnection(Request followUp) {
+    URL a = request.url();
+    URL b = followUp.url();
+    return a.getHost().equals(b.getHost())
+        && getEffectivePort(a) == getEffectivePort(b)
+        && a.getProtocol().equals(b.getProtocol());
   }
 }

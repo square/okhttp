@@ -18,22 +18,12 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.net.Proxy;
-import java.net.URL;
 import okio.BufferedSink;
 import okio.BufferedSource;
 
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
-import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
-import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
-import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
-import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
-import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
-import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
 
 final class Job extends NamedRunnable {
   private final Dispatcher dispatcher;
@@ -141,9 +131,9 @@ final class Job extends NamedRunnable {
       }
 
       Response response = engine.getResponse();
-      Request redirect = processResponse(engine, response);
+      Request followUp = engine.followUpRequest();
 
-      if (redirect == null) {
+      if (followUp == null) {
         engine.releaseConnection();
         return response.newBuilder()
             .body(new RealResponseBody(response, engine.getResponseBody()))
@@ -151,74 +141,22 @@ final class Job extends NamedRunnable {
             .build();
       }
 
-      if (!sameConnection(request, redirect)) {
+      if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
+        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      }
+
+      // TODO: drop from POST to GET when redirected? HttpURLConnection does.
+      // TODO: confirm that Cookies are not retained across hosts.
+
+      if (!engine.sameConnection(followUp)) {
         engine.releaseConnection();
       }
 
       Connection connection = engine.close();
       redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
-      request = redirect;
+      request = followUp;
       engine = new HttpEngine(client, request, false, connection, null, null);
     }
-  }
-
-  /**
-   * Figures out the HTTP request to make in response to receiving {@code
-   * response}. This will either add authentication headers or follow
-   * redirects. If a follow-up is either unnecessary or not applicable, this
-   * returns null.
-   */
-  private Request processResponse(HttpEngine engine, Response response) throws IOException {
-    Request request = response.request();
-    Proxy selectedProxy = engine.getRoute() != null
-        ? engine.getRoute().getProxy()
-        : client.getProxy();
-    int responseCode = response.code();
-
-    switch (responseCode) {
-      case HTTP_PROXY_AUTH:
-        if (selectedProxy.type() != Proxy.Type.HTTP) {
-          throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
-        }
-        // fall-through
-      case HTTP_UNAUTHORIZED:
-        return OkHeaders.processAuthHeader(client.getAuthenticator(), response, selectedProxy);
-
-      case HTTP_TEMP_REDIRECT:
-        // "If the 307 status code is received in response to a request other than GET or HEAD,
-        // the user agent MUST NOT automatically redirect the request"
-        if (!request.method().equals("GET") && !request.method().equals("HEAD")) return null;
-        // fall-through
-      case HTTP_MULT_CHOICE:
-      case HTTP_MOVED_PERM:
-      case HTTP_MOVED_TEMP:
-      case HTTP_SEE_OTHER:
-        String location = response.header("Location");
-        if (location == null) return null;
-        URL url = new URL(request.url(), location);
-
-        // Don't follow redirects to unsupported protocols.
-        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) return null;
-
-        // If configured, don't follow redirects between SSL and non-SSL.
-        boolean sameProtocol = url.getProtocol().equals(request.url().getProtocol());
-        if (!sameProtocol && !client.getFollowSslRedirects()) return null;
-
-        if (++redirectionCount > HttpURLConnectionImpl.MAX_REDIRECTS) {
-          throw new ProtocolException("Too many redirects: " + redirectionCount);
-        }
-
-        return this.request.newBuilder().url(url).build();
-
-      default:
-        return null;
-    }
-  }
-
-  static boolean sameConnection(Request a, Request b) {
-    return a.url().getHost().equals(b.url().getHost())
-        && getEffectivePort(a.url()) == getEffectivePort(b.url())
-        && a.url().getProtocol().equals(b.url().getProtocol());
   }
 
   static class RealResponseBody extends Response.Body {
