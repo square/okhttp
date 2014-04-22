@@ -54,9 +54,6 @@ import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
 import okio.Sink;
 
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
-import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-
 /**
  * This implementation uses HttpEngine to send requests and receive responses.
  * This class may use multiple HttpEngines to follow redirects, authentication
@@ -70,13 +67,6 @@ import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
  * header fields, request method, etc.) are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
-
-  /**
-   * How many redirects should we follow? Chrome follows 21; Firefox, curl,
-   * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
-   */
-  // TODO find a better location for this constant
-  public static final int MAX_REDIRECTS = 20;
 
   final OkHttpClient client;
 
@@ -340,20 +330,32 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         continue;
       }
 
-      Retry retry = processResponseHeaders();
-      if (retry == Retry.NONE) {
+      Response response = httpEngine.getResponse();
+      Request followUp = httpEngine.followUpRequest();
+
+      if (followUp == null) {
         httpEngine.releaseConnection();
         return httpEngine;
       }
 
+      if (response.isRedirect() && ++redirectionCount > HttpEngine.MAX_REDIRECTS) {
+        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      }
+
       // The first request was insufficient. Prepare for another...
+      if (response.isRedirect()) {
+        url = followUp.url(); // Get the redirected URL.
+      } else {
+        requestHeaders = followUp.headers().newBuilder(); // Get the follow-up's credentials!
+      }
+
       String retryMethod = method;
       Sink requestBody = httpEngine.getRequestBody();
 
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
       // redirect should keep the same method, Chrome, Firefox and the
       // RI all issue GETs when following any redirect.
-      int responseCode = httpEngine.getResponse().code();
+      int responseCode = response.code();
       if (responseCode == HTTP_MULT_CHOICE
           || responseCode == HTTP_MOVED_PERM
           || responseCode == HTTP_MOVED_TEMP
@@ -367,7 +369,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
-      if (retry == Retry.DIFFERENT_CONNECTION) {
+      if (!httpEngine.sameConnection(followUp)) {
         httpEngine.releaseConnection();
       }
 
@@ -403,78 +405,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       // Give up; recovery is not possible.
       httpEngineFailure = e;
       throw e;
-    }
-  }
-
-  enum Retry {
-    NONE,
-    SAME_CONNECTION,
-    DIFFERENT_CONNECTION
-  }
-
-  /**
-   * Returns the retry action to take for the current response headers. The
-   * headers, proxy and target URL for this connection may be adjusted to
-   * prepare for a follow up request.
-   */
-  private Retry processResponseHeaders() throws IOException {
-    Connection connection = httpEngine.getConnection();
-    Proxy selectedProxy = connection != null
-        ? connection.getRoute().getProxy()
-        : client.getProxy();
-    final int responseCode = getResponseCode();
-    switch (responseCode) {
-      case HTTP_PROXY_AUTH:
-        if (selectedProxy.type() != Proxy.Type.HTTP) {
-          throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
-        }
-        // fall-through
-      case HTTP_UNAUTHORIZED:
-        Request successorRequest = OkHeaders.processAuthHeader(client.getAuthenticator(),
-            httpEngine.getResponse(), selectedProxy);
-        if (successorRequest == null) return Retry.NONE;
-        requestHeaders = successorRequest.getHeaders().newBuilder();
-        return Retry.SAME_CONNECTION;
-
-      case HTTP_MULT_CHOICE:
-      case HTTP_MOVED_PERM:
-      case HTTP_MOVED_TEMP:
-      case HTTP_SEE_OTHER:
-      case HTTP_TEMP_REDIRECT:
-        if (!getInstanceFollowRedirects()) {
-          return Retry.NONE;
-        }
-        if (++redirectionCount > MAX_REDIRECTS) {
-          throw new ProtocolException("Too many redirects: " + redirectionCount);
-        }
-        if (responseCode == HTTP_TEMP_REDIRECT && !method.equals("GET") && !method.equals("HEAD")) {
-          // "If the 307 status code is received in response to a request other than GET or HEAD,
-          // the user agent MUST NOT automatically redirect the request"
-          return Retry.NONE;
-        }
-        String location = getHeaderField("Location");
-        if (location == null) {
-          return Retry.NONE;
-        }
-        URL previousUrl = url;
-        url = new URL(previousUrl, location);
-        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) {
-          return Retry.NONE; // Don't follow redirects to unsupported protocols.
-        }
-        boolean sameProtocol = previousUrl.getProtocol().equals(url.getProtocol());
-        if (!sameProtocol && !client.getFollowSslRedirects()) {
-          return Retry.NONE; // This client doesn't follow redirects across protocols.
-        }
-        boolean sameHost = previousUrl.getHost().equals(url.getHost());
-        boolean samePort = getEffectivePort(previousUrl) == getEffectivePort(url);
-        if (sameHost && samePort && sameProtocol) {
-          return Retry.SAME_CONNECTION;
-        } else {
-          return Retry.DIFFERENT_CONNECTION;
-        }
-
-      default:
-        return Retry.NONE;
     }
   }
 

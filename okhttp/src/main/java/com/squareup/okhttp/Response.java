@@ -28,7 +28,12 @@ import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 
 /**
@@ -124,6 +129,20 @@ public final class Response {
 
   public Builder newBuilder() {
     return new Builder(this);
+  }
+
+  /** Returns true if this response redirects to another resource. */
+  public boolean isRedirect() {
+    switch (code) {
+      case HTTP_TEMP_REDIRECT:
+      case HTTP_MULT_CHOICE:
+      case HTTP_MOVED_PERM:
+      case HTTP_MOVED_TEMP:
+      case HTTP_SEE_OTHER:
+        return true;
+      default:
+        return false;
+    }
   }
 
   /**
