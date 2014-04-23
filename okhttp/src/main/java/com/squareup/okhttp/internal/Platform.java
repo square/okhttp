@@ -256,17 +256,7 @@ public class Platform {
     }
 
     @Override public String getSelectedProtocol(SSLSocket socket) {
-      if (getNpnSelectedProtocol == null) return null;
-      if (!openSslSocketClass.isInstance(socket)) return null;
-      try {
-        byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
-        if (npnResult == null) return null;
-        return new String(npnResult, Util.UTF_8);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
-      }
+      return null;
     }
 
     @Override public void tagSocket(Socket socket) throws SocketException {
