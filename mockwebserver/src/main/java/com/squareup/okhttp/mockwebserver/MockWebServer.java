@@ -395,6 +395,10 @@ public final class MockWebServer {
         requestCount.incrementAndGet();
         requestQueue.add(request);
         MockResponse response = dispatcher.dispatch(request);
+        if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AFTER_REQUEST) {
+          socket.close();
+          return false;
+        }
         writeResponse(out, response);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           in.close();

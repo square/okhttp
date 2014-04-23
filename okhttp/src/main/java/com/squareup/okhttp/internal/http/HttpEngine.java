@@ -339,9 +339,10 @@ public final class HttpEngine {
   /**
    * Report and attempt to recover from {@code e}. Returns a new HTTP engine
    * that should be used for the retry if {@code e} is recoverable, or null if
-   * the failure is permanent.
+   * the failure is permanent. Requests with a body can only be recovered if the
+   * body is buffered.
    */
-  public HttpEngine recover(IOException e) {
+  public HttpEngine recover(IOException e, Sink requestBodyOut) {
     if (routeSelector != null && connection != null) {
       routeSelector.connectFailed(connection, e);
     }
@@ -359,6 +360,10 @@ public final class HttpEngine {
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, originalRequest, bufferRequestBody, connection, routeSelector,
         (RetryableSink) requestBodyOut);
+  }
+
+  public HttpEngine recover(IOException e) {
+    return recover(e, requestBodyOut);
   }
 
   private boolean isRecoverable(IOException e) {

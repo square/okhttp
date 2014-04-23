@@ -280,35 +280,34 @@ public final class SyncApiTest {
     }
   }
 
-  @Test public void postBodyRetransmittedOnRedirect() throws Exception {
-    server.enqueue(new MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: /b")
-        .setBody("Moved to /b !"));
-    server.enqueue(new MockResponse()
-        .setBody("This is b."));
+  @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    server.enqueue(new MockResponse().setBody("def"));
     server.play();
 
-    Request request = new Request.Builder()
+    // Seed the connection pool so we have something that can fail.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.execute(request1);
+    assertEquals("abc", response1.body().string());
+
+    Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .post(Request.Body.create(MediaType.parse("text/plain"), "body!"))
         .build();
+    Response response2 = client.execute(request2);
+    assertEquals("def", response2.body().string());
 
-    onSuccess(request)
-        .assertCode(200)
-        .assertBody("This is b.");
+    RecordedRequest get = server.takeRequest();
+    assertEquals(0, get.getSequenceNumber());
 
-    RecordedRequest request1 = server.takeRequest();
-    assertEquals("body!", request1.getUtf8Body());
-    assertEquals("5", request1.getHeader("Content-Length"));
-    assertEquals("text/plain; charset=utf-8", request1.getHeader("Content-Type"));
-    assertEquals(0, request1.getSequenceNumber());
+    RecordedRequest post1 = server.takeRequest();
+    assertEquals("body!", post1.getUtf8Body());
+    assertEquals(1, post1.getSequenceNumber());
 
-    RecordedRequest request2 = server.takeRequest();
-    assertEquals("body!", request2.getUtf8Body());
-    assertEquals("5", request2.getHeader("Content-Length"));
-    assertEquals("text/plain; charset=utf-8", request2.getHeader("Content-Type"));
-    assertEquals(1, request2.getSequenceNumber());
+    RecordedRequest post2 = server.takeRequest();
+    assertEquals("body!", post2.getUtf8Body());
+    assertEquals(0, post2.getSequenceNumber());
   }
 
   private RecordedResponse onSuccess(Request request) throws IOException {

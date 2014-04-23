@@ -19,12 +19,16 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.HttpResponseCache;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -2380,7 +2384,7 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    assertNull(connection.getContent(new Class[] {getClass()}));
+    assertNull(connection.getContent(new Class[]{getClass()}));
   }
 
   @Test public void getOutputStreamOnGetFails() throws Exception {
@@ -2561,6 +2565,32 @@ public final class URLConnectionTest {
     RecordedRequest requestB = server.takeRequest();
     assertEquals("/b", requestB.getPath());
     assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody()));
+  }
+
+  @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    // Seed the connection pool so we have something that can fail.
+    assertContent("abc", client.open(server.getUrl("/")));
+
+    HttpURLConnection post = client.open(server.getUrl("/"));
+    post.setDoOutput(true);
+    post.getOutputStream().write("body!".getBytes(Util.UTF_8));
+    assertContent("def", post);
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals(0, get.getSequenceNumber());
+
+    RecordedRequest post1 = server.takeRequest();
+    assertEquals("body!", post1.getUtf8Body());
+    assertEquals(1, post1.getSequenceNumber());
+
+    RecordedRequest post2 = server.takeRequest();
+    assertEquals("body!", post2.getUtf8Body());
+    assertEquals(0, post2.getSequenceNumber());
   }
 
   @Test public void fullyBufferedPostIsTooShort() throws Exception {
