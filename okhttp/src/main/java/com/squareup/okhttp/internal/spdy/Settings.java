@@ -21,7 +21,7 @@ import java.util.Arrays;
  * Settings describe characteristics of the sending peer, which are used by the receiving peer.
  * Settings are {@link com.squareup.okhttp.internal.spdy.SpdyConnection connection} scoped.
  */
-final class Settings {
+public final class Settings {
   /**
    * From the SPDY/3 and HTTP/2 specs, the default initial window size for all
    * streams is 64 KiB. (Chrome 25 uses 10 MiB).

@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-enum HeadersMode {
+public enum HeadersMode {
   SPDY_SYN_STREAM,
   SPDY_REPLY,
   SPDY_HEADERS,
