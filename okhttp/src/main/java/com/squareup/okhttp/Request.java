@@ -113,6 +113,16 @@ public final class Request {
     return url().getProtocol().equals("https");
   }
 
+  @Override public String toString() {
+    return "Request{method="
+        + method
+        + ", url="
+        + url
+        + ", tag="
+        + (tag != this ? tag : null)
+        + '}';
+  }
+
   public abstract static class Body {
     /** Returns the Content-Type header for this body. */
     public abstract MediaType contentType();

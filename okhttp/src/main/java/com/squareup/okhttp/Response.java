@@ -252,6 +252,18 @@ public final class Response {
     return result != null ? result : (cacheControl = CacheControl.parse(headers));
   }
 
+  @Override public String toString() {
+    return "Response{protocol="
+        + protocol
+        + ", code="
+        + code
+        + ", message="
+        + message
+        + ", url="
+        + request.urlString()
+        + '}';
+  }
+
   public interface Receiver {
     /**
      * Called when the request could not be executed due to a connectivity
