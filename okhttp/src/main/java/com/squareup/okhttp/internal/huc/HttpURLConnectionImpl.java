@@ -67,10 +67,22 @@ import okio.Sink;
  * header fields, request method, etc.) are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
+  private static final String PREFIX = Platform.get().getPrefix();
+  /**
+   * Synthetic response header: the response source and status code like
+   * "CONDITIONAL_CACHE 304".
+   */
+  public static final String RESPONSE_SOURCE = PREFIX + "-Response-Source";
+  /**
+   * Synthetic response header: the selected
+   * {@link com.squareup.okhttp.Protocol protocol} ("spdy/3.1", "http/1.1", etc).
+   */
+  public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
 
   final OkHttpClient client;
 
   private Headers.Builder requestHeaders = new Headers.Builder();
+  private Headers responseHeaders; // Lazily initialized.
 
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
@@ -132,13 +144,25 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
+  /** Retrieves the headers and appends OkHttp-specific synthetic headers. */
+  private Headers getHeaders() throws IOException {
+    if (responseHeaders == null) {
+      Response response = getResponse().getResponse();
+      responseHeaders = response.headers().newBuilder()
+          .add(RESPONSE_SOURCE, response.responseSource() + " " + response.code())
+          .add(SELECTED_PROTOCOL, response.protocol().toString())
+          .build();
+    }
+    return responseHeaders;
+  }
+
   /**
    * Returns the value of the field at {@code position}. Returns null if there
    * are fewer than {@code position} headers.
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponse().headers().value(position);
+      return getHeaders().value(position);
     } catch (IOException e) {
       return null;
     }
@@ -151,10 +175,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
-      Response response = getResponse().getResponse();
       return fieldName == null
-          ? StatusLine.get(response).toString()
-          : response.headers().get(fieldName);
+          ? StatusLine.get(getResponse().getResponse()).toString()
+          : getHeaders().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -162,7 +185,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponse().headers().name(position);
+      return getHeaders().name(position);
     } catch (IOException e) {
       return null;
     }
@@ -170,8 +193,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      Response response = getResponse().getResponse();
-      return OkHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
+      String nullValue = StatusLine.get(getResponse().getResponse()).toString();
+      return OkHeaders.toMultimap(getHeaders(), nullValue);
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -372,6 +395,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
       Connection connection = httpEngine.close();
       httpEngine = newHttpEngine(retryMethod, connection, (RetryableSink) requestBody);
+
+      // Clear out cached response headers.
+      responseHeaders = null;
     }
   }
 

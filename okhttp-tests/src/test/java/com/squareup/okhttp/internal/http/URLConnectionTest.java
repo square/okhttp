@@ -19,11 +19,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.HttpResponseCache;
-import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -85,8 +82,8 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
-import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static com.squareup.okhttp.internal.huc.HttpURLConnectionImpl.SELECTED_PROTOCOL;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
@@ -2725,7 +2722,7 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("url=" + server.getUrl("/private")));
     assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
   }
-  
+
   @Test public void customTokenAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
             .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")

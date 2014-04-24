@@ -179,7 +179,6 @@ public final class SpdyTransport implements Transport {
     String version = "HTTP/1.1"; // :version present only in spdy/3.
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.toString());
     for (int i = 0; i < headerBlock.size(); i++) {
       ByteString name = headerBlock.get(i).name;
       String values = headerBlock.get(i).value.utf8();
@@ -204,7 +203,7 @@ public final class SpdyTransport implements Transport {
 
     StatusLine statusLine = StatusLine.parse(version + " " + status);
     return new Response.Builder()
-        .protocol(statusLine.protocol)
+        .protocol(protocol)
         .code(statusLine.code)
         .message(statusLine.message)
         .headers(headersBuilder.build());

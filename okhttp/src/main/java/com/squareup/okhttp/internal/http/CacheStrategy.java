@@ -159,7 +159,7 @@ public final class CacheStrategy {
             .protocol(Protocol.HTTP_1_1)
             .code(504)
             .message("Gateway Timeout")
-            .setResponseSource(ResponseSource.NONE)
+            .responseSource(ResponseSource.NONE)
             .body(EMPTY_BODY)
             .build();
         return new CacheStrategy(candidate.request, noneResponse, ResponseSource.NONE);
@@ -212,7 +212,7 @@ public final class CacheStrategy {
 
       if (!responseCaching.noCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
         Response.Builder builder = cacheResponse.newBuilder()
-            .setResponseSource(ResponseSource.CACHE); // Overwrite any stored response source.
+            .responseSource(ResponseSource.CACHE); // Overwrite any stored response source.
         if (ageMillis + minFreshMillis >= freshMillis) {
           builder.addHeader("Warning", "110 HttpURLConnection \"Response is stale\"");
         }

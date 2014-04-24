@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
@@ -27,7 +27,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 
-import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
+import static com.squareup.okhttp.internal.huc.HttpURLConnectionImpl.SELECTED_PROTOCOL;
 
 public final class ExternalSpdyExample {
   public static void main(String[] args) throws Exception {
