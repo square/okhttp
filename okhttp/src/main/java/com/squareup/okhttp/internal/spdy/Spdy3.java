@@ -33,7 +33,7 @@ import okio.Okio;
  * Read and write spdy/3.1 frames.
  * http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1
  */
-final class Spdy3 implements Variant {
+public final class Spdy3 implements Variant {
 
   @Override public Protocol getProtocol() {
     return Protocol.SPDY_3;

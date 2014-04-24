@@ -20,7 +20,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 
 /** A version and dialect of the framed socket protocol. */
-interface Variant {
+public interface Variant {
 
   /** The protocol as selected using NPN or ALPN. */
   Protocol getProtocol();
