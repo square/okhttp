@@ -130,7 +130,7 @@ final class Job extends NamedRunnable {
 
         engine.readResponse();
       } catch (IOException e) {
-        HttpEngine retryEngine = engine.recover(e);
+        HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
           engine = retryEngine;
           continue;
