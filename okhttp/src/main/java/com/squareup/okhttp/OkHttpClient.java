@@ -381,17 +381,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Schedules {@code request} to be executed at some point in the future. The
-   * {@link #getDispatcher dispatcher} defines when the request will run:
-   * usually immediately unless there are several other requests currently being
-   * executed.
-   *
-   * <p>This client will later call back {@code responseReceiver} with either an
-   * HTTP response or a failure exception. If you {@link #cancel} a request
-   * before it completes the receiver will not be called back.
+   * Prepares the {@code request} to be executed at some point in the future.
    */
-  public void enqueue(Request request, Response.Receiver responseReceiver) {
-    dispatcher.enqueue(this, request, responseReceiver);
+  public Call call(Request request) {
+    return new Call(this, dispatcher, request);
   }
 
   /**

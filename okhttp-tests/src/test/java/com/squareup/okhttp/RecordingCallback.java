@@ -26,7 +26,7 @@ import okio.Buffer;
 /**
  * Records received HTTP responses so they can be later retrieved by tests.
  */
-public class RecordingReceiver implements Response.Receiver {
+public class RecordingCallback implements Response.Callback {
   public static final long TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();

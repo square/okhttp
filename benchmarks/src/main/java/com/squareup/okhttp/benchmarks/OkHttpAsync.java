@@ -38,7 +38,7 @@ class OkHttpAsync implements HttpClient {
   private final AtomicInteger requestsInFlight = new AtomicInteger();
 
   private OkHttpClient client;
-  private Response.Receiver receiver;
+  private Response.Callback callback;
   private int concurrencyLevel;
   private int targetBacklog;
 
@@ -63,7 +63,7 @@ class OkHttpAsync implements HttpClient {
       client.setHostnameVerifier(hostnameVerifier);
     }
 
-    receiver = new Response.Receiver() {
+    callback = new Response.Callback() {
       @Override public void onFailure(Failure failure) {
         System.out.println("Failed: " + failure.exception());
       }
@@ -84,7 +84,7 @@ class OkHttpAsync implements HttpClient {
 
   @Override public void enqueue(URL url) throws Exception {
     requestsInFlight.incrementAndGet();
-    client.enqueue(new Request.Builder().tag(System.nanoTime()).url(url).build(), receiver);
+    client.call(new Request.Builder().tag(System.nanoTime()).url(url).build()).execute(callback);
   }
 
   @Override public synchronized boolean acceptingJobs() {

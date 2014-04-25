@@ -271,7 +271,7 @@ public final class Response {
         + '}';
   }
 
-  public interface Receiver {
+  public interface Callback {
     /**
      * Called when the request could not be executed due to a connectivity
      * problem or timeout. Because networks can fail during an exchange, it is
@@ -281,7 +281,7 @@ public final class Response {
 
     /**
      * Called when the HTTP response was successfully returned by the remote
-     * server. The receiver may proceed to read the response body with the
+     * server. The callback may proceed to read the response body with the
      * response's {@link #body} method.
      *
      * <p>Note that transport-layer success (receiving a HTTP response code,
