@@ -1547,10 +1547,7 @@ public final class SpdyConnectionTest {
   }
 
   private void assertStreamData(String expected, Source source) throws IOException {
-    Buffer buffer = new Buffer();
-    while (source.read(buffer, Long.MAX_VALUE) != -1) {
-    }
-    String actual = buffer.readUtf8(buffer.size());
+    String actual = Okio.buffer(source).readUtf8();
     assertEquals(expected, actual);
   }
 

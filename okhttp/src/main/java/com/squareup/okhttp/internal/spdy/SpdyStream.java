@@ -454,7 +454,7 @@ public final class SpdyStream {
         // Move the received data to the read buffer to the reader can read it.
         synchronized (SpdyStream.this) {
           boolean wasEmpty = readBuffer.size() == 0;
-          readBuffer.write(receiveBuffer, receiveBuffer.size());
+          readBuffer.writeAll(receiveBuffer);
           if (wasEmpty) {
             SpdyStream.this.notifyAll();
           }

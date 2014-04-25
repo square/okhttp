@@ -717,7 +717,7 @@ public final class MockWebServer {
         }
         BufferedSink sink = Okio.buffer(stream.getSink());
         if (response.getThrottleBytesPerPeriod() == Integer.MAX_VALUE) {
-          sink.write(body, body.size());
+          sink.writeAll(body);
           sink.flush();
         } else {
           while (body.size() > 0) {

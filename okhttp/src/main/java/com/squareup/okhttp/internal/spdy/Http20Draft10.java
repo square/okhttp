@@ -397,7 +397,7 @@ public final class Http20Draft10 implements Variant {
       byte flags = FLAG_END_HEADERS;
       frameHeader(streamId, length, type, flags); // TODO: CONTINUATION
       sink.writeInt(promisedStreamId & 0x7fffffff);
-      sink.write(hpackBuffer, hpackBuffer.size());
+      sink.writeAll(hpackBuffer);
     }
 
     private void headers(boolean outFinished, int streamId, int priority,
@@ -414,7 +414,7 @@ public final class Http20Draft10 implements Variant {
       if (priority != -1) length += 4;
       frameHeader(streamId, length, type, flags); // TODO: CONTINUATION
       if (priority != -1) sink.writeInt(priority & 0x7fffffff);
-      sink.write(hpackBuffer, hpackBuffer.size());
+      sink.writeAll(hpackBuffer);
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)

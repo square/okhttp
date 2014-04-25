@@ -53,7 +53,7 @@ public class HpackDraft06Test {
     List<Header> headerBlock = headerEntries("cookie", new String(value));
 
     hpackWriter.writeHeaders(headerBlock);
-    bytesIn.write(bytesOut, bytesOut.size());
+    bytesIn.writeAll(bytesOut);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -76,7 +76,7 @@ public class HpackDraft06Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(out);
     hpackReader.maxHeaderTableByteCount(1);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -111,7 +111,7 @@ public class HpackDraft06Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(out);
     // Set to only support 110 bytes (enough for 2 headers).
     hpackReader.maxHeaderTableByteCount(110);
     hpackReader.readHeaders();
@@ -150,7 +150,7 @@ public class HpackDraft06Test {
       out.writeUtf8("custom-header");
     }
 
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(out);
     hpackReader.maxHeaderTableByteCount(16384); // Lots of headers need more room!
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -173,7 +173,7 @@ public class HpackDraft06Test {
         (byte) 0x25, (byte) 0xba, (byte) 0x7f};
     out.write(huffmanBytes, 0, huffmanBytes.length);
 
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(out);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -198,7 +198,7 @@ public class HpackDraft06Test {
     out.writeByte(0x0d); // Literal value (len = 13)
     out.writeUtf8("custom-header");
 
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(out);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -230,7 +230,7 @@ public class HpackDraft06Test {
     hpackWriter.writeHeaders(headerBlock);
     assertEquals(expectedBytes, bytesOut);
 
-    bytesIn.write(bytesOut, bytesOut.size());
+    bytesIn.writeAll(bytesOut);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -254,7 +254,7 @@ public class HpackDraft06Test {
     hpackWriter.writeHeaders(headerBlock);
     assertEquals(expectedBytes, bytesOut);
 
-    bytesIn.write(bytesOut, bytesOut.size());
+    bytesIn.writeAll(bytesOut);
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
 
@@ -431,20 +431,17 @@ public class HpackDraft06Test {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
-    Buffer out = firstRequestWithoutHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(firstRequestWithoutHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadFirstRequestWithoutHuffman();
 
-    out = secondRequestWithoutHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(secondRequestWithoutHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadSecondRequestWithoutHuffman();
 
-    out = thirdRequestWithoutHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(thirdRequestWithoutHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadThirdRequestWithoutHuffman();
@@ -634,20 +631,17 @@ public class HpackDraft06Test {
    * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#appendix-D.3
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
-    Buffer out = firstRequestWithHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(firstRequestWithHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadFirstRequestWithHuffman();
 
-    out = secondRequestWithHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(secondRequestWithHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadSecondRequestWithHuffman();
 
-    out = thirdRequestWithHuffman();
-    bytesIn.write(out, out.size());
+    bytesIn.writeAll(thirdRequestWithHuffman());
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
     checkReadThirdRequestWithHuffman();
@@ -928,6 +922,7 @@ public class HpackDraft06Test {
 
   private void assertBytes(int... bytes) {
     ByteString expected = intArrayToByteArray(bytes);
+    // TODO change to bytesOut.readByteString() once Okio 0.8.1+ is available.
     ByteString actual = bytesOut.readByteString(bytesOut.size());
     assertEquals(expected, actual);
   }

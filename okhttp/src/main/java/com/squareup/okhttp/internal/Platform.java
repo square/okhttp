@@ -367,6 +367,7 @@ public class Platform {
       result.writeByte(protocol.toString().length());
       result.writeUtf8(protocol.toString());
     }
+    // TODO change to result.readByteArray() when Okio 0.8.1+ is available.
     return result.readByteArray(result.size());
   }
 }

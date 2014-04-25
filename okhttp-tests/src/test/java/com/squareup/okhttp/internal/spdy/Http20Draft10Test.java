@@ -71,7 +71,7 @@ public class Http20Draft10Test {
       frame.writeByte(Http20Draft10.TYPE_HEADERS);
       frame.writeByte(FLAG_END_HEADERS | FLAG_END_STREAM);
       frame.writeInt(expectedStreamId & 0x7fffffff);
-      frame.write(headerBytes, headerBytes.size());
+      frame.writeAll(headerBytes);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -106,7 +106,7 @@ public class Http20Draft10Test {
       frame.writeByte(FLAG_END_HEADERS | FLAG_PRIORITY);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeInt(0); // Highest priority is 0.
-      frame.write(headerBytes, headerBytes.size());
+      frame.writeAll(headerBytes);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -149,7 +149,7 @@ public class Http20Draft10Test {
       frame.writeByte(Http20Draft10.TYPE_CONTINUATION);
       frame.writeByte(FLAG_END_HEADERS);
       frame.writeInt(expectedStreamId & 0x7fffffff);
-      frame.write(headerBlock, headerBlock.size());
+      frame.writeAll(headerBlock);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -191,7 +191,7 @@ public class Http20Draft10Test {
       frame.writeByte(Http20Draft10.FLAG_END_PUSH_PROMISE);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
-      frame.write(headerBytes, headerBytes.size());
+      frame.writeAll(headerBytes);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -557,7 +557,7 @@ public class Http20Draft10Test {
     frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_HIGH | FLAG_PAD_LOW);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeShort(paddingLength);
-    frame.write(headerBlock, headerBlock.size());
+    frame.writeAll(headerBlock);
     frame.write(padding);
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -574,7 +574,7 @@ public class Http20Draft10Test {
     frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_HIGH | FLAG_PAD_LOW);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeShort(0);
-    frame.write(headerBlock, headerBlock.size());
+    frame.writeAll(headerBlock);
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
     fr.nextFrame(assertHeaderBlock());
@@ -589,7 +589,7 @@ public class Http20Draft10Test {
     frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_LOW);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeByte(0);
-    frame.write(headerBlock, headerBlock.size());
+    frame.writeAll(headerBlock);
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
     fr.nextFrame(assertHeaderBlock());
@@ -608,7 +608,7 @@ public class Http20Draft10Test {
     frame.writeByte(FLAG_PAD_HIGH);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeShort(paddingLength);
-    frame.write(headerBlock, headerBlock.size());
+    frame.writeAll(headerBlock);
     frame.write(padding);
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -636,7 +636,7 @@ public class Http20Draft10Test {
     frame.writeByte(FLAG_PAD_HIGH | FLAG_PAD_LOW);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeShort(0xffff);
-    frame.write(headerBlock, headerBlock.size());
+    frame.writeAll(headerBlock);
     frame.write(padding);
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -676,7 +676,7 @@ public class Http20Draft10Test {
       frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_HIGH | FLAG_PAD_LOW);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeShort(paddingLength);
-      frame.write(headerBlock, headerBlock.size());
+      frame.writeAll(headerBlock);
       frame.write(padding);
     }
 
@@ -703,7 +703,7 @@ public class Http20Draft10Test {
       frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_HIGH | FLAG_PAD_LOW);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeShort(0);
-      frame.write(headerBlock, headerBlock.size());
+      frame.writeAll(headerBlock);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -728,7 +728,7 @@ public class Http20Draft10Test {
       frame.writeByte(FLAG_END_HEADERS | FLAG_PAD_LOW);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeByte(0);
-      frame.write(headerBlock, headerBlock.size());
+      frame.writeAll(headerBlock);
     }
 
     FrameReader fr = new Http20Draft10.Reader(frame, 4096, false);
@@ -757,7 +757,7 @@ public class Http20Draft10Test {
       frame.writeByte(FLAG_PAD_HIGH);
       frame.writeInt(expectedStreamId & 0x7fffffff);
       frame.writeShort(paddingLength);
-      frame.write(headerBlock, headerBlock.size());
+      frame.writeAll(headerBlock);
       frame.write(padding);
     }
 
@@ -807,7 +807,7 @@ public class Http20Draft10Test {
     } catch (IOException e) {
       assertEquals("PROTOCOL_ERROR padding > 16383: 65535", e.getMessage());
     }
-  }  
+  }
 
   @Test public void tooLargeDataFrame() throws IOException {
     try {

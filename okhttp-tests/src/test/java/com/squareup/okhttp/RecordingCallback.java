@@ -41,8 +41,7 @@ public class RecordingCallback implements Response.Callback {
     Response.Body body = response.body();
     body.source().readAll(buffer);
 
-    responses.add(new RecordedResponse(
-        response.request(), response, buffer.readUtf8(buffer.size()), null));
+    responses.add(new RecordedResponse(response.request(), response, buffer.readUtf8(), null));
     notifyAll();
   }
 

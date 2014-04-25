@@ -233,6 +233,6 @@ public class OkApacheClientTest {
     while ((read = in.read(temp)) != -1) {
       buffer.write(temp, 0, read);
     }
-    return buffer.readUtf8(buffer.size());
+    return buffer.readUtf8();
   }
 }
