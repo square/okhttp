@@ -189,7 +189,6 @@ public class JavaApiConverterTest {
     assertEquals("Fantastic", response.message());
     Headers okResponseHeaders = response.headers();
     assertEquals("baz", okResponseHeaders.get("xyzzy"));
-    assertEquals(body, response.body().string());
     if (isSecure) {
       Handshake handshake = response.handshake();
       assertNotNull(handshake);
@@ -204,6 +203,7 @@ public class JavaApiConverterTest {
     } else {
       assertNull(response.handshake());
     }
+    assertEquals(body, response.body().string());
   }
 
   @Test public void createOkResponse_fromCacheResponse() throws Exception {

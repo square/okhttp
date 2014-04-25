@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.Closeable;
 import java.io.IOException;
@@ -205,8 +206,14 @@ public final class Response {
       // }
       // return bytes;
 
+      BufferedSource source = source();
       Buffer buffer = new Buffer();
-      long contentRead = buffer.writeAll(source());
+      long contentRead;
+      try {
+        contentRead = buffer.writeAll(source);
+      } finally {
+        Util.closeQuietly(source);
+      }
       if (contentLength != -1 && contentLength != contentRead) {
         throw new IOException("Content-Length and stream length disagree");
       }
