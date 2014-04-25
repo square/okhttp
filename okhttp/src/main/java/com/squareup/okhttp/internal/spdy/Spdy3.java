@@ -341,7 +341,7 @@ public final class Spdy3 implements Variant {
       sink.writeInt(streamId & 0x7fffffff);
       sink.writeInt(associatedStreamId & 0x7fffffff);
       sink.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
-      sink.write(headerBlockBuffer, headerBlockBuffer.size());
+      sink.writeAll(headerBlockBuffer);
       sink.flush();
     }
 
@@ -356,7 +356,7 @@ public final class Spdy3 implements Variant {
       sink.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       sink.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       sink.writeInt(streamId & 0x7fffffff);
-      sink.write(headerBlockBuffer, headerBlockBuffer.size());
+      sink.writeAll(headerBlockBuffer);
       sink.flush();
     }
 
@@ -371,7 +371,7 @@ public final class Spdy3 implements Variant {
       sink.writeInt(0x80000000 | (VERSION & 0x7fff) << 16 | type & 0xffff);
       sink.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       sink.writeInt(streamId & 0x7fffffff);
-      sink.write(headerBlockBuffer, headerBlockBuffer.size());
+      sink.writeAll(headerBlockBuffer);
     }
 
     @Override public synchronized void rstStream(int streamId, ErrorCode errorCode)

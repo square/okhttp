@@ -121,7 +121,7 @@ public final class MockSpdyPeer implements Closeable {
     FrameReader reader = variant.newReader(Okio.buffer(Okio.source(in)), client);
 
     Iterator<OutFrame> outFramesIterator = outFrames.iterator();
-    byte[] outBytes = bytesOut.readByteString(bytesOut.size()).toByteArray();
+    byte[] outBytes = bytesOut.readByteArray();
     OutFrame nextOutFrame = null;
 
     for (int i = 0; i < frameCount; i++) {

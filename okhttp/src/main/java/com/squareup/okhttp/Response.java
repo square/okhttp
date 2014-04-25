@@ -25,7 +25,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -199,26 +198,17 @@ public final class Response {
         throw new IOException("Cannot buffer entire body for content length: " + contentLength);
       }
 
-      // TODO once https://github.com/square/okio/pull/41 is released.
-      // byte[] bytes = source.readByteArray();
-      // if (contentLength != -1 && contentLength != bytes.length) {
-      //   throw new IOException("Content-Length and stream length disagree");
-      // }
-      // return bytes;
-
       BufferedSource source = source();
-      Buffer buffer = new Buffer();
-      long contentRead;
+      byte[] bytes;
       try {
-        contentRead = buffer.writeAll(source);
+        bytes = source.readByteArray();
       } finally {
         Util.closeQuietly(source);
       }
-      if (contentLength != -1 && contentLength != contentRead) {
+      if (contentLength != -1 && contentLength != bytes.length) {
         throw new IOException("Content-Length and stream length disagree");
       }
-
-      return buffer.readByteArray(buffer.size());
+      return bytes;
     }
 
     /**
