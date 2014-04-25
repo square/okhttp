@@ -15,42 +15,258 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.OkHeaders;
+import java.io.IOException;
+import java.net.ProtocolException;
+import java.util.concurrent.CancellationException;
+import okio.BufferedSink;
+import okio.BufferedSource;
+
+import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
+
 /**
- * A call is an asynchronous {@code request} that has been prepared for
- * execution. Once executed, a call can be cancelled. As this object represents
- * a single request/response pair (or stream), it cannot be executed twice.
+ * A call is a request that has been prepared for execution. A call can be
+ * canceled. As this object represents a single request/response pair (stream),
+ * it cannot be executed twice.
  */
 public final class Call {
   private final OkHttpClient client;
   private final Dispatcher dispatcher;
-  private final Request request;
+  private int redirectionCount;
 
-  public Call(OkHttpClient client, Dispatcher dispatcher,
-      Request request) {
+  // Guarded by this.
+  private boolean executed;
+  volatile boolean canceled;
+
+  /** The request; possibly a consequence of redirects or auth headers. */
+  private Request request;
+  HttpEngine engine;
+
+  Call(OkHttpClient client, Dispatcher dispatcher, Request request) {
     this.client = client;
     this.dispatcher = dispatcher;
     this.request = request;
   }
 
   /**
-   * Schedules the {@code request} to be executed at some point in the future.
-   * The {@link OkHttpClient#getDispatcher dispatcher} defines when the request
-   * will run: usually immediately unless there are several other requests
-   * currently being executed.
+   * Invokes the request immediately, and blocks until the response can be
+   * processed or is in error.
+   *
+   * <p>The caller may read the response body with the response's
+   * {@link Response#body} method.  To facilitate connection recycling, callers
+   * should always {@link Response.Body#close() close the response body}.
+   *
+   * <p>Note that transport-layer success (receiving a HTTP response code,
+   * headers and body) does not necessarily indicate application-layer success:
+   * {@code response} may still indicate an unhappy HTTP response code like 404
+   * or 500.
+   *
+   * @return null if the call was canceled.
+   *
+   * @throws IOException if the request could not be executed due to a
+   *     connectivity problem or timeout. Because networks can fail during an
+   *     exchange, it is possible that the remote server accepted the request
+   *     before the failure.
+   *
+   * @throws IllegalStateException when the call has already been executed.
+   */
+  public Response execute() throws IOException {
+    synchronized (this) {
+      if (executed) throw new IllegalStateException("Already Executed");
+      executed = true;
+    }
+    Response result = getResponse(); // Since we don't cancel, this won't be null.
+    engine.releaseConnection(); // Transfer ownership of the body to the caller.
+    return result;
+  }
+
+  /**
+   * Schedules the request to be executed at some point in the future.
+   *
+   * <p>The {@link OkHttpClient#getDispatcher dispatcher} defines when the
+   * request will run: usually immediately unless there are several other
+   * requests currently being executed.
    *
    * <p>This client will later call back {@code responseCallback} with either
    * an HTTP response or a failure exception. If you {@link #cancel} a request
    * before it completes the callback will not be invoked.
+   *
+   * @throws IllegalStateException when the call has already been executed.
    */
   public void execute(Response.Callback responseCallback) {
-    dispatcher.enqueue(client, request, responseCallback);
+    synchronized (this) {
+      if (executed) throw new IllegalStateException("Already Executed");
+      executed = true;
+    }
+    dispatcher.enqueue(new AsyncCall(responseCallback));
   }
 
   /**
-   * Cancels the request, if possible. Requests that are already complete cannot
-   * be canceled.
+   * Cancels the request, if possible. Requests that are already complete
+   * cannot be canceled.
    */
   public void cancel() {
-    dispatcher.cancel(request.tag());
+    canceled = true;
+    if (engine != null) engine.disconnect();
+  }
+
+  final class AsyncCall extends NamedRunnable {
+    private final Response.Callback responseCallback;
+
+    private AsyncCall(Response.Callback responseCallback) {
+      super("OkHttp %s", request.urlString());
+      this.responseCallback = responseCallback;
+    }
+
+    String host() {
+      return request.url().getHost();
+    }
+
+    Request request() {
+      return request;
+    }
+
+    Object tag() {
+      return request.tag();
+    }
+
+    Call get() {
+      return Call.this;
+    }
+
+    @Override protected void execute() {
+      boolean signalledCallback = false;
+      try {
+        Response response = getResponse();
+        if (canceled) {
+          signalledCallback = true;
+          responseCallback.onFailure(new Failure.Builder()
+              .request(request)
+              .exception(new CancellationException("Canceled"))
+              .build());
+        } else {
+          signalledCallback = true;
+          responseCallback.onResponse(response);
+        }
+      } catch (IOException e) {
+        if (signalledCallback) return; // Do not signal the callback twice!
+        responseCallback.onFailure(new Failure.Builder()
+            .request(request)
+            .exception(e)
+            .build());
+      } finally {
+        engine.close(); // Close the connection if it isn't already.
+        dispatcher.finished(this);
+      }
+    }
+  }
+
+  /**
+   * Performs the request and returns the response. May return null if this
+   * call was canceled.
+   */
+  private Response getResponse() throws IOException {
+    Response redirectedBy = null;
+
+    // Copy body metadata to the appropriate request headers.
+    Request.Body body = request.body();
+    if (body != null) {
+      MediaType contentType = body.contentType();
+      if (contentType == null) throw new IllegalStateException("contentType == null");
+
+      Request.Builder requestBuilder = request.newBuilder();
+      requestBuilder.header("Content-Type", contentType.toString());
+
+      long contentLength = body.contentLength();
+      if (contentLength != -1) {
+        requestBuilder.header("Content-Length", Long.toString(contentLength));
+        requestBuilder.removeHeader("Transfer-Encoding");
+      } else {
+        requestBuilder.header("Transfer-Encoding", "chunked");
+        requestBuilder.removeHeader("Content-Length");
+      }
+
+      request = requestBuilder.build();
+    }
+
+    // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
+    engine = new HttpEngine(client, request, false, null, null, null);
+
+    while (true) {
+      if (canceled) return null;
+
+      try {
+        engine.sendRequest();
+
+        if (body != null) {
+          BufferedSink sink = engine.getBufferedRequestBody();
+          body.writeTo(sink);
+          sink.flush();
+        }
+
+        engine.readResponse();
+      } catch (IOException e) {
+        HttpEngine retryEngine = engine.recover(e, null);
+        if (retryEngine != null) {
+          engine = retryEngine;
+          continue;
+        }
+
+        // Give up; recovery is not possible.
+        throw e;
+      }
+
+      Response response = engine.getResponse();
+      Request followUp = engine.followUpRequest();
+
+      if (followUp == null) {
+        engine.releaseConnection();
+        return response.newBuilder()
+            .body(new RealResponseBody(response, engine.getResponseBody()))
+            .redirectedBy(redirectedBy)
+            .build();
+      }
+
+      if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
+        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      }
+
+      // TODO: drop from POST to GET when redirected? HttpURLConnection does.
+      // TODO: confirm that Cookies are not retained across hosts.
+
+      if (!engine.sameConnection(followUp)) {
+        engine.releaseConnection();
+      }
+
+      Connection connection = engine.close();
+      redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
+      request = followUp;
+      engine = new HttpEngine(client, request, false, connection, null, null);
+    }
+  }
+
+  private static class RealResponseBody extends Response.Body {
+    private final Response response;
+    private final BufferedSource source;
+
+    RealResponseBody(Response response, BufferedSource source) {
+      this.response = response;
+      this.source = source;
+    }
+
+    @Override public MediaType contentType() {
+      String contentType = response.header("Content-Type");
+      return contentType != null ? MediaType.parse(contentType) : null;
+    }
+
+    @Override public long contentLength() {
+      return OkHeaders.contentLength(response);
+    }
+
+    @Override public BufferedSource source() {
+      return source;
+    }
   }
 }

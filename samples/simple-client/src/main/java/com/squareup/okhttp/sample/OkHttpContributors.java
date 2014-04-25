@@ -31,7 +31,7 @@ public class OkHttpContributors {
         .build();
 
     // Execute the request and retrieve the response.
-    Response response = client.execute(request);
+    Response response = client.newCall(request).execute();
 
     // Deserialize HTTP response to concrete type.
     Reader body = response.body().charStream();
