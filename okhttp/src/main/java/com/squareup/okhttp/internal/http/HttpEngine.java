@@ -802,7 +802,16 @@ public final class HttpEngine {
         boolean sameProtocol = url.getProtocol().equals(request.url().getProtocol());
         if (!sameProtocol && !client.getFollowSslRedirects()) return null;
 
-        return request.newBuilder().url(url).build();
+        // Redirects don't include a request body.
+        Request.Builder requestBuilder = originalRequest.newBuilder();
+        if (HttpMethod.hasRequestBody(originalRequest.method())) {
+          requestBuilder.method("GET", null);
+          requestBuilder.removeHeader("Transfer-Encoding");
+          requestBuilder.removeHeader("Content-Length");
+          requestBuilder.removeHeader("Content-Type");
+        }
+
+        return requestBuilder.url(url).build();
 
       default:
         return null;
