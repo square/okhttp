@@ -13,7 +13,7 @@ public class GetExample {
         .url("https://raw.github.com/square/okhttp/master/README.md")
         .build();
 
-    Response response = client.execute(request);
+    Response response = client.newCall(request).execute();
     System.out.println(response.body().string());
   }
 

@@ -80,7 +80,7 @@ public final class Crawler {
     Request request = new Request.Builder()
         .url(url)
         .build();
-    Response response = client.execute(request);
+    Response response = client.newCall(request).execute();
     String responseSource = response.header(OkHeaders.RESPONSE_SOURCE);
     int responseCode = response.code();
 

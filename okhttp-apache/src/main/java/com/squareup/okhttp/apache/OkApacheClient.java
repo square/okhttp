@@ -159,7 +159,7 @@ public final class OkApacheClient implements HttpClient {
   @Override public HttpResponse execute(HttpHost host, HttpRequest request, HttpContext context)
       throws IOException {
     Request okRequest = transformRequest(request);
-    Response okResponse = client.execute(okRequest);
+    Response okResponse = client.newCall(okRequest).execute();
     return transformResponse(okResponse);
   }
 

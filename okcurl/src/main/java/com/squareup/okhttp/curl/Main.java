@@ -126,7 +126,7 @@ public class Main extends HelpOption implements Runnable {
     client = createClient();
     Request request = createRequest();
     try {
-      Response response = client.execute(request);
+      Response response = client.newCall(request).execute();
       if (showHeaders) {
         System.out.println(StatusLine.get(response));
         Headers headers = response.headers();

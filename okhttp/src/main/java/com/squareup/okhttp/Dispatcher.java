@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.Call.AsyncCall;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import java.util.ArrayDeque;
@@ -28,22 +29,22 @@ import java.util.concurrent.TimeUnit;
 /**
  * Policy on when async requests are executed.
  *
- * <p>Each dispatcher uses an {@link ExecutorService} to run jobs internally. If you
+ * <p>Each dispatcher uses an {@link ExecutorService} to run calls internally. If you
  * supply your own executor, it should be able to run {@linkplain #getMaxRequests the
- * configured maximum} number of jobs concurrently.
+ * configured maximum} number of calls concurrently.
  */
 public final class Dispatcher {
   private int maxRequests = 64;
   private int maxRequestsPerHost = 5;
 
-  /** Executes jobs. Created lazily. */
+  /** Executes calls. Created lazily. */
   private ExecutorService executorService;
 
-  /** Ready jobs in the order they'll be run. */
-  private final Deque<Job> readyJobs = new ArrayDeque<Job>();
+  /** Ready calls in the order they'll be run. */
+  private final Deque<AsyncCall> readyCalls = new ArrayDeque<AsyncCall>();
 
-  /** Running jobs. Includes canceled jobs that haven't finished yet. */
-  private final Deque<Job> runningJobs = new ArrayDeque<Job>();
+  /** Running calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<AsyncCall> runningCalls = new ArrayDeque<AsyncCall>();
 
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
@@ -62,7 +63,7 @@ public final class Dispatcher {
 
   /**
    * Set the maximum number of requests to execute concurrently. Above this
-   * requests queue in memory, waiting for the running jobs to complete.
+   * requests queue in memory, waiting for the running calls to complete.
    *
    * <p>If more than {@code maxRequests} requests are in flight when this is
    * invoked, those requests will remain in flight.
@@ -72,7 +73,7 @@ public final class Dispatcher {
       throw new IllegalArgumentException("max < 1: " + maxRequests);
     }
     this.maxRequests = maxRequests;
-    promoteJobs();
+    promoteCalls();
   }
 
   public synchronized int getMaxRequests() {
@@ -93,70 +94,65 @@ public final class Dispatcher {
       throw new IllegalArgumentException("max < 1: " + maxRequestsPerHost);
     }
     this.maxRequestsPerHost = maxRequestsPerHost;
-    promoteJobs();
+    promoteCalls();
   }
 
   public synchronized int getMaxRequestsPerHost() {
     return maxRequestsPerHost;
   }
 
-  synchronized void enqueue(OkHttpClient client, Request request, Response.Callback callback) {
-    // Copy the client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is executed.
-    client = client.copyWithDefaults();
-    Job job = new Job(this, client, request, callback);
-
-    if (runningJobs.size() < maxRequests && runningJobsForHost(job) < maxRequestsPerHost) {
-      runningJobs.add(job);
-      getExecutorService().execute(job);
+  synchronized void enqueue(AsyncCall call) {
+    if (runningCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
+      runningCalls.add(call);
+      getExecutorService().execute(call);
     } else {
-      readyJobs.add(job);
+      readyCalls.add(call);
     }
   }
 
-  /** Cancel all jobs with the tag {@code tag}. */
+  /** Cancel all calls with the tag {@code tag}. */
   public synchronized void cancel(Object tag) {
-    for (Iterator<Job> i = readyJobs.iterator(); i.hasNext(); ) {
+    for (Iterator<AsyncCall> i = readyCalls.iterator(); i.hasNext(); ) {
       if (Util.equal(tag, i.next().tag())) i.remove();
     }
 
-    for (Job job : runningJobs) {
-      if (Util.equal(tag, job.tag())) {
-        job.canceled = true;
-        HttpEngine engine = job.engine;
+    for (AsyncCall call : runningCalls) {
+      if (Util.equal(tag, call.tag())) {
+        call.get().canceled = true;
+        HttpEngine engine = call.get().engine;
         if (engine != null) engine.disconnect();
       }
     }
   }
 
-  /** Used by {@code Job#run} to signal completion. */
-  synchronized void finished(Job job) {
-    if (!runningJobs.remove(job)) throw new AssertionError("Job wasn't running!");
-    promoteJobs();
+  /** Used by {@code AsyncCall#run} to signal completion. */
+  synchronized void finished(AsyncCall call) {
+    if (!runningCalls.remove(call)) throw new AssertionError("AsyncCall wasn't running!");
+    promoteCalls();
   }
 
-  private void promoteJobs() {
-    if (runningJobs.size() >= maxRequests) return; // Already running max capacity.
-    if (readyJobs.isEmpty()) return; // No ready jobs to promote.
+  private void promoteCalls() {
+    if (runningCalls.size() >= maxRequests) return; // Already running max capacity.
+    if (readyCalls.isEmpty()) return; // No ready calls to promote.
 
-    for (Iterator<Job> i = readyJobs.iterator(); i.hasNext(); ) {
-      Job job = i.next();
+    for (Iterator<AsyncCall> i = readyCalls.iterator(); i.hasNext(); ) {
+      AsyncCall call = i.next();
 
-      if (runningJobsForHost(job) < maxRequestsPerHost) {
+      if (runningCallsForHost(call) < maxRequestsPerHost) {
         i.remove();
-        runningJobs.add(job);
-        getExecutorService().execute(job);
+        runningCalls.add(call);
+        getExecutorService().execute(call);
       }
 
-      if (runningJobs.size() >= maxRequests) return; // Reached max capacity.
+      if (runningCalls.size() >= maxRequests) return; // Reached max capacity.
     }
   }
 
-  /** Returns the number of running jobs that share a host with {@code job}. */
-  private int runningJobsForHost(Job job) {
+  /** Returns the number of running calls that share a host with {@code call}. */
+  private int runningCallsForHost(AsyncCall call) {
     int result = 0;
-    for (Job j : runningJobs) {
-      if (j.host().equals(job.host())) result++;
+    for (AsyncCall c : runningCalls) {
+      if (c.host().equals(call.host())) result++;
     }
     return result;
   }

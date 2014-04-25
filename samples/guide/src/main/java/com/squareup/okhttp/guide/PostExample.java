@@ -17,7 +17,7 @@ public class PostExample {
         .method("POST", body)
         .build();
 
-    Response response = client.execute(request);
+    Response response = client.newCall(request).execute();
     System.out.println(response.body().string());
   }
 

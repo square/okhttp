@@ -21,7 +21,6 @@ import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.ResponseCacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
-import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -353,38 +352,13 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Invokes {@code request} immediately, and blocks until the response can be
-   * processed or is in error.
-   *
-   * <p>The caller may read the response body with the response's
-   * {@link Response#body} method.  To facilitate connection recycling, callers
-   * should always {@link Response.Body#close() close the response body}.
-   *
-   * <p>Note that transport-layer success (receiving a HTTP response code,
-   * headers and body) does not necessarily indicate application-layer
-   * success: {@code response} may still indicate an unhappy HTTP response
-   * code like 404 or 500.
-   *
-   * @throws IOException if the request could not be executed due to a
-   *     connectivity problem or timeout. Because networks can fail during an
-   *     exchange, it is possible that the remote server accepted the request
-   *     before the failure.
+   * Prepares the {@code request} to be executed at some point in the future.
    */
-  public Response execute(Request request) throws IOException {
+  public Call newCall(Request request) {
     // Copy the client. Otherwise changes (socket factory, redirect policy,
     // etc.) may incorrectly be reflected in the request when it is executed.
     OkHttpClient client = copyWithDefaults();
-    Job job = new Job(dispatcher, client, request, null);
-    Response result = job.getResponse(); // Since we don't cancel, this won't be null.
-    job.engine.releaseConnection(); // Transfer ownership of the body to the caller.
-    return result;
-  }
-
-  /**
-   * Prepares the {@code request} to be executed at some point in the future.
-   */
-  public Call call(Request request) {
-    return new Call(this, dispatcher, request);
+    return new Call(client, dispatcher, request);
   }
 
   /**
