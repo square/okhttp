@@ -20,7 +20,6 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.util.concurrent.CancellationException;
 import okio.BufferedSink;
 import okio.BufferedSource;
 
@@ -63,12 +62,10 @@ public final class Call {
    * {@code response} may still indicate an unhappy HTTP response code like 404
    * or 500.
    *
-   * @throws CancellationException if the call was canceled.
-   *
-   * @throws IOException if the request could not be executed due to a
-   *     connectivity problem or timeout. Because networks can fail during an
-   *     exchange, it is possible that the remote server accepted the request
-   *     before the failure.
+   * @throws IOException if the request could not be executed due to
+   *     cancellation, a connectivity problem or timeout. Because networks can
+   *     fail during an exchange, it is possible that the remote server
+   *     accepted the request before the failure.
    *
    * @throws IllegalStateException when the call has already been executed.
    */
@@ -79,7 +76,7 @@ public final class Call {
     }
     Response result = getResponse();
     engine.releaseConnection(); // Transfer ownership of the body to the caller.
-    if (result == null) throw new CancellationException("Cancelled");
+    if (result == null) throw new IOException("Canceled");
     return result;
   }
 
@@ -145,7 +142,7 @@ public final class Call {
           signalledCallback = true;
           responseCallback.onFailure(new Failure.Builder()
               .request(request)
-              .exception(new CancellationException("Canceled"))
+              .exception(new IOException("Canceled"))
               .build());
         } else {
           signalledCallback = true;

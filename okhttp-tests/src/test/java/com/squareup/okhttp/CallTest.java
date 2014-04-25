@@ -29,7 +29,6 @@ import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -623,7 +622,7 @@ public final class CallTest {
     try {
       call.execute();
       fail();
-    } catch (CancellationException e){
+    } catch (IOException e){
     }
     assertEquals(0, server.getRequestCount());
   }
