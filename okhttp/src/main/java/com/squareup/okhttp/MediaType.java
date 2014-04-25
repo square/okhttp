@@ -48,6 +48,7 @@ public final class MediaType {
    * well-formed media type.
    */
   public static MediaType parse(String string) {
+    if (string == null) return null;
     Matcher typeSubtype = TYPE_SUBTYPE.matcher(string);
     if (!typeSubtype.lookingAt()) return null;
     String type = typeSubtype.group(1).toLowerCase(Locale.US);
