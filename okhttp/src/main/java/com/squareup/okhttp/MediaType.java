@@ -20,6 +20,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import android.text.TextUtils;
+
 /**
  * An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type,
  * appropriate to describe the content type of an HTTP request or response body.
@@ -101,6 +103,14 @@ public final class MediaType {
    */
   public Charset charset(Charset defaultValue) {
     return charset != null ? Charset.forName(charset) : defaultValue;
+  }
+  
+  /**
+   * Returns the MediaType has the same type/subtype as this media type,
+   * appropriate for matching Accept with the received Content-Type.
+   */
+  public boolean equalsType(MediaType o) {
+    return o != null && TextUtils.equals(type, o.type) && TextUtils.equals(subtype, o.subtype);
   }
 
   /**
