@@ -63,7 +63,7 @@ public final class Call {
    * {@code response} may still indicate an unhappy HTTP response code like 404
    * or 500.
    *
-   * @return null if the call was canceled.
+   * @throws CancellationException if the call was canceled.
    *
    * @throws IOException if the request could not be executed due to a
    *     connectivity problem or timeout. Because networks can fail during an
@@ -77,8 +77,9 @@ public final class Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    Response result = getResponse(); // Since we don't cancel, this won't be null.
+    Response result = getResponse();
     engine.releaseConnection(); // Transfer ownership of the body to the caller.
+    if (result == null) throw new CancellationException("Cancelled");
     return result;
   }
 
