@@ -100,11 +100,11 @@ public final class Dispatcher {
     return maxRequestsPerHost;
   }
 
-  synchronized void enqueue(OkHttpClient client, Request request, Response.Receiver receiver) {
+  synchronized void enqueue(OkHttpClient client, Request request, Response.Callback callback) {
     // Copy the client. Otherwise changes (socket factory, redirect policy,
     // etc.) may incorrectly be reflected in the request when it is executed.
     client = client.copyWithDefaults();
-    Job job = new Job(this, client, request, receiver);
+    Job job = new Job(this, client, request, callback);
 
     if (runningJobs.size() < maxRequests && runningJobsForHost(job) < maxRequestsPerHost) {
       runningJobs.add(job);

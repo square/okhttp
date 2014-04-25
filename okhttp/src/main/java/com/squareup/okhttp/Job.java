@@ -29,7 +29,7 @@ import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
 final class Job extends NamedRunnable {
   private final Dispatcher dispatcher;
   private final OkHttpClient client;
-  private final Response.Receiver responseReceiver;
+  private final Response.Callback responseCallback;
   private int redirectionCount;
 
   volatile boolean canceled;
@@ -39,12 +39,12 @@ final class Job extends NamedRunnable {
   HttpEngine engine;
 
   public Job(Dispatcher dispatcher, OkHttpClient client, Request request,
-      Response.Receiver responseReceiver) {
+      Response.Callback responseCallback) {
     super("OkHttp %s", request.urlString());
     this.dispatcher = dispatcher;
     this.client = client;
     this.request = request;
-    this.responseReceiver = responseReceiver;
+    this.responseCallback = responseCallback;
   }
 
   String host() {
@@ -60,22 +60,22 @@ final class Job extends NamedRunnable {
   }
 
   @Override protected void execute() {
-    boolean signalledReceiver = false;
+    boolean signalledCallback = false;
     try {
       Response response = getResponse();
       if (canceled) {
-        signalledReceiver = true;
-        responseReceiver.onFailure(new Failure.Builder()
+        signalledCallback = true;
+        responseCallback.onFailure(new Failure.Builder()
             .request(request)
             .exception(new CancellationException("Canceled"))
             .build());
       } else {
-        signalledReceiver = true;
-        responseReceiver.onResponse(response);
+        signalledCallback = true;
+        responseCallback.onResponse(response);
       }
     } catch (IOException e) {
-      if (signalledReceiver) return; // Do not signal the receiver twice!
-      responseReceiver.onFailure(new Failure.Builder()
+      if (signalledCallback) return; // Do not signal the callback twice!
+      responseCallback.onFailure(new Failure.Builder()
           .request(request)
           .exception(e)
           .build());

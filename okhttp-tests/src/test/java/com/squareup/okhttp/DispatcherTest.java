@@ -14,7 +14,7 @@ import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
   RecordingExecutor executor = new RecordingExecutor();
-  RecordingReceiver receiver = new RecordingReceiver();
+  RecordingCallback callback = new RecordingCallback();
   Dispatcher dispatcher = new Dispatcher(executor);
   OkHttpClient client = new OkHttpClient().setDispatcher(dispatcher);
 
@@ -40,53 +40,53 @@ public final class DispatcherTest {
   }
 
   @Test public void enqueuedJobsRunImmediately() throws Exception {
-    client.enqueue(newRequest("http://a/1"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
     executor.assertJobs("http://a/1");
   }
 
   @Test public void maxRequestsEnforced() throws Exception {
     dispatcher.setMaxRequests(3);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
-    client.enqueue(newRequest("http://b/1"), receiver);
-    client.enqueue(newRequest("http://b/2"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
+    client.call(newRequest("http://b/1")).execute(callback);
+    client.call(newRequest("http://b/2")).execute(callback);
     executor.assertJobs("http://a/1", "http://a/2", "http://b/1");
   }
 
   @Test public void maxPerHostEnforced() throws Exception {
     dispatcher.setMaxRequestsPerHost(2);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
-    client.enqueue(newRequest("http://a/3"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
+    client.call(newRequest("http://a/3")).execute(callback);
     executor.assertJobs("http://a/1", "http://a/2");
   }
 
   @Test public void increasingMaxRequestsPromotesJobsImmediately() throws Exception {
     dispatcher.setMaxRequests(2);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://b/1"), receiver);
-    client.enqueue(newRequest("http://c/1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
-    client.enqueue(newRequest("http://b/2"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://b/1")).execute(callback);
+    client.call(newRequest("http://c/1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
+    client.call(newRequest("http://b/2")).execute(callback);
     dispatcher.setMaxRequests(4);
     executor.assertJobs("http://a/1", "http://b/1", "http://c/1", "http://a/2");
   }
 
   @Test public void increasingMaxPerHostPromotesJobsImmediately() throws Exception {
     dispatcher.setMaxRequestsPerHost(2);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
-    client.enqueue(newRequest("http://a/3"), receiver);
-    client.enqueue(newRequest("http://a/4"), receiver);
-    client.enqueue(newRequest("http://a/5"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
+    client.call(newRequest("http://a/3")).execute(callback);
+    client.call(newRequest("http://a/4")).execute(callback);
+    client.call(newRequest("http://a/5")).execute(callback);
     dispatcher.setMaxRequestsPerHost(4);
     executor.assertJobs("http://a/1", "http://a/2", "http://a/3", "http://a/4");
   }
 
   @Test public void oldJobFinishesNewJobCanRunDifferentHost() throws Exception {
     dispatcher.setMaxRequests(1);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://b/1"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://b/1")).execute(callback);
     executor.finishJob("http://a/1");
     executor.assertJobs("http://b/1");
   }
@@ -94,27 +94,27 @@ public final class DispatcherTest {
   @Test public void oldJobFinishesNewJobWithSameHostStarts() throws Exception {
     dispatcher.setMaxRequests(2);
     dispatcher.setMaxRequestsPerHost(1);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://b/1"), receiver);
-    client.enqueue(newRequest("http://b/2"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://b/1")).execute(callback);
+    client.call(newRequest("http://b/2")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
     executor.finishJob("http://a/1");
     executor.assertJobs("http://b/1", "http://a/2");
   }
 
   @Test public void oldJobFinishesNewJobCantRunDueToHostLimit() throws Exception {
     dispatcher.setMaxRequestsPerHost(1);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://b/1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://b/1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
     executor.finishJob("http://b/1");
     executor.assertJobs("http://a/1");
   }
 
   @Test public void cancelingReadyJobPreventsItFromStarting() throws Exception {
     dispatcher.setMaxRequestsPerHost(1);
-    client.enqueue(newRequest("http://a/1"), receiver);
-    client.enqueue(newRequest("http://a/2", "tag1"), receiver);
+    client.call(newRequest("http://a/1")).execute(callback);
+    client.call(newRequest("http://a/2", "tag1")).execute(callback);
     dispatcher.cancel("tag1");
     executor.finishJob("http://a/1");
     executor.assertJobs();
@@ -122,8 +122,8 @@ public final class DispatcherTest {
 
   @Test public void cancelingRunningJobTakesNoEffectUntilJobFinishes() throws Exception {
     dispatcher.setMaxRequests(1);
-    client.enqueue(newRequest("http://a/1", "tag1"), receiver);
-    client.enqueue(newRequest("http://a/2"), receiver);
+    client.call(newRequest("http://a/1", "tag1")).execute(callback);
+    client.call(newRequest("http://a/2")).execute(callback);
     dispatcher.cancel("tag1");
     executor.assertJobs("http://a/1");
     executor.finishJob("http://a/1");

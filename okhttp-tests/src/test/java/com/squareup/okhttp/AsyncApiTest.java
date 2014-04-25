@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 public final class AsyncApiTest {
   private MockWebServer server = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
-  private RecordingReceiver receiver = new RecordingReceiver();
+  private RecordingCallback callback = new RecordingCallback();
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
   private HttpResponseCache cache;
@@ -68,9 +68,9 @@ public final class AsyncApiTest {
         .url(server.getUrl("/"))
         .header("User-Agent", "AsyncApiTest")
         .build();
-    client.enqueue(request, receiver);
+    client.call(request).execute(callback);
 
-    receiver.await(request.url())
+    callback.await(request.url())
         .assertCode(200)
         .assertContainsHeaders("Content-Type: text/plain")
         .assertBody("abc");
@@ -84,14 +84,14 @@ public final class AsyncApiTest {
     server.enqueue(new MockResponse().setBody("ghi"));
     server.play();
 
-    client.enqueue(new Request.Builder().url(server.getUrl("/a")).build(), receiver);
-    receiver.await(server.getUrl("/a")).assertBody("abc");
+    client.call(new Request.Builder().url(server.getUrl("/a")).build()).execute(callback);
+    callback.await(server.getUrl("/a")).assertBody("abc");
 
-    client.enqueue(new Request.Builder().url(server.getUrl("/b")).build(), receiver);
-    receiver.await(server.getUrl("/b")).assertBody("def");
+    client.call(new Request.Builder().url(server.getUrl("/b")).build()).execute(callback);
+    callback.await(server.getUrl("/b")).assertBody("def");
 
-    client.enqueue(new Request.Builder().url(server.getUrl("/c")).build(), receiver);
-    receiver.await(server.getUrl("/c")).assertBody("ghi");
+    client.call(new Request.Builder().url(server.getUrl("/c")).build()).execute(callback);
+    callback.await(server.getUrl("/c")).assertBody("ghi");
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(1, server.takeRequest().getSequenceNumber());
@@ -111,9 +111,9 @@ public final class AsyncApiTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request, receiver);
+    client.call(request).execute(callback);
 
-    receiver.await(request.url()).assertHandshake();
+    callback.await(request.url()).assertHandshake();
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
@@ -128,9 +128,9 @@ public final class AsyncApiTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request, receiver);
+    client.call(request).execute(callback);
 
-    receiver.await(request.url()).assertBody("abc");
+    callback.await(request.url()).assertBody("abc");
   }
 
   @Test public void post() throws Exception {
@@ -141,9 +141,9 @@ public final class AsyncApiTest {
         .url(server.getUrl("/"))
         .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
         .build();
-    client.enqueue(request, receiver);
+    client.call(request).execute(callback);
 
-    receiver.await(request.url())
+    callback.await(request.url())
         .assertCode(200)
         .assertBody("abc");
 
@@ -165,15 +165,15 @@ public final class AsyncApiTest {
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request1, receiver);
-    receiver.await(request1.url()).assertCode(200).assertBody("A");
+    client.call(request1).execute(callback);
+    callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request2, receiver);
-    receiver.await(request2.url()).assertCode(200).assertBody("A");
+    client.call(request2).execute(callback);
+    callback.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
@@ -187,15 +187,15 @@ public final class AsyncApiTest {
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request1, receiver);
-    receiver.await(request1.url()).assertCode(200).assertBody("A");
+    client.call(request1).execute(callback);
+    callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.enqueue(request2, receiver);
-    receiver.await(request2.url()).assertCode(200).assertBody("B");
+    client.call(request2).execute(callback);
+    callback.await(request2.url()).assertCode(200).assertBody("B");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
@@ -214,9 +214,9 @@ public final class AsyncApiTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.enqueue(request, receiver);
+    client.call(request).execute(callback);
 
-    receiver.await(server.getUrl("/c"))
+    callback.await(server.getUrl("/c"))
         .assertCode(200)
         .assertBody("C")
         .redirectedBy()
@@ -242,8 +242,8 @@ public final class AsyncApiTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
-    client.enqueue(request, receiver);
-    receiver.await(server.getUrl("/20"))
+    client.call(request).execute(callback);
+    callback.await(server.getUrl("/20"))
         .assertCode(200)
         .assertBody("Success!");
   }
@@ -258,8 +258,8 @@ public final class AsyncApiTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
-    client.enqueue(request, receiver);
-    receiver.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
+    client.call(request).execute(callback);
+    callback.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
   }
 
   /**
@@ -278,16 +278,16 @@ public final class AsyncApiTest {
     server.play();
 
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.enqueue(requestA, receiver);
+    client.call(requestA).execute(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
     Request requestB = new Request.Builder().url(server.getUrl("/b")).tag("request B").build();
-    client.enqueue(requestB, receiver);
+    client.call(requestB).execute(callback);
     assertEquals("/b", server.takeRequest().getPath());
 
-    receiver.await(requestA.url()).assertBody("A");
-    // At this point we know the receiver is ready, and that it will receive a cancel failure.
-    receiver.await(requestB.url()).assertFailure("Canceled");
+    callback.await(requestA.url()).assertBody("A");
+    // At this point we know the callback is ready, and that it will receive a cancel failure.
+    callback.await(requestB.url()).assertFailure("Canceled");
   }
 
   @Test public void canceledBeforeIOSignalsOnFailure_HTTP_2() throws Exception {
@@ -311,10 +311,10 @@ public final class AsyncApiTest {
     server.play();
 
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.enqueue(requestA, receiver);
+    client.call(requestA).execute(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    receiver.await(requestA.url()).assertFailure("Canceled");
+    callback.await(requestA.url()).assertFailure("Canceled");
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
@@ -340,14 +340,15 @@ public final class AsyncApiTest {
     final AtomicReference<Failure> failureRef = new AtomicReference<Failure>();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.enqueue(request, new Response.Receiver() {
+    final Call call = client.call(request);
+    call.execute(new Response.Callback() {
       @Override public void onFailure(Failure failure) {
         latch.countDown();
         failureRef.set(failure); // This should never occur as we don't signal twice.
       }
 
       @Override public void onResponse(Response response) throws IOException {
-        client.cancel("request A");
+        call.cancel();
         try {
           bodyRef.set(response.body().string());
         } catch (IOException e) { // It is ok if this broke the stream.
@@ -382,7 +383,7 @@ public final class AsyncApiTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.enqueue(request, new Response.Receiver() {
+    client.call(request).execute(new Response.Callback() {
       @Override public void onFailure(Failure failure) {
         throw new AssertionError();
       }
@@ -393,11 +394,11 @@ public final class AsyncApiTest {
         assertEquals('c', bytes.read());
 
         // This request will share a connection with 'A' cause it's all done.
-        client.enqueue(new Request.Builder().url(server.getUrl("/b")).build(), receiver);
+        client.call(new Request.Builder().url(server.getUrl("/b")).build()).execute(callback);
       }
     });
 
-    receiver.await(server.getUrl("/b")).assertCode(200).assertBody("def");
+    callback.await(server.getUrl("/b")).assertCode(200).assertBody("def");
     assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reuse!
   }
