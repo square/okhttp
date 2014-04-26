@@ -35,7 +35,7 @@ Testing
 ### On the Desktop
 
 Run OkHttp tests on the desktop with Maven. Running SPDY tests on the desktop uses
-[Jetty-NPN][3] which requires OpenJDK 7+.
+[Jetty-NPN][3] which requires OpenJDK 7.
 
 ```
 mvn clean test
@@ -101,6 +101,6 @@ License
 
  [1]: http://square.github.io/okhttp
  [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
- [3]: http://wiki.eclipse.org/Jetty/Feature/NPN
+ [3]: https://github.com/jetty-project/jetty-npn
  [4]: https://code.google.com/p/vogar/
  [5]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
