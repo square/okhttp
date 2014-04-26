@@ -620,7 +620,7 @@ public final class HttpEngine {
       } else {
         requestBodyOut.close();
       }
-      if (requestBodyOut instanceof RetryableSink) {
+      if (requestBodyOut instanceof RetryableSink && !Util.emptySink().equals(requestBodyOut)) {
         transport.writeRequestBody((RetryableSink) requestBodyOut);
       }
     }

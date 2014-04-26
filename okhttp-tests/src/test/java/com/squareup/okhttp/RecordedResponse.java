@@ -15,14 +15,9 @@
  */
 package com.squareup.okhttp;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 /**
  * A received response or failure recorded by the response recorder.
@@ -45,15 +40,8 @@ public class RecordedResponse {
     return this;
   }
 
-  public RecordedResponse assertContainsHeaders(String... expectedHeaders) {
-    List<String> actualHeaders = new ArrayList<String>();
-    Headers headers = response.headers();
-    for (int i = 0; i < headers.size(); i++) {
-      actualHeaders.add(headers.name(i) + ": " + headers.value(i));
-    }
-    if (!actualHeaders.containsAll(Arrays.asList(expectedHeaders))) {
-      fail("Expected: " + actualHeaders + "\nto contain: " + Arrays.toString(expectedHeaders));
-    }
+  public RecordedResponse assertHeader(String name, String value) {
+    assertEquals(value, response.header(name));
     return this;
   }
 
