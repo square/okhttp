@@ -17,27 +17,29 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
-import org.eclipse.jetty.npn.NextProtoNego;
 
 import static com.squareup.okhttp.internal.Util.headerEntries;
 
-/** A basic SPDY server that serves the contents of a local directory. */
+/** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
+  private final List<Protocol> spdyProtocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3);
+
   private final File baseDirectory;
   private SSLSocketFactory sslSocketFactory;
+  private Protocol protocol;
 
   public SpdyServer(File baseDirectory) {
     this.baseDirectory = baseDirectory;
@@ -56,7 +58,7 @@ public final class SpdyServer implements IncomingStreamHandler {
       if (sslSocketFactory != null) {
         socket = doSsl(socket);
       }
-      new SpdyConnection.Builder(false, socket).handler(this).build();
+      new SpdyConnection.Builder(false, socket).protocol(protocol).handler(this).build();
     }
   }
 
@@ -65,17 +67,13 @@ public final class SpdyServer implements IncomingStreamHandler {
         (SSLSocket) sslSocketFactory.createSocket(socket, socket.getInetAddress().getHostAddress(),
             socket.getPort(), true);
     sslSocket.setUseClientMode(false);
-    NextProtoNego.put(sslSocket, new NextProtoNego.ServerProvider() {
-      @Override public void unsupported() {
-        System.out.println("UNSUPPORTED");
-      }
-      @Override public List<String> protocols() {
-        return Arrays.asList(Protocol.SPDY_3.toString());
-      }
-      @Override public void protocolSelected(String protocol) {
-        System.out.println("PROTOCOL SELECTED: " + protocol);
-      }
-    });
+    Platform.get().setNpnProtocols(sslSocket, spdyProtocols);
+    sslSocket.startHandshake();
+    String protocolString = Platform.get().getNpnSelectedProtocol(sslSocket);
+    protocol = protocolString != null ? Protocol.get(protocolString) : null;
+    if (protocol == null || !spdyProtocols.contains(protocol)) {
+      throw new IllegalStateException("Protocol " + protocol + " unsupported");
+    }
     return sslSocket;
   }
 

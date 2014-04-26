@@ -24,6 +24,7 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.internal.spdy.Http20Draft10;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
 import io.airlift.command.HelpOption;
@@ -35,6 +36,11 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -102,6 +108,9 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = { "-i", "--include" }, description = "Include protocol headers in the output")
   public boolean showHeaders;
 
+  @Option(name = "--frames", description = "Log HTTP/2 frames to STDERR")
+  public boolean showHttp2Frames;
+
   @Option(name = { "-e", "--referer" }, description = "Referer URL")
   public String referer;
 
@@ -121,6 +130,10 @@ public class Main extends HelpOption implements Runnable {
       System.out.println(NAME + " " + versionString());
       System.out.println("Protocols: " + protocols());
       return;
+    }
+
+    if (showHttp2Frames) {
+      enableHttp2FrameLogging();
     }
 
     client = createClient();
@@ -248,5 +261,18 @@ public class Main extends HelpOption implements Runnable {
         return true;
       }
     };
+  }
+
+  private static void enableHttp2FrameLogging() {
+    Logger logger = Logger.getLogger(Http20Draft10.class.getName());
+    logger.setLevel(Level.FINE);
+    ConsoleHandler handler = new ConsoleHandler();
+    handler.setLevel(Level.FINE);
+    handler.setFormatter(new SimpleFormatter() {
+      @Override public String format(LogRecord record) {
+        return String.format("%s%n", record.getMessage());
+      }
+    });
+    logger.addHandler(handler);
   }
 }
