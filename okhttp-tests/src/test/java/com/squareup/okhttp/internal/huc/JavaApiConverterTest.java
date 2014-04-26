@@ -209,7 +209,7 @@ public class JavaApiConverterTest {
   @Test public void createOkResponse_fromCacheResponse() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
     URI uri = new URI("http://foo/bar");
-    Request request = new Request.Builder().url(uri.toURL()).method("GET", null).build();
+    Request request = new Request.Builder().url(uri.toURL()).build();
     CacheResponse cacheResponse = new CacheResponse() {
       @Override
       public Map<String, List<String>> getHeaders() throws IOException {
@@ -244,7 +244,7 @@ public class JavaApiConverterTest {
     final Principal serverPrincipal = SERVER_CERT.getSubjectX500Principal();
     final List<Certificate> serverCertificates = Arrays.<Certificate>asList(SERVER_CERT);
     URI uri = new URI("https://foo/bar");
-    Request request = new Request.Builder().url(uri.toURL()).method("GET", null).build();
+    Request request = new Request.Builder().url(uri.toURL()).build();
     SecureCacheResponse cacheResponse = new SecureCacheResponse() {
       @Override
       public Map<String, List<String>> getHeaders() throws IOException {
@@ -517,7 +517,7 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_accessibleRequestInfo_GET() throws Exception {
     Request okRequest = createArbitraryOkRequest().newBuilder()
-        .method("GET", null)
+        .get()
         .build();
     Response okResponse = createArbitraryOkResponse(okRequest);
     HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
@@ -529,7 +529,7 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_accessibleRequestInfo_POST() throws Exception {
     Request okRequest = createArbitraryOkRequest().newBuilder()
-        .method("POST", createRequestBody("PostBody"))
+        .post(createRequestBody("PostBody"))
         .build();
     Response okResponse = createArbitraryOkResponse(okRequest);
     HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
@@ -541,7 +541,7 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_https_extraHttpsMethods() throws Exception {
     Request okRequest = createArbitraryOkRequest().newBuilder()
-        .method("GET", null)
+        .get()
         .url("https://secure/request")
         .build();
     Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
@@ -584,7 +584,7 @@ public class JavaApiConverterTest {
     Request okRequest =
         createArbitraryOkRequest().newBuilder()
             .url("http://insecure/request")
-            .method("GET", null)
+            .get()
             .build();
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)
@@ -607,7 +607,7 @@ public class JavaApiConverterTest {
     Request okRequest =
         createArbitraryOkRequest().newBuilder()
             .url("http://insecure/request")
-            .method("POST", createRequestBody("RequestBody"))
+            .post(createRequestBody("RequestBody"))
             .build();
     Response.Body responseBody = createResponseBody("ResponseBody");
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
@@ -631,7 +631,7 @@ public class JavaApiConverterTest {
     Request okRequest =
         createArbitraryOkRequest().newBuilder()
             .url("https://secure/request")
-            .method("POST", createRequestBody("RequestBody") )
+            .post(createRequestBody("RequestBody") )
             .build();
     Response.Body responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
@@ -754,10 +754,7 @@ public class JavaApiConverterTest {
   }
 
   private static Request createArbitraryOkRequest() {
-    return new Request.Builder()
-        .url("http://arbitrary/url")
-        .method("GET", null)
-        .build();
+    return new Request.Builder().url("http://arbitrary/url").build();
   }
 
   private static Response createArbitraryOkResponse(Request request) {

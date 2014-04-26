@@ -276,8 +276,16 @@ public final class Request {
       return method("POST", body);
     }
 
+    public Builder delete() {
+      return method("DELETE", null);
+    }
+
     public Builder put(Body body) {
       return method("PUT", body);
+    }
+
+    public Builder patch(Body body) {
+      return method("PATCH", body);
     }
 
     public Builder method(String method, Body body) {

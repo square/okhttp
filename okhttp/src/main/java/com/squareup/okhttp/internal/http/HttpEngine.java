@@ -28,6 +28,7 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
@@ -283,7 +284,7 @@ public final class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    return HttpMethod.hasRequestBody(request.method());
+    return HttpMethod.hasRequestBody(request.method()) && !Util.emptySink().equals(requestBodyOut);
   }
 
   /** Returns the request body or null if this request doesn't have a body. */

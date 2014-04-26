@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.Closeable;
 import java.io.File;
@@ -222,4 +223,10 @@ public final class Util {
     }
     return result;
   }
+
+  public static RetryableSink emptySink() {
+    return EMPTY_SINK;
+  }
+
+  private static final RetryableSink EMPTY_SINK = new RetryableSink(0);
 }

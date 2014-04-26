@@ -16,8 +16,11 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
 import java.net.ProtocolException;
 import okio.BufferedSink;
@@ -170,6 +173,7 @@ public final class Call {
 
     // Copy body metadata to the appropriate request headers.
     Request.Body body = request.body();
+    RetryableSink requestBodyOut = null;
     if (body != null) {
       MediaType contentType = body.contentType();
       if (contentType == null) throw new IllegalStateException("contentType == null");
@@ -187,10 +191,12 @@ public final class Call {
       }
 
       request = requestBuilder.build();
+    } else if (HttpMethod.hasRequestBody(request.method())) {
+      requestBodyOut = Util.emptySink();
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, null, null, null);
+    engine = new HttpEngine(client, request, false, null, null, requestBodyOut);
 
     while (true) {
       if (canceled) return null;
