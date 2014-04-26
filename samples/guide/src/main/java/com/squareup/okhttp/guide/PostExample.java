@@ -12,10 +12,7 @@ public class PostExample {
   void run() throws IOException {
     String json = bowlingJson("Jesse", "Jake");
     Request.Body body = Request.Body.create(MediaType.parse("application/json"), json);
-    Request request = new Request.Builder()
-        .url("http://www.roundsapp.com/post")
-        .method("POST", body)
-        .build();
+    Request request = new Request.Builder().url("http://www.roundsapp.com/post").post(body).build();
 
     Response response = client.newCall(request).execute();
     System.out.println(response.body().string());

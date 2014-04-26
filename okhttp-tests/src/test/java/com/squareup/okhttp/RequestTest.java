@@ -23,6 +23,7 @@ import okio.Buffer;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public final class RequestTest {
   @Test public void string() throws Exception {
@@ -71,6 +72,36 @@ public final class RequestTest {
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
     assertEquals("Retransmit body", "616263", bodyToHex(body));
+  }
+
+  /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
+  @Test public void crudVerbs() {
+    MediaType contentType = MediaType.parse("application/json");
+    Request.Body body = Request.Body.create(contentType, "{}");
+
+    Request get = new Request.Builder().url("http://localhost/api").get().build();
+    assertEquals("GET", get.method());
+    assertNull(get.body());
+
+    Request head = new Request.Builder().url("http://localhost/api").head().build();
+    assertEquals("HEAD", head.method());
+    assertNull(head.body());
+
+    Request delete = new Request.Builder().url("http://localhost/api").delete().build();
+    assertEquals("DELETE", delete.method());
+    assertNull(delete.body());
+
+    Request post = new Request.Builder().url("http://localhost/api").post(body).build();
+    assertEquals("POST", post.method());
+    assertEquals(body, post.body());
+
+    Request put = new Request.Builder().url("http://localhost/api").put(body).build();
+    assertEquals("PUT", put.method());
+    assertEquals(body, put.body());
+
+    Request patch = new Request.Builder().url("http://localhost/api").patch(body).build();
+    assertEquals("PATCH", patch.method());
+    assertEquals(body, patch.body());
   }
 
   private String bodyToHex(Request.Body body) throws IOException {
