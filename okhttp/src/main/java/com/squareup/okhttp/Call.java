@@ -204,10 +204,9 @@ public final class Call {
       try {
         engine.sendRequest();
 
-        if (body != null) {
+        if (request.body() != null) {
           BufferedSink sink = engine.getBufferedRequestBody();
-          body.writeTo(sink);
-          sink.flush();
+          request.body().writeTo(sink);
         }
 
         engine.readResponse();

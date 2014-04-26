@@ -340,25 +340,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       // The first request was insufficient. Prepare for another...
-      if (response.isRedirect()) {
-        url = followUp.url(); // Get the redirected URL.
-      } else {
-        requestHeaders = followUp.headers().newBuilder(); // Get the follow-up's credentials!
-      }
+      url = followUp.url();
+      requestHeaders = followUp.headers().newBuilder();
 
-      String retryMethod = method;
+      // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM redirect
+      // should keep the same method, Chrome, Firefox and the RI all issue GETs
+      // when following any redirect.
       Sink requestBody = httpEngine.getRequestBody();
-
-      // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM
-      // redirect should keep the same method, Chrome, Firefox and the
-      // RI all issue GETs when following any redirect.
-      int responseCode = response.code();
-      if (responseCode == HTTP_MULT_CHOICE
-          || responseCode == HTTP_MOVED_PERM
-          || responseCode == HTTP_MOVED_TEMP
-          || responseCode == HTTP_SEE_OTHER) {
-        retryMethod = "GET";
-        requestHeaders.removeAll("Content-Length");
+      if (!followUp.method().equals(method)) {
         requestBody = null;
       }
 
@@ -371,7 +360,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(retryMethod, connection, (RetryableSink) requestBody);
+      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody);
     }
   }
 

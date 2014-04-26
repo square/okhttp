@@ -19,11 +19,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.HttpResponseCache;
-import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -1925,9 +1922,9 @@ public final class URLConnectionTest {
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
-    assertContainsNoneMatching(page2.getHeaders(), "Content-Length");
-    assertContains(page2.getHeaders(), "Content-Type: text/plain; charset=utf-8");
-    assertContains(page2.getHeaders(), "Transfer-Encoding: identity");
+    assertContainsNoneMatching(page2.getHeaders(), "Content-Length.*");
+    assertContainsNoneMatching(page2.getHeaders(), "Content-Type.*");
+    assertContainsNoneMatching(page2.getHeaders(), "Transfer-Encoding.*");
   }
 
   @Test public void response305UseProxy() throws Exception {

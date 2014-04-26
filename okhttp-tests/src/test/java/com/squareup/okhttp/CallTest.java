@@ -25,8 +25,12 @@ import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.CookieManager;
+import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -41,6 +45,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -622,6 +627,61 @@ public final class CallTest {
     assertEquals(2, server.takeRequest().getSequenceNumber()); // Connection reused again!
   }
 
+  @Test public void postRedirectsToGet() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: /page2")
+        .setBody("This page has moved!"));
+    server.enqueue(new MockResponse().setBody("Page 2"));
+    server.play();
+
+    Response response = client.newCall(new Request.Builder()
+        .url(server.getUrl("/page1"))
+        .post(Request.Body.create(MediaType.parse("text/plain"), "Request Body"))
+        .build()).execute();
+    assertEquals("Page 2", response.body().string());
+
+    RecordedRequest page1 = server.takeRequest();
+    assertEquals("POST /page1 HTTP/1.1", page1.getRequestLine());
+    assertEquals("Request Body", page1.getUtf8Body());
+
+    RecordedRequest page2 = server.takeRequest();
+    assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
+  }
+
+  @Test public void redirectsDoNotIncludeTooManyCookies() throws Exception {
+    MockWebServer redirectTarget = new MockWebServer();
+    redirectTarget.enqueue(new MockResponse().setBody("Page 2"));
+    redirectTarget.play();
+
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+        .addHeader("Location: " + redirectTarget.getUrl("/")));
+    server.play();
+
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    HttpCookie cookie = new HttpCookie("c", "cookie");
+    cookie.setDomain(server.getCookieDomain());
+    cookie.setPath("/");
+    String portList = Integer.toString(server.getPort());
+    cookie.setPortlist(portList);
+    cookieManager.getCookieStore().add(server.getUrl("/").toURI(), cookie);
+    client.setCookieHandler(cookieManager);
+
+    Response response = client.newCall(new Request.Builder()
+        .url(server.getUrl("/page1"))
+        .build()).execute();
+    assertEquals("Page 2", response.body().string());
+
+    RecordedRequest request1 = server.takeRequest();
+    assertContains(request1.getHeaders(), "Cookie: $Version=\"1\"; "
+        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.getCookieDomain()
+        + "\";$Port=\"" + portList + "\"");
+
+    RecordedRequest request2 = redirectTarget.takeRequest();
+    assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
+  }
+
   @Test public void redirect_Async() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(301)
@@ -885,5 +945,20 @@ public final class CallTest {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setNpnEnabled(true);
     server.setNpnProtocols(client.getProtocols());
+  }
+
+  private void assertContains(Collection<String> collection, String element) {
+    for (String c : collection) {
+      if (c != null && c.equalsIgnoreCase(element)) return;
+    }
+    fail("No " + element + " in " + collection);
+  }
+
+  private void assertContainsNoneMatching(List<String> headers, String pattern) {
+    for (String header : headers) {
+      if (header.matches(pattern)) {
+        fail("Header " + header + " matches " + pattern);
+      }
+    }
   }
 }
