@@ -40,18 +40,8 @@ public class MockWebServerRuleTest {
     server.after();
   }
 
-  @Test public void whenRuleCreatedPortIsAvailableAndServerNotYetPlayed() throws IOException {
+  @Test public void whenRuleCreatedPortIsAvailable() throws IOException {
     assertTrue(server.getPort() > 0);
-
-    try {
-      server.get().getPort();
-      fail();
-    } catch (IllegalStateException e) {
-
-    }
-
-    // Verify the port is available.
-    new ServerSocket(server.getPort()).close();
   }
 
   @Test public void differentRulesGetDifferentPorts() throws IOException {

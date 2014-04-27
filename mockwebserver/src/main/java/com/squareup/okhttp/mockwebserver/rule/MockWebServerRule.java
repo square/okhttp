@@ -15,12 +15,10 @@
  */
 package com.squareup.okhttp.mockwebserver.rule;
 
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -35,12 +33,14 @@ import org.junit.rules.ExternalResource;
 public class MockWebServerRule extends ExternalResource {
   private static final Logger logger = Logger.getLogger(MockWebServerRule.class.getName());
 
-  private final int port = pickPort();
   private final MockWebServer server = new MockWebServer();
+  private boolean started;
 
   @Override protected void before() {
+    if (started) return;
+    started = true;
     try {
-      server.play(port);
+      server.play();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -55,7 +55,8 @@ public class MockWebServerRule extends ExternalResource {
   }
 
   public int getPort() {
-    return port;
+    if (!started) before();
+    return server.getPort();
   }
 
   public int getRequestCount() {
@@ -77,17 +78,5 @@ public class MockWebServerRule extends ExternalResource {
   /** For any other functionality, use the {@linkplain MockWebServer} directly. */
   public MockWebServer get() {
     return server;
-  }
-
-  private static int pickPort() {
-    ServerSocket socket = null;
-    try {
-      socket = new ServerSocket(0);
-      return socket.getLocalPort();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      Util.closeQuietly(socket);
-    }
   }
 }
