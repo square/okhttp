@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
 import java.net.CookieHandler;
-import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
@@ -674,7 +673,7 @@ public final class HttpEngine {
    * response should be used.
    */
   private static boolean validate(Response cached, Response network) {
-    if (network.code() == HttpURLConnection.HTTP_NOT_MODIFIED) {
+    if (network.code() == HTTP_NOT_MODIFIED) {
       return true;
     }
 
