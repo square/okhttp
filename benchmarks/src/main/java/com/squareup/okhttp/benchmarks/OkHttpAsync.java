@@ -84,7 +84,7 @@ class OkHttpAsync implements HttpClient {
 
   @Override public void enqueue(URL url) throws Exception {
     requestsInFlight.incrementAndGet();
-    client.newCall(new Request.Builder().tag(System.nanoTime()).url(url).build()).execute(callback);
+    client.newCall(new Request.Builder().tag(System.nanoTime()).url(url).build()).enqueue(callback);
   }
 
   @Override public synchronized boolean acceptingJobs() {
