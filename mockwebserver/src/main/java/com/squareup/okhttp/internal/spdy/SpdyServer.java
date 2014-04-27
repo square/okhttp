@@ -67,9 +67,9 @@ public final class SpdyServer implements IncomingStreamHandler {
         (SSLSocket) sslSocketFactory.createSocket(socket, socket.getInetAddress().getHostAddress(),
             socket.getPort(), true);
     sslSocket.setUseClientMode(false);
-    Platform.get().setNpnProtocols(sslSocket, spdyProtocols);
+    Platform.get().setProtocols(sslSocket, spdyProtocols);
     sslSocket.startHandshake();
-    String protocolString = Platform.get().getNpnSelectedProtocol(sslSocket);
+    String protocolString = Platform.get().getSelectedProtocol(sslSocket);
     protocol = protocolString != null ? Protocol.get(protocolString) : null;
     if (protocol == null || !spdyProtocols.contains(protocol)) {
       throw new IllegalStateException("Protocol " + protocol + " unsupported");

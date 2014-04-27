@@ -109,7 +109,7 @@ public final class MockWebServer {
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
-  private boolean npnEnabled = true;
+  private boolean protocolNegotiationEnabled = true;
   private List<Protocol> npnProtocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
@@ -166,9 +166,19 @@ public final class MockWebServer {
    * Sets whether NPN is used on incoming HTTPS connections to negotiate a
    * protocol like HTTP/1.1 or SPDY/3. Call this method to disable NPN and
    * SPDY.
+   * @deprecated Use {@link #setProtocolNegotiationEnabled}.
    */
   public void setNpnEnabled(boolean npnEnabled) {
-    this.npnEnabled = npnEnabled;
+    this.protocolNegotiationEnabled = npnEnabled;
+  }
+
+  /**
+   * Sets whether ALPN or NPN is used on incoming HTTPS connections to
+   * negotiate a protocol like HTTP/1.1 or HTTP/2. Call this method to disable
+   * negotiation and restrict connections to HTTP/1.1.
+   */
+  public void setProtocolNegotiationEnabled(boolean protocolNegotiationEnabled) {
+    this.protocolNegotiationEnabled = protocolNegotiationEnabled;
   }
 
   /**
@@ -177,8 +187,21 @@ public final class MockWebServer {
    *
    * @param protocols the protocols to use, in order of preference. The list
    *     must contain "http/1.1". It must not contain null.
+   * @deprecated Use {@link #setProtocols(java.util.List)}.
    */
   public void setNpnProtocols(List<Protocol> protocols) {
+    setProtocols(protocols);
+  }
+
+  /**
+   * Indicates the protocols supported by NPN or ALPN on incoming HTTPS
+   * connections. This list is ignored when
+   * {@link #setProtocolNegotiationEnabled negotiation is disabled}.
+   *
+   * @param protocols the protocols to use, in order of preference. The list
+   *     must contain {@linkplain Protocol#HTTP_1_1}. It must not contain null.
+   */
+  public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
     if (!protocols.contains(Protocol.HTTP_1_1)) {
       throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
@@ -186,7 +209,7 @@ public final class MockWebServer {
     if (protocols.contains(null)) {
       throw new IllegalArgumentException("protocols must not contain null");
     }
-    this.npnProtocols = Util.immutableList(protocols);
+    this.npnProtocols = protocols;
   }
 
   /**
@@ -327,14 +350,14 @@ public final class MockWebServer {
           sslSocket.setUseClientMode(false);
           openClientSockets.put(socket, true);
 
-          if (npnEnabled) {
-            Platform.get().setNpnProtocols(sslSocket, npnProtocols);
+          if (protocolNegotiationEnabled) {
+            Platform.get().setProtocols(sslSocket, npnProtocols);
           }
 
           sslSocket.startHandshake();
 
-          if (npnEnabled) {
-            String protocolString = Platform.get().getNpnSelectedProtocol(sslSocket);
+          if (protocolNegotiationEnabled) {
+            String protocolString = Platform.get().getSelectedProtocol(sslSocket);
             protocol = protocolString != null
                 ? Protocol.get(protocolString)
                 : Protocol.HTTP_1_1;

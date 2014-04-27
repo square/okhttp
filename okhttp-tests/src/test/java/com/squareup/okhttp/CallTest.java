@@ -1013,8 +1013,7 @@ public final class CallTest {
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     server.useHttps(sslContext.getSocketFactory(), false);
-    server.setNpnEnabled(true);
-    server.setNpnProtocols(client.getProtocols());
+    server.setProtocols(client.getProtocols());
   }
 
   private void assertContains(Collection<String> collection, String element) {

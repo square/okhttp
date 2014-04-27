@@ -176,7 +176,7 @@ public final class Connection implements Closeable {
 
     boolean useNpn = false;
     if (route.supportsNpn() && route.address.protocols.size() > 1) {
-      platform.setNpnProtocols(sslSocket, route.address.protocols);
+      platform.setProtocols(sslSocket, route.address.protocols);
       useNpn = true;
     }
 
@@ -191,7 +191,7 @@ public final class Connection implements Closeable {
     handshake = Handshake.get(sslSocket.getSession());
 
     String maybeProtocol;
-    if (useNpn && (maybeProtocol = platform.getNpnSelectedProtocol(sslSocket)) != null) {
+    if (useNpn && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
     }
 

@@ -237,8 +237,9 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * When {@link MockWebServer#setNpnProtocols(java.util.List) protocols}
-   * include a SPDY variant, this attaches a pushed stream to this response.
+   * When {@link MockWebServer#setProtocols(java.util.List) protocols}
+   * include {@linkplain com.squareup.okhttp.Protocol#HTTP_2}, this attaches a
+   * pushed stream to this response.
    */
   public MockResponse withPush(PushPromise promise) {
     this.promises.add(promise);
