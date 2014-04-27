@@ -236,9 +236,6 @@ public final class Call {
         throw new ProtocolException("Too many redirects: " + redirectionCount);
       }
 
-      // TODO: drop from POST to GET when redirected? HttpURLConnection does.
-      // TODO: confirm that Cookies are not retained across hosts.
-
       if (!engine.sameConnection(followUp)) {
         engine.releaseConnection();
       }
