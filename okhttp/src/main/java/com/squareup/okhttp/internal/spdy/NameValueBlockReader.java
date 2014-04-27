@@ -8,10 +8,10 @@ import java.util.zip.Inflater;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.ForwardingSource;
 import okio.InflaterSource;
 import okio.Okio;
 import okio.Source;
-import okio.Timeout;
 
 /**
  * Reads a SPDY/3 Name/Value header block. This class is made complicated by the
@@ -32,26 +32,17 @@ class NameValueBlockReader {
   /** This source holds inflated bytes. */
   private final BufferedSource source;
 
-  public NameValueBlockReader(final BufferedSource source) {
+  public NameValueBlockReader(BufferedSource source) {
     // Limit the inflater input stream to only those bytes in the Name/Value
     // block. We cut the inflater off at its source because we can't predict the
     // ratio of compressed bytes to uncompressed bytes.
-    Source throttleSource = new Source() {
-      @Override public long read(Buffer sink, long byteCount)
-          throws IOException {
+    Source throttleSource = new ForwardingSource(source) {
+      @Override public long read(Buffer sink, long byteCount) throws IOException {
         if (compressedLimit == 0) return -1; // Out of data for the current block.
-        long read = source.read(sink, Math.min(byteCount, compressedLimit));
+        long read = super.read(sink, Math.min(byteCount, compressedLimit));
         if (read == -1) return -1;
         compressedLimit -= read;
         return read;
-      }
-
-      @Override public void close() throws IOException {
-        source.close();
-      }
-
-      @Override public Timeout timeout() {
-        return source.timeout();
       }
     };
 

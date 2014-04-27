@@ -46,12 +46,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.ForwardingSource;
 import okio.Okio;
 import okio.Source;
-import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 
@@ -617,18 +616,11 @@ public final class HttpResponseCache extends ResponseCache implements OkResponse
       this.contentType = contentType;
       this.contentLength = contentLength;
 
-      // This source closes the snapshot when it is closed.
-      bodySource = Okio.buffer(new Source() {
-        Source in = Okio.source(snapshot.getInputStream(ENTRY_BODY));
-        @Override public long read(Buffer sink, long byteCount) throws IOException {
-          return in.read(sink, byteCount);
-        }
-        @Override public Timeout timeout() {
-          return in.timeout();
-        }
+      Source in = Okio.source(snapshot.getInputStream(ENTRY_BODY));
+      bodySource = Okio.buffer(new ForwardingSource(in) {
         @Override public void close() throws IOException {
           snapshot.close();
-          in.close();
+          super.close();
         }
       });
     }
