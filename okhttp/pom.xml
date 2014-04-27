@@ -26,6 +26,9 @@
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <excludePackageNames>com.squareup.okhttp.internal:com.squareup.okhttp.internal.*</excludePackageNames>
+          <links>
+            <link>http://square.github.io/okio/</link>
+          </links>
         </configuration>
       </plugin>
     </plugins>

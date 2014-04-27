@@ -78,12 +78,13 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    *
    * @see URLConnection#setConnectTimeout(int)
    */
-  public void setConnectTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setConnectTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     connectTimeout = (int) millis;
+    return this;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -96,12 +97,13 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    *
    * @see URLConnection#setReadTimeout(int)
    */
-  public void setReadTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setReadTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     readTimeout = (int) millis;
+    return this;
   }
 
   /** Default read timeout (in milliseconds). */
@@ -112,12 +114,13 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   /**
    * Sets the default write timeout for new connections. A value of 0 means no timeout.
    */
-  public void setWriteTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setWriteTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     writeTimeout = (int) millis;
+    return this;
   }
 
   /** Default write timeout (in milliseconds). */
@@ -365,8 +368,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
    * complete cannot be canceled.
    */
-  public void cancel(Object tag) {
+  public OkHttpClient cancel(Object tag) {
     dispatcher.cancel(tag);
+    return this;
   }
 
   public HttpURLConnection open(URL url) {
