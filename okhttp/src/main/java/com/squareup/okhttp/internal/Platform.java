@@ -55,11 +55,6 @@ import okio.Buffer;
  * <p>On platforms that support both extensions, OkHttp will use both,
  * preferring ALPN's result. Future versions of OkHttp will drop support for
  * NPN.
- *
- * <h3>Deflater Sync Flush</h3>
- * SPDY header compression requires a recent version of {@code
- * DeflaterOutputStream} that is public API in Java 7 and callable via
- * reflection in Android 4.1+.
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
@@ -102,15 +97,15 @@ public class Platform {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
-  public String getNpnSelectedProtocol(SSLSocket socket) {
+  public String getSelectedProtocol(SSLSocket socket) {
     return null;
   }
 
   /**
    * Sets client-supported protocols on a socket to send to a server. The
-   * protocols are only sent if the socket implementation supports NPN.
+   * protocols are only sent if the socket implementation supports ALPN or NPN.
    */
-  public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
+  public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
   }
 
   public void connectSocket(Socket socket, InetSocketAddress address,
@@ -141,7 +136,7 @@ public class Platform {
       Method getNpnSelectedProtocol = null;
       try {
         setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
-        getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
+        getNpnSelectedProtocol = openSslSocketClass.getMethod("getSelectedProtocol");
       } catch (NoSuchMethodException ignored) {
       }
 
@@ -224,11 +219,11 @@ public class Platform {
       }
     }
 
-    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
+    @Override public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
       if (setNpnProtocols == null) return;
       if (!openSslSocketClass.isInstance(socket)) return;
       try {
-        Object[] parameters = { concatLengthPrefixed(npnProtocols) };
+        Object[] parameters = { concatLengthPrefixed(protocols) };
         setNpnProtocols.invoke(socket, parameters);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
@@ -237,7 +232,7 @@ public class Platform {
       }
     }
 
-    @Override public String getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public String getSelectedProtocol(SSLSocket socket) {
       if (getNpnSelectedProtocol == null) return null;
       if (!openSslSocketClass.isInstance(socket)) return null;
       try {
@@ -267,11 +262,11 @@ public class Platform {
       this.serverProviderClass = serverProviderClass;
     }
 
-    @Override public void setNpnProtocols(SSLSocket socket, List<Protocol> npnProtocols) {
+    @Override public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
       try {
-        List<String> names = new ArrayList<String>(npnProtocols.size());
-        for (int i = 0, size = npnProtocols.size(); i < size; i++) {
-          Protocol protocol = npnProtocols.get(i);
+        List<String> names = new ArrayList<String>(protocols.size());
+        for (int i = 0, size = protocols.size(); i < size; i++) {
+          Protocol protocol = protocols.get(i);
           if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN.
           names.add(protocol.toString());
         }
@@ -285,7 +280,7 @@ public class Platform {
       }
     }
 
-    @Override public String getNpnSelectedProtocol(SSLSocket socket) {
+    @Override public String getSelectedProtocol(SSLSocket socket) {
       try {
         JettyNpnProvider provider =
             (JettyNpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));

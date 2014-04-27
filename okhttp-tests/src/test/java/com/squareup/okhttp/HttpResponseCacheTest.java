@@ -104,7 +104,7 @@ public final class HttpResponseCacheTest {
 
   @Before public void setUp() throws Exception {
     server = serverRule.get();
-    server.setNpnEnabled(false);
+    server.setProtocolNegotiationEnabled(false);
     server2 = server2Rule.get();
     cache = new HttpResponseCache(cacheRule.getRoot(), Integer.MAX_VALUE);
     ResponseCache.setDefault(cache);

@@ -111,7 +111,7 @@ public final class URLConnectionTest {
 
   @Before public void setUp() throws Exception {
     hostName = server.getHostName();
-    server.setNpnEnabled(false);
+    server.setProtocolNegotiationEnabled(false);
   }
 
   @After public void tearDown() throws Exception {
@@ -1789,7 +1789,7 @@ public final class URLConnectionTest {
     if (https) {
       server.useHttps(sslContext.getSocketFactory(), false);
       server2.useHttps(sslContext.getSocketFactory(), false);
-      server2.setNpnEnabled(false);
+      server2.setProtocolNegotiationEnabled(false);
       client.setSslSocketFactory(sslContext.getSocketFactory());
       client.setHostnameVerifier(new RecordingHostnameVerifier());
     }
@@ -3120,7 +3120,7 @@ public final class URLConnectionTest {
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     server.useHttps(sslContext.getSocketFactory(), false);
-    server.setNpnEnabled(true);
-    server.setNpnProtocols(client.getProtocols());
+    server.setProtocolNegotiationEnabled(true);
+    server.setProtocols(client.getProtocols());
   }
 }

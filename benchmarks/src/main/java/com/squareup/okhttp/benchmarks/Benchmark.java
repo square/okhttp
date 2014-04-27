@@ -165,8 +165,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
     if (tls) {
       SSLContext sslContext = SslContextBuilder.localhost();
       server.useHttps(sslContext.getSocketFactory(), false);
-      server.setNpnEnabled(true);
-      server.setNpnProtocols(protocols);
+      server.setProtocols(protocols);
     }
 
     final MockResponse response = newResponse();

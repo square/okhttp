@@ -106,7 +106,7 @@ public final class ResponseCacheTest {
 
   @Before public void setUp() throws Exception {
     server = serverRule.get();
-    server.setNpnEnabled(false);
+    server.setProtocolNegotiationEnabled(false);
     server2 = server2Rule.get();
 
     client = new OkHttpClient();
