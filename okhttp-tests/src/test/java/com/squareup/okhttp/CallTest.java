@@ -304,7 +304,7 @@ public final class CallTest {
     }
 
     try {
-      call.execute(callback);
+      call.enqueue(callback);
       fail();
     } catch (IllegalStateException e){
       assertEquals("Already Executed", e.getMessage());
@@ -325,7 +325,7 @@ public final class CallTest {
         .build();
 
     Call call = client.newCall(request);
-    call.execute(callback);
+    call.enqueue(callback);
 
     try {
       call.execute();
@@ -335,7 +335,7 @@ public final class CallTest {
     }
 
     try {
-      call.execute(callback);
+      call.enqueue(callback);
       fail();
     } catch (IllegalStateException e){
       assertEquals("Already Executed", e.getMessage());
@@ -354,7 +354,7 @@ public final class CallTest {
         .url(server.getUrl("/"))
         .header("User-Agent", "AsyncApiTest")
         .build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
 
     callback.await(request.url())
         .assertCode(200)
@@ -390,13 +390,13 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("ghi"));
     server.play();
 
-    client.newCall(new Request.Builder().url(server.getUrl("/a")).build()).execute(callback);
+    client.newCall(new Request.Builder().url(server.getUrl("/a")).build()).enqueue(callback);
     callback.await(server.getUrl("/a")).assertBody("abc");
 
-    client.newCall(new Request.Builder().url(server.getUrl("/b")).build()).execute(callback);
+    client.newCall(new Request.Builder().url(server.getUrl("/b")).build()).enqueue(callback);
     callback.await(server.getUrl("/b")).assertBody("def");
 
-    client.newCall(new Request.Builder().url(server.getUrl("/c")).build()).execute(callback);
+    client.newCall(new Request.Builder().url(server.getUrl("/c")).build()).enqueue(callback);
     callback.await(server.getUrl("/c")).assertBody("ghi");
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
@@ -410,7 +410,7 @@ public final class CallTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.newCall(request).execute(new Response.Callback() {
+    client.newCall(request).enqueue(new Response.Callback() {
       @Override public void onFailure(Failure failure) {
         throw new AssertionError();
       }
@@ -422,7 +422,7 @@ public final class CallTest {
         assertEquals('c', bytes.read());
 
         // This request will share a connection with 'A' cause it's all done.
-        client.newCall(new Request.Builder().url(server.getUrl("/b")).build()).execute(callback);
+        client.newCall(new Request.Builder().url(server.getUrl("/b")).build()).enqueue(callback);
       }
     });
 
@@ -487,7 +487,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
 
     callback.await(request.url()).assertHandshake();
   }
@@ -517,7 +517,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
 
     callback.await(request.url()).assertBody("abc");
   }
@@ -546,7 +546,7 @@ public final class CallTest {
         .url(server.getUrl("/"))
         .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
         .build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
 
     callback.await(request.url())
         .assertCode(200)
@@ -618,14 +618,14 @@ public final class CallTest {
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request1).execute(callback);
+    client.newCall(request1).enqueue(callback);
     callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request2).execute(callback);
+    client.newCall(request2).enqueue(callback);
     callback.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
@@ -656,14 +656,14 @@ public final class CallTest {
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request1).execute(callback);
+    client.newCall(request1).enqueue(callback);
     callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
         .build();
-    client.newCall(request2).execute(callback);
+    client.newCall(request2).enqueue(callback);
     callback.await(request2.url()).assertCode(200).assertBody("B");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
@@ -767,7 +767,7 @@ public final class CallTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
 
     callback.await(server.getUrl("/c"))
         .assertCode(200)
@@ -810,7 +810,7 @@ public final class CallTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
     callback.await(server.getUrl("/20"))
         .assertCode(200)
         .assertBody("Success!");
@@ -843,7 +843,7 @@ public final class CallTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
-    client.newCall(request).execute(callback);
+    client.newCall(request).enqueue(callback);
     callback.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
   }
 
@@ -901,11 +901,11 @@ public final class CallTest {
     server.play();
 
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.newCall(requestA).execute(callback);
+    client.newCall(requestA).enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
     Request requestB = new Request.Builder().url(server.getUrl("/b")).tag("request B").build();
-    client.newCall(requestB).execute(callback);
+    client.newCall(requestB).enqueue(callback);
     assertEquals("/b", server.takeRequest().getPath());
 
     callback.await(requestA.url()).assertBody("A");
@@ -933,7 +933,7 @@ public final class CallTest {
     server.play();
 
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.newCall(requestA).execute(callback);
+    client.newCall(requestA).enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
     callback.await(requestA.url()).assertFailure("Canceled");
@@ -963,7 +963,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(request);
-    call.execute(new Response.Callback() {
+    call.enqueue(new Response.Callback() {
       @Override public void onFailure(Failure failure) {
         latch.countDown();
         failureRef.set(failure); // This should never occur as we don't signal twice.

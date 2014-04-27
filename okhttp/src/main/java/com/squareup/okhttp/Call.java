@@ -96,7 +96,7 @@ public final class Call {
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  public void execute(Response.Callback responseCallback) {
+  public void enqueue(Response.Callback responseCallback) {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
