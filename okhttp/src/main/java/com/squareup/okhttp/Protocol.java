@@ -20,7 +20,8 @@ import java.io.IOException;
 /**
  * Protocols that OkHttp implements for <a
  * href="http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04">NPN</a> and
- * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>.
+ * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
+ * selection.
  *
  * <h3>Protocol vs Scheme</h3>
  * Despite its name, {@link java.net.URL#getProtocol()} returns the

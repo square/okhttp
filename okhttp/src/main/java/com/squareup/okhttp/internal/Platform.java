@@ -45,12 +45,13 @@ import okio.Buffer;
  *
  * <p>NPN (Next Protocol Negotiation) was developed for SPDY. It is widely
  * available and we support it on both Android (4.1+) and OpenJDK 7 (via the
- * Jetty NPN-boot library). NPN is not yet available on Java 8.
+ * Jetty Alpn-boot library). NPN is not yet available on OpenJDK 8.
  *
  * <p>ALPN (Application Layer Protocol Negotiation) is the successor to NPN. It
  * has some technical advantages over NPN. ALPN first arrived in Android 4.4,
  * but that release suffers a <a href="http://goo.gl/y5izPP">concurrency bug</a>
- * so we don't use it. ALPN will be supported in the future.
+ * so we don't use it. ALPN is supported on OpenJDK 7 and 8 (via the Jetty
+ * ALPN-boot library).
  *
  * <p>On platforms that support both extensions, OkHttp will use both,
  * preferring ALPN's result. Future versions of OkHttp will drop support for
@@ -148,21 +149,24 @@ public class Platform {
       // This isn't Android 2.3 or better.
     }
 
-    // Attempt to find the Jetty's NPN extension for OpenJDK.
-    try {
-      String npnClassName = "org.eclipse.jetty.npn.NextProtoNego";
-      Class<?> nextProtoNegoClass = Class.forName(npnClassName);
-      Class<?> providerClass = Class.forName(npnClassName + "$Provider");
-      Class<?> clientProviderClass = Class.forName(npnClassName + "$ClientProvider");
-      Class<?> serverProviderClass = Class.forName(npnClassName + "$ServerProvider");
-      Method putMethod = nextProtoNegoClass.getMethod("put", SSLSocket.class, providerClass);
-      Method getMethod = nextProtoNegoClass.getMethod("get", SSLSocket.class);
-      return new JdkWithJettyNpnPlatform(
+    try { // to find the Jetty's ALPN or NPN extension for OpenJDK.
+      String negoClassName = "org.eclipse.jetty.alpn.ALPN";
+      Class<?> negoClass;
+      try {
+        negoClass = Class.forName(negoClassName);
+      } catch (ClassNotFoundException ignored) { // ALPN isn't on the classpath.
+        negoClassName = "org.eclipse.jetty.npn.NextProtoNego";
+        negoClass = Class.forName(negoClassName);
+      }
+      Class<?> providerClass = Class.forName(negoClassName + "$Provider");
+      Class<?> clientProviderClass = Class.forName(negoClassName + "$ClientProvider");
+      Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
+      Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
+      Method getMethod = negoClass.getMethod("get", SSLSocket.class);
+      return new JdkWithJettyBootPlatform(
           putMethod, getMethod, clientProviderClass, serverProviderClass);
-    } catch (ClassNotFoundException ignored) {
-      // NPN isn't on the classpath.
-    } catch (NoSuchMethodException ignored) {
-      // The NPN version isn't what we expect.
+    } catch (ClassNotFoundException ignored) { // NPN isn't on the classpath.
+    } catch (NoSuchMethodException ignored) { // The ALPN or NPN version isn't what we expect.
     }
 
     return new Platform();
@@ -247,15 +251,18 @@ public class Platform {
     }
   }
 
-  /** OpenJDK 7 plus {@code org.mortbay.jetty.npn/npn-boot} on the boot class path. */
-  private static class JdkWithJettyNpnPlatform extends Platform {
+  /**
+   * OpenJDK 7+ with {@code org.mortbay.jetty.npn/npn-boot} or
+   * {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
+   */
+  private static class JdkWithJettyBootPlatform extends Platform {
     private final Method getMethod;
     private final Method putMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyNpnPlatform(Method putMethod, Method getMethod, Class<?> clientProviderClass,
-        Class<?> serverProviderClass) {
+    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod,
+        Class<?> clientProviderClass, Class<?> serverProviderClass) {
       this.putMethod = putMethod;
       this.getMethod = getMethod;
       this.clientProviderClass = clientProviderClass;
@@ -267,11 +274,11 @@ public class Platform {
         List<String> names = new ArrayList<String>(protocols.size());
         for (int i = 0, size = protocols.size(); i < size; i++) {
           Protocol protocol = protocols.get(i);
-          if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN.
+          if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN or ALPN.
           names.add(protocol.toString());
         }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] { clientProviderClass, serverProviderClass }, new JettyNpnProvider(names));
+            new Class[] { clientProviderClass, serverProviderClass }, new JettyNegoProvider(names));
         putMethod.invoke(null, socket, provider);
       } catch (InvocationTargetException e) {
         throw new AssertionError(e);
@@ -282,12 +289,12 @@ public class Platform {
 
     @Override public String getSelectedProtocol(SSLSocket socket) {
       try {
-        JettyNpnProvider provider =
-            (JettyNpnProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
+        JettyNegoProvider provider =
+            (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
         if (!provider.unsupported && provider.selected == null) {
           Logger logger = Logger.getLogger("com.squareup.okhttp.OkHttpClient");
-          logger.log(Level.INFO,
-              "NPN callback dropped so SPDY is disabled. Is npn-boot on the boot class path?");
+          logger.log(Level.INFO, "NPN/ALPN callback dropped: SPDY and HTTP/2 are disabled. "
+                  + "Is npn-boot or alpn-boot on the boot class path?");
           return null;
         }
         return provider.unsupported ? null : provider.selected;
@@ -300,18 +307,18 @@ public class Platform {
   }
 
   /**
-   * Handle the methods of NextProtoNego's ClientProvider and ServerProvider
+   * Handle the methods of NPN or ALPN's ClientProvider and ServerProvider
    * without a compile-time dependency on those interfaces.
    */
-  private static class JettyNpnProvider implements InvocationHandler {
+  private static class JettyNegoProvider implements InvocationHandler {
     /** This peer's supported protocols. */
     private final List<String> protocols;
-    /** Set when remote peer notifies NPN is unsupported. */
+    /** Set when remote peer notifies NPN or ALPN is unsupported. */
     private boolean unsupported;
-    /** The protocol the client selected. */
+    /** The protocol the client (NPN) or server (ALPN) selected. */
     private String selected;
 
-    public JettyNpnProvider(List<String> protocols) {
+    public JettyNegoProvider(List<String> protocols) {
       this.protocols = protocols;
     }
 
@@ -322,27 +329,25 @@ public class Platform {
         args = Util.EMPTY_STRING_ARRAY;
       }
       if (methodName.equals("supports") && boolean.class == returnType) {
-        return true; // Client supports NPN.
+        return true; // NPN or ALPN is supported.
       } else if (methodName.equals("unsupported") && void.class == returnType) {
-        this.unsupported = true; // Remote peer doesn't support NPN.
+        this.unsupported = true; // Peer doesn't support NPN or ALPN.
         return null;
       } else if (methodName.equals("protocols") && args.length == 0) {
-        return protocols; // Server advertises these protocols.
-      } else if (methodName.equals("selectProtocol") // Called when client.
-          && String.class == returnType
-          && args.length == 1
-          && (args[0] == null || args[0] instanceof List)) {
-        List<String> serverProtocols = (List) args[0];
-        // Pick the first protocol the server advertises and client knows.
-        for (int i = 0, size = serverProtocols.size(); i < size; i++) {
-          if (protocols.contains(serverProtocols.get(i))) {
-            return selected = serverProtocols.get(i);
+        return protocols; // Server (NPN) or Client (ALPN) advertises these protocols.
+      } else if ((methodName.equals("selectProtocol") || methodName.equals("select"))
+          && String.class == returnType && args.length == 1 && args[0] instanceof List) {
+        List<String> peerProtocols = (List) args[0];
+        // Pick the first known protocol the peer advertises.
+        for (int i = 0, size = peerProtocols.size(); i < size; i++) {
+          if (protocols.contains(peerProtocols.get(i))) {
+            return selected = peerProtocols.get(i);
           }
         }
-        // On no intersection, try client's first protocol.
-        return selected = protocols.get(0);
-      } else if (methodName.equals("protocolSelected") && args.length == 1) {
-        this.selected = (String) args[0]; // Client selected this protocol.
+        return selected = protocols.get(0); // On no intersection, try peer's first protocol.
+      } else if ((methodName.equals("protocolSelected") || methodName.equals("selected"))
+          && args.length == 1) {
+        this.selected = (String) args[0]; // Client (NPN) or Server (ALPN) selected this protocol.
         return null;
       } else {
         return method.invoke(this, args);

@@ -92,12 +92,12 @@ public final class CallTest {
   }
 
   @Test public void get_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     get();
   }
 
   @Test public void get_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     get();
   }
 
@@ -123,12 +123,12 @@ public final class CallTest {
   }
 
   @Test public void head_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     head();
   }
 
   @Test public void head_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     head();
   }
 
@@ -153,12 +153,12 @@ public final class CallTest {
   }
 
   @Test public void post_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     post();
   }
 
   @Test public void post_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     post();
   }
 
@@ -183,12 +183,12 @@ public final class CallTest {
   }
 
   @Test public void postZeroLength_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     postZeroLength();
   }
 
   @Test public void postZerolength_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     postZeroLength();
   }
 
@@ -213,12 +213,12 @@ public final class CallTest {
   }
 
   @Test public void delete_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     delete();
   }
 
   @Test public void delete_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     delete();
   }
 
@@ -243,12 +243,12 @@ public final class CallTest {
   }
 
   @Test public void put_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     put();
   }
 
   @Test public void put_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     put();
   }
 
@@ -273,12 +273,12 @@ public final class CallTest {
   }
 
   @Test public void patch_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     patch();
   }
 
   @Test public void patch_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     patch();
   }
 
@@ -914,12 +914,12 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeIOSignalsOnFailure_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     canceledBeforeIOSignalsOnFailure();
   }
 
   @Test public void canceledBeforeIOSignalsOnFailure_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     canceledBeforeIOSignalsOnFailure();
   }
 
@@ -940,12 +940,12 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     canceledBeforeResponseReadSignalsOnFailure();
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     canceledBeforeResponseReadSignalsOnFailure();
   }
 
@@ -989,13 +989,13 @@ public final class CallTest {
 
   @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTP_2()
       throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
   }
 
   @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_SPDY_3()
       throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
   }
 
@@ -1006,9 +1006,9 @@ public final class CallTest {
 
   /**
    * Tests that use this will fail unless boot classpath is set. Ex. {@code
-   * -Xbootclasspath/p:/tmp/npn-boot-1.1.7.v20140316.jar}
+   * -Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317}
    */
-  private void enableNpn(Protocol protocol) {
+  private void enableProtocol(Protocol protocol) {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
