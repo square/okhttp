@@ -110,7 +110,7 @@ public final class MockWebServer {
 
   private int port = -1;
   private boolean protocolNegotiationEnabled = true;
-  private List<Protocol> npnProtocols
+  private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
   public int getPort() {
@@ -209,7 +209,7 @@ public final class MockWebServer {
     if (protocols.contains(null)) {
       throw new IllegalArgumentException("protocols must not contain null");
     }
-    this.npnProtocols = protocols;
+    this.protocols = protocols;
   }
 
   /**
@@ -351,7 +351,7 @@ public final class MockWebServer {
           openClientSockets.put(socket, true);
 
           if (protocolNegotiationEnabled) {
-            Platform.get().setProtocols(sslSocket, npnProtocols);
+            Platform.get().setProtocols(sslSocket, protocols);
           }
 
           sslSocket.startHandshake();

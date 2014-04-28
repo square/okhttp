@@ -51,8 +51,8 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * <ul>
  *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
  *       connections for multiple domain names.
- *   <li>Next Protocol Negotiation (NPN) enables the HTTPS port (443) to be used
- *       for both HTTP and SPDY protocols.
+ *   <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port
+ *       (443) to be used for different HTTP and SPDY protocols.
  * </ul>
  * Unfortunately, older HTTPS servers refuse to connect when such options are
  * presented. Rather than avoiding these options entirely, this class allows a

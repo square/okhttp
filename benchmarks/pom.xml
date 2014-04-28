@@ -39,11 +39,6 @@
       <artifactId>bcprov-jdk15on</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.mortbay.jetty.npn</groupId>
-      <artifactId>npn-boot</artifactId>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
     </dependency>
@@ -71,28 +66,70 @@
   </dependencies>
   <build>
     <plugins>
-    <plugin>
-      <groupId>org.codehaus.mojo</groupId>
-      <artifactId>exec-maven-plugin</artifactId>
-      <executions>
-        <execution>
-          <goals>
-            <goal>java</goal>
-          </goals>
-        </execution>
-      </executions>
-      <configuration>
-        <executable>java</executable>
-        <arguments>
-          <argument>-Xms512m</argument>
-          <argument>-Xmx512m</argument>
-          <commandlineArgs>-Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</commandlineArgs>
-          <argument>-classpath</argument>
-          <classpath/>
-          <argument>com.squareup.okhttp.benchmarks.Benchmark</argument>
-        </arguments>
-      </configuration>
-    </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>java</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Xms512m</argument>
+            <argument>-Xmx512m</argument>
+            <commandlineArgs>-Xbootclasspath/p:${bootclasspath}</commandlineArgs>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>com.squareup.okhttp.benchmarks.Benchmark</argument>
+          </arguments>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>npn-when-jdk7</id>
+      <activation>
+        <jdk>1.7</jdk>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.mortbay.jetty.npn</groupId>
+          <artifactId>npn-boot</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>org.mortbay.jetty.alpn</groupId>
+          <artifactId>alpn-boot</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <!-- Fails on caliper's ASM on OpenJDK 8. -->
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>none</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

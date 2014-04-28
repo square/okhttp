@@ -647,10 +647,10 @@ public final class URLConnectionTest {
     assertContent("def", client.open(server.getUrl("/")));
 
     RecordedRequest request1 = server.takeRequest();
-    assertEquals("TLSv1", request1.getSslProtocol()); // OkHttp's current best TLS version.
+    assertTrue(request1.getSslProtocol().startsWith("TLSv1")); // v1.2 on OpenJDK 8.
 
     RecordedRequest request2 = server.takeRequest();
-    assertEquals("TLSv1", request2.getSslProtocol()); // OkHttp's current best TLS version.
+    assertTrue(request2.getSslProtocol().startsWith("TLSv1")); // v1.2 on OpenJDK 8.
   }
 
   /**
@@ -2745,19 +2745,19 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("challenges=[Bearer realm=\"oauthed\"]"));
   }
 
-  @Test public void npnSetsProtocolHeader_SPDY_3() throws Exception {
-    npnSetsProtocolHeader(Protocol.SPDY_3);
+  @Test public void setsNegotiatedProtocolHeader_SPDY_3() throws Exception {
+    setsNegotiatedProtocolHeader(Protocol.SPDY_3);
   }
 
-  @Test public void npnSetsProtocolHeader_HTTP_2() throws Exception {
-    npnSetsProtocolHeader(Protocol.HTTP_2);
+  @Test public void setsNegotiatedProtocolHeader_HTTP_2() throws Exception {
+    setsNegotiatedProtocolHeader(Protocol.HTTP_2);
   }
 
-  private void npnSetsProtocolHeader(Protocol protocol) throws IOException {
-    enableNpn(protocol);
+  private void setsNegotiatedProtocolHeader(Protocol protocol) throws IOException {
+    enableProtocol(protocol);
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
-    client.setProtocols(Arrays.asList(Protocol.HTTP_1_1, protocol));
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     connection = client.open(server.getUrl("/"));
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
     assertEquals(Arrays.asList(protocol.toString()), protocolValues);
@@ -2786,12 +2786,12 @@ public final class URLConnectionTest {
   }
 
   @Test public void zeroLengthPost_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     zeroLengthPost();
   }
 
   @Test public void zeroLengthPost_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     zeroLengthPost();
   }
 
@@ -2801,12 +2801,12 @@ public final class URLConnectionTest {
   }
 
   @Test public void zeroLengthPut_SPDY_3() throws Exception {
-    enableNpn(Protocol.SPDY_3);
+    enableProtocol(Protocol.SPDY_3);
     zeroLengthPut();
   }
 
   @Test public void zeroLengthPut_HTTP_2() throws Exception {
-    enableNpn(Protocol.HTTP_2);
+    enableProtocol(Protocol.HTTP_2);
     zeroLengthPut();
   }
 
@@ -3113,9 +3113,9 @@ public final class URLConnectionTest {
 
   /**
    * Tests that use this will fail unless boot classpath is set. Ex. {@code
-   * -Xbootclasspath/p:/tmp/npn-boot-1.1.7.v20140316.jar}
+   * -Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317}
    */
-  private void enableNpn(Protocol protocol) {
+  private void enableProtocol(Protocol protocol) {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
