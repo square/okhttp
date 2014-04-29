@@ -351,7 +351,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responsesAreCached() throws IOException {
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
     server.play();
@@ -368,7 +368,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void conditionalCache() throws IOException {
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
@@ -385,7 +385,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("ABCD"));
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));

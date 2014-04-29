@@ -303,8 +303,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
     OkHttpClient engineClient = client;
-    if (engineClient.getOkResponseCache() != null && !getUseCaches()) {
-      engineClient = client.clone().setOkResponseCache(null);
+    if (engineClient.internalCache() != null && !getUseCaches()) {
+      engineClient = client.clone().setCache(null);
     }
 
     return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody);

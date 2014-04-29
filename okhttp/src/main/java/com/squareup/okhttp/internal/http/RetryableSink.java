@@ -20,8 +20,8 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import okio.Buffer;
 import okio.BufferedSink;
-import okio.Timeout;
 import okio.Sink;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 

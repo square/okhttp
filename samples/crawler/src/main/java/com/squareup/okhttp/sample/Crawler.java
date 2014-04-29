@@ -122,7 +122,7 @@ public final class Crawler {
 
     OkHttpClient client = new OkHttpClient();
     HttpResponseCache httpResponseCache = new HttpResponseCache(new File(args[0]), cacheByteCount);
-    client.setOkResponseCache(httpResponseCache);
+    client.setCache(httpResponseCache);
 
     Crawler crawler = new Crawler(client);
     crawler.queue.add(new URL(args[1]));
