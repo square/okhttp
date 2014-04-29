@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.HttpResponseCache;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
@@ -82,7 +82,7 @@ public abstract class HttpOverSpdyTest {
   protected final String hostName = server.getHostName();
   protected final OkHttpClient client = new OkHttpClient();
   protected HttpURLConnection connection;
-  protected HttpResponseCache cache;
+  protected Cache cache;
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
@@ -91,7 +91,7 @@ public abstract class HttpOverSpdyTest {
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(systemTmpDir, "HttpCache-" + protocol + "-" + UUID.randomUUID());
-    cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(cacheDir, Integer.MAX_VALUE);
   }
 
   @After public void tearDown() throws Exception {

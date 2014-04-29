@@ -15,10 +15,10 @@
  */
 package com.squareup.okhttp.internal.huc;
 
-import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.internal.InternalCache;
 import java.io.IOException;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -28,12 +28,11 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-/** Adapts {@link ResponseCache} to {@link OkResponseCache}. */
-public final class ResponseCacheAdapter implements OkResponseCache {
-
+/** Adapts {@link ResponseCache} to {@link InternalCache}. */
+public final class CacheAdapter implements InternalCache {
   private final ResponseCache delegate;
 
-  public ResponseCacheAdapter(ResponseCache delegate) {
+  public CacheAdapter(ResponseCache delegate) {
     this.delegate = delegate;
   }
 

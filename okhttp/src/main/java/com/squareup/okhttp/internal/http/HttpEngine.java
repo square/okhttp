@@ -21,13 +21,13 @@ import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.OkResponseCache;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
@@ -178,7 +178,7 @@ public final class HttpEngine {
     if (transport != null) throw new IllegalStateException();
 
     prepareRawRequestHeaders();
-    OkResponseCache responseCache = client.internalCache();
+    InternalCache responseCache = client.internalCache();
 
     Response cacheResponse = responseCache != null
         ? responseCache.get(request)
@@ -384,7 +384,7 @@ public final class HttpEngine {
   }
 
   private void maybeCache() throws IOException {
-    OkResponseCache responseCache = client.internalCache();
+    InternalCache responseCache = client.internalCache();
     if (responseCache == null) return;
 
     // Should we cache this response for this request?
@@ -644,7 +644,7 @@ public final class HttpEngine {
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
-        OkResponseCache responseCache = client.internalCache();
+        InternalCache responseCache = client.internalCache();
         responseCache.trackConditionalCacheHit();
         responseCache.update(validatingResponse, cacheableResponse());
 

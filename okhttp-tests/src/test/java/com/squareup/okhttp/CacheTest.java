@@ -81,10 +81,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Android's HttpResponseCacheTest. This tests both the {@link HttpResponseCache} implementation and
- * the behavior of {@link OkResponseCache} classes generally.
+ * Android's HttpResponseCacheTest. This tests both {@link Cache} and handling
+ * of {@link ResponseCache}.
  */
-public final class HttpResponseCacheTest {
+public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
     @Override public boolean verify(String s, SSLSession sslSession) {
       return true;
@@ -100,14 +100,14 @@ public final class HttpResponseCacheTest {
   private final OkHttpClient client = new OkHttpClient();
   private MockWebServer server;
   private MockWebServer server2;
-  private HttpResponseCache cache;
+  private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
     server = serverRule.get();
     server.setProtocolNegotiationEnabled(false);
     server2 = server2Rule.get();
-    cache = new HttpResponseCache(cacheRule.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
     client.setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
@@ -118,7 +118,7 @@ public final class HttpResponseCacheTest {
   }
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
-    assertSame(cache, client.internalCache());
+    assertSame(cache, client.getCache());
     assertNull(client.getResponseCache());
   }
 
@@ -1760,7 +1760,7 @@ public final class HttpResponseCacheTest {
     writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new HttpResponseCache(cache.getDirectory(), Integer.MAX_VALUE);
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE);
     client.setCache(cache);
 
     HttpURLConnection connection = client.open(url);

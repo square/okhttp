@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.sample;
 
-import com.squareup.okhttp.HttpResponseCache;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -121,8 +121,8 @@ public final class Crawler {
     long cacheByteCount = 1024L * 1024L * 100L;
 
     OkHttpClient client = new OkHttpClient();
-    HttpResponseCache httpResponseCache = new HttpResponseCache(new File(args[0]), cacheByteCount);
-    client.setCache(httpResponseCache);
+    Cache cache = new Cache(new File(args[0]), cacheByteCount);
+    client.setCache(cache);
 
     Crawler crawler = new Crawler(client);
     crawler.queue.add(new URL(args[1]));

@@ -57,12 +57,12 @@ public final class CallTest {
   private RecordingCallback callback = new RecordingCallback();
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
-  private HttpResponseCache cache;
+  private Cache cache;
 
   @Before public void setUp() throws Exception {
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-    cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(cacheDir, Integer.MAX_VALUE);
   }
 
   @After public void tearDown() throws Exception {

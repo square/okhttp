@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseSource;
 import java.io.IOException;
 import java.net.CacheRequest;
 
 /**
- * An extended response cache API. Unlike {@link java.net.ResponseCache}, this
- * interface supports conditional caching and statistics.
+ * OkHttp's internal cache interface. Applications shouldn't implement this:
+ * instead use {@link com.squareup.okhttp.Cache}.
  */
-public interface OkResponseCache {
+public interface InternalCache {
   Response get(Request request) throws IOException;
 
   CacheRequest put(Response response) throws IOException;
