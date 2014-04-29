@@ -17,6 +17,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.DiskLruCache;
+import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
@@ -31,7 +32,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.net.CacheRequest;
-import java.net.ResponseCache;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -50,12 +50,6 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused,
  * saving time and bandwidth.
- *
- * <p>This cache extends {@link ResponseCache} but is only intended for use
- * with OkHttp and is not a general-purpose implementation: The
- * {@link ResponseCache} API requires that the subclass handles cache-control
- * logic as well as storage. In OkHttp the {@link HttpResponseCache} only
- * handles cursory cache-control logic.
  *
  * <h3>Cache Optimization</h3>
  * To measure cache effectiveness, this class tracks three statistics:
@@ -110,12 +104,33 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
  *         connection.addRequestProperty("Cache-Control", "max-stale=" + maxStale);
  * }</pre>
  */
-public final class HttpResponseCache implements OkResponseCache {
+public final class Cache {
   // TODO: add APIs to iterate the cache?
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
   private static final int ENTRY_BODY = 1;
   private static final int ENTRY_COUNT = 2;
+
+  final InternalCache internalCache = new InternalCache() {
+    @Override public Response get(Request request) throws IOException {
+      return Cache.this.get(request);
+    }
+    @Override public CacheRequest put(Response response) throws IOException {
+      return Cache.this.put(response);
+    }
+    @Override public void remove(Request request) throws IOException {
+      Cache.this.remove(request);
+    }
+    @Override public void update(Response cached, Response network) throws IOException {
+      Cache.this.update(cached, network);
+    }
+    @Override public void trackConditionalCacheHit() {
+      Cache.this.trackConditionalCacheHit();
+    }
+    @Override public void trackResponse(ResponseSource source) {
+      Cache.this.trackResponse(source);
+    }
+  };
 
   private final DiskLruCache cache;
 
@@ -126,7 +141,7 @@ public final class HttpResponseCache implements OkResponseCache {
   private int hitCount;
   private int requestCount;
 
-  public HttpResponseCache(File directory, long maxSize) throws IOException {
+  public Cache(File directory, long maxSize) throws IOException {
     cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
@@ -134,7 +149,7 @@ public final class HttpResponseCache implements OkResponseCache {
     return Util.hash(requst.urlString());
   }
 
-  @Override public Response get(Request request) {
+  Response get(Request request) {
     String key = urlToKey(request);
     DiskLruCache.Snapshot snapshot;
     Entry entry;
@@ -165,7 +180,7 @@ public final class HttpResponseCache implements OkResponseCache {
     return response;
   }
 
-  @Override public CacheRequest put(Response response) throws IOException {
+  private CacheRequest put(Response response) throws IOException {
     String requestMethod = response.request().method();
 
     if (HttpMethod.invalidatesCache(response.request().method())) {
@@ -202,11 +217,11 @@ public final class HttpResponseCache implements OkResponseCache {
     }
   }
 
-  @Override public void remove(Request request) throws IOException {
+  private void remove(Request request) throws IOException {
     cache.remove(urlToKey(request));
   }
 
-  @Override public void update(Response cached, Response network) {
+  private void update(Response cached, Response network) {
     Entry entry = new Entry(network);
     DiskLruCache.Snapshot snapshot = ((CacheResponseBody) cached.body()).snapshot;
     DiskLruCache.Editor editor = null;
@@ -272,7 +287,7 @@ public final class HttpResponseCache implements OkResponseCache {
     return cache.isClosed();
   }
 
-  @Override public synchronized void trackResponse(ResponseSource source) {
+  private synchronized void trackResponse(ResponseSource source) {
     requestCount++;
 
     switch (source) {
@@ -286,7 +301,7 @@ public final class HttpResponseCache implements OkResponseCache {
     }
   }
 
-  @Override public synchronized void trackConditionalCacheHit() {
+  private synchronized void trackConditionalCacheHit() {
     hitCount++;
   }
 
@@ -313,7 +328,7 @@ public final class HttpResponseCache implements OkResponseCache {
       this.cacheOut = editor.newOutputStream(ENTRY_BODY);
       this.body = new FilterOutputStream(cacheOut) {
         @Override public void close() throws IOException {
-          synchronized (HttpResponseCache.this) {
+          synchronized (Cache.this) {
             if (done) {
               return;
             }
@@ -333,7 +348,7 @@ public final class HttpResponseCache implements OkResponseCache {
     }
 
     @Override public void abort() {
-      synchronized (HttpResponseCache.this) {
+      synchronized (Cache.this) {
         if (done) {
           return;
         }

@@ -45,7 +45,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * A white-box test for {@link ResponseCacheAdapter}. See also:
+ * A white-box test for {@link CacheAdapter}. See also:
  * <ul>
  *   <li>{@link ResponseCacheTest} for black-box tests that check that {@link ResponseCache}
  *   classes are called correctly by OkHttp.</li>
@@ -53,8 +53,7 @@ import static org.junit.Assert.assertTrue;
  *   logic. </li>
  * </ul>
  */
-public class ResponseCacheAdapterTest {
-
+public class CacheAdapterTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
     public boolean verify(String hostname, SSLSession session) {
@@ -216,7 +215,7 @@ public class ResponseCacheAdapterTest {
         assertEquals(serverUrl, connection.getURL());
 
         HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) connection;
-        HttpsURLConnection realHttpsUrlConnection = (HttpsURLConnection) ResponseCacheAdapterTest.this.connection;
+        HttpsURLConnection realHttpsUrlConnection = (HttpsURLConnection) CacheAdapterTest.this.connection;
         assertEquals(realHttpsUrlConnection.getCipherSuite(),
             cacheHttpsUrlConnection.getCipherSuite());
         assertEquals(realHttpsUrlConnection.getPeerPrincipal(),

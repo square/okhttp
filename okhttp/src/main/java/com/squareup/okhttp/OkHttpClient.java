@@ -15,11 +15,12 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
+import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
-import com.squareup.okhttp.internal.huc.ResponseCacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
@@ -57,7 +58,11 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private List<Protocol> protocols;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
-  private OkResponseCache responseCache;
+
+  // At least one of the two cache fields will be null.
+  private Cache cache;
+  private CacheAdapter cacheAdapter;
+
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
@@ -182,33 +187,29 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    */
   @Deprecated // internal only.
   public OkHttpClient setResponseCache(ResponseCache responseCache) {
-    this.responseCache = responseCache == null || responseCache instanceof OkResponseCache
-        ? (OkResponseCache) responseCache
-        : new ResponseCacheAdapter(responseCache);
+    this.cacheAdapter = responseCache != null ? new CacheAdapter(responseCache) : null;
+    this.cache = null;
     return this;
   }
 
   @Deprecated // internal only.
   public ResponseCache getResponseCache() {
-    return responseCache instanceof ResponseCacheAdapter
-        ? ((ResponseCacheAdapter) responseCache).getDelegate()
-        : null;
+    return cacheAdapter != null ? cacheAdapter.getDelegate() : null;
   }
 
-  public OkHttpClient setCache(HttpResponseCache responseCache) {
-    this.responseCache = responseCache;
+  public OkHttpClient setCache(Cache cache) {
+    this.cache = cache;
+    this.cacheAdapter = null;
     return this;
   }
 
-  public HttpResponseCache getCache() {
-    return responseCache instanceof HttpResponseCache
-        ? (HttpResponseCache) responseCache
-        : null;
+  public Cache getCache() {
+    return cache;
   }
 
   @Deprecated // internal only.
-  public OkResponseCache internalCache() {
-    return responseCache;
+  public InternalCache internalCache() {
+    return cache != null ? cache.internalCache : cacheAdapter;
   }
 
   /**
@@ -409,8 +410,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     if (result.cookieHandler == null) {
       result.cookieHandler = CookieHandler.getDefault();
     }
-    if (result.responseCache == null) {
-      result.responseCache = toOkResponseCache(ResponseCache.getDefault());
+    if (result.cache == null && result.cacheAdapter == null) {
+      // TODO: drop support for the default response cache.
+      ResponseCache defaultCache = ResponseCache.getDefault();
+      result.cacheAdapter = defaultCache != null ? new CacheAdapter(defaultCache) : null;
     }
     if (result.socketFactory == null) {
       result.socketFactory = SocketFactory.getDefault();
@@ -464,12 +467,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     } catch (CloneNotSupportedException e) {
       throw new AssertionError();
     }
-  }
-
-  private OkResponseCache toOkResponseCache(ResponseCache responseCache) {
-    return responseCache == null || responseCache instanceof OkResponseCache
-        ? (OkResponseCache) responseCache
-        : new ResponseCacheAdapter(responseCache);
   }
 
   /**

@@ -82,10 +82,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Tests for interaction between OkHttp and the ResponseCache. This test is based on
- * {@link com.squareup.okhttp.HttpResponseCacheTest}. Some tests for the
- * {@link com.squareup.okhttp.OkResponseCache} found in HttpResponseCacheTest provide
- * coverage for ResponseCache as well.
+ * Tests for interaction between OkHttp and the ResponseCache. This test is
+ * based on {@link com.squareup.okhttp.CacheTest}. Some tests for the {@link
+ * com.squareup.okhttp.internal.InternalCache} in CacheTest cover ResponseCache
+ * as well.
  */
 public final class ResponseCacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
@@ -126,7 +126,7 @@ public final class ResponseCacheTest {
     ResponseCache.setDefault(null);
     client.setResponseCache(cache);
     assertSame(cache, client.getResponseCache());
-    assertTrue(client.internalCache() instanceof ResponseCacheAdapter);
+    assertTrue(client.internalCache() instanceof CacheAdapter);
   }
 
   @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
@@ -592,7 +592,7 @@ public final class ResponseCacheTest {
   }
 
   /**
-   * Equivalent to {@link com.squareup.okhttp.HttpResponseCacheTest#postInvalidatesCacheWithUncacheableResponse()} but
+   * Equivalent to {@link com.squareup.okhttp.CacheTest#postInvalidatesCacheWithUncacheableResponse()} but
    * demonstrating that {@link ResponseCache} provides no mechanism for cache invalidation as the
    * result of locally-made requests. In reality invalidation could take place from other clients at
    * any time.
@@ -1181,7 +1181,7 @@ public final class ResponseCacheTest {
   }
 
   /**
-   * Equivalent to {@link com.squareup.okhttp.HttpResponseCacheTest#conditionalHitUpdatesCache()}, except a Java
+   * Equivalent to {@link com.squareup.okhttp.CacheTest#conditionalHitUpdatesCache()}, except a Java
    * standard cache has no means to update the headers for an existing entry so the behavior is
    * different.
    */

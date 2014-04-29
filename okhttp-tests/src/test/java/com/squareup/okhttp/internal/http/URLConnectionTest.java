@@ -17,9 +17,9 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.AbstractResponseCache;
+import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
-import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
@@ -105,7 +105,7 @@ public final class URLConnectionTest {
 
   private final OkHttpClient client = new OkHttpClient();
   private HttpURLConnection connection;
-  private HttpResponseCache cache;
+  private Cache cache;
   private String hostName;
 
   @Before public void setUp() throws Exception {
@@ -796,7 +796,7 @@ public final class URLConnectionTest {
     assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
   }
 
-  /** Tolerate bad https proxy response when using HttpResponseCache. http://b/6754912 */
+  /** Tolerate bad https proxy response when using a cache. http://b/6754912 */
   @Test public void connectViaHttpProxyToHttpsUsingBadProxyAndHttpResponseCache() throws Exception {
     initResponseCache();
 
@@ -837,7 +837,7 @@ public final class URLConnectionTest {
   private void initResponseCache() throws IOException {
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-    cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(cacheDir, Integer.MAX_VALUE);
     client.setCache(cache);
   }
 
