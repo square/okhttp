@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.HttpResponseCache;
@@ -36,7 +37,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Authenticator;
 import java.net.CacheRequest;
-import java.net.CacheResponse;
 import java.net.ConnectException;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
@@ -44,7 +44,6 @@ import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.ResponseCache;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.URL;
@@ -839,7 +838,7 @@ public final class URLConnectionTest {
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new HttpResponseCache(cacheDir, Integer.MAX_VALUE);
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
   }
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */
@@ -2315,12 +2314,7 @@ public final class URLConnectionTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    client.setResponseCache(new ResponseCache() {
-      @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        return null;
-      }
-
+    client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         return new CacheRequest() {
           @Override public void abort() {

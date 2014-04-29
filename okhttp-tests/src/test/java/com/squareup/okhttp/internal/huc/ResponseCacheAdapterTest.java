@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.huc;
 
+import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -25,7 +26,6 @@ import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
@@ -43,7 +43,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * A white-box test for {@link ResponseCacheAdapter}. See also:
@@ -85,7 +84,7 @@ public class ResponseCacheAdapterTest {
     final URL serverUrl = configureServer(new MockResponse());
     assertEquals("http", serverUrl.getProtocol());
 
-    ResponseCache responseCache = new NoOpResponseCache() {
+    ResponseCache responseCache = new AbstractResponseCache() {
       @Override
       public CacheResponse get(URI uri, String method, Map<String, List<String>> headers) throws IOException {
         assertEquals(toUri(serverUrl), uri);
@@ -107,9 +106,8 @@ public class ResponseCacheAdapterTest {
     final URL serverUrl = configureHttpsServer(new MockResponse());
     assertEquals("https", serverUrl.getProtocol());
 
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheResponse get(URI uri, String method, Map<String, List<String>> headers)
+    ResponseCache responseCache = new AbstractResponseCache() {
+      @Override public CacheResponse get(URI uri, String method, Map<String, List<String>> headers)
           throws IOException {
         assertEquals("https", uri.getScheme());
         assertEquals(toUri(serverUrl), uri);
@@ -136,23 +134,22 @@ public class ResponseCacheAdapterTest {
             .setStatus(statusLine)
             .addHeader("A", "c"));
 
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        assertTrue(urlConnection instanceof HttpURLConnection);
-        assertFalse(urlConnection instanceof HttpsURLConnection);
+    ResponseCache responseCache = new AbstractResponseCache() {
+      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+        assertTrue(connection instanceof HttpURLConnection);
+        assertFalse(connection instanceof HttpsURLConnection);
 
-        assertEquals(0, urlConnection.getContentLength());
+        assertEquals(0, connection.getContentLength());
 
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
+        HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
         assertEquals("GET", httpUrlConnection.getRequestMethod());
         assertTrue(httpUrlConnection.getDoInput());
         assertFalse(httpUrlConnection.getDoOutput());
 
         assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
         assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, urlConnection.getURL());
-        assertEquals("value", urlConnection.getRequestProperty("key"));
+        assertEquals(serverUrl, connection.getURL());
+        assertEquals("value", connection.getRequestProperty("key"));
 
         // Check retrieval by string key.
         assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
@@ -176,23 +173,22 @@ public class ResponseCacheAdapterTest {
             .setStatus(statusLine)
             .addHeader("A", "c"));
 
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        assertTrue(urlConnection instanceof HttpURLConnection);
-        assertFalse(urlConnection instanceof HttpsURLConnection);
+    ResponseCache responseCache = new AbstractResponseCache() {
+      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+        assertTrue(connection instanceof HttpURLConnection);
+        assertFalse(connection instanceof HttpsURLConnection);
 
-        assertEquals(0, urlConnection.getContentLength());
+        assertEquals(0, connection.getContentLength());
 
-        HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
+        HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
         assertEquals("POST", httpUrlConnection.getRequestMethod());
         assertTrue(httpUrlConnection.getDoInput());
         assertTrue(httpUrlConnection.getDoOutput());
 
         assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
         assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, urlConnection.getURL());
-        assertEquals("value", urlConnection.getRequestProperty("key"));
+        assertEquals(serverUrl, connection.getURL());
+        assertEquals("value", connection.getRequestProperty("key"));
 
         // Check retrieval by string key.
         assertEquals(statusLine, httpUrlConnection.getHeaderField(null));
@@ -213,15 +209,14 @@ public class ResponseCacheAdapterTest {
     final URL serverUrl = configureHttpsServer(new MockResponse());
     assertEquals("https", serverUrl.getProtocol());
 
-    ResponseCache responseCache = new NoOpResponseCache() {
-      @Override
-      public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-        assertTrue(urlConnection instanceof HttpsURLConnection);
+    ResponseCache responseCache = new AbstractResponseCache() {
+      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+        assertTrue(connection instanceof HttpsURLConnection);
         assertEquals(toUri(serverUrl), uri);
-        assertEquals(serverUrl, urlConnection.getURL());
+        assertEquals(serverUrl, connection.getURL());
 
-        HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) urlConnection;
-        HttpsURLConnection realHttpsUrlConnection = (HttpsURLConnection) connection;
+        HttpsURLConnection cacheHttpsUrlConnection = (HttpsURLConnection) connection;
+        HttpsURLConnection realHttpsUrlConnection = (HttpsURLConnection) ResponseCacheAdapterTest.this.connection;
         assertEquals(realHttpsUrlConnection.getCipherSuite(),
             cacheHttpsUrlConnection.getCipherSuite());
         assertEquals(realHttpsUrlConnection.getPeerPrincipal(),
@@ -267,28 +262,5 @@ public class ResponseCacheAdapterTest {
     server.enqueue(mockResponse);
     server.play();
     return server.getUrl("/");
-  }
-
-  private static class NoOpResponseCache extends ResponseCache {
-
-    @Override
-    public CacheResponse get(URI uri, String s, Map<String, List<String>> stringListMap)
-        throws IOException {
-      return null;
-    }
-
-    @Override
-    public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-      return null;
-    }
-  }
-
-  private static URI toUri(URL serverUrl) {
-    try {
-      return serverUrl.toURI();
-    } catch (URISyntaxException e) {
-      fail(e.getMessage());
-      return null;
-    }
   }
 }

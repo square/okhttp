@@ -178,7 +178,7 @@ public final class HttpEngine {
     if (transport != null) throw new IllegalStateException();
 
     prepareRawRequestHeaders();
-    OkResponseCache responseCache = client.getOkResponseCache();
+    OkResponseCache responseCache = client.internalCache();
 
     Response cacheResponse = responseCache != null
         ? responseCache.get(request)
@@ -384,7 +384,7 @@ public final class HttpEngine {
   }
 
   private void maybeCache() throws IOException {
-    OkResponseCache responseCache = client.getOkResponseCache();
+    OkResponseCache responseCache = client.internalCache();
     if (responseCache == null) return;
 
     // Should we cache this response for this request?
@@ -644,7 +644,7 @@ public final class HttpEngine {
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
-        OkResponseCache responseCache = client.getOkResponseCache();
+        OkResponseCache responseCache = client.internalCache();
         responseCache.trackConditionalCacheHit();
         responseCache.update(validatingResponse, cacheableResponse());
 

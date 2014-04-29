@@ -126,13 +126,13 @@ public final class ResponseCacheTest {
     ResponseCache.setDefault(null);
     client.setResponseCache(cache);
     assertSame(cache, client.getResponseCache());
-    assertTrue(client.getOkResponseCache() instanceof ResponseCacheAdapter);
+    assertTrue(client.internalCache() instanceof ResponseCacheAdapter);
   }
 
   @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
     ResponseCache.setDefault(cache);
     client.setResponseCache(null);
-    assertNull(client.getOkResponseCache());
+    assertNull(client.internalCache());
     assertNull(client.getResponseCache());
   }
 

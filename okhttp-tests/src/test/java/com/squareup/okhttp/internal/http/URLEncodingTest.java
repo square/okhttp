@@ -16,16 +16,14 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import java.io.IOException;
-import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.HttpURLConnection;
-import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -124,11 +122,7 @@ public final class URLEncodingTest {
     final AtomicReference<URI> uriReference = new AtomicReference<URI>();
 
     OkHttpClient client = new OkHttpClient();
-    client.setResponseCache(new ResponseCache() {
-      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
-        return null;
-      }
-
+    client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         uriReference.set(uri);

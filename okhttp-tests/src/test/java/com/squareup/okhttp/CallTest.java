@@ -595,7 +595,7 @@ public final class CallTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.play();
 
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
         .assertCode(200).assertBody("A");
@@ -613,7 +613,7 @@ public final class CallTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.play();
 
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))
@@ -635,7 +635,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("B"));
     server.play();
 
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
         .assertCode(200).assertBody("A");
@@ -651,7 +651,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("B"));
     server.play();
 
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     Request request1 = new Request.Builder()
         .url(server.getUrl("/"))

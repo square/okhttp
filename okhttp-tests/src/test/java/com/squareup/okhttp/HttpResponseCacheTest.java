@@ -19,7 +19,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -32,11 +31,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CacheRequest;
+import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -47,10 +48,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,7 +82,7 @@ import static org.junit.Assert.fail;
 
 /**
  * Android's HttpResponseCacheTest. This tests both the {@link HttpResponseCache} implementation and
- * the behavior of {@link com.squareup.okhttp.OkResponseCache} classes generally.
+ * the behavior of {@link OkResponseCache} classes generally.
  */
 public final class HttpResponseCacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
@@ -107,7 +108,7 @@ public final class HttpResponseCacheTest {
     server.setProtocolNegotiationEnabled(false);
     server2 = server2Rule.get();
     cache = new HttpResponseCache(cacheRule.getRoot(), Integer.MAX_VALUE);
-    ResponseCache.setDefault(cache);
+    client.setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
 
@@ -117,16 +118,7 @@ public final class HttpResponseCacheTest {
   }
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
-    ResponseCache.setDefault(null);
-    client.setResponseCache(cache);
-    assertSame(cache, client.getOkResponseCache());
-    assertNull(client.getResponseCache());
-  }
-
-  @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
-    ResponseCache.setDefault(cache);
-    client.setResponseCache(null);
-    assertNull(client.getOkResponseCache());
+    assertSame(cache, client.internalCache());
     assertNull(client.getResponseCache());
   }
 
@@ -222,14 +214,19 @@ public final class HttpResponseCacheTest {
         .addHeader("fgh: ijk")
         .setBody(body));
 
-    client.setOkResponseCache(new AbstractOkResponseCache() {
-      @Override public CacheRequest put(Response response) throws IOException {
-        assertEquals(server.getUrl("/"), response.request().url());
-        assertEquals(200, response.code());
-        assertNull(response.body());
-        assertEquals("5", response.header("Content-Length"));
-        assertEquals("text/plain", response.header("Content-Type"));
-        assertEquals("ijk", response.header("fgh"));
+    client.setResponseCache(new AbstractResponseCache() {
+      @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
+        HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
+        assertEquals(server.getUrl("/"), uri.toURL());
+        assertEquals(200, httpURLConnection.getResponseCode());
+        try {
+          httpURLConnection.getInputStream();
+          fail();
+        } catch (UnsupportedOperationException expected) {
+        }
+        assertEquals("5", connection.getHeaderField("Content-Length"));
+        assertEquals("text/plain", connection.getHeaderField("Content-Type"));
+        assertEquals("ijk", connection.getHeaderField("fgh"));
         cacheCount.incrementAndGet();
         return null;
       }
@@ -244,8 +241,8 @@ public final class HttpResponseCacheTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    client.setOkResponseCache(new AbstractOkResponseCache() {
-      @Override public CacheRequest put(Response response) throws IOException {
+    client.setResponseCache(new AbstractResponseCache() {
+      @Override public CacheRequest put(URI uri, URLConnection connection) {
         return new CacheRequest() {
           @Override public void abort() {
             aborted.set(true);
@@ -459,10 +456,12 @@ public final class HttpResponseCacheTest {
   @Test public void responseCacheRequestHeaders() throws IOException, URISyntaxException {
     server.enqueue(new MockResponse().setBody("ABC"));
 
-    final AtomicReference<Request> requestRef = new AtomicReference<Request>();
-    client.setOkResponseCache(new AbstractOkResponseCache() {
-      @Override public Response get(Request request) throws IOException {
-        requestRef.set(request);
+    final AtomicReference<Map<String, List<String>>> requestHeadersRef
+        = new AtomicReference<Map<String, List<String>>>();
+    client.setResponseCache(new AbstractResponseCache() {
+      @Override public CacheResponse get(URI uri,
+          String requestMethod, Map<String, List<String>> requestHeaders) throws IOException {
+        requestHeadersRef.set(requestHeaders);
         return null;
       }
     });
@@ -471,7 +470,7 @@ public final class HttpResponseCacheTest {
     URLConnection urlConnection = client.open(url);
     urlConnection.addRequestProperty("A", "android");
     readAscii(urlConnection);
-    assertEquals(Arrays.asList("android"), requestRef.get().headers("A"));
+    assertEquals(Arrays.asList("android"), requestHeadersRef.get().get("A"));
   }
 
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
@@ -1762,67 +1761,12 @@ public final class HttpResponseCacheTest {
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache = new HttpResponseCache(cache.getDirectory(), Integer.MAX_VALUE);
-    client.setOkResponseCache(cache);
+    client.setCache(cache);
 
     HttpURLConnection connection = client.open(url);
     assertEquals(entryBody, readAscii(connection));
     assertEquals("3", connection.getHeaderField("Content-Length"));
     assertEquals("foo", connection.getHeaderField("etag"));
-  }
-
-  // Older versions of OkHttp use ResponseCache.get() and ResponseCache.put(). For compatibility
-  // with Android apps when the Android-bundled and and an older app-bundled OkHttp library are in
-  // use at the same time the HttpResponseCache must behave as it always used to. That's not the
-  // same as a fully API-compliant {@link ResponseCache}: That means that the cache
-  // doesn't throw an exception from get() or put() and also does not cache requests/responses from
-  // anything other than the variant of OkHttp that it comes with. It does still return values from
-  // get() and it is not expected to implement any cache-control logic.
-  @Test public void testHttpResponseCacheBackwardsCompatible() throws Exception {
-    assertSame(cache, ResponseCache.getDefault());
-    assertEquals(0, cache.getRequestCount());
-
-    String body = "Body";
-    server.enqueue(new MockResponse()
-        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-        .setBody(body));
-
-    URL url = server.getUrl("/");
-
-    // Here we use a HttpURLConnection from URL to represent a non-OkHttp HttpURLConnection. In
-    // Android this would be com.android.okhttp.internal.http.HttpURLConnectionImpl. In tests this
-    // is some other implementation.
-    HttpURLConnection javaConnection = (HttpURLConnection) url.openConnection();
-    assertFalse("This test relies on url.openConnection() not returning an OkHttp connection",
-        javaConnection instanceof HttpURLConnectionImpl);
-    javaConnection.disconnect();
-
-    // This should simply be discarded. It doesn't matter the connection is not useful.
-    cache.put(url.toURI(), javaConnection);
-
-    // Confirm the initial cache state.
-    assertNull(cache.get(url.toURI(), "GET", new HashMap<String, List<String>>()));
-
-    // Now cache a response
-    HttpURLConnection okHttpConnection = client.open(url);
-    assertEquals(body, readAscii(okHttpConnection));
-    okHttpConnection.disconnect();
-
-    assertEquals(1, server.getRequestCount());
-    assertEquals(0, cache.getHitCount());
-
-    // OkHttp should now find the result cached.
-    HttpURLConnection okHttpConnection2 = client.open(url);
-    assertEquals(body, readAscii(okHttpConnection2));
-    okHttpConnection2.disconnect();
-
-    assertEquals(1, server.getRequestCount());
-    assertEquals(1, cache.getHitCount());
-
-    // Confirm the unfortunate get() behavior.
-    assertNotNull(cache.get(url.toURI(), "GET", new HashMap<String, List<String>>()));
-    // Only OkHttp makes the necessary callbacks to increment the cache stats.
-    assertEquals(1, cache.getHitCount());
   }
 
   private void writeFile(File directory, String file, String content) throws IOException {
@@ -2011,27 +1955,5 @@ public final class HttpResponseCacheTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
-  }
-
-  static abstract class AbstractOkResponseCache implements OkResponseCache {
-    @Override public Response get(Request request) throws IOException {
-      return null;
-    }
-
-    @Override public CacheRequest put(Response response) throws IOException {
-      return null;
-    }
-
-    @Override public void remove(Request request) throws IOException {
-    }
-
-    @Override public void update(Response cached, Response network) throws IOException {
-    }
-
-    @Override public void trackConditionalCacheHit() {
-    }
-
-    @Override public void trackResponse(ResponseSource source) {
-    }
   }
 }
