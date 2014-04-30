@@ -23,7 +23,7 @@ import java.net.CacheRequest;
 import okio.Sink;
 import okio.Source;
 
-interface Transport {
+public interface Transport {
   /**
    * The timeout to use while discarding a stream of input data. Since this is
    * used for connection reuse, this timeout should be significantly less than

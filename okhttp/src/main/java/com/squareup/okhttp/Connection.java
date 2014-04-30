@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
+import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.Closeable;
 import java.io.IOException;
@@ -273,7 +274,7 @@ public final class Connection implements Closeable {
   }
 
   /** Returns the transport appropriate for this connection. */
-  public Object newTransport(HttpEngine httpEngine) throws IOException {
+  Transport newTransport(HttpEngine httpEngine) throws IOException {
     return (spdyConnection != null)
         ? new SpdyTransport(httpEngine, spdyConnection)
         : new HttpTransport(httpEngine, httpConnection);

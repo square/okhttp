@@ -15,13 +15,17 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -51,6 +55,14 @@ import javax.net.ssl.SSLSocketFactory;
  * safely modified with further configuration changes.
  */
 public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
+  static {
+    Internal.instance = new Internal() {
+      @Override public Transport newTransport(
+          Connection connection, HttpEngine httpEngine) throws IOException {
+        return connection.newTransport(httpEngine);
+      }
+    };
+  }
 
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
