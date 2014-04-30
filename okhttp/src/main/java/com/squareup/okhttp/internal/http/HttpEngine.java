@@ -27,6 +27,7 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
@@ -209,7 +210,7 @@ public final class HttpEngine {
       // Blow up if we aren't the current owner of the connection.
       if (connection.getOwner() != this && !connection.isSpdy()) throw new AssertionError();
 
-      transport = (Transport) connection.newTransport(this);
+      transport = Internal.instance.newTransport(connection, this);
 
       // Create a request body if we don't have one already. We'll already have
       // one if we're retrying a failed POST.
