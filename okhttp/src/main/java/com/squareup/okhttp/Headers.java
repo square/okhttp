@@ -139,7 +139,7 @@ public final class Headers {
     private final List<String> namesAndValues = new ArrayList<String>(20);
 
     /** Add an header line containing a field name, a literal colon, and a value. */
-    public Builder addLine(String line) {
+    Builder addLine(String line) {
       int index = line.indexOf(":", 1);
       if (index != -1) {
         return addLenient(line.substring(0, index), line.substring(index + 1));

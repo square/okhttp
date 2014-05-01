@@ -21,6 +21,7 @@ import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.RouteDatabase;
 import com.squareup.okhttp.internal.Dns;
+import com.squareup.okhttp.internal.Internal;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -106,7 +107,7 @@ public final class RouteSelector {
   public Connection next(String method) throws IOException {
     // Always prefer pooled connections over new connections.
     for (Connection pooled; (pooled = pool.get(address)) != null; ) {
-      if (method.equals("GET") || pooled.isReadable()) return pooled;
+      if (method.equals("GET") || Internal.instance.isReadable(pooled)) return pooled;
       pooled.close();
     }
 
@@ -144,7 +145,7 @@ public final class RouteSelector {
    */
   public void connectFailed(Connection connection, IOException failure) {
     // If this is a recycled connection, don't count its failure against the route.
-    if (connection.recycleCount() > 0) return;
+    if (Internal.instance.recycleCount(connection) > 0) return;
 
     Route failedRoute = connection.getRoute();
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {

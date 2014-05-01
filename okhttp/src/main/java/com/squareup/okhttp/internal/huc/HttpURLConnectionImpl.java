@@ -25,6 +25,7 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpDate;
@@ -303,7 +304,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
     OkHttpClient engineClient = client;
-    if (engineClient.internalCache() != null && !getUseCaches()) {
+    if (Internal.instance.internalCache(engineClient) != null && !getUseCaches()) {
       engineClient = client.clone().setCache(null);
     }
 

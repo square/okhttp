@@ -85,13 +85,13 @@ public final class Connection implements Closeable {
     this.route = route;
   }
 
-  public Object getOwner() {
+  Object getOwner() {
     synchronized (pool) {
       return owner;
     }
   }
 
-  public void setOwner(Object owner) {
+  void setOwner(Object owner) {
     if (isSpdy()) return; // SPDY connections are shared.
     synchronized (pool) {
       if (this.owner != null) throw new IllegalStateException("Connection already has an owner!");
@@ -105,7 +105,7 @@ public final class Connection implements Closeable {
    * false if the connection cannot be pooled or reused, such as if it was
    * closed with {@link #closeIfOwnedBy}.
    */
-  public boolean clearOwner() {
+  boolean clearOwner() {
     synchronized (pool) {
       if (owner == null) {
         // No owner? Don't reuse this connection.
@@ -121,7 +121,7 @@ public final class Connection implements Closeable {
    * Closes this connection if it is currently owned by {@code owner}. This also
    * strips the ownership of the connection so it cannot be pooled or reused.
    */
-  public void closeIfOwnedBy(Object owner) throws IOException {
+  void closeIfOwnedBy(Object owner) throws IOException {
     if (isSpdy()) throw new IllegalStateException();
     synchronized (pool) {
       if (this.owner != owner) {
@@ -135,7 +135,7 @@ public final class Connection implements Closeable {
     socket.close();
   }
 
-  public void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
+  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
       throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
@@ -207,7 +207,7 @@ public final class Connection implements Closeable {
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
-  public boolean isConnected() {
+  boolean isConnected() {
     return connected;
   }
 
@@ -229,7 +229,7 @@ public final class Connection implements Closeable {
   }
 
   /** Returns true if this connection is alive. */
-  public boolean isAlive() {
+  boolean isAlive() {
     return !socket.isClosed() && !socket.isInputShutdown() && !socket.isOutputShutdown();
   }
 
@@ -238,18 +238,18 @@ public final class Connection implements Closeable {
    * connection. This is more expensive and more accurate than {@link
    * #isAlive()}; callers should check {@link #isAlive()} first.
    */
-  public boolean isReadable() {
+  boolean isReadable() {
     if (httpConnection != null) return httpConnection.isReadable();
     return true; // SPDY connections, and connections before connect() are both optimistic.
   }
 
-  public void resetIdleStartTime() {
+  void resetIdleStartTime() {
     if (spdyConnection != null) throw new IllegalStateException("spdyConnection != null");
     this.idleStartTimeNs = System.nanoTime();
   }
 
   /** Returns true if this connection is idle. */
-  public boolean isIdle() {
+  boolean isIdle() {
     return spdyConnection == null || spdyConnection.isIdle();
   }
 
@@ -257,7 +257,7 @@ public final class Connection implements Closeable {
    * Returns true if this connection has been idle for longer than
    * {@code keepAliveDurationNs}.
    */
-  public boolean isExpired(long keepAliveDurationNs) {
+  boolean isExpired(long keepAliveDurationNs) {
     return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
   }
 
@@ -265,7 +265,7 @@ public final class Connection implements Closeable {
    * Returns the time in ns when this connection became idle. Undefined if
    * this connection is not idle.
    */
-  public long getIdleStartTimeNs() {
+  long getIdleStartTimeNs() {
     return spdyConnection == null ? idleStartTimeNs : spdyConnection.getIdleStartTimeNs();
   }
 
@@ -284,7 +284,7 @@ public final class Connection implements Closeable {
    * Returns true if this is a SPDY connection. Such connections can be used
    * in multiple HTTP requests simultaneously.
    */
-  public boolean isSpdy() {
+  boolean isSpdy() {
     return spdyConnection != null;
   }
 
@@ -300,12 +300,12 @@ public final class Connection implements Closeable {
    * Sets the protocol negotiated by this connection. Typically this is used
    * when an HTTP/1.1 request is sent and an HTTP/1.0 response is received.
    */
-  public void setProtocol(Protocol protocol) {
+  void setProtocol(Protocol protocol) {
     if (protocol == null) throw new IllegalArgumentException("protocol == null");
     this.protocol = protocol;
   }
 
-  public void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) throws IOException {
+  void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) throws IOException {
     if (!connected) throw new IllegalStateException("setTimeouts - not connected");
 
     // Don't set timeouts on shared SPDY connections.
@@ -315,7 +315,7 @@ public final class Connection implements Closeable {
     }
   }
 
-  public void incrementRecycleCount() {
+  void incrementRecycleCount() {
     recycleCount++;
   }
 
@@ -323,7 +323,7 @@ public final class Connection implements Closeable {
    * Returns the number of times this connection has been returned to the
    * connection pool.
    */
-  public int recycleCount() {
+  int recycleCount() {
     return recycleCount;
   }
 

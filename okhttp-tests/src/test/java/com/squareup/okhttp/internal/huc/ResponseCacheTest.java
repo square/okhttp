@@ -16,8 +16,10 @@
 
 package com.squareup.okhttp.internal.huc;
 
+import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -77,7 +79,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -124,16 +125,15 @@ public final class ResponseCacheTest {
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
     ResponseCache.setDefault(null);
-    client.setResponseCache(cache);
-    assertSame(cache, client.getResponseCache());
-    assertTrue(client.internalCache() instanceof CacheAdapter);
+    Internal.instance.setResponseCache(client, cache);
+    assertTrue(Internal.instance.internalCache(client) instanceof CacheAdapter);
   }
 
   @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
     ResponseCache.setDefault(cache);
-    client.setResponseCache(null);
-    assertNull(client.internalCache());
-    assertNull(client.getResponseCache());
+    Internal.instance.setResponseCache(client, null);
+    assertNull(Internal.instance.internalCache(client));
+    assertNull(client.getCache());
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
@@ -215,7 +215,8 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    client.setResponseCache(new InsecureResponseCache(new InMemoryResponseCache()));
+    Internal.instance.setResponseCache(client,
+        new InsecureResponseCache(new InMemoryResponseCache()));
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     connection1.setSSLSocketFactory(sslContext.getSocketFactory());
@@ -331,16 +332,10 @@ public final class ResponseCacheTest {
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef =
         new AtomicReference<Map<String, List<String>>>();
-    client.setResponseCache(new ResponseCache() {
-      @Override
-      public CacheResponse get(URI uri, String requestMethod,
+    Internal.instance.setResponseCache(client, new AbstractResponseCache() {
+      @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         requestHeadersRef.set(requestHeaders);
-        return null;
-      }
-
-      @Override
-      public CacheRequest put(URI uri, URLConnection conn) throws IOException {
         return null;
       }
     });

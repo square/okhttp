@@ -22,6 +22,7 @@ import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -2314,7 +2315,7 @@ public final class URLConnectionTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    client.setResponseCache(new AbstractResponseCache() {
+    Internal.instance.setResponseCache(client, new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         return new CacheRequest() {
           @Override public void abort() {
