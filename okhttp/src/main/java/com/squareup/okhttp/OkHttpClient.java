@@ -61,6 +61,64 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
           Connection connection, HttpEngine httpEngine) throws IOException {
         return connection.newTransport(httpEngine);
       }
+
+      @Override public boolean clearOwner(Connection connection) {
+        return connection.clearOwner();
+      }
+
+      @Override public void closeIfOwnedBy(Connection connection, Object owner) throws IOException {
+        connection.closeIfOwnedBy(owner);
+      }
+
+      @Override public int recycleCount(Connection connection) {
+        return connection.recycleCount();
+      }
+
+      @Override public Object getOwner(Connection connection) {
+        return connection.getOwner();
+      }
+
+      @Override public void setProtocol(Connection connection, Protocol protocol) {
+        connection.setProtocol(protocol);
+      }
+
+      @Override public void setOwner(Connection connection, HttpEngine httpEngine) {
+        connection.setOwner(httpEngine);
+      }
+
+      @Override public void connect(Connection connection, int connectTimeout, int readTimeout,
+          int writeTimeout, Request request) throws IOException {
+        connection.connect(connectTimeout, readTimeout, writeTimeout, request);
+      }
+
+      @Override public boolean isConnected(Connection connection) {
+        return connection.isConnected();
+      }
+
+      @Override public boolean isSpdy(Connection connection) {
+        return connection.isSpdy();
+      }
+
+      @Override public void setTimeouts(Connection connection, int readTimeout, int writeTimeout)
+          throws IOException {
+        connection.setTimeouts(readTimeout, writeTimeout);
+      }
+
+      @Override public boolean isReadable(Connection pooled) {
+        return pooled.isReadable();
+      }
+
+      @Override public void addLine(Headers.Builder builder, String line) {
+        builder.addLine(line);
+      }
+
+      @Override public void setResponseCache(OkHttpClient client, ResponseCache responseCache) {
+        client.setResponseCache(responseCache);
+      }
+
+      @Override public InternalCache internalCache(OkHttpClient client) {
+        return client.internalCache();
+      }
     };
   }
 
@@ -194,18 +252,14 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     return cookieHandler;
   }
 
-  /**
-   * Sets the response cache to be used to read and write cached responses.
-   */
-  @Deprecated // internal only.
-  public OkHttpClient setResponseCache(ResponseCache responseCache) {
+  /** Sets the response cache to be used to read and write cached responses. */
+  OkHttpClient setResponseCache(ResponseCache responseCache) {
     this.cacheAdapter = responseCache != null ? new CacheAdapter(responseCache) : null;
     this.cache = null;
     return this;
   }
 
-  @Deprecated // internal only.
-  public ResponseCache getResponseCache() {
+  ResponseCache getResponseCache() {
     return cacheAdapter != null ? cacheAdapter.getDelegate() : null;
   }
 
@@ -219,8 +273,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     return cache;
   }
 
-  @Deprecated // internal only.
-  public InternalCache internalCache() {
+  InternalCache internalCache() {
     return cache != null ? cache.internalCache : cacheAdapter;
   }
 

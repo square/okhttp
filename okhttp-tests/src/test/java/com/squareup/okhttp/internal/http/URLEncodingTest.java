@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.internal.Internal;
 import java.io.IOException;
 import java.net.CacheResponse;
 import java.net.HttpURLConnection;
@@ -122,7 +123,7 @@ public final class URLEncodingTest {
     final AtomicReference<URI> uriReference = new AtomicReference<URI>();
 
     OkHttpClient client = new OkHttpClient();
-    client.setResponseCache(new AbstractResponseCache() {
+    Internal.instance.setResponseCache(client, new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         uriReference.set(uri);

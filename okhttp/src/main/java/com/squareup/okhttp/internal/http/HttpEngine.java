@@ -162,7 +162,7 @@ public final class HttpEngine {
     this.requestBodyOut = requestBodyOut;
 
     if (connection != null) {
-      connection.setOwner(this);
+      Internal.instance.setOwner(connection, this);
       this.route = connection.getRoute();
     } else {
       this.route = null;
@@ -179,7 +179,7 @@ public final class HttpEngine {
     if (transport != null) throw new IllegalStateException();
 
     prepareRawRequestHeaders();
-    InternalCache responseCache = client.internalCache();
+    InternalCache responseCache = Internal.instance.internalCache(client);
 
     Response cacheResponse = responseCache != null
         ? responseCache.get(request)
@@ -208,7 +208,9 @@ public final class HttpEngine {
       }
 
       // Blow up if we aren't the current owner of the connection.
-      if (connection.getOwner() != this && !connection.isSpdy()) throw new AssertionError();
+      if (Internal.instance.getOwner(connection) != this && !Internal.instance.isSpdy(connection)) {
+        throw new AssertionError();
+      }
 
       transport = Internal.instance.newTransport(connection, this);
 
@@ -262,15 +264,15 @@ public final class HttpEngine {
     }
 
     connection = routeSelector.next(request.method());
-    connection.setOwner(this);
+    Internal.instance.setOwner(connection, this);
 
-    if (!connection.isConnected()) {
-      connection.connect(client.getConnectTimeout(), client.getReadTimeout(),
+    if (!Internal.instance.isConnected(connection)) {
+      Internal.instance.connect(connection, client.getConnectTimeout(), client.getReadTimeout(),
           client.getWriteTimeout(), tunnelRequest(connection, request));
-      if (connection.isSpdy()) client.getConnectionPool().share(connection);
+      if (Internal.instance.isSpdy(connection)) client.getConnectionPool().share(connection);
       client.getRoutesDatabase().connected(connection.getRoute());
     }
-    connection.setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
+    Internal.instance.setTimeouts(connection, client.getReadTimeout(), client.getWriteTimeout());
     route = connection.getRoute();
   }
 
@@ -385,7 +387,7 @@ public final class HttpEngine {
   }
 
   private void maybeCache() throws IOException {
-    InternalCache responseCache = client.internalCache();
+    InternalCache responseCache = Internal.instance.internalCache(client);
     if (responseCache == null) return;
 
     // Should we cache this response for this request?
@@ -464,7 +466,7 @@ public final class HttpEngine {
     }
 
     // Prevent this engine from disconnecting a connection it no longer owns.
-    if (connection != null && !connection.clearOwner()) {
+    if (connection != null && !Internal.instance.clearOwner(connection)) {
       connection = null;
     }
 
@@ -634,7 +636,7 @@ public final class HttpEngine {
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .setResponseSource(responseSource)
         .build();
-    connection.setProtocol(response.protocol());
+    Internal.instance.setProtocol(connection, response.protocol());
     receiveHeaders(response.headers());
 
     if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
@@ -645,7 +647,7 @@ public final class HttpEngine {
 
         // Update the cache after combining headers but before stripping the
         // Content-Encoding header (as performed by initContentStream()).
-        InternalCache responseCache = client.internalCache();
+        InternalCache responseCache = Internal.instance.internalCache(client);
         responseCache.trackConditionalCacheHit();
         responseCache.update(validatingResponse, cacheableResponse());
 

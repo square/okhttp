@@ -20,6 +20,7 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -132,7 +133,7 @@ public final class HttpConnection {
   }
 
   public void closeIfOwnedBy(Object owner) throws IOException {
-    connection.closeIfOwnedBy(owner);
+    Internal.instance.closeIfOwnedBy(connection, owner);
   }
 
   public void flush() throws IOException {
@@ -208,7 +209,7 @@ public final class HttpConnection {
   public void readHeaders(Headers.Builder builder) throws IOException {
     // parse the result headers until the first blank line
     for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
-      builder.addLine(line);
+      Internal.instance.addLine(builder, line);
     }
   }
 

@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -93,7 +94,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    client.setResponseCache(responseCache);
+    Internal.instance.setResponseCache(client, responseCache);
 
     connection = client.open(serverUrl);
     connection.setRequestProperty("key1", "value1");
@@ -116,7 +117,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    client.setResponseCache(responseCache);
+    Internal.instance.setResponseCache(client, responseCache);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
@@ -158,7 +159,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    client.setResponseCache(responseCache);
+    Internal.instance.setResponseCache(client, responseCache);
 
     connection = client.open(serverUrl);
     connection.setRequestProperty("key", "value");
@@ -197,7 +198,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    client.setResponseCache(responseCache);
+    Internal.instance.setResponseCache(client, responseCache);
 
     connection = client.open(serverUrl);
 
@@ -229,7 +230,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    client.setResponseCache(responseCache);
+    Internal.instance.setResponseCache(client, responseCache);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
