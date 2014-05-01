@@ -108,7 +108,7 @@ public final class RouteSelector {
     // Always prefer pooled connections over new connections.
     for (Connection pooled; (pooled = pool.get(address)) != null; ) {
       if (method.equals("GET") || Internal.instance.isReadable(pooled)) return pooled;
-      pooled.close();
+      pooled.getSocket().close();
     }
 
     // Compute the next route to attempt.

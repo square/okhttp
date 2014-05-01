@@ -116,12 +116,12 @@ public final class ConnectionPoolTest {
     httpServer.shutdown();
     spdyServer.shutdown();
 
-    Util.closeQuietly(httpA);
-    Util.closeQuietly(httpB);
-    Util.closeQuietly(httpC);
-    Util.closeQuietly(httpD);
-    Util.closeQuietly(httpE);
-    Util.closeQuietly(spdyA);
+    Util.closeQuietly(httpA.getSocket());
+    Util.closeQuietly(httpB.getSocket());
+    Util.closeQuietly(httpC.getSocket());
+    Util.closeQuietly(httpD.getSocket());
+    Util.closeQuietly(httpE.getSocket());
+    Util.closeQuietly(spdyA.getSocket());
   }
 
   private void resetWithPoolSize(int poolSize) throws Exception {
@@ -199,7 +199,7 @@ public final class ConnectionPoolTest {
 
   @Test public void nonAliveConnectionNotReturned() throws Exception {
     pool.recycle(httpA);
-    httpA.close();
+    httpA.getSocket().close();
     assertNull(pool.get(httpAddress));
     assertPooled(pool);
   }
@@ -361,7 +361,7 @@ public final class ConnectionPoolTest {
     assertEquals(1, pool.getSpdyConnectionCount());
 
     // Kill http A.
-    Util.closeQuietly(httpA);
+    Util.closeQuietly(httpA.getSocket());
 
     // Force pool to run a clean up.
     assertNotNull(pool.get(spdyAddress));
@@ -386,7 +386,7 @@ public final class ConnectionPoolTest {
   @Test public void evictAllConnections() throws Exception {
     resetWithPoolSize(10);
     pool.recycle(httpA);
-    Util.closeQuietly(httpA); // Include a closed connection in the pool.
+    Util.closeQuietly(httpA.getSocket()); // Include a closed connection in the pool.
     pool.recycle(httpB);
     pool.share(spdyA);
     int connectionCount = pool.getConnectionCount();
