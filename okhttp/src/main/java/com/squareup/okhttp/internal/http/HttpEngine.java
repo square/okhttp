@@ -223,7 +223,7 @@ public final class HttpEngine {
     } else {
       // We're using a cached response. Recycle a connection we may have inherited from a redirect.
       if (connection != null) {
-        client.getConnectionPool().recycle(connection);
+        Internal.instance.recycle(client.getConnectionPool(), connection);
         connection = null;
       }
 
@@ -269,7 +269,9 @@ public final class HttpEngine {
     if (!Internal.instance.isConnected(connection)) {
       Internal.instance.connect(connection, client.getConnectTimeout(), client.getReadTimeout(),
           client.getWriteTimeout(), tunnelRequest(connection, request));
-      if (Internal.instance.isSpdy(connection)) client.getConnectionPool().share(connection);
+      if (Internal.instance.isSpdy(connection)) {
+        Internal.instance.share(client.getConnectionPool(), connection);
+      }
       client.getRoutesDatabase().connected(connection.getRoute());
     }
     Internal.instance.setTimeouts(connection, client.getReadTimeout(), client.getWriteTimeout());
@@ -447,7 +449,7 @@ public final class HttpEngine {
 
     // If this engine never achieved a response body, its connection cannot be reused.
     if (responseBody == null) {
-      closeQuietly(connection);
+      if (connection != null) closeQuietly(connection.getSocket()); // TODO: does this break SPDY?
       connection = null;
       return null;
     }
@@ -460,7 +462,7 @@ public final class HttpEngine {
 
     // Close the connection if it cannot be reused.
     if (transport != null && !transport.canReuseConnection()) {
-      closeQuietly(connection);
+      closeQuietly(connection.getSocket());
       connection = null;
       return null;
     }

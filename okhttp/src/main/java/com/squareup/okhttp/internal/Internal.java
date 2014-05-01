@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
@@ -65,4 +66,8 @@ public abstract class Internal {
   public abstract void setResponseCache(OkHttpClient client, ResponseCache responseCache);
 
   public abstract InternalCache internalCache(OkHttpClient client);
+
+  public abstract void recycle(ConnectionPool pool, Connection connection);
+
+  public abstract void share(ConnectionPool connectionPool, Connection connection);
 }

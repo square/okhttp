@@ -110,7 +110,7 @@ public final class ConnectionPool {
         }
       }
       for (Connection expiredConnection : expiredConnections) {
-        Util.closeQuietly(expiredConnection);
+        Util.closeQuietly(expiredConnection.getSocket());
       }
     }
   };
@@ -189,7 +189,7 @@ public final class ConnectionPool {
         try {
           Platform.get().tagSocket(connection.getSocket());
         } catch (SocketException e) {
-          Util.closeQuietly(connection);
+          Util.closeQuietly(connection.getSocket());
           // When unable to tag, skip recycling and close
           Platform.get().logW("Unable to tagSocket(): " + e);
           continue;
@@ -213,7 +213,7 @@ public final class ConnectionPool {
    *
    * <p>It is an error to use {@code connection} after calling this method.
    */
-  public void recycle(Connection connection) {
+  void recycle(Connection connection) {
     if (connection.isSpdy()) {
       return;
     }
@@ -223,7 +223,7 @@ public final class ConnectionPool {
     }
 
     if (!connection.isAlive()) {
-      Util.closeQuietly(connection);
+      Util.closeQuietly(connection.getSocket());
       return;
     }
 
@@ -232,7 +232,7 @@ public final class ConnectionPool {
     } catch (SocketException e) {
       // When unable to remove tagging, skip recycling and close.
       Platform.get().logW("Unable to untagSocket(): " + e);
-      Util.closeQuietly(connection);
+      Util.closeQuietly(connection.getSocket());
       return;
     }
 
@@ -249,7 +249,7 @@ public final class ConnectionPool {
    * Shares the SPDY connection with the pool. Callers to this method may
    * continue to use {@code connection}.
    */
-  public void share(Connection connection) {
+  void share(Connection connection) {
     if (!connection.isSpdy()) throw new IllegalArgumentException();
     executorService.execute(connectionsCleanupRunnable);
     if (connection.isAlive()) {
@@ -268,7 +268,7 @@ public final class ConnectionPool {
     }
 
     for (int i = 0, size = connections.size(); i < size; i++) {
-      Util.closeQuietly(connections.get(i));
+      Util.closeQuietly(connections.get(i).getSocket());
     }
   }
 }

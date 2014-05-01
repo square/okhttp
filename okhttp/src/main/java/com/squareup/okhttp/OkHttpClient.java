@@ -119,6 +119,14 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
       @Override public InternalCache internalCache(OkHttpClient client) {
         return client.internalCache();
       }
+
+      @Override public void recycle(ConnectionPool pool, Connection connection) {
+        pool.recycle(connection);
+      }
+
+      @Override public void share(ConnectionPool connectionPool, Connection connection) {
+        connectionPool.share(connection);
+      }
     };
   }
 

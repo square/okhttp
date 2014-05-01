@@ -24,7 +24,6 @@ import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
-import java.io.Closeable;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
@@ -60,7 +59,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * connection to be attempted with modern options and then retried without them
  * should the attempt fail.
  */
-public final class Connection implements Closeable {
+public final class Connection {
   private final ConnectionPool pool;
   private final Route route;
 
@@ -209,10 +208,6 @@ public final class Connection implements Closeable {
   /** Returns true if {@link #connect} has been attempted on this connection. */
   boolean isConnected() {
     return connected;
-  }
-
-  @Override public void close() throws IOException {
-    socket.close();
   }
 
   /** Returns the route used by this connection. */

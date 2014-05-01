@@ -109,7 +109,7 @@ public final class HttpConnection {
     // If we're already idle, go to the pool immediately.
     if (state == STATE_IDLE) {
       onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
-      pool.recycle(connection);
+      Internal.instance.recycle(pool, connection);
     }
   }
 
@@ -123,7 +123,7 @@ public final class HttpConnection {
     // If we're already idle, close immediately.
     if (state == STATE_IDLE) {
       state = STATE_CLOSED;
-      connection.close();
+      connection.getSocket().close();
     }
   }
 
@@ -408,10 +408,10 @@ public final class HttpConnection {
       state = STATE_IDLE;
       if (recyclable && onIdle == ON_IDLE_POOL) {
         onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
-        pool.recycle(connection);
+        Internal.instance.recycle(pool, connection);
       } else if (onIdle == ON_IDLE_CLOSE) {
         state = STATE_CLOSED;
-        connection.close();
+        connection.getSocket();
       }
     }
 
@@ -431,7 +431,7 @@ public final class HttpConnection {
       if (cacheRequest != null) {
         cacheRequest.abort();
       }
-      Util.closeQuietly(connection);
+      Util.closeQuietly(connection.getSocket());
       state = STATE_CLOSED;
     }
   }
