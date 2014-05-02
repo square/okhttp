@@ -150,6 +150,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
+  private boolean enabledTransparentGzip = true;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -360,6 +361,21 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   public ConnectionPool getConnectionPool() {
     return connectionPool;
+  }
+
+  /**
+   * Allows transparent GZIP to be turned off to save extra bytes for
+   * small requests.
+   *
+   * <p>If unset, transparent GZIP compression is on.
+   */
+  public boolean hasTransparentGzip() {
+    return enabledTransparentGzip;
+  }
+
+  public OkHttpClient setTransparentGzip(boolean enabledTransparentGzip) {
+    this.enabledTransparentGzip = enabledTransparentGzip;
+    return this;
   }
 
   /**
