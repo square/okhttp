@@ -1202,6 +1202,20 @@ public final class URLConnectionTest {
     assertEquals(0, server.takeRequest().getSequenceNumber()); // Connection is not pooled.
   }
 
+  @Test public void disableTransparentGzip() throws Exception {
+    client.setTransparentGzip(false);
+
+    server.enqueue(new MockResponse()
+        .setBody("a"));
+    server.play();
+
+    assertContent("a", client.open(server.getUrl("/")));
+
+    // no encoding header
+    RecordedRequest get = server.takeRequest();
+    assertContainsNoneMatching(get.getHeaders(), "Accept-Encoding.*");
+  }
+
   @Test public void endOfStreamResponseIsNotPooled() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("{}")

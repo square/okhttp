@@ -556,7 +556,7 @@ public final class HttpEngine {
       result.header("Connection", "Keep-Alive");
     }
 
-    if (request.header("Accept-Encoding") == null) {
+    if (client.hasTransparentGzip() && request.header("Accept-Encoding") == null) {
       transparentGzip = true;
       result.header("Accept-Encoding", "gzip");
     }
