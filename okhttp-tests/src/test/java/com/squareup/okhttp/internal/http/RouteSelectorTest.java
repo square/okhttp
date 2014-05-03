@@ -28,8 +28,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -85,7 +83,7 @@ public final class RouteSelectorTest {
   private final OkAuthenticator authenticator = AuthenticatorAdapter.INSTANCE;
   private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
-  private final FakeProxySelector proxySelector = new FakeProxySelector();
+  private final RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void singleRoute() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null,
@@ -440,29 +438,6 @@ public final class RouteSelectorTest {
     public void assertRequests(String... expectedHosts) {
       assertEquals(Arrays.asList(expectedHosts), requestedHosts);
       requestedHosts.clear();
-    }
-  }
-
-  private static class FakeProxySelector extends ProxySelector {
-    List<URI> requestedUris = new ArrayList<URI>();
-    List<Proxy> proxies = new ArrayList<Proxy>();
-    List<String> failures = new ArrayList<String>();
-
-    @Override public List<Proxy> select(URI uri) {
-      requestedUris.add(uri);
-      return proxies;
-    }
-
-    public void assertRequests(URI... expectedUris) {
-      assertEquals(Arrays.asList(expectedUris), requestedUris);
-      requestedUris.clear();
-    }
-
-    @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
-      InetSocketAddress socketAddress = (InetSocketAddress) sa;
-      failures.add(
-          String.format("%s %s:%d %s", uri, socketAddress.getHostName(), socketAddress.getPort(),
-              ioe.getMessage()));
     }
   }
 }

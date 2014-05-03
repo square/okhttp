@@ -130,6 +130,9 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     };
   }
 
+  /** Lazily-initialized. */
+  private static SSLSocketFactory defaultSslSocketFactory;
+
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
   private Proxy proxy;
@@ -515,22 +518,22 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * used the shared SSL context, when OkHttp enables NPN for its SPDY-related
    * stuff, it would also enable NPN for other usages, which might crash them
    * because NPN is enabled when it isn't expected to be.
-   * <p>
-   * This code avoids that by defaulting to an OkHttp created SSL context. The
-   * significant drawback of this approach is that apps that customize the
-   * global SSL context will lose these customizations.
+   *
+   * <p>This code avoids that by defaulting to an OkHttp-created SSL context.
+   * The drawback of this approach is that apps that customize the global SSL
+   * context will lose these customizations.
    */
   private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
-    if (sslSocketFactory == null) {
+    if (defaultSslSocketFactory == null) {
       try {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, null, null);
-        sslSocketFactory = sslContext.getSocketFactory();
+        defaultSslSocketFactory = sslContext.getSocketFactory();
       } catch (GeneralSecurityException e) {
         throw new AssertionError(); // The system has no TLS. Just give up.
       }
     }
-    return sslSocketFactory;
+    return defaultSslSocketFactory;
   }
 
   /** Returns a shallow copy of this OkHttpClient. */
