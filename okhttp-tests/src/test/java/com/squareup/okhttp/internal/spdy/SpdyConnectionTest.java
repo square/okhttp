@@ -56,7 +56,7 @@ import static org.junit.Assert.fail;
 
 public final class SpdyConnectionTest {
   private static final Variant SPDY3 = new Spdy3();
-  private static final Variant HTTP_20_DRAFT_09 = new Http20Draft10();
+  private static final Variant HTTP_20_DRAFT_09 = new Http20Draft12();
   private final MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
@@ -143,7 +143,7 @@ public final class SpdyConnectionTest {
         ":version", "HTTP/1.1",
         "content-type", "text/html");
     // write the mocking script
-    peer.sendFrame().synStream(false, false, 2, 0, 5, 129, pushHeaders);
+    peer.sendFrame().synStream(false, false, 2, 0, pushHeaders);
     peer.acceptFrame(); // SYN_REPLY
     peer.play();
 
@@ -154,7 +154,6 @@ public final class SpdyConnectionTest {
         receiveCount.incrementAndGet();
         assertEquals(pushHeaders, stream.getRequestHeaders());
         assertEquals(null, stream.getErrorCode());
-        assertEquals(5, stream.getPriority());
         stream.reply(headerEntries("b", "banana"), true);
       }
     };
@@ -172,7 +171,7 @@ public final class SpdyConnectionTest {
 
   @Test public void replyWithNoData() throws Exception {
     // write the mocking script
-    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("a", "android"));
+    peer.sendFrame().synStream(false, false, 2, 0, headerEntries("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
     peer.play();
 
@@ -339,7 +338,7 @@ public final class SpdyConnectionTest {
 
     // verify the peer's settings were read and applied.
     assertEquals(0, connection.peerSettings.getHeaderTableSize());
-    Http20Draft10.Reader frameReader = (Http20Draft10.Reader) connection.readerRunnable.frameReader;
+    Http20Draft12.Reader frameReader = (Http20Draft12.Reader) connection.readerRunnable.frameReader;
     assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
     // TODO: when supported, check the frameWriter's compression table is unaffected.
   }
@@ -708,9 +707,9 @@ public final class SpdyConnectionTest {
 
   @Test public void remoteDoubleSynStream() throws Exception {
     // write the mocking script
-    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("a", "android"));
+    peer.sendFrame().synStream(false, false, 2, 0, headerEntries("a", "android"));
     peer.acceptFrame(); // SYN_REPLY
-    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("b", "banana"));
+    peer.sendFrame().synStream(false, false, 2, 0, headerEntries("b", "banana"));
     peer.acceptFrame(); // RST_STREAM
     peer.play();
 
@@ -877,7 +876,7 @@ public final class SpdyConnectionTest {
     peer.acceptFrame(); // SYN_STREAM 3
     peer.acceptFrame(); // GOAWAY
     peer.acceptFrame(); // PING
-    peer.sendFrame().synStream(false, false, 2, 0, 0, 0, headerEntries("b", "b")); // Should be ignored!
+    peer.sendFrame().synStream(false, false, 2, 0, headerEntries("b", "b")); // Should be ignored!
     peer.sendFrame().ping(true, 1, 0);
     peer.play();
 

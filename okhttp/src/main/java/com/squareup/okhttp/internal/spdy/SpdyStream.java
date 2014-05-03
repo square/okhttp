@@ -53,7 +53,7 @@ public final class SpdyStream {
 
   private final int id;
   private final SpdyConnection connection;
-  private final int priority;
+  private long readTimeoutMillis = 0;
 
   /** Headers sent by the stream initiator. Immutable and non null. */
   private final List<Header> requestHeaders;
@@ -74,7 +74,7 @@ public final class SpdyStream {
   private ErrorCode errorCode = null;
 
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      int priority, List<Header> requestHeaders) {
+      List<Header> requestHeaders) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
@@ -86,7 +86,6 @@ public final class SpdyStream {
     this.sink = new SpdyDataSink();
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
-    this.priority = priority;
     this.requestHeaders = requestHeaders;
   }
 
@@ -305,10 +304,6 @@ public final class SpdyStream {
       this.errorCode = errorCode;
       notifyAll();
     }
-  }
-
-  int getPriority() {
-    return priority;
   }
 
   /**

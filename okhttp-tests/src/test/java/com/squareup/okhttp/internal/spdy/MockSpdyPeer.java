@@ -192,7 +192,6 @@ public final class MockSpdyPeer implements Closeable {
     public boolean inFinished;
     public int streamId;
     public int associatedStreamId;
-    public int priority;
     public ErrorCode errorCode;
     public long windowSizeIncrement;
     public List<Header> headerBlock;
@@ -222,15 +221,13 @@ public final class MockSpdyPeer implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<Header> headerBlock,
-        HeadersMode headersMode) {
+        int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
       if (this.type != -1) throw new IllegalStateException();
       this.type = Spdy3.TYPE_HEADERS;
       this.outFinished = outFinished;
       this.inFinished = inFinished;
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
-      this.priority = priority;
       this.headerBlock = headerBlock;
       this.headersMode = headersMode;
     }
@@ -274,16 +271,22 @@ public final class MockSpdyPeer implements Closeable {
       this.windowSizeIncrement = windowSizeIncrement;
     }
 
-    @Override public void priority(int streamId, int priority) {
+    @Override public void priority(int streamId, int streamDependency, int weight,
+        boolean exclusive) {
       throw new UnsupportedOperationException();
     }
 
     @Override
     public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
-      this.type = Http20Draft10.TYPE_PUSH_PROMISE;
+      this.type = Http20Draft12.TYPE_PUSH_PROMISE;
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.headerBlock = headerBlock;
+    }
+
+    @Override public void alternateService(int streamId, String origin, ByteString protocol,
+        String host, int port, long maxAge) {
+      throw new UnsupportedOperationException();
     }
   }
 }

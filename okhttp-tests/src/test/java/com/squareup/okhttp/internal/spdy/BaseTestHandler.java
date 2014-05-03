@@ -30,7 +30,7 @@ class BaseTestHandler implements FrameReader.Handler {
 
   @Override
   public void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      int priority, List<Header> headerBlock, HeadersMode headersMode) {
+      List<Header> headerBlock, HeadersMode headersMode) {
     fail();
   }
 
@@ -58,12 +58,18 @@ class BaseTestHandler implements FrameReader.Handler {
     fail();
   }
 
-  @Override public void priority(int streamId, int priority) {
+  @Override public void priority(int streamId, int streamDependency, int weight,
+      boolean exclusive) {
     fail();
   }
 
   @Override
   public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
+    fail();
+  }
+
+  @Override public void alternateService(int streamId, String origin, ByteString protocol,
+      String host, int port, long maxAge) {
     fail();
   }
 }

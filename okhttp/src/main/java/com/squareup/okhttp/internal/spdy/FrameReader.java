@@ -24,7 +24,7 @@ import okio.ByteString;
 
 /** Reads transport frames for SPDY/3 or HTTP/2. */
 public interface FrameReader extends Closeable {
-  void readConnectionHeader() throws IOException;
+  void readConnectionPreface() throws IOException;
   boolean nextFrame(Handler handler) throws IOException;
 
   public interface Handler {
@@ -40,13 +40,10 @@ public interface FrameReader extends Closeable {
      * @param inFinished true if the sender will not send further frames.
      * @param streamId the stream owning these headers.
      * @param associatedStreamId the stream that triggered the sender to create
-     * this stream.
-     * @param priority or -1 for no priority. For SPDY, priorities range from 0
-     * (highest) thru 7 (lowest). For HTTP/2, priorities range from 0
-     * (highest) thru 2^31-1 (lowest), defaulting to 2^30.
+     *     this stream.
      */
     void headers(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-        int priority, List<Header> headerBlock, HeadersMode headersMode);
+        List<Header> headerBlock, HeadersMode headersMode);
     void rstStream(int streamId, ErrorCode errorCode);
     void settings(boolean clearPrevious, Settings settings);
 
@@ -85,7 +82,18 @@ public interface FrameReader extends Closeable {
      * sent on {@code streamId}, or the connection if {@code streamId} is zero.
      */
     void windowUpdate(int streamId, long windowSizeIncrement);
-    void priority(int streamId, int priority);
+
+    /**
+     * Called when reading a headers or priority frame. This may be used to
+     * change the stream's weight from the default (16) to a new value.
+     *
+     * @param streamId stream which has a priority change.
+     * @param streamDependency the stream ID this stream is dependent on.
+     * @param weight relative proportion of priority in [1..256].
+     * @param exclusive inserts this stream ID as the sole child of
+     *     {@code streamDependency}.
+     */
+    void priority(int streamId, int streamDependency, int weight, boolean exclusive);
 
     /**
      * HTTP/2 only. Receive a push promise header block.
@@ -93,8 +101,7 @@ public interface FrameReader extends Closeable {
      * A push promise contains all the headers that pertain to a server-initiated
      * request, and a {@code promisedStreamId} to which response frames will be
      * delivered. Push promise frames are sent as a part of the response to
-     * {@code streamId}.  The {@code promisedStreamId} has a priority of one
-     * greater than {@code streamId}.
+     * {@code streamId}.
      *
      * @param streamId client-initiated stream ID.  Must be an odd number.
      * @param promisedStreamId server-initiated stream ID.  Must be an even
@@ -104,5 +111,27 @@ public interface FrameReader extends Closeable {
      */
     void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders)
         throws IOException;
+
+    /**
+     * HTTP/2 only. Expresses that resources for the connection or a client-
+     * initiated stream are available from a different network location or
+     * protocol configuration.
+     *
+     * <p>See <a href="https://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01">alt-svc</a>
+     *
+     * @param streamId when a client-initiated stream ID (odd number), the
+     *     origin of this alternate service is the origin of the stream. When
+     *     zero, the origin is specified in the {@code origin} parameter.
+     * @param origin when present, the
+     *     <a href="http://tools.ietf.org/html/rfc6454">origin</a> is typically
+     *     represented as a combination of scheme, host and port. When empty,
+     *     the origin is that of the {@code streamId}.
+     * @param protocol an ALPN protocol, such as {@code h2}.
+     * @param host an IP address or hostname.
+     * @param port the IP port associated with the service.
+     * @param maxAge time in seconds that this alternative is considered fresh.
+     */
+    void alternateService(int streamId, String origin, ByteString protocol, String host, int port,
+        long maxAge);
   }
 }

@@ -24,7 +24,7 @@ import okio.Buffer;
 /** Writes transport frames for SPDY/3 or HTTP/2. */
 public interface FrameWriter extends Closeable {
   /** HTTP/2 only. */
-  void connectionHeader() throws IOException;
+  void connectionPreface() throws IOException;
   void ackSettings() throws IOException;
 
   /**
@@ -48,7 +48,7 @@ public interface FrameWriter extends Closeable {
   /** SPDY/3 only. */
   void flush() throws IOException;
   void synStream(boolean outFinished, boolean inFinished, int streamId, int associatedStreamId,
-      int priority, int slot, List<Header> headerBlock) throws IOException;
+      List<Header> headerBlock) throws IOException;
   void synReply(boolean outFinished, int streamId, List<Header> headerBlock)
       throws IOException;
   void headers(int streamId, List<Header> headerBlock) throws IOException;

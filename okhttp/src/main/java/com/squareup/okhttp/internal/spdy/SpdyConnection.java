@@ -128,7 +128,7 @@ public final class SpdyConnection implements Closeable {
     pushObserver = builder.pushObserver;
     client = builder.client;
     handler = builder.handler;
-    // http://tools.ietf.org/html/draft-ietf-httpbis-http2-10#section-5.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-http2-12#section-5.1.1
     nextStreamId = builder.client ? 3 : 2; // 1 on client is reserved for Upgrade
     nextPingId = builder.client ? 1 : 2;
 
@@ -143,7 +143,7 @@ public final class SpdyConnection implements Closeable {
     hostName = builder.hostName;
 
     if (protocol == Protocol.HTTP_2) {
-      variant = new Http20Draft10();
+      variant = new Http20Draft12();
     } else if (protocol == Protocol.SPDY_3) {
       variant = new Spdy3();
     } else {
@@ -232,8 +232,6 @@ public final class SpdyConnection implements Closeable {
       boolean in) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = !in;
-    int priority = -1; // TODO: permit the caller to specify a priority?
-    int slot = 0; // TODO: permit the caller to specify a slot?
     SpdyStream stream;
     int streamId;
 
@@ -244,14 +242,14 @@ public final class SpdyConnection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new SpdyStream(streamId, this, outFinished, inFinished, priority, requestHeaders);
+        stream = new SpdyStream(streamId, this, outFinished, inFinished, requestHeaders);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
         }
       }
       if (associatedStreamId == 0) {
-        frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId, priority, slot,
+        frameWriter.synStream(outFinished, inFinished, streamId, associatedStreamId,
             requestHeaders);
       } else if (client) {
         throw new IllegalArgumentException("client streams shouldn't have associated stream IDs");
@@ -488,8 +486,8 @@ public final class SpdyConnection implements Closeable {
    * Sends a connection header if the current variant requires it. This should
    * be called after {@link Builder#build} for all new connections.
    */
-  public void sendConnectionHeader() throws IOException {
-    frameWriter.connectionHeader();
+  public void sendConnectionPreface() throws IOException {
+    frameWriter.connectionPreface();
     frameWriter.settings(okHttpSettings);
   }
 
@@ -552,7 +550,7 @@ public final class SpdyConnection implements Closeable {
       try {
         frameReader = variant.newReader(Okio.buffer(Okio.source(socket)), client);
         if (!client) {
-          frameReader.readConnectionHeader();
+          frameReader.readConnectionPreface();
         }
         while (frameReader.nextFrame(this)) {
         }
@@ -589,7 +587,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, int priority, List<Header> headerBlock, HeadersMode headersMode) {
+        int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
       if (pushedStream(streamId)) {
         pushHeadersLater(streamId, headerBlock, inFinished);
         return;
@@ -616,7 +614,7 @@ public final class SpdyConnection implements Closeable {
 
           // Create a stream.
           final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
-              inFinished, priority, headerBlock);
+              inFinished, headerBlock);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
@@ -748,13 +746,19 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void priority(int streamId, int priority) {
+    @Override public void priority(int streamId, int streamDependency, int weight,
+        boolean exclusive) {
       // TODO: honor priority.
     }
 
     @Override
     public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
       pushRequestLater(promisedStreamId, requestHeaders);
+    }
+
+    @Override public void alternateService(int streamId, String origin, ByteString protocol,
+        String host, int port, long maxAge) {
+      // TODO: register alternate service.
     }
   }
 
