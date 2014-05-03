@@ -83,13 +83,13 @@ public final class Http20Draft10 implements Variant {
     private final boolean client;
 
     // Visible for testing.
-    final HpackDraft06.Reader hpackReader;
+    final HpackDraft07.Reader hpackReader;
 
     Reader(BufferedSource source, int headerTableSize, boolean client) {
       this.source = source;
       this.client = client;
       this.continuation = new ContinuationSource(this.source);
-      this.hpackReader = new HpackDraft06.Reader(headerTableSize, continuation);
+      this.hpackReader = new HpackDraft07.Reader(headerTableSize, continuation);
     }
 
     @Override public void readConnectionHeader() throws IOException {
@@ -272,7 +272,7 @@ public final class Http20Draft10 implements Variant {
       }
       handler.settings(false, settings);
       if (settings.getHeaderTableSize() >= 0) {
-        hpackReader.maxHeaderTableByteCount(settings.getHeaderTableSize());
+        hpackReader.maxHeaderTableByteCountSetting(settings.getHeaderTableSize());
       }
     }
 
@@ -333,14 +333,14 @@ public final class Http20Draft10 implements Variant {
     private final BufferedSink sink;
     private final boolean client;
     private final Buffer hpackBuffer;
-    private final HpackDraft06.Writer hpackWriter;
+    private final HpackDraft07.Writer hpackWriter;
     private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
       this.client = client;
       this.hpackBuffer = new Buffer();
-      this.hpackWriter = new HpackDraft06.Writer(hpackBuffer);
+      this.hpackWriter = new HpackDraft07.Writer(hpackBuffer);
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -539,7 +539,7 @@ public final class Http20Draft10 implements Variant {
   /**
    * Decompression of the header block occurs above the framing layer. This
    * class lazily reads continuation frames as they are needed by {@link
-   * HpackDraft06.Reader#readHeaders()}.
+   * HpackDraft07.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
     private final BufferedSource source;

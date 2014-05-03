@@ -65,7 +65,7 @@ public enum Protocol {
    * <p>This version of OkHttp implements HTTP/2 <a
    * href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-10">draft 10</a>
    * with HPACK <a
-   * href="http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06">draft
+   * href="http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07">draft
    * 6</a>. Future releases of OkHttp may use this identifier for a newer draft
    * of these specs.
    */

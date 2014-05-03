@@ -15,15 +15,16 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v06.
+ * Read and write HPACK v07.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07
  *
  * This implementation uses an array for the header table with a bitset for
  * references.  Dynamic entries are added to the array, starting in the last
  * position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft06 {
+final class HpackDraft07 {
+  private static final int PREFIX_4_BITS = 0x0f;
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
 
@@ -36,11 +37,12 @@ final class HpackDraft06 {
       new Header(Header.TARGET_SCHEME, "http"),
       new Header(Header.TARGET_SCHEME, "https"),
       new Header(Header.RESPONSE_STATUS, "200"),
-      new Header(Header.RESPONSE_STATUS, "500"),
-      new Header(Header.RESPONSE_STATUS, "404"),
-      new Header(Header.RESPONSE_STATUS, "403"),
+      new Header(Header.RESPONSE_STATUS, "204"),
+      new Header(Header.RESPONSE_STATUS, "206"),
+      new Header(Header.RESPONSE_STATUS, "304"),
       new Header(Header.RESPONSE_STATUS, "400"),
-      new Header(Header.RESPONSE_STATUS, "401"),
+      new Header(Header.RESPONSE_STATUS, "404"),
+      new Header(Header.RESPONSE_STATUS, "500"),
       new Header("accept-charset", ""),
       new Header("accept-encoding", ""),
       new Header("accept-language", ""),
@@ -90,14 +92,15 @@ final class HpackDraft06 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft06() {
+  private HpackDraft07() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-3.2
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-3.2
   static final class Reader {
 
     private final List<Header> emittedHeaders = new ArrayList<Header>();
     private final BufferedSource source;
+    private int maxHeaderTableByteCountSetting;
     private int maxHeaderTableByteCount;
 
     // Visible for testing.
@@ -118,8 +121,9 @@ final class HpackDraft06 {
     BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
     int headerTableByteCount = 0;
 
-    Reader(int maxHeaderTableByteCount, Source source) {
-      this.maxHeaderTableByteCount = maxHeaderTableByteCount;
+    Reader(int maxHeaderTableByteCountSetting, Source source) {
+      this.maxHeaderTableByteCountSetting = maxHeaderTableByteCountSetting;
+      this.maxHeaderTableByteCount = maxHeaderTableByteCountSetting;
       this.source = Okio.buffer(source);
     }
 
@@ -129,11 +133,18 @@ final class HpackDraft06 {
 
     /**
      * Called by the reader when the peer sent a new header table size setting.
-     * <p>
-     * Evicts entries or clears the table as needed.
+     * While this establishes the maximum header table size, the
+     * {@link #maxHeaderTableByteCount} set during processing may limit the
+     * table size to a smaller amount.
+     * <p> Evicts entries or clears the table as needed.
      */
-    void maxHeaderTableByteCount(int newMaxHeaderTableByteCount) {
-      this.maxHeaderTableByteCount = newMaxHeaderTableByteCount;
+    void maxHeaderTableByteCountSetting(int newMaxHeaderTableByteCountSetting) {
+      this.maxHeaderTableByteCountSetting = newMaxHeaderTableByteCountSetting;
+      this.maxHeaderTableByteCount = maxHeaderTableByteCountSetting;
+      adjustHeaderTableByteCount();
+    }
+
+    private void adjustHeaderTableByteCount() {
       if (maxHeaderTableByteCount < headerTableByteCount) {
         if (maxHeaderTableByteCount == 0) {
           clearHeaderTable();
@@ -173,46 +184,39 @@ final class HpackDraft06 {
 
     /**
      * Read {@code byteCount} bytes of headers from the source stream into the
-     * set of emitted headers.
+     * set of emitted headers. This implementation does not propagate the never
+     * indexed flag of a header.
      */
     void readHeaders() throws IOException {
       while (!source.exhausted()) {
         int b = source.readByte() & 0xff;
         if (b == 0x80) { // 10000000
-          b = source.readByte();
-          if ((b & 0x80) == 0x80) { // 1NNNNNNN
-            if ((b & PREFIX_7_BITS) == 0) {
-              clearReferenceSet();
-            } else {
-              throw new IOException("Invalid header table state change " + b);
-            }
-          } else {
-            int headerTableByteCount = b != PREFIX_7_BITS ? b : readInt(b, PREFIX_7_BITS);
-            if (headerTableByteCount < 0) {
-              throw new IOException("Invalid header table byte count " + headerTableByteCount);
-            }
-            maxHeaderTableByteCount = Math.min(headerTableByteCount, maxHeaderTableByteCount);
-            int toEvict = headerTableByteCount - maxHeaderTableByteCount;
-            if (toEvict > 0) evictToRecoverBytes(toEvict);
-          }
+          throw new IOException("index == 0");
         } else if ((b & 0x80) == 0x80) { // 1NNNNNNN
           int index = readInt(b, PREFIX_7_BITS);
           readIndexedHeader(index - 1);
-        } else { // 0NNNNNNN
-          if (b == 0x40) { // 01000000
-            readLiteralHeaderWithoutIndexingNewName();
-          } else if ((b & 0x40) == 0x40) {  // 01NNNNNN
-            int index = readInt(b, PREFIX_6_BITS);
-            readLiteralHeaderWithoutIndexingIndexedName(index - 1);
-          } else if (b == 0) { // 00000000
-            readLiteralHeaderWithIncrementalIndexingNewName();
-          } else if ((b & 0xc0) == 0) { // 00NNNNNN
-            int index = readInt(b, PREFIX_6_BITS);
-            readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
-          } else {
-            // TODO: we should throw something that we can coerce to a PROTOCOL_ERROR
-            throw new AssertionError("unhandled byte: " + Integer.toBinaryString(b));
+        } else if (b == 0x40) { // 01000000
+          readLiteralHeaderWithIncrementalIndexingNewName();
+        } else if ((b & 0x40) == 0x40) {  // 01NNNNNN
+          int index = readInt(b, PREFIX_6_BITS);
+          readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
+        } else if ((b & 0x20) == 0x20) {  // 001NNNNN
+          if ((b & 0x10) == 0x10) { // 0011NNNN
+            if ((b & 0x0f) != 0) throw new IOException("Invalid header table state change " + b);
+            clearReferenceSet(); // 00110000
+          } else { // 0010NNNN
+            maxHeaderTableByteCount = readInt(b, PREFIX_4_BITS);
+            if (maxHeaderTableByteCount < 0
+                || maxHeaderTableByteCount > maxHeaderTableByteCountSetting) {
+              throw new IOException("Invalid header table byte count " + maxHeaderTableByteCount);
+            }
+            adjustHeaderTableByteCount();
           }
+        } else if (b == 0x10 || b == 0) { // 000?0000 - Ignore never indexed bit.
+          readLiteralHeaderWithoutIndexingNewName();
+        } else { // 000?NNNN - Ignore never indexed bit.
+          int index = readInt(b, PREFIX_4_BITS);
+          readLiteralHeaderWithoutIndexingIndexedName(index - 1);
         }
       }
     }
@@ -419,6 +423,8 @@ final class HpackDraft06 {
       this.out = out;
     }
 
+    /** This does not use "never indexed" semantics for sensitive headers. */
+    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-4.3.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -426,17 +432,17 @@ final class HpackDraft06 {
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
         if (staticIndex != null) {
           // Literal Header Field without Indexing - Indexed Name.
-          writeInt(staticIndex + 1, PREFIX_6_BITS, 0x40);
+          writeInt(staticIndex + 1, PREFIX_4_BITS, 0);
           writeByteString(headerBlock.get(i).value);
         } else {
-          out.writeByte(0x40); // Literal Header without Indexing - New Name.
+          out.writeByte(0x00); // Literal Header without Indexing - New Name.
           writeByteString(name);
           writeByteString(headerBlock.get(i).value);
         }
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-06#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

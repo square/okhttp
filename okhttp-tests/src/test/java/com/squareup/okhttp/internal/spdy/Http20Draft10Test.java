@@ -944,7 +944,7 @@ public class Http20Draft10Test {
 
   private Buffer literalHeaders(List<Header> sentHeaders) throws IOException {
     Buffer out = new Buffer();
-    new HpackDraft06.Writer(out).writeHeaders(sentHeaders);
+    new HpackDraft07.Writer(out).writeHeaders(sentHeaders);
     return out;
   }
 
