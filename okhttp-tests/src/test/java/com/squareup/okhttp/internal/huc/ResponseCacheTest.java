@@ -112,7 +112,7 @@ public final class ResponseCacheTest {
 
     client = new OkHttpClient();
     cache = new InMemoryResponseCache();
-    ResponseCache.setDefault(cache);
+    Internal.instance.setResponseCache(client, cache);
   }
 
   @After public void tearDown() throws Exception {
@@ -121,19 +121,6 @@ public final class ResponseCacheTest {
 
   private HttpURLConnection openConnection(URL url) {
     return client.open(url);
-  }
-
-  @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
-    ResponseCache.setDefault(null);
-    Internal.instance.setResponseCache(client, cache);
-    assertTrue(Internal.instance.internalCache(client) instanceof CacheAdapter);
-  }
-
-  @Test public void responseCacheAccessWithGlobalDefault() throws IOException {
-    ResponseCache.setDefault(cache);
-    Internal.instance.setResponseCache(client, null);
-    assertNull(Internal.instance.internalCache(client));
-    assertNull(client.getCache());
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {
