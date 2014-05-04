@@ -19,9 +19,9 @@ package com.squareup.okhttp.internal.spdy;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Sink;
@@ -54,7 +54,6 @@ public final class SpdyStream {
   private final int id;
   private final SpdyConnection connection;
   private final int priority;
-  private long readTimeoutMillis = 0;
 
   /** Headers sent by the stream initiator. Immutable and non null. */
   private final List<Header> requestHeaders;
@@ -64,6 +63,8 @@ public final class SpdyStream {
 
   private final SpdyDataSource source;
   final SpdyDataSink sink;
+  private final SpdyTimeout readTimeout = new SpdyTimeout();
+  private final SpdyTimeout writeTimeout = new SpdyTimeout();
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple
@@ -134,33 +135,16 @@ public final class SpdyStream {
    * have not been received yet.
    */
   public synchronized List<Header> getResponseHeaders() throws IOException {
-    long remaining = 0;
-    long start = 0;
-    if (readTimeoutMillis != 0) {
-      start = (System.nanoTime() / 1000000);
-      remaining = readTimeoutMillis;
-    }
+    readTimeout.enter();
     try {
       while (responseHeaders == null && errorCode == null) {
-        if (readTimeoutMillis == 0) { // No timeout configured.
-          wait();
-        } else if (remaining > 0) {
-          wait(remaining);
-          remaining = start + readTimeoutMillis - (System.nanoTime() / 1000000);
-        } else {
-          throw new SocketTimeoutException("Read response header timeout. readTimeoutMillis: "
-                            + readTimeoutMillis);
-        }
+        waitForIo();
       }
-      if (responseHeaders != null) {
-        return responseHeaders;
-      }
-      throw new IOException("stream was reset: " + errorCode);
-    } catch (InterruptedException e) {
-      InterruptedIOException rethrow = new InterruptedIOException();
-      rethrow.initCause(e);
-      throw rethrow;
+    } finally {
+      readTimeout.exitAndThrowIfTimedOut();
     }
+    if (responseHeaders != null) return responseHeaders;
+    throw new IOException("stream was reset: " + errorCode);
   }
 
   /**
@@ -200,16 +184,12 @@ public final class SpdyStream {
     }
   }
 
-  /**
-   * Sets the maximum time to wait on input stream reads before failing with a
-   * {@code SocketTimeoutException}, or {@code 0} to wait indefinitely.
-   */
-  public void setReadTimeout(long readTimeoutMillis) {
-    this.readTimeoutMillis = readTimeoutMillis;
+  public Timeout readTimeout() {
+    return readTimeout;
   }
 
-  public long getReadTimeoutMillis() {
-    return readTimeoutMillis;
+  public Timeout writeTimeout() {
+    return writeTimeout;
   }
 
   /** Returns a source that reads data from the peer. */
@@ -394,31 +374,15 @@ public final class SpdyStream {
       return read;
     }
 
-    /**
-     * Returns once the input stream is either readable or finished. Throws
-     * a {@link SocketTimeoutException} if the read timeout elapses before
-     * that happens.
-     */
+    /** Returns once the source is either readable or finished. */
     private void waitUntilReadable() throws IOException {
-      long start = 0;
-      long remaining = 0;
-      if (readTimeoutMillis != 0) {
-        start = (System.nanoTime() / 1000000);
-        remaining = readTimeoutMillis;
-      }
+      readTimeout.enter();
       try {
         while (readBuffer.size() == 0 && !finished && !closed && errorCode == null) {
-          if (readTimeoutMillis == 0) {
-            SpdyStream.this.wait();
-          } else if (remaining > 0) {
-            SpdyStream.this.wait(remaining);
-            remaining = start + readTimeoutMillis - (System.nanoTime() / 1000000);
-          } else {
-            throw new SocketTimeoutException("Read timed out");
-          }
+          waitForIo();
         }
-      } catch (InterruptedException e) {
-        throw new InterruptedIOException();
+      } finally {
+        readTimeout.exitAndThrowIfTimedOut();
       }
     }
 
@@ -463,8 +427,7 @@ public final class SpdyStream {
     }
 
     @Override public Timeout timeout() {
-      // TODO: honor timeouts.
-      return Timeout.NONE;
+      return readTimeout;
     }
 
     @Override public void close() throws IOException {
@@ -523,12 +486,13 @@ public final class SpdyStream {
       while (byteCount > 0) {
         long toWrite;
         synchronized (SpdyStream.this) {
+          writeTimeout.enter();
           try {
-            while (bytesLeftInWriteWindow <= 0) {
-              SpdyStream.this.wait(); // Wait until we receive a WINDOW_UPDATE.
+            while (bytesLeftInWriteWindow <= 0 && !finished && !closed && errorCode == null) {
+              waitForIo(); // Wait until we receive a WINDOW_UPDATE.
             }
-          } catch (InterruptedException e) {
-            throw new InterruptedIOException();
+          } finally {
+            writeTimeout.exitAndThrowIfTimedOut();
           }
 
           checkOutNotClosed(); // Kick out if the stream was reset or closed while waiting.
@@ -550,8 +514,7 @@ public final class SpdyStream {
     }
 
     @Override public Timeout timeout() {
-      // TODO: honor timeouts.
-      return Timeout.NONE;
+      return writeTimeout;
     }
 
     @Override public void close() throws IOException {
@@ -586,6 +549,33 @@ public final class SpdyStream {
       throw new IOException("stream finished");
     } else if (errorCode != null) {
       throw new IOException("stream was reset: " + errorCode);
+    }
+  }
+
+  /**
+   * Like {@link #wait}, but throws an {@code InterruptedIOException} when
+   * interrupted instead of the more awkward {@link InterruptedException}.
+   */
+  private void waitForIo() throws InterruptedIOException {
+    try {
+      wait();
+    } catch (InterruptedException e) {
+      throw new InterruptedIOException();
+    }
+  }
+
+  /**
+   * The Okio timeout watchdog will call {@link #timedOut} if the timeout is
+   * reached. In that case we close the stream (asynchronously) which will
+   * notify the waiting thread.
+   */
+  class SpdyTimeout extends AsyncTimeout {
+    @Override protected void timedOut() {
+      closeLater(ErrorCode.CANCEL);
+    }
+
+    public void exitAndThrowIfTimedOut() throws InterruptedIOException {
+      if (exit()) throw new InterruptedIOException("timeout");
     }
   }
 }

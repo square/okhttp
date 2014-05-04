@@ -28,6 +28,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
+import okio.Sink;
 import okio.Source;
 import org.junit.After;
 import org.junit.Test;
@@ -978,33 +979,94 @@ public final class SpdyConnectionTest {
     assertEquals(-1, ping.roundTripTime());
   }
 
-  @Test public void readTimeoutExpires() throws Exception {
+  @Test public void getResponseHeadersTimesOut() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
-    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
-    peer.acceptFrame(); // PING
-    peer.sendFrame().ping(true, 1, 0);
+    peer.acceptFrame(); // RST_STREAM
     peer.play();
 
     // play it back
     SpdyConnection connection = connection(peer, SPDY3);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
-    stream.setReadTimeout(1000);
+    stream.readTimeout().timeout(500, TimeUnit.MILLISECONDS);
+    long startNanos = System.nanoTime();
+    try {
+      stream.getResponseHeaders();
+      fail();
+    } catch (InterruptedIOException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
+  @Test public void readTimesOut() throws Exception {
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = connection(peer, SPDY3);
+    SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
+    stream.readTimeout().timeout(500, TimeUnit.MILLISECONDS);
     Source source = stream.getSource();
     long startNanos = System.nanoTime();
     try {
       source.read(new Buffer(), 1);
       fail();
-    } catch (IOException expected) {
+    } catch (InterruptedIOException expected) {
     }
     long elapsedNanos = System.nanoTime() - startNanos;
-    assertEquals(1000d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
-    assertEquals(1, connection.openStreamCount());
-    connection.ping().roundTripTime(); // Prevent the peer from exiting prematurely.
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
 
     // verify the peer received what was expected
-    MockSpdyPeer.InFrame synStream = peer.takeFrame();
-    assertEquals(TYPE_HEADERS, synStream.type);
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
+  @Test public void writeTimesOutAwaitingStreamWindow() throws Exception {
+    // Set the peer's receive window to 5 bytes!
+    Settings peerSettings = new Settings().set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 5);
+
+    // write the mocking script
+    peer.sendFrame().settings(peerSettings);
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0);
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    peer.acceptFrame(); // DATA
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = connection(peer, SPDY3);
+    connection.ping().roundTripTime(); // Make sure settings have been received.
+    SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
+    Sink sink = stream.getSink();
+    sink.write(new Buffer().writeUtf8("abcde"), 5);
+    stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS);
+    long startNanos = System.nanoTime();
+    try {
+      sink.write(new Buffer().writeUtf8("f"), 1); // This will time out waiting on the write window.
+      fail();
+    } catch (InterruptedIOException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    assertEquals(TYPE_PING, peer.takeFrame().type);
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(TYPE_DATA, peer.takeFrame().type);
+    assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
   }
 
   @Test public void headers() throws Exception {

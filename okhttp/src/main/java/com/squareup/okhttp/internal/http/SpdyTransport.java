@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.ByteString;
 import okio.Sink;
@@ -93,7 +94,7 @@ public final class SpdyTransport implements Transport {
     stream = spdyConnection.newStream(
         writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
         hasResponseBody);
-    stream.setReadTimeout(httpEngine.client.getReadTimeout());
+    stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
@@ -308,18 +309,15 @@ public final class SpdyTransport implements Transport {
     }
 
     private boolean discardStream() {
+      long oldTimeoutNanos = stream.readTimeout().timeoutNanos();
+      stream.readTimeout().timeout(DISCARD_STREAM_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       try {
-        long socketTimeout = stream.getReadTimeoutMillis();
-        stream.setReadTimeout(socketTimeout);
-        stream.setReadTimeout(DISCARD_STREAM_TIMEOUT_MILLIS);
-        try {
-          Util.skipAll(this, DISCARD_STREAM_TIMEOUT_MILLIS);
-          return true;
-        } finally {
-          stream.setReadTimeout(socketTimeout);
-        }
+        Util.skipAll(this, DISCARD_STREAM_TIMEOUT_MILLIS);
+        return true;
       } catch (IOException e) {
         return false;
+      } finally {
+        stream.readTimeout().timeout(oldTimeoutNanos, TimeUnit.NANOSECONDS);
       }
     }
   }

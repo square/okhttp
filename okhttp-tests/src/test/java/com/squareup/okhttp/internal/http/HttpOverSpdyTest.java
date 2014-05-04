@@ -331,7 +331,7 @@ public abstract class HttpOverSpdyTest {
       readAscii(connection.getInputStream(), Integer.MAX_VALUE);
       fail("Should have timed out!");
     } catch (IOException e){
-      assertEquals("Read timed out", e.getMessage());
+      assertEquals("timeout", e.getMessage());
     }
   }
 
