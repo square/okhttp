@@ -70,4 +70,6 @@ public abstract class Internal {
   public abstract void recycle(ConnectionPool pool, Connection connection);
 
   public abstract void share(ConnectionPool connectionPool, Connection connection);
+
+  public abstract RouteDatabase routeDatabase(OkHttpClient client);
 }

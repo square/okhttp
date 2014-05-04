@@ -19,7 +19,7 @@ import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.RouteDatabase;
+import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import java.io.IOException;

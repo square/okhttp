@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
+import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
@@ -126,6 +127,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
       @Override public void share(ConnectionPool connectionPool, Connection connection) {
         connectionPool.share(connection);
+      }
+
+      @Override public RouteDatabase routeDatabase(OkHttpClient client) {
+        return client.routeDatabase;
       }
     };
   }
@@ -381,7 +386,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     return followSslRedirects;
   }
 
-  public RouteDatabase getRoutesDatabase() {
+  RouteDatabase getRoutesDatabase() {
     return routeDatabase;
   }
 
