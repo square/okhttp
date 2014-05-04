@@ -260,7 +260,7 @@ public final class HttpEngine {
           client.getSocketFactory(), sslSocketFactory, hostnameVerifier, client.getAuthenticator(),
           client.getProxy(), client.getProtocols());
       routeSelector = new RouteSelector(address, request.uri(), client.getProxySelector(),
-          client.getConnectionPool(), Dns.DEFAULT, client.getRoutesDatabase());
+          client.getConnectionPool(), Dns.DEFAULT, Internal.instance.routeDatabase(client));
     }
 
     connection = routeSelector.next(request.method());
@@ -272,7 +272,7 @@ public final class HttpEngine {
       if (Internal.instance.isSpdy(connection)) {
         Internal.instance.share(client.getConnectionPool(), connection);
       }
-      client.getRoutesDatabase().connected(connection.getRoute());
+      Internal.instance.routeDatabase(client).connected(connection.getRoute());
     }
     Internal.instance.setTimeouts(connection, client.getReadTimeout(), client.getWriteTimeout());
     route = connection.getRoute();
