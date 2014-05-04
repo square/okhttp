@@ -18,7 +18,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.http.RecordingProxySelector;
 import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
-import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.Authenticator;
 import java.net.CookieManager;
@@ -63,21 +62,18 @@ public final class OkHttpClientTest {
   @Test public void copyWithDefaultsWhenDefaultIsGlobal() throws Exception {
     ProxySelector proxySelector = new RecordingProxySelector();
     CookieManager cookieManager = new CookieManager();
-    ResponseCache responseCache = new AbstractResponseCache();
     Authenticator authenticator = new RecordingAuthenticator();
     SocketFactory socketFactory = SocketFactory.getDefault(); // Global isn't configurable.
     OkHostnameVerifier hostnameVerifier = OkHostnameVerifier.INSTANCE; // Global isn't configurable.
 
     CookieManager.setDefault(cookieManager);
     ProxySelector.setDefault(proxySelector);
-    ResponseCache.setDefault(responseCache);
     Authenticator.setDefault(authenticator);
 
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
 
     assertSame(proxySelector, client.getProxySelector());
     assertSame(cookieManager, client.getCookieHandler());
-    assertSame(responseCache, ((CacheAdapter) client.internalCache()).getDelegate());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
     assertSame(socketFactory, client.getSocketFactory());
     assertSame(hostnameVerifier, client.getHostnameVerifier());
@@ -87,6 +83,14 @@ public final class OkHttpClientTest {
   @Test public void copyWithDefaultsCacheIsNull() throws Exception {
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
     assertNull(client.getCache());
+  }
+
+  @Test public void copyWithDefaultsDoesNotHonorGlobalResponseCache() throws Exception {
+    ResponseCache responseCache = new AbstractResponseCache();
+    ResponseCache.setDefault(responseCache);
+
+    OkHttpClient client = new OkHttpClient().copyWithDefaults();
+    assertNull(client.internalCache());
   }
 
   /**

@@ -491,11 +491,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     if (result.cookieHandler == null) {
       result.cookieHandler = CookieHandler.getDefault();
     }
-    if (result.cache == null && result.cacheAdapter == null) {
-      // TODO: drop support for the default response cache.
-      ResponseCache defaultCache = ResponseCache.getDefault();
-      result.cacheAdapter = defaultCache != null ? new CacheAdapter(defaultCache) : null;
-    }
     if (result.socketFactory == null) {
       result.socketFactory = SocketFactory.getDefault();
     }
