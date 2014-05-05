@@ -119,7 +119,7 @@ public final class Spdy3 implements Variant {
       this.client = client;
     }
 
-    @Override public void readConnectionHeader() {
+    @Override public void readConnectionPreface() {
     }
 
     /**
@@ -196,17 +196,15 @@ public final class Spdy3 implements Variant {
     private void readSynStream(Handler handler, int flags, int length) throws IOException {
       int w1 = source.readInt();
       int w2 = source.readInt();
-      int s3 = source.readShort();
       int streamId = w1 & 0x7fffffff;
       int associatedStreamId = w2 & 0x7fffffff;
-      int priority = (s3 & 0xe000) >>> 13;
-      // int slot = s3 & 0xff;
+      source.readShort(); // int priority = (s3 & 0xe000) >>> 13; int slot = s3 & 0xff;
       List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 10);
 
       boolean inFinished = (flags & FLAG_FIN) != 0;
       boolean outFinished = (flags & FLAG_UNIDIRECTIONAL) != 0;
-      handler.headers(outFinished, inFinished, streamId, associatedStreamId, priority,
-          headerBlock, HeadersMode.SPDY_SYN_STREAM);
+      handler.headers(outFinished, inFinished, streamId, associatedStreamId, headerBlock,
+          HeadersMode.SPDY_SYN_STREAM);
     }
 
     private void readSynReply(Handler handler, int flags, int length) throws IOException {
@@ -214,7 +212,7 @@ public final class Spdy3 implements Variant {
       int streamId = w1 & 0x7fffffff;
       List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 4);
       boolean inFinished = (flags & FLAG_FIN) != 0;
-      handler.headers(false, inFinished, streamId, -1, -1, headerBlock, HeadersMode.SPDY_REPLY);
+      handler.headers(false, inFinished, streamId, -1, headerBlock, HeadersMode.SPDY_REPLY);
     }
 
     private void readRstStream(Handler handler, int flags, int length) throws IOException {
@@ -232,7 +230,7 @@ public final class Spdy3 implements Variant {
       int w1 = source.readInt();
       int streamId = w1 & 0x7fffffff;
       List<Header> headerBlock = headerBlockReader.readNameValueBlock(length - 4);
-      handler.headers(false, false, streamId, -1, -1, headerBlock, HeadersMode.SPDY_HEADERS);
+      handler.headers(false, false, streamId, -1, headerBlock, HeadersMode.SPDY_HEADERS);
     }
 
     private void readWindowUpdate(Handler handler, int flags, int length) throws IOException {
@@ -317,8 +315,8 @@ public final class Spdy3 implements Variant {
       // Do nothing: no push promise for SPDY/3.
     }
 
-    @Override public synchronized void connectionHeader() {
-      // Do nothing: no connection header for SPDY/3.
+    @Override public synchronized void connectionPreface() {
+      // Do nothing: no connection preface for SPDY/3.
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -327,7 +325,7 @@ public final class Spdy3 implements Variant {
     }
 
     @Override public synchronized void synStream(boolean outFinished, boolean inFinished,
-        int streamId, int associatedStreamId, int priority, int slot, List<Header> headerBlock)
+        int streamId, int associatedStreamId, List<Header> headerBlock)
         throws IOException {
       if (closed) throw new IOException("closed");
       writeNameValueBlockToBuffer(headerBlock);
@@ -340,7 +338,7 @@ public final class Spdy3 implements Variant {
       sink.writeInt((flags & 0xff) << 24 | length & 0xffffff);
       sink.writeInt(streamId & 0x7fffffff);
       sink.writeInt(associatedStreamId & 0x7fffffff);
-      sink.writeShort((priority & 0x7) << 13 | (unused & 0x1f) << 8 | (slot & 0xff));
+      sink.writeShort((unused & 0x7) << 13 | (unused & 0x1f) << 8 | (unused & 0xff));
       sink.writeAll(headerBlockBuffer);
       sink.flush();
     }

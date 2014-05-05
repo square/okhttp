@@ -20,19 +20,22 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FLAG_ACK;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FLAG_END_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FLAG_END_STREAM;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FLAG_NONE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FrameLogger.formatFlags;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.FrameLogger.formatHeader;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.TYPE_DATA;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.TYPE_GOAWAY;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.TYPE_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft10.TYPE_SETTINGS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_ACK;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_COMPRESSED;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_END_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_END_PUSH_PROMISE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_END_STREAM;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_NONE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FrameLogger.formatFlags;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_DATA;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.*;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_PUSH_PROMISE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_SETTINGS;
 import static org.junit.Assert.assertEquals;
 
-public class Http20Draft10FrameLoggerTest {
+public class Http20Draft12FrameLoggerTest {
 
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {
@@ -56,6 +59,33 @@ public class Http20Draft10FrameLoggerTest {
         formatHeader(false, 0, 8, TYPE_GOAWAY, FLAG_NONE));
   }
 
+  @Test public void flagOverlapOn0x1() {
+    assertEquals("<< 0x00000000     0 SETTINGS      ACK",
+        formatHeader(true, 0, 0, TYPE_SETTINGS, (byte) 0x1));
+    assertEquals("<< 0x00000000     8 PING          ACK",
+        formatHeader(true, 0, 8, TYPE_PING, (byte) 0x1));
+    assertEquals("<< 0x00000003     0 HEADERS       END_STREAM",
+        formatHeader(true, 3, 0, TYPE_HEADERS, (byte) 0x1));
+    assertEquals("<< 0x00000003     0 DATA          END_STREAM",
+        formatHeader(true, 3, 0, TYPE_DATA, (byte) 0x1));
+  }
+
+  @Test public void flagOverlapOn0x4() {
+    assertEquals("<< 0x00000003 10000 HEADERS       END_HEADERS",
+        formatHeader(true, 3, 10000, TYPE_HEADERS, (byte) 0x4));
+    assertEquals("<< 0x00000003 10000 CONTINUATION  END_HEADERS",
+        formatHeader(true, 3, 10000, TYPE_CONTINUATION, (byte) 0x4));
+    assertEquals("<< 0x00000004 10000 PUSH_PROMISE  END_PUSH_PROMISE",
+        formatHeader(true, 4, 10000, TYPE_PUSH_PROMISE, (byte) 0x4));
+  }
+
+  @Test public void flagOverlapOn0x20() {
+    assertEquals("<< 0x00000003 10000 HEADERS       PRIORITY",
+        formatHeader(true, 3, 10000, TYPE_HEADERS, (byte) 0x20));
+    assertEquals("<< 0x00000003 10000 DATA          COMPRESSED",
+        formatHeader(true, 3, 10000, TYPE_DATA, (byte) 0x20));
+  }
+
   /**
    * Ensures that valid flag combinations appear visually correct, and invalid show in hex.  This
    * also demonstrates how sparse the lookup table is.
@@ -73,6 +103,30 @@ public class Http20Draft10FrameLoggerTest {
         "END_STREAM|END_HEADERS",
         "END_SEGMENT|END_HEADERS",
         "END_STREAM|END_SEGMENT|END_HEADERS",
+        "PAD_LOW",
+        "END_STREAM|PAD_LOW",
+        "END_SEGMENT|PAD_LOW",
+        "END_STREAM|END_SEGMENT|PAD_LOW",
+        "00001100",
+        "END_STREAM|END_HEADERS|PAD_LOW",
+        "END_SEGMENT|END_HEADERS|PAD_LOW",
+        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW",
+        "00010000",
+        "00010001",
+        "00010010",
+        "00010011",
+        "00010100",
+        "00010101",
+        "00010110",
+        "00010111",
+        "PAD_LOW|PAD_HIGH",
+        "END_STREAM|PAD_LOW|PAD_HIGH",
+        "END_SEGMENT|PAD_LOW|PAD_HIGH",
+        "END_STREAM|END_SEGMENT|PAD_LOW|PAD_HIGH",
+        "00011100",
+        "END_STREAM|END_HEADERS|PAD_LOW|PAD_HIGH",
+        "END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
+        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
         "PRIORITY",
         "END_STREAM|PRIORITY",
         "END_SEGMENT|PRIORITY",
@@ -81,46 +135,22 @@ public class Http20Draft10FrameLoggerTest {
         "END_STREAM|END_HEADERS|PRIORITY",
         "END_SEGMENT|END_HEADERS|PRIORITY",
         "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY",
-        "PAD_LOW",
-        "END_STREAM|PAD_LOW",
-        "END_SEGMENT|PAD_LOW",
-        "END_STREAM|END_SEGMENT|PAD_LOW",
-        "00010100",
-        "END_STREAM|END_HEADERS|PAD_LOW",
-        "END_SEGMENT|END_HEADERS|PAD_LOW",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW",
-        "00011000",
+        "00101000",
         "END_STREAM|PRIORITY|PAD_LOW",
         "END_SEGMENT|PRIORITY|PAD_LOW",
         "END_STREAM|END_SEGMENT|PRIORITY|PAD_LOW",
-        "00011100",
+        "00101100",
         "END_STREAM|END_HEADERS|PRIORITY|PAD_LOW",
         "END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW",
         "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW",
-        "00100000",
-        "00100001",
-        "00100010",
-        "00100011",
-        "00100100",
-        "00100101",
-        "00100110",
-        "00100111",
-        "00101000",
-        "00101001",
-        "00101010",
-        "00101011",
-        "00101100",
-        "00101101",
-        "00101110",
-        "00101111",
-        "PAD_LOW|PAD_HIGH",
-        "END_STREAM|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|PAD_LOW|PAD_HIGH",
+        "00110000",
+        "00110001",
+        "00110010",
+        "00110011",
         "00110100",
-        "END_STREAM|END_HEADERS|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
+        "00110101",
+        "00110110",
+        "00110111",
         "00111000",
         "END_STREAM|PRIORITY|PAD_LOW|PAD_HIGH",
         "END_SEGMENT|PRIORITY|PAD_LOW|PAD_HIGH",

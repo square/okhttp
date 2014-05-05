@@ -199,7 +199,7 @@ public final class Connection {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
           .protocol(protocol).build();
-      spdyConnection.sendConnectionHeader();
+      spdyConnection.sendConnectionPreface();
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
     }
