@@ -924,16 +924,17 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure() throws Exception {
+    server.play();
+    Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
+    final Call call = client.newCall(requestA);
     server.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
-        client.cancel("request A");
+        call.cancel();
         return new MockResponse().setBody("A");
       }
     });
-    server.play();
 
-    Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
-    client.newCall(requestA).enqueue(callback);
+    call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
     callback.await(requestA.url()).assertFailure("Canceled");
