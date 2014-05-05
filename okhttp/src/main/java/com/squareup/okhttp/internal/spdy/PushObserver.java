@@ -21,9 +21,19 @@ import okio.BufferedSource;
 
 /**
  * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} only.
- * Processes server-initiated HTTP requests on the client.
+ * Processes server-initiated HTTP requests on the client. Implementations must
+ * quickly dispatch callbacks to avoid creating a bottleneck.
  *
- * <p>Use the stream ID to correlate response headers and data.
+ * <p>While {@link #onReset} may occur at any time, the following callbacks are
+ * expected in order, correlated by stream ID.
+ * <ul>
+ *   <li>{@link #onRequest}</li>
+ *   <li>{@link #onHeaders} (unless canceled)</li>
+ *   <li>{@link #onData} (optional sequence of data frames)</li>
+ * </ul>
+ *
+ * <p>As a stream ID is scoped to a single HTTP/2 connection, implementations
+ * which target multiple connections should expect repetition of stream IDs.
  *
  * <p>Return true to request cancellation of a pushed stream.  Note that this
  * does not guarantee future frames won't arrive on the stream ID.

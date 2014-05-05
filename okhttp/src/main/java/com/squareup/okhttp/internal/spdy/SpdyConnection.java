@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -84,6 +85,9 @@ public final class SpdyConnection implements Closeable {
   private int nextStreamId;
   private boolean shutdown;
   private long idleStartTimeNs = System.nanoTime();
+
+  /** Ensures push promise callbacks events are sent in order per stream. */
+  private final ExecutorService pushExecutor;
 
   /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
   private Map<Integer, Ping> pings;
@@ -144,8 +148,14 @@ public final class SpdyConnection implements Closeable {
 
     if (protocol == Protocol.HTTP_2) {
       variant = new Http20Draft12();
+      // Like newSingleThreadExecutor, except lazy creates the thread.
+      pushExecutor = new ThreadPoolExecutor(0, 1,
+          0L, TimeUnit.MILLISECONDS,
+          new LinkedBlockingQueue<Runnable>(),
+          Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
     } else if (protocol == Protocol.SPDY_3) {
       variant = new Spdy3();
+      pushExecutor = null;
     } else {
       throw new AssertionError(protocol);
     }
@@ -778,7 +788,7 @@ public final class SpdyConnection implements Closeable {
       }
       currentPushRequests.add(streamId);
     }
-    executor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, streamId) {
+    pushExecutor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, streamId) {
       @Override public void execute() {
         boolean cancel = pushObserver.onRequest(streamId, requestHeaders);
         try {
@@ -796,7 +806,7 @@ public final class SpdyConnection implements Closeable {
 
   private void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
       final boolean inFinished) {
-    executor.submit(new NamedRunnable("OkHttp %s Push Headers[%s]", hostName, streamId) {
+    pushExecutor.submit(new NamedRunnable("OkHttp %s Push Headers[%s]", hostName, streamId) {
       @Override public void execute() {
         boolean cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished);
         try {
@@ -822,7 +832,7 @@ public final class SpdyConnection implements Closeable {
     source.require(byteCount); // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount);
     if (buffer.size() != byteCount) throw new IOException(buffer.size() + " != " + byteCount);
-    executor.submit(new NamedRunnable("OkHttp %s Push Data[%s]", hostName, streamId) {
+    pushExecutor.submit(new NamedRunnable("OkHttp %s Push Data[%s]", hostName, streamId) {
       @Override public void execute() {
         try {
           boolean cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished);
@@ -839,7 +849,7 @@ public final class SpdyConnection implements Closeable {
   }
 
   private void pushResetLater(final int streamId, final ErrorCode errorCode) {
-    executor.submit(new NamedRunnable("OkHttp %s Push Reset[%s]", hostName, streamId) {
+    pushExecutor.submit(new NamedRunnable("OkHttp %s Push Reset[%s]", hostName, streamId) {
       @Override public void execute() {
         pushObserver.onReset(streamId, errorCode);
         synchronized (SpdyConnection.this) {
