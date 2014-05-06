@@ -18,10 +18,12 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
@@ -2711,11 +2713,10 @@ public final class URLConnectionTest {
     assertContains(server.takeRequest().getHeaders(),
         "Authorization: " + credential);
 
-    assertEquals(1, authenticator.calls.size());
-    String call = authenticator.calls.get(0);
-    assertTrue(call, call.contains("proxy=DIRECT"));
-    assertTrue(call, call.contains("url=" + server.getUrl("/private")));
-    assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
+    assertEquals(Proxy.NO_PROXY, authenticator.onlyProxy());
+    Response response = authenticator.onlyResponse();
+    assertEquals("/private", response.request().url().getPath());
+    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
   
   @Test public void customTokenAuthenticator() throws Exception {
@@ -2733,11 +2734,31 @@ public final class URLConnectionTest {
     assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
     assertContains(server.takeRequest().getHeaders(), "Authorization: oauthed abc123");
 
-    assertEquals(1, authenticator.calls.size());
-    String call = authenticator.calls.get(0);
-    assertTrue(call, call.contains("proxy=DIRECT"));
-    assertTrue(call, call.contains("url=" + server.getUrl("/private")));
-    assertTrue(call, call.contains("challenges=[Bearer realm=\"oauthed\"]"));
+    Response response = authenticator.onlyResponse();
+    assertEquals("/private", response.request().url().getPath());
+    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
+  }
+
+  @Test public void authenticateCallsTrackedAsRedirects() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(302)
+        .addHeader("Location: /b"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(401)
+        .addHeader("WWW-Authenticate: Basic realm=\"protected area\""));
+    server.enqueue(new MockResponse().setBody("c"));
+    server.play();
+
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
+        Credentials.basic("jesse", "peanutbutter"));
+    client.setAuthenticator(authenticator);
+    assertContent("c", client.open(server.getUrl("/a")));
+
+    Response challengeResponse = authenticator.responses.get(0);
+    assertEquals("/b", challengeResponse.request().url().getPath());
+
+    Response redirectedBy = challengeResponse.redirectedBy();
+    assertEquals("/a", redirectedBy.request().url().getPath());
   }
 
   @Test public void setsNegotiatedProtocolHeader_SPDY_3() throws Exception {

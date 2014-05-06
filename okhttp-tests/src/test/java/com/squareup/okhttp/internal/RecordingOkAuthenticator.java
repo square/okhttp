@@ -23,28 +23,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RecordingOkAuthenticator implements OkAuthenticator {
-  public final List<String> calls = new ArrayList<String>();
+  public final List<Response> responses = new ArrayList<Response>();
+  public final List<Proxy> proxies = new ArrayList<Proxy>();
   public final String credential;
 
   public RecordingOkAuthenticator(String credential) {
     this.credential = credential;
   }
 
+  public Response onlyResponse() {
+    if (responses.size() != 1) throw new IllegalStateException();
+    return responses.get(0);
+  }
+
+  public Proxy onlyProxy() {
+    if (proxies.size() != 1) throw new IllegalStateException();
+    return proxies.get(0);
+  }
+
   @Override public Request authenticate(Proxy proxy, Response response) {
-    calls.add("authenticate"
-        + " proxy=" + proxy.type()
-        + " url=" + response.request().url()
-        + " challenges=" + response.challenges());
+    responses.add(response);
+    proxies.add(proxy);
     return response.request().newBuilder()
         .addHeader("Authorization", credential)
         .build();
   }
 
   @Override public Request authenticateProxy(Proxy proxy, Response response) {
-    calls.add("authenticateProxy"
-        + " proxy=" + proxy.type()
-        + " url=" + response.request().url()
-        + " challenges=" + response.challenges());
+    responses.add(response);
+    proxies.add(proxy);
     return response.request().newBuilder()
         .addHeader("Proxy-Authorization", credential)
         .build();
