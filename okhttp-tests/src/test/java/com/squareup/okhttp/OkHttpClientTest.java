@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.http.RecordingProxySelector;
 import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.Authenticator;
+import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
@@ -35,11 +36,16 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public final class OkHttpClientTest {
+  private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
+  private static final CookieHandler DEFAULT_COOKIE_HANDLER = CookieManager.getDefault();
+  private static final ResponseCache DEFAULT_RESPONSE_CACHE = ResponseCache.getDefault();
+  private static final Authenticator DEFAULT_AUTHENTICATOR = null; // No Authenticator.getDefault().
+
   @After public void tearDown() throws Exception {
-    ProxySelector.setDefault(null);
-    CookieManager.setDefault(null);
-    ResponseCache.setDefault(null);
-    Authenticator.setDefault(null);
+    ProxySelector.setDefault(DEFAULT_PROXY_SELECTOR);
+    CookieManager.setDefault(DEFAULT_COOKIE_HANDLER);
+    ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
+    Authenticator.setDefault(DEFAULT_AUTHENTICATOR);
   }
 
   /** Confirm that {@code copyWithDefaults} gets expected constant values. */
