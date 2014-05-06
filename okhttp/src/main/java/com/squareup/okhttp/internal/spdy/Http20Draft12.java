@@ -288,6 +288,8 @@ public final class Http20Draft12 implements Variant {
               throw ioException("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1");
             }
             break;
+          case 5: // SETTINGS_COMPRESS_DATA
+            break;
           default:
             throw ioException("PROTOCOL_ERROR invalid settings id: %s", id);
         }
@@ -349,7 +351,7 @@ public final class Http20Draft12 implements Variant {
 
     private void readAlternateService(Handler handler, short length, byte flags, int streamId)
         throws IOException {
-      long maxAge = source.readInt() & 0xffffffff;
+      long maxAge = source.readInt() & 0xffff;
       int port = source.readShort() & 0xffff;
       source.readByte(); // Reserved.
       int protocolLength = source.readByte() & 0xff;

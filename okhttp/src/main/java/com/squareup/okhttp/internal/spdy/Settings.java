@@ -42,7 +42,7 @@ public final class Settings {
   static final int HEADER_TABLE_SIZE = 1;
   /** spdy/3: Sender's estimate of max outgoing kbps. */
   static final int DOWNLOAD_BANDWIDTH = 2;
-  /** HTTP/2: An endpoint must not send a PUSH_PROMISE frame when this is 0. */
+  /** HTTP/2: The peer must not send a PUSH_PROMISE frame when this is 0. */
   static final int ENABLE_PUSH = 2;
   /** spdy/3: Sender's estimate of millis between sending a request and receiving a response. */
   static final int ROUND_TRIP_TIME = 3;
@@ -50,6 +50,8 @@ public final class Settings {
   static final int MAX_CONCURRENT_STREAMS = 4;
   /** spdy/3: Current CWND in Packets. */
   static final int CURRENT_CWND = 5;
+  /** HTTP/2: The peer must not gzip a DATA frame when this is 0. */
+  static final int COMPRESS_DATA = 5;
   /** spdy/3: Retransmission rate. Percentage */
   static final int DOWNLOAD_RETRANS_RATE = 6;
   /** Window size in bytes. */
@@ -169,6 +171,13 @@ public final class Settings {
   int getCurrentCwnd(int defaultValue) {
     int bit = 1 << CURRENT_CWND;
     return (bit & set) != 0 ? values[CURRENT_CWND] : defaultValue;
+  }
+
+  /** HTTP/2 only. */
+  // TODO: honor this setting in HTTP/2.
+  boolean getCompressData(boolean defaultValue) {
+    int bit = 1 << COMPRESS_DATA;
+    return ((bit & set) != 0 ? values[COMPRESS_DATA] : defaultValue ? 1 : 0) == 1;
   }
 
   /** spdy/3 only. */
