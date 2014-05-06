@@ -96,6 +96,7 @@ public final class HttpEngine {
   private Connection connection;
   private RouteSelector routeSelector;
   private Route route;
+  private final Response redirectedBy;
 
   private Transport transport;
 
@@ -152,7 +153,8 @@ public final class HttpEngine {
    *     recover from a failure.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut) {
+      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
+      Response redirectedBy) {
     this.client = client;
     this.originalRequest = request;
     this.request = request;
@@ -160,6 +162,7 @@ public final class HttpEngine {
     this.connection = connection;
     this.routeSelector = routeSelector;
     this.requestBodyOut = requestBodyOut;
+    this.redirectedBy = redirectedBy;
 
     if (connection != null) {
       Internal.instance.setOwner(connection, this);
@@ -364,7 +367,7 @@ public final class HttpEngine {
 
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, originalRequest, bufferRequestBody, connection, routeSelector,
-        (RetryableSink) requestBodyOut);
+        (RetryableSink) requestBodyOut, redirectedBy);
   }
 
   public HttpEngine recover(IOException e) {
@@ -632,6 +635,7 @@ public final class HttpEngine {
     transport.flushRequest();
 
     response = transport.readResponseHeaders()
+        .redirectedBy(redirectedBy)
         .request(request)
         .handshake(connection.getHandshake())
         .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))

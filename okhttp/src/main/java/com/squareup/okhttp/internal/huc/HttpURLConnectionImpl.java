@@ -272,7 +272,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           throw new ProtocolException(method + " does not support writing");
         }
       }
-      httpEngine = newHttpEngine(method, null, null);
+      httpEngine = newHttpEngine(method, null, null, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
@@ -280,7 +280,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableSink requestBody) {
+      RetryableSink requestBody, Response redirectedBy) {
     Request.Builder builder = new Request.Builder()
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
@@ -308,7 +308,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody);
+    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
+        redirectedBy);
   }
 
   /**
@@ -361,7 +362,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody);
+      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody,
+          response);
     }
   }
 

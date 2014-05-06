@@ -169,8 +169,6 @@ public final class Call {
    * call was canceled.
    */
   private Response getResponse() throws IOException {
-    Response redirectedBy = null;
-
     // Copy body metadata to the appropriate request headers.
     Request.Body body = request.body();
     RetryableSink requestBodyOut = null;
@@ -196,7 +194,7 @@ public final class Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, null, null, requestBodyOut);
+    engine = new HttpEngine(client, request, false, null, null, requestBodyOut, null);
 
     while (true) {
       if (canceled) return null;
@@ -228,7 +226,6 @@ public final class Call {
         engine.releaseConnection();
         return response.newBuilder()
             .body(new RealResponseBody(response, engine.getResponseBody()))
-            .redirectedBy(redirectedBy)
             .build();
       }
 
@@ -241,9 +238,8 @@ public final class Call {
       }
 
       Connection connection = engine.close();
-      redirectedBy = response.newBuilder().redirectedBy(redirectedBy).build(); // Chained.
       request = followUp;
-      engine = new HttpEngine(client, request, false, connection, null, null);
+      engine = new HttpEngine(client, request, false, connection, null, null, response);
     }
   }
 
