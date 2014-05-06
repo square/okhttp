@@ -56,7 +56,7 @@ import static org.junit.Assert.fail;
 
 public final class SpdyConnectionTest {
   private static final Variant SPDY3 = new Spdy3();
-  private static final Variant HTTP_20_DRAFT_09 = new Http20Draft12();
+  private static final Variant HTTP_2 = new Http20Draft12();
   private final MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
@@ -213,7 +213,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void serverPingsClientHttp2() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     // write the mocking script
     peer.sendFrame().ping(false, 2, 3);
@@ -221,7 +221,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    connection(peer, HTTP_20_DRAFT_09);
+    connection(peer, HTTP_2);
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame ping = peer.takeFrame();
@@ -253,7 +253,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void clientPingsServerHttp2() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     // write the mocking script
     peer.acceptFrame(); // PING
@@ -261,7 +261,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection = connection(peer, HTTP_20_DRAFT_09);
+    SpdyConnection connection = connection(peer, HTTP_2);
     Ping ping = connection.ping();
     assertTrue(ping.roundTripTime() > 0);
     assertTrue(ping.roundTripTime() < TimeUnit.SECONDS.toNanos(1));
@@ -275,7 +275,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void peerHttp2ServerLowersInitialWindowSize() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     Settings initial = new Settings();
     initial.set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 1684);
@@ -289,7 +289,7 @@ public final class SpdyConnectionTest {
     peer.acceptFrame(); // HEADERS
     peer.play();
 
-    SpdyConnection connection = connection(peer, HTTP_20_DRAFT_09);
+    SpdyConnection connection = connection(peer, HTTP_2);
 
     // verify the peer received the ACK
     MockSpdyPeer.InFrame ackFrame = peer.takeFrame();
@@ -818,7 +818,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void receiveGoAwayHttp2() throws Exception {
-    receiveGoAway(HTTP_20_DRAFT_09);
+    receiveGoAway(HTTP_2);
   }
 
   private void receiveGoAway(Variant variant) throws Exception {
@@ -837,7 +837,7 @@ public final class SpdyConnectionTest {
     SpdyConnection connection = connection(peer, variant);
     SpdyStream stream1 = connection.newStream(headerEntries("a", "android"), true, true);
     SpdyStream stream2 = connection.newStream(headerEntries("b", "banana"), true, true);
-    connection.ping().roundTripTime(); // Ensure that the GO_AWAY has been received.
+    connection.ping().roundTripTime(); // Ensure the GO_AWAY that resets stream2 has been received.
     BufferedSink sink1 = Okio.buffer(stream1.getSink());
     BufferedSink sink2 = Okio.buffer(stream2.getSink());
     sink1.writeUtf8("abc");
@@ -856,6 +856,8 @@ public final class SpdyConnectionTest {
     } catch (IOException expected) {
       assertEquals("shutdown", expected.getMessage());
     }
+    assertTrue(stream1.isOpen());
+    assertFalse(stream2.isOpen());
     assertEquals(1, connection.openStreamCount());
 
     // verify the peer received what was expected
@@ -1127,7 +1129,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void readSendsWindowUpdateHttp2() throws Exception {
-    readSendsWindowUpdate(HTTP_20_DRAFT_09);
+    readSendsWindowUpdate(HTTP_2);
   }
 
   private void readSendsWindowUpdate(Variant variant)
@@ -1187,7 +1189,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void serverSendsEmptyDataClientDoesntSendWindowUpdateHttp2() throws Exception {
-    serverSendsEmptyDataClientDoesntSendWindowUpdate(HTTP_20_DRAFT_09);
+    serverSendsEmptyDataClientDoesntSendWindowUpdate(HTTP_2);
   }
 
   private void serverSendsEmptyDataClientDoesntSendWindowUpdate(Variant variant)
@@ -1216,7 +1218,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void clientSendsEmptyDataServerDoesntSendWindowUpdateHttp2() throws Exception {
-    clientSendsEmptyDataServerDoesntSendWindowUpdate(HTTP_20_DRAFT_09);
+    clientSendsEmptyDataServerDoesntSendWindowUpdate(HTTP_2);
   }
 
   private void clientSendsEmptyDataServerDoesntSendWindowUpdate(Variant variant)
@@ -1244,7 +1246,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void writeAwaitsWindowUpdate() throws Exception {
-    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
+    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_2.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
@@ -1286,7 +1288,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void initialSettingsWithWindowSizeAdjustsConnection() throws Exception {
-    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_20_DRAFT_09.maxFrameSize());
+    int framesThatFillWindow = roundUp(DEFAULT_INITIAL_WINDOW_SIZE, HTTP_2.maxFrameSize());
 
     // Write the mocking script. This accepts more data frames than necessary!
     peer.acceptFrame(); // SYN_STREAM
@@ -1395,9 +1397,9 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void maxFrameSizeHonored() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
-    byte[] buff = new byte[HTTP_20_DRAFT_09.maxFrameSize() + 1];
+    byte[] buff = new byte[HTTP_2.maxFrameSize() + 1];
     Arrays.fill(buff, (byte) '*');
 
     // write the mocking script
@@ -1408,7 +1410,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection = connection(peer, HTTP_20_DRAFT_09);
+    SpdyConnection connection = connection(peer, HTTP_2);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
     BufferedSink out = Okio.buffer(stream.getSink());
     out.write(buff);
@@ -1418,7 +1420,7 @@ public final class SpdyConnectionTest {
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     MockSpdyPeer.InFrame data = peer.takeFrame();
-    assertEquals(HTTP_20_DRAFT_09.maxFrameSize(), data.data.length);
+    assertEquals(HTTP_2.maxFrameSize(), data.data.length);
     data = peer.takeFrame();
     assertEquals(1, data.data.length);
   }
@@ -1494,7 +1496,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void pushPromiseStream() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
@@ -1516,7 +1518,7 @@ public final class SpdyConnectionTest {
     RecordingPushObserver observer = new RecordingPushObserver();
 
     // play it back
-    SpdyConnection connection = connectionBuilder(peer, HTTP_20_DRAFT_09)
+    SpdyConnection connection = connectionBuilder(peer, HTTP_2)
         .pushObserver(observer).build();
     SpdyStream client = connection.newStream(headerEntries("b", "banana"), false, true);
     assertEquals(-1, client.getSource().read(new Buffer(), 1));
@@ -1529,7 +1531,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void doublePushPromise() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     // write the mocking script
     peer.sendFrame().pushPromise(3, 2, headerEntries("a", "android"));
@@ -1539,7 +1541,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection = connectionBuilder(peer, HTTP_20_DRAFT_09).build();
+    SpdyConnection connection = connectionBuilder(peer, HTTP_2).build();
     connection.newStream(headerEntries("b", "banana"), false, true);
 
     // verify the peer received what was expected
@@ -1548,7 +1550,7 @@ public final class SpdyConnectionTest {
   }
 
   @Test public void pushPromiseStreamsAutomaticallyCancel() throws Exception {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, false);
+    peer.setVariantAndClient(HTTP_2, false);
 
     // write the mocking script
     peer.sendFrame().pushPromise(3, 2, Arrays.asList(
@@ -1564,7 +1566,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    connectionBuilder(peer, HTTP_20_DRAFT_09)
+    connectionBuilder(peer, HTTP_2)
         .pushObserver(PushObserver.CANCEL).build();
 
     // verify the peer received what was expected
@@ -1576,7 +1578,7 @@ public final class SpdyConnectionTest {
 
   private SpdyConnection sendHttp2SettingsAndCheckForAck(boolean client, Settings settings)
       throws IOException, InterruptedException {
-    peer.setVariantAndClient(HTTP_20_DRAFT_09, client);
+    peer.setVariantAndClient(HTTP_2, client);
     peer.sendFrame().settings(settings);
     peer.acceptFrame(); // ACK
     peer.acceptFrame(); // PING
@@ -1584,7 +1586,7 @@ public final class SpdyConnectionTest {
     peer.play();
 
     // play it back
-    SpdyConnection connection = connection(peer, HTTP_20_DRAFT_09);
+    SpdyConnection connection = connection(peer, HTTP_2);
 
     // verify the peer received the ACK
     MockSpdyPeer.InFrame ackFrame = peer.takeFrame();
