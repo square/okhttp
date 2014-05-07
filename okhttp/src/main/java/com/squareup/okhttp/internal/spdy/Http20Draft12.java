@@ -344,14 +344,14 @@ public final class Http20Draft12 implements Variant {
     private void readWindowUpdate(Handler handler, short length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
-      long increment = (source.readInt() & 0x7fffffff);
+      long increment = (source.readInt() & 0x7fffffffL);
       if (increment == 0) throw ioException("windowSizeIncrement was 0", increment);
       handler.windowUpdate(streamId, increment);
     }
 
     private void readAlternateService(Handler handler, short length, byte flags, int streamId)
         throws IOException {
-      long maxAge = source.readInt() & 0xffff;
+      long maxAge = source.readInt() & 0xffffffffL;
       int port = source.readShort() & 0xffff;
       source.readByte(); // Reserved.
       int protocolLength = source.readByte() & 0xff;
