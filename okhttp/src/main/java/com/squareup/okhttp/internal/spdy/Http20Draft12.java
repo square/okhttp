@@ -200,7 +200,6 @@ public final class Http20Draft12 implements Variant {
 
     private List<Header> readHeaderBlock(short length, short padding, byte flags, int streamId)
         throws IOException {
-
       continuation.length = continuation.left = length;
       continuation.padding = padding;
       continuation.flags = flags;

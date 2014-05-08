@@ -100,9 +100,9 @@ final class HpackDraft07 {
 
     private final List<Header> emittedHeaders = new ArrayList<Header>();
     private final BufferedSource source;
+
     private int maxHeaderTableByteCountSetting;
     private int maxHeaderTableByteCount;
-
     // Visible for testing.
     Header[] headerTable = new Header[8];
     // Array is populated back to front, so new entries always have lowest index.
@@ -274,26 +274,26 @@ final class HpackDraft07 {
 
     private void readLiteralHeaderWithoutIndexingIndexedName(int index) throws IOException {
       ByteString name = getName(index);
-      ByteString value = readByteString(false);
+      ByteString value = readByteString();
       emittedHeaders.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithoutIndexingNewName() throws IOException {
-      ByteString name = readByteString(true);
-      ByteString value = readByteString(false);
+      ByteString name = checkLowercase(readByteString());
+      ByteString value = readByteString();
       emittedHeaders.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
         throws IOException {
       ByteString name = getName(nameIndex);
-      ByteString value = readByteString(false);
+      ByteString value = readByteString();
       insertIntoHeaderTable(-1, new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
-      ByteString name = readByteString(true);
-      ByteString value = readByteString(false);
+      ByteString name = checkLowercase(readByteString());
+      ByteString value = readByteString();
       insertIntoHeaderTable(-1, new Header(name, value));
     }
 
@@ -380,26 +380,17 @@ final class HpackDraft07 {
       return result;
     }
 
-    /**
-     * Reads a potentially Huffman encoded string byte string. When
-     * {@code asciiLowercase} is true, bytes will be converted to lowercase.
-     */
-    ByteString readByteString(boolean asciiLowercase) throws IOException {
+    /** Reads a potentially Huffman encoded byte string. */
+    ByteString readByteString() throws IOException {
       int firstByte = readByte();
       boolean huffmanDecode = (firstByte & 0x80) == 0x80; // 1NNNNNNN
       int length = readInt(firstByte, PREFIX_7_BITS);
 
-      ByteString byteString = source.readByteString(length);
-
       if (huffmanDecode) {
-        byteString = Huffman.get().decode(byteString); // TODO: streaming Huffman!
+        return ByteString.of(Huffman.get().decode(source.readByteArray(length)));
+      } else {
+        return source.readByteString(length);
       }
-
-      if (asciiLowercase) {
-        byteString = byteString.toAsciiLowercase();
-      }
-
-      return byteString;
     }
   }
 
@@ -428,7 +419,7 @@ final class HpackDraft07 {
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
-        ByteString name = headerBlock.get(i).name;
+        ByteString name = headerBlock.get(i).name.toAsciiLowercase();
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
         if (staticIndex != null) {
           // Literal Header Field without Indexing - Indexed Name.
@@ -467,5 +458,19 @@ final class HpackDraft07 {
       writeInt(data.size(), PREFIX_7_BITS, 0);
       out.write(data);
     }
+  }
+
+  /**
+   * An HTTP/2 response cannot contain uppercase header characters and must
+   * be treated as malformed.
+   */
+  private static ByteString checkLowercase(ByteString name) throws IOException {
+    for (int i = 0, length = name.size(); i < length; i++) {
+      byte c = name.getByte(i);
+      if (c >= 'A' && c <= 'Z') {
+        throw new IOException("PROTOCOL_ERROR response malformed: mixed case name: " + name.utf8());
+      }
+    }
+    return name;
   }
 }
