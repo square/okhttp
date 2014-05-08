@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.spdy;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import okio.ByteString;
 
 /**
  * This class was originally composed from the following classes in
@@ -124,10 +123,6 @@ class Huffman {
     }
 
     return (int) ((len + 7) >> 3);
-  }
-
-  ByteString decode(ByteString buf) throws IOException {
-    return ByteString.of(decode(buf.toByteArray()));
   }
 
   byte[] decode(byte[] buf) throws IOException {

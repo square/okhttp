@@ -886,17 +886,24 @@ public class HpackDraft07Test {
     assertEquals(0, newReader(byteStream()).readInt(0, 31));
   }
 
-  @Test public void headerName() throws IOException {
-    hpackWriter.writeByteString(ByteString.encodeUtf8("foo"));
-    assertBytes(3, 'f', 'o', 'o');
-    assertEquals("foo", newReader(byteStream(3, 'F', 'o', 'o')).readByteString(true).utf8());
+  @Test public void lowercaseHeaderNameBeforeEmit() throws IOException {
+    hpackWriter.writeHeaders(Arrays.asList(new Header("FoO", "BaR")));
+    assertBytes(0, 3, 'f', 'o', 'o', 3, 'B', 'a', 'R');
+  }
+
+  @Test public void mixedCaseHeaderNameIsMalformed() throws IOException {
+    try {
+      newReader(byteStream(0, 3, 'F', 'o', 'o', 3, 'B', 'a', 'R')).readHeaders();
+      fail();
+    } catch (IOException e) {
+      assertEquals("PROTOCOL_ERROR response malformed: mixed case name: Foo", e.getMessage());
+    }
   }
 
   @Test public void emptyHeaderName() throws IOException {
     hpackWriter.writeByteString(ByteString.encodeUtf8(""));
     assertBytes(0);
-    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(true));
-    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString(false));
+    assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
   private HpackDraft07.Reader newReader(Buffer source) {
