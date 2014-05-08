@@ -126,7 +126,6 @@ class Huffman {
   }
 
   byte[] decode(byte[] buf) throws IOException {
-    // FIXME
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     Node node = root;
     int current = 0;
