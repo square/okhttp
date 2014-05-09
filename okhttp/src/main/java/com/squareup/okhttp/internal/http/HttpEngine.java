@@ -164,6 +164,14 @@ public final class HttpEngine {
    */
   private Response userResponse;
 
+  /**
+   * True if this connection ever intends to do output. This is necessary
+   * because we don't see the actual body until after we've established
+   * the connection and sent up headers, but those headers depend on
+   * whether or not there will ever be a body.
+   */
+  private boolean willHaveRequestBody;
+
   private Sink requestBodyOut;
   private BufferedSink bufferedRequestBody;
 
@@ -187,11 +195,13 @@ public final class HttpEngine {
    *     immediately preceding this attempt, or null if this request doesn't
    *     recover from a failure.
    */
-  public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
+  public HttpEngine(OkHttpClient client, Request request, boolean willHaveRequestBody, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
       Response priorResponse) {
     this.client = client;
     this.userRequest = request;
+
+    this.willHaveRequestBody = willHaveRequestBody;
     this.bufferRequestBody = bufferRequestBody;
     this.connection = connection;
     this.routeSelector = routeSelector;
@@ -339,8 +349,7 @@ public final class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    return HttpMethod.hasRequestBody(userRequest.method())
-        && !Util.emptySink().equals(requestBodyOut);
+    return HttpMethod.hasRequestBody(userRequest.method()) && willHaveRequestBody && !Util.emptySink().equals(requestBodyOut);
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
@@ -411,7 +420,7 @@ public final class HttpEngine {
     Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, bufferRequestBody, connection, routeSelector,
+    return new HttpEngine(client, userRequest, willHaveRequestBody, bufferRequestBody, connection, routeSelector,
         (RetryableSink) requestBodyOut, priorResponse);
   }
 
