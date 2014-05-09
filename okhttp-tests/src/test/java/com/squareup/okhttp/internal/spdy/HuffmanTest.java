@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Random;
 import org.junit.Test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -35,7 +36,6 @@ public class HuffmanTest {
     for (int i = 0; i < s.length(); i++) {
       assertRoundTrip(s.substring(0, i).getBytes());
     }
-
     Random random = new Random(123456789L);
     byte[] buf = new byte[4096];
     random.nextBytes(buf);
@@ -49,7 +49,7 @@ public class HuffmanTest {
     Huffman.get().encode(buf, dos);
     assertEquals(baos.size(), Huffman.get().encodedLength(buf));
 
-    byte[] decodedBytes = Huffman.get().decode(baos.toByteArray());
-    assertTrue(Arrays.equals(buf, decodedBytes));
+    byte[] decodedBytes = Huffman.get().decode(baos.toByteArray()).toByteArray();
+    assertArrayEquals(buf, decodedBytes);
   }
 }

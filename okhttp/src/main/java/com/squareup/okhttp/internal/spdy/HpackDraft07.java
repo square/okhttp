@@ -387,7 +387,7 @@ final class HpackDraft07 {
       int length = readInt(firstByte, PREFIX_7_BITS);
 
       if (huffmanDecode) {
-        return ByteString.of(Huffman.get().decode(source.readByteArray(length)));
+        return Huffman.get().decode(source.readByteArray(length));
       } else {
         return source.readByteString(length);
       }

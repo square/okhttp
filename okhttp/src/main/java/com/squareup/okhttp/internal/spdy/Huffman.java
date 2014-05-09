@@ -15,9 +15,10 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import okio.ByteString;
 
 /**
  * This class was originally composed from the following classes in
@@ -125,8 +126,9 @@ class Huffman {
     return (int) ((len + 7) >> 3);
   }
 
-  byte[] decode(byte[] buf) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  ByteString decode(byte[] buf) throws IOException {
+    int length = 0;
+    byte[] temp = new byte[32];
     Node node = root;
     int current = 0;
     int nbits = 0;
@@ -139,7 +141,7 @@ class Huffman {
         node = node.children[c];
         if (node.children == null) {
           // terminal node
-          baos.write(node.symbol);
+          temp = write(temp, length++, (byte) node.symbol);
           nbits -= node.terminalBits;
           node = root;
         } else {
@@ -155,12 +157,19 @@ class Huffman {
       if (node.children != null || node.terminalBits > nbits) {
         break;
       }
-      baos.write(node.symbol);
+      temp = write(temp, length++, (byte) node.symbol);
       nbits -= node.terminalBits;
       node = root;
     }
 
-    return baos.toByteArray();
+    return ByteString.of(temp, 0, length);
+  }
+
+  /** Returns {@code out} or a new array if it needed to grow. */
+  private static byte[] write(byte[] out, int pos, byte symbol) {
+    if (pos == out.length) out = Arrays.copyOf(out, pos * 2);
+    out[pos] = symbol;
+    return out;
   }
 
   private void buildTree() {
