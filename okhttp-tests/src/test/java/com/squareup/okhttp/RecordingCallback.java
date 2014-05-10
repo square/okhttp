@@ -38,7 +38,7 @@ public class RecordingCallback implements Response.Callback {
 
   @Override public synchronized void onResponse(Response response) throws IOException {
     Buffer buffer = new Buffer();
-    Response.Body body = response.body();
+    ResponseBody body = response.body();
     body.source().readAll(buffer);
 
     responses.add(new RecordedResponse(response.request(), response, buffer.readUtf8(), null));

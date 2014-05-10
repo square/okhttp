@@ -4,7 +4,9 @@ package com.squareup.okhttp.apache;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -48,7 +50,7 @@ public final class OkApacheClient implements HttpClient {
       builder.header(header.getName(), header.getValue());
     }
 
-    Request.Body body = null;
+    RequestBody body = null;
     if (request instanceof HttpEntityEnclosingRequest) {
       HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
       if (entity != null) {
@@ -71,7 +73,7 @@ public final class OkApacheClient implements HttpClient {
     String message = response.message();
     BasicHttpResponse httpResponse = new BasicHttpResponse(HTTP_1_1, code, message);
 
-    Response.Body body = response.body();
+    ResponseBody body = response.body();
     InputStreamEntity entity = new InputStreamEntity(body.byteStream(), body.contentLength());
     httpResponse.setEntity(entity);
 

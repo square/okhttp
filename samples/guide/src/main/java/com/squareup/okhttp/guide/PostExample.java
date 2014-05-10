@@ -3,6 +3,7 @@ package com.squareup.okhttp.guide;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 
@@ -11,7 +12,7 @@ public class PostExample {
 
   void run() throws IOException {
     String json = bowlingJson("Jesse", "Jake");
-    Request.Body body = Request.Body.create(MediaType.parse("application/json"), json);
+    RequestBody body = RequestBody.create(MediaType.parse("application/json"), json);
     Request request = new Request.Builder().url("http://www.roundsapp.com/post").post(body).build();
 
     Response response = client.newCall(request).execute();

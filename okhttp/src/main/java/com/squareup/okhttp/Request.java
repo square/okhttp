@@ -16,18 +16,12 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.Util;
-import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
-import okio.BufferedSink;
-import okio.Okio;
-import okio.Source;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
@@ -37,7 +31,7 @@ public final class Request {
   private final URL url;
   private final String method;
   private final Headers headers;
-  private final Body body;
+  private final RequestBody body;
   private final Object tag;
 
   private volatile URI uri; // Lazily initialized.
@@ -84,7 +78,7 @@ public final class Request {
     return headers.values(name);
   }
 
-  public Body body() {
+  public RequestBody body() {
     return body;
   }
 
@@ -123,89 +117,11 @@ public final class Request {
         + '}';
   }
 
-  public abstract static class Body {
-    /** Returns the Content-Type header for this body. */
-    public abstract MediaType contentType();
-
-    /**
-     * Returns the number of bytes that will be written to {@code out} in a call
-     * to {@link #writeTo}, or -1 if that count is unknown.
-     */
-    public long contentLength() {
-      return -1;
-    }
-
-    /** Writes the content of this request to {@code out}. */
-    public abstract void writeTo(BufferedSink sink) throws IOException;
-
-    /**
-     * Returns a new request body that transmits {@code content}. If {@code
-     * contentType} lacks a charset, this will use UTF-8.
-     */
-    public static Body create(MediaType contentType, String content) {
-      contentType = contentType.charset() != null
-          ? contentType
-          : MediaType.parse(contentType + "; charset=utf-8");
-      try {
-        byte[] bytes = content.getBytes(contentType.charset().name());
-        return create(contentType, bytes);
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError();
-      }
-    }
-
-    /** Returns a new request body that transmits {@code content}. */
-    public static Body create(final MediaType contentType, final byte[] content) {
-      if (contentType == null) throw new NullPointerException("contentType == null");
-      if (content == null) throw new NullPointerException("content == null");
-
-      return new Body() {
-        @Override public MediaType contentType() {
-          return contentType;
-        }
-
-        @Override public long contentLength() {
-          return content.length;
-        }
-
-        @Override public void writeTo(BufferedSink sink) throws IOException {
-          sink.write(content);
-        }
-      };
-    }
-
-    /** Returns a new request body that transmits the content of {@code file}. */
-    public static Body create(final MediaType contentType, final File file) {
-      if (contentType == null) throw new NullPointerException("contentType == null");
-      if (file == null) throw new NullPointerException("content == null");
-
-      return new Body() {
-        @Override public MediaType contentType() {
-          return contentType;
-        }
-
-        @Override public long contentLength() {
-          return file.length();
-        }
-
-        @Override public void writeTo(BufferedSink sink) throws IOException {
-          Source source = null;
-          try {
-            source = Okio.source(file);
-            sink.writeAll(source);
-          } finally {
-            Util.closeQuietly(source);
-          }
-        }
-      };
-    }
-  }
-
   public static class Builder {
     private URL url;
     private String method;
     private Headers.Builder headers;
-    private Body body;
+    private RequestBody body;
     private Object tag;
 
     public Builder() {
@@ -272,7 +188,7 @@ public final class Request {
       return method("HEAD", null);
     }
 
-    public Builder post(Body body) {
+    public Builder post(RequestBody body) {
       return method("POST", body);
     }
 
@@ -280,15 +196,15 @@ public final class Request {
       return method("DELETE", null);
     }
 
-    public Builder put(Body body) {
+    public Builder put(RequestBody body) {
       return method("PUT", body);
     }
 
-    public Builder patch(Body body) {
+    public Builder patch(RequestBody body) {
       return method("PATCH", body);
     }
 
-    public Builder method(String method, Body body) {
+    public Builder method(String method, RequestBody body) {
       if (method == null || method.length() == 0) {
         throw new IllegalArgumentException("method == null || method.length() == 0");
       }

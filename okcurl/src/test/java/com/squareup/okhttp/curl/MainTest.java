@@ -16,6 +16,7 @@
 package com.squareup.okhttp.curl;
 
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import java.io.IOException;
 import okio.Buffer;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class MainTest {
 
   @Test public void dataPost() {
     Request request = fromArgs("-d", "foo", "http://example.com").createRequest();
-    Request.Body body = request.body();
+    RequestBody body = request.body();
     assertEquals("POST", request.method());
     assertEquals("http://example.com", request.urlString());
     assertEquals("application/x-form-urlencoded; charset=utf-8", body.contentType().toString());
@@ -50,7 +51,7 @@ public class MainTest {
 
   @Test public void dataPut() {
     Request request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest();
-    Request.Body body = request.body();
+    RequestBody body = request.body();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com", request.urlString());
     assertEquals("application/x-form-urlencoded; charset=utf-8", body.contentType().toString());
@@ -60,7 +61,7 @@ public class MainTest {
   @Test public void contentTypeHeader() {
     Request request = fromArgs("-d", "foo", "-H", "Content-Type: application/json",
         "http://example.com").createRequest();
-    Request.Body body = request.body();
+    RequestBody body = request.body();
     assertEquals("POST", request.method());
     assertEquals("http://example.com", request.urlString());
     assertEquals("application/json; charset=utf-8", body.contentType().toString());
@@ -83,7 +84,7 @@ public class MainTest {
     assertNull(request.body());
   }
 
-  private static String bodyAsString(Request.Body body) {
+  private static String bodyAsString(RequestBody body) {
     try {
       Buffer buffer = new Buffer();
       body.writeTo(buffer);

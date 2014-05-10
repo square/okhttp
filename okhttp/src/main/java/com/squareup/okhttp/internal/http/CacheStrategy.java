@@ -5,6 +5,7 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.ResponseSource;
 import java.net.HttpURLConnection;
 import java.util.Date;
@@ -22,7 +23,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * response (if the cached data is potentially stale).
  */
 public final class CacheStrategy {
-  private static final Response.Body EMPTY_BODY = new Response.Body() {
+  private static final ResponseBody EMPTY_BODY = new ResponseBody() {
     @Override public MediaType contentType() {
       return null;
     }

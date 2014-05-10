@@ -20,6 +20,7 @@ import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
 import java.net.URL;
@@ -69,7 +70,7 @@ class OkHttpAsync implements HttpClient {
       }
 
       @Override public void onResponse(Response response) throws IOException {
-        Response.Body body = response.body();
+        ResponseBody body = response.body();
         long total = SynchronousHttpClient.readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
         if (VERBOSE) {
