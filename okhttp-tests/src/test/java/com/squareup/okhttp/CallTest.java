@@ -138,7 +138,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
-        .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -228,7 +228,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
-        .put(Request.Body.create(MediaType.parse("text/plain"), "def"))
+        .put(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -258,7 +258,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
-        .patch(Request.Body.create(MediaType.parse("text/plain"), "def"))
+        .patch(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
 
     executeSynchronously(request)
@@ -544,7 +544,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
-        .post(Request.Body.create(MediaType.parse("text/plain"), "def"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "def"))
         .build();
     client.newCall(request).enqueue(callback);
 
@@ -571,7 +571,7 @@ public final class CallTest {
 
     Request request2 = new Request.Builder()
         .url(server.getUrl("/"))
-        .post(Request.Body.create(MediaType.parse("text/plain"), "body!"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "body!"))
         .build();
     Response response2 = client.newCall(request2).execute();
     assertEquals("def", response2.body().string());
@@ -707,7 +707,7 @@ public final class CallTest {
 
     Response response = client.newCall(new Request.Builder()
         .url(server.getUrl("/page1"))
-        .post(Request.Body.create(MediaType.parse("text/plain"), "Request Body"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
         .build()).execute();
     assertEquals("Page 2", response.body().string());
 

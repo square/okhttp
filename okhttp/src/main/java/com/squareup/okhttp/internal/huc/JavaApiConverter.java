@@ -20,6 +20,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
@@ -82,7 +83,7 @@ public final class JavaApiConverter {
     okResponseBuilder.setResponseSource(ResponseSource.NETWORK);
 
     // Response body
-    Response.Body okBody = createOkBody(okHeaders, urlConnection.getInputStream());
+    ResponseBody okBody = createOkBody(okHeaders, urlConnection.getInputStream());
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -132,7 +133,7 @@ public final class JavaApiConverter {
     okResponseBuilder.setResponseSource(ResponseSource.CACHE);
 
     // Response body
-    Response.Body okBody = createOkBody(okHeaders, javaResponse.getBody());
+    ResponseBody okBody = createOkBody(okHeaders, javaResponse.getBody());
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -185,7 +186,7 @@ public final class JavaApiConverter {
    */
   public static CacheResponse createJavaCacheResponse(final Response response) {
     final Headers headers = response.headers();
-    final Response.Body body = response.body();
+    final ResponseBody body = response.body();
     if (response.request().isHttps()) {
       final Handshake handshake = response.handshake();
       return new SecureCacheResponse() {
@@ -345,9 +346,9 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static Response.Body createOkBody(final Headers okHeaders, InputStream body) {
+  private static ResponseBody createOkBody(final Headers okHeaders, InputStream body) {
     final BufferedSource source = Okio.buffer(Okio.source(body));
-    return new Response.Body() {
+    return new ResponseBody() {
       @Override public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);

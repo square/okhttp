@@ -28,7 +28,7 @@ import static org.junit.Assert.assertNull;
 public final class RequestTest {
   @Test public void string() throws Exception {
     MediaType contentType = MediaType.parse("text/plain; charset=utf-8");
-    Request.Body body = Request.Body.create(contentType, "abc".getBytes(Util.UTF_8));
+    RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
@@ -37,7 +37,7 @@ public final class RequestTest {
 
   @Test public void stringWithDefaultCharsetAdded() throws Exception {
     MediaType contentType = MediaType.parse("text/plain");
-    Request.Body body = Request.Body.create(contentType, "\u0800");
+    RequestBody body = RequestBody.create(contentType, "\u0800");
     assertEquals(MediaType.parse("text/plain; charset=utf-8"), body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("e0a080", bodyToHex(body));
@@ -45,7 +45,7 @@ public final class RequestTest {
 
   @Test public void stringWithNonDefaultCharsetSpecified() throws Exception {
     MediaType contentType = MediaType.parse("text/plain; charset=utf-16be");
-    Request.Body body = Request.Body.create(contentType, "\u0800");
+    RequestBody body = RequestBody.create(contentType, "\u0800");
     assertEquals(contentType, body.contentType());
     assertEquals(2, body.contentLength());
     assertEquals("0800", bodyToHex(body));
@@ -53,7 +53,7 @@ public final class RequestTest {
 
   @Test public void byteArray() throws Exception {
     MediaType contentType = MediaType.parse("text/plain");
-    Request.Body body = Request.Body.create(contentType, "abc".getBytes(Util.UTF_8));
+    RequestBody body = RequestBody.create(contentType, "abc".getBytes(Util.UTF_8));
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
@@ -67,7 +67,7 @@ public final class RequestTest {
     writer.close();
 
     MediaType contentType = MediaType.parse("text/plain");
-    Request.Body body = Request.Body.create(contentType, file);
+    RequestBody body = RequestBody.create(contentType, file);
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
     assertEquals("616263", bodyToHex(body));
@@ -77,7 +77,7 @@ public final class RequestTest {
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
   @Test public void crudVerbs() {
     MediaType contentType = MediaType.parse("application/json");
-    Request.Body body = Request.Body.create(contentType, "{}");
+    RequestBody body = RequestBody.create(contentType, "{}");
 
     Request get = new Request.Builder().url("http://localhost/api").get().build();
     assertEquals("GET", get.method());
@@ -104,7 +104,7 @@ public final class RequestTest {
     assertEquals(body, patch.body());
   }
 
-  private String bodyToHex(Request.Body body) throws IOException {
+  private String bodyToHex(RequestBody body) throws IOException {
     Buffer buffer = new Buffer();
     body.writeTo(buffer);
     return buffer.readByteString().hex();

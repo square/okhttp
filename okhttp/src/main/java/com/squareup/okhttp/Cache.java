@@ -582,7 +582,7 @@ public final class Cache {
     }
   }
 
-  private static class CacheResponseBody extends Response.Body {
+  private static class CacheResponseBody extends ResponseBody {
     private final DiskLruCache.Snapshot snapshot;
     private final BufferedSource bodySource;
     private final String contentType;

@@ -15,19 +15,11 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
-import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
-import okio.BufferedSource;
 
-import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
@@ -48,7 +40,7 @@ public final class Response {
   private final String message;
   private final Handshake handshake;
   private final Headers headers;
-  private final Body body;
+  private final ResponseBody body;
   private final Response redirectedBy;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -123,7 +115,7 @@ public final class Response {
     return headers;
   }
 
-  public Body body() {
+  public ResponseBody body() {
     return body;
   }
 
@@ -172,72 +164,6 @@ public final class Response {
       return Collections.emptyList();
     }
     return OkHeaders.parseChallenges(headers(), responseField);
-  }
-
-  public abstract static class Body implements Closeable {
-    /** Multiple calls to {@link #charStream()} must return the same instance. */
-    private Reader reader;
-
-    public abstract MediaType contentType();
-
-    /**
-     * Returns the number of bytes in that will returned by {@link #bytes}, or
-     * {@link #byteStream}, or -1 if unknown.
-     */
-    public abstract long contentLength();
-
-    public final InputStream byteStream() {
-      return source().inputStream();
-    }
-
-    public abstract BufferedSource source();
-
-    public final byte[] bytes() throws IOException {
-      long contentLength = contentLength();
-      if (contentLength > Integer.MAX_VALUE) {
-        throw new IOException("Cannot buffer entire body for content length: " + contentLength);
-      }
-
-      BufferedSource source = source();
-      byte[] bytes;
-      try {
-        bytes = source.readByteArray();
-      } finally {
-        Util.closeQuietly(source);
-      }
-      if (contentLength != -1 && contentLength != bytes.length) {
-        throw new IOException("Content-Length and stream length disagree");
-      }
-      return bytes;
-    }
-
-    /**
-     * Returns the response as a character stream decoded with the charset
-     * of the Content-Type header. If that header is either absent or lacks a
-     * charset, this will attempt to decode the response body as UTF-8.
-     */
-    public final Reader charStream() {
-      Reader r = reader;
-      return r != null ? r : (reader = new InputStreamReader(byteStream(), charset()));
-    }
-
-    /**
-     * Returns the response as a string decoded with the charset of the
-     * Content-Type header. If that header is either absent or lacks a charset,
-     * this will attempt to decode the response body as UTF-8.
-     */
-    public final String string() throws IOException {
-      return new String(bytes(), charset().name());
-    }
-
-    private Charset charset() {
-      MediaType contentType = contentType();
-      return contentType != null ? contentType.charset(UTF_8) : UTF_8;
-    }
-
-    @Override public void close() throws IOException {
-      source().close();
-    }
   }
 
   /**
@@ -290,7 +216,7 @@ public final class Response {
     private String message;
     private Handshake handshake;
     private Headers.Builder headers;
-    private Body body;
+    private ResponseBody body;
     private Response redirectedBy;
 
     public Builder() {
@@ -362,7 +288,7 @@ public final class Response {
       return this;
     }
 
-    public Builder body(Body body) {
+    public Builder body(ResponseBody body) {
       this.body = body;
       return this;
     }

@@ -1,14 +1,14 @@
 package com.squareup.okhttp.apache;
 
 import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import java.io.IOException;
 import okio.BufferedSink;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 
-/** Adapts an {@link HttpEntity} to OkHttp's {@link Request.Body}. */
-final class HttpEntityBody extends Request.Body {
+/** Adapts an {@link HttpEntity} to OkHttp's {@link RequestBody}. */
+final class HttpEntityBody extends RequestBody {
   private static final String DEFAULT_MEDIA_TYPE = "application/octet-stream";
 
   private final HttpEntity entity;

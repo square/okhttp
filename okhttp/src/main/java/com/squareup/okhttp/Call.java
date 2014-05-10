@@ -58,7 +58,7 @@ public final class Call {
    *
    * <p>The caller may read the response body with the response's
    * {@link Response#body} method.  To facilitate connection recycling, callers
-   * should always {@link Response.Body#close() close the response body}.
+   * should always {@link ResponseBody#close() close the response body}.
    *
    * <p>Note that transport-layer success (receiving a HTTP response code,
    * headers and body) does not necessarily indicate application-layer success:
@@ -170,7 +170,7 @@ public final class Call {
    */
   private Response getResponse() throws IOException {
     // Copy body metadata to the appropriate request headers.
-    Request.Body body = request.body();
+    RequestBody body = request.body();
     RetryableSink requestBodyOut = null;
     if (body != null) {
       MediaType contentType = body.contentType();
@@ -243,7 +243,7 @@ public final class Call {
     }
   }
 
-  private static class RealResponseBody extends Response.Body {
+  private static class RealResponseBody extends ResponseBody {
     private final Response response;
     private final BufferedSource source;
 
