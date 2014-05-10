@@ -152,7 +152,7 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
-  private OkAuthenticator authenticator;
+  private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followSslRedirects = true;
   private int connectTimeout;
@@ -346,12 +346,12 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    * <p>If unset, the {@link java.net.Authenticator#setDefault system-wide default}
    * authenticator will be used.
    */
-  public OkHttpClient setAuthenticator(OkAuthenticator authenticator) {
+  public OkHttpClient setAuthenticator(Authenticator authenticator) {
     this.authenticator = authenticator;
     return this;
   }
 
-  public OkAuthenticator getAuthenticator() {
+  public Authenticator getAuthenticator() {
     return authenticator;
   }
 

@@ -21,7 +21,7 @@ import java.net.Proxy;
 /**
  * Responds to authentication challenges from the remote web or proxy server.
  */
-public interface OkAuthenticator {
+public interface Authenticator {
   /**
    * Returns a request that includes a credential to satisfy an authentication
    * challenge in {@code response}. Returns null if the challenge cannot be
