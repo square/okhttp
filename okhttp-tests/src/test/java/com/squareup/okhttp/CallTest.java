@@ -410,7 +410,7 @@ public final class CallTest {
     server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
-    client.newCall(request).enqueue(new Response.Callback() {
+    client.newCall(request).enqueue(new Callback() {
       @Override public void onFailure(Failure failure) {
         throw new AssertionError();
       }
@@ -964,7 +964,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(request);
-    call.enqueue(new Response.Callback() {
+    call.enqueue(new Callback() {
       @Override public void onFailure(Failure failure) {
         latch.countDown();
         failureRef.set(failure); // This should never occur as we don't signal twice.
