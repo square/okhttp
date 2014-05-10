@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Dispatcher;
 import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.OkHttpClient;
@@ -39,7 +40,7 @@ class OkHttpAsync implements HttpClient {
   private final AtomicInteger requestsInFlight = new AtomicInteger();
 
   private OkHttpClient client;
-  private Response.Callback callback;
+  private Callback callback;
   private int concurrencyLevel;
   private int targetBacklog;
 
@@ -64,7 +65,7 @@ class OkHttpAsync implements HttpClient {
       client.setHostnameVerifier(hostnameVerifier);
     }
 
-    callback = new Response.Callback() {
+    callback = new Callback() {
       @Override public void onFailure(Failure failure) {
         System.out.println("Failed: " + failure.exception());
       }

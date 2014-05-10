@@ -96,7 +96,7 @@ public final class Call {
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  public void enqueue(Response.Callback responseCallback) {
+  public void enqueue(Callback responseCallback) {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -114,9 +114,9 @@ public final class Call {
   }
 
   final class AsyncCall extends NamedRunnable {
-    private final Response.Callback responseCallback;
+    private final Callback responseCallback;
 
-    private AsyncCall(Response.Callback responseCallback) {
+    private AsyncCall(Callback responseCallback) {
       super("OkHttp %s", request.urlString());
       this.responseCallback = responseCallback;
     }
