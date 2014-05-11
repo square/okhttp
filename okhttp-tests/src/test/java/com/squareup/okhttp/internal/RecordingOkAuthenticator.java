@@ -15,14 +15,14 @@
  */
 package com.squareup.okhttp.internal;
 
-import com.squareup.okhttp.OkAuthenticator;
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class RecordingOkAuthenticator implements OkAuthenticator {
+public final class RecordingOkAuthenticator implements Authenticator {
   public final List<Response> responses = new ArrayList<Response>();
   public final List<Proxy> proxies = new ArrayList<Proxy>();
   public final String credential;

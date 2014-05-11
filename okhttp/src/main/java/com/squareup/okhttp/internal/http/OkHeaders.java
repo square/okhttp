@@ -1,8 +1,8 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Platform;
@@ -257,7 +257,7 @@ public final class OkHeaders {
    * Returns a request for a subsequent attempt, or null if no further attempts
    * should be made.
    */
-  public static Request processAuthHeader(OkAuthenticator authenticator, Response response,
+  public static Request processAuthHeader(Authenticator authenticator, Response response,
       Proxy proxy) throws IOException {
     return response.code() == HTTP_PROXY_AUTH
         ? authenticator.authenticateProxy(proxy, response)

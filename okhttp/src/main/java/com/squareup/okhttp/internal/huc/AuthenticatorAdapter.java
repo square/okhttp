@@ -15,13 +15,13 @@
  */
 package com.squareup.okhttp.internal.huc;
 
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.Credentials;
-import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.net.Authenticator;
+import java.net.Authenticator.RequestorType;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
@@ -29,10 +29,10 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.List;
 
-/** Adapts {@link Authenticator} to {@link OkAuthenticator}. */
-public final class AuthenticatorAdapter implements OkAuthenticator {
+/** Adapts {@link java.net.Authenticator} to {@link com.squareup.okhttp.Authenticator}. */
+public final class AuthenticatorAdapter implements Authenticator {
   /** Uses the global authenticator to get the password. */
-  public static final OkAuthenticator INSTANCE = new AuthenticatorAdapter();
+  public static final Authenticator INSTANCE = new AuthenticatorAdapter();
 
   @Override public Request authenticate(Proxy proxy, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
@@ -42,9 +42,9 @@ public final class AuthenticatorAdapter implements OkAuthenticator {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
 
-      PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(url.getHost(),
-          getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(),
-          challenge.getRealm(), challenge.getScheme(), url, Authenticator.RequestorType.SERVER);
+      PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
+          url.getHost(), getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(),
+          challenge.getRealm(), challenge.getScheme(), url, RequestorType.SERVER);
       if (auth == null) continue;
 
       String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
@@ -65,10 +65,10 @@ public final class AuthenticatorAdapter implements OkAuthenticator {
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
 
       InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-      PasswordAuthentication auth = Authenticator.requestPasswordAuthentication(
+      PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
           proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
           url.getProtocol(), challenge.getRealm(), challenge.getScheme(), url,
-          Authenticator.RequestorType.PROXY);
+          RequestorType.PROXY);
       if (auth == null) continue;
 
       String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));

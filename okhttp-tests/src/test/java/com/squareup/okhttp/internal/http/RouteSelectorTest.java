@@ -16,9 +16,9 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.OkAuthenticator;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.RouteDatabase;
@@ -80,7 +80,7 @@ public final class RouteSelectorTest {
     }
   }
 
-  private final OkAuthenticator authenticator = AuthenticatorAdapter.INSTANCE;
+  private final Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
   private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
