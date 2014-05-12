@@ -92,6 +92,8 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_E
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -1381,7 +1383,7 @@ public final class URLConnectionTest {
     assertTrue(call, call.contains("host=" + url.getHost()));
     assertTrue(call, call.contains("port=" + url.getPort()));
     InetAddress inetAddress = InetAddress.getByName(url.getHost());
-    assertTrue(call, call.contains("site=" + inetAddress.getCanonicalHostName() + "/" + inetAddress.getHostAddress()));
+    assertThat(call, containsString("site=" + inetAddress.getCanonicalHostName() + "/" + inetAddress.getHostAddress()));
     assertTrue(call, call.contains("url=http://android.com"));
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.PROXY));
     assertTrue(call, call.contains("prompt=Bar"));
