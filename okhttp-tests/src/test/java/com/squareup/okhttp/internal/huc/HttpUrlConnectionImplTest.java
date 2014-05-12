@@ -48,7 +48,7 @@ public class HttpUrlConnectionImplTest {
   @Test public void followUpURLHasIllegalCharacter() {
     MockResponse mockResponse = new MockResponse();
     mockResponse.setResponseCode(302);
-    mockResponse.addHeader("Location", "http://example.com/index.php?t=A|B|C");
+    mockResponse.addHeader("Location", "http://foo.com/index.php?t=A|B|C");
 
     server.enqueue(mockResponse);
     server.enqueue(new MockResponse());
