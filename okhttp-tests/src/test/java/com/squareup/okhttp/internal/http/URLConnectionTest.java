@@ -1835,7 +1835,6 @@ public final class URLConnectionTest {
       }
     });
 
-    server2 = new MockWebServer();
     server2.enqueue(new MockResponse().setBody("This is the 2nd server!"));
     server2.play();
 
@@ -1850,6 +1849,24 @@ public final class URLConnectionTest {
         proxySelectionRequests);
 
     server2.shutdown();
+  }
+
+  @Ignore // https://github.com/square/okhttp/issues/810
+  @Test public void redirectWithAuthentication() throws Exception {
+    server2.enqueue(new MockResponse().setBody("Page 2"));
+    server2.play();
+
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse().setResponseCode(302)
+        .addHeader("Location: " + server2.getUrl("/b")));
+    server.play();
+
+    client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+    assertContent("Page 2", client.open(server.getUrl("/a")));
+
+    RecordedRequest redirectRequest = server2.takeRequest();
+    assertContainsNoneMatching(redirectRequest.getHeaders(), "Authorization.*");
+    assertEquals("/b", redirectRequest.getPath());
   }
 
   @Test public void response300MultipleChoiceWithPost() throws Exception {
