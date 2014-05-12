@@ -63,7 +63,7 @@ public enum Protocol {
    * HTTP/1.1 semantics are layered on HTTP/2.
    *
    * <p>This version of OkHttp implements HTTP/2 <a
-   * href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-12">draft 10</a>
+   * href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-12">draft 12</a>
    * with HPACK <a
    * href="http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07">draft
    * 6</a>. Future releases of OkHttp may use this identifier for a newer draft
