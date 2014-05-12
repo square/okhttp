@@ -30,6 +30,7 @@ import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CacheRequest;
@@ -37,14 +38,17 @@ import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
+
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSource;
@@ -801,7 +805,7 @@ public final class HttpEngine {
       case HTTP_SEE_OTHER:
         String location = response.header("Location");
         if (location == null) return null;
-        URL url = new URL(request.url(), location);
+        URL url = new URL(request.url(), URLEncoder.encode(location, "UTF-8"));
 
         // Don't follow redirects to unsupported protocols.
         if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) return null;
