@@ -36,23 +36,14 @@ public final class RecordingAuthenticator extends Authenticator {
   }
 
   @Override protected PasswordAuthentication getPasswordAuthentication() {
-    this.calls
-        .add("host="
-            + getRequestingHost()
-            + " port="
-            + getRequestingPort()
-            + " site="
-            + getRequestingSite()
-            + " url="
-            + getRequestingURL()
-            + " type="
-            + getRequestorType()
-            + " prompt="
-            + getRequestingPrompt()
-            + " protocol="
-            + getRequestingProtocol()
-            + " scheme="
-            + getRequestingScheme());
+    this.calls.add("host=" + getRequestingHost()
+        + " port=" + getRequestingPort()
+        + " site=" + getRequestingSite().getHostName()
+        + " url=" + getRequestingURL()
+        + " type=" + getRequestorType()
+        + " prompt=" + getRequestingPrompt()
+        + " protocol=" + getRequestingProtocol()
+        + " scheme=" + getRequestingScheme());
     return authentication;
   }
 }
