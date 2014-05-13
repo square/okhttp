@@ -92,6 +92,8 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_E
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -1380,7 +1382,7 @@ public final class URLConnectionTest {
     String call = calls.get(0);
     assertTrue(call, call.contains("host=" + url.getHost()));
     assertTrue(call, call.contains("port=" + url.getPort()));
-    assertTrue(call, call.contains("site=" + InetAddress.getAllByName(url.getHost())[0]));
+    assertThat(call, containsString("site=" + getProxySite(url.getHost())));
     assertTrue(call, call.contains("url=http://android.com"));
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.PROXY));
     assertTrue(call, call.contains("prompt=Bar"));
@@ -1407,6 +1409,15 @@ public final class URLConnectionTest {
     }
     assertEquals(responseCode, connection.getResponseCode());
     return authenticator.calls;
+  }
+
+  private String getProxySite(String host) throws UnknownHostException {
+    InetAddress inetAddress = InetAddress.getByName(host);
+    if ((Character.digit(host.charAt(0), 16) != -1
+        || (host.charAt(0) == ':'))) {
+      return inetAddress.getCanonicalHostName() + "/" + inetAddress.getHostAddress();
+    }
+    return inetAddress.toString();
   }
 
   @Test public void setValidRequestMethod() throws Exception {
