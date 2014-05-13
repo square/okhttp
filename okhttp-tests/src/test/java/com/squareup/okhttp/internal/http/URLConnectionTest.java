@@ -24,6 +24,7 @@ import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
@@ -1365,7 +1366,7 @@ public final class URLConnectionTest {
     String call = calls.get(0);
     assertTrue(call, call.contains("host=" + url.getHost()));
     assertTrue(call, call.contains("port=" + url.getPort()));
-    assertTrue(call, call.contains("site=" + InetAddress.getAllByName(url.getHost())[0]));
+    assertTrue(call, call.contains("site=" + url.getHost()));
     assertTrue(call, call.contains("url=" + url));
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.SERVER));
     assertTrue(call, call.contains("prompt=Bar"));
@@ -1380,7 +1381,7 @@ public final class URLConnectionTest {
     String call = calls.get(0);
     assertTrue(call, call.contains("host=" + url.getHost()));
     assertTrue(call, call.contains("port=" + url.getPort()));
-    assertTrue(call, call.contains("site=" + InetAddress.getAllByName(url.getHost())[0]));
+    assertTrue(call, call.contains("site=" + url.getHost()));
     assertTrue(call, call.contains("url=http://android.com"));
     assertTrue(call, call.contains("type=" + Authenticator.RequestorType.PROXY));
     assertTrue(call, call.contains("prompt=Bar"));
