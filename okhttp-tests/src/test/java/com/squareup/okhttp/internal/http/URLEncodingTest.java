@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
 import java.io.IOException;
 import java.net.CacheResponse;
@@ -132,7 +133,7 @@ public final class URLEncodingTest {
     });
 
     try {
-      HttpURLConnection connection = client.open(url);
+      HttpURLConnection connection = new OkUrlFactory(client).open(url);
       connection.getResponseCode();
     } catch (Exception expected) {
       if (expected.getCause() instanceof URISyntaxException) {

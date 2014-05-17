@@ -97,7 +97,7 @@ public final class CacheTest {
   @Rule public MockWebServerRule serverRule = new MockWebServerRule();
   @Rule public MockWebServerRule server2Rule = new MockWebServerRule();
 
-  private final OkHttpClient client = new OkHttpClient();
+  private final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
   private MockWebServer server;
   private MockWebServer server2;
   private Cache cache;
@@ -108,7 +108,7 @@ public final class CacheTest {
     server.setProtocolNegotiationEnabled(false);
     server2 = server2Rule.get();
     cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
-    client.setCache(cache);
+    client.client().setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
 
@@ -118,8 +118,8 @@ public final class CacheTest {
   }
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
-    assertSame(cache, client.getCache());
-    assertNull(client.getResponseCache());
+    assertSame(cache, client.client().getCache());
+    assertNull(client.client().getResponseCache());
   }
 
   /**
@@ -214,7 +214,7 @@ public final class CacheTest {
         .addHeader("fgh: ijk")
         .setBody(body));
 
-    client.setResponseCache(new AbstractResponseCache() {
+    client.client().setResponseCache(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
         assertEquals(server.getUrl("/"), uri.toURL());
@@ -241,7 +241,7 @@ public final class CacheTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    client.setResponseCache(new AbstractResponseCache() {
+    client.client().setResponseCache(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) {
         return new CacheRequest() {
           @Override public void abort() {
@@ -402,8 +402,8 @@ public final class CacheTest {
         .setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.client().setSslSocketFactory(sslContext.getSocketFactory());
+    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
     HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
@@ -439,8 +439,8 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.getUrl("/")));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.client().setSslSocketFactory(sslContext.getSocketFactory());
+    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
     HttpURLConnection connection1 = client.open(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
@@ -458,7 +458,7 @@ public final class CacheTest {
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef
         = new AtomicReference<Map<String, List<String>>>();
-    client.setResponseCache(new AbstractResponseCache() {
+    client.client().setResponseCache(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri,
           String requestMethod, Map<String, List<String>> requestHeaders) throws IOException {
         requestHeadersRef.set(requestHeaders);
@@ -930,11 +930,11 @@ public final class CacheTest {
 
     ConnectionPool pool = ConnectionPool.getDefault();
     pool.evictAll();
-    client.setConnectionPool(pool);
+    client.client().setConnectionPool(pool);
 
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
-    assertEquals(1, client.getConnectionPool().getConnectionCount());
+    assertEquals(1, client.client().getConnectionPool().getConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
@@ -1761,7 +1761,7 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE);
-    client.setCache(cache);
+    client.client().setCache(cache);
 
     HttpURLConnection connection = client.open(url);
     assertEquals(entryBody, readAscii(connection));

@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
@@ -38,7 +39,7 @@ public final class DisconnectTest {
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     disconnectLater(connection, 500);
 
     connection.setDoOutput(true);
@@ -65,7 +66,7 @@ public final class DisconnectTest {
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.play();
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     disconnectLater(connection, 500);
 
     InputStream responseBody = connection.getInputStream();

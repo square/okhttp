@@ -20,6 +20,7 @@ import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -726,7 +727,7 @@ public class JavaApiConverterTest {
 
     @Override
     public HttpURLConnection open(URL serverUrl) {
-      return client.open(serverUrl);
+      return new OkUrlFactory(client).open(serverUrl);
     }
   }
 
