@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
+import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -43,6 +44,7 @@ import javax.net.ssl.SSLContext;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
@@ -53,6 +55,7 @@ import static org.junit.Assert.fail;
 
 public final class CallTest {
   private MockWebServer server = new MockWebServer();
+  private MockWebServer server2 = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
 
@@ -67,6 +70,7 @@ public final class CallTest {
 
   @After public void tearDown() throws Exception {
     server.shutdown();
+    server2.shutdown();
     cache.delete();
   }
 
@@ -720,13 +724,12 @@ public final class CallTest {
   }
 
   @Test public void redirectsDoNotIncludeTooManyCookies() throws Exception {
-    MockWebServer redirectTarget = new MockWebServer();
-    redirectTarget.enqueue(new MockResponse().setBody("Page 2"));
-    redirectTarget.play();
+    server2.enqueue(new MockResponse().setBody("Page 2"));
+    server2.play();
 
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + redirectTarget.getUrl("/")));
+        .addHeader("Location: " + server2.getUrl("/")));
     server.play();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
@@ -748,8 +751,29 @@ public final class CallTest {
         + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.getCookieDomain()
         + "\";$Port=\"" + portList + "\"");
 
-    RecordedRequest request2 = redirectTarget.takeRequest();
+    RecordedRequest request2 = server2.takeRequest();
     assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
+  }
+
+  @Ignore // https://github.com/square/okhttp/issues/810
+  @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
+    server2.enqueue(new MockResponse().setBody("Page 2"));
+    server2.play();
+
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse().setResponseCode(302)
+        .addHeader("Location: " + server2.getUrl("/b")));
+    server.play();
+
+    client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+
+    Request request = new Request.Builder().url(server.getUrl("/a")).build();
+    Response response = client.newCall(request).execute();
+    assertEquals("Page 2", response.body().string());
+
+    RecordedRequest redirectRequest = server2.takeRequest();
+    assertContainsNoneMatching(redirectRequest.getHeaders(), "Authorization.*");
+    assertEquals("/b", redirectRequest.getPath());
   }
 
   @Test public void redirect_Async() throws Exception {
