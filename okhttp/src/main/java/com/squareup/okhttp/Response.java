@@ -40,7 +40,7 @@ public final class Response {
   private final Handshake handshake;
   private final Headers headers;
   private final ResponseBody body;
-  private final Response redirectedBy;
+  private final Response priorResponse;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -52,7 +52,7 @@ public final class Response {
     this.handshake = builder.handshake;
     this.headers = builder.headers.build();
     this.body = builder.body;
-    this.redirectedBy = builder.redirectedBy;
+    this.priorResponse = builder.priorResponse;
   }
 
   /**
@@ -142,8 +142,8 @@ public final class Response {
    * automatic retry. The body of the returned response should not be read
    * because it has already been consumed by the redirecting client.
    */
-  public Response redirectedBy() {
-    return redirectedBy;
+  public Response priorResponse() {
+    return priorResponse;
   }
 
   /**
@@ -194,7 +194,7 @@ public final class Response {
     private Handshake handshake;
     private Headers.Builder headers;
     private ResponseBody body;
-    private Response redirectedBy;
+    private Response priorResponse;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -208,7 +208,7 @@ public final class Response {
       this.handshake = response.handshake;
       this.headers = response.headers.newBuilder();
       this.body = response.body;
-      this.redirectedBy = response.redirectedBy;
+      this.priorResponse = response.priorResponse;
     }
 
     public Builder request(Request request) {
@@ -275,8 +275,8 @@ public final class Response {
       return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + code);
     }
 
-    public Builder redirectedBy(Response redirectedBy) {
-      this.redirectedBy = redirectedBy;
+    public Builder priorResponse(Response priorResponse) {
+      this.priorResponse = priorResponse;
       return this;
     }
 
