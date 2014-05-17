@@ -16,8 +16,8 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.RecordingAuthenticator;
+import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.RecordingProxySelector;
-import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.Authenticator;
 import java.net.CookieHandler;

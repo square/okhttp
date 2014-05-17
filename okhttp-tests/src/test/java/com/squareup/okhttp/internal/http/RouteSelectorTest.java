@@ -23,7 +23,6 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.SslContextBuilder;
-import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;

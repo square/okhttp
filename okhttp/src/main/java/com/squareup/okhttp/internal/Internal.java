@@ -24,7 +24,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
-import java.net.ResponseCache;
 
 /**
  * Escalate internal APIs in {@code com.squareup.okhttp} so they can be used
@@ -63,7 +62,7 @@ public abstract class Internal {
 
   public abstract void addLine(Headers.Builder builder, String line);
 
-  public abstract void setResponseCache(OkHttpClient client, ResponseCache responseCache);
+  public abstract void setCache(OkHttpClient client, InternalCache internalCache);
 
   public abstract InternalCache internalCache(OkHttpClient client);
 

@@ -19,16 +19,14 @@ import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
-import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
-import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.ResponseCache;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.util.List;
@@ -107,8 +105,8 @@ public final class OkHttpClient implements Cloneable {
         builder.addLine(line);
       }
 
-      @Override public void setResponseCache(OkHttpClient client, ResponseCache responseCache) {
-        client.setResponseCache(responseCache);
+      @Override public void setCache(OkHttpClient client, InternalCache internalCache) {
+        client.setInternalCache(internalCache);
       }
 
       @Override public InternalCache internalCache(OkHttpClient client) {
@@ -139,9 +137,9 @@ public final class OkHttpClient implements Cloneable {
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
 
-  // At least one of the two cache fields will be null.
+  /** Non-null if this client is caching; possibly by {@code cache}. */
+  private InternalCache internalCache;
   private Cache cache;
-  private CacheAdapter cacheAdapter;
 
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
@@ -263,28 +261,24 @@ public final class OkHttpClient implements Cloneable {
   }
 
   /** Sets the response cache to be used to read and write cached responses. */
-  OkHttpClient setResponseCache(ResponseCache responseCache) {
-    this.cacheAdapter = responseCache != null ? new CacheAdapter(responseCache) : null;
+  OkHttpClient setInternalCache(InternalCache internalCache) {
+    this.internalCache = internalCache;
     this.cache = null;
     return this;
   }
 
-  ResponseCache getResponseCache() {
-    return cacheAdapter != null ? cacheAdapter.getDelegate() : null;
+  InternalCache internalCache() {
+    return internalCache;
   }
 
   public OkHttpClient setCache(Cache cache) {
     this.cache = cache;
-    this.cacheAdapter = null;
+    this.internalCache = cache != null ? cache.internalCache : null;
     return this;
   }
 
   public Cache getCache() {
     return cache;
-  }
-
-  InternalCache internalCache() {
-    return cache != null ? cache.internalCache : cacheAdapter;
   }
 
   /**

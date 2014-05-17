@@ -31,6 +31,7 @@ import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -1863,7 +1864,8 @@ public final class URLConnectionTest {
         .addHeader("Location: " + server2.getUrl("/b")));
     server.play();
 
-    client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+    client.client().setAuthenticator(
+        new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
     assertContent("Page 2", client.open(server.getUrl("/a")));
 
     RecordedRequest redirectRequest = server2.takeRequest();
@@ -2336,7 +2338,7 @@ public final class URLConnectionTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    Internal.instance.setResponseCache(client.client(), new AbstractResponseCache() {
+    Internal.instance.setCache(client.client(), new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         return new CacheRequest() {
           @Override public void abort() {
@@ -2348,7 +2350,7 @@ public final class URLConnectionTest {
           }
         };
       }
-    });
+    }));
 
     server.enqueue(new MockResponse().setBody("abcdef"));
     server.play();
