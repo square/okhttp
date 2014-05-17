@@ -23,19 +23,13 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.huc.CacheAdapter;
-import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
-import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;
-import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
-import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLStreamHandler;
-import java.net.URLStreamHandlerFactory;
 import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +49,7 @@ import javax.net.ssl.SSLSocketFactory;
  * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
  * safely modified with further configuration changes.
  */
-public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
+public final class OkHttpClient implements Cloneable {
   static {
     Internal.instance = new Internal() {
       @Override public Transport newTransport(
@@ -465,20 +459,6 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     return this;
   }
 
-  public HttpURLConnection open(URL url) {
-    return open(url, proxy);
-  }
-
-  HttpURLConnection open(URL url, Proxy proxy) {
-    String protocol = url.getProtocol();
-    OkHttpClient copy = copyWithDefaults();
-    copy.proxy = proxy;
-
-    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);
-    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy);
-    throw new IllegalArgumentException("Unexpected protocol: " + protocol);
-  }
-
   /**
    * Returns a shallow copy of this OkHttpClient that uses the system-wide
    * default for each field that hasn't been explicitly configured.
@@ -543,35 +523,5 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     } catch (CloneNotSupportedException e) {
       throw new AssertionError();
     }
-  }
-
-  /**
-   * Creates a URLStreamHandler as a {@link URL#setURLStreamHandlerFactory}.
-   *
-   * <p>This code configures OkHttp to handle all HTTP and HTTPS connections
-   * created with {@link URL#openConnection()}: <pre>   {@code
-   *
-   *   OkHttpClient okHttpClient = new OkHttpClient();
-   *   URL.setURLStreamHandlerFactory(okHttpClient);
-   * }</pre>
-   */
-  public URLStreamHandler createURLStreamHandler(final String protocol) {
-    if (!protocol.equals("http") && !protocol.equals("https")) return null;
-
-    return new URLStreamHandler() {
-      @Override protected URLConnection openConnection(URL url) {
-        return open(url);
-      }
-
-      @Override protected URLConnection openConnection(URL url, Proxy proxy) {
-        return open(url, proxy);
-      }
-
-      @Override protected int getDefaultPort() {
-        if (protocol.equals("http")) return 80;
-        if (protocol.equals("https")) return 443;
-        throw new AssertionError();
-      }
-    };
   }
 }

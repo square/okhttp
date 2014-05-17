@@ -16,6 +16,7 @@
 package com.squareup.okhttp.benchmarks;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -63,7 +64,7 @@ class OkHttp extends SynchronousHttpClient {
     public void run() {
       long start = System.nanoTime();
       try {
-        HttpURLConnection urlConnection = client.open(url);
+        HttpURLConnection urlConnection = new OkUrlFactory(client).open(url);
         long total = readAllAndClose(urlConnection.getInputStream());
         long finish = System.nanoTime();
 

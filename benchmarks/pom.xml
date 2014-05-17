@@ -31,6 +31,11 @@
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp-urlconnection</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
     </dependency>

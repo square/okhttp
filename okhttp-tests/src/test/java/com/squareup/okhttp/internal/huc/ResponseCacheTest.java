@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -120,7 +121,7 @@ public final class ResponseCacheTest {
   }
 
   private HttpURLConnection openConnection(URL url) {
-    return client.open(url);
+    return new OkUrlFactory(client).open(url);
   }
 
   @Test public void responseCachingAndInputStreamSkipWithFixedLength() throws IOException {

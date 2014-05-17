@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.InputStream;
@@ -40,7 +41,7 @@ public final class ThreadInterruptTest {
 
     interruptLater(500);
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     connection.setDoOutput(true);
     connection.setFixedLengthStreamingMode(requestBodySize);
     OutputStream requestBody = connection.getOutputStream();
@@ -67,7 +68,7 @@ public final class ThreadInterruptTest {
 
     interruptLater(500);
 
-    HttpURLConnection connection = client.open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     InputStream responseBody = connection.getInputStream();
     byte[] buffer = new byte[1024];
     try {

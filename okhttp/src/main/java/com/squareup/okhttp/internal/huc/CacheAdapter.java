@@ -92,5 +92,4 @@ public final class CacheAdapter implements InternalCache {
     Map<String, List<String>> headers = JavaApiConverter.extractJavaHeaders(request);
     return delegate.get(request.uri(), request.method(), headers);
   }
-
 }

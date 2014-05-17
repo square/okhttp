@@ -1,6 +1,7 @@
 package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
@@ -31,7 +32,7 @@ public class HttpUrlConnectionImplTest {
     server.enqueue(new MockResponse().setResponseCode(407));
 
     URL url = server.getUrl("/");
-    HttpURLConnection conn = client.open(url);
+    HttpURLConnection conn = new OkUrlFactory(client).open(url);
     try {
       conn.getResponseCode();
       fail();

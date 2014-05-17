@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -80,15 +81,15 @@ public abstract class HttpOverSpdyTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
   protected final MockWebServer server = new MockWebServer();
   protected final String hostName = server.getHostName();
-  protected final OkHttpClient client = new OkHttpClient();
+  protected final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
   protected HttpURLConnection connection;
   protected Cache cache;
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.client().setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    client.client().setSslSocketFactory(sslContext.getSocketFactory());
+    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     String systemTmpDir = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(systemTmpDir, "HttpCache-" + protocol + "-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
@@ -351,7 +352,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responsesAreCached() throws IOException {
-    client.setCache(cache);
+    client.client().setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
     server.play();
@@ -368,7 +369,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void conditionalCache() throws IOException {
-    client.setCache(cache);
+    client.client().setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
@@ -385,7 +386,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
-    client.setCache(cache);
+    client.client().setCache(cache);
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("ABCD"));
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));
@@ -404,7 +405,7 @@ public abstract class HttpOverSpdyTest {
 
   @Test public void acceptAndTransmitCookies() throws Exception {
     CookieManager cookieManager = new CookieManager();
-    client.setCookieHandler(cookieManager);
+    client.client().setCookieHandler(cookieManager);
     server.enqueue(
         new MockResponse().addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
             .setBody("A"));

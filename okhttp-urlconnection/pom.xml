@@ -9,34 +9,19 @@
     <version>2.0.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>okhttp-tests</artifactId>
-  <name>OkHttp Tests</name>
+  <artifactId>okhttp-urlconnection</artifactId>
+  <name>OkHttp URLConnection</name>
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.okio</groupId>
-      <artifactId>okio</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.squareup.okhttp</groupId>
       <artifactId>okhttp</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp-urlconnection</artifactId>
       <version>${project.version}</version>
     </dependency>
 
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>mockwebserver</artifactId>
-      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
