@@ -280,7 +280,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableSink requestBody, Response redirectedBy) {
+      RetryableSink requestBody, Response priorResponse) {
     Request.Builder builder = new Request.Builder()
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
@@ -309,7 +309,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
 
     return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
-        redirectedBy);
+        priorResponse);
   }
 
   /**

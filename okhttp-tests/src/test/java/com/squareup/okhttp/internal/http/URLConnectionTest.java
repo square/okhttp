@@ -24,7 +24,6 @@ import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
@@ -2758,7 +2757,7 @@ public final class URLConnectionTest {
     Response challengeResponse = authenticator.responses.get(0);
     assertEquals("/b", challengeResponse.request().url().getPath());
 
-    Response redirectedBy = challengeResponse.redirectedBy();
+    Response redirectedBy = challengeResponse.priorResponse();
     assertEquals("/a", redirectedBy.request().url().getPath());
   }
 
