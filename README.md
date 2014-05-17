@@ -1,14 +1,12 @@
 OkHttp
 ======
 
-An HTTP & SPDY client for Android and Java applications.
-
-For more information please see [the website][1].
+An HTTP & SPDY client for Android and Java applications. For more information see [the website][1] and [the wiki][2].
 
 Download
 --------
 
-Download [the latest JAR][2] or grab via Maven:
+Download [the latest JAR][3] or grab via Maven:
 
 ```xml
 <dependency>
@@ -28,7 +26,7 @@ MockWebServer coupling with OkHttp is essential for proper testing of SPDY and H
 
 ### Download
 
-Download [the latest JAR][3] or grab via Maven:
+Download [the latest JAR][4] or grab via Maven:
 
 ```xml
 <dependency>
@@ -57,5 +55,6 @@ License
 
 
  [1]: http://square.github.io/okhttp
- [2]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
- [3]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [2]: https://github.com/square/okhttp/wiki
+ [3]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
+ [4]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
