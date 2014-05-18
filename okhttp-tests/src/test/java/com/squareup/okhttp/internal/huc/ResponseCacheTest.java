@@ -113,7 +113,7 @@ public final class ResponseCacheTest {
 
     client = new OkHttpClient();
     cache = new InMemoryResponseCache();
-    Internal.instance.setResponseCache(client, cache);
+    Internal.instance.setCache(client, new CacheAdapter(cache));
   }
 
   @After public void tearDown() throws Exception {
@@ -203,8 +203,8 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    Internal.instance.setResponseCache(client,
-        new InsecureResponseCache(new InMemoryResponseCache()));
+    Internal.instance.setCache(client,
+        new CacheAdapter(new InsecureResponseCache(new InMemoryResponseCache())));
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     connection1.setSSLSocketFactory(sslContext.getSocketFactory());
@@ -320,13 +320,13 @@ public final class ResponseCacheTest {
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef =
         new AtomicReference<Map<String, List<String>>>();
-    Internal.instance.setResponseCache(client, new AbstractResponseCache() {
+    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         requestHeadersRef.set(requestHeaders);
         return null;
       }
-    });
+    }));
 
     URL url = server.getUrl("/");
     URLConnection urlConnection = openConnection(url);

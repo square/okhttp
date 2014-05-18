@@ -18,7 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.huc.AuthenticatorAdapter;
+import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
 import java.net.InetAddress;

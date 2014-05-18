@@ -95,7 +95,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setResponseCache(client, responseCache);
+    Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key1", "value1");
@@ -118,7 +118,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setResponseCache(client, responseCache);
+    Internal.instance.setCache(client, new CacheAdapter(responseCache));
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 
@@ -160,7 +160,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setResponseCache(client, responseCache);
+    Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key", "value");
@@ -199,7 +199,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setResponseCache(client, responseCache);
+    Internal.instance.setCache(client, new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
 
@@ -231,7 +231,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setResponseCache(client, responseCache);
+    Internal.instance.setCache(client, new CacheAdapter(responseCache));
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
 

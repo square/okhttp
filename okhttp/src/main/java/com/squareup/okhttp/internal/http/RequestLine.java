@@ -2,7 +2,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
+import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 
@@ -12,8 +12,8 @@ public final class RequestLine {
 
   /**
    * Returns the request status line, like "GET / HTTP/1.1". This is exposed
-   * to the application by {@link HttpURLConnectionImpl#getHeaderFields}, so
-   * it needs to be set even if the transport is SPDY.
+   * to the application by {@link HttpURLConnection#getHeaderFields}, so it
+   * needs to be set even if the transport is SPDY.
    */
   static String get(Request request, Proxy.Type proxyType, Protocol protocol) {
     StringBuilder result = new StringBuilder();

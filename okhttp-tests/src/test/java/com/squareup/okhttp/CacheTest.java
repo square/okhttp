@@ -119,7 +119,7 @@ public final class CacheTest {
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
     assertSame(cache, client.client().getCache());
-    assertNull(client.client().getResponseCache());
+    assertNull(client.getResponseCache());
   }
 
   /**
@@ -214,7 +214,7 @@ public final class CacheTest {
         .addHeader("fgh: ijk")
         .setBody(body));
 
-    client.client().setResponseCache(new AbstractResponseCache() {
+    client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
         assertEquals(server.getUrl("/"), uri.toURL());
@@ -241,7 +241,7 @@ public final class CacheTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    client.client().setResponseCache(new AbstractResponseCache() {
+    client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) {
         return new CacheRequest() {
           @Override public void abort() {
@@ -458,7 +458,7 @@ public final class CacheTest {
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef
         = new AtomicReference<Map<String, List<String>>>();
-    client.client().setResponseCache(new AbstractResponseCache() {
+    client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri,
           String requestMethod, Map<String, List<String>> requestHeaders) throws IOException {
         requestHeadersRef.set(requestHeaders);
