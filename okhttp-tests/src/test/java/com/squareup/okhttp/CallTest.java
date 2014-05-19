@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -592,22 +593,69 @@ public final class CallTest {
     assertEquals(0, post2.getSequenceNumber());
   }
 
+  @Ignore // Cache requests not populated properly. https://github.com/square/okhttp/issues/805
   @Test public void conditionalCacheHit() throws Exception {
-    server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .addHeader("Vary: Accept-Charset")
+        .addHeader("Donut: a")
+        .setBody("A"));
     server.enqueue(new MockResponse()
         .clearHeaders()
+        .addHeader("Donut: b")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
     server.play();
 
     client.setCache(cache);
 
-    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
-        .assertCode(200).assertBody("A");
+    // Store a response in the cache.
+    URL url = server.getUrl("/");
+    Request cacheStoreRequest = new Request.Builder()
+        .url(url)
+        .addHeader("Accept-Language", "fr-CA")
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    executeSynchronously(cacheStoreRequest)
+        .assertCode(200)
+        .assertHeader("Donut", "a")
+        .assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
-    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
-        .assertCode(200).assertBody("A");
+    // Hit that stored response.
+    Request cacheHitRequest = new Request.Builder()
+        .url(url)
+        .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    RecordedResponse cacheHit = executeSynchronously(cacheHitRequest);
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+
+    // Check the merged response. The request is the application's original request.
+    cacheHit.assertCode(200)
+        .assertBody("A")
+        .assertHeader("Donut", "b")
+        .assertRequestUrl(cacheStoreRequest.url())
+        .assertRequestHeader("Accept-Language", "en-US")
+        .assertRequestHeader("Accept-Charset", "UTF-8")
+        .assertRequestHeader("If-None-Match"); // No If-None-Match on the cache hit's request.
+
+    // Check the cached response. Its request contains only the saved Vary headers.
+    cacheHit.cacheResponse()
+        .assertCode(200)
+        .assertHeader("Donut", "a")
+        .assertHeader("ETag", "v1")
+        .assertRequestUrl(cacheStoreRequest.url())
+        .assertRequestHeader("Accept-Language") // No Vary on Accept-Language.
+        .assertRequestHeader("Accept-Charset", "UTF-8") // Because of Vary on Accept-Charset.
+        .assertRequestHeader("If-None-Match"); // This wasn't present in the original request.
+
+    // Check the network response. Its has the caller's request, plus some caching headers.
+    cacheHit.networkResponse()
+        .assertCode(304)
+        .assertHeader("Donut", "b")
+        .assertRequestHeader("Accept-Language", "en-US")
+        .assertRequestHeader("Accept-Charset", "UTF-8")
+        .assertRequestHeader("If-None-Match", "v1"); // If-None-Match in the validation request.
   }
 
   @Test public void conditionalCacheHit_Async() throws Exception {
@@ -689,10 +737,10 @@ public final class CallTest {
     executeSynchronously(new Request.Builder().url(server.getUrl("/a")).build())
         .assertCode(200)
         .assertBody("C")
-        .redirectedBy()
+        .priorResponse()
         .assertCode(302)
         .assertHeader("Test", "Redirect from /b to /c")
-        .redirectedBy()
+        .priorResponse()
         .assertCode(301)
         .assertHeader("Test", "Redirect from /a to /b");
 
@@ -796,10 +844,10 @@ public final class CallTest {
     callback.await(server.getUrl("/c"))
         .assertCode(200)
         .assertBody("C")
-        .redirectedBy()
+        .priorResponse()
         .assertCode(302)
         .assertHeader("Test", "Redirect from /b to /c")
-        .redirectedBy()
+        .priorResponse()
         .assertCode(301)
         .assertHeader("Test", "Redirect from /a to /b");
 

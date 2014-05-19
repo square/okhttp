@@ -35,14 +35,17 @@ public final class CacheStrategy {
     }
   };
 
-  public final Request request;
-  public final Response response;
+  /** The request to send on the network, or null if this call doesn't use the network. */
+  public final Request networkRequest;
+
+  /** The cached response to return or validate; or null if this call doesn't use a cache. */
+  public final Response cacheResponse;
+
   public final ResponseSource source;
 
-  private CacheStrategy(
-      Request request, Response response, ResponseSource source) {
-    this.request = request;
-    this.response = response;
+  private CacheStrategy(Request networkRequest, Response cacheResponse, ResponseSource source) {
+    this.networkRequest = networkRequest;
+    this.cacheResponse = cacheResponse;
     this.source = source;
   }
 
@@ -156,14 +159,14 @@ public final class CacheStrategy {
       if (candidate.source != ResponseSource.CACHE && request.cacheControl().onlyIfCached()) {
         // We're forbidden from using the network, but the cache is insufficient.
         Response noneResponse = new Response.Builder()
-            .request(candidate.request)
+            .request(candidate.networkRequest)
             .protocol(Protocol.HTTP_1_1)
             .code(504)
             .message("Gateway Timeout")
             .setResponseSource(ResponseSource.NONE)
             .body(EMPTY_BODY)
             .build();
-        return new CacheStrategy(candidate.request, noneResponse, ResponseSource.NONE);
+        return new CacheStrategy(null, noneResponse, ResponseSource.NONE);
       }
 
       return candidate;
@@ -173,24 +176,24 @@ public final class CacheStrategy {
     private CacheStrategy getCandidate() {
       // No cached response.
       if (cacheResponse == null) {
-        return new CacheStrategy(request, cacheResponse, ResponseSource.NETWORK);
+        return new CacheStrategy(request, null, ResponseSource.NETWORK);
       }
 
       // Drop the cached response if it's missing a required handshake.
       if (request.isHttps() && cacheResponse.handshake() == null) {
-        return new CacheStrategy(request, cacheResponse, ResponseSource.NETWORK);
+        return new CacheStrategy(request, null, ResponseSource.NETWORK);
       }
 
       // If this response shouldn't have been stored, it should never be used
       // as a response source. This check should be redundant as long as the
       // persistence store is well-behaved and the rules are constant.
       if (!isCacheable(cacheResponse, request)) {
-        return new CacheStrategy(request, cacheResponse, ResponseSource.NETWORK);
+        return new CacheStrategy(request, null, ResponseSource.NETWORK);
       }
 
       CacheControl requestCaching = request.cacheControl();
       if (requestCaching.noCache() || hasConditions(request)) {
-        return new CacheStrategy(request, cacheResponse, ResponseSource.NETWORK);
+        return new CacheStrategy(request, null, ResponseSource.NETWORK);
       }
 
       long ageMillis = cacheResponseAge();
@@ -221,7 +224,7 @@ public final class CacheStrategy {
         if (ageMillis > oneDayMillis && isFreshnessLifetimeHeuristic()) {
           builder.addHeader("Warning", "113 HttpURLConnection \"Heuristic expiration\"");
         }
-        return new CacheStrategy(request, builder.build(), ResponseSource.CACHE);
+        return new CacheStrategy(null, builder.build(), ResponseSource.CACHE);
       }
 
       Request.Builder conditionalRequestBuilder = request.newBuilder();
@@ -237,10 +240,9 @@ public final class CacheStrategy {
       }
 
       Request conditionalRequest = conditionalRequestBuilder.build();
-      ResponseSource responseSource = hasConditions(conditionalRequest)
-          ? ResponseSource.CONDITIONAL_CACHE
-          : ResponseSource.NETWORK;
-      return new CacheStrategy(conditionalRequest, cacheResponse, responseSource);
+      return hasConditions(conditionalRequest)
+          ? new CacheStrategy(conditionalRequest, cacheResponse, ResponseSource.CONDITIONAL_CACHE)
+          : new CacheStrategy(conditionalRequest, null, ResponseSource.NETWORK);
     }
 
     /**
