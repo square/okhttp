@@ -83,7 +83,7 @@ public final class Response {
     return protocol;
   }
 
-  /** Returns the HTTP status code or -1 if it is unknown. */
+  /** Returns the HTTP status code. */
   public int code() {
     return code;
   }
