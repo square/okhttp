@@ -641,12 +641,12 @@ public final class SpdyConnection implements Closeable {
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
             @Override public void execute() {
-              if (associated != null && associated.pushObserver() != null) {
-                if (!associated.pushObserver().onPush(newStream))
-                  return;
-              }
-
               try {
+                if (associated != null && associated.pushObserver() != null) {
+                  if (!associated.pushObserver().onPush(newStream))
+                    return;
+                }
+
                 handler.receive(newStream);
               } catch (IOException e) {
                 throw new RuntimeException(e);

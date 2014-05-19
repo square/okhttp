@@ -25,5 +25,5 @@ import java.util.List;
 import okio.BufferedSource;
 
 public interface RequestPushObserver {
-  boolean onPush(Request request, Request push, ResponseBody body);
+  boolean onPush(Request push, BufferedSource data) throws IOException;
 }

@@ -25,5 +25,5 @@ import java.util.List;
 import okio.BufferedSource;
 
 public interface TransportPushObserver {
-  boolean onPush(SpdyStream stream);
+  boolean onPush(SpdyStream stream) throws IOException;
 }

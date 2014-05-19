@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestPushObserver;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
@@ -37,7 +38,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.BufferedSource;
 import okio.ByteString;
+import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import okio.Timeout;
@@ -89,10 +92,18 @@ public final class SpdyTransport implements Transport {
     if (stream != null) return;
 
     // Handle PUSHes if asked
+    final RequestPushObserver reqPushObserver = request.pushObserver();
     TransportPushObserver pushObserver = null;
-    if (request.pushObserver() != null) {
+    if (reqPushObserver != null) {
       pushObserver = new TransportPushObserver() {
-        @Override public boolean onPush(SpdyStream stream) {
+        @Override public boolean onPush(SpdyStream stream) throws IOException {
+          Request push = readPushNameValueBlock(
+              stream.getRequestHeaders(),
+              spdyConnection.getProtocol()).build();
+
+          SpdySource source = new SpdySource(stream, null);
+          BufferedSource buffer = Okio.buffer(source);
+          reqPushObserver.onPush(push, buffer);
           return true;
         }
       };
@@ -221,6 +232,37 @@ public final class SpdyTransport implements Transport {
         .protocol(statusLine.protocol)
         .code(statusLine.code)
         .message(statusLine.message)
+        .headers(headersBuilder.build());
+  }
+
+  /** Returns headers for a name value block containing a SPDY response. */
+  public static Request.Builder readPushNameValueBlock(List<Header> headerBlock,
+      Protocol protocol) throws IOException {
+    String url = null;
+
+    Headers.Builder headersBuilder = new Headers.Builder();
+    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.toString());
+    for (int i = 0; i < headerBlock.size(); i++) {
+      ByteString name = headerBlock.get(i).name;
+      String values = headerBlock.get(i).value.utf8();
+      for (int start = 0; start < values.length(); ) {
+        int end = values.indexOf('\0', start);
+        if (end == -1) {
+          end = values.length();
+        }
+        String value = values.substring(start, end);
+        if (name.equals(TARGET_PATH)) {
+          url = value;
+        } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
+          headersBuilder.add(name.utf8(), value);
+        }
+        start = end + 1;
+      }
+    }
+    if (url == null) throw new ProtocolException("Expected ':version' header not present");
+
+    return new Request.Builder()
+        .url(url)
         .headers(headersBuilder.build());
   }
 
