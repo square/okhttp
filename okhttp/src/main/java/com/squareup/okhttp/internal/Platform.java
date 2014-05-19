@@ -132,6 +132,17 @@ public class Platform {
       setUseSessionTickets = openSslSocketClass.getMethod("setUseSessionTickets", boolean.class);
       setHostname = openSslSocketClass.getMethod("setHostname", String.class);
 
+      // Attempt to find Android 4.0+ APIs.
+      Method trafficStatsTagSocket = null;
+      Method trafficStatsUntagSocket = null;
+      try {
+        Class<?> trafficStats = Class.forName("android.net.TrafficStats");
+        trafficStatsTagSocket = trafficStats.getMethod("tagSocket", Socket.class);
+        trafficStatsUntagSocket = trafficStats.getMethod("untagSocket", Socket.class);
+      } catch (ClassNotFoundException ignored) {
+      } catch (NoSuchMethodException ignored) {
+      }
+
       // Attempt to find Android 4.1+ APIs.
       Method setNpnProtocols = null;
       Method getNpnSelectedProtocol = null;
@@ -141,7 +152,8 @@ public class Platform {
       } catch (NoSuchMethodException ignored) {
       }
 
-      return new Android(openSslSocketClass, setUseSessionTickets, setHostname, setNpnProtocols,
+      return new Android(openSslSocketClass, setUseSessionTickets, setHostname,
+          trafficStatsTagSocket, trafficStatsUntagSocket, setNpnProtocols,
           getNpnSelectedProtocol);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
@@ -182,15 +194,22 @@ public class Platform {
     private final Method setUseSessionTickets;
     private final Method setHostname;
 
+    // Non-null on Android 4.0+.
+    private final Method trafficStatsTagSocket;
+    private final Method trafficStatsUntagSocket;
+
     // Non-null on Android 4.1+.
     private final Method setNpnProtocols;
     private final Method getNpnSelectedProtocol;
 
     private Android(Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method setNpnProtocols, Method getNpnSelectedProtocol) {
+        Method trafficStatsTagSocket, Method trafficStatsUntagSocket, Method setNpnProtocols,
+        Method getNpnSelectedProtocol) {
       this.openSslSocketClass = openSslSocketClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
+      this.trafficStatsTagSocket = trafficStatsTagSocket;
+      this.trafficStatsUntagSocket = trafficStatsUntagSocket;
       this.setNpnProtocols = setNpnProtocols;
       this.getNpnSelectedProtocol = getNpnSelectedProtocol;
     }
@@ -247,6 +266,30 @@ public class Platform {
         throw new RuntimeException(e);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
+      }
+    }
+
+    @Override public void tagSocket(Socket socket) throws SocketException {
+      if (trafficStatsTagSocket == null) return;
+
+      try {
+        trafficStatsTagSocket.invoke(null, socket);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override public void untagSocket(Socket socket) throws SocketException {
+      if (trafficStatsUntagSocket == null) return;
+
+      try {
+        trafficStatsUntagSocket.invoke(null, socket);
+      } catch (IllegalAccessException e) {
+        throw new RuntimeException(e);
+      } catch (InvocationTargetException e) {
+        throw new RuntimeException(e);
       }
     }
   }
