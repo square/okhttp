@@ -42,7 +42,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
+import okio.Buffer;
+import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.GzipSink;
+import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -1072,6 +1076,35 @@ public final class CallTest {
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
   }
 
+  @Test public void gzip() throws Exception {
+    Buffer gzippedBody = gzip("abcabcabc");
+    String bodySize = Long.toString(gzippedBody.size());
+
+    server.enqueue(new MockResponse()
+        .setBody(gzippedBody)
+        .addHeader("Content-Encoding: gzip"));
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    // Confirm that the user request doesn't have Accept-Encoding, and the user
+    // response doesn't have a Content-Encoding or Content-Length.
+    RecordedResponse userResponse = executeSynchronously(request);
+    userResponse.assertCode(200)
+        .assertRequestHeader("Accept-Encoding")
+        .assertHeader("Content-Encoding")
+        .assertHeader("Content-Length")
+        .assertBody("abcabcabc");
+
+    // But the network request doesn't lie. OkHttp used gzip for this call.
+    userResponse.networkResponse()
+        .assertHeader("Content-Encoding", "gzip")
+        .assertHeader("Content-Length", bodySize)
+        .assertRequestHeader("Accept-Encoding", "gzip");
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, response.body().string(), null);
@@ -1087,6 +1120,14 @@ public final class CallTest {
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setProtocols(client.getProtocols());
+  }
+
+  private Buffer gzip(String data) throws IOException {
+    Buffer result = new Buffer();
+    BufferedSink sink = Okio.buffer(new GzipSink(result));
+    sink.writeUtf8(data);
+    sink.close();
+    return result;
   }
 
   private void assertContains(Collection<String> collection, String element) {
