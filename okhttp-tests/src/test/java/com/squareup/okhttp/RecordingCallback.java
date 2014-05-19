@@ -31,8 +31,8 @@ public class RecordingCallback implements Callback {
 
   private final List<RecordedResponse> responses = new ArrayList<RecordedResponse>();
 
-  @Override public synchronized void onFailure(Failure failure) {
-    responses.add(new RecordedResponse(failure.request(), null, null, failure));
+  @Override public synchronized void onFailure(Request request, Throwable throwable) {
+    responses.add(new RecordedResponse(request, null, null, throwable));
     notifyAll();
   }
 

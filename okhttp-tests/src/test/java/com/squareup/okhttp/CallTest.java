@@ -40,6 +40,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import okio.Buffer;
@@ -54,6 +55,7 @@ import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -420,7 +422,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Failure failure) {
+      @Override public void onFailure(Request request, Throwable throwable) {
         throw new AssertionError();
       }
 
@@ -1135,14 +1137,14 @@ public final class CallTest {
 
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<String> bodyRef = new AtomicReference<String>();
-    final AtomicReference<Failure> failureRef = new AtomicReference<Failure>();
+    final AtomicBoolean failureRef = new AtomicBoolean();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(request);
     call.enqueue(new Callback() {
-      @Override public void onFailure(Failure failure) {
+      @Override public void onFailure(Request request, Throwable throwable) {
+        failureRef.set(true);
         latch.countDown();
-        failureRef.set(failure); // This should never occur as we don't signal twice.
       }
 
       @Override public void onResponse(Response response) throws IOException {
@@ -1160,7 +1162,7 @@ public final class CallTest {
 
     latch.await();
     assertEquals("A", bodyRef.get());
-    assertNull(failureRef.get());
+    assertFalse(failureRef.get());
   }
 
   @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTP_2()

@@ -24,7 +24,7 @@ public interface Callback {
    * exchange, it is possible that the remote server accepted the request
    * before the failure.
    */
-  void onFailure(Failure failure);
+  void onFailure(Request request, Throwable throwable);
 
   /**
    * Called when the HTTP response was successfully returned by the remote

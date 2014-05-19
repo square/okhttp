@@ -17,7 +17,6 @@ package com.squareup.okhttp.benchmarks;
 
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Dispatcher;
-import com.squareup.okhttp.Failure;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -66,8 +65,8 @@ class OkHttpAsync implements HttpClient {
     }
 
     callback = new Callback() {
-      @Override public void onFailure(Failure failure) {
-        System.out.println("Failed: " + failure.exception());
+      @Override public void onFailure(Request request, Throwable throwable) {
+        System.out.println("Failed: " + throwable);
       }
 
       @Override public void onResponse(Response response) throws IOException {
