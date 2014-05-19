@@ -177,6 +177,7 @@ public final class Headers {
         if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
           namesAndValues.remove(i); // field name
           namesAndValues.remove(i); // value
+          i -= 2;
         }
       }
       return this;
