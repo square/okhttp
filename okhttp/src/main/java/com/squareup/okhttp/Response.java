@@ -297,11 +297,6 @@ public final class Response {
       return this;
     }
 
-    // TODO: move out of public API
-    public Builder setResponseSource(ResponseSource responseSource) {
-      return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + code);
-    }
-
     public Builder networkResponse(Response networkResponse) {
       if (networkResponse != null) checkSupportResponse("networkResponse", networkResponse);
       this.networkResponse = networkResponse;

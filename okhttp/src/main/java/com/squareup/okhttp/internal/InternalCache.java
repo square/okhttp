@@ -17,7 +17,7 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.internal.http.CacheStrategy;
 import java.io.IOException;
 import java.net.CacheRequest;
 
@@ -47,6 +47,6 @@ public interface InternalCache {
   /** Track an conditional GET that was satisfied by this cache. */
   void trackConditionalCacheHit();
 
-  /** Track an HTTP response being satisfied by {@code source}. */
-  void trackResponse(ResponseSource source);
+  /** Track an HTTP response being satisfied with {@code cacheStrategy}. */
+  void trackResponse(CacheStrategy cacheStrategy);
 }
