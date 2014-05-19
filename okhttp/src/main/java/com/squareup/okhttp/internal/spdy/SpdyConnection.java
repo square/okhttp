@@ -222,7 +222,7 @@ public final class SpdyConnection implements Closeable {
       throws IOException {
     if (client) throw new IllegalStateException("Client cannot push requests.");
     if (protocol != Protocol.HTTP_2) throw new IllegalStateException("protocol != HTTP_2");
-    return newStream(associatedStreamId, requestHeaders, out, false);
+    return newStream(associatedStreamId, requestHeaders, out, false, null);
   }
 
   /**
@@ -233,13 +233,13 @@ public final class SpdyConnection implements Closeable {
    * @param in true to create an input stream that the remote peer can use to send data to us.
    *     Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
-  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in)
+  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in, TransportPushObserver pushObserver)
       throws IOException {
-    return newStream(0, requestHeaders, out, in);
+    return newStream(0, requestHeaders, out, in, pushObserver);
   }
 
   private SpdyStream newStream(int associatedStreamId, List<Header> requestHeaders, boolean out,
-      boolean in) throws IOException {
+      boolean in, TransportPushObserver pushObserver) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = !in;
     SpdyStream stream;
@@ -252,7 +252,8 @@ public final class SpdyConnection implements Closeable {
         }
         streamId = nextStreamId;
         nextStreamId += 2;
-        stream = new SpdyStream(streamId, this, outFinished, inFinished, requestHeaders);
+        stream = new SpdyStream(streamId, this, outFinished, inFinished, requestHeaders,
+            pushObserver);
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
@@ -580,11 +581,11 @@ public final class SpdyConnection implements Closeable {
 
     @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException {
-      if (pushedStream(streamId)) {
+      SpdyStream dataStream = getStream(streamId);
+      if (dataStream == null && pushedStream(streamId)) {
         pushDataLater(streamId, source, length, inFinished);
         return;
       }
-      SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
         source.skip(length);
@@ -598,16 +599,27 @@ public final class SpdyConnection implements Closeable {
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
         int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
-      if (pushedStream(streamId)) {
-        pushHeadersLater(streamId, headerBlock, inFinished);
-        return;
-      }
       SpdyStream stream;
+      final SpdyStream associated;
       synchronized (SpdyConnection.this) {
         // If we're shutdown, don't bother with this stream.
         if (shutdown) return;
 
         stream = getStream(streamId);
+        if (associatedStreamId != 0) {
+          associated = getStream(associatedStreamId);
+        } else {
+          associated = null;
+        }
+
+        // Queue PUSH stream, if it does not exists, or if we have no observers
+        // for it
+        if (pushedStream(streamId) &&
+            (!(associated != null && associated.pushObserver() != null) ||
+             stream == null)) {
+          pushHeadersLater(streamId, headerBlock, inFinished);
+          return;
+        }
 
         if (stream == null) {
           // The headers claim to be for an existing stream, but we don't have one.
@@ -624,11 +636,16 @@ public final class SpdyConnection implements Closeable {
 
           // Create a stream.
           final SpdyStream newStream = new SpdyStream(streamId, SpdyConnection.this, outFinished,
-              inFinished, headerBlock);
+              inFinished, headerBlock, null);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
             @Override public void execute() {
+              if (associated != null && associated.pushObserver() != null) {
+                if (!associated.pushObserver().onPush(newStream))
+                  return;
+              }
+
               try {
                 handler.receive(newStream);
               } catch (IOException e) {
@@ -653,11 +670,11 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void rstStream(int streamId, ErrorCode errorCode) {
-      if (pushedStream(streamId)) {
+      SpdyStream rstStream = removeStream(streamId);
+      if (rstStream == null && pushedStream(streamId)) {
         pushResetLater(streamId, errorCode);
         return;
       }
-      SpdyStream rstStream = removeStream(streamId);
       if (rstStream != null) {
         rstStream.receiveRstStream(errorCode);
       }

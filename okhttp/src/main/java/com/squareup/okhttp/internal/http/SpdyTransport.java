@@ -25,6 +25,7 @@ import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
+import com.squareup.okhttp.internal.spdy.TransportPushObserver;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.CacheRequest;
@@ -87,13 +88,25 @@ public final class SpdyTransport implements Transport {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     if (stream != null) return;
 
+    // Handle PUSHes if asked
+    TransportPushObserver pushObserver = null;
+    if (request.pushObserver() != null) {
+      pushObserver = new TransportPushObserver() {
+        @Override public boolean onPush(SpdyStream stream) {
+          return true;
+        }
+      };
+    }
+
     httpEngine.writingRequestHeaders();
     boolean hasRequestBody = httpEngine.hasRequestBody();
     boolean hasResponseBody = true;
     String version = RequestLine.version(httpEngine.getConnection().getProtocol());
     stream = spdyConnection.newStream(
-        writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
-        hasResponseBody);
+        writeNameValueBlock(request, spdyConnection.getProtocol(), version),
+        hasRequestBody,
+        hasResponseBody,
+        pushObserver);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
   }
 

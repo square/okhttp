@@ -33,6 +33,7 @@ public final class Request {
   private final Headers headers;
   private final RequestBody body;
   private final Object tag;
+  private final RequestPushObserver pushObserver;
 
   private volatile URI uri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -43,6 +44,7 @@ public final class Request {
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
+    this.pushObserver = builder.pushObserver;
   }
 
   public URL url() {
@@ -117,12 +119,17 @@ public final class Request {
         + '}';
   }
 
+  public RequestPushObserver pushObserver() {
+    return pushObserver;
+  }
+
   public static class Builder {
     private URL url;
     private String method;
     private Headers.Builder headers;
     private RequestBody body;
     private Object tag;
+    private RequestPushObserver pushObserver;
 
     public Builder() {
       this.method = "GET";
@@ -135,6 +142,7 @@ public final class Request {
       this.body = request.body;
       this.tag = request.tag;
       this.headers = request.headers.newBuilder();
+      this.pushObserver = request.pushObserver;
     }
 
     public Builder url(String url) {
@@ -220,6 +228,11 @@ public final class Request {
      */
     public Builder tag(Object tag) {
       this.tag = tag;
+      return this;
+    }
+
+    public Builder pushObserver(RequestPushObserver pushObserver) {
+      this.pushObserver = pushObserver;
       return this;
     }
 
