@@ -597,7 +597,55 @@ public final class CallTest {
     assertEquals(0, post2.getSequenceNumber());
   }
 
-  @Ignore // Cache requests not populated properly. https://github.com/square/okhttp/issues/805
+  @Test public void cacheHit() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("Vary: Accept-Charset")
+        .setBody("A"));
+    server.play();
+
+    client.setCache(cache);
+
+    // Store a response in the cache.
+    URL url = server.getUrl("/");
+    Request cacheStoreRequest = new Request.Builder()
+        .url(url)
+        .addHeader("Accept-Language", "fr-CA")
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    executeSynchronously(cacheStoreRequest)
+        .assertCode(200)
+        .assertBody("A");
+    assertNull(server.takeRequest().getHeader("If-None-Match"));
+
+    // Hit that stored response.
+    Request cacheHitRequest = new Request.Builder()
+        .url(url)
+        .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    RecordedResponse cacheHit = executeSynchronously(cacheHitRequest);
+
+    // Check the merged response. The request is the application's original request.
+    cacheHit.assertCode(200)
+        .assertBody("A")
+        .assertHeader("ETag", "v1")
+        .assertRequestUrl(cacheStoreRequest.url())
+        .assertRequestHeader("Accept-Language", "en-US")
+        .assertRequestHeader("Accept-Charset", "UTF-8");
+
+    // Check the cached response. Its request contains only the saved Vary headers.
+    cacheHit.cacheResponse()
+        .assertCode(200)
+        .assertHeader("ETag", "v1")
+        .assertRequestUrl(cacheStoreRequest.url())
+        .assertRequestHeader("Accept-Language")
+        .assertRequestHeader("Accept-Charset", "UTF-8");
+
+    cacheHit.assertNoNetworkResponse();
+  }
+
   @Test public void conditionalCacheHit() throws Exception {
     server.enqueue(new MockResponse()
         .addHeader("ETag: v1")
@@ -641,7 +689,7 @@ public final class CallTest {
         .assertRequestUrl(cacheStoreRequest.url())
         .assertRequestHeader("Accept-Language", "en-US")
         .assertRequestHeader("Accept-Charset", "UTF-8")
-        .assertRequestHeader("If-None-Match"); // No If-None-Match on the cache hit's request.
+        .assertRequestHeader("If-None-Match"); // No If-None-Match on the user's request.
 
     // Check the cached response. Its request contains only the saved Vary headers.
     cacheHit.cacheResponse()
@@ -653,7 +701,7 @@ public final class CallTest {
         .assertRequestHeader("Accept-Charset", "UTF-8") // Because of Vary on Accept-Charset.
         .assertRequestHeader("If-None-Match"); // This wasn't present in the original request.
 
-    // Check the network response. Its has the caller's request, plus some caching headers.
+    // Check the network response. It has the caller's request, plus some caching headers.
     cacheHit.networkResponse()
         .assertCode(304)
         .assertHeader("Donut", "b")
@@ -687,19 +735,55 @@ public final class CallTest {
   }
 
   @Test public void conditionalCacheMiss() throws Exception {
-    server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .addHeader("Vary: Accept-Charset")
+        .addHeader("Donut: a")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .addHeader("Donut: b")
+        .setBody("B"));
     server.play();
 
     client.setCache(cache);
 
-    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
-        .assertCode(200).assertBody("A");
+    Request cacheStoreRequest = new Request.Builder()
+        .url(server.getUrl("/"))
+        .addHeader("Accept-Language", "fr-CA")
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    executeSynchronously(cacheStoreRequest)
+        .assertCode(200)
+        .assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
-    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
-        .assertCode(200).assertBody("B");
+    Request cacheMissRequest = new Request.Builder()
+        .url(server.getUrl("/"))
+        .addHeader("Accept-Language", "en-US") // Different, but Vary says it doesn't matter.
+        .addHeader("Accept-Charset", "UTF-8")
+        .build();
+    RecordedResponse cacheHit = executeSynchronously(cacheMissRequest);
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+
+    // Check the user response. It has the application's original request.
+    cacheHit.assertCode(200)
+        .assertBody("B")
+        .assertHeader("Donut", "b")
+        .assertRequestUrl(cacheStoreRequest.url());
+
+    // Check the cache response. Even though it's a miss, we used the cache.
+    cacheHit.cacheResponse()
+        .assertCode(200)
+        .assertHeader("Donut", "a")
+        .assertHeader("ETag", "v1")
+        .assertRequestUrl(cacheStoreRequest.url());
+
+    // Check the network response. It has the network request, plus caching headers.
+    cacheHit.networkResponse()
+        .assertCode(200)
+        .assertHeader("Donut", "b")
+        .assertRequestHeader("If-None-Match", "v1")  // If-None-Match in the validation request.
+        .assertRequestUrl(cacheStoreRequest.url());
   }
 
   @Test public void conditionalCacheMiss_Async() throws Exception {

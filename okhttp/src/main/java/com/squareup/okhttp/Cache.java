@@ -561,8 +561,13 @@ public final class Cache {
     public Response response(Request request, DiskLruCache.Snapshot snapshot) {
       String contentType = responseHeaders.get("Content-Type");
       String contentLength = responseHeaders.get("Content-Length");
+      Request cacheRequest = new Request.Builder()
+          .url(url)
+          .method(message, null)
+          .headers(varyHeaders)
+          .build();
       return new Response.Builder()
-          .request(request)
+          .request(cacheRequest)
           .protocol(protocol)
           .code(code)
           .message(message)
