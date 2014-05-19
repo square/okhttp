@@ -15,13 +15,7 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.List;
 import okio.BufferedSource;
 
 public interface RequestPushObserver {

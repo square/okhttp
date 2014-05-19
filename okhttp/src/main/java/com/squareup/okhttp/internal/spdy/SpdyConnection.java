@@ -233,9 +233,14 @@ public final class SpdyConnection implements Closeable {
    * @param in true to create an input stream that the remote peer can use to send data to us.
    *     Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
-  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in, TransportPushObserver pushObserver)
-      throws IOException {
+  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in,
+      TransportPushObserver pushObserver) throws IOException {
     return newStream(0, requestHeaders, out, in, pushObserver);
+  }
+
+  public SpdyStream newStream(List<Header> requestHeaders, boolean out, boolean in)
+      throws IOException {
+    return newStream(0, requestHeaders, out, in, null);
   }
 
   private SpdyStream newStream(int associatedStreamId, List<Header> requestHeaders, boolean out,
@@ -614,9 +619,9 @@ public final class SpdyConnection implements Closeable {
 
         // Queue PUSH stream, if it does not exists, or if we have no observers
         // for it
-        if (pushedStream(streamId) &&
-            (!(associated != null && associated.pushObserver() != null) ||
-             stream == null)) {
+        if (pushedStream(streamId)
+            && (!(associated != null && associated.pushObserver() != null)
+                || stream == null)) {
           pushHeadersLater(streamId, headerBlock, inFinished);
           return;
         }

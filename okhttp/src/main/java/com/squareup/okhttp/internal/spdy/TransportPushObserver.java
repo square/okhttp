@@ -15,14 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.Platform;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.List;
-import okio.BufferedSource;
 
 public interface TransportPushObserver {
   boolean onPush(SpdyStream stream) throws IOException;
