@@ -20,11 +20,12 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.ResponseSource;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
@@ -45,6 +46,7 @@ import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSource;
@@ -90,6 +92,18 @@ public final class HttpEngine {
    * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
   public static final int MAX_REDIRECTS = 20;
+
+  private static final ResponseBody EMPTY_BODY = new ResponseBody() {
+    @Override public MediaType contentType() {
+      return null;
+    }
+    @Override public long contentLength() {
+      return 0;
+    }
+    @Override public BufferedSource source() {
+      return new Buffer();
+    }
+  };
 
   final OkHttpClient client;
 
@@ -153,8 +167,6 @@ public final class HttpEngine {
   private Sink requestBodyOut;
   private BufferedSink bufferedRequestBody;
 
-  private ResponseSource responseSource;
-
   /** Null until a response is received from the network or the cache. */
   private Source responseTransferSource;
   private BufferedSource responseBody;
@@ -162,6 +174,7 @@ public final class HttpEngine {
 
   /** The cache request currently being populated from a network response. */
   private CacheRequest storeRequest;
+  private CacheStrategy cacheStrategy;
 
   /**
    * @param request the HTTP request without a body. The body must be
@@ -199,7 +212,7 @@ public final class HttpEngine {
    * writing the request body if it exists.
    */
   public void sendRequest() throws IOException {
-    if (responseSource != null) return; // Already sent.
+    if (cacheStrategy != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
 
     Request request = networkRequest(userRequest);
@@ -210,17 +223,15 @@ public final class HttpEngine {
         : null;
 
     long now = System.currentTimeMillis();
-    CacheStrategy cacheStrategy = new CacheStrategy.Factory(now, request, cacheCandidate).get();
-    responseSource = cacheStrategy.source;
+    cacheStrategy = new CacheStrategy.Factory(now, request, cacheCandidate).get();
     networkRequest = cacheStrategy.networkRequest;
     cacheResponse = cacheStrategy.cacheResponse;
 
     if (responseCache != null) {
-      responseCache.trackResponse(responseSource);
+      responseCache.trackResponse(cacheStrategy);
     }
 
-    if (cacheCandidate != null
-        && (responseSource == ResponseSource.NONE || cacheResponse == null)) {
+    if (cacheCandidate != null && cacheResponse == null) {
       closeQuietly(cacheCandidate.body()); // The cache candidate wasn't applicable. Close it.
     }
 
@@ -244,18 +255,31 @@ public final class HttpEngine {
       }
 
     } else {
-      // We're using a cached response. Recycle a connection we may have inherited from a redirect.
+      // We aren't using the network. Recycle a connection we may have inherited from a redirect.
       if (connection != null) {
         Internal.instance.recycle(client.getConnectionPool(), connection);
         connection = null;
       }
 
-      // No need for the network! Promote the cached response immediately.
-      this.userResponse = cacheResponse.newBuilder()
-          .request(userRequest)
-          .priorResponse(stripBody(priorResponse))
-          .cacheResponse(stripBody(cacheResponse))
-          .build();
+      if (cacheResponse != null) {
+        // We have a valid cached response. Promote it to the user response immediately.
+        this.userResponse = cacheResponse.newBuilder()
+            .request(userRequest)
+            .priorResponse(stripBody(priorResponse))
+            .cacheResponse(stripBody(cacheResponse))
+            .build();
+      } else {
+        // We're forbidden from using the network, and the cache is insufficient.
+        this.userResponse = new Response.Builder()
+            .request(userRequest)
+            .priorResponse(stripBody(priorResponse))
+            .protocol(Protocol.HTTP_1_1)
+            .code(504)
+            .message("Gateway Timeout")
+            .body(EMPTY_BODY)
+            .build();
+      }
+
       if (userResponse.body() != null) {
         initContentStream(userResponse.body().source());
       }
@@ -321,7 +345,7 @@ public final class HttpEngine {
 
   /** Returns the request body or null if this request doesn't have a body. */
   public Sink getRequestBody() {
-    if (responseSource == null) throw new IllegalStateException();
+    if (cacheStrategy == null) throw new IllegalStateException();
     return requestBodyOut;
   }
 
@@ -667,12 +691,12 @@ public final class HttpEngine {
         .handshake(connection.getHandshake())
         .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
-        .setResponseSource(responseSource)
         .build();
     Internal.instance.setProtocol(connection, networkResponse.protocol());
     receiveHeaders(networkResponse.headers());
 
-    if (responseSource == ResponseSource.CONDITIONAL_CACHE) {
+    // If we have a cache response too, then we're doing a conditional get.
+    if (cacheResponse != null) {
       if (validate(cacheResponse, networkResponse)) {
         userResponse = cacheResponse.newBuilder()
             .request(userRequest)

@@ -18,7 +18,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -1654,9 +1653,6 @@ public final class CacheTest {
     URLConnection connection = client.open(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
@@ -1670,9 +1666,6 @@ public final class CacheTest {
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
@@ -1684,9 +1677,6 @@ public final class CacheTest {
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 304", source);
   }
 
   @Test public void responseSourceHeaderFetched() throws IOException {
@@ -1694,9 +1684,6 @@ public final class CacheTest {
 
     URLConnection connection = client.open(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.NETWORK + " 200", source);
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
@@ -1908,8 +1895,6 @@ public final class CacheTest {
     }
     assertEquals(504, connection.getResponseCode());
     assertEquals(-1, connection.getErrorStream().read());
-    assertEquals(ResponseSource.NONE + " 504",
-        connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
   }
 
   enum TransferKind {

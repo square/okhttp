@@ -19,6 +19,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.CacheStrategy;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -127,8 +128,8 @@ public final class Cache {
     @Override public void trackConditionalCacheHit() {
       Cache.this.trackConditionalCacheHit();
     }
-    @Override public void trackResponse(ResponseSource source) {
-      Cache.this.trackResponse(source);
+    @Override public void trackResponse(CacheStrategy cacheStrategy) {
+      Cache.this.trackResponse(cacheStrategy);
     }
   };
 
@@ -287,17 +288,16 @@ public final class Cache {
     return cache.isClosed();
   }
 
-  private synchronized void trackResponse(ResponseSource source) {
+  private synchronized void trackResponse(CacheStrategy cacheStrategy) {
     requestCount++;
 
-    switch (source) {
-      case CACHE:
-        hitCount++;
-        break;
-      case CONDITIONAL_CACHE:
-      case NETWORK:
-        networkCount++;
-        break;
+    if (cacheStrategy.networkRequest != null) {
+      // If this is a conditional request, we'll increment hitCount if/when it hits.
+      networkCount++;
+
+    } else if (cacheStrategy.cacheResponse != null) {
+      // This response uses the cache and not the network. That's a cache hit.
+      hitCount++;
     }
   }
 

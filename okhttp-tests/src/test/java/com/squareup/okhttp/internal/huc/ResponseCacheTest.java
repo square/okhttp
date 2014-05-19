@@ -19,10 +19,8 @@ package com.squareup.okhttp.internal.huc;
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
-import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
-import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -1215,9 +1213,6 @@ public final class ResponseCacheTest {
     URLConnection connection = openConnection(server.getUrl("/"));
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheFetched() throws IOException {
@@ -1231,9 +1226,6 @@ public final class ResponseCacheTest {
     assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("B", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 200", source);
   }
 
   @Test public void responseSourceHeaderConditionalCacheNotFetched() throws IOException {
@@ -1245,9 +1237,6 @@ public final class ResponseCacheTest {
     assertEquals("A", readAscii(openConnection(server.getUrl("/"))));
     HttpURLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.CONDITIONAL_CACHE + " 304", source);
   }
 
   @Test public void responseSourceHeaderFetched() throws IOException {
@@ -1255,9 +1244,6 @@ public final class ResponseCacheTest {
 
     URLConnection connection = openConnection(server.getUrl("/"));
     assertEquals("A", readAscii(connection));
-
-    String source = connection.getHeaderField(OkHeaders.RESPONSE_SOURCE);
-    assertEquals(ResponseSource.NETWORK + " 200", source);
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
@@ -1402,8 +1388,6 @@ public final class ResponseCacheTest {
     }
     assertEquals(504, connection.getResponseCode());
     assertEquals(-1, connection.getErrorStream().read());
-    assertEquals(ResponseSource.NONE + " 504",
-        connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
   }
 
   enum TransferKind {

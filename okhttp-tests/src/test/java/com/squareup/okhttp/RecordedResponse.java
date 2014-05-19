@@ -95,6 +95,18 @@ public class RecordedResponse {
     return new RecordedResponse(networkResponse.request(), networkResponse, null, null);
   }
 
+  /** Asserts that the current response didn't use the network. */
+  public RecordedResponse assertNoNetworkResponse() {
+    assertNull(response.networkResponse());
+    return this;
+  }
+
+  /** Asserts that the current response didn't use the cache. */
+  public RecordedResponse assertNoCacheResponse() {
+    assertNull(response.cacheResponse());
+    return this;
+  }
+
   /**
    * Asserts that the current response used the cache and returns the cache
    * response.

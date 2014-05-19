@@ -724,6 +724,21 @@ public final class CallTest {
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
+  @Test public void onlyIfCachedReturns504WhenNotCached() throws Exception {
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Cache-Control", "only-if-cached")
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(504)
+        .assertBody("")
+        .assertNoNetworkResponse()
+        .assertNoCacheResponse();
+  }
+
   @Test public void redirect() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(301)

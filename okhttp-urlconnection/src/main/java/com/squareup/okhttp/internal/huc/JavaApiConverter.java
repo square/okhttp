@@ -21,7 +21,6 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
-import com.squareup.okhttp.ResponseSource;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
@@ -79,9 +78,6 @@ public final class JavaApiConverter {
     Headers okHeaders = extractOkResponseHeaders(httpUrlConnection);
     okResponseBuilder.headers(okHeaders);
 
-    // Meta data: Defaulted
-    okResponseBuilder.setResponseSource(ResponseSource.NETWORK);
-
     // Response body
     ResponseBody okBody = createOkBody(okHeaders, urlConnection.getInputStream());
     okResponseBuilder.body(okBody);
@@ -128,9 +124,6 @@ public final class JavaApiConverter {
     // Response headers
     Headers okHeaders = extractOkHeaders(javaResponse);
     okResponseBuilder.headers(okHeaders);
-
-    // Meta data: Defaulted
-    okResponseBuilder.setResponseSource(ResponseSource.CACHE);
 
     // Response body
     ResponseBody okBody = createOkBody(okHeaders, javaResponse.getBody());
