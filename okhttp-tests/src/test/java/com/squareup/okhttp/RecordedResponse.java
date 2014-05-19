@@ -29,9 +29,9 @@ public class RecordedResponse {
   public final Request request;
   public final Response response;
   public final String body;
-  public final Failure failure;
+  public final Throwable failure;
 
-  RecordedResponse(Request request, Response response, String body, Failure failure) {
+  RecordedResponse(Request request, Response response, String body, Throwable failure) {
     this.request = request;
     this.response = response;
     this.body = body;
@@ -120,6 +120,6 @@ public class RecordedResponse {
 
   public void assertFailure(String message) {
     assertNotNull(failure);
-    assertEquals(message, failure.exception().getMessage());
+    assertEquals(message, failure.getMessage());
   }
 }
