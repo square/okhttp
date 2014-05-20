@@ -357,7 +357,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
-      if (!httpEngine.sameConnection(followUp)) {
+      if (!httpEngine.sameConnection(followUp.url())) {
         httpEngine.releaseConnection();
       }
 

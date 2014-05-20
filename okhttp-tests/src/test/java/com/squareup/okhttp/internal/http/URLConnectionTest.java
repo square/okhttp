@@ -1854,7 +1854,6 @@ public final class URLConnectionTest {
     server2.shutdown();
   }
 
-  @Ignore // https://github.com/square/okhttp/issues/810
   @Test public void redirectWithAuthentication() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server2.play();

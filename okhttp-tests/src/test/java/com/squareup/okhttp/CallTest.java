@@ -50,7 +50,6 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
@@ -908,7 +907,6 @@ public final class CallTest {
     assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
   }
 
-  @Ignore // https://github.com/square/okhttp/issues/810
   @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server2.play();
