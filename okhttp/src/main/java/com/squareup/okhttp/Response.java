@@ -60,15 +60,14 @@ public final class Response {
   }
 
   /**
-   * The wire-level request that initiated this HTTP response. This is usually
-   * <strong>not</strong> the same request instance provided to the HTTP client:
+   * The wire-level request that initiated this HTTP response. This is not
+   * necessarily the same request issued by the application:
    * <ul>
    *     <li>It may be transformed by the HTTP client. For example, the client
-   *         may have added its own {@code Content-Encoding} header to enable
-   *         response compression.
-   *     <li>It may be the request generated in response to an HTTP redirect.
-   *         In this case the request URL may be different than the initial
-   *         request URL.
+   *         may copy headers like {@code Content-Length} from the request body.
+   *     <li>It may be the request generated in response to an HTTP redirect or
+   *         authentication challenge. In this case the request URL may be
+   *         different than the initial request URL.
    * </ul>
    */
   public Request request() {

@@ -509,7 +509,7 @@ public final class HttpEngine {
     closeQuietly(responseBodyBytes);
 
     // Close the connection if it cannot be reused.
-    if (transport != null && !transport.canReuseConnection()) {
+    if (transport != null && connection != null && !transport.canReuseConnection()) {
       closeQuietly(connection.getSocket());
       connection = null;
       return null;
