@@ -16,15 +16,14 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import com.squareup.okhttp.*;
+import com.squareup.okhttp.internal.PushCallback;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
+import com.squareup.okhttp.internal.spdy.SpdyPushObserver;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.CacheRequest;
@@ -36,7 +35,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.BufferedSource;
+import okio.GzipSource;
 import okio.ByteString;
+import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import okio.Timeout;
@@ -84,7 +86,7 @@ public final class SpdyTransport implements Transport {
     return stream.getSink();
   }
 
-  @Override public void writeRequestHeaders(Request request) throws IOException {
+  @Override public void writeRequestHeaders(final Request request) throws IOException {
     if (stream != null) return;
 
     httpEngine.writingRequestHeaders();
@@ -95,6 +97,36 @@ public final class SpdyTransport implements Transport {
         writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
         hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
+
+    final PushCallback pushCallback = request.pushCallback();
+    if (pushCallback != null) {
+      stream.pushObserver = new SpdyPushObserver() {
+        @Override public synchronized boolean onPromise(int streamId, List<Header> requestHeaders) {
+          return true;
+        }
+
+        @Override public synchronized boolean onPush(SpdyStream associated, SpdyStream push) {
+          try {
+            Response pushReq = parsePushResponse(
+                    request,
+                    push.getRequestHeaders(),
+                    spdyConnection.getProtocol()).build();
+
+            SpdySource source = new SpdySource(push, null);
+            BufferedSource buffer;
+            if (httpEngine.isTransparentGzip()
+                    && "gzip".equalsIgnoreCase(pushReq.headers().get("Content-Encoding"))) {
+              buffer = Okio.buffer(new GzipSource(source));
+            } else {
+              buffer = Okio.buffer(source);
+            }
+            return pushCallback.onPush(pushReq, buffer);
+          } catch (IOException ignored) {
+            return true;
+          }
+        }
+      };
+    }
   }
 
   @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
@@ -210,6 +242,51 @@ public final class SpdyTransport implements Transport {
         .message(statusLine.message)
         .headers(headersBuilder.build());
   }
+
+  /** Returns headers for a name value block containing a SPDY response. */
+  public static Response.Builder parsePushResponse(Request request, List<Header> headerBlock,
+                                                  Protocol protocol) throws IOException {
+    String path = null;
+    String host = null;
+    String scheme = null;
+
+    Headers.Builder headersBuilder = new Headers.Builder();
+    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.toString());
+    for (Header header : headerBlock) {
+      ByteString name = header.name;
+      String values = header.value.utf8();
+      for (int start = 0; start < values.length(); ) {
+        int end = values.indexOf('\0', start);
+        if (end == -1) {
+          end = values.length();
+        }
+        String value = values.substring(start, end);
+        if (name.equals(TARGET_PATH)) {
+          path = value;
+          // Add :path header to enable transparent decompression
+          headersBuilder.add(name.utf8(), value);
+        } else if (name.equals(TARGET_HOST)) {
+          host = value;
+        } else if (name.equals(TARGET_SCHEME)) {
+          scheme = value;
+        } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
+          headersBuilder.add(name.utf8(), value);
+        }
+        start = end + 1;
+      }
+    }
+    if (path == null || host == null || scheme == null) {
+      throw new ProtocolException("Expected ':path',':host', ':scheme' headers are not set");
+    }
+
+    return new Response.Builder()
+            .code(200)
+            .message("OK")
+            .request(request)
+            .protocol(protocol)
+            .headers(headersBuilder.build());
+  }
+
 
   @Override public void emptyTransferStream() {
     // Do nothing.

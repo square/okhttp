@@ -65,6 +65,7 @@ public final class SpdyStream {
   final SpdyDataSink sink;
   private final SpdyTimeout readTimeout = new SpdyTimeout();
   private final SpdyTimeout writeTimeout = new SpdyTimeout();
+  public SpdyPushObserver pushObserver = null;
 
   /**
    * The reason why this stream was abnormally closed. If there are multiple

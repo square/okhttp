@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.PushCallback;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
@@ -45,6 +46,7 @@ public final class Call {
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
   HttpEngine engine;
+  PushObserver pushObserver;
 
   Call(OkHttpClient client, Dispatcher dispatcher, Request request) {
     this.client = client;
@@ -73,6 +75,7 @@ public final class Call {
    * @throws IllegalStateException when the call has already been executed.
    */
   public Response execute() throws IOException {
+    setPushCallback();
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -97,6 +100,7 @@ public final class Call {
    * @throws IllegalStateException when the call has already been executed.
    */
   public void enqueue(Callback responseCallback) {
+    setPushCallback();
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -237,6 +241,25 @@ public final class Call {
       engine = new HttpEngine(client, request, request.body() != null, false, connection, null,
               null, response);
     }
+  }
+
+  private void setPushCallback() {
+      if(pushObserver != null) {
+          request = request.newBuilder().pushCallback(new PushCallback() {
+              @Override
+              public boolean onPush(Response partialResponse, BufferedSource buffer) {
+                  Response response = partialResponse.newBuilder()
+                          .body(new RealResponseBody(partialResponse, buffer))
+                          .build();
+                  return pushObserver.onPush(response);
+              }
+          }).build();
+      }
+  }
+
+  public Call pushObserver(PushObserver pushObserver) {
+      this.pushObserver = pushObserver;
+      return this;
   }
 
   private static class RealResponseBody extends ResponseBody {
