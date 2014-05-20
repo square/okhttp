@@ -883,6 +883,13 @@ public final class HttpEngine {
           requestBuilder.removeHeader("Content-Type");
         }
 
+        // When redirecting across hosts, drop all authentication headers. This
+        // is potentially annoying to the application layer since they have no
+        // way to retain them.
+        if (!sameConnection(url)) {
+          requestBuilder.removeHeader("Authorization");
+        }
+
         return requestBuilder.url(url).build();
 
       default:
@@ -891,14 +898,13 @@ public final class HttpEngine {
   }
 
   /**
-   * Returns true if an HTTP request for {@code followUp} can use the same
-   * engine as this connection.
+   * Returns true if an HTTP request for {@code followUp} can reuse the
+   * connection used by this engine.
    */
-  public boolean sameConnection(Request followUp) {
-    URL a = userRequest.url();
-    URL b = followUp.url();
-    return a.getHost().equals(b.getHost())
-        && getEffectivePort(a) == getEffectivePort(b)
-        && a.getProtocol().equals(b.getProtocol());
+  public boolean sameConnection(URL followUp) {
+    URL url = userRequest.url();
+    return url.getHost().equals(followUp.getHost())
+        && getEffectivePort(url) == getEffectivePort(followUp)
+        && url.getProtocol().equals(followUp.getProtocol());
   }
 }

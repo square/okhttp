@@ -227,7 +227,7 @@ public final class Call {
         throw new ProtocolException("Too many redirects: " + redirectionCount);
       }
 
-      if (!engine.sameConnection(followUp)) {
+      if (!engine.sameConnection(followUp.url())) {
         engine.releaseConnection();
       }
 
