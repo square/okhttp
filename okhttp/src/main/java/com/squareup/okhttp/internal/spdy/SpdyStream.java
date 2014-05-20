@@ -73,8 +73,10 @@ public final class SpdyStream {
    */
   private ErrorCode errorCode = null;
 
+  private TransportPushObserver pushObserver;
+
   SpdyStream(int id, SpdyConnection connection, boolean outFinished, boolean inFinished,
-      List<Header> requestHeaders) {
+      List<Header> requestHeaders, TransportPushObserver pushObserver) {
     if (connection == null) throw new NullPointerException("connection == null");
     if (requestHeaders == null) throw new NullPointerException("requestHeaders == null");
     this.id = id;
@@ -87,10 +89,15 @@ public final class SpdyStream {
     this.source.finished = inFinished;
     this.sink.finished = outFinished;
     this.requestHeaders = requestHeaders;
+    this.pushObserver = pushObserver;
   }
 
   public int getId() {
     return id;
+  }
+
+  public TransportPushObserver pushObserver() {
+    return pushObserver;
   }
 
   /**
