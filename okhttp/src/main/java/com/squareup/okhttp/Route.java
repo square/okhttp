@@ -60,7 +60,8 @@ public final class Route {
    * Returns the {@link Proxy} of this route.
    *
    * <strong>Warning:</strong> This may disagree with {@link Address#getProxy}
-   * is null. When the address's proxy is null, the proxy selector will be used.
+   * when it is null. When the address's proxy is null, the proxy selector is
+   * used.
    */
   public Proxy getProxy() {
     return proxy;
