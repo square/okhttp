@@ -90,10 +90,6 @@ public final class Request {
     return new Builder(this);
   }
 
-  public Headers getHeaders() {
-    return headers;
-  }
-
   /**
    * Returns the cache control directives for this response. This is never null,
    * even if this response contains no {@code Cache-Control} header.
