@@ -1,6 +1,100 @@
 Change Log
 ==========
 
+## Version 2.0.0-RC1
+
+_RELEASE DATE TBA_
+
+OkHttp 2 is designed around a new API that is true to HTTP, with classes for
+requests, responses, headers, and calls. It uses modern Java patterns like
+immutability and chained builders. The API now offers asynchronous callbacks
+in addition to synchronous blocking calls.
+
+#### API Changes
+
+ *  **New Request and Response types,** each with their own builder. There's also
+    a `RequestBody` class to write the request body to the network and a
+    `ResponseBody` to read the response body from the network. The standalone
+    `Headers` class offers full access to the HTTP headers.
+
+ *  **Okio dependency added.** OkHttp now depends on
+    [Okio](https://github.com/square/okio), an I/O library that makes it easier
+    to access, store and process data. Using this library internally makes OkHttp
+    faster while consuming less memory. You can write a `RequestBody` as an Okio
+    `BufferedSink` and a `ResponseBody` as an Okio `BufferedSource`. Standard
+    `InputStream` and `OutputStream` access is also available.
+
+ *  **New Call and Callback types** execute requests and receive their
+    responses. Both types of calls can be canceled via the `Call` or the
+    `OkHttpClient`.
+
+ *  **URLConnection support has moved to the okhttp-urlconnection module.**
+    If you're upgrading from 1.x, this change will impact you. You will need to
+    add the `okhttp-urlconnection` module to your project and use the
+    `OkUrlFactory` to create new instances of `HttpURLConnection`:
+
+    ```
+    // OkHttp 1.x:
+    HttpURLConnection connection = client.open(url);
+
+    // OkHttp 2.x:
+    HttpURLConnection connection = new OkUrlFactory(client).open(url);
+    ```
+
+ *  **Custom caches are no longer supported.** In OkHttp 1.x it was possible to
+    define your own response cache with the `java.net.ResponseCache` and OkHttp's
+    `OkResponseCache` interfaces. Both of these APIs have been dropped. In
+    OkHttp 2 the built-in disk cache is the only supported response cache.
+
+ *  **HttpResponseCache has been renamed to Cache.** Install it with
+    `OkHttpClient.setCache(...)` instead of `OkHttpClient.setResponseCache(...)`.
+
+ *  **OkAuthenticator has been replaced with Authenticator.** This new
+    authenticator has access to the full incoming response and can respond with
+    whichever followup request is appropriate. The `Challenge` class is now a
+    top-level class and `Credential` is replaced with a utility class called
+    `Credentials`.
+
+ *  **OkHttpClient.getFollowProtocolRedirects() renamed to
+    getFollowSslRedirects()**. We reserve the word _protocol_ for the HTTP
+    version being used (HTTP/1.1, HTTP/2). The old name of this method was
+    misleading; it was always used to configure redirects between `https://` and
+    `http://` schemes.
+
+ *  **RouteDatabase is no longer public API.** OkHttp continues to track which
+    routes have failed but this is no exposed in the API.
+
+ *  **ResponseSource is gone.** This enum exposed whether a response came from
+    the cache, network, or both. OkHttp 2 offers more detail with raw access to
+    the cache and network responses in the new `Response` class.
+
+ *  **TunnelRequest is gone.** It specified how to connect to an HTTP proxy.
+    OkHttp 2 uses the new `Request` class for this.
+
+ *  **Dispatcher** is a new class to manages the queue of asynchronous calls. It
+    implements limits on total in-flight calls and in-flight calls per host.
+
+#### Implementation changes
+
+ * Support Android `TrafficStats` socket tagging.
+ * Drop authentication headers on redirect.
+ * Added support for compressed data frames.
+ * Process push promise callbacks in order.
+ * Update to http/2 draft 12.
+ * Update to HPACK draft 07.
+ * Add ALPN support. Maven will use ALPN on OpenJDK 8.
+ * Update NPN dependency to target `jdk7u60-b13` and `Oracle jdk7u55-b13`.
+ * Ensure SPDY variants support zero-length DELETE and POST.
+ * Prevent leaking a cache item's InputStreams when metadata read fails.
+ * Use a string to identify TLS versions in routes.
+ * Add frame logger for HTTP/2.
+ * Replacing `httpMinorVersion` with `Protocol`. Expose HTTP/1.0 as a potential protocol.
+ * Use `Protocol` to describe framing.
+ * Implement write timeouts for HTTP/1.1 streams.
+ * Avoid use of SPDY stream ID 1, as that's typically used for UPGRADE.
+ * Support OAuth in `Authenticator`.
+ * Permit a dangling semicolon in media type parsing.
+
 ## Version 1.5.4
 
 _2014-04-14_
