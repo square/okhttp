@@ -195,9 +195,9 @@ public final class HttpEngine {
    *     immediately preceding this attempt, or null if this request doesn't
    *     recover from a failure.
    */
-  public HttpEngine(OkHttpClient client, Request request, boolean willHaveRequestBody, boolean bufferRequestBody,
-      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
-      Response priorResponse) {
+  public HttpEngine(OkHttpClient client, Request request, boolean willHaveRequestBody,
+      boolean bufferRequestBody, Connection connection, RouteSelector routeSelector,
+      RetryableSink requestBodyOut, Response priorResponse) {
     this.client = client;
     this.userRequest = request;
 
@@ -349,7 +349,8 @@ public final class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    return HttpMethod.hasRequestBody(userRequest.method()) && willHaveRequestBody && !Util.emptySink().equals(requestBodyOut);
+    return HttpMethod.hasRequestBody(userRequest.method()) && willHaveRequestBody &&
+            !Util.emptySink().equals(requestBodyOut);
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
@@ -420,8 +421,8 @@ public final class HttpEngine {
     Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, willHaveRequestBody, bufferRequestBody, connection, routeSelector,
-        (RetryableSink) requestBodyOut, priorResponse);
+    return new HttpEngine(client, userRequest, willHaveRequestBody, bufferRequestBody, connection,
+        routeSelector, (RetryableSink) requestBodyOut, priorResponse);
   }
 
   public HttpEngine recover(IOException e) {
