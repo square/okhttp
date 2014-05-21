@@ -349,8 +349,8 @@ public final class HttpEngine {
   }
 
   boolean hasRequestBody() {
-    return HttpMethod.hasRequestBody(userRequest.method()) && willHaveRequestBody &&
-            !Util.emptySink().equals(requestBodyOut);
+    return HttpMethod.hasRequestBody(userRequest.method()) && willHaveRequestBody
+            && !Util.emptySink().equals(requestBodyOut);
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
