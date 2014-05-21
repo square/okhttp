@@ -148,7 +148,7 @@ public class Platform {
       Method getNpnSelectedProtocol = null;
       try {
         setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
-        getNpnSelectedProtocol = openSslSocketClass.getMethod("getSelectedProtocol");
+        getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
       } catch (NoSuchMethodException ignored) {
       }
 
