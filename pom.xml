@@ -68,7 +68,16 @@
     </license>
   </licenses>
 
-  <dependencyManagement>
+    <distributionManagement>
+        <repository>
+            <id>deployment</id>
+            <name>Internal Releases</name>
+            <url>${env.OKHTTP_DEPLOYMENT_URL}</url>
+        </repository>
+    </distributionManagement>
+
+
+    <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.squareup.okio</groupId>
