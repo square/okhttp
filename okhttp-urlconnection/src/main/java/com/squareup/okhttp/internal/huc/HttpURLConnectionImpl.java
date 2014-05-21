@@ -308,8 +308,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, doOutput, bufferRequestBody, connection, null, requestBody,
-        priorResponse);
+    return new HttpEngine(engineClient, request, doOutput, bufferRequestBody, connection, null,
+        requestBody, priorResponse);
   }
 
   /**
