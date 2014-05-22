@@ -4,13 +4,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp.sample</groupId>
-    <artifactId>sample-parent</artifactId>
+    <groupId>com.squareup.okhttp</groupId>
+    <artifactId>parent</artifactId>
     <version>1.6.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>simple-client</artifactId>
-  <name>Sample: Simple Client</name>
+  <artifactId>okhttp-urlconnection</artifactId>
+  <name>OkHttp URLConnection</name>
 
   <dependencies>
     <dependency>
@@ -20,8 +20,9 @@
     </dependency>
 
     <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

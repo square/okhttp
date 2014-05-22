@@ -348,6 +348,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
     return protocols;
   }
 
+  /**
+   * @deprecated moved to {@code OkUrlFactory.open}.
+   */
+  @Deprecated
   public HttpURLConnection open(URL url) {
     return open(url, proxy);
   }
@@ -443,7 +447,10 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
    *   OkHttpClient okHttpClient = new OkHttpClient();
    *   URL.setURLStreamHandlerFactory(okHttpClient);
    * }</pre>
+   *
+   * @deprecated moved to {@code OkUrlFactory.createURLStreamHandler}.
    */
+  @Deprecated
   public URLStreamHandler createURLStreamHandler(final String protocol) {
     if (!protocol.equals("http") && !protocol.equals("https")) return null;
 
