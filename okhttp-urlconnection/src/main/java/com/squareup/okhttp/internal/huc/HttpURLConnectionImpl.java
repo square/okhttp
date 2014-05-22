@@ -272,7 +272,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           throw new ProtocolException(method + " does not support writing");
         }
       }
-      httpEngine = newHttpEngine(method, null, null, null);
+      // If the user set content length to zero, we know there will not be a request body.
+      RetryableSink requestBody = doOutput && fixedContentLength == 0 ? Util.emptySink() : null;
+      httpEngine = newHttpEngine(method, null, requestBody, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
