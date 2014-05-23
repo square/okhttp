@@ -298,7 +298,7 @@ public final class HttpEngine {
 
   private static Response stripBody(Response response) {
     return response != null && response.body() != null
-        ? response.newBuilder().body(null).build()
+        ? response.newBuilder().body((ResponseBody) null).build()
         : response;
   }
 

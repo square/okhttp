@@ -596,7 +596,7 @@ public class JavaApiConverterTest {
         .addHeader("key1", "value1_1")
         .addHeader("key2", "value2")
         .addHeader("key1", "value1_2")
-        .body(null)
+        .body((ResponseBody) null)
         .build();
     CacheResponse javaCacheResponse = JavaApiConverter.createJavaCacheResponse(okResponse);
     assertFalse(javaCacheResponse instanceof SecureCacheResponse);

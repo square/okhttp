@@ -16,11 +16,9 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.PushCallback;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
-import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -75,7 +73,6 @@ public final class Call {
    * @throws IllegalStateException when the call has already been executed.
    */
   public Response execute() throws IOException {
-    setPushCallback();
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -100,7 +97,6 @@ public final class Call {
    * @throws IllegalStateException when the call has already been executed.
    */
   public void enqueue(Callback responseCallback) {
-    setPushCallback();
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
@@ -224,7 +220,7 @@ public final class Call {
       if (followUp == null) {
         engine.releaseConnection();
         return response.newBuilder()
-            .body(new RealResponseBody(response, engine.getResponseBody()))
+            .body(engine.getResponseBody())
             .build();
       }
 
@@ -243,45 +239,9 @@ public final class Call {
     }
   }
 
-  private void setPushCallback() {
-      if(pushObserver != null) {
-          request = request.newBuilder().pushCallback(new PushCallback() {
-              @Override
-              public boolean onPush(Response partialResponse, BufferedSource buffer) {
-                  Response response = partialResponse.newBuilder()
-                          .body(new RealResponseBody(partialResponse, buffer))
-                          .build();
-                  return pushObserver.onPush(response);
-              }
-          }).build();
-      }
-  }
-
   public Call pushObserver(PushObserver pushObserver) {
       this.pushObserver = pushObserver;
       return this;
   }
 
-  private static class RealResponseBody extends ResponseBody {
-    private final Response response;
-    private final BufferedSource source;
-
-    RealResponseBody(Response response, BufferedSource source) {
-      this.response = response;
-      this.source = source;
-    }
-
-    @Override public MediaType contentType() {
-      String contentType = response.header("Content-Type");
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return OkHeaders.contentLength(response);
-    }
-
-    @Override public BufferedSource source() {
-      return source;
-    }
-  }
 }

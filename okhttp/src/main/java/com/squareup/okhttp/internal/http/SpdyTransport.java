@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.*;
-import com.squareup.okhttp.internal.PushCallback;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
@@ -98,7 +97,7 @@ public final class SpdyTransport implements Transport {
         hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
 
-    final PushCallback pushCallback = request.pushCallback();
+    final PushObserver pushCallback = request.pushObserver();
     if (pushCallback != null) {
       stream.pushObserver = new SpdyPushObserver() {
         @Override public synchronized boolean onPromise(int streamId, List<Header> requestHeaders) {
@@ -107,20 +106,21 @@ public final class SpdyTransport implements Transport {
 
         @Override public synchronized boolean onPush(SpdyStream associated, SpdyStream push) {
           try {
-            Response pushReq = parsePushResponse(
-                    request,
-                    push.getRequestHeaders(),
+            Response partialResponse = parsePushResponse(request, push.getRequestHeaders(),
                     spdyConnection.getProtocol()).build();
 
             SpdySource source = new SpdySource(push, null);
             BufferedSource buffer;
             if (httpEngine.isTransparentGzip()
-                    && "gzip".equalsIgnoreCase(pushReq.headers().get("Content-Encoding"))) {
+                    && "gzip".equalsIgnoreCase(partialResponse.headers().get("Content-Encoding"))) {
               buffer = Okio.buffer(new GzipSource(source));
             } else {
               buffer = Okio.buffer(source);
             }
-            return pushCallback.onPush(pushReq, buffer);
+            Response response = partialResponse.newBuilder()
+                    .body(buffer)
+                    .build();
+            return pushCallback.onPush(response);
           } catch (IOException ignored) {
             return true;
           }

@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.PushCallback;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -35,7 +34,7 @@ public final class Request {
   private final Headers headers;
   private final RequestBody body;
   private final Object tag;
-  private final PushCallback pushCallback;
+  private final PushObserver pushObserver;
 
   private volatile URI uri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -46,7 +45,7 @@ public final class Request {
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
-    this.pushCallback = builder.pushCallback;
+    this.pushObserver = builder.pushObserver;
   }
 
   public URL url() {
@@ -90,8 +89,8 @@ public final class Request {
     return tag;
   }
 
-  public PushCallback pushCallback() {
-    return pushCallback;
+  public PushObserver pushObserver() {
+    return pushObserver;
   }
 
   public Builder newBuilder() {
@@ -127,7 +126,7 @@ public final class Request {
     private Headers.Builder headers;
     private RequestBody body;
     private Object tag;
-    private PushCallback pushCallback = null;
+    private PushObserver pushObserver = null;
 
     public Builder() {
       this.method = "GET";
@@ -140,7 +139,7 @@ public final class Request {
       this.body = request.body;
       this.tag = request.tag;
       this.headers = request.headers.newBuilder();
-      this.pushCallback = request.pushCallback;
+      this.pushObserver = request.pushObserver;
     }
 
     public Builder url(String url) {
@@ -219,8 +218,8 @@ public final class Request {
       return this;
     }
 
-    Builder pushCallback(PushCallback pushCallback) {
-      this.pushCallback = pushCallback;
+    Builder pushObserver(PushObserver pushObserver) {
+      this.pushObserver = pushObserver;
       return this;
     }
 
