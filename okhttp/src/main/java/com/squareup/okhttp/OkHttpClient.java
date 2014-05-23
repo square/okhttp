@@ -170,24 +170,52 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
 
   /**
    * Sets the response cache to be used to read and write cached responses.
+   *
+   * @deprecated replaced by {@link #setCache} which doesn't support custom
+   *     cache implementations.
    */
+  @Deprecated
   public OkHttpClient setResponseCache(ResponseCache responseCache) {
     return setOkResponseCache(toOkResponseCache(responseCache));
   }
 
+  /**
+   * @deprecated replaced by {@link #getCache} which doesn't support custom
+   *     cache implementations.
+   */
+  @Deprecated
   public ResponseCache getResponseCache() {
     return responseCache instanceof ResponseCacheAdapter
         ? ((ResponseCacheAdapter) responseCache).getDelegate()
         : null;
   }
 
+  /**
+   * @deprecated replaced by {@link #setCache} which doesn't support custom
+   *     cache implementations.
+   */
+  @Deprecated
   public OkHttpClient setOkResponseCache(OkResponseCache responseCache) {
     this.responseCache = responseCache;
     return this;
   }
 
+  /**
+   * @deprecated replaced by {@link #getCache} which doesn't support custom
+   *     cache implementations.
+   */
+  @Deprecated
   public OkResponseCache getOkResponseCache() {
     return responseCache;
+  }
+
+  public OkHttpClient setCache(Cache cache) {
+    responseCache = cache;
+    return this;
+  }
+
+  public Cache getCache() {
+    return responseCache instanceof Cache ? (Cache) responseCache : null;
   }
 
   /**

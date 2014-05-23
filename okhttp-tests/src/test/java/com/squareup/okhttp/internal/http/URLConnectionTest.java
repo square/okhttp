@@ -20,6 +20,7 @@ import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.HttpResponseCache;
 import com.squareup.okhttp.OkAuthenticator.Credential;
 import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
@@ -125,6 +126,10 @@ public final class URLConnectionTest {
     if (cache != null) {
       cache.delete();
     }
+  }
+
+  @Test public void v2Api() throws IOException {
+    connection = new OkUrlFactory(client).open(new URL("http://example.com/"));
   }
 
   @Test public void requestHeaders() throws IOException, InterruptedException {

@@ -19,6 +19,11 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp-urlconnection</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.mortbay.jetty.npn</groupId>
       <artifactId>npn-boot</artifactId>
       <scope>provided</scope>
