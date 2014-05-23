@@ -16,7 +16,8 @@
 package com.squareup.okhttp;
 
 /**
- * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} and {@link com.squareup.okhttp.Protocol#SPDY_3 SPDY/3} only.
+ * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} and
+ * {@link com.squareup.okhttp.Protocol#SPDY_3 SPDY/3} only.
  * Processes server-initiated HTTP requests on the client. Implementations must
  * quickly dispatch callbacks to avoid creating a bottleneck.
  *
