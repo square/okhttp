@@ -26,7 +26,10 @@ import java.net.CacheRequest;
  *
  * <h3>Warning: Experimental OkHttp 2.0 API</h3>
  * This class is in beta. APIs are subject to change!
+ *
+ * @deprecated removed from the public API in OkHttp 2.0.
  */
+@Deprecated
 public interface OkResponseCache {
   Response get(Request request) throws IOException;
 

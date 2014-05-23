@@ -70,9 +70,18 @@ public class Route {
     return inetSocketAddress;
   }
 
-  /** Returns true if this route uses modern TLS. */
+  /**
+   * Returns true if this route uses modern TLS.
+   *
+   * @deprecated replaced with {@link #getTlsVersion} in OkHttp 2.0.
+   */
+  @Deprecated
   public boolean isModernTls() {
     return modernTls;
+  }
+
+  public String getTlsVersion() {
+    return modernTls ? "TLSv1" : "SSLv3";
   }
 
   @Override public boolean equals(Object obj) {

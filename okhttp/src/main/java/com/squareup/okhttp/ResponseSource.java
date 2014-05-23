@@ -15,7 +15,14 @@
  */
 package com.squareup.okhttp;
 
-/** The source of an HTTP response. */
+/**
+ * The source of an HTTP response.
+ *
+ * @deprecated removed from the public API in OkHttp 2.0. Use the response's
+ *     {@code networkResponse()} and {@code cacheResponse()} to compute how the
+ *     request was satisfied.
+ */
+@Deprecated
 public enum ResponseSource {
 
   /** The response was returned from the local cache. */
