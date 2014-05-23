@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>parent</artifactId>
-  <version>1.5.5-SNAPSHOT</version>
+  <version>1.6.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -22,6 +22,7 @@
     <module>okhttp</module>
     <module>okhttp-apache</module>
     <module>okhttp-tests</module>
+    <module>okhttp-urlconnection</module>
     <module>mockwebserver</module>
     <module>samples</module>
     <module>benchmarks</module>
