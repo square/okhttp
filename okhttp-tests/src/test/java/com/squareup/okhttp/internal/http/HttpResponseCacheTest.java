@@ -118,6 +118,11 @@ public final class HttpResponseCacheTest {
     return client.open(url);
   }
 
+  @Test public void v2Api() throws IOException {
+    client.setCache(cache);
+    assertSame(cache, client.getCache());
+  }
+
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
     ResponseCache.setDefault(null);
     client.setResponseCache(cache);
