@@ -16,7 +16,11 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.*;
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.PushObserver;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;

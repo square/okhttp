@@ -15,35 +15,22 @@
  */
 package com.squareup.okhttp;
 
-import okio.BufferedSource;
-
 /**
- * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} only.
+ * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} and {@link com.squareup.okhttp.Protocol#SPDY_3 SPDY/3} only.
  * Processes server-initiated HTTP requests on the client. Implementations must
  * quickly dispatch callbacks to avoid creating a bottleneck.
- *
- * <p>While {@link #onReset} may occur at any time, the following callbacks are
- * expected in order, correlated by stream ID.
- * <ul>
- *   <li>{@link #onRequest}</li>
- *   <li>{@link #onHeaders} (unless canceled)</li>
- *   <li>{@link #onData} (optional sequence of data frames)</li>
- * </ul>
- *
- * <p>As a stream ID is scoped to a single HTTP/2 connection, implementations
- * which target multiple connections should expect repetition of stream IDs.
  *
  * <p>Return true to request cancellation of a pushed stream.  Note that this
  * does not guarantee future frames won't arrive on the stream ID.
  */
 public interface PushObserver {
   /**
-   * The response headers corresponding to a pushed request.  When {@code last}
-   * is true, there are no data frames to follow.
+   * Receive a push initiated by the server. The push is in the form of
+   * an http response, where the request is either a previous client response
+   * (SPDY) or a push promise "request" from the server (HTTP/2).
    *
-   * @param streamId server-initiated stream ID: an even number.
-   * @param responseHeaders minimally includes {@code :status}.
-   * @param last when true, there is no response data.
+   * @param response The push from the server
+   * @return true to cancel the push stream
    */
   boolean onPush(Response response);
 }

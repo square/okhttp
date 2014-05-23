@@ -308,7 +308,7 @@ public final class Response {
       private final long contentLength;
 
       RealResponseBody(BufferedSource source) {
-        if(headers == null) {
+        if (headers == null) {
           throw new IllegalStateException("Set headers before setting the body");
         }
         String contentType = headers.get("Content-Type");

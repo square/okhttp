@@ -218,7 +218,7 @@ public final class Request {
       return this;
     }
 
-    Builder pushObserver(PushObserver pushObserver) {
+    public Builder pushObserver(PushObserver pushObserver) {
       this.pushObserver = pushObserver;
       return this;
     }
