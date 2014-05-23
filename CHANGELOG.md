@@ -3,7 +3,7 @@ Change Log
 
 ## Version 2.0.0-RC1
 
-_RELEASE DATE TBA_
+_2014-05-23_
 
 OkHttp 2 is designed around a new API that is true to HTTP, with classes for
 requests, responses, headers, and calls. It uses modern Java patterns like
@@ -94,6 +94,14 @@ in addition to synchronous blocking calls.
  * Avoid use of SPDY stream ID 1, as that's typically used for UPGRADE.
  * Support OAuth in `Authenticator`.
  * Permit a dangling semicolon in media type parsing.
+
+## Version 1.6.0
+
+_2014-05-23_
+
+ * Offer bridges to make it easier to migrate from OkHttp 1.x to OkHttp 2.0.
+   This adds `OkUrlFactory`, `Cache`, and `@Deprecated` annotations for APIs
+   dropped in 2.0.
 
 ## Version 1.5.4
 
