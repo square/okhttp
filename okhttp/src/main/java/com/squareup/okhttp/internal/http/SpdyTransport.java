@@ -255,24 +255,17 @@ public final class SpdyTransport implements Transport {
     for (Header header : headerBlock) {
       ByteString name = header.name;
       String values = header.value.utf8();
-      for (int start = 0; start < values.length(); ) {
-        int end = values.indexOf('\0', start);
-        if (end == -1) {
-          end = values.length();
-        }
-        String value = values.substring(start, end);
+      for (String value : values.split("0x00")) {
         if (name.equals(TARGET_PATH)) {
           path = value;
-          // Add :path header to enable transparent decompression
-          headersBuilder.add(name.utf8(), value);
         } else if (name.equals(TARGET_HOST)) {
           host = value;
         } else if (name.equals(TARGET_SCHEME)) {
           scheme = value;
-        } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
+        }
+        if (!isProhibitedHeader(protocol, name)) {
           headersBuilder.add(name.utf8(), value);
         }
-        start = end + 1;
       }
     }
     if (path == null || host == null || scheme == null) {
