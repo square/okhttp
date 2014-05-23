@@ -253,21 +253,42 @@ public final class OkHttpClient implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
+   * @deprecated moved to {@link #setFollowSslRedirects}.
+   */
+  @Deprecated
+  public OkHttpClient setFollowProtocolRedirects(boolean followProtocolRedirects) {
+    this.followProtocolRedirects = followProtocolRedirects;
+    return this;
+  }
+
+  /**
+   * @deprecated moved to {@link #getFollowSslRedirects}.
+   */
+  @Deprecated
+  public boolean getFollowProtocolRedirects() {
+    return followProtocolRedirects;
+  }
+
+  /**
    * Configure this client to follow redirects from HTTPS to HTTP and from HTTP
    * to HTTPS.
    *
    * <p>If unset, protocol redirects will be followed. This is different than
    * the built-in {@code HttpURLConnection}'s default.
    */
-  public OkHttpClient setFollowProtocolRedirects(boolean followProtocolRedirects) {
+  public OkHttpClient setFollowSslRedirects(boolean followProtocolRedirects) {
     this.followProtocolRedirects = followProtocolRedirects;
     return this;
   }
 
-  public boolean getFollowProtocolRedirects() {
+  public boolean getFollowSslRedirects() {
     return followProtocolRedirects;
   }
 
+  /**
+   * @deprecated removed from the public API in OkHttp 2.0.
+   */
+  @Deprecated
   public RouteDatabase getRoutesDatabase() {
     return routeDatabase;
   }

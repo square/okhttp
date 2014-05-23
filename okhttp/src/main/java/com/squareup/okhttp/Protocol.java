@@ -34,14 +34,21 @@ public enum Protocol {
   SPDY_3("spdy/3.1", true),
   HTTP_11("http/1.1", false);
 
-  /** Identifier string used in NPN or ALPN selection. */
+  /**
+   * Identifier string used in NPN or ALPN selection.
+   *
+   * @deprecated removed from the public API in OkHttp 2.0.
+   */
+  @Deprecated
   public final ByteString name;
 
   /**
    * When true the protocol is binary framed and derived from SPDY.
    *
    * @see com.squareup.okhttp.internal.spdy.Variant
+   * @deprecated removed from the public API in OkHttp 2.0.
    */
+  @Deprecated
   public final boolean spdyVariant;
 
   Protocol(String name, boolean spdyVariant) {

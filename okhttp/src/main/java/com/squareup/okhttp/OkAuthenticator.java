@@ -25,7 +25,10 @@ import java.util.List;
 /**
  * Responds to authentication challenges from the remote web or proxy server by
  * returning credentials.
+ *
+ * @deprecated replaced with {@code Authenticator} in OkHttp 2.0.
  */
+@Deprecated
 public interface OkAuthenticator {
   /**
    * Returns a credential that satisfies the authentication challenge made by

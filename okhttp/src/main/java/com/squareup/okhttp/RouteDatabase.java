@@ -24,7 +24,10 @@ import java.util.Set;
  * there was a failure attempting to connect to a specific IP address, proxy
  * server or TLS mode, that failure is remembered and alternate routes are
  * preferred.
+ *
+ * @deprecated removed from the public API in OkHttp 2.0.
  */
+@Deprecated
 public final class RouteDatabase {
   private final Set<Route> failedRoutes = new LinkedHashSet<Route>();
 

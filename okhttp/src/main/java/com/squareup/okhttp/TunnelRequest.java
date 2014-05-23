@@ -28,7 +28,10 @@ import static com.squareup.okhttp.internal.Util.getDefaultPort;
  *
  * <p>See <a href="http://www.ietf.org/rfc/rfc2817.txt">RFC 2817, Section
  * 5.2</a>.
+ *
+ * @deprecated removed from the public API in OkHttp 2.0.
  */
+@Deprecated
 public final class TunnelRequest {
   final String host;
   final int port;
