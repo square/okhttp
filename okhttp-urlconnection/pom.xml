@@ -25,4 +25,19 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <excludePackageNames>com.squareup.okhttp.internal.*</excludePackageNames>
+          <links>
+            <link>http://square.github.io/okhttp/javadoc/</link>
+          </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
