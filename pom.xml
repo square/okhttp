@@ -217,7 +217,7 @@
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspath>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</bootclasspath>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
@@ -226,7 +226,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspath}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
               </configuration>
               <dependencies>
                 <dependency>
@@ -246,7 +246,7 @@
         <jdk>1.8</jdk>
       </activation>
       <properties>
-        <bootclasspath>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar</bootclasspath>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar</bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
@@ -255,7 +255,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspath}</argLine>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
               </configuration>
               <dependencies>
                 <dependency>
