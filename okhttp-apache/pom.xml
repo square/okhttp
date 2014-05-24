@@ -36,4 +36,20 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>http://square.github.io/okhttp/javadoc/</link>
+            <link>http://hc.apache.org/httpcomponents-client-4.3.x/httpclient/apidocs/</link>
+            <link>https://hc.apache.org/httpcomponents-core-4.3.x/httpcore/apidocs/</link>
+          </links>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
