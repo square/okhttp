@@ -8,16 +8,18 @@ import java.io.IOException;
 public class GetExample {
   OkHttpClient client = new OkHttpClient();
 
-  void run() throws IOException {
+  String run(String url) throws IOException {
     Request request = new Request.Builder()
-        .url("https://raw.github.com/square/okhttp/master/README.md")
+        .url(url)
         .build();
 
     Response response = client.newCall(request).execute();
-    System.out.println(response.body().string());
+    return response.body().string();
   }
 
   public static void main(String[] args) throws IOException {
-    new GetExample().run();
+    GetExample example = new GetExample();
+    String response = example.run("https://raw.github.com/square/okhttp/master/README.md");
+    System.out.println(response);
   }
 }
