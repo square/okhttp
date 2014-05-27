@@ -52,6 +52,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static java.lang.Thread.UncaughtExceptionHandler;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -64,6 +65,7 @@ public final class CallTest {
   private MockWebServer server2 = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
+  private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
   private Cache cache;
@@ -72,12 +74,14 @@ public final class CallTest {
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
+    defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
   }
 
   @After public void tearDown() throws Exception {
     server.shutdown();
     server2.shutdown();
     cache.delete();
+    Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
   }
 
   @Test public void get() throws Exception {
@@ -372,6 +376,41 @@ public final class CallTest {
         .assertBody("abc");
 
     assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
+  }
+
+  @Test public void onResponseThrowsIsHandledByUncaughtExceptionHandler() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    final AtomicReference<Throwable> uncaughtExceptionRef = new AtomicReference<Throwable>();
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @Override public void uncaughtException(Thread thread, Throwable throwable) {
+        uncaughtExceptionRef.set(throwable);
+        latch.countDown();
+      }
+    });
+
+    client.newCall(request).enqueue(new Callback() {
+      @Override public void onFailure(Request request, Throwable throwable) {
+        fail();
+      }
+
+      @Override public void onResponse(Response response) throws IOException {
+        throw new IOException("a");
+      }
+    });
+
+    latch.await();
+    Throwable uncaughtException = uncaughtExceptionRef.get();
+    assertEquals(RuntimeException.class, uncaughtException.getClass());
+    assertEquals(IOException.class, uncaughtException.getCause().getClass());
+    assertEquals("a", uncaughtException.getCause().getMessage());
   }
 
   @Test public void connectionPooling() throws Exception {

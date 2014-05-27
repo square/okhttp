@@ -149,7 +149,7 @@ public final class Call {
           responseCallback.onResponse(response);
         }
       } catch (IOException e) {
-        if (signalledCallback) return; // Do not signal the callback twice!
+        if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
         responseCallback.onFailure(request, e);
       } finally {
         engine.close(); // Close the connection if it isn't already.
