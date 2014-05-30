@@ -517,8 +517,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     setFixedLengthStreamingMode((long) contentLength);
   }
 
-  // @Override Don't override: this overload method doesn't exist prior to Java 1.7.
-  public void setFixedLengthStreamingMode(long contentLength) {
+  @Override public void setFixedLengthStreamingMode(long contentLength) {
     if (super.connected) throw new IllegalStateException("Already connected");
     if (chunkLength > 0) throw new IllegalStateException("Already in chunked mode");
     if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
