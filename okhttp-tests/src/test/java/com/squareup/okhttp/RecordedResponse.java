@@ -19,8 +19,10 @@ import java.net.URL;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * A received response or failure recorded by the response recorder.
@@ -50,6 +52,16 @@ public class RecordedResponse {
 
   public RecordedResponse assertCode(int expectedCode) {
     assertEquals(expectedCode, response.code());
+    return this;
+  }
+
+  public RecordedResponse assertSuccessful() {
+    assertTrue(response.isSuccessful());
+    return this;
+  }
+
+  public RecordedResponse assertNotSuccessful() {
+    assertFalse(response.isSuccessful());
     return this;
   }
 
