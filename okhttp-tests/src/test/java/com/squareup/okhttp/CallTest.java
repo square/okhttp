@@ -101,7 +101,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertNull(recordedRequest.getBody());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
@@ -132,7 +132,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("HEAD", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertNull(recordedRequest.getBody());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 

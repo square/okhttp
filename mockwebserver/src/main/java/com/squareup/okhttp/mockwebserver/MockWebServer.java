@@ -65,6 +65,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
@@ -502,14 +503,16 @@ public final class MockWebServer {
     }
 
     boolean hasBody = false;
-    TruncatingOutputStream requestBody = new TruncatingOutputStream();
+    TruncatingOutputStream requestBody = null;
     List<Integer> chunkSizes = new ArrayList<Integer>();
     MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
       hasBody = true;
+      requestBody = new TruncatingOutputStream();
       throttledTransfer(throttlePolicy, in, requestBody, contentLength);
     } else if (chunked) {
       hasBody = true;
+      requestBody = new TruncatingOutputStream();
       while (true) {
         int chunkSize = Integer.parseInt(readAsciiUntilCrlf(in).trim(), 16);
         if (chunkSize == 0) {
@@ -537,8 +540,15 @@ public final class MockWebServer {
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
-    return new RecordedRequest(request, headers, chunkSizes, requestBody.numBytesReceived,
-        requestBody.toByteArray(), sequenceNumber, socket);
+    long bytesReceived = 0;
+    byte[] body = null;
+    if (requestBody != null) {
+      bytesReceived = requestBody.numBytesReceived;
+      body = requestBody.toByteArray();
+    }
+
+    return new RecordedRequest(request, headers, chunkSizes, bytesReceived, body, sequenceNumber,
+        socket);
   }
 
   private void writeResponse(OutputStream out, MockResponse response) throws IOException {
@@ -674,9 +684,13 @@ public final class MockWebServer {
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
+      long contentLength = -1;
       for (int i = 0, size = spdyHeaders.size(); i < size; i++) {
         ByteString name = spdyHeaders.get(i).name;
         String value = spdyHeaders.get(i).value.utf8();
+        if (name.toAsciiLowercase().utf8().equals("content-length")) {
+          contentLength = Long.parseLong(value);
+        }
         if (name.equals(Header.TARGET_METHOD)) {
           method = value;
         } else if (name.equals(Header.TARGET_PATH)) {
@@ -688,18 +702,20 @@ public final class MockWebServer {
         }
       }
 
-      InputStream bodyIn = Okio.buffer(stream.getSource()).inputStream();
-      ByteArrayOutputStream bodyOut = new ByteArrayOutputStream();
-      byte[] buffer = new byte[8192];
-      int count;
-      while ((count = bodyIn.read(buffer)) != -1) {
-        bodyOut.write(buffer, 0, count);
-      }
-      bodyIn.close();
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.size(),
-          bodyOut.toByteArray(), sequenceNumber.getAndIncrement(), socket);
+
+      byte[] body = null;
+      long bytesReceived = 0;
+      BufferedSource source = Okio.buffer(stream.getSource());
+      if (contentLength != -1) {
+        body = source.readByteArray();
+        bytesReceived = body.length;
+      }
+      source.close();
+
+      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bytesReceived, body,
+          sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {

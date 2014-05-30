@@ -105,9 +105,9 @@ public final class MockWebServerTest extends TestCase {
      * href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html#sec8.2.3">100
      * Status</a> expect the server to send an interim response with status code
      * 100 before they send their payload.
-     * 
+     *
      * <h4>Note</h4>
-     * 
+     *
      * JRE 6 only passes this test if
      * {@code -Dsun.net.http.allowRestrictedHeaders=true} is set.
      */
@@ -171,6 +171,7 @@ public final class MockWebServerTest extends TestCase {
 
         RecordedRequest request = server.takeRequest();
         assertEquals("GET / HTTP/1.1", request.getRequestLine());
+        assertNull(request.getBody());
         assertTrue(request.getHeaders().contains("Accept-Language: en-US"));
     }
 
