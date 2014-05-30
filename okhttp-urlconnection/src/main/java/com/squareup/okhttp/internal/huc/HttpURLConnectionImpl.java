@@ -78,6 +78,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   private int redirectionCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
+  /** Lazily created (with synthetic headers) on first call to getHeaders(). */
+  private Headers responseHeaders;
 
   /**
    * The most recently attempted route. This will be null if we haven't sent a
@@ -133,13 +135,38 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
+  private Headers getHeaders() throws IOException {
+    if (responseHeaders == null) {
+      Response response = getResponse().getResponse();
+      Headers headers = response.headers();
+
+      responseHeaders = headers.newBuilder()
+          .add(Platform.get().getPrefix() + "-Response-Source", responseSourceHeader(response))
+          .build();
+    }
+    return responseHeaders;
+  }
+
+  private static String responseSourceHeader(Response response) {
+    if (response.networkResponse() == null) {
+      if (response.cacheResponse() == null) {
+        return "NONE";
+      }
+      return "CACHE " + response.code();
+    }
+    if (response.cacheResponse() == null) {
+      return "NETWORK " + response.code();
+    }
+    return "CONDITIONAL_CACHE " + response.networkResponse().code();
+  }
+
   /**
    * Returns the value of the field at {@code position}. Returns null if there
    * are fewer than {@code position} headers.
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getResponse().getResponse().headers().value(position);
+      return getHeaders().value(position);
     } catch (IOException e) {
       return null;
     }
@@ -152,10 +179,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
-      Response response = getResponse().getResponse();
       return fieldName == null
-          ? StatusLine.get(response).toString()
-          : response.headers().get(fieldName);
+          ? StatusLine.get(getResponse().getResponse()).toString()
+          : getHeaders().get(fieldName);
     } catch (IOException e) {
       return null;
     }
@@ -163,7 +189,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getResponse().getResponse().headers().name(position);
+      return getHeaders().name(position);
     } catch (IOException e) {
       return null;
     }
@@ -171,8 +197,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      Response response = getResponse().getResponse();
-      return OkHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
+      return OkHeaders.toMultimap(getHeaders(),
+          StatusLine.get(getResponse().getResponse()).toString());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
