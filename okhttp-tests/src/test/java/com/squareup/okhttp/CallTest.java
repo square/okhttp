@@ -95,6 +95,7 @@ public final class CallTest {
 
     executeSynchronously(request)
         .assertCode(200)
+        .assertSuccessful()
         .assertHeader("Content-Type", "text/plain")
         .assertBody("abc");
 
@@ -103,6 +104,19 @@ public final class CallTest {
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
     assertEquals(0, recordedRequest.getBody().length);
     assertNull(recordedRequest.getHeader("Content-Length"));
+  }
+
+  @Test public void getReturns500() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(500));
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(500)
+        .assertNotSuccessful();
   }
 
   @Test public void get_SPDY_3() throws Exception {
