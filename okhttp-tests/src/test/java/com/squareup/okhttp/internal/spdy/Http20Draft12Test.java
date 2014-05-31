@@ -70,6 +70,8 @@ public class Http20Draft12Test {
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
+    assertEquals(frame, sendHeaderFrames(true, sentHeaders)); // Check writer sends the same bytes.
+
     fr.nextFrame(new BaseTestHandler() {
       @Override
       public void headers(boolean outFinished, boolean inFinished, int streamId,
@@ -119,15 +121,16 @@ public class Http20Draft12Test {
 
   /** Headers are compressed, then framed. */
   @Test public void headersFrameThenContinuation() throws IOException {
-    // Decoding the first header will cross frame boundaries.
-    Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
+    final List<Header> sentHeaders = largeHeaders();
+
+    Buffer headerBlock = literalHeaders(sentHeaders);
 
     // Write the first headers frame.
-    frame.writeShort((int) (headerBlock.size() / 2));
+    frame.writeShort(Http20Draft12.MAX_FRAME_SIZE);
     frame.writeByte(Http20Draft12.TYPE_HEADERS);
     frame.writeByte(0); // no flags
     frame.writeInt(expectedStreamId & 0x7fffffff);
-    frame.write(headerBlock, headerBlock.size() / 2);
+    frame.write(headerBlock, Http20Draft12.MAX_FRAME_SIZE);
 
     // Write the continuation frame, specifying no more frames are expected.
     frame.writeShort((int) headerBlock.size());
@@ -135,6 +138,8 @@ public class Http20Draft12Test {
     frame.writeByte(FLAG_END_HEADERS);
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
+
+    assertEquals(frame, sendHeaderFrames(false, sentHeaders)); // Check writer sends the same bytes.
 
     // Reading the above frames should result in a concatenated headerBlock.
     fr.nextFrame(new BaseTestHandler() {
@@ -144,7 +149,7 @@ public class Http20Draft12Test {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
         assertEquals(-1, associatedStreamId);
-        assertEquals(headerEntries("foo", "barrr", "baz", "qux"), headerBlock);
+        assertEquals(sentHeaders, headerBlock);
         assertEquals(HeadersMode.HTTP_20_HEADERS, headersMode);
       }
     });
@@ -169,6 +174,8 @@ public class Http20Draft12Test {
     frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
+    assertEquals(frame, sendPushPromiseFrames(expectedPromisedStreamId, pushPromise));
+
     fr.nextFrame(new BaseTestHandler() {
       @Override
       public void pushPromise(int streamId, int promisedStreamId, List<Header> headerBlock) {
@@ -182,31 +189,27 @@ public class Http20Draft12Test {
   /** Headers are compressed, then framed. */
   @Test public void pushPromiseThenContinuation() throws IOException {
     final int expectedPromisedStreamId = 11;
-
-    final List<Header> pushPromise = Arrays.asList(
-        new Header(Header.TARGET_METHOD, "GET"),
-        new Header(Header.TARGET_SCHEME, "https"),
-        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
-        new Header(Header.TARGET_PATH, "/")
-    );
+    final List<Header> pushPromise = largeHeaders();
 
     // Decoding the first header will cross frame boundaries.
     Buffer headerBlock = literalHeaders(pushPromise);
-    int firstFrameLength = (int) (headerBlock.size() - 1);
+
     // Write the first headers frame.
-    frame.writeShort(firstFrameLength + 4);
+    frame.writeShort(Http20Draft12.MAX_FRAME_SIZE);
     frame.writeByte(Http20Draft12.TYPE_PUSH_PROMISE);
     frame.writeByte(0); // no flags
     frame.writeInt(expectedStreamId & 0x7fffffff);
     frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
-    frame.write(headerBlock, firstFrameLength);
+    frame.write(headerBlock, 16379);
 
     // Write the continuation frame, specifying no more frames are expected.
-    frame.writeShort(1);
+    frame.writeShort((int) headerBlock.size());
     frame.writeByte(Http20Draft12.TYPE_CONTINUATION);
     frame.writeByte(FLAG_END_HEADERS);
     frame.writeInt(expectedStreamId & 0x7fffffff);
-    frame.write(headerBlock, 1);
+    frame.writeAll(headerBlock);
+
+    assertEquals(frame, sendPushPromiseFrames(expectedPromisedStreamId, pushPromise));
 
     // Reading the above frames should result in a concatenated headerBlock.
     fr.nextFrame(new BaseTestHandler() {
@@ -330,7 +333,7 @@ public class Http20Draft12Test {
   }
 
   @Test public void maxLengthDataFrame() throws IOException {
-    final byte[] expectedData = new byte[16383];
+    final byte[] expectedData = new byte[Http20Draft12.MAX_FRAME_SIZE];
     Arrays.fill(expectedData, (byte) 2);
 
     frame.writeShort(expectedData.length);
@@ -347,7 +350,7 @@ public class Http20Draft12Test {
           int length) throws IOException {
         assertFalse(inFinished);
         assertEquals(expectedStreamId, streamId);
-        assertEquals(16383, length);
+        assertEquals(Http20Draft12.MAX_FRAME_SIZE, length);
         ByteString data = source.readByteString(length);
         for (byte b : data.toByteArray()) {
           assertEquals(2, b);
@@ -358,7 +361,7 @@ public class Http20Draft12Test {
 
   /** We do not send SETTINGS_COMPRESS_DATA = 1, nor want to. Let's make sure we error. */
   @Test public void compressedDataFrameWhenSettingDisabled() throws IOException {
-    byte[] expectedData = new byte[16383];
+    byte[] expectedData = new byte[Http20Draft12.MAX_FRAME_SIZE];
     Arrays.fill(expectedData, (byte) 2);
     Buffer zipped = gzip(expectedData);
     int zippedSize = (int) zipped.size();
@@ -455,7 +458,7 @@ public class Http20Draft12Test {
   }
 
   /**
-   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is 16383.
+   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is Http20Draft12.MAX_FRAME_SIZE.
    */
   @Test public void readPaddedDataFrameWithTooMuchPadding() throws IOException {
     int dataLength = 1123;
@@ -546,7 +549,7 @@ public class Http20Draft12Test {
   }
 
   /**
-   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is 16383.
+   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is Http20Draft12.MAX_FRAME_SIZE.
    */
   @Test public void readPaddedHeadersFrameWithTooMuchPadding() throws IOException {
     byte[] padding = new byte[0xffff];
@@ -674,7 +677,7 @@ public class Http20Draft12Test {
   }
 
   /**
-   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is 16383.
+   * Padding is encoded over 2 bytes, so maximum value is 65535, but maximum frame size is Http20Draft12.MAX_FRAME_SIZE.
    */
   @Test public void readPaddedContinuationFrameWithTooMuchPadding() throws IOException {
     byte[] padding = new byte[0xffff];
@@ -817,7 +820,7 @@ public class Http20Draft12Test {
     try {
       int streamId = 3;
       streamId |= 1L << 31; // set reserved bit
-      writer.frameHeader(streamId, 16383, Http20Draft12.TYPE_DATA, FLAG_NONE);
+      writer.frameHeader(streamId, Http20Draft12.MAX_FRAME_SIZE, Http20Draft12.TYPE_DATA, FLAG_NONE);
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("reserved bit set: -2147483645", e.getMessage());
@@ -911,6 +914,18 @@ public class Http20Draft12Test {
     return out;
   }
 
+  private Buffer sendHeaderFrames(boolean outFinished, List<Header> headers) throws IOException {
+    Buffer out = new Buffer();
+    new Http20Draft12.Writer(out, true).headers(outFinished, expectedStreamId, headers);
+    return out;
+  }
+
+  private Buffer sendPushPromiseFrames(int streamId, List<Header> headers) throws IOException {
+    Buffer out = new Buffer();
+    new Http20Draft12.Writer(out, true).pushPromise(expectedStreamId, streamId, headers);
+    return out;
+  }
+
   private Buffer sendPingFrame(boolean ack, int payload1, int payload2) throws IOException {
     Buffer out = new Buffer();
     new Http20Draft12.Writer(out, true).ping(ack, payload1, payload2);
@@ -970,5 +985,16 @@ public class Http20Draft12Test {
     Buffer buffer = new Buffer();
     Okio.buffer(new GzipSink(buffer)).write(data).close();
     return buffer;
+  }
+
+  /** Create a sufficiently large header set to overflow Http20Draft12.MAX_FRAME_SIZE bytes. */
+  private static List<Header> largeHeaders() {
+    String[] nameValues = new String[32];
+    char[] chars = new char[512];
+    for (int i = 0; i < nameValues.length;) {
+      Arrays.fill(chars, (char) i);
+      nameValues[i++] = nameValues[i++] = String.valueOf(chars);
+    }
+    return headerEntries(nameValues);
   }
 }
