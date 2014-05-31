@@ -65,6 +65,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
@@ -688,18 +689,14 @@ public final class MockWebServer {
         }
       }
 
-      InputStream bodyIn = Okio.buffer(stream.getSource()).inputStream();
-      ByteArrayOutputStream bodyOut = new ByteArrayOutputStream();
-      byte[] buffer = new byte[8192];
-      int count;
-      while ((count = bodyIn.read(buffer)) != -1) {
-        bodyOut.write(buffer, 0, count);
-      }
+      BufferedSource bodyIn = Okio.buffer(stream.getSource());
+      byte[] bodyOut = bodyIn.readByteArray();
       bodyIn.close();
+
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.size(),
-          bodyOut.toByteArray(), sequenceNumber.getAndIncrement(), socket);
+      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.length,
+          bodyOut, sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
