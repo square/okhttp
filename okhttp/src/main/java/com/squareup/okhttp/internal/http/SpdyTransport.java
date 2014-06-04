@@ -74,6 +74,8 @@ public final class SpdyTransport implements Transport {
       ByteString.encodeUtf8("encoding"),
       ByteString.encodeUtf8("upgrade"));
 
+  private static final String VALUE_DELIMITER = "0x00";
+
   private final HttpEngine httpEngine;
   private final SpdyConnection spdyConnection;
   private SpdyStream stream;
@@ -259,7 +261,7 @@ public final class SpdyTransport implements Transport {
     for (Header header : headerBlock) {
       ByteString name = header.name;
       String values = header.value.utf8();
-      for (String value : values.split("0x00")) {
+      for (String value : values.split(VALUE_DELIMITER)) {
         if (name.equals(TARGET_PATH)) {
           path = value;
         } else if (name.equals(TARGET_HOST)) {
