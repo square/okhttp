@@ -298,7 +298,7 @@ public final class HttpEngine {
 
   private static Response stripBody(Response response) {
     return response != null && response.body() != null
-        ? response.newBuilder().body(null).build()
+        ? response.newBuilder().body((ResponseBody) null).build()
         : response;
   }
 
@@ -637,6 +637,10 @@ public final class HttpEngine {
     }
 
     return result.build();
+  }
+
+  public boolean isTransparentGzip() {
+    return transparentGzip;
   }
 
   public static String getDefaultUserAgent() {

@@ -1530,6 +1530,37 @@ public final class SpdyConnectionTest {
     assertEquals(expectedResponseHeaders, observer.takeEvent());
   }
 
+  @Test public void pushStream() throws Exception {
+    peer.setVariantAndClient(SPDY3, false);
+
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 3, headerEntries("a", "android"));
+    final List<Header> expectedPushHeaders = Arrays.asList(
+        new Header(Header.TARGET_SCHEME, "https"),
+        new Header(Header.TARGET_AUTHORITY, "squareup.com"),
+        new Header(Header.TARGET_PATH, "/cached")
+    );
+    peer.sendFrame().synStream(false, true, 2, 3, expectedPushHeaders);
+    peer.sendFrame().data(true, 3, data(0));
+    peer.sendFrame().data(true, 2, new Buffer().writeUtf8("robot"));
+    peer.play();
+
+    RecordingPushObserver observer = new RecordingPushObserver();
+
+    // play it back
+    SpdyConnection connection = connectionBuilder(peer, SPDY3)
+        .pushObserver(observer).build();
+    SpdyStream client = connection.newStream(headerEntries("b", "banana"), false, true);
+    assertEquals(-1, client.getSource().read(new Buffer(), 1));
+
+    // verify the peer received what was expected
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+
+    assertEquals(expectedPushHeaders, observer.takeEvent());
+    assertEquals("robot", observer.takeEvent());
+  }
+
   @Test public void doublePushPromise() throws Exception {
     peer.setVariantAndClient(HTTP_2, false);
 
@@ -1567,7 +1598,7 @@ public final class SpdyConnectionTest {
 
     // play it back
     connectionBuilder(peer, HTTP_2)
-        .pushObserver(PushObserver.CANCEL).build();
+        .pushObserver(SpdyPushObserver.CANCEL).build();
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -1642,27 +1673,18 @@ public final class SpdyConnectionTest {
     return (num + divisor - 1) / divisor;
   }
 
-  static final PushObserver IGNORE = new PushObserver() {
+  static final SpdyPushObserver IGNORE = new SpdyPushObserver() {
 
-    @Override public boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public synchronized boolean onPromise(int streamId, List<Header> requestHeaders) {
       return false;
     }
 
-    @Override public boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last) {
+    @Override public synchronized boolean onPush(SpdyStream associated, SpdyStream push) {
       return false;
-    }
-
-    @Override public boolean onData(int streamId, BufferedSource source, int byteCount,
-        boolean last) throws IOException {
-      source.skip(byteCount);
-      return false;
-    }
-
-    @Override public void onReset(int streamId, ErrorCode errorCode) {
     }
   };
 
-  private static class RecordingPushObserver implements PushObserver {
+  private static class RecordingPushObserver implements SpdyPushObserver {
     final List<Object> events = new ArrayList<Object>();
 
     public synchronized Object takeEvent() throws InterruptedException {
@@ -1672,32 +1694,26 @@ public final class SpdyConnectionTest {
       return events.remove(0);
     }
 
-    @Override public synchronized boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public synchronized boolean onPromise(int streamId, List<Header> requestHeaders) {
       assertEquals(2, streamId);
       events.add(requestHeaders);
       notifyAll();
       return false;
     }
 
-    @Override public synchronized boolean onHeaders(
-        int streamId, List<Header> responseHeaders, boolean last) {
-      assertEquals(2, streamId);
-      assertTrue(last);
-      events.add(responseHeaders);
-      notifyAll();
-      return false;
-    }
+    @Override public synchronized boolean onPush(SpdyStream associated, SpdyStream push) {
+      assertEquals(2, push.getId());
+      events.add(push.getRequestHeaders());
+      Source in = push.getSource();
+      try {
+        String data = Okio.buffer(in).readByteString(5).utf8();
 
-    @Override public synchronized boolean onData(
-        int streamId, BufferedSource source, int byteCount, boolean last) {
-      events.add(new AssertionError("onData"));
-      notifyAll();
+        events.add(data);
+        notifyAll();
+      } catch (IOException expected) {
+        // Just don't push anything to events
+      }
       return false;
-    }
-
-    @Override public synchronized void onReset(int streamId, ErrorCode errorCode) {
-      events.add(new AssertionError("onReset"));
-      notifyAll();
     }
   }
 }

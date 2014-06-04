@@ -15,9 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import java.io.IOException;
 import java.util.List;
-import okio.BufferedSource;
 
 /**
  * {@link com.squareup.okhttp.Protocol#HTTP_2 HTTP/2} only.
@@ -38,7 +36,7 @@ import okio.BufferedSource;
  * <p>Return true to request cancellation of a pushed stream.  Note that this
  * does not guarantee future frames won't arrive on the stream ID.
  */
-public interface PushObserver {
+public interface SpdyPushObserver {
   /**
    * Describes the request that the server intends to push a response for.
    *
@@ -46,7 +44,7 @@ public interface PushObserver {
    * @param requestHeaders minimally includes {@code :method}, {@code :scheme},
    * {@code :authority}, and (@code :path}.
    */
-  boolean onRequest(int streamId, List<Header> requestHeaders);
+  boolean onPromise(int streamId, List<Header> requestHeaders);
 
   /**
    * The response headers corresponding to a pushed request.  When {@code last}
@@ -56,40 +54,16 @@ public interface PushObserver {
    * @param responseHeaders minimally includes {@code :status}.
    * @param last when true, there is no response data.
    */
-  boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last);
+  boolean onPush(SpdyStream associated, SpdyStream push);
 
-  /**
-   * A chunk of response data corresponding to a pushed request.  This data
-   * must either be read or skipped.
-   *
-   * @param streamId server-initiated stream ID: an even number.
-   * @param source location of data corresponding with this stream ID.
-   * @param byteCount number of bytes to read or skip from the source.
-   * @param last when true, there are no data frames to follow.
-   */
-  boolean onData(int streamId, BufferedSource source, int byteCount, boolean last)
-      throws IOException;
+  SpdyPushObserver CANCEL = new SpdyPushObserver() {
 
-  /** Indicates the reason why this stream was canceled. */
-  void onReset(int streamId, ErrorCode errorCode);
-
-  PushObserver CANCEL = new PushObserver() {
-
-    @Override public boolean onRequest(int streamId, List<Header> requestHeaders) {
+    @Override public boolean onPromise(int streamId, List<Header> requestHeaders) {
       return true;
     }
 
-    @Override public boolean onHeaders(int streamId, List<Header> responseHeaders, boolean last) {
+    @Override public boolean onPush(SpdyStream associated, SpdyStream push) {
       return true;
-    }
-
-    @Override public boolean onData(int streamId, BufferedSource source, int byteCount,
-        boolean last) throws IOException {
-      source.skip(byteCount);
-      return true;
-    }
-
-    @Override public void onReset(int streamId, ErrorCode errorCode) {
     }
   };
 }

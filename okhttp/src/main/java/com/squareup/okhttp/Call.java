@@ -19,12 +19,10 @@ import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
-import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
 import java.net.ProtocolException;
 import okio.BufferedSink;
-import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
 
@@ -220,7 +218,7 @@ public final class Call {
       if (followUp == null) {
         engine.releaseConnection();
         return response.newBuilder()
-            .body(new RealResponseBody(response, engine.getResponseBody()))
+            .body(engine.getResponseBody())
             .build();
       }
 
@@ -236,29 +234,6 @@ public final class Call {
       request = followUp;
       engine = new HttpEngine(client, request, request.body() != null, false, connection, null,
               null, response);
-    }
-  }
-
-  private static class RealResponseBody extends ResponseBody {
-    private final Response response;
-    private final BufferedSource source;
-
-    RealResponseBody(Response response, BufferedSource source) {
-      this.response = response;
-      this.source = source;
-    }
-
-    @Override public MediaType contentType() {
-      String contentType = response.header("Content-Type");
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return OkHeaders.contentLength(response);
-    }
-
-    @Override public BufferedSource source() {
-      return source;
     }
   }
 }

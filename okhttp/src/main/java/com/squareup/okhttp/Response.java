@@ -16,6 +16,8 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.OkHeaders;
+import okio.BufferedSource;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -294,6 +296,38 @@ public final class Response {
     public Builder body(ResponseBody body) {
       this.body = body;
       return this;
+    }
+
+    public Builder body(BufferedSource source) {
+      return body(new RealResponseBody(source));
+    }
+
+    private class RealResponseBody extends ResponseBody {
+      private final MediaType mediaType;
+      private final BufferedSource source;
+      private final long contentLength;
+
+      RealResponseBody(BufferedSource source) {
+        if (headers == null) {
+          throw new IllegalStateException("Set headers before setting the body");
+        }
+        String contentType = headers.get("Content-Type");
+        mediaType = contentType != null ? MediaType.parse(contentType) : null;
+        this.source = source;
+        this.contentLength = OkHeaders.contentLength(headers.build());
+      }
+
+      @Override public MediaType contentType() {
+        return mediaType;
+      }
+
+      @Override public long contentLength() {
+        return contentLength;
+      }
+
+      @Override public BufferedSource source() {
+        return source;
+      }
     }
 
     public Builder networkResponse(Response networkResponse) {

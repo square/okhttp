@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.PushPromise;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import java.io.File;
@@ -290,6 +291,37 @@ public final class CallTest {
   @Test public void patch_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     patch();
+  }
+
+  @Test public void push_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    server.enqueue(new MockResponse()
+        .withPush(new PushPromise("GET", "/pushed", Arrays.asList("foo: bar"),
+             new MockResponse().setBody("push data")))
+        .setBody("abc"));
+    server.play();
+
+    TestPushObserver pushObserver = new TestPushObserver();
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    executeSynchronously(request, pushObserver)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("GET", recordedRequest.getMethod());
+    assertEquals(0, recordedRequest.getBody().length);
+
+    synchronized (pushObserver) {
+      if (!pushObserver.gotRequest()) {
+        pushObserver.wait();
+      }
+      assertNull(pushObserver.exception());
+      assertEquals("/pushed", pushObserver.response().header("path"));
+      assertEquals("push data", new String(pushObserver.response().body().bytes()));
+    }
   }
 
   @Test public void illegalToExecuteTwice() throws Exception {
@@ -1204,9 +1236,14 @@ public final class CallTest {
         .assertRequestHeader("Accept-Encoding", "gzip");
   }
 
+  private RecordedResponse executeSynchronously(Request request, PushObserver pushObserver) throws IOException {
+      Call call = client.newCall(request.newBuilder().pushObserver(pushObserver).build());
+      Response response = call.execute();
+      return new RecordedResponse(request, response, response.body().string(), null);
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
-    Response response = client.newCall(request).execute();
-    return new RecordedResponse(request, response, response.body().string(), null);
+      return executeSynchronously(request, null);
   }
 
   /**
@@ -1243,4 +1280,33 @@ public final class CallTest {
       }
     }
   }
+  private class TestPushObserver implements PushObserver {
+    private boolean gotRequest = false;
+    private IOException exception = null;
+    private Response response = null;
+    private String data = null;
+
+    public boolean gotRequest() {
+      return gotRequest;
+    }
+
+    public IOException exception() {
+      return exception;
+    }
+
+    public Response response() {
+      return response;
+    }
+
+
+    @Override public synchronized boolean onPush(Response response) {
+      try {
+          this.response = response;
+        return false;
+      } finally {
+        gotRequest = true;
+        notifyAll();
+      }
+    }
+  };
 }
