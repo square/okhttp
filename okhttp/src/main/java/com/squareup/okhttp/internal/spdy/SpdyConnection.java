@@ -778,7 +778,7 @@ public final class SpdyConnection implements Closeable {
 
   /** Even, positive numbered streams are pushed streams in HTTP/2 and SPDY/3. */
   private boolean pushedStream(int streamId) {
-    return (protocol == Protocol.HTTP_2 || client) && streamId != 0 && (streamId & 1) == 0;
+    return (protocol == Protocol.HTTP_2 || client) && streamId > 0 && (streamId & 1) == 0;
   }
 
   private void pushPromiseLater(final int streamId, final List<Header> requestHeaders) {
