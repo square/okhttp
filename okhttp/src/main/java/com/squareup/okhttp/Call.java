@@ -43,7 +43,6 @@ public final class Call {
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
   HttpEngine engine;
-  PushObserver pushObserver;
 
   Call(OkHttpClient client, Dispatcher dispatcher, Request request) {
     this.client = client;
@@ -237,10 +236,4 @@ public final class Call {
               null, response);
     }
   }
-
-  public Call pushObserver(PushObserver pushObserver) {
-      this.pushObserver = pushObserver;
-      return this;
-  }
-
 }

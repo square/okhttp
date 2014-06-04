@@ -1237,10 +1237,7 @@ public final class CallTest {
   }
 
   private RecordedResponse executeSynchronously(Request request, PushObserver pushObserver) throws IOException {
-      Call call = client.newCall(request);
-      if(pushObserver != null) {
-          call = call.pushObserver(pushObserver);
-      }
+      Call call = client.newCall(request.newBuilder().pushObserver(pushObserver).build());
       Response response = call.execute();
       return new RecordedResponse(request, response, response.body().string(), null);
   }
