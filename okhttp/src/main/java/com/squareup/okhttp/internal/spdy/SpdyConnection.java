@@ -821,8 +821,4 @@ public final class SpdyConnection implements Closeable {
       }
     });
   }
-
-  private void pushRequestLater(final int streamId, final List<Header> requestHeaders) {
-    // WTF Should I do with this?
-  }
 }
