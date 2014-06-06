@@ -411,7 +411,7 @@ public final class HttpConnection {
         Internal.instance.recycle(pool, connection);
       } else if (onIdle == ON_IDLE_CLOSE) {
         state = STATE_CLOSED;
-        connection.getSocket();
+        connection.getSocket().close();
       }
     }
 
