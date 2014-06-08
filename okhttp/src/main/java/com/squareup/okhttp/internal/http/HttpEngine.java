@@ -609,10 +609,6 @@ public final class HttpEngine {
       result.header("Accept-Encoding", "gzip");
     }
 
-    if (hasRequestBody() && request.header("Content-Type") == null) {
-      result.header("Content-Type", "application/x-www-form-urlencoded");
-    }
-
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
       // Capture the request headers added so far so that they can be offered to the CookieHandler.

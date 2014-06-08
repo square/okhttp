@@ -319,12 +319,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
     boolean bufferRequestBody = false;
     if (HttpMethod.hasRequestBody(method)) {
+      // Specify how the request body is terminated.
       if (fixedContentLength != -1) {
         builder.header("Content-Length", Long.toString(fixedContentLength));
       } else if (chunkLength > 0) {
         builder.header("Transfer-Encoding", "chunked");
       } else {
         bufferRequestBody = true;
+      }
+
+      // Add a content type for the request body, if one isn't already present.
+      if (headers.get("Content-Type") == null) {
+        builder.header("Content-Type", "application/x-www-form-urlencoded");
       }
     }
 

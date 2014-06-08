@@ -310,6 +310,23 @@ public final class CallTest {
     patch();
   }
 
+  @Test public void unspecifiedRequestBodyContentTypeDoesNotGetDefault() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("POST", RequestBody.create(null, "abc"))
+        .build();
+
+    executeSynchronously(request).assertCode(200);
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(null, recordedRequest.getHeader("Content-Type"));
+    assertEquals("3", recordedRequest.getHeader("Content-Length"));
+    assertEquals("abc", recordedRequest.getUtf8Body());
+  }
+
   @Test public void illegalToExecuteTwice() throws Exception {
     server.enqueue(new MockResponse()
         .setBody("abc")

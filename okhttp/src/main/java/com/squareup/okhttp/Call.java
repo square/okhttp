@@ -167,11 +167,12 @@ public final class Call {
     RequestBody body = request.body();
     RetryableSink requestBodyOut = null;
     if (body != null) {
-      MediaType contentType = body.contentType();
-      if (contentType == null) throw new IllegalStateException("contentType == null");
-
       Request.Builder requestBuilder = request.newBuilder();
-      requestBuilder.header("Content-Type", contentType.toString());
+
+      MediaType contentType = body.contentType();
+      if (contentType != null) {
+        requestBuilder.header("Content-Type", contentType.toString());
+      }
 
       long contentLength = body.contentLength();
       if (contentLength != -1) {
