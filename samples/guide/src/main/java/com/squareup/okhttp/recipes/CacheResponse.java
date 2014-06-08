@@ -25,8 +25,7 @@ import java.io.IOException;
 public final class CacheResponse {
   private final OkHttpClient client;
 
-  public CacheResponse() throws Exception {
-    File cacheDirectory = new File("CacheResponse.tmp");
+  public CacheResponse(File cacheDirectory) throws Exception {
     int cacheSize = 10 * 1024 * 1024; // 10 MiB
     Cache cache = new Cache(cacheDirectory, cacheSize);
 
@@ -59,6 +58,6 @@ public final class CacheResponse {
   }
 
   public static void main(String... args) throws Exception {
-    new CacheResponse().run();
+    new CacheResponse(new File("CacheResponse.tmp")).run();
   }
 }
