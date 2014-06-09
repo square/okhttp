@@ -2862,6 +2862,21 @@ public final class URLConnectionTest {
     assertEquals(0L, zeroLengthPayload.getBodySize());
   }
 
+  @Test public void unspecifiedRequestBodyContentTypeGetsDefault() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    connection = client.open(server.getUrl("/"));
+    connection.setDoOutput(true);
+    connection.getOutputStream().write("abc".getBytes(UTF_8));
+    assertEquals(200, connection.getResponseCode());
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("application/x-www-form-urlencoded", request.getHeader("Content-Type"));
+    assertEquals("3", request.getHeader("Content-Length"));
+    assertEquals("abc", request.getUtf8Body());
+  }
+
   @Test public void setProtocols() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
     server.play();
