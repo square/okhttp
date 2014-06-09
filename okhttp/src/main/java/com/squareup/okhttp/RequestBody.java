@@ -76,7 +76,6 @@ public abstract class RequestBody {
 
   /** Returns a new request body that transmits the content of {@code file}. */
   public static RequestBody create(final MediaType contentType, final File file) {
-    if (contentType == null) throw new NullPointerException("contentType == null");
     if (file == null) throw new NullPointerException("content == null");
 
     return new RequestBody() {
