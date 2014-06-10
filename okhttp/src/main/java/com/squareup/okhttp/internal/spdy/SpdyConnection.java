@@ -133,7 +133,11 @@ public final class SpdyConnection implements Closeable {
     client = builder.client;
     handler = builder.handler;
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-12#section-5.1.1
-    nextStreamId = builder.client ? 3 : 2; // 1 on client is reserved for Upgrade
+    nextStreamId = builder.client ? 1 : 2;
+    if (builder.client && protocol == Protocol.HTTP_2) {
+      nextStreamId += 2; // In HTTP/2, 1 on client is reserved for Upgrade.
+    }
+
     nextPingId = builder.client ? 1 : 2;
 
     // Flow control was designed more for servers, or proxies than edge clients.
