@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -203,6 +204,9 @@ public final class Request {
     public Builder method(String method, RequestBody body) {
       if (method == null || method.length() == 0) {
         throw new IllegalArgumentException("method == null || method.length() == 0");
+      }
+      if (body != null && !HttpMethod.hasRequestBody(method)) {
+        throw new IllegalArgumentException("method " + method + " must not have a request body.");
       }
       this.method = method;
       this.body = body;

@@ -129,6 +129,17 @@ public final class CallTest {
     get();
   }
 
+  @Test public void getWithRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    try {
+      new Request.Builder().method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
   @Test public void head() throws Exception {
     server.enqueue(new MockResponse().addHeader("Content-Type: text/plain"));
     server.play();
