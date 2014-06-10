@@ -161,13 +161,12 @@ public final class OkHttpClient implements Cloneable {
    *
    * @see URLConnection#setConnectTimeout(int)
    */
-  public OkHttpClient setConnectTimeout(long timeout, TimeUnit unit) {
+  public void setConnectTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     connectTimeout = (int) millis;
-    return this;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -180,13 +179,12 @@ public final class OkHttpClient implements Cloneable {
    *
    * @see URLConnection#setReadTimeout(int)
    */
-  public OkHttpClient setReadTimeout(long timeout, TimeUnit unit) {
+  public void setReadTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     readTimeout = (int) millis;
-    return this;
   }
 
   /** Default read timeout (in milliseconds). */
@@ -197,13 +195,12 @@ public final class OkHttpClient implements Cloneable {
   /**
    * Sets the default write timeout for new connections. A value of 0 means no timeout.
    */
-  public OkHttpClient setWriteTimeout(long timeout, TimeUnit unit) {
+  public void setWriteTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     writeTimeout = (int) millis;
-    return this;
   }
 
   /** Default write timeout (in milliseconds). */
@@ -261,10 +258,9 @@ public final class OkHttpClient implements Cloneable {
   }
 
   /** Sets the response cache to be used to read and write cached responses. */
-  OkHttpClient setInternalCache(InternalCache internalCache) {
+  void setInternalCache(InternalCache internalCache) {
     this.internalCache = internalCache;
     this.cache = null;
-    return this;
   }
 
   InternalCache internalCache() {
