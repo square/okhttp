@@ -174,10 +174,9 @@ public final class Connection {
     SSLSocket sslSocket = (SSLSocket) socket;
     platform.configureTls(sslSocket, route.address.uriHost, route.tlsVersion);
 
-    boolean useNpn = false;
-    if (route.supportsNpn() && route.address.protocols.size() > 1) {
+    boolean useNpn = route.supportsNpn();
+    if (useNpn) {
       platform.setProtocols(sslSocket, route.address.protocols);
-      useNpn = true;
     }
 
     // Force handshake. This can throw!
