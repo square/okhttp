@@ -146,13 +146,13 @@ public final class Call {
           responseCallback.onFailure(request, new IOException("Canceled"));
         } else {
           signalledCallback = true;
+          engine.releaseConnection();
           responseCallback.onResponse(response);
         }
       } catch (IOException e) {
         if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
         responseCallback.onFailure(request, e);
       } finally {
-        engine.close(); // Close the connection if it isn't already.
         dispatcher.finished(this);
       }
     }
