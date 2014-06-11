@@ -591,10 +591,6 @@ public final class HttpEngine {
   private Request networkRequest(Request request) throws IOException {
     Request.Builder result = request.newBuilder();
 
-    if (request.header("User-Agent") == null) {
-      result.header("User-Agent", getDefaultUserAgent());
-    }
-
     if (request.header("Host") == null) {
       result.header("Host", hostHeader(request.url()));
     }
@@ -623,11 +619,6 @@ public final class HttpEngine {
     }
 
     return result.build();
-  }
-
-  public static String getDefaultUserAgent() {
-    String agent = System.getProperty("http.agent");
-    return agent != null ? agent : ("Java" + System.getProperty("java.version"));
   }
 
   public static String hostHeader(URL url) {
@@ -799,17 +790,19 @@ public final class HttpEngine {
   private Request tunnelRequest(Connection connection, Request request) throws IOException {
     if (!connection.getRoute().requiresTunnel()) return null;
 
-    String userAgent = request.header("User-Agent");
-    if (userAgent == null) userAgent = getDefaultUserAgent();
-
     String host = request.url().getHost();
     int port = getEffectivePort(request.url());
     String authority = (port == getDefaultPort("https")) ? host : (host + ":" + port);
     Request.Builder result = new Request.Builder()
         .url(new URL("https", host, port, "/"))
         .header("Host", authority)
-        .header("User-Agent", userAgent)
         .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
+
+    // Copy over the User-Agent header if it exists.
+    String userAgent = request.header("User-Agent");
+    if (userAgent != null) {
+      result.header("User-Agent", userAgent);
+    }
 
     // Copy over the Proxy-Authorization header if it exists.
     String proxyAuthorization = request.header("Proxy-Authorization");
