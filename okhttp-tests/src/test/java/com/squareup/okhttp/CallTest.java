@@ -52,6 +52,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.lang.Thread.UncaughtExceptionHandler;
@@ -106,6 +107,15 @@ public final class CallTest {
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
     assertEquals(0, recordedRequest.getBody().length);
     assertNull(recordedRequest.getHeader("Content-Length"));
+  }
+
+  @Ignore // TODO(jwilson): fix.
+  @Test public void invalidScheme() throws Exception {
+    try {
+      new Request.Builder().url("ftp://hostname/path");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   @Test public void getReturns500() throws Exception {
