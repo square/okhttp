@@ -34,11 +34,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1283,6 +1285,44 @@ public final class CallTest {
         .assertHeader("Content-Encoding", "gzip")
         .assertHeader("Content-Length", bodySize)
         .assertRequestHeader("Accept-Encoding", "gzip");
+  }
+
+  @Test public void asyncResponseCanBeConsumedLater() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("User-Agent", "SyncApiTest")
+        .build();
+
+    final BlockingQueue<Response> responseRef = new SynchronousQueue<Response>();
+    client.newCall(request).enqueue(new Callback() {
+      @Override public void onFailure(Request request, Throwable throwable) {
+        throw new AssertionError();
+      }
+
+      @Override public void onResponse(Response response) throws IOException {
+        try {
+          responseRef.put(response);
+        } catch (InterruptedException e) {
+          throw new AssertionError();
+        }
+      }
+    });
+
+    Response response = responseRef.take();
+    assertEquals(200, response.code());
+    assertEquals("abc", response.body().string());
+
+    // Make another request just to confirm that that connection can be reused...
+    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build()).assertBody("def");
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Connection reused.
+
+    // ... even before we close the response body!
+    response.body().close();
   }
 
   private RecordedResponse executeSynchronously(Request request) throws IOException {
