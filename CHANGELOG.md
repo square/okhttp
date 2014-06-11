@@ -1,6 +1,45 @@
 Change Log
 ==========
 
+## Version 2.0.0-RC2
+
+_2014-06-11_
+
+This update fixes problems in 2.0.0-RC1. Read the 2.0.0-RC1 changes for
+advice on upgrading from 1.x to 2.x.
+
+ *  Fix: Don't leak connections! There was a regression in 2.0.0-RC2 where
+    connections were neither closed nor pooled.
+ *  Fix: Revert builder-style return types from OkHttpClient's timeout methods
+    for binary compatibility with OkHttp 1.x.
+ *  Fix: Don't skip client stream 1 on SPDY/3.1. This fixes SPDY connectivity to
+    `https://google.com`, which doesn't follow the SPDY/3.1 spec!
+ *  Fix: Always configure NPN headers. This fixes connectivity to
+    `https://facebook.com` when SPDY and HTTP/2 are both disabled. Otherwise an
+    unexpected NPN response is received and OkHttp crashes.
+ *  Fix: Write continuation frames when HPACK data is larger than 16383 bytes.
+ *  Fix: Don't drop uncaught exceptions thrown in async calls.
+ *  Fix: Throw an exception eagerly when a request body is not legal. Previously
+    we ignored the problem at request-building time, only to crash later with a
+    `NullPointerException`.
+ *  Fix: Include a backwards-compatible `OkHttp-Response-Source` header with
+    `OkUrlFactory `responses.
+ *  Fix: Don't include a default User-Agent header in requests made with the Call
+    API. Requests made with OkUrlFactory will continue to have a default user
+    agent.
+ *  New: Guava-like API to create headers:
+
+    ```
+    Headers headers = Headers.of(name1, value1, name2, value2, ...).
+    ```
+
+ *  New: Make the content-type header optional for request bodies.
+ *  New: `Response.isSuccessful()` is a convenient API to check response codes.
+ *  New: The response body can now be read outside of the callback. Response
+    bodies must always be closed, otherwise they will leak connections!
+ *  New: APIs to create multipart request bodies (`MultipartBuilder`) and form
+    encoding bodies (`FormEncodingBuilder`).
+
 ## Version 2.0.0-RC1
 
 _2014-05-23_
