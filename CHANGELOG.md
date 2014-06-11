@@ -8,7 +8,7 @@ _2014-06-11_
 This update fixes problems in 2.0.0-RC1. Read the 2.0.0-RC1 changes for
 advice on upgrading from 1.x to 2.x.
 
- *  Fix: Don't leak connections! There was a regression in 2.0.0-RC2 where
+ *  Fix: Don't leak connections! There was a regression in 2.0.0-RC1 where
     connections were neither closed nor pooled.
  *  Fix: Revert builder-style return types from OkHttpClient's timeout methods
     for binary compatibility with OkHttp 1.x.
