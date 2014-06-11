@@ -467,6 +467,17 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
+   * Prepares the {@code request} to create a web socket at some point in the future.
+   */
+  public WebSocket newWebSocket(Request request) {
+    // Copy the client. Otherwise changes (socket factory, redirect policy,
+    // etc.) may incorrectly be reflected in the request when it is executed.
+    OkHttpClient client = copyWithDefaults();
+
+    throw new UnsupportedOperationException(); // TODO!
+  }
+
+  /**
    * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
    * complete cannot be canceled.
    */
