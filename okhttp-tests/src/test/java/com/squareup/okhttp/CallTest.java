@@ -1325,6 +1325,16 @@ public final class CallTest {
     response.body().close();
   }
 
+  @Test public void userAgentIsOmittedByDefault() throws Exception {
+    server.enqueue(new MockResponse());
+    server.play();
+
+    executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertNull(recordedRequest.getHeader("User-Agent"));
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, response.body().string(), null);

@@ -334,6 +334,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
     }
 
+    if (headers.get("User-Agent") == null) {
+      builder.header("User-Agent", defaultUserAgent());
+    }
+
     Request request = builder.build();
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
@@ -344,6 +348,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
     return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
         priorResponse);
+  }
+
+  private String defaultUserAgent() {
+    String agent = System.getProperty("http.agent");
+    return agent != null ? agent : ("Java" + System.getProperty("java.version"));
   }
 
   /**

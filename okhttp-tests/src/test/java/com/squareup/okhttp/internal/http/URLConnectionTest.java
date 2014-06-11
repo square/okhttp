@@ -122,6 +122,7 @@ public final class URLConnectionTest {
     Authenticator.setDefault(null);
     System.clearProperty("proxyHost");
     System.clearProperty("proxyPort");
+    System.clearProperty("http.agent");
     System.clearProperty("http.proxyHost");
     System.clearProperty("http.proxyPort");
     System.clearProperty("https.proxyHost");
@@ -2992,6 +2993,27 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("DELETE", request.getMethod());
     assertEquals("BODY", new String(request.getBody(), UTF_8));
+  }
+
+  @Test public void userAgentPicksUpHttpAgentSystemProperty() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+
+    System.setProperty("http.agent", "foo");
+    assertContent("abc", client.open(server.getUrl("/")));
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("foo", request.getHeader("User-Agent"));
+  }
+
+  @Test public void userAgentDefaultsToJavaVersion() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+
+    assertContent("abc", client.open(server.getUrl("/")));
+
+    RecordedRequest request = server.takeRequest();
+    assertTrue(request.getHeader("User-Agent").startsWith("Java"));
   }
 
   /** Returns a gzipped copy of {@code bytes}. */
