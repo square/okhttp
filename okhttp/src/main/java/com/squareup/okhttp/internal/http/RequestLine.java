@@ -18,7 +18,7 @@ public final class RequestLine {
   static String get(Request request, Proxy.Type proxyType, Protocol protocol) {
     StringBuilder result = new StringBuilder();
     result.append(request.method());
-    result.append(" ");
+    result.append(' ');
 
     if (includeAuthorityInRequestLine(request, proxyType)) {
       result.append(request.url());
@@ -26,7 +26,7 @@ public final class RequestLine {
       result.append(requestPath(request.url()));
     }
 
-    result.append(" ");
+    result.append(' ');
     result.append(version(protocol));
     return result.toString();
   }
