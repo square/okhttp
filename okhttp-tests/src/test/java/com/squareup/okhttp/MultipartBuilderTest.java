@@ -106,17 +106,17 @@ public final class MultipartBuilderTest {
     RequestBody requestBody = new MultipartBuilder("AaB03x")
         .type(MultipartBuilder.FORM)
         .addPart(
-            headers("Content-Disposition", "form-data; name=\"submit-name\""),
+            Headers.of("Content-Disposition", "form-data; name=\"submit-name\""),
             RequestBody.create(null, "Larry"))
         .addPart(
-            headers("Content-Disposition", "form-data; name=\"files\""),
+            Headers.of("Content-Disposition", "form-data; name=\"files\""),
             new MultipartBuilder("BbC04y")
                 .addPart(
-                    headers("Content-Disposition", "file; filename=\"file1.txt\""),
+                    Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
                     RequestBody.create(
                         MediaType.parse("text/plain"), "... contents of file1.txt ..."))
                 .addPart(
-                    headers(
+                    Headers.of(
                         "Content-Disposition", "file; filename=\"file2.gif\"",
                         "Content-Transfer-Encoding", "binary"),
                     RequestBody.create(
@@ -134,8 +134,9 @@ public final class MultipartBuilderTest {
 
   @Test public void contentTypeHeaderIsForbidden() throws Exception {
     try {
-      new MultipartBuilder()
-          .addPart(headers("Content-Type", "text/plain"), RequestBody.create(null, "Hello, World!"));
+      new MultipartBuilder().addPart(
+          Headers.of("Content-Type", "text/plain"),
+          RequestBody.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -143,21 +144,11 @@ public final class MultipartBuilderTest {
 
   @Test public void contentLengthHeaderIsForbidden() throws Exception {
     try {
-      new MultipartBuilder()
-          .addPart(headers("Content-Length", "13"), RequestBody.create(null, "Hello, World!"));
+      new MultipartBuilder().addPart(
+          Headers.of("Content-Length", "13"),
+          RequestBody.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
     }
-  }
-
-  private static Headers headers(String name, String value) {
-    return new Headers.Builder().add(name, value).build();
-  }
-
-  private static Headers headers(String name1, String value1, String name2, String value2) {
-    return new Headers.Builder()
-        .add(name1, value1)
-        .add(name2, value2)
-        .build();
   }
 }
