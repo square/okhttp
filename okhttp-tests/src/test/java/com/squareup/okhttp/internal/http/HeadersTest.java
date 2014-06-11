@@ -27,6 +27,7 @@ import org.junit.Test;
 import static com.squareup.okhttp.internal.Util.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public final class HeadersTest {
   @Test public void parseNameValueBlock() throws IOException {
@@ -136,5 +137,58 @@ public final class HeadersTest {
         ":scheme", "http");
     assertEquals(expected,
         SpdyTransport.writeNameValueBlock(request, Protocol.HTTP_2, "HTTP/1.1"));
+  }
+
+  @Test public void ofTrims() {
+    Headers headers = Headers.of("\t User-Agent \n", " \r OkHttp ");
+    assertEquals("User-Agent", headers.name(0));
+    assertEquals("OkHttp", headers.value(0));
+  }
+
+  @Test public void ofThrowsOddNumberOfHeaders() {
+    try {
+      Headers.of("User-Agent", "OkHttp", "Content-Length");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void ofThrowsOnNull() {
+    try {
+      Headers.of("User-Agent", null);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void ofThrowsOnEmptyName() {
+    try {
+      Headers.of("", "OkHttp");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void ofAcceptsEmptyValue() {
+    Headers headers = Headers.of("User-Agent", "");
+    assertEquals("", headers.value(0));
+  }
+
+  @Test public void ofMakesDefensiveCopy() {
+    String[] namesAndValues = {
+        "User-Agent",
+        "OkHttp"
+    };
+    Headers headers = Headers.of(namesAndValues);
+    namesAndValues[1] = "Chrome";
+    assertEquals("OkHttp", headers.value(0));
+  }
+
+  @Test public void ofRejectsNulChar() {
+    try {
+      Headers.of("User-Agent", "Square\u0000OkHttp");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 }

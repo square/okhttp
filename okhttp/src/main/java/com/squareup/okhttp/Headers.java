@@ -51,9 +51,13 @@ public final class Headers {
     this.namesAndValues = builder.namesAndValues.toArray(new String[builder.namesAndValues.size()]);
   }
 
+  private Headers(String[] namesAndValues) {
+    this.namesAndValues = namesAndValues;
+  }
+
   /** Returns the last value corresponding to the specified field, or null. */
-  public String get(String fieldName) {
-    return get(namesAndValues, fieldName);
+  public String get(String name) {
+    return get(namesAndValues, name);
   }
 
   /**
@@ -61,8 +65,8 @@ public final class Headers {
    * HTTP date, or null if either the field is absent or cannot be parsed as a
    * date.
    */
-  public Date getDate(String fieldName) {
-    String value = get(fieldName);
+  public Date getDate(String name) {
+    String value = get(name);
     return value != null ? HttpDate.parse(value) : null;
   }
 
@@ -73,11 +77,11 @@ public final class Headers {
 
   /** Returns the field at {@code position} or null if that is out of range. */
   public String name(int index) {
-    int fieldNameIndex = index * 2;
-    if (fieldNameIndex < 0 || fieldNameIndex >= namesAndValues.length) {
+    int nameIndex = index * 2;
+    if (nameIndex < 0 || nameIndex >= namesAndValues.length) {
       return null;
     }
-    return namesAndValues[fieldNameIndex];
+    return namesAndValues[nameIndex];
   }
 
   /** Returns the value at {@code index} or null if that is out of range. */
@@ -126,13 +130,42 @@ public final class Headers {
     return result.toString();
   }
 
-  private static String get(String[] namesAndValues, String fieldName) {
+  private static String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
-      if (fieldName.equalsIgnoreCase(namesAndValues[i])) {
+      if (name.equalsIgnoreCase(namesAndValues[i])) {
         return namesAndValues[i + 1];
       }
     }
     return null;
+  }
+
+  /**
+   * Returns headers for the alternating header names and values. There must be
+   * an even number of arguments, and they must alternate between header names
+   * and values.
+   */
+  public static Headers of(String... namesAndValues) {
+    if (namesAndValues == null || namesAndValues.length % 2 != 0) {
+      throw new IllegalArgumentException("Expected alternating header names and values");
+    }
+
+    // Make a defensive copy and clean it up.
+    namesAndValues = namesAndValues.clone();
+    for (int i = 0; i < namesAndValues.length; i++) {
+      if (namesAndValues[i] == null) throw new IllegalArgumentException("Headers cannot be null");
+      namesAndValues[i] = namesAndValues[i].trim();
+    }
+
+    // Check for malformed headers.
+    for (int i = 0; i < namesAndValues.length; i += 2) {
+      String name = namesAndValues[i];
+      String value = namesAndValues[i + 1];
+      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
+      }
+    }
+
+    return new Headers(namesAndValues);
   }
 
   public static class Builder {
@@ -153,29 +186,29 @@ public final class Headers {
     }
 
     /** Add a field with the specified value. */
-    public Builder add(String fieldName, String value) {
-      if (fieldName == null) throw new IllegalArgumentException("fieldname == null");
+    public Builder add(String name, String value) {
+      if (name == null) throw new IllegalArgumentException("name == null");
       if (value == null) throw new IllegalArgumentException("value == null");
-      if (fieldName.length() == 0 || fieldName.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + fieldName + ": " + value);
+      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
+        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
       }
-      return addLenient(fieldName, value);
+      return addLenient(name, value);
     }
 
     /**
      * Add a field with the specified value without any validation. Only
      * appropriate for headers from the remote peer.
      */
-    private Builder addLenient(String fieldName, String value) {
-      namesAndValues.add(fieldName);
+    private Builder addLenient(String name, String value) {
+      namesAndValues.add(name);
       namesAndValues.add(value.trim());
       return this;
     }
 
-    public Builder removeAll(String fieldName) {
+    public Builder removeAll(String name) {
       for (int i = 0; i < namesAndValues.size(); i += 2) {
-        if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
-          namesAndValues.remove(i); // field name
+        if (name.equalsIgnoreCase(namesAndValues.get(i))) {
+          namesAndValues.remove(i); // name
           namesAndValues.remove(i); // value
           i -= 2;
         }
@@ -187,16 +220,16 @@ public final class Headers {
      * Set a field with the specified value. If the field is not found, it is
      * added. If the field is found, the existing values are replaced.
      */
-    public Builder set(String fieldName, String value) {
-      removeAll(fieldName);
-      add(fieldName, value);
+    public Builder set(String name, String value) {
+      removeAll(name);
+      add(name, value);
       return this;
     }
 
-    /** Equivalent to {@code build().get(fieldName)}, but potentially faster. */
-    public String get(String fieldName) {
+    /** Equivalent to {@code build().get(name)}, but potentially faster. */
+    public String get(String name) {
       for (int i = namesAndValues.size() - 2; i >= 0; i -= 2) {
-        if (fieldName.equalsIgnoreCase(namesAndValues.get(i))) {
+        if (name.equalsIgnoreCase(namesAndValues.get(i))) {
           return namesAndValues.get(i + 1);
         }
       }
