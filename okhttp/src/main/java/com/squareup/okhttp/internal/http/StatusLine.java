@@ -80,9 +80,9 @@ public final class StatusLine {
   @Override public String toString() {
     StringBuilder result = new StringBuilder();
     result.append(protocol == Protocol.HTTP_1_0 ? "HTTP/1.0" : "HTTP/1.1");
-    result.append(" ").append(code);
+    result.append(' ').append(code);
     if (message != null) {
-      result.append(" ").append(message);
+      result.append(' ').append(message);
     }
     return result.toString();
   }
