@@ -451,7 +451,7 @@ public final class CallTest {
     });
 
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, Throwable throwable) {
+      @Override public void onFailure(Request request, IOException e) {
         fail();
       }
 
@@ -514,7 +514,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, Throwable throwable) {
+      @Override public void onFailure(Request request, IOException e) {
         throw new AssertionError();
       }
 
@@ -1233,7 +1233,7 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(request);
     call.enqueue(new Callback() {
-      @Override public void onFailure(Request request, Throwable throwable) {
+      @Override public void onFailure(Request request, IOException e) {
         failureRef.set(true);
         latch.countDown();
       }
@@ -1309,7 +1309,7 @@ public final class CallTest {
 
     final BlockingQueue<Response> responseRef = new SynchronousQueue<Response>();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, Throwable throwable) {
+      @Override public void onFailure(Request request, IOException e) {
         throw new AssertionError();
       }
 

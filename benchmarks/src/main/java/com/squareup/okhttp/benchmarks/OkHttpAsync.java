@@ -65,8 +65,8 @@ class OkHttpAsync implements HttpClient {
     }
 
     callback = new Callback() {
-      @Override public void onFailure(Request request, Throwable throwable) {
-        System.out.println("Failed: " + throwable);
+      @Override public void onFailure(Request request, IOException e) {
+        System.out.println("Failed: " + e);
       }
 
       @Override public void onResponse(Response response) throws IOException {
