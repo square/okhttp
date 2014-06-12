@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -31,9 +32,9 @@ public class RecordedResponse {
   public final Request request;
   public final Response response;
   public final String body;
-  public final Throwable failure;
+  public final IOException failure;
 
-  RecordedResponse(Request request, Response response, String body, Throwable failure) {
+  RecordedResponse(Request request, Response response, String body, IOException failure) {
     this.request = request;
     this.response = response;
     this.body = body;
