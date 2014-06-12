@@ -25,7 +25,7 @@ import com.squareup.okhttp.Response;
 import java.io.File;
 import java.io.IOException;
 
-public final class MultipartPost {
+public final class PostMultipart {
   /**
    * The imgur client ID for OkHttp recipes. If you're using imgur for anything
    * other than running these examples, please request your own client ID!
@@ -61,6 +61,6 @@ public final class MultipartPost {
   }
 
   public static void main(String... args) throws Exception {
-    new MultipartPost().run();
+    new PostMultipart().run();
   }
 }
