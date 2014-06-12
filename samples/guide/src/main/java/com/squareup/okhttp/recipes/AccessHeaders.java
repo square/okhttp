@@ -20,7 +20,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 
-public final class Headers {
+public final class AccessHeaders {
   private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
@@ -37,11 +37,9 @@ public final class Headers {
     System.out.println("Server: " + response.header("Server"));
     System.out.println("Date: " + response.header("Date"));
     System.out.println("Vary: " + response.headers("Vary"));
-
-    response.body().close();
   }
 
   public static void main(String... args) throws Exception {
-    new Headers().run();
+    new AccessHeaders().run();
   }
 }
