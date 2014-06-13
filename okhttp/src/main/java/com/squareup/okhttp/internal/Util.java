@@ -19,6 +19,7 @@ package com.squareup.okhttp.internal;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import okio.Buffer;
+import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 
@@ -261,5 +263,14 @@ public final class Util {
       }
     }
     return Collections.unmodifiableList(result);
+  }
+
+  public static void readFully(BufferedSource source, byte[] sink) throws IOException {
+    int read = 0;
+    do {
+      int got = source.read(sink, read, sink.length - read);
+      if (got == -1) throw new EOFException();
+      read += got;
+    } while (read < sink.length);
   }
 }
