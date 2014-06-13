@@ -20,6 +20,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -81,7 +82,7 @@ public class OkHttpSslFactory extends SSLSocketFactory {
 
     @Override
     public String[] getDefaultCipherSuites() {
-        return decoratedFactory.getDefaultCipherSuites();
+        return  intersect(decoratedFactory.getSupportedCipherSuites(),  ENABLED_CIPHERS);
     }
 
     @Override
@@ -109,7 +110,7 @@ public class OkHttpSslFactory extends SSLSocketFactory {
     }
 
     private String[] intersect(String[] supported, String[] enabled) {
-        List<String> supportedList = Arrays.asList(supported);
+        List<String> supportedList = new ArrayList<String>(Arrays.asList(supported));
 
         supportedList.retainAll(Arrays.asList(enabled));
 
