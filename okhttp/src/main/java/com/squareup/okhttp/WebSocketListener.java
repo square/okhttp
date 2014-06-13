@@ -26,7 +26,7 @@ public interface WebSocketListener {
    * Called when a server message is received. The {@code type} indicates whether the
    * {@code payload} should be interpreted as UTF-8 text or binary data.
    */
-  void onMessage(BufferedSource payload, PayloadType type);
+  void onMessage(BufferedSource payload, PayloadType type) throws IOException;
 
   /**
    * Called when the server sends a close message. This may have been initiated
@@ -34,7 +34,7 @@ public interface WebSocketListener {
    * the server.
    *
    * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1>RFC-compliant</a>
-   * status code or {@code -1} for none.
+   * status code.
    * @param reason Optional reason for close. May be {@code null}.
    */
   void onClose(int code, String reason);
