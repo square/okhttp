@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
+import com.squareup.okhttp.internal.OkHttpSslFactory;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
@@ -498,7 +499,7 @@ public final class OkHttpClient implements Cloneable {
       try {
         SSLContext sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, null, null);
-        defaultSslSocketFactory = sslContext.getSocketFactory();
+        defaultSslSocketFactory = new OkHttpSslFactory(sslContext.getSocketFactory());
       } catch (GeneralSecurityException e) {
         throw new AssertionError(); // The system has no TLS. Just give up.
       }
