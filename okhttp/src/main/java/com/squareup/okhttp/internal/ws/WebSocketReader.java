@@ -34,7 +34,7 @@ import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_RSV3;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_MASK_OPCODE;
 import static com.squareup.okhttp.internal.ws.Protocol.B1_FLAG_MASK;
 import static com.squareup.okhttp.internal.ws.Protocol.B1_MASK_LENGTH;
-import static com.squareup.okhttp.internal.ws.Protocol.MAX_CONTROL_PAYLOAD;
+import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_MAX;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_BINARY;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_CONTINUATION;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_CONTROL_CLOSE;
@@ -47,6 +47,9 @@ import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_SHORT;
 import static com.squareup.okhttp.internal.ws.Protocol.toggleMask;
 import static java.lang.Integer.toHexString;
 
+/**
+ * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
+ */
 public final class WebSocketReader {
   private final boolean isClient;
   private final BufferedSource source;
@@ -150,8 +153,8 @@ public final class WebSocketReader {
     }
     frameBytesRead = 0;
 
-    if (isControlFrame && frameLength > MAX_CONTROL_PAYLOAD) {
-      throw new ProtocolException("Control frame must be less than " + MAX_CONTROL_PAYLOAD + "B.");
+    if (isControlFrame && frameLength > PAYLOAD_MAX) {
+      throw new ProtocolException("Control frame must be less than " + PAYLOAD_MAX + "B.");
     }
 
     if (isMasked) {
