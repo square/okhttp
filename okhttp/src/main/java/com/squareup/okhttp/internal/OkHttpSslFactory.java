@@ -56,8 +56,16 @@ public class OkHttpSslFactory extends SSLSocketFactory {
 
   public OkHttpSslFactory(SSLSocketFactory decoratedFactory, String[] defaultProtocols) {
     this.decoratedFactory = decoratedFactory;
-    intersectedCiphers = intersect(decoratedFactory.getSupportedCipherSuites(), ENABLED_CIPHERS);
-    intersectedProtocols = intersect(defaultProtocols, ENABLED_PROTOCOLS);
+    intersectedCiphers =   intersectWithDefaultFallback(decoratedFactory.getSupportedCipherSuites(),
+            ENABLED_CIPHERS);
+    intersectedProtocols = intersectWithDefaultFallback(defaultProtocols, ENABLED_PROTOCOLS);
+  }
+
+  private String[] intersectWithDefaultFallback(String[] actual, String[] recommended) {
+    String[] result = intersect(actual, recommended);
+
+    // Fallback to defaults if intersection is empty
+    return result.length == 0 ? actual : result;
   }
 
   @Override
