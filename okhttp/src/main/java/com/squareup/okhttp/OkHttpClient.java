@@ -497,7 +497,7 @@ public final class OkHttpClient implements Cloneable {
   private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
     if (defaultSslSocketFactory == null) {
       try {
-        SSLContext sslContext = SSLContext.getDefault();
+        SSLContext sslContext = SSLContext.getInstance("Default");
         sslContext.init(null, null, null);
 
         defaultSslSocketFactory = new OkHttpSslFactory(sslContext.getSocketFactory(),
