@@ -24,6 +24,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Decorator of {@link javax.net.ssl.SSLSocketFactory} applying default ciphers and protocols.
+ * List taken from: {@see http://op-co.de/blog/posts/android_ssl_downgrade/}
+ */
 public class OkHttpSslFactory extends SSLSocketFactory {
 
   private SSLSocketFactory decoratedFactory;
@@ -47,9 +51,13 @@ public class OkHttpSslFactory extends SSLSocketFactory {
           "SSL_RSA_WITH_RC4_128_MD5",
   };
 
+  private final String[] intersectedCiphers;
+  private final String[] intersectedProtocols;
 
-  public OkHttpSslFactory(SSLSocketFactory decoratedFactory) {
+  public OkHttpSslFactory(SSLSocketFactory decoratedFactory, String[] defaultProtocols) {
     this.decoratedFactory = decoratedFactory;
+    intersectedCiphers = intersect(decoratedFactory.getSupportedCipherSuites(), ENABLED_CIPHERS);
+    intersectedProtocols = intersect(defaultProtocols, ENABLED_PROTOCOLS);
   }
 
   @Override
@@ -81,7 +89,7 @@ public class OkHttpSslFactory extends SSLSocketFactory {
 
   @Override
   public String[] getDefaultCipherSuites() {
-    return intersect(decoratedFactory.getSupportedCipherSuites(), ENABLED_CIPHERS);
+    return intersectedCiphers;
   }
 
   @Override
@@ -99,16 +107,14 @@ public class OkHttpSslFactory extends SSLSocketFactory {
   }
 
   private void applyCipherSuites(SSLSocket sslSocket) {
-    sslSocket.setEnabledCipherSuites(intersect(sslSocket.getSupportedCipherSuites(),
-            ENABLED_CIPHERS));
+    sslSocket.setEnabledCipherSuites(intersectedCiphers);
   }
 
   private void applyProtocolOrder(SSLSocket sslSocket) {
-    sslSocket.setEnabledProtocols(intersect(sslSocket.getSupportedProtocols(),
-            ENABLED_PROTOCOLS));
+    sslSocket.setEnabledProtocols(intersectedProtocols);
   }
 
-  private String[] intersect(String[] supported, String[] enabled) {
+  String[] intersect(String[] supported, String[] enabled) {
     List<String> supportedList = new ArrayList<String>(Arrays.asList(supported));
 
     supportedList.retainAll(Arrays.asList(enabled));
