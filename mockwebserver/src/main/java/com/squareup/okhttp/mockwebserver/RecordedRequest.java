@@ -91,7 +91,7 @@ public final class RecordedRequest {
 
   /** Returns the headers named {@code name}. */
   public List<String> getHeaders(String name) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     name += ":";
     for (int i = 0, size = headers.size(); i < size; i++) {
       String header = headers.get(i);

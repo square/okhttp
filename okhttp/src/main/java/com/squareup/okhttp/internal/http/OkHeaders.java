@@ -86,12 +86,12 @@ public final class OkHeaders {
    *     for responses. If non-null, this value is mapped to the null key.
    */
   public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
-    Map<String, List<String>> result = new TreeMap<String, List<String>>(FIELD_NAME_COMPARATOR);
+    Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
     for (int i = 0; i < headers.size(); i++) {
       String fieldName = headers.name(i);
       String value = headers.value(i);
 
-      List<String> allValues = new ArrayList<String>();
+      List<String> allValues = new ArrayList<>();
       List<String> otherValues = result.get(fieldName);
       if (otherValues != null) {
         allValues.addAll(otherValues);
@@ -157,7 +157,7 @@ public final class OkHeaders {
 
       String value = headers.value(i);
       if (result.isEmpty()) {
-        result = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+        result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       }
       for (String varyField : value.split(",")) {
         result.add(varyField.trim());
@@ -210,7 +210,7 @@ public final class OkHeaders {
     // challenge   = auth-scheme 1*SP 1#auth-param
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
-    List<Challenge> result = new ArrayList<Challenge>();
+    List<Challenge> result = new ArrayList<>();
     for (int h = 0; h < responseHeaders.size(); h++) {
       if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
         continue;

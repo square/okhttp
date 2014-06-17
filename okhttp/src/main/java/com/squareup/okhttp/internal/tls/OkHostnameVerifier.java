@@ -115,7 +115,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   }
 
   private List<String> getSubjectAltNames(X509Certificate certificate, int type) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     try {
       Collection<?> subjectAltNames = certificate.getSubjectAlternativeNames();
       if (subjectAltNames == null) {

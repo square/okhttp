@@ -24,8 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * by calling {@link #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
-  protected final BlockingQueue<MockResponse> responseQueue
-      = new LinkedBlockingQueue<MockResponse>();
+  protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
   private MockResponse failFastResponse;
 
   @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {

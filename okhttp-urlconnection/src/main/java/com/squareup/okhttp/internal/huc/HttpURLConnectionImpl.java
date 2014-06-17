@@ -532,7 +532,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * defined in {@link Protocol OkHttp's protocol enumeration}.
    */
   private void setProtocols(String protocolsString, boolean append) {
-    List<Protocol> protocolsList = new ArrayList<Protocol>();
+    List<Protocol> protocolsList = new ArrayList<>();
     if (append) {
       protocolsList.addAll(client.getProtocols());
     }

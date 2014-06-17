@@ -525,7 +525,7 @@ public final class Cache {
 
       try {
         CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
-        List<Certificate> result = new ArrayList<Certificate>(length);
+        List<Certificate> result = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
           String line = source.readUtf8LineStrict();
           byte[] bytes = ByteString.decodeBase64(line).toByteArray();

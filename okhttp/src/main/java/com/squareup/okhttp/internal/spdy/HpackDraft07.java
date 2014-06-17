@@ -113,7 +113,7 @@ final class HpackDraft07 {
   // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-3.2
   static final class Reader {
 
-    private final List<Header> emittedHeaders = new ArrayList<Header>();
+    private final List<Header> emittedHeaders = new ArrayList<>();
     private final BufferedSource source;
 
     private int maxHeaderTableByteCountSetting;
@@ -254,7 +254,7 @@ final class HpackDraft07 {
      * emitted headers.
      */
     List<Header> getAndReset() {
-      List<Header> result = new ArrayList<Header>(emittedHeaders);
+      List<Header> result = new ArrayList<>(emittedHeaders);
       emittedHeaders.clear();
       emittedReferencedHeaders.clear();
       return result;
@@ -412,8 +412,7 @@ final class HpackDraft07 {
   private static final Map<ByteString, Integer> NAME_TO_FIRST_INDEX = nameToFirstIndex();
 
   private static Map<ByteString, Integer> nameToFirstIndex() {
-    Map<ByteString, Integer> result =
-        new LinkedHashMap<ByteString, Integer>(STATIC_HEADER_TABLE.length);
+    Map<ByteString, Integer> result = new LinkedHashMap<>(STATIC_HEADER_TABLE.length);
     for (int i = 0; i < STATIC_HEADER_TABLE.length; i++) {
       if (!result.containsKey(STATIC_HEADER_TABLE[i].name)) {
         result.put(STATIC_HEADER_TABLE[i].name, i);

@@ -53,8 +53,8 @@ class NettyHttpClient implements HttpClient {
   private static final boolean VERBOSE = false;
 
   // Guarded by this. Real apps need more capable connection management.
-  private final Deque<HttpChannel> freeChannels = new ArrayDeque<HttpChannel>();
-  private final Deque<URL> backlog = new ArrayDeque<URL>();
+  private final Deque<HttpChannel> freeChannels = new ArrayDeque<>();
+  private final Deque<URL> backlog = new ArrayDeque<>();
 
   private int totalChannels = 0;
   private int concurrencyLevel;

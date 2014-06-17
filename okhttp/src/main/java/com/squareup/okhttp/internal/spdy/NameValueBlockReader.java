@@ -85,7 +85,7 @@ class NameValueBlockReader {
     if (numberOfPairs < 0) throw new IOException("numberOfPairs < 0: " + numberOfPairs);
     if (numberOfPairs > 1024) throw new IOException("numberOfPairs > 1024: " + numberOfPairs);
 
-    List<Header> entries = new ArrayList<Header>(numberOfPairs);
+    List<Header> entries = new ArrayList<>(numberOfPairs);
     for (int i = 0; i < numberOfPairs; i++) {
       ByteString name = readByteString().toAsciiLowercase();
       ByteString values = readByteString();

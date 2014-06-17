@@ -24,7 +24,7 @@ public final class RecordingAuthenticator extends Authenticator {
   /** base64("username:password") */
   public static final String BASE_64_CREDENTIALS = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
-  public final List<String> calls = new ArrayList<String>();
+  public final List<String> calls = new ArrayList<>();
   public final PasswordAuthentication authentication;
 
   public RecordingAuthenticator(PasswordAuthentication authentication) {

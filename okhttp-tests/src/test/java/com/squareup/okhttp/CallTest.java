@@ -440,7 +440,7 @@ public final class CallTest {
         .url(server.getUrl("/"))
         .build();
 
-    final AtomicReference<Throwable> uncaughtExceptionRef = new AtomicReference<Throwable>();
+    final AtomicReference<Throwable> uncaughtExceptionRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
 
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
@@ -1227,7 +1227,7 @@ public final class CallTest {
     server.play();
 
     final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<String> bodyRef = new AtomicReference<String>();
+    final AtomicReference<String> bodyRef = new AtomicReference<>();
     final AtomicBoolean failureRef = new AtomicBoolean();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
@@ -1307,7 +1307,7 @@ public final class CallTest {
         .header("User-Agent", "SyncApiTest")
         .build();
 
-    final BlockingQueue<Response> responseRef = new SynchronousQueue<Response>();
+    final BlockingQueue<Response> responseRef = new SynchronousQueue<>();
     client.newCall(request).enqueue(new Callback() {
       @Override public void onFailure(Request request, IOException e) {
         throw new AssertionError();

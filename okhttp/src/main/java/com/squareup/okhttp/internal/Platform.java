@@ -314,7 +314,7 @@ public class Platform {
 
     @Override public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
       try {
-        List<String> names = new ArrayList<String>(protocols.size());
+        List<String> names = new ArrayList<>(protocols.size());
         for (int i = 0, size = protocols.size(); i < size; i++) {
           Protocol protocol = protocols.get(i);
           if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN or ALPN.

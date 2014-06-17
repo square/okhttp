@@ -252,13 +252,13 @@ public class CookiesTest {
    * getRequestProperties}.
    */
   @Test public void testHeadersSentToCookieHandler() throws IOException, InterruptedException {
-    final Map<String, List<String>> cookieHandlerHeaders = new HashMap<String, List<String>>();
+    final Map<String, List<String>> cookieHandlerHeaders = new HashMap<>();
     CookieHandler.setDefault(new CookieManager() {
       @Override
       public Map<String, List<String>> get(URI uri,
           Map<String, List<String>> requestHeaders) throws IOException {
         cookieHandlerHeaders.putAll(requestHeaders);
-        Map<String, List<String>> result = new HashMap<String, List<String>>();
+        Map<String, List<String>> result = new HashMap<>();
         result.put("Cookie", Collections.singletonList("Bar=bar"));
         result.put("Cookie2", Collections.singletonList("Baz=baz"));
         result.put("Quux", Collections.singletonList("quux"));
@@ -308,7 +308,7 @@ public class CookiesTest {
     CookieHandler.setDefault(new CookieManager() {
       @Override public Map<String, List<String>> get(URI uri,
           Map<String, List<String>> requestHeaders) throws IOException {
-        Map<String, List<String>> result = new HashMap<String, List<String>>();
+        Map<String, List<String>> result = new HashMap<>();
         result.put("COOKIE", Collections.singletonList("Bar=bar"));
         result.put("cooKIE2", Collections.singletonList("Baz=baz"));
         return result;
