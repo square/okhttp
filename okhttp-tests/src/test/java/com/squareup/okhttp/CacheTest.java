@@ -455,8 +455,7 @@ public final class CacheTest {
   @Test public void responseCacheRequestHeaders() throws IOException, URISyntaxException {
     server.enqueue(new MockResponse().setBody("ABC"));
 
-    final AtomicReference<Map<String, List<String>>> requestHeadersRef
-        = new AtomicReference<Map<String, List<String>>>();
+    final AtomicReference<Map<String, List<String>>> requestHeadersRef = new AtomicReference<>();
     client.setResponseCache(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri,
           String requestMethod, Map<String, List<String>> requestHeaders) throws IOException {
@@ -1602,7 +1601,7 @@ public final class CacheTest {
   }
 
   public void assertCookies(URL url, String... expectedCookies) throws Exception {
-    List<String> actualCookies = new ArrayList<String>();
+    List<String> actualCookies = new ArrayList<>();
     for (HttpCookie cookie : cookieManager.getCookieStore().get(url.toURI())) {
       actualCookies.add(cookie.toString());
     }
@@ -1846,7 +1845,7 @@ public final class CacheTest {
    */
   private MockResponse truncateViolently(MockResponse response, int numBytesToKeep) {
     response.setSocketPolicy(DISCONNECT_AT_END);
-    List<String> headers = new ArrayList<String>(response.getHeaders());
+    List<String> headers = new ArrayList<>(response.getHeaders());
     Buffer truncatedBody = new Buffer();
     truncatedBody.write(response.getBody(), numBytesToKeep);
     response.setBody(truncatedBody);

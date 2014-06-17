@@ -70,8 +70,8 @@ public final class MultipartBuilder {
   private MediaType type = MIXED;
 
   // Parallel lists of headers and bodies. Headers may be null. Bodies are never null.
-  private final List<Headers> partHeaders = new ArrayList<Headers>();
-  private final List<RequestBody> partBodies = new ArrayList<RequestBody>();
+  private final List<Headers> partHeaders = new ArrayList<>();
+  private final List<RequestBody> partBodies = new ArrayList<>();
 
   /** Creates a new multipart builder that uses a random boundary token. */
   public MultipartBuilder() {

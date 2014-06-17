@@ -87,7 +87,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
   List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
 
   public static void main(String[] args) {
-    List<String> allArgs = new ArrayList<String>();
+    List<String> allArgs = new ArrayList<>();
     allArgs.add("--instrument");
     allArgs.add("arbitrary");
     allArgs.addAll(Arrays.asList(args));
@@ -141,7 +141,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
   }
 
   @Override public String toString() {
-    List<Object> modifiers = new ArrayList<Object>();
+    List<Object> modifiers = new ArrayList<>();
     if (tls) modifiers.add("tls");
     if (gzip) modifiers.add("gzip");
     if (chunked) modifiers.add("chunked");

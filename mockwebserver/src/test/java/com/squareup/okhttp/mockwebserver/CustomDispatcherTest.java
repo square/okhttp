@@ -36,7 +36,7 @@ public class CustomDispatcherTest {
 
   @Test public void simpleDispatch() throws Exception {
     mockWebServer.play();
-    final List<RecordedRequest> requestsMade = new ArrayList<RecordedRequest>();
+    final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
       public MockResponse dispatch(RecordedRequest request) throws InterruptedException {

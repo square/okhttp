@@ -83,7 +83,7 @@ public final class RouteSelector {
     this.pool = pool;
     this.dns = dns;
     this.routeDatabase = routeDatabase;
-    this.postponedRoutes = new LinkedList<Route>();
+    this.postponedRoutes = new LinkedList<>();
 
     resetNextProxy(uri, address.getProxy());
   }

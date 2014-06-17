@@ -42,8 +42,8 @@ public final class MockSpdyPeer implements Closeable {
   private Variant variant = new Spdy3();
   private final Buffer bytesOut = new Buffer();
   private FrameWriter frameWriter = variant.newWriter(bytesOut, client);
-  private final List<OutFrame> outFrames = new ArrayList<OutFrame>();
-  private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<InFrame>();
+  private final List<OutFrame> outFrames = new ArrayList<>();
+  private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<>();
   private int port;
   private final ExecutorService executor = Executors.newSingleThreadExecutor(
       Util.threadFactory("MockSpdyPeer", false));

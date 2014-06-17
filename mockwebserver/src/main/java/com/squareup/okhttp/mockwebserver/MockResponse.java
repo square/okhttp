@@ -27,7 +27,7 @@ public final class MockResponse implements Cloneable {
   private static final String CHUNKED_BODY_HEADER = "Transfer-encoding: chunked";
 
   private String status = "HTTP/1.1 200 OK";
-  private List<String> headers = new ArrayList<String>();
+  private List<String> headers = new ArrayList<>();
 
   /** The response body content, or null if {@code bodyStream} is set. */
   private Buffer body;
@@ -42,7 +42,7 @@ public final class MockResponse implements Cloneable {
 
   private int bodyDelayTimeMs = 0;
 
-  private List<PushPromise> promises = new ArrayList<PushPromise>();
+  private List<PushPromise> promises = new ArrayList<>();
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -52,8 +52,8 @@ public final class MockResponse implements Cloneable {
   @Override public MockResponse clone() {
     try {
       MockResponse result = (MockResponse) super.clone();
-      result.headers = new ArrayList<String>(headers);
-      result.promises = new ArrayList<PushPromise>(promises);
+      result.headers = new ArrayList<>(headers);
+      result.promises = new ArrayList<>(promises);
       return result;
     } catch (CloneNotSupportedException e) {
       throw new AssertionError();

@@ -198,7 +198,7 @@ public final class Util {
 
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
-    return Collections.unmodifiableList(new ArrayList<T>(list));
+    return Collections.unmodifiableList(new ArrayList<>(list));
   }
 
   /** Returns an immutable list containing {@code elements}. */
@@ -217,7 +217,7 @@ public final class Util {
   }
 
   public static List<Header> headerEntries(String... elements) {
-    List<Header> result = new ArrayList<Header>(elements.length / 2);
+    List<Header> result = new ArrayList<>(elements.length / 2);
     for (int i = 0; i < elements.length; i += 2) {
       result.add(new Header(elements[i], elements[i + 1]));
     }

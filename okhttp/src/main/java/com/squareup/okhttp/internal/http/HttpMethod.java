@@ -20,7 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class HttpMethod {
-  public static final Set<String> METHODS = new LinkedHashSet<String>(Arrays.asList(
+  public static final Set<String> METHODS = new LinkedHashSet<>(Arrays.asList(
       "OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
 
   public static boolean invalidatesCache(String method) {

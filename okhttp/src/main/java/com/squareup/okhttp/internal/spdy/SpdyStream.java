@@ -267,7 +267,7 @@ public final class SpdyStream {
         if (headersMode.failIfHeadersPresent()) {
           errorCode = ErrorCode.STREAM_IN_USE;
         } else {
-          List<Header> newHeaders = new ArrayList<Header>();
+          List<Header> newHeaders = new ArrayList<>();
           newHeaders.addAll(responseHeaders);
           newHeaders.addAll(headers);
           this.responseHeaders = newHeaders;

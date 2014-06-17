@@ -94,13 +94,11 @@ public final class MockWebServer {
 
   private static final Logger logger = Logger.getLogger(MockWebServer.class.getName());
 
-  private final BlockingQueue<RecordedRequest> requestQueue =
-      new LinkedBlockingQueue<RecordedRequest>();
+  private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   /** All map values are Boolean.TRUE. (Collections.newSetFromMap isn't available in Froyo) */
-  private final Map<Socket, Boolean> openClientSockets = new ConcurrentHashMap<Socket, Boolean>();
-  private final Map<SpdyConnection, Boolean> openSpdyConnections
-      = new ConcurrentHashMap<SpdyConnection, Boolean>();
+  private final Map<Socket, Boolean> openClientSockets = new ConcurrentHashMap<>();
+  private final Map<SpdyConnection, Boolean> openSpdyConnections = new ConcurrentHashMap<>();
   private final AtomicInteger requestCount = new AtomicInteger();
   private int bodyLimit = Integer.MAX_VALUE;
   private ServerSocket serverSocket;
@@ -474,7 +472,7 @@ public final class MockWebServer {
       return null; // no request because the stream is exhausted
     }
 
-    List<String> headers = new ArrayList<String>();
+    List<String> headers = new ArrayList<>();
     long contentLength = -1;
     boolean chunked = false;
     boolean expectContinue = false;
@@ -504,7 +502,7 @@ public final class MockWebServer {
 
     boolean hasBody = false;
     TruncatingOutputStream requestBody = new TruncatingOutputStream();
-    List<Integer> chunkSizes = new ArrayList<Integer>();
+    List<Integer> chunkSizes = new ArrayList<>();
     MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
       hasBody = true;
@@ -671,7 +669,7 @@ public final class MockWebServer {
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
       List<Header> spdyHeaders = stream.getRequestHeaders();
-      List<String> httpHeaders = new ArrayList<String>();
+      List<String> httpHeaders = new ArrayList<>();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
@@ -703,7 +701,7 @@ public final class MockWebServer {
       if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
         return;
       }
-      List<Header> spdyHeaders = new ArrayList<Header>();
+      List<Header> spdyHeaders = new ArrayList<>();
       String[] statusParts = response.getStatus().split(" ", 2);
       if (statusParts.length != 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
@@ -760,7 +758,7 @@ public final class MockWebServer {
 
     private void pushPromises(SpdyStream stream, List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
-        List<Header> pushedHeaders = new ArrayList<Header>();
+        List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
             ? Header.TARGET_HOST
             : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));

@@ -243,7 +243,7 @@ public final class Http2ConnectionTest {
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
     for (int i = 0; i < 3; i++) {
-      List<Integer> windowUpdateStreamIds = new ArrayList<Integer>(2);
+      List<Integer> windowUpdateStreamIds = new ArrayList<>(2);
       for (int j = 0; j < 2; j++) {
         MockSpdyPeer.InFrame windowUpdate = peer.takeFrame();
         assertEquals(TYPE_WINDOW_UPDATE, windowUpdate.type);
@@ -466,7 +466,7 @@ public final class Http2ConnectionTest {
   };
 
   private static class RecordingPushObserver implements PushObserver {
-    final List<Object> events = new ArrayList<Object>();
+    final List<Object> events = new ArrayList<>();
 
     public synchronized Object takeEvent() throws InterruptedException {
       while (events.isEmpty()) {

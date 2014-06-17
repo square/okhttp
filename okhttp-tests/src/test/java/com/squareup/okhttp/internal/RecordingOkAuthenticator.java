@@ -23,8 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RecordingOkAuthenticator implements Authenticator {
-  public final List<Response> responses = new ArrayList<Response>();
-  public final List<Proxy> proxies = new ArrayList<Proxy>();
+  public final List<Response> responses = new ArrayList<>();
+  public final List<Proxy> proxies = new ArrayList<>();
   public final String credential;
 
   public RecordingOkAuthenticator(String credential) {

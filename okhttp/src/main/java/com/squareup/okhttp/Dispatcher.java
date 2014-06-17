@@ -41,10 +41,10 @@ public final class Dispatcher {
   private ExecutorService executorService;
 
   /** Ready calls in the order they'll be run. */
-  private final Deque<AsyncCall> readyCalls = new ArrayDeque<AsyncCall>();
+  private final Deque<AsyncCall> readyCalls = new ArrayDeque<>();
 
   /** Running calls. Includes canceled calls that haven't finished yet. */
-  private final Deque<AsyncCall> runningCalls = new ArrayDeque<AsyncCall>();
+  private final Deque<AsyncCall> runningCalls = new ArrayDeque<>();
 
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
