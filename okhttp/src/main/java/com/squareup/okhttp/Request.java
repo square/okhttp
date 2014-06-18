@@ -138,7 +138,7 @@ public final class Request {
       try {
         return url(new URL(url));
       } catch (MalformedURLException e) {
-        throw new IllegalArgumentException("Malformed URL: " + url);
+        throw new IllegalArgumentException("Malformed URL: " + url, e);
       }
     }
 
