@@ -109,10 +109,29 @@ public final class CallTest {
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
+  @Test public void lazilyEvaluateRequestUrl() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+
+    Request request1 = new Request.Builder()
+        .url("foo://bar?baz")
+        .build();
+    Request request2 = request1.newBuilder()
+        .url(server.getUrl("/"))
+        .build();
+    executeSynchronously(request2)
+        .assertCode(200)
+        .assertSuccessful()
+        .assertBody("abc");
+  }
+
   @Ignore // TODO(jwilson): fix.
   @Test public void invalidScheme() throws Exception {
     try {
-      new Request.Builder().url("ftp://hostname/path");
+      Request request = new Request.Builder()
+          .url("ftp://hostname/path")
+          .build();
+      executeSynchronously(request);
       fail();
     } catch (IllegalArgumentException expected) {
     }

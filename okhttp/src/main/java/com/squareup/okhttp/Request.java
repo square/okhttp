@@ -29,25 +29,32 @@ import java.util.List;
  * is null or itself immutable.
  */
 public final class Request {
-  private final URL url;
+  private final String urlString;
   private final String method;
   private final Headers headers;
   private final RequestBody body;
   private final Object tag;
 
+  private volatile URL url; // Lazily initialized.
   private volatile URI uri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Request(Builder builder) {
-    this.url = builder.url;
+    this.urlString = builder.urlString;
     this.method = builder.method;
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
+    this.url = builder.url;
   }
 
   public URL url() {
-    return url;
+    try {
+      URL result = url;
+      return result != null ? result : (url = new URL(urlString));
+    } catch (MalformedURLException e) {
+      throw new RuntimeException("Malformed URL: " + urlString, e);
+    }
   }
 
   public URI uri() throws IOException {
@@ -60,7 +67,7 @@ public final class Request {
   }
 
   public String urlString() {
-    return url.toString();
+    return urlString;
   }
 
   public String method() {
@@ -115,6 +122,7 @@ public final class Request {
   }
 
   public static class Builder {
+    private String urlString;
     private URL url;
     private String method;
     private Headers.Builder headers;
@@ -127,6 +135,7 @@ public final class Request {
     }
 
     private Builder(Request request) {
+      this.urlString = request.urlString;
       this.url = request.url;
       this.method = request.method;
       this.body = request.body;
@@ -135,16 +144,15 @@ public final class Request {
     }
 
     public Builder url(String url) {
-      try {
-        return url(new URL(url));
-      } catch (MalformedURLException e) {
-        throw new IllegalArgumentException("Malformed URL: " + url, e);
-      }
+      if (url == null) throw new IllegalArgumentException("url == null");
+      urlString = url;
+      return this;
     }
 
     public Builder url(URL url) {
       if (url == null) throw new IllegalArgumentException("url == null");
       this.url = url;
+      this.urlString = url.toString();
       return this;
     }
 
@@ -224,7 +232,7 @@ public final class Request {
     }
 
     public Request build() {
-      if (url == null) throw new IllegalStateException("url == null");
+      if (urlString == null) throw new IllegalStateException("url == null");
       return new Request(this);
     }
   }
