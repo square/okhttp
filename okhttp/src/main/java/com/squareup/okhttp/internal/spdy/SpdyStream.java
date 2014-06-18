@@ -350,7 +350,7 @@ public final class SpdyStream {
         // Flow control: notify the peer that we're ready for more data!
         unacknowledgedBytesRead += read;
         if (unacknowledgedBytesRead
-            >= connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
+            >= connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
           connection.writeWindowUpdateLater(id, unacknowledgedBytesRead);
           unacknowledgedBytesRead = 0;
         }
@@ -360,7 +360,7 @@ public final class SpdyStream {
       synchronized (connection) { // Multiple application threads may hit this section.
         connection.unacknowledgedBytesRead += read;
         if (connection.unacknowledgedBytesRead
-            >= connection.peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
+            >= connection.okHttpSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE) / 2) {
           connection.writeWindowUpdateLater(0, connection.unacknowledgedBytesRead);
           connection.unacknowledgedBytesRead = 0;
         }
