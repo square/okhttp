@@ -113,6 +113,7 @@ public final class SpdyConnection implements Closeable {
   // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
   final Settings okHttpSettings = new Settings();
       // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
+  private static final int OKHTTP_CLIENT_WINDOW_SIZE = 16 * 1024 * 1024;
 
   /** Settings we receive from the peer. */
   // TODO: MWS will need to guard on this setting before attempting to push.
@@ -145,7 +146,7 @@ public final class SpdyConnection implements Closeable {
     // thrashing window updates every 64KiB, yet small enough to avoid blowing
     // up the heap.
     if (builder.client) {
-      okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 16 * 1024 * 1024);
+      okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, OKHTTP_CLIENT_WINDOW_SIZE);
     }
 
     hostName = builder.hostName;
@@ -503,6 +504,10 @@ public final class SpdyConnection implements Closeable {
   public void sendConnectionPreface() throws IOException {
     frameWriter.connectionPreface();
     frameWriter.settings(okHttpSettings);
+    int windowSize = okHttpSettings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+    if (windowSize != Settings.DEFAULT_INITIAL_WINDOW_SIZE) {
+      frameWriter.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+    }
   }
 
   public static class Builder {

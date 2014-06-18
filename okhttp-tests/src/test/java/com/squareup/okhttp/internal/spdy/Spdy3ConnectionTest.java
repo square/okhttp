@@ -1013,17 +1013,17 @@ public final class Spdy3ConnectionTest {
   @Test public void readSendsWindowUpdate() throws Exception {
     peer.setVariantAndClient(SPDY3, false);
 
-    int windowUpdateThreshold = DEFAULT_INITIAL_WINDOW_SIZE / 2;
+    int windowSize = 100;
+    int windowUpdateThreshold = 50;
 
     // Write the mocking script.
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
     for (int i = 0; i < 3; i++) {
-      // Send frames summing to windowUpdateThreshold.
-      for (int sent = 0, count; sent < windowUpdateThreshold; sent += count) {
-        count = Math.min(SPDY3.maxFrameSize(), windowUpdateThreshold - sent);
-        peer.sendFrame().data(false, 1, data(count));
-      }
+      // Send frames of summing to size 50, which is windowUpdateThreshold.
+      peer.sendFrame().data(false, 1, data(24));
+      peer.sendFrame().data(false, 1, data(25));
+      peer.sendFrame().data(false, 1, data(1));
       peer.acceptFrame(); // connection WINDOW UPDATE
       peer.acceptFrame(); // stream WINDOW UPDATE
     }
@@ -1032,15 +1032,15 @@ public final class Spdy3ConnectionTest {
 
     // Play it back.
     SpdyConnection connection = connection(peer, SPDY3);
+    connection.okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, windowSize);
     SpdyStream stream = connection.newStream(headerEntries("b", "banana"), false, true);
     assertEquals(0, stream.unacknowledgedBytesRead);
     assertEquals(headerEntries("a", "android"), stream.getResponseHeaders());
     Source in = stream.getSource();
     Buffer buffer = new Buffer();
-    while (in.read(buffer, 1024) != -1) {
-      if (buffer.size() == 3 * windowUpdateThreshold) break;
-    }
+    buffer.writeAll(in);
     assertEquals(-1, in.read(buffer, 1));
+    assertEquals(150, buffer.size());
 
     MockSpdyPeer.InFrame synStream = peer.takeFrame();
     assertEquals(TYPE_HEADERS, synStream.type);
