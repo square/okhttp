@@ -1345,6 +1345,25 @@ public final class CallTest {
     assertNull(recordedRequest.getHeader("User-Agent"));
   }
 
+  @Test
+  public void setFollowRedirectsFalse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(302)
+        .addHeader("Location: /b")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+    server.play();
+
+    client.setFollowRedirects(false);
+    RecordedResponse recordedResponse = executeSynchronously(
+        new Request.Builder().url(server.getUrl("/a")).build());
+
+    recordedResponse
+        .assertBody("A")
+        .assertCode(302);
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, response.body().string(), null);
