@@ -920,6 +920,19 @@ public final class CacheTest {
     assertEquals("DEFDEFDEF", readAscii(client.open(server.getUrl("/"))));
   }
 
+  /** https://github.com/square/okhttp/issues/947 */
+  @Test public void gzipAndVaryOnAcceptEncoding() throws Exception {
+    server.enqueue(new MockResponse()
+        .setBody(gzip("ABCABCABC"))
+        .addHeader("Content-Encoding: gzip")
+        .addHeader("Vary: Accept-Encoding")
+        .addHeader("Cache-Control: max-age=60"));
+    server.enqueue(new MockResponse().setBody("FAIL"));
+
+    assertEquals("ABCABCABC", readAscii(client.open(server.getUrl("/"))));
+    assertEquals("ABCABCABC", readAscii(client.open(server.getUrl("/"))));
+  }
+
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
     server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
     server.enqueue(new MockResponse()
