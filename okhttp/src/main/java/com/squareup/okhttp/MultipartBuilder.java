@@ -124,6 +124,61 @@ public final class MultipartBuilder {
     return this;
   }
 
+  /**
+   * Appends a quoted-string to a StringBuilder.
+   *
+   * <p>RFC 2388 is rather vague about how one should escape special characters
+   * in form-data parameters, and as it turns out Firefox and Chrome actually
+   * do rather different things, and both say in their comments that they're
+   * not really sure what the right approach is. We go with Chrome's behavior
+   * (which also experimentally seems to match what IE does), but if you
+   * actually want to have a good chance of things working, please avoid
+   * double-quotes, newlines, percent signs, and the like in your field names.
+   */
+  private static StringBuilder appendQuotedString(StringBuilder target, String key) {
+    target.append('"');
+    for (int i = 0, len = key.length(); i < len; i++) {
+      char ch = key.charAt(i);
+      switch (ch) {
+        case '\n':
+          target.append("%0A");
+          break;
+        case '\r':
+          target.append("%0D");
+          break;
+        case '"':
+          target.append("%22");
+          break;
+        default:
+          target.append(ch);
+          break;
+      }
+    }
+    target.append('"');
+    return target;
+  }
+
+  /** Add a form data part to the body. */
+  public MultipartBuilder addFormDataPart(String name, String value) {
+    return addFormDataPart(name, null, RequestBody.create(null, value));
+  }
+
+  /** Add a form data part to the body. */
+  public MultipartBuilder addFormDataPart(String name, String filename, RequestBody value) {
+    if (name == null) {
+      throw new NullPointerException("name == null");
+    }
+    StringBuilder disposition = new StringBuilder("form-data; name=");
+    appendQuotedString(disposition, name);
+
+    if (filename != null) {
+      disposition.append("; filename=");
+      appendQuotedString(disposition, filename);
+    }
+
+    return addPart(Headers.of("Content-Disposition", disposition.toString()), value);
+  }
+
   /** Assemble the specified parts into a request body. */
   public RequestBody build() {
     if (partHeaders.isEmpty()) {
