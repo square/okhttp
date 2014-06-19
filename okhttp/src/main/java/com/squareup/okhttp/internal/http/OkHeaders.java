@@ -174,8 +174,12 @@ public final class OkHeaders {
     Set<String> varyFields = varyFields(response);
     if (varyFields.isEmpty()) return new Headers.Builder().build();
 
+    // Use the request headers sent over the network, since that's what the
+    // response varies on. Otherwise OkHttp-supplied headers like
+    // "Accept-Encoding: gzip" may be lost.
+    Headers requestHeaders = response.networkResponse().request().headers();
+
     Headers.Builder result = new Headers.Builder();
-    Headers requestHeaders = response.request().headers();
     for (int i = 0; i < requestHeaders.size(); i++) {
       String fieldName = requestHeaders.name(i);
       if (varyFields.contains(fieldName)) {
