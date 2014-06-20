@@ -39,7 +39,7 @@
     <npn.version>1.1.7.v20140316</npn.version>
     <!-- Targetted to OpenJDK 8 b132 -->
     <alpn.version>8.0.0.v20140317</alpn.version>
-    <bouncycastle.version>1.48</bouncycastle.version>
+    <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
     <airlift.version>0.6</airlift.version>
