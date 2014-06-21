@@ -563,7 +563,7 @@ public final class Cache {
       String contentLength = responseHeaders.get("Content-Length");
       Request cacheRequest = new Request.Builder()
           .url(url)
-          .method(message, null)
+          .method(requestMethod, null)
           .headers(varyHeaders)
           .build();
       return new Response.Builder()
