@@ -30,15 +30,15 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v07.
+ * Read and write HPACK v08.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08
  *
  * This implementation uses an array for the header table with a bitset for
  * references.  Dynamic entries are added to the array, starting in the last
  * position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft07 {
+final class HpackDraft08 {
   private static final int PREFIX_4_BITS = 0x0f;
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
@@ -59,7 +59,7 @@ final class HpackDraft07 {
       new Header(Header.RESPONSE_STATUS, "404"),
       new Header(Header.RESPONSE_STATUS, "500"),
       new Header("accept-charset", ""),
-      new Header("accept-encoding", ""),
+      new Header("accept-encoding", "gzip, deflate"),
       new Header("accept-language", ""),
       new Header("accept-ranges", ""),
       new Header("accept", ""),
@@ -107,10 +107,10 @@ final class HpackDraft07 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft07() {
+  private HpackDraft08() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-3.2
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-3.2
   static final class Reader {
 
     private final List<Header> emittedHeaders = new ArrayList<>();
@@ -429,7 +429,7 @@ final class HpackDraft07 {
     }
 
     /** This does not use "never indexed" semantics for sensitive headers. */
-    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-4.3.3
+    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.3.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -447,7 +447,7 @@ final class HpackDraft07 {
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

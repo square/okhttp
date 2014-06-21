@@ -15,28 +15,29 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
+
+import com.squareup.okhttp.Protocol;
+
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
-
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static okio.ByteString.EMPTY;
 
 /**
- * Read and write HTTP/2 v12 frames.
- * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-12
+ * Read and write HTTP/2 v13 frames.
+ * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-13
  */
-public final class Http20Draft12 implements Variant {
-  private static final Logger logger = Logger.getLogger(Http20Draft12.class.getName());
+public final class Http20Draft13 implements Variant {
+  private static final Logger logger = Logger.getLogger(Http20Draft13.class.getName());
 
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
@@ -57,8 +58,6 @@ public final class Http20Draft12 implements Variant {
   static final byte TYPE_GOAWAY = 0x7;
   static final byte TYPE_WINDOW_UPDATE = 0x8;
   static final byte TYPE_CONTINUATION = 0x9;
-  static final byte TYPE_ALTSVC = 0xa;
-  static final byte TYPE_BLOCKED = 0xb;
 
   static final byte FLAG_NONE = 0x0;
   static final byte FLAG_ACK = 0x1; // Used for settings and ping.
@@ -66,8 +65,7 @@ public final class Http20Draft12 implements Variant {
   static final byte FLAG_END_SEGMENT = 0x2;
   static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
   static final byte FLAG_END_PUSH_PROMISE = 0x4;
-  static final byte FLAG_PAD_LOW = 0x8; // Used for headers, data, and continuation.
-  static final byte FLAG_PAD_HIGH = 0x10; // Used for headers, data, and continuation.
+  static final byte FLAG_PADDED = 0x8; // Used for headers and data.
   static final byte FLAG_PRIORITY = 0x20; // Used for headers.
   static final byte FLAG_COMPRESSED = 0x20; // Used for data.
 
@@ -93,13 +91,13 @@ public final class Http20Draft12 implements Variant {
     private final boolean client;
 
     // Visible for testing.
-    final HpackDraft07.Reader hpackReader;
+    final HpackDraft08.Reader hpackReader;
 
     Reader(BufferedSource source, int headerTableSize, boolean client) {
       this.source = source;
       this.client = client;
       this.continuation = new ContinuationSource(this.source);
-      this.hpackReader = new HpackDraft07.Reader(headerTableSize, continuation);
+      this.hpackReader = new HpackDraft08.Reader(headerTableSize, continuation);
     }
 
     @Override public void readConnectionPreface() throws IOException {
@@ -166,16 +164,9 @@ public final class Http20Draft12 implements Variant {
           readWindowUpdate(handler, length, flags, streamId);
           break;
 
-        case TYPE_ALTSVC:
-          readAlternateService(handler, length, flags, streamId);
-          break;
-
-        case TYPE_BLOCKED: // Ignore as this is experimental.
-          if (length != 0) throw ioException("TYPE_BLOCKED length != 0: %s", length);
-          break;
-
         default:
-          throw ioException("PROTOCOL_ERROR: unknown frame type %s", type);
+          // Implementations MUST discard frames that have unknown or unsupported types.
+          source.skip(length);
       }
       return true;
     }
@@ -186,7 +177,7 @@ public final class Http20Draft12 implements Variant {
 
       boolean endStream = (flags & FLAG_END_STREAM) != 0;
 
-      short padding = readPadding(source, flags);
+      short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
 
       if ((flags & FLAG_PRIORITY) != 0) {
         readPriority(handler, streamId);
@@ -223,7 +214,7 @@ public final class Http20Draft12 implements Variant {
         throw ioException("PROTOCOL_ERROR: FLAG_COMPRESSED without SETTINGS_COMPRESS_DATA");
       }
 
-      short padding = readPadding(source, flags);
+      short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
       length = lengthWithoutPadding(length, flags, padding);
 
       handler.data(inFinished, streamId, source, length);
@@ -266,10 +257,10 @@ public final class Http20Draft12 implements Variant {
         return;
       }
 
-      if (length % 5 != 0) throw ioException("TYPE_SETTINGS length %% 5 != 0: %s", length);
+      if (length % 6 != 0) throw ioException("TYPE_SETTINGS length %% 6 != 0: %s", length);
       Settings settings = new Settings();
-      for (int i = 0; i < length; i += 5) {
-        int id = source.readByte();
+      for (int i = 0; i < length; i += 6) {
+        short id = source.readShort();
         int value = source.readInt();
 
         switch (id) {
@@ -307,9 +298,10 @@ public final class Http20Draft12 implements Variant {
       if (streamId == 0) {
         throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
       }
-      short padding = readPadding(source, flags);
+      short padding = (flags & FLAG_PADDED) != 0 ? (short) (source.readByte() & 0xff) : 0;
       int promisedStreamId = source.readInt() & 0x7fffffff;
       length -= 4; // account for above read.
+      length = lengthWithoutPadding(length, flags, padding);
       List<Header> headerBlock = readHeaderBlock(length, padding, flags, streamId);
       handler.pushPromise(streamId, promisedStreamId, headerBlock);
     }
@@ -350,20 +342,6 @@ public final class Http20Draft12 implements Variant {
       handler.windowUpdate(streamId, increment);
     }
 
-    private void readAlternateService(Handler handler, short length, byte flags, int streamId)
-        throws IOException {
-      long maxAge = source.readInt() & 0xffffffffL;
-      int port = source.readShort() & 0xffff;
-      source.readByte(); // Reserved.
-      int protocolLength = source.readByte() & 0xff;
-      ByteString protocol = source.readByteString(protocolLength);
-      int hostLength = source.readByte() & 0xff;
-      String host = source.readUtf8(hostLength);
-      int originLength = length - 9 - protocolLength - hostLength;
-      String origin = source.readUtf8(originLength);
-      handler.alternateService(streamId, origin, protocol, host, port, maxAge);
-    }
-
     @Override public void close() throws IOException {
       source.close();
     }
@@ -373,14 +351,14 @@ public final class Http20Draft12 implements Variant {
     private final BufferedSink sink;
     private final boolean client;
     private final Buffer hpackBuffer;
-    private final HpackDraft07.Writer hpackWriter;
+    private final HpackDraft08.Writer hpackWriter;
     private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
       this.client = client;
       this.hpackBuffer = new Buffer();
-      this.hpackWriter = new HpackDraft07.Writer(hpackBuffer);
+      this.hpackWriter = new HpackDraft08.Writer(hpackBuffer);
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -506,7 +484,7 @@ public final class Http20Draft12 implements Variant {
 
     @Override public synchronized void settings(Settings settings) throws IOException {
       if (closed) throw new IOException("closed");
-      int length = settings.size() * 5;
+      int length = settings.size() * 6;
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_NONE;
       int streamId = 0;
@@ -516,7 +494,7 @@ public final class Http20Draft12 implements Variant {
         int id = i;
         if (id == 4) id = 3; // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
         else if (id == 7) id = 4; // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
-        sink.writeByte(id);
+        sink.writeShort(id);
         sink.writeInt(settings.get(i));
       }
       sink.flush();
@@ -594,7 +572,7 @@ public final class Http20Draft12 implements Variant {
   /**
    * Decompression of the header block occurs above the framing layer. This
    * class lazily reads continuation frames as they are needed by {@link
-   * HpackDraft07.Reader#readHeaders()}.
+   * HpackDraft08.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
     private final BufferedSource source;
@@ -636,41 +614,19 @@ public final class Http20Draft12 implements Variant {
       int previousStreamId = streamId;
       int w1 = source.readInt();
       int w2 = source.readInt();
-      length = (short) ((w1 & 0x3fff0000) >> 16);
+      length = left = (short) ((w1 & 0x3fff0000) >> 16);
       byte type = (byte) ((w1 & 0xff00) >> 8);
       flags = (byte) (w1 & 0xff);
       if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
-      padding = readPadding(source, flags);
-      length = left = lengthWithoutPadding(length, flags, padding);
       streamId = (w2 & 0x7fffffff);
       if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
       if (streamId != previousStreamId) throw ioException("TYPE_CONTINUATION streamId changed");
     }
   }
 
-  private static short readPadding(BufferedSource source, byte flags) throws IOException {
-    if ((flags & FLAG_PAD_HIGH) != 0 && (flags & FLAG_PAD_LOW) == 0) {
-      throw ioException("PROTOCOL_ERROR FLAG_PAD_HIGH set without FLAG_PAD_LOW");
-    }
-    int padding = 0;
-    if ((flags & FLAG_PAD_HIGH) != 0) {
-      padding = source.readShort() & 0xffff;
-    } else if ((flags & FLAG_PAD_LOW) != 0) {
-      padding = source.readByte() & 0xff;
-    }
-    if (padding > MAX_FRAME_SIZE) {
-      throw ioException("PROTOCOL_ERROR padding > %d: %d", MAX_FRAME_SIZE, padding);
-    }
-    return (short) padding;
-  }
-
   private static short lengthWithoutPadding(short length, byte flags, short padding)
       throws IOException {
-    if ((flags & FLAG_PAD_HIGH) != 0) { // account for reading the padding length.
-      length -= 2;
-    } else if ((flags & FLAG_PAD_LOW) != 0) {
-      length--;
-    }
+    if ((flags & FLAG_PADDED) != 0) length--; // Account for reading the padding length.
     if (padding > length) {
       throw ioException("PROTOCOL_ERROR padding %s > remaining length %s", padding, length);
     }
@@ -719,8 +675,6 @@ public final class Http20Draft12 implements Variant {
         case TYPE_RST_STREAM:
         case TYPE_GOAWAY:
         case TYPE_WINDOW_UPDATE:
-        case TYPE_ALTSVC:
-        case TYPE_BLOCKED:
           return BINARY[flags];
       }
       String result = flags < FLAGS.length ? FLAGS[flags] : BINARY[flags];
@@ -744,9 +698,7 @@ public final class Http20Draft12 implements Variant {
         "PING",
         "GOAWAY",
         "WINDOW_UPDATE",
-        "CONTINUATION",
-        "ALTSVC",
-        "BLOCKED"
+        "CONTINUATION"
     };
 
     /**
@@ -768,14 +720,9 @@ public final class Http20Draft12 implements Variant {
       int[] prefixFlags =
           new int[] {FLAG_END_STREAM, FLAG_END_SEGMENT, FLAG_END_SEGMENT | FLAG_END_STREAM};
 
-      FLAGS[FLAG_PAD_LOW] = "PAD_LOW";
-      FLAGS[FLAG_PAD_LOW | FLAG_PAD_HIGH] = "PAD_LOW|PAD_HIGH";
-      int[] suffixFlags = new int[] {FLAG_PAD_LOW, FLAG_PAD_LOW | FLAG_PAD_HIGH};
-
+      FLAGS[FLAG_PADDED] = "PADDED";
       for (int prefixFlag : prefixFlags) {
-        for (int suffixFlag : suffixFlags) {
-          FLAGS[prefixFlag | suffixFlag] = FLAGS[prefixFlag] + '|' + FLAGS[suffixFlag];
-        }
+         FLAGS[prefixFlag | FLAG_PADDED] = FLAGS[prefixFlag] + "|PADDED";
       }
 
       FLAGS[FLAG_END_HEADERS] = "END_HEADERS"; // Same as END_PUSH_PROMISE.
@@ -787,10 +734,8 @@ public final class Http20Draft12 implements Variant {
       for (int frameFlag : frameFlags) {
         for (int prefixFlag : prefixFlags) {
           FLAGS[prefixFlag | frameFlag] = FLAGS[prefixFlag] + '|' + FLAGS[frameFlag];
-          for (int suffixFlag : suffixFlags) {
-            FLAGS[prefixFlag | frameFlag | suffixFlag] =
-                FLAGS[prefixFlag] + '|' + FLAGS[frameFlag] + '|' + FLAGS[suffixFlag];
-          }
+          FLAGS[prefixFlag | frameFlag | FLAG_PADDED] =
+              FLAGS[prefixFlag] + '|' + FLAGS[frameFlag] + "|PADDED";
         }
       }
 

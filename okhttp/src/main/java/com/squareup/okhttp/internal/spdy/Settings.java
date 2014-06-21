@@ -50,8 +50,6 @@ public final class Settings {
   static final int MAX_CONCURRENT_STREAMS = 4;
   /** spdy/3: Current CWND in Packets. */
   static final int CURRENT_CWND = 5;
-  /** HTTP/2: The peer must not gzip a DATA frame when this is 0. */
-  static final int COMPRESS_DATA = 5;
   /** spdy/3: Retransmission rate. Percentage */
   static final int DOWNLOAD_RETRANS_RATE = 6;
   /** Window size in bytes. */
@@ -171,13 +169,6 @@ public final class Settings {
   int getCurrentCwnd(int defaultValue) {
     int bit = 1 << CURRENT_CWND;
     return (bit & set) != 0 ? values[CURRENT_CWND] : defaultValue;
-  }
-
-  /** HTTP/2 only. */
-  // TODO: honor this setting in HTTP/2.
-  boolean getCompressData(boolean defaultValue) {
-    int bit = 1 << COMPRESS_DATA;
-    return ((bit & set) != 0 ? values[COMPRESS_DATA] : defaultValue ? 1 : 0) == 1;
   }
 
   /** spdy/3 only. */

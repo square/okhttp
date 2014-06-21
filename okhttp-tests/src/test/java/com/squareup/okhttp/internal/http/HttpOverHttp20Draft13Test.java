@@ -24,9 +24,9 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class HttpOverHttp20Draft12Test extends HttpOverSpdyTest {
+public class HttpOverHttp20Draft13Test extends HttpOverSpdyTest {
 
-  public HttpOverHttp20Draft12Test() {
+  public HttpOverHttp20Draft13Test() {
     super(Protocol.HTTP_2);
     this.hostHeader = ":authority";
   }

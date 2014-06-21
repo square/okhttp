@@ -20,22 +20,22 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_ACK;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_END_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_END_STREAM;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FLAG_NONE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FrameLogger.formatFlags;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.FrameLogger.formatHeader;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_CONTINUATION;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_DATA;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_GOAWAY;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_PING;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_PUSH_PROMISE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft12.TYPE_SETTINGS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_ACK;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_END_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_END_STREAM;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_NONE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatFlags;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_CONTINUATION;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_DATA;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_PING;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_PUSH_PROMISE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_SETTINGS;
 import static org.junit.Assert.assertEquals;
 
-public class Http20Draft12FrameLoggerTest {
+public class Http20Draft13FrameLoggerTest {
 
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {
@@ -103,14 +103,14 @@ public class Http20Draft12FrameLoggerTest {
         "END_STREAM|END_HEADERS",
         "END_SEGMENT|END_HEADERS",
         "END_STREAM|END_SEGMENT|END_HEADERS",
-        "PAD_LOW",
-        "END_STREAM|PAD_LOW",
-        "END_SEGMENT|PAD_LOW",
-        "END_STREAM|END_SEGMENT|PAD_LOW",
+        "PADDED",
+        "END_STREAM|PADDED",
+        "END_SEGMENT|PADDED",
+        "END_STREAM|END_SEGMENT|PADDED",
         "00001100",
-        "END_STREAM|END_HEADERS|PAD_LOW",
-        "END_SEGMENT|END_HEADERS|PAD_LOW",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW",
+        "END_STREAM|END_HEADERS|PADDED",
+        "END_SEGMENT|END_HEADERS|PADDED",
+        "END_STREAM|END_SEGMENT|END_HEADERS|PADDED",
         "00010000",
         "00010001",
         "00010010",
@@ -119,14 +119,14 @@ public class Http20Draft12FrameLoggerTest {
         "00010101",
         "00010110",
         "00010111",
-        "PAD_LOW|PAD_HIGH",
-        "END_STREAM|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|PAD_LOW|PAD_HIGH",
+        "00011000",
+        "00011001",
+        "00011010",
+        "00011011",
         "00011100",
-        "END_STREAM|END_HEADERS|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PAD_LOW|PAD_HIGH",
+        "00011101",
+        "00011110",
+        "00011111",
         "PRIORITY",
         "END_STREAM|PRIORITY",
         "END_SEGMENT|PRIORITY",
@@ -136,13 +136,13 @@ public class Http20Draft12FrameLoggerTest {
         "END_SEGMENT|END_HEADERS|PRIORITY",
         "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY",
         "00101000",
-        "END_STREAM|PRIORITY|PAD_LOW",
-        "END_SEGMENT|PRIORITY|PAD_LOW",
-        "END_STREAM|END_SEGMENT|PRIORITY|PAD_LOW",
+        "END_STREAM|PRIORITY|PADDED",
+        "END_SEGMENT|PRIORITY|PADDED",
+        "END_STREAM|END_SEGMENT|PRIORITY|PADDED",
         "00101100",
-        "END_STREAM|END_HEADERS|PRIORITY|PAD_LOW",
-        "END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW",
+        "END_STREAM|END_HEADERS|PRIORITY|PADDED",
+        "END_SEGMENT|END_HEADERS|PRIORITY|PADDED",
+        "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY|PADDED",
         "00110000",
         "00110001",
         "00110010",
@@ -152,13 +152,13 @@ public class Http20Draft12FrameLoggerTest {
         "00110110",
         "00110111",
         "00111000",
-        "END_STREAM|PRIORITY|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|PRIORITY|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|PRIORITY|PAD_LOW|PAD_HIGH",
+        "00111001",
+        "00111010",
+        "00111011",
         "00111100",
-        "END_STREAM|END_HEADERS|PRIORITY|PAD_LOW|PAD_HIGH",
-        "END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW|PAD_HIGH",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY|PAD_LOW|PAD_HIGH"
+        "00111101",
+        "00111110",
+        "00111111"
     ), formattedFlags);
   }
 }
