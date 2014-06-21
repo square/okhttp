@@ -1,6 +1,22 @@
 Change Log
 ==========
 
+## Version 2.0.0
+
+This release commits to a stable 2.0 API. Read the 2.0.0-RC1 changes for advice
+on upgrading from 1.x to 2.x.
+
+_2014-06-21_
+
+ *  **API Change**: Use `IOException` in `Callback.onFailure()`. This is
+    a source-incompatible change, and is different from OkHttp 2.0.0-RC2 which
+    used `Throwable`.
+ *  Fix: Fixed a caching bug where we weren't storing rewritten request headers
+    like `Accept-Encoding`.
+ *  Fix: Fixed bugs in handling the SPDY window size. This was stalling certain
+    large downloads
+ *  Update the language level to Java 7. (OkHttp requires Android 2.3+ or Java 7+.)
+
 ## Version 2.0.0-RC2
 
 _2014-06-11_
