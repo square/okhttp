@@ -46,6 +46,11 @@ public class RecordedResponse {
     return this;
   }
 
+  public RecordedResponse assertRequestMethod(String method) {
+    assertEquals(method, request.method());
+    return this;
+  }
+
   public RecordedResponse assertRequestHeader(String name, String... values) {
     assertEquals(Arrays.asList(values), request.headers(name));
     return this;

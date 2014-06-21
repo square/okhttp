@@ -752,6 +752,7 @@ public final class CallTest {
     cacheHit.cacheResponse()
         .assertCode(200)
         .assertHeader("ETag", "v1")
+        .assertRequestMethod("GET")
         .assertRequestUrl(cacheStoreRequest.url())
         .assertRequestHeader("Accept-Language")
         .assertRequestHeader("Accept-Charset", "UTF-8");
