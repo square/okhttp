@@ -30,23 +30,23 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class HpackDraft07Test {
+public class HpackDraft08Test {
 
   private final Buffer bytesIn = new Buffer();
-  private HpackDraft07.Reader hpackReader;
+  private HpackDraft08.Reader hpackReader;
   private Buffer bytesOut = new Buffer();
-  private HpackDraft07.Writer hpackWriter;
+  private HpackDraft08.Writer hpackWriter;
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new HpackDraft07.Writer(bytesOut);
+    hpackWriter = new HpackDraft08.Writer(bytesOut);
   }
 
   /**
    * Variable-length quantity special cases strings which are longer than 127
    * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
    *
-   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-4.1.1
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.1.1
    */
   @Test public void largeHeaderValue() throws IOException {
     char[] value = new char[4096];
@@ -157,7 +157,7 @@ public class HpackDraft07Test {
                              // Indexed name (idx = 4) -> :path
     bytesIn.writeByte(0x8c); // Literal value Huffman encoded 12 bytes
                              // decodes to www.example.com which is length 15
-    bytesIn.write(decodeHex("e7cf9bebe89b6fb16fa9b6ff"));
+    bytesIn.write(decodeHex("f1e3c2e5f23a6ba0ab90f4ff"));
 
     hpackReader.readHeaders();
     hpackReader.emitReferenceSet();
@@ -171,7 +171,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.1.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.1.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     bytesIn.writeByte(0x40); // Literal indexed
@@ -195,7 +195,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.2.2
+   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2.2
    */
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
@@ -268,7 +268,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.1.3
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.1.3
    */
   @Test public void readIndexedHeaderField() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -379,7 +379,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#section-3.2.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-3.2.1
    */
   @Test public void toggleIndex() throws IOException {
     // Static table entries are copied to the top of the reference set.
@@ -444,7 +444,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.2.4
+   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -461,7 +461,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     firstRequestWithoutHuffman();
@@ -648,7 +648,7 @@ public class HpackDraft07Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-07#appendix-D.3
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.3
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     firstRequestWithHuffman();
@@ -676,9 +676,9 @@ public class HpackDraft07Test {
                              // idx = 6 -> :path: /
     bytesIn.writeByte(0x44); // == Literal indexed ==
                              // Indexed name (idx = 4) -> :authority
-    bytesIn.writeByte(0x8c); // Literal value Huffman encoded 12 bytes
+    bytesIn.writeByte(0x0f); // Literal value Huffman encoded 12 bytes
                              // decodes to www.example.com which is length 15
-    bytesIn.write(decodeHex("e7cf9bebe89b6fb16fa9b6ff"));
+    bytesIn.write(decodeHex("7777772e6578616d706c652e636f6d"));
   }
 
   private void checkReadFirstRequestWithHuffman() {
@@ -720,7 +720,7 @@ public class HpackDraft07Test {
                              // Indexed name (idx = 28) -> cache-control
     bytesIn.writeByte(0x86); // Literal value Huffman encoded 6 bytes
                              // decodes to no-cache which is length 8
-    bytesIn.write(decodeHex("b9b9949556bf"));
+    bytesIn.write(decodeHex("a8eb10649cbf"));
   }
 
   private void checkReadSecondRequestWithHuffman() {
@@ -776,10 +776,10 @@ public class HpackDraft07Test {
     bytesIn.writeByte(0x40); // Literal indexed
     bytesIn.writeByte(0x88); // Literal name Huffman encoded 8 bytes
                              // decodes to custom-key which is length 10
-    bytesIn.write(decodeHex("571c5cdb737b2faf"));
-    bytesIn.writeByte(0x89); // Literal value Huffman encoded 6 bytes
+    bytesIn.write(decodeHex("25a849e95ba97d7f"));
+    bytesIn.writeByte(0x89); // Literal value Huffman encoded 9 bytes
                              // decodes to custom-value which is length 12
-    bytesIn.write(decodeHex("571c5cdb73724d9c57"));
+    bytesIn.write(decodeHex("25a849e95bb8e8b4bf"));
   }
 
   private void checkReadThirdRequestWithHuffman() {
@@ -906,8 +906,8 @@ public class HpackDraft07Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
-  private HpackDraft07.Reader newReader(Buffer source) {
-    return new HpackDraft07.Reader(4096, source);
+  private HpackDraft08.Reader newReader(Buffer source) {
+    return new HpackDraft08.Reader(4096, source);
   }
 
   private Buffer byteStream(int... bytes) {

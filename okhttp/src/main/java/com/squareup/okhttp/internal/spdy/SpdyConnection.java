@@ -133,7 +133,7 @@ public final class SpdyConnection implements Closeable {
     pushObserver = builder.pushObserver;
     client = builder.client;
     handler = builder.handler;
-    // http://tools.ietf.org/html/draft-ietf-httpbis-http2-12#section-5.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-http2-13#section-5.1.1
     nextStreamId = builder.client ? 1 : 2;
     if (builder.client && protocol == Protocol.HTTP_2) {
       nextStreamId += 2; // In HTTP/2, 1 on client is reserved for Upgrade.
@@ -152,7 +152,7 @@ public final class SpdyConnection implements Closeable {
     hostName = builder.hostName;
 
     if (protocol == Protocol.HTTP_2) {
-      variant = new Http20Draft12();
+      variant = new Http20Draft13();
       // Like newSingleThreadExecutor, except lazy creates the thread.
       pushExecutor = new ThreadPoolExecutor(0, 1,
           0L, TimeUnit.MILLISECONDS,

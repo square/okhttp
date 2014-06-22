@@ -62,14 +62,9 @@ public final class SettingsTest {
     settings.set(MAX_CONCURRENT_STREAMS, 0, 75);
     assertEquals(75, settings.getMaxConcurrentStreams(-3));
 
-    // WARNING: clash on flags between spdy/3 and HTTP/2!
     assertEquals(-3, settings.getCurrentCwnd(-3));
     settings.set(Settings.CURRENT_CWND, 0, 86);
     assertEquals(86, settings.getCurrentCwnd(-3));
-    settings.clear();
-    assertEquals(true, settings.getCompressData(true));
-    settings.set(Settings.COMPRESS_DATA, 0, 1);
-    assertEquals(true, settings.getCompressData(false));
 
     assertEquals(-3, settings.getDownloadRetransRate(-3));
     settings.set(DOWNLOAD_RETRANS_RATE, 0, 97);
