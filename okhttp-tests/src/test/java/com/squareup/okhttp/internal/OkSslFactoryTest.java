@@ -45,7 +45,7 @@ public class OkSslFactoryTest {
 
     OkHttpSslFactory okHttpSslFactory = new OkHttpSslFactory(socketFactory, defaultEnabledProtocols);
 
-    Assert.assertArrayEquals(defaultEnabledProtocols,  getEnabledProtocols(okHttpSslFactory));
+    Assert.assertArrayEquals(defaultEnabledProtocols, getEnabledProtocols(okHttpSslFactory));
   }
 
   @Test
@@ -67,8 +67,7 @@ public class OkSslFactoryTest {
 
   private String[] getEnabledProtocols(SSLSocketFactory sslSocketFactory) throws IOException {
     return ((SSLSocket) sslSocketFactory.createSocket(server.getUrl("/").getHost(),
-            server.getPort()))
-            .getEnabledProtocols();
+            server.getPort())).getEnabledProtocols();
   }
 
 }
