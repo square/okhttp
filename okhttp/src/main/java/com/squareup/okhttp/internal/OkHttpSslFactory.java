@@ -122,12 +122,12 @@ public class OkHttpSslFactory extends SSLSocketFactory {
     sslSocket.setEnabledProtocols(intersectedProtocols);
   }
 
-  String[] intersect(String[] supported, String[] enabled) {
-    List<String> supportedList = new ArrayList<String>(Arrays.asList(supported));
+  String[] intersect(String[] actual, String[] recommended) {
+    List<String> recommendedList = new ArrayList<String>(Arrays.asList(recommended));
 
-    supportedList.retainAll(Arrays.asList(enabled));
+    recommendedList.retainAll(Arrays.asList(actual));
 
-    return supportedList.toArray(new String[supportedList.size()]);
+    return recommendedList.toArray(new String[recommendedList.size()]);
   }
 }
 
