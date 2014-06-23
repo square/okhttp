@@ -46,8 +46,10 @@ import javax.net.ssl.SSLSocketFactory;
  * to concurrently open new connections. If required, threads can call
  * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
  * safely modified with further configuration changes.
+ *
+ * <p>OkHttpClient should remain non-final, for testing purposes.
  */
-public final class OkHttpClient implements Cloneable {
+public class OkHttpClient implements Cloneable {
   static {
     Internal.instance = new Internal() {
       @Override public Transport newTransport(
