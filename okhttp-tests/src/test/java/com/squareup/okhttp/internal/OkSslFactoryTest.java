@@ -16,7 +16,9 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-import org.junit.Assert;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import javax.net.ssl.SSLContext;
@@ -29,14 +31,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 public class OkSslFactoryTest {
 
-  private MockWebServer server = new MockWebServer();
+  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
+
   private SSLSocketFactory socketFactory;
+  private MockWebServer server;
+
+  @Before
+  public void setUp() throws Exception {
+    server = serverRule.get();
+  }
 
   public OkSslFactoryTest() throws KeyManagementException, NoSuchAlgorithmException, IOException {
-    socketFactory = getSSLContext().getSocketFactory();
-    server.play();
+    socketFactory = getAndInitSSLContext().getSocketFactory();
   }
 
   @Test
@@ -45,29 +56,38 @@ public class OkSslFactoryTest {
 
     OkHttpSslFactory okHttpSslFactory = new OkHttpSslFactory(socketFactory, defaultEnabledProtocols);
 
-    Assert.assertArrayEquals(defaultEnabledProtocols, getEnabledProtocols(okHttpSslFactory));
+    assertArrayEquals(defaultEnabledProtocols, getEnabledProtocols(okHttpSslFactory));
   }
 
   @Test
-  public void createSocketWithIntersectedCiphers() throws IOException {
-    OkHttpSslFactory okHttpSslFactory = new OkHttpSslFactory(socketFactory, new String[]{});
+  public void createSocketWithIntersectedCiphersAndVerifyOrder() throws IOException {
+    String[] decoratedDefaultCipherSuites = new OkHttpSslFactory(socketFactory, new String[0])
+        .getDefaultCipherSuites();
 
-    String[] decoratedDefaultCipherSuites = okHttpSslFactory.getDefaultCipherSuites();
+    List<String> decoratedList = Arrays.asList(decoratedDefaultCipherSuites);
+    List<String> defaultList = new ArrayList<String>(Arrays.asList(OkHttpSslFactory.ENABLED_CIPHERS));
+    defaultList.retainAll(decoratedList);
 
-    List<String> decoratedList = new ArrayList<String>(Arrays.asList(decoratedDefaultCipherSuites));
-    decoratedList.removeAll(Arrays.asList(OkHttpSslFactory.ENABLED_CIPHERS));
-    Assert.assertTrue(decoratedList.isEmpty());
+    assertEquals(defaultList, decoratedList);
   }
 
-  private static SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
+  private static SSLContext getAndInitSSLContext() throws NoSuchAlgorithmException, KeyManagementException {
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(null, null, null);
     return sslContext;
   }
 
   private String[] getEnabledProtocols(SSLSocketFactory sslSocketFactory) throws IOException {
-    return ((SSLSocket) sslSocketFactory.createSocket(server.getUrl("/").getHost(),
-            server.getPort())).getEnabledProtocols();
+    SSLSocket socket = null;
+    try {
+      socket = (SSLSocket) sslSocketFactory.createSocket(server.getUrl("/").getHost(),
+          server.getPort());
+      return socket.getEnabledProtocols();
+    } finally {
+      if(socket != null){
+        socket.close();
+      }
+    }
   }
 
 }

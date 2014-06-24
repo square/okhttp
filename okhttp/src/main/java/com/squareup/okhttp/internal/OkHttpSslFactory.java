@@ -30,7 +30,6 @@ import java.util.List;
  */
 public class OkHttpSslFactory extends SSLSocketFactory {
 
-  private SSLSocketFactory decoratedFactory;
 
   static final String[] ENABLED_PROTOCOLS = {"TLSv1.2", "TLSv1.1", "TLSv1"};
 
@@ -51,20 +50,23 @@ public class OkHttpSslFactory extends SSLSocketFactory {
           "SSL_RSA_WITH_RC4_128_MD5",
   };
 
+  private final SSLSocketFactory decoratedFactory;
   private final String[] intersectedCiphers;
   private final String[] intersectedProtocols;
 
   public OkHttpSslFactory(SSLSocketFactory decoratedFactory, String[] defaultProtocols) {
     this.decoratedFactory = decoratedFactory;
-    intersectedCiphers =   intersectWithDefaultFallback(decoratedFactory.getSupportedCipherSuites(),
+    intersectedCiphers = intersectWithDefaultFallback(decoratedFactory.getSupportedCipherSuites(),
             ENABLED_CIPHERS);
     intersectedProtocols = intersectWithDefaultFallback(defaultProtocols, ENABLED_PROTOCOLS);
   }
 
   private String[] intersectWithDefaultFallback(String[] actual, String[] recommended) {
-    String[] result = intersect(actual, recommended);
+    List<String> recommendedList = new ArrayList<String>(Arrays.asList(recommended));
+    recommendedList.retainAll(Arrays.asList(actual));
+    String[] result = recommendedList.toArray(new String[recommendedList.size()]);
 
-    // Fallback to defaults if intersection is empty
+    // Fallback to defaults if intersection is empty.
     return result.length == 0 ? actual : result;
   }
 
@@ -107,27 +109,14 @@ public class OkHttpSslFactory extends SSLSocketFactory {
 
   private Socket decorateSocket(Socket socket) {
     if (socket instanceof SSLSocket) {
-      applyProtocolOrder((SSLSocket) socket);
-      applyCipherSuites((SSLSocket) socket);
+      SSLSocket sslSocket = (SSLSocket) socket;
+      sslSocket.setEnabledProtocols(intersectedProtocols);
+      sslSocket.setEnabledCipherSuites(intersectedCiphers);
     }
 
     return socket;
   }
 
-  private void applyCipherSuites(SSLSocket sslSocket) {
-    sslSocket.setEnabledCipherSuites(intersectedCiphers);
-  }
 
-  private void applyProtocolOrder(SSLSocket sslSocket) {
-    sslSocket.setEnabledProtocols(intersectedProtocols);
-  }
-
-  String[] intersect(String[] actual, String[] recommended) {
-    List<String> recommendedList = new ArrayList<String>(Arrays.asList(recommended));
-
-    recommendedList.retainAll(Arrays.asList(actual));
-
-    return recommendedList.toArray(new String[recommendedList.size()]);
-  }
 }
 
