@@ -325,8 +325,8 @@ public final class DiskLruCache implements Closeable {
       } else {
         entry.currentEditor = null;
         for (int t = 0; t < valueCount; t++) {
-          deleteIfExists(entry.getCleanFile(t));
-          deleteIfExists(entry.getDirtyFile(t));
+          deleteIfExists(entry.cleanFiles[t]);
+          deleteIfExists(entry.dirtyFiles[t]);
         }
         i.remove();
       }
@@ -414,7 +414,7 @@ public final class DiskLruCache implements Closeable {
     InputStream[] ins = new InputStream[valueCount];
     try {
       for (int i = 0; i < valueCount; i++) {
-        ins[i] = new FileInputStream(entry.getCleanFile(i));
+        ins[i] = new FileInputStream(entry.cleanFiles[i]);
       }
     } catch (FileNotFoundException e) {
       // A file must have been deleted manually!
@@ -513,7 +513,7 @@ public final class DiskLruCache implements Closeable {
           editor.abort();
           throw new IllegalStateException("Newly created entry didn't create value for index " + i);
         }
-        if (!entry.getDirtyFile(i).exists()) {
+        if (!entry.dirtyFiles[i].exists()) {
           editor.abort();
           return;
         }
@@ -521,10 +521,10 @@ public final class DiskLruCache implements Closeable {
     }
 
     for (int i = 0; i < valueCount; i++) {
-      File dirty = entry.getDirtyFile(i);
+      File dirty = entry.dirtyFiles[i];
       if (success) {
         if (dirty.exists()) {
-          File clean = entry.getCleanFile(i);
+          File clean = entry.cleanFiles[i];
           dirty.renameTo(clean);
           long oldLength = entry.lengths[i];
           long newLength = clean.length();
@@ -585,7 +585,7 @@ public final class DiskLruCache implements Closeable {
     }
 
     for (int i = 0; i < valueCount; i++) {
-      File file = entry.getCleanFile(i);
+      File file = entry.cleanFiles[i];
       deleteIfExists(file);
       size -= entry.lengths[i];
       entry.lengths[i] = 0;
@@ -748,7 +748,7 @@ public final class DiskLruCache implements Closeable {
           return null;
         }
         try {
-          return new FileInputStream(entry.getCleanFile(index));
+          return new FileInputStream(entry.cleanFiles[index]);
         } catch (FileNotFoundException e) {
           return null;
         }
@@ -779,7 +779,7 @@ public final class DiskLruCache implements Closeable {
         if (!entry.readable) {
           written[index] = true;
         }
-        File dirtyFile = entry.getDirtyFile(index);
+        File dirtyFile = entry.dirtyFiles[index];
         FileOutputStream outputStream;
         try {
           outputStream = new FileOutputStream(dirtyFile);
@@ -879,6 +879,8 @@ public final class DiskLruCache implements Closeable {
 
     /** Lengths of this entry's files. */
     private final long[] lengths;
+    private final File[] cleanFiles;
+    private final File[] dirtyFiles;
 
     /** True if this entry has ever been published. */
     private boolean readable;
@@ -891,7 +893,21 @@ public final class DiskLruCache implements Closeable {
 
     private Entry(String key) {
       this.key = key;
-      this.lengths = new long[valueCount];
+
+      lengths = new long[valueCount];
+      cleanFiles = new File[valueCount];
+      dirtyFiles = new File[valueCount];
+
+      // The names are repetitive so re-use the same builder to avoid allocations.
+      StringBuilder fileBuilder = new StringBuilder(key).append('.');
+      int truncateTo = fileBuilder.length();
+      for (int i = 0; i < valueCount; i++) {
+        fileBuilder.append(i);
+        cleanFiles[i] = new File(directory, fileBuilder.toString());
+        fileBuilder.append(".tmp");
+        dirtyFiles[i] = new File(directory, fileBuilder.toString());
+        fileBuilder.setLength(truncateTo);
+      }
     }
 
     public String getLengths() throws IOException {
@@ -919,14 +935,6 @@ public final class DiskLruCache implements Closeable {
 
     private IOException invalidLengths(String[] strings) throws IOException {
       throw new IOException("unexpected journal line: " + java.util.Arrays.toString(strings));
-    }
-
-    public File getCleanFile(int i) {
-      return new File(directory, key + "." + i);
-    }
-
-    public File getDirtyFile(int i) {
-      return new File(directory, key + "." + i + ".tmp");
     }
   }
 }
