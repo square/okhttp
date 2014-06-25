@@ -55,6 +55,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -223,10 +224,28 @@ public final class MockWebServer {
 
   /**
    * Awaits the next HTTP request, removes it, and returns it. Callers should
-   * use this to verify the request was sent as intended.
+   * use this to verify the request was sent as intended. This method will block until the
+   * request is available, possibly forever.
+   *
+   * @return the head of the request queue
    */
   public RecordedRequest takeRequest() throws InterruptedException {
     return requestQueue.take();
+  }
+
+  /**
+   * Awaits the next HTTP request (waiting up to the
+   * specified wait time if necessary), removes it, and returns it. Callers should
+   * use this to verify the request was sent as intended within the given time.
+   *
+   * @param timeout how long to wait before giving up, in units of
+  *        {@code unit}
+   * @param unit a {@code TimeUnit} determining how to interpret the
+   *        {@code timeout} parameter
+   * @return the head of the request queue
+   */
+  public RecordedRequest takeRequest(int timeout, TimeUnit unit) throws InterruptedException {
+    return requestQueue.poll(timeout, unit);
   }
 
   /**
