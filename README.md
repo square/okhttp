@@ -3,11 +3,18 @@ OkHttp
 
 An HTTP & SPDY client for Android and Java applications. For more information see [the website][1] and [the wiki][2].
 
+To use OkHttp you'll also need [Okio][5] library, which OkHttp uses for fast I/O and resizable buffers.
+
 Download
 --------
 
-Download [the latest JAR][3] or grab via Maven:
+[Download OkHttp latest JAR][3]
 
+[Download Okio latest JAR][6]
+
+
+
+#### Maven
 ```xml
 <dependency>
     <groupId>com.squareup.okhttp</groupId>
@@ -16,6 +23,11 @@ Download [the latest JAR][3] or grab via Maven:
 </dependency>
 ```
 
+#### Gradle
+```java
+compile 'com.squareup.okhttp:okhttp:2.0.+'
+```
+#### Note: Okio will be installed automatically when using maven or gradle.
 
 MockWebServer
 -------------
@@ -37,7 +49,6 @@ Download [the latest JAR][4] or grab via Maven:
 </dependency>
 ```
 
-
 License
 -------
 
@@ -58,3 +69,5 @@ License
  [2]: https://github.com/square/okhttp/wiki
  [3]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST
  [4]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+[5]: https://github.com/square/okio
+[6]: http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okio&a=okio&v=LATEST

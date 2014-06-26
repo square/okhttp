@@ -120,6 +120,23 @@ String post(String url, String json) throws IOException {
   &lt;artifactId>okhttp&lt;/artifactId>
   &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
 &lt;/dependency></pre>
+            <h4>Gradle</h4>
+            <pre class="prettyprint">
+compile 'com.squareup.okhttp:okhttp:<span class="version pln"><em>(insert latest version)</em></span>'</pre>
+            <h4>Integration</h4>
+            Since <a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.retrofit&a=retrofit&v=LATEST">Retrofit 1.6.0</a> release, when integrating it with OkHttp, the OkHttp-UrlConnection module is also required. Download the latest OkHttp-UrlConnection jar <a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp-urlconnection&v=LATEST">here</a> or get it using maven or gradle:
+            <h4>Maven</h4>
+            <pre class="prettyprint">
+&lt;dependency>
+  &lt;groupId>com.squareup.okhttp&lt;/groupId>
+  &lt;artifactId>okhttp-urlconnection&lt;/artifactId>
+  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
+&lt;/dependency>
+</pre>
+            <h4>Gradle</h4>
+<pre class="prettyprint">
+compile 'com.squareup.okhttp:okhttp-urlconnection:<span class="version pln"><em>(insert latest version)</em></span>'
+</pre>
 
             <h3 id="contributing">Contributing</h3>
             <p>If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.</p>
