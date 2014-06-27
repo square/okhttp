@@ -67,34 +67,12 @@ public final class OkHttpClient implements Cloneable {
         return connection.recycleCount();
       }
 
-      @Override public Object getOwner(Connection connection) {
-        return connection.getOwner();
-      }
-
       @Override public void setProtocol(Connection connection, Protocol protocol) {
         connection.setProtocol(protocol);
       }
 
       @Override public void setOwner(Connection connection, HttpEngine httpEngine) {
         connection.setOwner(httpEngine);
-      }
-
-      @Override public void connect(Connection connection, int connectTimeout, int readTimeout,
-          int writeTimeout, Request request) throws IOException {
-        connection.connect(connectTimeout, readTimeout, writeTimeout, request);
-      }
-
-      @Override public boolean isConnected(Connection connection) {
-        return connection.isConnected();
-      }
-
-      @Override public boolean isSpdy(Connection connection) {
-        return connection.isSpdy();
-      }
-
-      @Override public void setTimeouts(Connection connection, int readTimeout, int writeTimeout)
-          throws IOException {
-        connection.setTimeouts(readTimeout, writeTimeout);
       }
 
       @Override public boolean isReadable(Connection pooled) {
@@ -117,12 +95,13 @@ public final class OkHttpClient implements Cloneable {
         pool.recycle(connection);
       }
 
-      @Override public void share(ConnectionPool connectionPool, Connection connection) {
-        connectionPool.share(connection);
-      }
-
       @Override public RouteDatabase routeDatabase(OkHttpClient client) {
         return client.routeDatabase;
+      }
+
+      @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
+          HttpEngine owner, Request request) throws IOException {
+        connection.connectAndSetOwner(client, owner, request);
       }
     };
   }
@@ -385,7 +364,7 @@ public final class OkHttpClient implements Cloneable {
     return followRedirects;
   }
 
-  RouteDatabase getRoutesDatabase() {
+  RouteDatabase routeDatabase() {
     return routeDatabase;
   }
 

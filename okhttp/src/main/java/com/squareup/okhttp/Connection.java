@@ -30,6 +30,8 @@ import java.net.Socket;
 import java.net.URL;
 import javax.net.ssl.SSLSocket;
 
+import static com.squareup.okhttp.internal.Util.getDefaultPort;
+import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
@@ -153,6 +155,59 @@ public final class Connection {
       httpConnection = new HttpConnection(pool, this, socket);
     }
     connected = true;
+  }
+
+  /**
+   * Connects this connection if it isn't already. This creates tunnels, shares
+   * the connection with the connection pool, and configures timeouts.
+   */
+  void connectAndSetOwner(OkHttpClient client, Object owner, Request request) throws IOException {
+    setOwner(owner);
+
+    if (!isConnected()) {
+      Request tunnelRequest = tunnelRequest(request);
+      connect(client.getConnectTimeout(), client.getReadTimeout(),
+          client.getWriteTimeout(), tunnelRequest);
+      if (isSpdy()) {
+        client.getConnectionPool().share(this);
+      }
+      client.routeDatabase().connected(getRoute());
+    }
+
+    setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
+  }
+
+  /**
+   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
+   * no tunnel is necessary. Everything in the tunnel request is sent
+   * unencrypted to the proxy server, so tunnels include only the minimum set of
+   * headers. This avoids sending potentially sensitive data like HTTP cookies
+   * to the proxy unencrypted.
+   */
+  private Request tunnelRequest(Request request) throws IOException {
+    if (!route.requiresTunnel()) return null;
+
+    String host = request.url().getHost();
+    int port = getEffectivePort(request.url());
+    String authority = (port == getDefaultPort("https")) ? host : (host + ":" + port);
+    Request.Builder result = new Request.Builder()
+        .url(new URL("https", host, port, "/"))
+        .header("Host", authority)
+        .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
+
+    // Copy over the User-Agent header if it exists.
+    String userAgent = request.header("User-Agent");
+    if (userAgent != null) {
+      result.header("User-Agent", userAgent);
+    }
+
+    // Copy over the Proxy-Authorization header if it exists.
+    String proxyAuthorization = request.header("Proxy-Authorization");
+    if (proxyAuthorization != null) {
+      result.header("Proxy-Authorization", proxyAuthorization);
+    }
+
+    return result.build();
   }
 
   /**
