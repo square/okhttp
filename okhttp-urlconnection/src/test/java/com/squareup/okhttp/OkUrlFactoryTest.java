@@ -125,6 +125,21 @@ public class OkUrlFactoryTest {
     assertResponseHeader(connection2, "NONE");
   }
 
+  @Test
+  public void setInstanceFollowRedirectsFalse() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(302)
+        .addHeader("Location: /b")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+
+    HttpURLConnection connection = factory.open(server.getUrl("/a"));
+    connection.setInstanceFollowRedirects(false);
+    assertResponseBody(connection, "A");
+    assertResponseCode(connection, 302);
+  }
+
   private void assertResponseBody(HttpURLConnection connection, String expected) throws Exception {
     String actual = buffer(source(connection.getInputStream())).readString(US_ASCII);
     assertEquals(expected, actual);
@@ -132,6 +147,10 @@ public class OkUrlFactoryTest {
 
   private void assertResponseHeader(HttpURLConnection connection, String expected) {
     assertEquals(expected, connection.getHeaderField("OkHttp-Response-Source"));
+  }
+
+  private void assertResponseCode(HttpURLConnection connection, int expected) throws IOException {
+    assertEquals(expected, connection.getResponseCode());
   }
 
   private static String formatDate(long delta, TimeUnit timeUnit) {

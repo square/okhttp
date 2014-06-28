@@ -852,6 +852,9 @@ public final class HttpEngine {
       case HTTP_MOVED_PERM:
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
+        // Does the client allow redirects?
+        if (!client.getFollowRedirects()) return null;
+
         String location = userResponse.header("Location");
         if (location == null) return null;
         URL url = new URL(userRequest.url(), location);

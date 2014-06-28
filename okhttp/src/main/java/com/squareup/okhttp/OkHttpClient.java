@@ -147,6 +147,7 @@ public final class OkHttpClient implements Cloneable {
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private boolean followSslRedirects = true;
+  private boolean followRedirects = true;
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
@@ -368,6 +369,20 @@ public final class OkHttpClient implements Cloneable {
 
   public boolean getFollowSslRedirects() {
     return followSslRedirects;
+  }
+
+  /**
+   * Configure this client to follow redirects.
+   *
+   * <p>If unset, redirects will not be followed. This is the equivalent as the
+   * built-in {@code HttpURLConnection}'s default.
+   */
+  public void setFollowRedirects(boolean followRedirects) {
+    this.followRedirects = followRedirects;
+  }
+
+  public boolean getFollowRedirects() {
+    return followRedirects;
   }
 
   RouteDatabase getRoutesDatabase() {

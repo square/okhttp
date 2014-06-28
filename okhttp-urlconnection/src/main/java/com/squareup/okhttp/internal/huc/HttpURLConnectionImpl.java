@@ -268,6 +268,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     client.setConnectTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
   }
 
+  @Override
+  public void setInstanceFollowRedirects(boolean followRedirects) {
+    client.setFollowRedirects(followRedirects);
+  }
+
   @Override public int getConnectTimeout() {
     return client.getConnectTimeout();
   }
