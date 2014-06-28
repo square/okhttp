@@ -20,14 +20,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import okio.Buffer;
 import okio.BufferedSink;
+import okio.ByteString;
 
 /**
  * Fluent API to build <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC
  * 2387</a>-compliant request bodies.
  */
 public final class MultipartBuilder {
-
   /**
    * The "mixed" subtype of "multipart" is intended for use when the body
    * parts are independent and need to be bundled in a particular order. Any
@@ -66,11 +67,16 @@ public final class MultipartBuilder {
    */
   public static final MediaType FORM = MediaType.parse("multipart/form-data");
 
-  private final String boundary;
-  private MediaType type = MIXED;
+  private static final byte[] COLONSPACE = { ':', ' ' };
+  private static final byte[] CRLF = { '\r', '\n' };
+  private static final byte[] DASHDASH = { '-', '-' };
 
-  // Parallel lists of headers and bodies. Headers may be null. Bodies are never null.
-  private final List<Headers> partHeaders = new ArrayList<>();
+  private final ByteString boundary;
+  private MediaType type = MIXED;
+  private long length = 0;
+
+  // Parallel lists of nullable headings (boundary + headers) and non-null bodies.
+  private final List<Buffer> partHeadings = new ArrayList<>();
   private final List<RequestBody> partBodies = new ArrayList<>();
 
   /** Creates a new multipart builder that uses a random boundary token. */
@@ -84,7 +90,7 @@ public final class MultipartBuilder {
    * attacks.
    */
   public MultipartBuilder(String boundary) {
-    this.boundary = boundary;
+    this.boundary = ByteString.encodeUtf8(boundary);
   }
 
   /**
@@ -119,8 +125,18 @@ public final class MultipartBuilder {
     if (headers != null && headers.get("Content-Length") != null) {
       throw new IllegalArgumentException("Unexpected header: Content-Length");
     }
-    partHeaders.add(headers);
+
+    Buffer heading = createPartHeading(headers, body, partHeadings.isEmpty());
+    partHeadings.add(heading);
     partBodies.add(body);
+
+    long bodyContentLength = body.contentLength();
+    if (bodyContentLength == -1) {
+      length = -1;
+    } else if (length != -1) {
+      length += heading.size() + bodyContentLength;
+    }
+
     return this;
   }
 
@@ -179,28 +195,77 @@ public final class MultipartBuilder {
     return addPart(Headers.of("Content-Disposition", disposition.toString()), value);
   }
 
+  /** Creates a part "heading" from the boundary and any real or generated headers. */
+  private Buffer createPartHeading(Headers headers, RequestBody body, boolean isFirst) {
+    Buffer sink = new Buffer();
+
+    if (!isFirst) {
+      sink.write(CRLF);
+    }
+    sink.write(DASHDASH);
+    sink.write(boundary);
+    sink.write(CRLF);
+
+    if (headers != null) {
+      for (int i = 0; i < headers.size(); i++) {
+        sink.writeUtf8(headers.name(i))
+            .write(COLONSPACE)
+            .writeUtf8(headers.value(i))
+            .write(CRLF);
+      }
+    }
+
+    MediaType contentType = body.contentType();
+    if (contentType != null) {
+      sink.writeUtf8("Content-Type: ")
+          .writeUtf8(contentType.toString())
+          .write(CRLF);
+    }
+
+    long contentLength = body.contentLength();
+    if (contentLength != -1) {
+      sink.writeUtf8("Content-Length: ")
+          .writeUtf8(Long.toString(contentLength))
+          .write(CRLF);
+    }
+
+    sink.write(CRLF);
+
+    return sink;
+  }
+
   /** Assemble the specified parts into a request body. */
   public RequestBody build() {
-    if (partHeaders.isEmpty()) {
+    if (partHeadings.isEmpty()) {
       throw new IllegalStateException("Multipart body must have at least one part.");
     }
-    return new MultipartRequestBody(type, boundary, partHeaders, partBodies);
+    return new MultipartRequestBody(type, boundary, partHeadings, partBodies, length);
   }
 
   private static final class MultipartRequestBody extends RequestBody {
-    private final String boundary;
+    private final ByteString boundary;
     private final MediaType contentType;
-    private final List<Headers> partHeaders;
+    private final List<Buffer> partHeadings;
     private final List<RequestBody> partBodies;
+    private final long length;
 
-    public MultipartRequestBody(MediaType type, String boundary, List<Headers> partHeaders,
-        List<RequestBody> partBodies) {
+    public MultipartRequestBody(MediaType type, ByteString boundary, List<Buffer> partHeadings,
+        List<RequestBody> partBodies, long length) {
       if (type == null) throw new NullPointerException("type == null");
 
       this.boundary = boundary;
-      this.contentType = MediaType.parse(type + "; boundary=" + boundary);
-      this.partHeaders = Util.immutableList(partHeaders);
+      this.contentType = MediaType.parse(type + "; boundary=" + boundary.utf8());
+      this.partHeadings = Util.immutableList(partHeadings);
       this.partBodies = Util.immutableList(partBodies);
+      if (length != -1) {
+        // Add the length of the final boundary.
+        length += CRLF.length + DASHDASH.length + boundary.size() + DASHDASH.length + CRLF.length;
+      }
+      this.length = length;
+    }
+
+    @Override public long contentLength() {
+      return length;
     }
 
     @Override public MediaType contentType() {
@@ -208,58 +273,16 @@ public final class MultipartBuilder {
     }
 
     @Override public void writeTo(BufferedSink sink) throws IOException {
-      byte[] boundary = this.boundary.getBytes("UTF-8");
-      boolean first = true;
-      for (int i = 0; i < partHeaders.size(); i++) {
-        Headers headers = partHeaders.get(i);
-        RequestBody body = partBodies.get(i);
-        writeBoundary(sink, boundary, first, false);
-        writePart(sink, headers, body);
-        first = false;
+      for (int i = 0, size = partHeadings.size(); i < size; i++) {
+        sink.writeAll(partHeadings.get(i).clone());
+        partBodies.get(i).writeTo(sink);
       }
-      writeBoundary(sink, boundary, false, true);
-    }
 
-    private static void writeBoundary(BufferedSink sink, byte[] boundary,
-        boolean first, boolean last) throws IOException {
-      if (!first) {
-        sink.writeUtf8("\r\n");
-      }
-      sink.writeUtf8("--");
+      sink.write(CRLF);
+      sink.write(DASHDASH);
       sink.write(boundary);
-      if (last) {
-        sink.writeUtf8("--");
-      }
-      sink.writeUtf8("\r\n");
-    }
-
-    private void writePart(BufferedSink sink, Headers headers, RequestBody body)
-        throws IOException {
-      if (headers != null) {
-        for (int i = 0; i < headers.size(); i++) {
-          sink.writeUtf8(headers.name(i))
-              .writeUtf8(": ")
-              .writeUtf8(headers.value(i))
-              .writeUtf8("\r\n");
-        }
-      }
-
-      MediaType contentType = body.contentType();
-      if (contentType != null) {
-        sink.writeUtf8("Content-Type: ")
-            .writeUtf8(contentType.toString())
-            .writeUtf8("\r\n");
-      }
-
-      long contentLength = body.contentLength();
-      if (contentLength != -1) {
-        sink.writeUtf8("Content-Length: ")
-            .writeUtf8(Long.toString(contentLength))
-            .writeUtf8("\r\n");
-      }
-
-      sink.writeUtf8("\r\n");
-      body.writeTo(sink);
+      sink.write(DASHDASH);
+      sink.write(CRLF);
     }
   }
 }
