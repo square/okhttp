@@ -224,7 +224,7 @@ public final class DiskLruCache implements Closeable {
       try {
         cache.readJournal();
         cache.processJournal();
-        cache.journalWriter = Okio.buffer(Okio.sink(new FileOutputStream(cache.journalFile, true)));
+        cache.journalWriter = Okio.buffer(Okio.appendingSink(cache.journalFile));
         return cache;
       } catch (IOException journalIsCorrupt) {
         Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
