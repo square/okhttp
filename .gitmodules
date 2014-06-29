@@ -1,0 +1,3 @@
+[submodule "okhttp-tests/src/test/resources/hpack-test-case"]
+	path = okhttp-tests/src/test/resources/hpack-test-case
+	url = git://github.com/http2jp/hpack-test-case.git
