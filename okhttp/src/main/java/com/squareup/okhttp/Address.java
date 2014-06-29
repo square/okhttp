@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
 import java.net.Proxy;
-import java.net.UnknownHostException;
 import java.util.List;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
@@ -47,8 +46,7 @@ public final class Address {
 
   public Address(String uriHost, int uriPort, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      Authenticator authenticator, Proxy proxy, List<Protocol> protocols)
-      throws UnknownHostException {
+      Authenticator authenticator, Proxy proxy, List<Protocol> protocols) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
