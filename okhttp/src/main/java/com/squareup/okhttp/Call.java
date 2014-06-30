@@ -77,7 +77,7 @@ public class Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    Response result = getResponse();
+    Response result = getResponse(false);
     engine.releaseConnection(); // Transfer ownership of the body to the caller.
     if (result == null) throw new IOException("Canceled");
     return result;
@@ -140,7 +140,7 @@ public class Call {
     @Override protected void execute() {
       boolean signalledCallback = false;
       try {
-        Response response = getResponse();
+        Response response = getResponse(false);
         if (canceled) {
           signalledCallback = true;
           responseCallback.onFailure(request, new IOException("Canceled"));
@@ -162,7 +162,7 @@ public class Call {
    * Performs the request and returns the response. May return null if this
    * call was canceled.
    */
-  private Response getResponse() throws IOException {
+  Response getResponse(boolean forWebSocket) throws IOException {
     // Copy body metadata to the appropriate request headers.
     RequestBody body = request.body();
     RetryableSink requestBodyOut = null;
@@ -202,7 +202,7 @@ public class Call {
           request.body().writeTo(sink);
         }
 
-        engine.readResponse();
+        engine.readResponse(forWebSocket);
       } catch (IOException e) {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
@@ -218,10 +218,12 @@ public class Call {
       Request followUp = engine.followUpRequest();
 
       if (followUp == null) {
-        engine.releaseConnection();
-        return response.newBuilder()
-            .body(new RealResponseBody(response, engine.getResponseBody()))
-            .build();
+        Response.Builder builder = response.newBuilder();
+        if (!forWebSocket) {
+          engine.releaseConnection();
+          builder.body(new RealResponseBody(response, engine.getResponseBody()));
+        }
+        return builder.build();
       }
 
       if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {

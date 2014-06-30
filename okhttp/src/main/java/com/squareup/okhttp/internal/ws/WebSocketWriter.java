@@ -62,9 +62,15 @@ public final class WebSocketWriter {
   private final byte[] maskBuffer = new byte[2048];
 
   public WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
+    if (sink == null) throw new NullPointerException("sink");
+    if (random == null) throw new NullPointerException("random");
     this.isClient = isClient;
     this.sink = sink;
     this.random = random;
+  }
+
+  public boolean isClosed() {
+    return closed;
   }
 
   /** Send a ping with the supplied {@code payload}. Payload may be {@code null} */
@@ -96,23 +102,29 @@ public final class WebSocketWriter {
   public void writeClose(int code, String reason) throws IOException {
     if (closed) throw new IllegalStateException("Closed");
 
-    Buffer buffer = null;
+    Buffer payload = null;
     if (code != 0) {
       if (code < 1000 || code >= 5000) {
         throw new IllegalArgumentException("Code must be in range [1000,5000).");
       }
-      buffer = new Buffer();
-      buffer.writeShort(code);
+      payload = new Buffer();
+      payload.writeShort(code);
       if (reason != null) {
-        buffer.writeUtf8(reason);
+        payload.writeUtf8(reason);
       }
     } else if (reason != null) {
       throw new IllegalArgumentException("Code required to include reason.");
     }
+    writeClose(payload);
+  }
 
+  /**
+   * Send a close frame with optional payload. This is used when echoing a close and its
+   * payload back to the other peer.
+   */
+  public void writeClose(Buffer payload) throws IOException {
     synchronized (sink) {
-      writeControlFrame(OPCODE_CONTROL_CLOSE, buffer);
-      sink.close();
+      writeControlFrame(OPCODE_CONTROL_CLOSE, payload);
       closed = true;
     }
   }
@@ -230,6 +242,8 @@ public final class WebSocketWriter {
       } else {
         sink.write(source, byteCount);
       }
+
+      sink.flush();
     }
   }
 
