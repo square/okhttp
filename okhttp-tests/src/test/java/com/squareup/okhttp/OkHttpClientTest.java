@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.RecordingProxySelector;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import java.io.IOException;
 import java.net.Authenticator;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -119,5 +120,48 @@ public final class OkHttpClientTest {
     assertSame(a.getDispatcher(), b.getDispatcher());
     assertSame(a.getConnectionPool(), b.getConnectionPool());
     assertSame(a.getSslSocketFactory(), b.getSslSocketFactory());
+  }
+
+  /** We don't want to run user code inside of HttpEngine, etc. */
+  @Test public void copyWithDefaultsDoesNotReturnSubclass() throws Exception {
+    OkHttpClient subclass = new OkHttpClient() {};
+    OkHttpClient copy = subclass.copyWithDefaults();
+    assertEquals(OkHttpClient.class, copy.getClass());
+  }
+
+  @Test public void cloneReturnsSubclass() throws Exception {
+    OkHttpClient subclass = new OkHttpClient() {};
+    OkHttpClient clone = subclass.clone();
+    assertEquals(subclass.getClass(), clone.getClass());
+  }
+
+  /** Exercise a synchronous mocking case. */
+  @Test public void mock() throws Exception {
+    final Request request = new Request.Builder()
+        .url("http://example.com/")
+        .build();
+    final Response response = new Response.Builder()
+        .protocol(Protocol.HTTP_1_1)
+        .request(request)
+        .code(200)
+        .message("Alright")
+        .build();
+
+    OkHttpClient mockClient = new OkHttpClient() {
+      @Override public Call newCall(Request request) {
+        return new Call(this, request) {
+          @Override public Response execute() throws IOException {
+            return response;
+          }
+          @Override public void enqueue(Callback responseCallback) {
+          }
+          @Override public void cancel() {
+          }
+        };
+      }
+    };
+
+    Response actualResponse = mockClient.newCall(request).execute();
+    assertSame(response, actualResponse);
   }
 }

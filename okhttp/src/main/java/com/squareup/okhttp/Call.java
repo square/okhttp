@@ -33,9 +33,8 @@ import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
  * canceled. As this object represents a single request/response pair (stream),
  * it cannot be executed twice.
  */
-public final class Call {
+public class Call {
   private final OkHttpClient client;
-  private final Dispatcher dispatcher;
   private int redirectionCount;
 
   // Guarded by this.
@@ -46,9 +45,10 @@ public final class Call {
   private Request request;
   HttpEngine engine;
 
-  Call(OkHttpClient client, Dispatcher dispatcher, Request request) {
-    this.client = client;
-    this.dispatcher = dispatcher;
+  protected Call(OkHttpClient client, Request request) {
+    // Copy the client. Otherwise changes (socket factory, redirect policy,
+    // etc.) may incorrectly be reflected in the request when it is executed.
+    this.client = client.copyWithDefaults();
     this.request = request;
   }
 
@@ -101,7 +101,7 @@ public final class Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    dispatcher.enqueue(new AsyncCall(responseCallback));
+    client.getDispatcher().enqueue(new AsyncCall(responseCallback));
   }
 
   /**
@@ -153,7 +153,7 @@ public final class Call {
         if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
         responseCallback.onFailure(request, e);
       } finally {
-        dispatcher.finished(this);
+        client.getDispatcher().finished(this);
       }
     }
   }
