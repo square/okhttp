@@ -142,7 +142,7 @@ public final class Cache {
   }
 
   private static String urlToKey(Request request) {
-    return Util.hash(request.urlString());
+    return Util.md5Hex(request.urlString());
   }
 
   Response get(Request request) {

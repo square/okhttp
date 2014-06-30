@@ -1827,7 +1827,7 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     URL url = server.getUrl("/");
-    String urlKey = Util.hash(url.toString());
+    String urlKey = Util.md5Hex(url.toString());
     String entryMetadata = ""
         + "" + url + "\n"
         + "GET\n"

@@ -49,7 +49,7 @@ public final class RecordingWebSocketListener implements WebSocketListener {
     }
   }
 
-  private final Deque<Object> events = new ArrayDeque<Object>();
+  private final Deque<Object> events = new ArrayDeque<>();
 
   private MessageDelegate delegate;
 

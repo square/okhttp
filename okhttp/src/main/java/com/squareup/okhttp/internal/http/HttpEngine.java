@@ -602,7 +602,7 @@ public final class HttpEngine {
    * Flushes the remaining request header and body, parses the HTTP response
    * headers and starts reading the HTTP response body if it exists.
    */
-  public void readResponse() throws IOException {
+  public void readResponse(boolean forWebSocket) throws IOException {
     if (userResponse != null) {
       return; // Already ready.
     }
@@ -689,9 +689,11 @@ public final class HttpEngine {
         .build();
 
     if (!hasResponseBody()) {
-      // Don't call initContentStream() when the response doesn't have any content.
-      responseTransferSource = transport.getTransferStream(storeRequest);
-      responseBody = Okio.buffer(responseTransferSource);
+      if (!forWebSocket) {
+        // Don't call initContentStream() when the response doesn't have any content.
+        responseTransferSource = transport.getTransferStream(storeRequest);
+        responseBody = Okio.buffer(responseTransferSource);
+      }
       return;
     }
 

@@ -30,8 +30,8 @@ public interface WebSocketListener {
 
   /**
    * Called when the server sends a close message. This may have been initiated
-   * from a call to {@link WebSocket#close()} or as an unprompted message from
-   * the server.
+   * from a call to {@link WebSocket#close(int, String) close()} or as an unprompted
+   * message from the server.
    *
    * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1>RFC-compliant</a>
    * status code.
