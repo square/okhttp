@@ -185,15 +185,24 @@ public final class Util {
     return false; // Ran out of time.
   }
 
-  /** Returns a 32 character string containing a hash of {@code s}. */
-  public static String hash(String s) {
+  /** Returns a 32 character string containing an MD5 hash of {@code s}. */
+  public static String md5Hex(String s) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance("MD5");
       byte[] md5bytes = messageDigest.digest(s.getBytes("UTF-8"));
       return ByteString.of(md5bytes).hex();
-    } catch (NoSuchAlgorithmException e) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       throw new AssertionError(e);
-    } catch (UnsupportedEncodingException e) {
+    }
+  }
+
+  /** Returns a Base 64-encoded string containing a SHA1 hash of {@code s}. */
+  public static String shaBase64(String s) {
+    try {
+      MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
+      byte[] md5bytes = messageDigest.digest(s.getBytes("UTF-8"));
+      return ByteString.of(md5bytes).base64();
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }
   }

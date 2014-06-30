@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
@@ -291,7 +292,7 @@ public class WebSocketWriterTest {
     }
   }
 
-  private void assertData(String hex) {
+  private void assertData(String hex) throws EOFException {
     ByteString expected = ByteString.decodeHex(hex);
     ByteString actual = this.data.readByteString(expected.size());
     assertEquals(expected, actual);

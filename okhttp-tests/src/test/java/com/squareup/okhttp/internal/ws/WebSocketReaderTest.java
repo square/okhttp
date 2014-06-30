@@ -34,11 +34,12 @@ import static org.junit.Assert.fail;
 public class WebSocketReaderTest {
   private final Buffer data = new Buffer();
   private final RecordingWebSocketListener listener = new RecordingWebSocketListener();
+  private final RecordingReaderFrameCallback callback = new RecordingReaderFrameCallback();
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketReader serverReader = new WebSocketReader(false, data, listener);
-  private final WebSocketReader clientReader = new WebSocketReader(true, data, listener);
+  private final WebSocketReader serverReader = new WebSocketReader(false, data, listener, callback);
+  private final WebSocketReader clientReader = new WebSocketReader(true, data, listener, callback);
 
   @Test public void controlFramesMustBeFinal() throws IOException {
     data.write(ByteString.decodeHex("0a00")); // Empty ping.
@@ -290,6 +291,36 @@ public class WebSocketReaderTest {
     clientReader.readMessage();
 
     assertNotNull(exception.get());
+  }
+
+  @Test public void emptyPingCallsCallback() throws IOException {
+    data.write(ByteString.decodeHex("8900")); // Empty ping
+    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
+    clientReader.readMessage();
+    callback.assertPing(null);
+    listener.assertTextMessage("Hello");
+  }
+
+  @Test public void pingCallsCallback() throws IOException {
+    data.write(ByteString.decodeHex("890548656c6c6f")); // Ping with "Hello"
+    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
+    clientReader.readMessage();
+    callback.assertPing(new Buffer().writeUtf8("Hello"));
+    listener.assertTextMessage("Hello");
+  }
+
+  @Test public void emptyCloseCallsCallback() throws IOException {
+    data.write(ByteString.decodeHex("8800")); // Empty close
+    clientReader.readMessage();
+    callback.assertClose(null);
+    listener.onClose(0, null);
+  }
+
+  @Test public void closeCallsCallback() throws IOException {
+    data.write(ByteString.decodeHex("880703e848656c6c6f")); // Close with code and reason
+    clientReader.readMessage();
+    callback.assertClose(new Buffer().writeShort(1000).writeUtf8("Hello"));
+    listener.onClose(1000, "Hello");
   }
 
   private byte[] binaryData(int length) {
