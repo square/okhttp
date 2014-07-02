@@ -158,6 +158,8 @@ public final class SpdyConnection implements Closeable {
           0L, TimeUnit.MILLISECONDS,
           new LinkedBlockingQueue<Runnable>(),
           Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
+      // 1 less than SPDY http://tools.ietf.org/html/draft-ietf-httpbis-http2-13#section-6.9.2
+      peerSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
     } else if (protocol == Protocol.SPDY_3) {
       variant = new Spdy3();
       pushExecutor = null;
