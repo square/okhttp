@@ -204,7 +204,7 @@ public final class SpdyTransport implements Transport {
 
     StatusLine statusLine = StatusLine.parse(version + " " + status);
     return new Response.Builder()
-        .protocol(statusLine.protocol)
+        .protocol(protocol)
         .code(statusLine.code)
         .message(statusLine.message)
         .headers(headersBuilder.build());

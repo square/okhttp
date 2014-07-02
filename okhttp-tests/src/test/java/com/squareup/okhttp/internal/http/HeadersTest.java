@@ -41,7 +41,7 @@ public final class HeadersTest {
         SpdyTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
     Headers headers = response.headers();
     assertEquals(4, headers.size());
-    assertEquals(Protocol.HTTP_1_1, response.protocol());
+    assertEquals(Protocol.SPDY_3, response.protocol());
     assertEquals(200, response.code());
     assertEquals("OK", response.message());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
