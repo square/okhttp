@@ -105,11 +105,8 @@ public final class MultipartBuilderTest {
 
     RequestBody requestBody = new MultipartBuilder("AaB03x")
         .type(MultipartBuilder.FORM)
-        .addPart(
-            Headers.of("Content-Disposition", "form-data; name=\"submit-name\""),
-            RequestBody.create(null, "Larry"))
-        .addPart(
-            Headers.of("Content-Disposition", "form-data; name=\"files\""),
+        .addFormDataPart("submit-name", "Larry")
+        .addFormDataPart("files", null,
             new MultipartBuilder("BbC04y")
                 .addPart(
                     Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
@@ -126,6 +123,45 @@ public final class MultipartBuilderTest {
         .build();
 
     assertEquals("multipart/form-data; boundary=AaB03x", requestBody.contentType().toString());
+
+    Buffer buffer = new Buffer();
+    requestBody.writeTo(buffer);
+    assertEquals(expected, buffer.readUtf8());
+  }
+
+  @Test public void stringEscapingIsWeird() throws Exception {
+    String expected = ""
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"field with spaces\"; filename=\"filename with spaces.txt\"\r\n"
+        + "Content-Type: text/plain; charset=utf-8\r\n"
+        + "Content-Length: 4\r\n"
+        + "\r\n"
+        + "okay\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
+        + "Content-Length: 1\r\n"
+        + "\r\n"
+        + "\"\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"field with %22\"\r\n"
+        + "Content-Length: 3\r\n"
+        + "\r\n"
+        + "%22\r\n"
+        + "--AaB03x\r\n"
+        + "Content-Disposition: form-data; name=\"field with \u0391\"\r\n"
+        + "Content-Length: 5\r\n"
+        + "\r\n"
+        + "Alpha\r\n"
+        + "--AaB03x--";
+
+    RequestBody requestBody = new MultipartBuilder("AaB03x")
+        .type(MultipartBuilder.FORM)
+        .addFormDataPart("field with spaces", "filename with spaces.txt",
+            RequestBody.create(MediaType.parse("text/plain; charset=utf-8"), "okay"))
+        .addFormDataPart("field with \"", "\"")
+        .addFormDataPart("field with %22", "%22")
+        .addFormDataPart("field with \u0391", "Alpha")
+        .build();
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
