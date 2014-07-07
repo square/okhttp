@@ -23,14 +23,18 @@ import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -115,6 +119,7 @@ public class OkHttpClient implements Cloneable {
   private List<Protocol> protocols;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
+  private Map<String, Protocol> preferredProtocol;
 
   /** Non-null if this client is caching; possibly by {@code cache}. */
   private InternalCache internalCache;
@@ -446,10 +451,42 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
+   * Set a prefered prototol for a specified host.
+   * this configuration doesn't affect the TLS NPN/ALPN's protocol negotiation
+   *
+   * Protocol preferred feature:
+   * It enables okhttp connect to a http(without TSL NPN/ALPN) base spdy host
+   *
+   * This feature is meaningful for some web service refining with spdy,
+   * and also it can unify the web service request facade such as Andriod and iOS, since NPN
+   * "this extension isn't supported by Secure Transport (Apple's TLS implementation)"
+   * one example for iOS request: https://github.com/twitter/CocoaSPDY
+   */
+  public synchronized void setPreferredProtocol(String host, Protocol p) {
+      if (preferredProtocol == null) {
+          preferredProtocol = new HashMap<String, Protocol>();
+      }
+      preferredProtocol.put(host, p);
+  }
+
+  public final Map<String, Protocol> getPreferredProtocol() {
+      return preferredProtocol;
+  }
+
+  public Request preConfigRequest(Request request) {
+      if (preferredProtocol != null && preferredProtocol.containsKey(request.url().getHost())) {
+        Protocol p = preferredProtocol.get(request.url().getHost());
+        Request target = request.newBuilder().preferredProtocol(p).build();
+        return target;
+      }
+      return request;
+  }
+
+  /**
    * Prepares the {@code request} to be executed at some point in the future.
    */
   public Call newCall(Request request) {
-    return new Call(this, request);
+    return new Call(this, preConfigRequest(request));
   }
 
   /**

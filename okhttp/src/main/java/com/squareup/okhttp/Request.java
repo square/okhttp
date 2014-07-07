@@ -34,6 +34,8 @@ public final class Request {
   private final Headers headers;
   private final RequestBody body;
   private final Object tag;
+  private final Protocol preferredProtocol;
+  private final boolean needTunnel;
 
   private volatile URL url; // Lazily initialized.
   private volatile URI uri; // Lazily initialized.
@@ -46,6 +48,8 @@ public final class Request {
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
     this.url = builder.url;
+    this.preferredProtocol = builder.preferredProtocol;
+    this.needTunnel = builder.needTunnel;
   }
 
   public URL url() {
@@ -94,6 +98,14 @@ public final class Request {
     return tag;
   }
 
+  public Protocol preferredProtocol() {
+      return preferredProtocol;
+  }
+
+  public boolean needTunnel() {
+      return needTunnel;
+  }
+
   public Builder newBuilder() {
     return new Builder(this);
   }
@@ -128,6 +140,8 @@ public final class Request {
     private Headers.Builder headers;
     private RequestBody body;
     private Object tag;
+    private Protocol preferredProtocol;
+    private boolean needTunnel;
 
     public Builder() {
       this.method = "GET";
@@ -140,6 +154,8 @@ public final class Request {
       this.method = request.method;
       this.body = request.body;
       this.tag = request.tag;
+      this.preferredProtocol = request.preferredProtocol;
+      this.needTunnel = request.needTunnel;
       this.headers = request.headers.newBuilder();
     }
 
@@ -229,6 +245,16 @@ public final class Request {
     public Builder tag(Object tag) {
       this.tag = tag;
       return this;
+    }
+
+    public Builder preferredProtocol(Protocol preferredProtocol) {
+        this.preferredProtocol = preferredProtocol;
+        return this;
+    }
+
+    public Builder needTunnel(boolean needTunnel) {
+        this.needTunnel = needTunnel;
+        return this;
     }
 
     public Request build() {

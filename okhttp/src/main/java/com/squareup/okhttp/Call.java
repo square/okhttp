@@ -207,6 +207,8 @@ public class Call {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
           engine = retryEngine;
+          // sync up the request from retry engine
+          request = engine.getRequest();
           continue;
         }
 
