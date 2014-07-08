@@ -151,7 +151,7 @@ public final class Connection {
 
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(request, readTimeout, writeTimeout);
-    } else if (request.preferredProtocol() != null) {
+    } else if (request != null && request.preferredProtocol() != null) {
       usePreferredProtocol(request);
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
@@ -196,8 +196,8 @@ public final class Connection {
   }
 
   /**
-   * Returns a request that creates a TLS tunnel via an HTTP proxy, or original request
-   * if no tunnel is necessary. Everything in the tunnel request is sent
+   * Returns a request that creates a TLS tunnel via an HTTP proxy and mark it as need-tunnel,
+   * or original request if no tunnel is necessary. Everything in the tunnel request is sent
    * unencrypted to the proxy server, so tunnels include only the minimum set of
    * headers. This avoids sending potentially sensitive data like HTTP cookies
    * to the proxy unencrypted.
@@ -265,7 +265,7 @@ public final class Connection {
     String maybeProtocol;
     if (useNpn && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
-    } else if (request.preferredProtocol() != null) {
+    } else if (request != null &&  request.preferredProtocol() != null) {
       protocol = request.preferredProtocol();
     }
 

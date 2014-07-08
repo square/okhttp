@@ -373,10 +373,10 @@ public final class HttpEngine {
         || !canRetryRequestBody) {
         // rule out the preferred protocol and try again.
         if (userRequest.preferredProtocol() != null) {
-            close();
-            Request request = userRequest.newBuilder().preferredProtocol(null).build();
-            return new HttpEngine(client, request, false, null, null,
-                    (RetryableSink) requestBodyOut, null);
+          close();
+          Request request = userRequest.newBuilder().preferredProtocol(null).build();
+          return new HttpEngine(client, request, false, null, null,
+                  (RetryableSink) requestBodyOut, null);
         } else {
           return null;
         }
