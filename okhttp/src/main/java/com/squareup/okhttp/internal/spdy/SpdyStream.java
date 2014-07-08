@@ -249,9 +249,9 @@ public final class SpdyStream {
       // so we need keep side-effect operations in one synchronized (this) block
       // for consideration of program consistency.
       // one example for describing this issue:
-      // the assertEquals(0, connection.openStreamCount()) can not ensure alwasy true
+      // the 'assertEquals(0, connection.openStreamCount())' can not ensure always true
       // for test case (getResponseHeadersTimesOut) if we moved the statement
-      // this.connection.removeStream(id);
+      // 'this.connection.removeStream(id)'
       // out of the synchronized (this) block.
       this.connection.removeStream(id);
       notifyAll();

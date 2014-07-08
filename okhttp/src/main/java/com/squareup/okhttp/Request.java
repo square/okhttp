@@ -252,7 +252,9 @@ public final class Request {
         return this;
     }
 
-    public Builder needTunnel(boolean needTunnel) {
+    // no need public access.
+    // it should be able to set only in this package.
+    Builder needTunnel(boolean needTunnel) {
         this.needTunnel = needTunnel;
         return this;
     }
