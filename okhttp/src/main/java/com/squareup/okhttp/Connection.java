@@ -152,7 +152,7 @@ public final class Connection {
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(request, readTimeout, writeTimeout);
     } else if (request.preferredProtocol() != null) {
-        usePreferredProtocol(request);
+      usePreferredProtocol(request);
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
     }
@@ -160,12 +160,20 @@ public final class Connection {
   }
 
   private void usePreferredProtocol(Request request) throws IOException {
-      protocol = request.preferredProtocol();
+    protocol = request.preferredProtocol();
+    createConnectionAccordingProtocol();
+  }
+
+  private void createConnectionAccordingProtocol() throws IOException {
+    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-        .protocol(protocol).build();
+          .protocol(protocol).build();
       spdyConnection.sendConnectionPreface();
+    } else {
+      httpConnection = new HttpConnection(pool, this, socket);
     }
+  }
 
   /**
    * Connects this connection if it isn't already. This creates tunnels, shares
@@ -258,17 +266,10 @@ public final class Connection {
     if (useNpn && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
     } else if (request.preferredProtocol() != null) {
-        protocol = request.preferredProtocol();
+      protocol = request.preferredProtocol();
     }
 
-    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
-      sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-          .protocol(protocol).build();
-      spdyConnection.sendConnectionPreface();
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket);
-    }
+    createConnectionAccordingProtocol();
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */

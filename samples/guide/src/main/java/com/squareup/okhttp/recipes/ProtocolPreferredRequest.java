@@ -25,18 +25,19 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 /**
- * It demonstrates how to connect a http(without TSL NPN/ALPN) base spdy host
- * using spdy 3.1 protocol preferred request.
- * This feature is meaningful for some web service refining with spdy.
- * and also it can unify the web service request facade such as Andriod and iOS,
- * one example for iOS request: https://github.com/twitter/CocoaSPDY
+ * It demonstrates how to connect a http(without TLS NPN/ALPN) based spdy host
+ * using spdy 3.1 protocol preferred request. This feature is meaningful for
+ * some web service refining with spdy. and also it can unify the web service
+ * request facade such as Andriod and iOS, one example for iOS request:
+ * https://github.com/twitter/CocoaSPDY
  */
 public class ProtocolPreferredRequest {
 
   OkHttpClient client = new OkHttpClient();
   {
     // config the preferred protocol for a specified host.
-    // 118.186.217.31 hosts a spdy 3.1(can access without TSL NPN/ALPN) web service.
+    // 118.186.217.31 hosts a spdy 3.1(can access without TSL NPN/ALPN) web
+    // service.
     client.setPreferredProtocol("118.186.217.31", Protocol.SPDY_3);
   }
 

@@ -455,7 +455,7 @@ public class OkHttpClient implements Cloneable {
    * this configuration doesn't affect the TLS NPN/ALPN's protocol negotiation
    *
    * Protocol preferred feature:
-   * It enables okhttp connect to a http(without TSL NPN/ALPN) base spdy host
+   * It enables okhttp connect to a http(without TLS NPN/ALPN) based spdy host
    *
    * This feature is meaningful for some web service refining with spdy,
    * and also it can unify the web service request facade such as Andriod and iOS, since NPN
