@@ -244,9 +244,18 @@ public final class SpdyStream {
         return false;
       }
       this.errorCode = errorCode;
+      // since closeInternal() will be invoked in different threads,
+      // and the notifyAll() will trigger the threads switch possibly,
+      // so we need keep side-effect operations in one synchronized (this) block
+      // for consideration of program consistency.
+      // one example for describing this issue:
+      // the assertEquals(0, connection.openStreamCount()) can not ensure alwasy true
+      // for test case (getResponseHeadersTimesOut) if we moved the statement
+      // this.connection.removeStream(id);
+      // out of the synchronized (this) block.
+      this.connection.removeStream(id);
       notifyAll();
     }
-    connection.removeStream(id);
     return true;
   }
 
