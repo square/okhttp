@@ -229,9 +229,8 @@ public final class MultipartBuilder {
       sink.write(boundary);
       if (last) {
         sink.writeUtf8("--");
-      } else {
-        sink.writeUtf8("\r\n");
       }
+      sink.writeUtf8("\r\n");
     }
 
     private void writePart(BufferedSink sink, Headers headers, RequestBody body)

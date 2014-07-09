@@ -34,7 +34,7 @@ public final class MultipartBuilderTest {
         + "Content-Length: 13\r\n"
         + "\r\n"
         + "Hello, World!\r\n"
-        + "--123--";
+        + "--123--\r\n";
 
     RequestBody requestBody = new MultipartBuilder("123")
         .addPart(RequestBody.create(null, "Hello, World!"))
@@ -61,7 +61,7 @@ public final class MultipartBuilderTest {
         + "Content-Length: 3\r\n"
         + "\r\n"
         + "Fox\r\n"
-        + "--123--";
+        + "--123--\r\n";
 
     RequestBody requestBody = new MultipartBuilder("123")
         .addPart(RequestBody.create(null, "Quick"))
@@ -101,7 +101,8 @@ public final class MultipartBuilderTest {
         + "\r\n"
         + "... contents of file2.gif ...\r\n"
         + "--BbC04y--\r\n"
-        + "--AaB03x--";
+        + "\r\n"
+        + "--AaB03x--\r\n";
 
     RequestBody requestBody = new MultipartBuilder("AaB03x")
         .type(MultipartBuilder.FORM)
@@ -152,7 +153,7 @@ public final class MultipartBuilderTest {
         + "Content-Length: 5\r\n"
         + "\r\n"
         + "Alpha\r\n"
-        + "--AaB03x--";
+        + "--AaB03x--\r\n";
 
     RequestBody requestBody = new MultipartBuilder("AaB03x")
         .type(MultipartBuilder.FORM)
