@@ -16,8 +16,12 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.OkHeaders;
+
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
@@ -43,6 +47,7 @@ public final class Response {
   private Response networkResponse;
   private Response cacheResponse;
   private final Response priorResponse;
+  private final List<Response> pushedResponses;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -57,6 +62,8 @@ public final class Response {
     this.networkResponse = builder.networkResponse;
     this.cacheResponse = builder.cacheResponse;
     this.priorResponse = builder.priorResponse;
+    this.pushedResponses = builder.pushedResponses != null
+        ? Collections.unmodifiableList(builder.pushedResponses) : Collections.<Response> emptyList();
   }
 
   /**
@@ -204,6 +211,30 @@ public final class Response {
     return result != null ? result : (cacheControl = CacheControl.parse(headers));
   }
 
+  /**
+   * If the response was received from the network, this will find matching
+   * responses that the server pushed with this response.  These responses are
+   * cached independently of this response.  Returns null if the response was
+   * received from the cache or no matching response was pushed.
+   */
+  public Response findPushedResponse(Request request) {
+    // TODO: replace with request matching as implemented by cache.
+    for (Response response : pushedResponses) {
+      if (response.request.equals(request)) {
+        return response;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * If the response was received from the network, list all responses that the
+   * server pushed with this response.
+   */
+  public List<Response> pushedResponses() {
+    return pushedResponses;
+  }
+
   @Override public String toString() {
     return "Response{protocol="
         + protocol
@@ -227,6 +258,7 @@ public final class Response {
     private Response networkResponse;
     private Response cacheResponse;
     private Response priorResponse;
+    private List<Response> pushedResponses;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -243,6 +275,7 @@ public final class Response {
       this.networkResponse = response.networkResponse;
       this.cacheResponse = response.cacheResponse;
       this.priorResponse = response.priorResponse;
+      this.pushedResponses = response.pushedResponses;
     }
 
     public Builder request(Request request) {
@@ -338,6 +371,15 @@ public final class Response {
       if (response.body != null) {
         throw new IllegalArgumentException("priorResponse.body != null");
       }
+    }
+
+    /**
+     * Adds a map of push promises to responses that were sent with this
+     * response.
+     */
+    public Builder pushedResponses(List<Response> pushedResponses) {
+      this.pushedResponses = pushedResponses;
+      return this;
     }
 
     public Response build() {
