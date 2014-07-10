@@ -115,7 +115,7 @@ public final class Request {
     return "Request{method="
         + method
         + ", url="
-        + url
+        + urlString
         + ", tag="
         + (tag != this ? tag : null)
         + '}';
