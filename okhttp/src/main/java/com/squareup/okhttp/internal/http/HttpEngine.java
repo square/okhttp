@@ -218,39 +218,20 @@ public final class HttpEngine {
     cacheStrategy = null;
   }
 
+  /** 
+   * This interface is defined for {@link HttpEngine#tryGetResponse tryGetResponse}.
+   * You can inject a <code>isCanceled</code> checker by implementing
+   * this cancellation indicatior interface. */
   public interface ICancelIndicator {
     boolean isCanceled();
   }
 
-  private static class RealResponseBody extends ResponseBody {
-    private final Response response;
-    private final BufferedSource source;
-
-    RealResponseBody(Response response, BufferedSource source) {
-      this.response = response;
-      this.source = source;
-    }
-
-    @Override
-    public MediaType contentType() {
-      String contentType = response.header("Content-Type");
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override
-    public long contentLength() {
-      return OkHeaders.contentLength(response);
-    }
-
-    @Override
-    public BufferedSource source() {
-      return source;
-    }
-  }
-
   /**
-   * Retries and redirects need re-init for each attempt. May return null if this
-   * call was canceled.
+   * Retries and redirects to get the reponse from current http engine.
+   * May return null if this call was canceled.
+   * <p>The {@link ICancelIndicator indicator} will be injected to check if the caller
+   * attempts to cancel current transport of this engine.
+   * If set null means no need cancellation support.
    */
   public Response tryGetResponse(ICancelIndicator indicator) throws IOException {
     int redirectionCount = 0;
@@ -323,7 +304,6 @@ public final class HttpEngine {
       init(client, userRequest, false, connection, null, null, response);
     }
   }
-
 
   /**
    * Figures out what the response source will be, and opens a socket to that
@@ -955,5 +935,31 @@ public final class HttpEngine {
     return url.getHost().equals(followUp.getHost())
         && getEffectivePort(url) == getEffectivePort(followUp)
         && url.getProtocol().equals(followUp.getProtocol());
+  }
+
+  private static class RealResponseBody extends ResponseBody {
+    private final Response response;
+    private final BufferedSource source;
+
+    RealResponseBody(Response response, BufferedSource source) {
+      this.response = response;
+      this.source = source;
+    }
+
+    @Override
+    public MediaType contentType() {
+      String contentType = response.header("Content-Type");
+      return contentType != null ? MediaType.parse(contentType) : null;
+    }
+
+    @Override
+    public long contentLength() {
+      return OkHeaders.contentLength(response);
+    }
+
+    @Override
+    public BufferedSource source() {
+      return source;
+    }
   }
 }
