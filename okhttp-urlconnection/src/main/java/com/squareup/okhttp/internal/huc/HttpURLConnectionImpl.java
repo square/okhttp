@@ -38,7 +38,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -53,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
-import okio.Sink;
 
 /**
  * This implementation uses HttpEngine to send requests and receive responses.
@@ -75,7 +73,6 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
-  private int redirectionCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
   /** Lazily created (with synthetic headers) on first call to getHeaders(). */
@@ -372,47 +369,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       return httpEngine;
     }
 
-    while (true) {
-      if (!execute(true)) {
-        continue;
-      }
-
-      Response response = httpEngine.getResponse();
-      Request followUp = httpEngine.followUpRequest();
-
-      if (followUp == null) {
-        httpEngine.releaseConnection();
-        return httpEngine;
-      }
-
-      if (response.isRedirect() && ++redirectionCount > HttpEngine.MAX_REDIRECTS) {
-        throw new ProtocolException("Too many redirects: " + redirectionCount);
-      }
-
-      // The first request was insufficient. Prepare for another...
-      url = followUp.url();
-      requestHeaders = followUp.headers().newBuilder();
-
-      // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM redirect
-      // should keep the same method, Chrome, Firefox and the RI all issue GETs
-      // when following any redirect.
-      Sink requestBody = httpEngine.getRequestBody();
-      if (!followUp.method().equals(method)) {
-        requestBody = null;
-      }
-
-      if (requestBody != null && !(requestBody instanceof RetryableSink)) {
-        throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
-      }
-
-      if (!httpEngine.sameConnection(followUp.url())) {
-        httpEngine.releaseConnection();
-      }
-
-      Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody,
-          response);
-    }
+    // input null means no need cancellation support
+    httpEngine.tryGetResponse(null);
+    return httpEngine;
   }
 
   /**
