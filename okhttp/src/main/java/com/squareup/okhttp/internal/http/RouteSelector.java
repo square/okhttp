@@ -18,10 +18,10 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.HostResolver;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RouteDatabase;
 import java.io.IOException;
@@ -54,7 +54,7 @@ public final class RouteSelector {
 
   private final Address address;
   private final URI uri;
-  private final Dns dns;
+  private final HostResolver hostResolver;
   private final OkHttpClient client;
   private final ProxySelector proxySelector;
   private final ConnectionPool pool;
@@ -81,21 +81,20 @@ public final class RouteSelector {
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
 
-  private RouteSelector(Address address, URI uri, Dns dns, OkHttpClient client, Request request) {
+  private RouteSelector(Address address, URI uri, OkHttpClient client, Request request) {
     this.address = address;
     this.uri = uri;
     this.client = client;
     this.proxySelector = client.getProxySelector();
     this.pool = client.getConnectionPool();
     this.routeDatabase = Internal.instance.routeDatabase(client);
-    this.dns = dns;
+    this.hostResolver = client.getHostResolver();
     this.request = request;
 
     resetNextProxy(uri, address.getProxy());
   }
 
-  public static RouteSelector get(Request request, OkHttpClient client, Dns dns)
-      throws IOException {
+  public static RouteSelector get(Request request, OkHttpClient client) throws IOException {
     String uriHost = request.url().getHost();
     if (uriHost == null || uriHost.length() == 0) {
       throw new UnknownHostException(request.url().toString());
@@ -112,7 +111,7 @@ public final class RouteSelector {
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, client.getAuthenticator(),
         client.getProxy(), client.getProtocols());
 
-    return new RouteSelector(address, request.uri(), dns, client, request);
+    return new RouteSelector(address, request.uri(), client, request);
   }
 
   /**
@@ -262,7 +261,7 @@ public final class RouteSelector {
     }
 
     // Try each address for best behavior in mixed IPv4/IPv6 environments.
-    socketAddresses = dns.getAllByName(socketHost);
+    socketAddresses = hostResolver.getAllByName(socketHost);
     nextSocketAddressIndex = 0;
   }
 

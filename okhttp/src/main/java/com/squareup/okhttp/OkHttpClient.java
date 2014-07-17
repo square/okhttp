@@ -125,6 +125,7 @@ public class OkHttpClient implements Cloneable {
   private HostnameVerifier hostnameVerifier;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
+  private HostResolver hostResolver;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
   private int connectTimeout;
@@ -445,6 +446,19 @@ public class OkHttpClient implements Cloneable {
     return protocols;
   }
 
+  /*
+   * Sets the {@code HostResolver} that will be used by this client to resolve
+   * hostnames to IP addresses.
+   */
+  public OkHttpClient setHostResolver(HostResolver hostResolver) {
+    this.hostResolver = hostResolver;
+    return this;
+  }
+
+  public HostResolver getHostResolver() {
+    return hostResolver;
+  }
+
   /**
    * Prepares the {@code request} to be executed at some point in the future.
    */
@@ -490,6 +504,9 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.protocols == null) {
       result.protocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+    }
+    if (result.hostResolver == null) {
+      result.hostResolver = HostResolver.DEFAULT;
     }
     return result;
   }
