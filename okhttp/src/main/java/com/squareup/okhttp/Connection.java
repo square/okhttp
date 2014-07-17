@@ -140,10 +140,10 @@ public final class Connection {
       throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
-    if (route.proxy.type() != Proxy.Type.HTTP) {
-      socket = new Socket(route.proxy);
-    } else {
+    if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
       socket = route.address.socketFactory.createSocket();
+    } else {
+      socket = new Socket(route.proxy);
     }
 
     socket.setSoTimeout(readTimeout);
