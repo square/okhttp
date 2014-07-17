@@ -218,7 +218,7 @@ public final class HttpEngine {
     cacheStrategy = null;
   }
 
-  /** 
+  /**
    * This interface is defined for {@link HttpEngine#tryGetResponse tryGetResponse}.
    * You can inject a <code>isCanceled</code> checker by implementing
    * this cancellation indicatior interface. */
