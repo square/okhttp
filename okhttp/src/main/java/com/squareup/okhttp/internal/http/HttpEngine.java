@@ -371,7 +371,15 @@ public final class HttpEngine {
         || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
         || !isRecoverable(e)
         || !canRetryRequestBody) {
-      return null;
+        // rule out the preferred protocol and try again.
+        if (userRequest.preferredProtocol() != null) {
+          close();
+          Request request = userRequest.newBuilder().preferredProtocol(null).build();
+          return new HttpEngine(client, request, false, null, null,
+                  (RetryableSink) requestBodyOut, null);
+        } else {
+          return null;
+        }
     }
 
     Connection connection = close();

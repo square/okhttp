@@ -136,7 +136,7 @@ public final class Connection {
     socket.close();
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
+  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request request)
       throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
@@ -150,11 +150,29 @@ public final class Connection {
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
 
     if (route.address.sslSocketFactory != null) {
-      upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
+      upgradeToTls(request, readTimeout, writeTimeout);
+    } else if (request != null && request.preferredProtocol() != null) {
+      usePreferredProtocol(request);
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
     }
     connected = true;
+  }
+
+  private void usePreferredProtocol(Request request) throws IOException {
+    protocol = request.preferredProtocol();
+    createConnectionAccordingProtocol();
+  }
+
+  private void createConnectionAccordingProtocol() throws IOException {
+    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
+      socket.setSoTimeout(0); // SPDY timeouts are set per-stream.
+      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
+          .protocol(protocol).build();
+      spdyConnection.sendConnectionPreface();
+    } else {
+      httpConnection = new HttpConnection(pool, this, socket);
+    }
   }
 
   /**
@@ -178,14 +196,14 @@ public final class Connection {
   }
 
   /**
-   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
-   * no tunnel is necessary. Everything in the tunnel request is sent
+   * Returns a request that creates a TLS tunnel via an HTTP proxy and mark it as need-tunnel,
+   * or original request if no tunnel is necessary. Everything in the tunnel request is sent
    * unencrypted to the proxy server, so tunnels include only the minimum set of
    * headers. This avoids sending potentially sensitive data like HTTP cookies
    * to the proxy unencrypted.
    */
   private Request tunnelRequest(Request request) throws IOException {
-    if (!route.requiresTunnel()) return null;
+    if (!route.requiresTunnel()) return request;
 
     String host = request.url().getHost();
     int port = getEffectivePort(request.url());
@@ -207,20 +225,20 @@ public final class Connection {
       result.header("Proxy-Authorization", proxyAuthorization);
     }
 
-    return result.build();
+    return result.needTunnel(true).build();
   }
 
   /**
    * Create an {@code SSLSocket} and perform the TLS handshake and certificate
    * validation.
    */
-  private void upgradeToTls(Request tunnelRequest, int readTimeout, int writeTimeout)
+  private void upgradeToTls(Request request, int readTimeout, int writeTimeout)
       throws IOException {
     Platform platform = Platform.get();
 
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    if (tunnelRequest != null) {
-      makeTunnel(tunnelRequest, readTimeout, writeTimeout);
+    if (request != null &&  request.needTunnel()) {
+      makeTunnel(request, readTimeout, writeTimeout);
     }
 
     // Create the wrapper over connected socket.
@@ -247,16 +265,11 @@ public final class Connection {
     String maybeProtocol;
     if (useNpn && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
+    } else if (request != null &&  request.preferredProtocol() != null) {
+      protocol = request.preferredProtocol();
     }
 
-    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
-      sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-          .protocol(protocol).build();
-      spdyConnection.sendConnectionPreface();
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket);
-    }
+    createConnectionAccordingProtocol();
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
