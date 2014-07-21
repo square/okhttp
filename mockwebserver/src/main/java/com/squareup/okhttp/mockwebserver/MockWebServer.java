@@ -524,7 +524,7 @@ public final class MockWebServer {
     List<Integer> chunkSizes = new ArrayList<>();
     MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
-      hasBody = true;
+      hasBody = contentLength > 0;
       throttledTransfer(throttlePolicy, in, requestBody, contentLength);
     } else if (chunked) {
       hasBody = true;
