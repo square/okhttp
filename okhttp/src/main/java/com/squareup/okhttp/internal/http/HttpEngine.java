@@ -189,11 +189,23 @@ public final class HttpEngine {
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
       Response priorResponse) {
-    init(client, request, bufferRequestBody, connection, routeSelector,
-        requestBodyOut, priorResponse);
+    this.client = client;
+    this.userRequest = request;
+    this.bufferRequestBody = bufferRequestBody;
+    this.connection = connection;
+    this.routeSelector = routeSelector;
+    this.requestBodyOut = requestBodyOut;
+    this.priorResponse = priorResponse;
+
+    if (connection != null) {
+      Internal.instance.setOwner(connection, this);
+      this.route = connection.getRoute();
+    } else {
+      this.route = null;
+    }
   }
 
-  private void init(OkHttpClient client, Request request, boolean bufferRequestBody,
+  private void reset(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
       Response priorResponse) {
     this.client = client;
@@ -211,29 +223,37 @@ public final class HttpEngine {
       this.route = null;
     }
 
-    transport = null; sentRequestMillis = -1; transparentGzip = false;
-    networkRequest = null; cacheResponse = null; networkResponse = null;
-    userResponse = null; bufferedRequestBody = null; responseTransferSource = null;
-    responseBody = null; responseBodyBytes = null; storeRequest = null;
-    cacheStrategy = null;
+    this.transport = null;
+    this.sentRequestMillis = -1;
+    this.transparentGzip = false;
+    this.networkRequest = null;
+    this.cacheResponse = null;
+    this.networkResponse = null;
+    this.userResponse = null;
+    this.bufferedRequestBody = null;
+    this.responseTransferSource = null;
+    this.responseBody = null;
+    this.responseBodyBytes = null;
+    this.storeRequest = null;
+    this.cacheStrategy = null;
   }
 
   /**
    * This interface is defined for {@link HttpEngine#tryGetResponse tryGetResponse}.
    * You can inject a <code>isCanceled</code> checker by implementing
    * this cancellation indicatior interface. */
-  public interface ICancelIndicator {
+  public interface CancelIndicator {
     boolean isCanceled();
   }
 
   /**
    * Retries and redirects to get the reponse from current http engine.
    * May return null if this call was canceled.
-   * <p>The {@link ICancelIndicator indicator} will be injected to check if the caller
+   * <p>The {@link CancelIndicator indicator} will be injected to check if the caller
    * attempts to cancel current transport of this engine.
    * If set null means no need cancellation support.
    */
-  public Response tryGetResponse(ICancelIndicator indicator) throws IOException {
+  public Response tryGetResponse(CancelIndicator indicator) throws IOException {
     int redirectionCount = 0;
     // Copy body metadata to the appropriate request headers.
     RequestBody body = userRequest.body();
@@ -301,7 +321,7 @@ public final class HttpEngine {
 
       Connection connection = close();
       userRequest = followUp;
-      init(client, userRequest, false, connection, null, null, response);
+      reset(client, userRequest, false, connection, null, null, response);
     }
   }
 
@@ -480,7 +500,7 @@ public final class HttpEngine {
     Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    init(client, userRequest, bufferRequestBody, connection, routeSelector,
+    reset(client, userRequest, bufferRequestBody, connection, routeSelector,
         (RetryableSink) requestBodyOut, priorResponse);
     return this;
   }

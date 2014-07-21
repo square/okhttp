@@ -155,7 +155,7 @@ public class Call {
    */
   private Response getResponse() throws IOException {
     engine = new HttpEngine(client, request, false, null, null, null, null);
-    return engine.tryGetResponse(new HttpEngine.ICancelIndicator() {
+    return engine.tryGetResponse(new HttpEngine.CancelIndicator() {
         @Override public boolean isCanceled() {
           return Call.this.canceled;
         }
