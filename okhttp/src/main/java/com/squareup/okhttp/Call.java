@@ -142,6 +142,7 @@ public class Call {
         }
       } catch (IOException e) {
         if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
+        request = engine.getRequest(); // sync up the request content
         responseCallback.onFailure(request, e);
       } finally {
         client.getDispatcher().finished(this);
@@ -155,10 +156,12 @@ public class Call {
    */
   private Response getResponse() throws IOException {
     engine = new HttpEngine(client, request, false, null, null, null, null);
-    return engine.tryGetResponse(new HttpEngine.CancelIndicator() {
-        @Override public boolean isCanceled() {
-          return Call.this.canceled;
-        }
+    Response response = engine.tryGetResponse(new HttpEngine.CancelIndicator() {
+      @Override public boolean isCanceled() {
+        return Call.this.canceled;
+      }
     });
+    request = engine.getRequest(); // sync up the request content
+    return response;
   }
 }

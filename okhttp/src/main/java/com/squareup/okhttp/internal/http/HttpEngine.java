@@ -189,6 +189,13 @@ public final class HttpEngine {
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
       Response priorResponse) {
+    init(client, request, bufferRequestBody, connection, routeSelector, requestBodyOut,
+        priorResponse);
+  }
+
+  private void init(OkHttpClient client, Request request, boolean bufferRequestBody,
+      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
+      Response priorResponse) {
     this.client = client;
     this.userRequest = request;
     this.bufferRequestBody = bufferRequestBody;
@@ -208,21 +215,6 @@ public final class HttpEngine {
   private void reset(OkHttpClient client, Request request, boolean bufferRequestBody,
       Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
       Response priorResponse) {
-    this.client = client;
-    this.userRequest = request;
-    this.bufferRequestBody = bufferRequestBody;
-    this.connection = connection;
-    this.routeSelector = routeSelector;
-    this.requestBodyOut = requestBodyOut;
-    this.priorResponse = priorResponse;
-
-    if (connection != null) {
-      Internal.instance.setOwner(connection, this);
-      this.route = connection.getRoute();
-    } else {
-      this.route = null;
-    }
-
     this.transport = null;
     this.sentRequestMillis = -1;
     this.transparentGzip = false;
@@ -236,6 +228,9 @@ public final class HttpEngine {
     this.responseBodyBytes = null;
     this.storeRequest = null;
     this.cacheStrategy = null;
+
+    init(client, request, bufferRequestBody, connection, routeSelector, requestBodyOut,
+        priorResponse);
   }
 
   /**
@@ -319,8 +314,7 @@ public final class HttpEngine {
       }
 
       Connection connection = close();
-      userRequest = followUp;
-      reset(client, userRequest, false, connection, null, null, response);
+      reset(client, followUp, false, connection, null, null, response);
     }
   }
 
