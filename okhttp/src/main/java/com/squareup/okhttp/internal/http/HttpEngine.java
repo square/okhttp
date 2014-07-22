@@ -311,7 +311,6 @@ public final class HttpEngine {
       }
 
       if (getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
-        releaseConnection();
         throw new ProtocolException("Too many redirects: " + redirectionCount);
       }
 
