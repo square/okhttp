@@ -81,7 +81,7 @@ public class CookiesTest {
     assertEquals(null, cookie.getComment());
     assertEquals(null, cookie.getCommentURL());
     assertEquals(false, cookie.getDiscard());
-    assertEquals(server.getCookieDomain(), cookie.getDomain());
+    assertTrue(server.getCookieDomain().equalsIgnoreCase(cookie.getDomain()));
     assertTrue(cookie.getMaxAge() > 100000000000L);
     assertEquals("/path", cookie.getPath());
     assertEquals(true, cookie.getSecure());
@@ -111,7 +111,7 @@ public class CookiesTest {
     assertEquals("this cookie is delicious", cookie.getComment());
     assertEquals(null, cookie.getCommentURL());
     assertEquals(false, cookie.getDiscard());
-    assertEquals(server.getCookieDomain(), cookie.getDomain());
+    assertTrue(server.getCookieDomain().equalsIgnoreCase(cookie.getDomain()));
     assertEquals(60, cookie.getMaxAge());
     assertEquals("/path", cookie.getPath());
     assertEquals(true, cookie.getSecure());
@@ -144,7 +144,7 @@ public class CookiesTest {
     assertEquals("this cookie is delicious", cookie.getComment());
     assertEquals("http://google.com/", cookie.getCommentURL());
     assertEquals(true, cookie.getDiscard());
-    assertEquals(server.getCookieDomain(), cookie.getDomain());
+    assertTrue(server.getCookieDomain().equalsIgnoreCase(cookie.getDomain()));
     assertEquals(60, cookie.getMaxAge());
     assertEquals("/path", cookie.getPath());
     assertEquals("80,443," + server.getPort(), cookie.getPortlist());
@@ -178,7 +178,7 @@ public class CookiesTest {
     assertEquals("this cookie is delicious", cookie.getComment());
     assertEquals("http://google.com/", cookie.getCommentURL());
     assertEquals(true, cookie.getDiscard());
-    assertEquals(server.getCookieDomain(), cookie.getDomain());
+    assertTrue(server.getCookieDomain().equalsIgnoreCase(cookie.getDomain()));
     assertEquals(60, cookie.getMaxAge());
     assertEquals("/path", cookie.getPath());
     assertEquals("80,443," + server.getPort(), cookie.getPortlist());
