@@ -26,7 +26,6 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.internal.Dns;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
@@ -288,7 +287,7 @@ public final class HttpEngine {
     if (connection != null) throw new IllegalStateException();
 
     if (routeSelector == null) {
-      routeSelector = RouteSelector.get(request, client, Dns.DEFAULT);
+      routeSelector = RouteSelector.get(request, client);
     }
 
     connection = routeSelector.next(this);
