@@ -107,6 +107,11 @@ public class MediaTypeTest {
     assertEquals("UTF-8", mediaType.charset().name());
   }
 
+  @Test public void testDuplicatedCharsets() {
+    MediaType mediaType = MediaType.parse("text/plain; charset=utf-8; charset=UTF-8");
+    assertEquals("UTF-8", mediaType.charset().name());
+  }
+
   @Test public void testMultipleCharsets() {
     try {
       MediaType.parse("text/plain; charset=utf-8; charset=utf-16");
