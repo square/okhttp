@@ -64,8 +64,9 @@ public final class MediaType {
       String charsetParameter = parameter.group(2) != null
           ? parameter.group(2)  // Value is a token.
           : parameter.group(3); // Value is a quoted string.
-      if (charset != null && !charsetParameter.equalsIgnoreCase(charset))
+      if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
         throw new IllegalArgumentException("Multiple different charsets: " + string);
+      }
       charset = charsetParameter;
     }
 
