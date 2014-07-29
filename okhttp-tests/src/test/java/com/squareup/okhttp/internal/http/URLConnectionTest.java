@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.HttpResponseCache;
-import com.squareup.okhttp.OkAuthenticator.Challenge;
 import com.squareup.okhttp.OkAuthenticator.Credential;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
@@ -1645,39 +1644,6 @@ public final class URLConnectionTest {
     }
   }
 
-  /** https://code.google.com/p/android/issues/detail?id=74026 */
-  @Test public void authenticateWithGetAndTransparentGzip() throws Exception {
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
-        .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
-        .setBody("Please authenticate.");
-    // fail auth three times...
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    server.enqueue(pleaseAuthenticate);
-    // ...then succeed the fourth time
-    MockResponse successfulResponse = new MockResponse()
-        .addHeader("Content-Encoding", "gzip")
-        .setBody(gzip("Successful auth!".getBytes("UTF-8")));
-    server.enqueue(successfulResponse);
-    server.play();
-
-    Authenticator.setDefault(new RecordingAuthenticator());
-    connection = client.open(server.getUrl("/"));
-    assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
-
-    // no authorization header for the first request...
-    RecordedRequest request = server.takeRequest();
-    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
-
-    // ...but the three requests that follow requests include an authorization header
-    for (int i = 0; i < 3; i++) {
-      request = server.takeRequest();
-      assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
-    }
-  }
- 
   /** https://github.com/square/okhttp/issues/342 */
   @Test public void authenticateRealmUppercase() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(401)
@@ -2695,10 +2661,11 @@ public final class URLConnectionTest {
     assertContains(server.takeRequest().getHeaders(),
         "Authorization: " + credential.getHeaderValue());
 
-    assertEquals(Proxy.NO_PROXY, authenticator.onlyProxy());
-    URL url = authenticator.onlyUrl();
-    assertEquals("/private", url.getPath());
-    assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), authenticator.onlyChallenge());
+    assertEquals(1, authenticator.calls.size());
+    String call = authenticator.calls.get(0);
+    assertTrue(call, call.contains("proxy=DIRECT"));
+    assertTrue(call, call.contains("url=" + server.getUrl("/private")));
+    assertTrue(call, call.contains("challenges=[Basic realm=\"protected area\"]"));
   }
 
   @Test public void npnSetsProtocolHeader_SPDY_3() throws Exception {

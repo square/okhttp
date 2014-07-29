@@ -81,7 +81,7 @@ public class RecordedResponse {
    * response for the original request.
    */
   public RecordedResponse redirectedBy() {
-    Response redirectedBy = response.priorResponse();
+    Response redirectedBy = response.redirectedBy();
     assertNotNull(redirectedBy);
     assertNull(redirectedBy.body());
     return new RecordedResponse(redirectedBy.request(), redirectedBy, null, null);
