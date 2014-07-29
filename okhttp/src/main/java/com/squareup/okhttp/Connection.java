@@ -25,7 +25,6 @@ import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
 import javax.net.ssl.SSLSocket;
@@ -136,18 +135,12 @@ public final class Connection {
     socket.close();
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
-      throws IOException {
+  void connect(ConnectionStrategy connectionStrategy, int connectTimeout, int readTimeout,
+      int writeTimeout, Request tunnelRequest) throws IOException {
     if (connected) throw new IllegalStateException("already connected");
 
-    if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
-      socket = route.address.socketFactory.createSocket();
-    } else {
-      socket = new Socket(route.proxy);
-    }
-
+    socket = connectionStrategy.connect(route, connectTimeout);
     socket.setSoTimeout(readTimeout);
-    Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
 
     if (route.address.sslSocketFactory != null) {
       upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
@@ -166,7 +159,7 @@ public final class Connection {
 
     if (!isConnected()) {
       Request tunnelRequest = tunnelRequest(request);
-      connect(client.getConnectTimeout(), client.getReadTimeout(),
+      connect(client.getConnectionStrategy(), client.getConnectTimeout(), client.getReadTimeout(),
           client.getWriteTimeout(), tunnelRequest);
       if (isSpdy()) {
         client.getConnectionPool().share(this);
