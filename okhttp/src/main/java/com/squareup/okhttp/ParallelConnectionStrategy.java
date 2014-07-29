@@ -18,11 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A {@link ConnectionStrategy} which, if given a hostname, will attempt a connection to each IP
- * behind it in parallel. Which ever connection is established first will be returned.
- *
- * <p>If a hostname resolves to multiple IPs in different geographic locations, this will generally
- * give you a connection to the IP with the lowest latency.
+ * See {@link ConnectionStrategy#PARALLEL}.
  */
 final class ParallelConnectionStrategy extends ConnectionStrategy {
   // Use an unbounded thread pool to make sure we don't introduce an unnecessary bottleneck.
