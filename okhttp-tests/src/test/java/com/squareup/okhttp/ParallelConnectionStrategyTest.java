@@ -21,13 +21,15 @@ public class ParallelConnectionStrategyTest {
   @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test public void testConnectionToLocalServer() throws Exception {
-    Address httpAddress = new Address(serverRule.get().getHostName(), serverRule.getPort(),
+    Address address = new Address(serverRule.get().getHostName(), serverRule.getPort(),
         SocketFactory.getDefault(), null, null, AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1));
-    InetSocketAddress httpSocketAddress = new InetSocketAddress(
+    InetSocketAddress socketAddress = new InetSocketAddress(
         InetAddress.getByName(serverRule.get().getHostName()),
         serverRule.getPort());
-    Route route = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, TLS_V1);
+    Route route = new Route(address, Proxy.NO_PROXY, socketAddress, TLS_V1);
+
+    // Just verify that we are able to connect without an exception.
     Socket socket = ConnectionStrategy.PARALLEL.connect(route, 200);
     socket.close();
   }
