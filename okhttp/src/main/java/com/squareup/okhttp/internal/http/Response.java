@@ -50,7 +50,9 @@ public final class Response {
   private final Handshake handshake;
   private final Headers headers;
   private final Body body;
-  private final Response redirectedBy;
+  private Response networkResponse;
+  private Response cacheResponse;
+  private final Response priorResponse;
 
   private volatile ParsedHeaders parsedHeaders; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
@@ -61,7 +63,9 @@ public final class Response {
     this.handshake = builder.handshake;
     this.headers = builder.headers.build();
     this.body = builder.body;
-    this.redirectedBy = builder.redirectedBy;
+    this.networkResponse = builder.networkResponse;
+    this.cacheResponse = builder.cacheResponse;
+    this.priorResponse = builder.priorResponse;
   }
 
   /**
@@ -135,8 +139,27 @@ public final class Response {
    * of the returned response should not be read because it has already been
    * consumed by the redirecting client.
    */
-  public Response redirectedBy() {
-    return redirectedBy;
+  public Response priorResponse() {
+    return priorResponse;
+  }
+
+  /**
+   * Returns the raw response received from the network. Will be null if this
+   * response didn't use the network, such as when the response is fully cached.
+   * The body of the returned response should not be read.
+   */
+  public Response networkResponse() {
+    return networkResponse;
+  }
+
+  /**
+   * Returns the raw response received from the cache. Will be null if this
+   * response didn't use the cache. For conditional get requests the cache
+   * response and network response may both be non-null. The body of the
+   * returned response should not be read.
+   */
+  public Response cacheResponse() {
+    return cacheResponse;
   }
 
   // TODO: move out of public API
@@ -362,7 +385,9 @@ public final class Response {
     private Handshake handshake;
     private Headers.Builder headers;
     private Body body;
-    private Response redirectedBy;
+    private Response networkResponse;
+    private Response cacheResponse;
+    private Response priorResponse;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -374,7 +399,9 @@ public final class Response {
       this.handshake = response.handshake;
       this.headers = response.headers.newBuilder();
       this.body = response.body;
-      this.redirectedBy = response.redirectedBy;
+      this.networkResponse = response.networkResponse;
+      this.cacheResponse = response.cacheResponse;
+      this.priorResponse = response.priorResponse;
     }
 
     public Builder request(Request request) {
@@ -440,8 +467,32 @@ public final class Response {
       return header(OkHeaders.RESPONSE_SOURCE, responseSource + " " + statusLine.code());
     }
 
-    public Builder redirectedBy(Response redirectedBy) {
-      this.redirectedBy = redirectedBy;
+    public Builder networkResponse(Response networkResponse) {
+      if (networkResponse != null) checkSupportResponse("networkResponse", networkResponse);
+      this.networkResponse = networkResponse;
+      return this;
+    }
+
+    public Builder cacheResponse(Response cacheResponse) {
+      if (cacheResponse != null) checkSupportResponse("cacheResponse", cacheResponse);
+      this.cacheResponse = cacheResponse;
+      return this;
+    }
+
+    private void checkSupportResponse(String name, Response response) {
+      if (response.body != null) {
+        throw new IllegalArgumentException(name + ".body != null");
+      } else if (response.networkResponse != null) {
+        throw new IllegalArgumentException(name + ".networkResponse != null");
+      } else if (response.cacheResponse != null) {
+        throw new IllegalArgumentException(name + ".cacheResponse != null");
+      } else if (response.priorResponse != null) {
+        throw new IllegalArgumentException(name + ".priorResponse != null");
+      }
+    }
+
+    public Builder priorResponse(Response priorResponse) {
+      this.priorResponse = priorResponse;
       return this;
     }
 

@@ -23,28 +23,43 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RecordingOkAuthenticator implements OkAuthenticator {
-  public final List<String> calls = new ArrayList<String>();
+  public final List<URL> urls = new ArrayList<URL>();
+  public final List<List<Challenge>> challengesList = new ArrayList<List<Challenge>>();
+  public final List<Proxy> proxies = new ArrayList<Proxy>();
   public final Credential credential;
 
   public RecordingOkAuthenticator(Credential credential) {
     this.credential = credential;
   }
 
+  public URL onlyUrl() {
+    if (urls.size() != 1) throw new IllegalStateException();
+    return urls.get(0);
+  }
+
+  public List<Challenge> onlyChallenge() {
+    if (challengesList.size() != 1) throw new IllegalStateException();
+    return challengesList.get(0);
+  }
+
+  public Proxy onlyProxy() {
+    if (proxies.size() != 1) throw new IllegalStateException();
+    return proxies.get(0);
+  }
+
   @Override public Credential authenticate(Proxy proxy, URL url, List<Challenge> challenges)
       throws IOException {
-    calls.add("authenticate"
-        + " proxy=" + proxy.type()
-        + " url=" + url
-        + " challenges=" + challenges);
+    urls.add(url);
+    challengesList.add(challenges);
+    proxies.add(proxy);
     return credential;
   }
 
   @Override public Credential authenticateProxy(Proxy proxy, URL url, List<Challenge> challenges)
       throws IOException {
-    calls.add("authenticateProxy"
-        + " proxy=" + proxy.type()
-        + " url=" + url
-        + " challenges=" + challenges);
+    urls.add(url);
+    challengesList.add(challenges);
+    proxies.add(proxy);
     return credential;
   }
 }

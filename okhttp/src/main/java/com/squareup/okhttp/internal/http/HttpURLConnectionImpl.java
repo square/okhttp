@@ -273,7 +273,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           throw new ProtocolException(method + " does not support writing");
         }
       }
-      httpEngine = newHttpEngine(method, null, null);
+      httpEngine = newHttpEngine(method, null, null, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
@@ -281,7 +281,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableSink requestBody) {
+      RetryableSink requestBody, Response priorResponse) {
     Request.Builder builder = new Request.Builder()
         .url(getURL())
         .method(method, null /* No body; that's passed separately. */);
@@ -309,7 +309,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setOkResponseCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody);
+    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
+        priorResponse);
   }
 
   /**
@@ -328,6 +329,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       if (!execute(true)) {
         continue;
       }
+
+      Response response = httpEngine.getResponse();
 
       Retry retry = processResponseHeaders();
       if (retry == Retry.NONE) {
@@ -361,7 +364,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(retryMethod, connection, (RetryableSink) requestBody);
+      httpEngine = newHttpEngine(retryMethod, connection, (RetryableSink) requestBody,
+          response);
     }
   }
 
