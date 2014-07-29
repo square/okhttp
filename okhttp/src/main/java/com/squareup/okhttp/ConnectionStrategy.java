@@ -8,6 +8,9 @@ import java.net.Socket;
  * Establishes connections to a route.
  */
 public abstract class ConnectionStrategy {
+  public static final ConnectionStrategy SIMPLE = new SimpleConnectionStrategy();
+  public static final ParallelConnectionStrategy PARALLEL = new ParallelConnectionStrategy();
+
   /**
    * Establish a connection to the given route.
    *

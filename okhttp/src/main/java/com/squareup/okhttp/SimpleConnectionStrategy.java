@@ -9,12 +9,7 @@ import java.net.Socket;
  * IPs behind it. If there are multiple IPs behind the hostname, the method by which one IP is
  * selected is undefined.
  */
-public final class SimpleConnectionStrategy extends ConnectionStrategy {
-  public static final SimpleConnectionStrategy INSTANCE = new SimpleConnectionStrategy();
-
-  private SimpleConnectionStrategy() {
-  }
-
+final class SimpleConnectionStrategy extends ConnectionStrategy {
   @Override public Socket connect(Route route, int connectTimeout) throws IOException {
     Socket socket = createSocket(route);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);

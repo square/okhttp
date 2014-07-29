@@ -28,7 +28,7 @@ public class ParallelConnectionStrategyTest {
         InetAddress.getByName(serverRule.get().getHostName()),
         serverRule.getPort());
     Route route = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, TLS_V1);
-    Socket socket = ParallelConnectionStrategy.DEFAULT.connect(route, 200);
+    Socket socket = ConnectionStrategy.PARALLEL.connect(route, 200);
     socket.close();
   }
 

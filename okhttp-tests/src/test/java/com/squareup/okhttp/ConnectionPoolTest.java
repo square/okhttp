@@ -92,17 +92,17 @@ public final class ConnectionPoolTest {
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, TLS_V1);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
     httpA = new Connection(pool, httpRoute);
-    httpA.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    httpA.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     httpB = new Connection(pool, httpRoute);
-    httpB.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    httpB.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     httpC = new Connection(pool, httpRoute);
-    httpC.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    httpC.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     httpD = new Connection(pool, httpRoute);
-    httpD.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    httpD.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     httpE = new Connection(pool, httpRoute);
-    httpE.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    httpE.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     spdyA = new Connection(pool, spdyRoute);
-    spdyA.connect(SimpleConnectionStrategy.INSTANCE, 20000, 20000, 2000, null);
+    spdyA.connect(ConnectionStrategy.SIMPLE, 20000, 20000, 2000, null);
 
     owner = new Object();
     httpA.setOwner(owner);
@@ -136,7 +136,7 @@ public final class ConnectionPoolTest {
 
     connection = new Connection(
         pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, TLS_V1));
-    connection.connect(SimpleConnectionStrategy.INSTANCE, 200, 200, 200, null);
+    connection.connect(ConnectionStrategy.SIMPLE, 200, 200, 200, null);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
 

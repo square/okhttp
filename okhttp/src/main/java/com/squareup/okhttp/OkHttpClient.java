@@ -516,7 +516,7 @@ public class OkHttpClient implements Cloneable {
       result.authenticator = AuthenticatorAdapter.INSTANCE;
     }
     if (result.connectionStrategy == null) {
-      result.connectionStrategy = SimpleConnectionStrategy.INSTANCE;
+      result.connectionStrategy = ConnectionStrategy.SIMPLE;
     }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();
