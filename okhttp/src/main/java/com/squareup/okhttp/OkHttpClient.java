@@ -124,6 +124,7 @@ public class OkHttpClient implements Cloneable {
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
   private Authenticator authenticator;
+  private ConnectionStrategy connectionStrategy;
   private ConnectionPool connectionPool;
   private HostResolver hostResolver;
   private boolean followSslRedirects = true;
@@ -150,6 +151,7 @@ public class OkHttpClient implements Cloneable {
     this.sslSocketFactory = okHttpClient.getSslSocketFactory();
     this.hostnameVerifier = okHttpClient.getHostnameVerifier();
     this.authenticator = okHttpClient.getAuthenticator();
+    this.connectionStrategy = okHttpClient.getConnectionStrategy();
     this.connectionPool = okHttpClient.getConnectionPool();
     this.followSslRedirects = okHttpClient.getFollowSslRedirects();
     this.followRedirects = okHttpClient.getFollowRedirects();
@@ -357,6 +359,20 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
+   * Configure the strategy used to establish new TCP connections.
+   *
+   * <p>If unset, a default strategy will be used. The default strategy's behavior is undefined.
+   */
+  public final OkHttpClient setConnectionStrategy(ConnectionStrategy connectionStrategy) {
+    this.connectionStrategy = connectionStrategy;
+    return this;
+  }
+
+  public final ConnectionStrategy getConnectionStrategy() {
+    return connectionStrategy;
+  }
+
+  /**
    * Configure this client to follow redirects from HTTPS to HTTP and from HTTP
    * to HTTPS.
    *
@@ -498,6 +514,9 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.authenticator == null) {
       result.authenticator = AuthenticatorAdapter.INSTANCE;
+    }
+    if (result.connectionStrategy == null) {
+      result.connectionStrategy = ConnectionStrategy.SIMPLE;
     }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();
