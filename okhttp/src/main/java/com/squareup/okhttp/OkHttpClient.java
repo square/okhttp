@@ -48,6 +48,8 @@ import javax.net.ssl.SSLSocketFactory;
  * safely modified with further configuration changes.
  */
 public class OkHttpClient implements Cloneable {
+  private static final int DEFAULT_MAX_CONCURRENT_HANDSHAKES = 3;
+
   static {
     Internal.instance = new Internal() {
       @Override public Transport newTransport(
@@ -128,6 +130,7 @@ public class OkHttpClient implements Cloneable {
   private HostResolver hostResolver;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
+  private int maxConcurrentHandshakes;
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
@@ -153,9 +156,34 @@ public class OkHttpClient implements Cloneable {
     this.connectionPool = okHttpClient.getConnectionPool();
     this.followSslRedirects = okHttpClient.getFollowSslRedirects();
     this.followRedirects = okHttpClient.getFollowRedirects();
+    this.maxConcurrentHandshakes = okHttpClient.getMaxConcurrentHandshakes();
     this.connectTimeout = okHttpClient.getConnectTimeout();
     this.readTimeout = okHttpClient.getReadTimeout();
     this.writeTimeout = okHttpClient.getWriteTimeout();
+  }
+
+  /**
+   * Sets the maximum number of concurrent TCP/SSL handshakes to attempt for a single request.
+   *
+   * <p>If there are multiple routes to a host with different latency, attempting several handshakes
+   * concurrently is recommended in order to discover the fastest connection. On the other hand,
+   * being too aggressive with concurrent handshakes may cause network congestion and also increase
+   * server load.
+   *
+   * @param maxConcurrentHandshakes the number of concurrent handshakes, between 1 and
+   *     {@link Integer#MAX_VALUE}.
+   */
+  public final OkHttpClient setMaxConcurrentHandshakes(int maxConcurrentHandshakes) {
+    if (maxConcurrentHandshakes <= 0) {
+      throw new IllegalArgumentException("maxConcurrentHandshakes <= 0");
+    }
+    this.maxConcurrentHandshakes = maxConcurrentHandshakes;
+    return this;
+  }
+
+  /** Maximum number of concurrent handshakes to attempt for a single request. */
+  public final int getMaxConcurrentHandshakes() {
+    return maxConcurrentHandshakes;
   }
 
   /**
@@ -507,6 +535,9 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.hostResolver == null) {
       result.hostResolver = HostResolver.DEFAULT;
+    }
+    if (result.maxConcurrentHandshakes == 0) {
+      result.maxConcurrentHandshakes = DEFAULT_MAX_CONCURRENT_HANDSHAKES;
     }
     return result;
   }
