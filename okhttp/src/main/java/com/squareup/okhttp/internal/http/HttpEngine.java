@@ -453,6 +453,8 @@ public final class HttpEngine {
    * this engine, it is returned.
    */
   public Connection close() {
+    routeSelector.close();
+
     if (bufferedRequestBody != null) {
       // This also closes the wrapped requestBodyOut.
       closeQuietly(bufferedRequestBody);
