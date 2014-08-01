@@ -130,7 +130,7 @@ public class OkHttpClient implements Cloneable {
   private HostResolver hostResolver;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
-  private int maxConcurrentHandshakes;
+  private int maxConcurrentHandshakes = DEFAULT_MAX_CONCURRENT_HANDSHAKES;
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
@@ -535,9 +535,6 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.hostResolver == null) {
       result.hostResolver = HostResolver.DEFAULT;
-    }
-    if (result.maxConcurrentHandshakes == 0) {
-      result.maxConcurrentHandshakes = DEFAULT_MAX_CONCURRENT_HANDSHAKES;
     }
     return result;
   }
