@@ -27,6 +27,7 @@
               </ul>
             </menu>
           </div>
+        </div>
       </div>
     </header>
     <section id="subtitle">
@@ -43,15 +44,16 @@
         <div class="row">
           <div class="span9">
             <h3 id="overview">Overview</h3>
-            <p>HTTP is the way modern applications network. It’s how we exchange data & media.
+            <p>HTTP is the way modern applications network. It’s how we exchange data &amp; media.
                 Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
 
             <p>OkHttp is an HTTP client that’s efficient by default:</p>
             <ul>
-                <li>SPDY support allows all requests to the same host to share a socket.</li>
+                <li>SPDY (3.1) support allows all requests to the same host to share a socket.</li>
                 <li>Connection pooling reduces request latency (if SPDY isn’t available).</li>
                 <li>Transparent GZIP shrinks download sizes.</li>
                 <li>Response caching avoids the network completely for repeat requests.</li>
+                <li>Support for NPN, Next Protocol Negotiation</li>
             </ul>
 
             <p>OkHttp perseveres when the network is troublesome: it will silently recover from
@@ -108,18 +110,18 @@ String post(String url, String json) throws IOException {
 </pre>
 
             <h3 id="download">Download</h3>
-            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&amp;g=com.squareup.okhttp&amp;a=okhttp&amp;v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
             <p>You'll also need <a href="http://github.com/square/okio">Okio</a>, which OkHttp
                 uses for fast I/O and resizable buffers. Download the
-                <a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okio&a=okio&v=LATEST">latest JAR</a>.
+                <a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&amp;g=com.squareup.okio&amp;a=okio&amp;v=LATEST">latest JAR</a>.
             <p>The source code to OkHttp, its samples, and this website is <a href="http://github.com/square/okhttp">available on GitHub</a>.</p>
 
             <h4>Maven</h4>
-            <pre class="prettyprint">&lt;dependency>
-  &lt;groupId>com.squareup.okhttp&lt;/groupId>
-  &lt;artifactId>okhttp&lt;/artifactId>
-  &lt;version><span class="version pln"><em>(insert latest version)</em></span>&lt;/version>
-&lt;/dependency></pre>
+            <pre class="prettyprint">&lt;dependency&gt;
+  &lt;groupId&gt;com.squareup.okhttp&lt;/groupId&gt;
+  &lt;artifactId&gt;okhttp&lt;/artifactId&gt;
+  &lt;version&gt;<span class="version pln"><em>(insert latest version)</em></span>&lt;/version&gt;
+&lt;/dependency&gt;</pre>
 
             <h3 id="contributing">Contributing</h3>
             <p>If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request.</p>
