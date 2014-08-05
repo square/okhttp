@@ -1691,6 +1691,39 @@ public final class URLConnectionTest {
     }
   }
 
+  /** https://code.google.com/p/android/issues/detail?id=74026 */
+  @Test public void authenticateWithGetAndTransparentGzip() throws Exception {
+    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+        .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
+        .setBody("Please authenticate.");
+    // fail auth three times...
+    server.enqueue(pleaseAuthenticate);
+    server.enqueue(pleaseAuthenticate);
+    server.enqueue(pleaseAuthenticate);
+    // ...then succeed the fourth time
+    MockResponse successfulResponse = new MockResponse()
+        .addHeader("Content-Encoding", "gzip")
+        .setBody(gzip("Successful auth!"));
+    server.enqueue(successfulResponse);
+    server.play();
+
+    Authenticator.setDefault(new RecordingAuthenticator());
+    connection = client.open(server.getUrl("/"));
+    assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+
+    // no authorization header for the first request...
+    RecordedRequest request = server.takeRequest();
+    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
+
+    // ...but the three requests that follow requests include an authorization header
+    for (int i = 0; i < 3; i++) {
+      request = server.takeRequest();
+      assertEquals("GET / HTTP/1.1", request.getRequestLine());
+      assertContains(request.getHeaders(),
+          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    }
+  }
+
   /** https://github.com/square/okhttp/issues/342 */
   @Test public void authenticateRealmUppercase() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(401)
