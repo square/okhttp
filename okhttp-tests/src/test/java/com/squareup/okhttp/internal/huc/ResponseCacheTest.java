@@ -21,6 +21,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -911,7 +912,7 @@ public final class ResponseCacheTest {
     connection.setIfModifiedSince(since.getTime());
     assertEquals("A", readAscii(connection));
     RecordedRequest request = server.takeRequest();
-    assertTrue(request.getHeaders().contains("If-Modified-Since: " + formatDate(since)));
+    assertTrue(request.getHeaders().contains("If-Modified-Since: " + HttpDate.format(since)));
   }
 
   @Test public void clientSuppliedConditionWithoutCachedResult() throws Exception {
@@ -1262,13 +1263,7 @@ public final class ResponseCacheTest {
    * future.
    */
   private String formatDate(long delta, TimeUnit timeUnit) {
-    return formatDate(new Date(System.currentTimeMillis() + timeUnit.toMillis(delta)));
-  }
-
-  private String formatDate(Date date) {
-    DateFormat rfc1123 = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
-    rfc1123.setTimeZone(TimeZone.getTimeZone("GMT"));
-    return rfc1123.format(date);
+    return HttpDate.format(new Date(System.currentTimeMillis() + timeUnit.toMillis(delta)));
   }
 
   private void addRequestBodyIfNecessary(String requestMethod, HttpURLConnection invalidate)
