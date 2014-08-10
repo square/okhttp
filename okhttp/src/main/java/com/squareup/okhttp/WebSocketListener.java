@@ -35,7 +35,7 @@ public interface WebSocketListener {
    *
    * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1>RFC-compliant</a>
    * status code.
-   * @param reason Optional reason for close. May be {@code null}.
+   * @param reason Reason for close or an empty string.
    */
   void onClose(int code, String reason);
 

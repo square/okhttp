@@ -313,7 +313,7 @@ public class WebSocketReaderTest {
     data.write(ByteString.decodeHex("8800")); // Empty close
     clientReader.readMessage();
     callback.assertClose(null);
-    listener.onClose(0, null);
+    listener.onClose(0, "");
   }
 
   @Test public void closeCallsCallback() throws IOException {
