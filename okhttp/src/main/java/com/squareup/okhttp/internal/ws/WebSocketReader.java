@@ -207,12 +207,10 @@ public final class WebSocketReader {
         closed = true;
 
         int code = 0;
-        String reason = null;
+        String reason = "";
         if (buffer != null) {
           code = buffer.readShort();
-          if (buffer.size() > 0) {
-            reason = buffer.readUtf8();
-          }
+          reason = buffer.readUtf8();
         }
         listener.onClose(code, reason);
         break;
