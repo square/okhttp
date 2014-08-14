@@ -164,6 +164,9 @@ public class OkHttpClient implements Cloneable {
     this.connectTimeout = okHttpClient.getConnectTimeout();
     this.readTimeout = okHttpClient.getReadTimeout();
     this.writeTimeout = okHttpClient.getWriteTimeout();
+    this.requestInterceptors = okHttpClient.requestInterceptors();
+    this.networkRequestInterceptors = okHttpClient.networkInterceptors();
+    this.responseInterceptors = okHttpClient.responseInterceptors();
   }
 
   /**

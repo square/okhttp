@@ -167,29 +167,6 @@ public class InterceptorTest {
         .assertCode(300);
   }
 
-  @Test public void interceptResponseBody() throws IOException {
-    server.play();
-
-    final ResponseInterceptor loudNoises = new ResponseInterceptor() {
-      public Response execute(Response response) {
-        final Response.Builder result = response.newBuilder();
-        try {
-          result.message(response.body().string().toUpperCase());
-        } catch (IOException e) {
-        }
-        return result.build();
-      }
-    };
-    final List<ResponseInterceptor> responseInterceptors = client.responseInterceptors();
-    responseInterceptors.add(loudNoises);
-    final Request request = new Request.Builder()
-        .url(server.getUrl("/"))
-        .build();
-    server.enqueue(new MockResponse().setBody("i'm in a glass case of emotion!"));
-    executeSynchronously(request)
-        .assertBody("I'M IN A GLASS CASE OF EMOTION!");
-  }
-
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, response.body().string(), null);
