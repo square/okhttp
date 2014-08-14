@@ -23,8 +23,10 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestInterceptor;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
+import com.squareup.okhttp.ResponseInterceptor;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
@@ -203,14 +205,15 @@ public final class HttpEngine {
 
   /**
    * Figures out what the response source will be, and opens a socket to that
-   * source if necessary. Prepares the request headers and gets ready to start
-   * writing the request body if it exists.
+   * source if necessary. Executes client-defined interceptors, prepares the request
+   * headers, and gets ready to start writing the request body if it exists.
    */
   public void sendRequest() throws IOException {
     if (cacheStrategy != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
 
     Request request = networkRequest(userRequest);
+    request = interceptRequest(request);
 
     InternalCache responseCache = Internal.instance.internalCache(client);
     Response cacheCandidate = responseCache != null
@@ -231,6 +234,9 @@ public final class HttpEngine {
     }
 
     if (networkRequest != null) {
+      // TODO: no test exists for this yet, a MockCache is needed in order to verify this
+      networkRequest = interceptRequest(networkRequest);
+
       // Open a connection unless we inherited one from a redirect.
       if (connection == null) {
         connect(networkRequest);
@@ -274,6 +280,13 @@ public final class HttpEngine {
         initContentStream(userResponse.body().source());
       }
     }
+  }
+
+  private Request interceptRequest(Request request) {
+    for (RequestInterceptor requestInterceptor : client.requestInterceptors()) {
+      request = requestInterceptor.execute(request);
+    }
+    return request;
   }
 
   private static Response stripBody(Response response) {
@@ -593,11 +606,12 @@ public final class HttpEngine {
   }
 
   /**
-   * Flushes the remaining request header and body, parses the HTTP response
-   * headers and starts reading the HTTP response body if it exists.
+   * Flushes the remaining request header and body, parses the HTTP response headers, executes
+   * client-defined interceptors, and starts reading the HTTP response body if it exists.
    */
   public void readResponse() throws IOException {
     if (userResponse != null) {
+      userResponse = interceptResponse(userResponse);
       return; // Already ready.
     }
     if (networkRequest == null && cacheResponse == null) {
@@ -666,6 +680,7 @@ public final class HttpEngine {
         responseCache.trackConditionalCacheHit();
         responseCache.update(cacheResponse, stripBody(userResponse));
 
+        cacheResponse = interceptResponse(cacheResponse);
         if (cacheResponse.body() != null) {
           initContentStream(cacheResponse.body().source());
         }
@@ -681,6 +696,7 @@ public final class HttpEngine {
         .cacheResponse(stripBody(cacheResponse))
         .networkResponse(stripBody(networkResponse))
         .build();
+    userResponse = interceptResponse(userResponse);
 
     if (!hasResponseBody()) {
       // Don't call initContentStream() when the response doesn't have any content.
@@ -691,6 +707,13 @@ public final class HttpEngine {
 
     maybeCache();
     initContentStream(transport.getTransferStream(storeRequest));
+  }
+
+  private Response interceptResponse(Response response) {
+    for (ResponseInterceptor responseInterceptor : client.responseInterceptors()) {
+      response = responseInterceptor.execute(response);
+    }
+    return response;
   }
 
   /**

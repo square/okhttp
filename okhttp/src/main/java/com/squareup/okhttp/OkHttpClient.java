@@ -29,6 +29,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -132,9 +133,16 @@ public class OkHttpClient implements Cloneable {
   private int readTimeout;
   private int writeTimeout;
 
+  private List<RequestInterceptor> requestInterceptors;
+  private List<RequestInterceptor> networkRequestInterceptors;
+  private List<ResponseInterceptor> responseInterceptors;
+
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
     dispatcher = new Dispatcher();
+    requestInterceptors = new ArrayList<RequestInterceptor>();
+    networkRequestInterceptors = new ArrayList<RequestInterceptor>();
+    responseInterceptors = new ArrayList<ResponseInterceptor>();
   }
 
   private OkHttpClient(OkHttpClient okHttpClient) {
@@ -156,6 +164,9 @@ public class OkHttpClient implements Cloneable {
     this.connectTimeout = okHttpClient.getConnectTimeout();
     this.readTimeout = okHttpClient.getReadTimeout();
     this.writeTimeout = okHttpClient.getWriteTimeout();
+    this.requestInterceptors = okHttpClient.requestInterceptors();
+    this.networkRequestInterceptors = okHttpClient.networkInterceptors();
+    this.responseInterceptors = okHttpClient.responseInterceptors();
   }
 
   /**
@@ -542,5 +553,17 @@ public class OkHttpClient implements Cloneable {
     } catch (CloneNotSupportedException e) {
       throw new AssertionError();
     }
+  }
+
+  public List<RequestInterceptor> requestInterceptors() {
+    return requestInterceptors;
+  }
+
+  public List<RequestInterceptor> networkInterceptors() {
+    return networkRequestInterceptors;
+  }
+
+  public List<ResponseInterceptor> responseInterceptors() {
+    return responseInterceptors;
   }
 }
