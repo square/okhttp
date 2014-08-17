@@ -18,15 +18,18 @@ package com.squareup.okhttp.internal.huc;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.InternalCache;
+import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.CacheStrategy;
 import java.io.IOException;
-import java.net.CacheRequest;
+import java.io.OutputStream;
 import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import okio.Okio;
+import okio.Sink;
 
 /** Adapts {@link ResponseCache} to {@link InternalCache}. */
 public final class CacheAdapter implements InternalCache {
@@ -51,7 +54,20 @@ public final class CacheAdapter implements InternalCache {
   @Override public CacheRequest put(Response response) throws IOException {
     URI uri = response.request().uri();
     HttpURLConnection connection = JavaApiConverter.createJavaUrlConnection(response);
-    return delegate.put(uri, connection);
+    final java.net.CacheRequest request = delegate.put(uri, connection);
+    if (request == null) {
+      return null;
+    }
+    return new CacheRequest() {
+      @Override public Sink body() throws IOException {
+        OutputStream body = request.getBody();
+        return body != null ? Okio.sink(body) : null;
+      }
+
+      @Override public void abort() {
+        request.abort();
+      }
+    };
   }
 
   @Override public void remove(Request request) throws IOException {

@@ -26,8 +26,6 @@ import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -245,7 +243,7 @@ public final class SpdyTransport implements Transport {
     private final SpdyStream stream;
     private final Source source;
     private final CacheRequest cacheRequest;
-    private final OutputStream cacheBody;
+    private final Sink cacheBody;
 
     private boolean inputExhausted;
     private boolean closed;
@@ -255,7 +253,7 @@ public final class SpdyTransport implements Transport {
       this.source = stream.getSource();
 
       // Some apps return a null body; for compatibility we treat that like a null cache request.
-      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
+      Sink cacheBody = cacheRequest != null ? cacheRequest.body() : null;
       if (cacheBody == null) {
         cacheRequest = null;
       }
@@ -264,13 +262,13 @@ public final class SpdyTransport implements Transport {
       this.cacheRequest = cacheRequest;
     }
 
-    @Override public long read(Buffer sink, long byteCount)
+    @Override public long read(Buffer buffer, long byteCount)
         throws IOException {
       if (byteCount < 0) throw new IllegalArgumentException("byteCount < 0: " + byteCount);
       if (closed) throw new IllegalStateException("closed");
       if (inputExhausted) return -1;
 
-      long read = source.read(sink, byteCount);
+      long read = source.read(buffer, byteCount);
       if (read == -1) {
         inputExhausted = true;
         if (cacheRequest != null) {
@@ -280,7 +278,8 @@ public final class SpdyTransport implements Transport {
       }
 
       if (cacheBody != null) {
-        sink.copyTo(cacheBody, sink.size() - read, read);
+        // TODO get buffer.copyTo(cacheBody, read);
+        cacheBody.write(buffer.clone(), read);
       }
 
       return read;
