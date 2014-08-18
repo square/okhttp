@@ -84,6 +84,12 @@ public class MainTest {
     assertNull(request.body());
   }
 
+  @Test public void headerSplitWithDate() {
+    Request request = fromArgs("-H", "If-Modified-Since: Mon, 18 Aug 2014 15:16:06 GMT",
+        "http://example.com").createRequest();
+    assertEquals("Mon, 18 Aug 2014 15:16:06 GMT", request.header("If-Modified-Since"));
+  }
+
   private static String bodyAsString(RequestBody body) {
     try {
       Buffer buffer = new Buffer();

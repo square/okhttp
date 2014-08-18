@@ -218,7 +218,7 @@ public class Main extends HelpOption implements Runnable {
 
     if (headers != null) {
       for (String header : headers) {
-        String[] parts = header.split(":", -1);
+        String[] parts = header.split(":", 2);
         request.header(parts[0], parts[1]);
       }
     }
