@@ -19,20 +19,14 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.DiskLruCache;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.CacheStrategy;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FilterOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.CacheRequest;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -40,13 +34,14 @@ import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.ForwardingSink;
 import okio.ForwardingSource;
 import okio.Okio;
+import okio.Sink;
 import okio.Source;
-
-import static com.squareup.okhttp.internal.Util.UTF_8;
 
 /**
  * Caches HTTP and HTTPS responses to the filesystem so they may be reused,
@@ -146,8 +141,8 @@ public final class Cache {
     cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
-  private static String urlToKey(Request requst) {
-    return Util.hash(requst.urlString());
+  private static String urlToKey(Request request) {
+    return Util.hash(request.urlString());
   }
 
   Response get(Request request) {
@@ -165,7 +160,7 @@ public final class Cache {
     }
 
     try {
-      entry = new Entry(snapshot.getInputStream(ENTRY_METADATA));
+      entry = new Entry(snapshot.getSource(ENTRY_METADATA));
     } catch (IOException e) {
       Util.closeQuietly(snapshot);
       return null;
@@ -317,16 +312,16 @@ public final class Cache {
     return requestCount;
   }
 
-  private final class CacheRequestImpl extends CacheRequest {
+  private final class CacheRequestImpl implements CacheRequest {
     private final DiskLruCache.Editor editor;
-    private OutputStream cacheOut;
+    private Sink cacheOut;
     private boolean done;
-    private OutputStream body;
+    private Sink body;
 
     public CacheRequestImpl(final DiskLruCache.Editor editor) throws IOException {
       this.editor = editor;
-      this.cacheOut = editor.newOutputStream(ENTRY_BODY);
-      this.body = new FilterOutputStream(cacheOut) {
+      this.cacheOut = editor.newSink(ENTRY_BODY);
+      this.body = new ForwardingSink(cacheOut) {
         @Override public void close() throws IOException {
           synchronized (Cache.this) {
             if (done) {
@@ -337,12 +332,6 @@ public final class Cache {
           }
           super.close();
           editor.commit();
-        }
-
-        @Override public void write(byte[] buffer, int offset, int length) throws IOException {
-          // Since we don't override "write(int oneByte)", we can write directly to "out"
-          // and avoid the inefficient implementation from the FilterOutputStream.
-          out.write(buffer, offset, length);
         }
       };
     }
@@ -362,7 +351,7 @@ public final class Cache {
       }
     }
 
-    @Override public OutputStream getBody() throws IOException {
+    @Override public Sink body() {
       return body;
     }
   }
@@ -426,9 +415,9 @@ public final class Cache {
      * certificates are also base64-encoded and appear each on their own
      * line. A length of -1 is used to encode a null array.
      */
-    public Entry(InputStream in) throws IOException {
+    public Entry(Source in) throws IOException {
       try {
-        BufferedSource source = Okio.buffer(Okio.source(in));
+        BufferedSource source = Okio.buffer(in);
         url = source.readUtf8LineStrict();
         requestMethod = source.readUtf8LineStrict();
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
@@ -478,41 +467,40 @@ public final class Cache {
     }
 
     public void writeTo(DiskLruCache.Editor editor) throws IOException {
-      OutputStream out = editor.newOutputStream(ENTRY_METADATA);
-      Writer writer = new BufferedWriter(new OutputStreamWriter(out, UTF_8));
+      BufferedSink sink = Okio.buffer(editor.newSink(ENTRY_METADATA));
 
-      writer.write(url);
-      writer.write('\n');
-      writer.write(requestMethod);
-      writer.write('\n');
-      writer.write(Integer.toString(varyHeaders.size()));
-      writer.write('\n');
+      sink.writeUtf8(url);
+      sink.writeByte('\n');
+      sink.writeUtf8(requestMethod);
+      sink.writeByte('\n');
+      sink.writeUtf8(Integer.toString(varyHeaders.size()));
+      sink.writeByte('\n');
       for (int i = 0; i < varyHeaders.size(); i++) {
-        writer.write(varyHeaders.name(i));
-        writer.write(": ");
-        writer.write(varyHeaders.value(i));
-        writer.write('\n');
+        sink.writeUtf8(varyHeaders.name(i));
+        sink.writeUtf8(": ");
+        sink.writeUtf8(varyHeaders.value(i));
+        sink.writeByte('\n');
       }
 
-      writer.write(new StatusLine(protocol, code, message).toString());
-      writer.write('\n');
-      writer.write(Integer.toString(responseHeaders.size()));
-      writer.write('\n');
+      sink.writeUtf8(new StatusLine(protocol, code, message).toString());
+      sink.writeByte('\n');
+      sink.writeUtf8(Integer.toString(responseHeaders.size()));
+      sink.writeByte('\n');
       for (int i = 0; i < responseHeaders.size(); i++) {
-        writer.write(responseHeaders.name(i));
-        writer.write(": ");
-        writer.write(responseHeaders.value(i));
-        writer.write('\n');
+        sink.writeUtf8(responseHeaders.name(i));
+        sink.writeUtf8(": ");
+        sink.writeUtf8(responseHeaders.value(i));
+        sink.writeByte('\n');
       }
 
       if (isHttps()) {
-        writer.write('\n');
-        writer.write(handshake.cipherSuite());
-        writer.write('\n');
-        writeCertArray(writer, handshake.peerCertificates());
-        writeCertArray(writer, handshake.localCertificates());
+        sink.writeByte('\n');
+        sink.writeUtf8(handshake.cipherSuite());
+        sink.writeByte('\n');
+        writeCertArray(sink, handshake.peerCertificates());
+        writeCertArray(sink, handshake.localCertificates());
       }
-      writer.close();
+      sink.close();
     }
 
     private boolean isHttps() {
@@ -537,15 +525,16 @@ public final class Cache {
       }
     }
 
-    private void writeCertArray(Writer writer, List<Certificate> certificates) throws IOException {
+    private void writeCertArray(BufferedSink sink, List<Certificate> certificates)
+        throws IOException {
       try {
-        writer.write(Integer.toString(certificates.size()));
-        writer.write('\n');
+        sink.writeUtf8(Integer.toString(certificates.size()));
+        sink.writeByte('\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
           String line = ByteString.of(bytes).base64();
-          writer.write(line);
-          writer.write('\n');
+          sink.writeUtf8(line);
+          sink.writeByte('\n');
         }
       } catch (CertificateEncodingException e) {
         throw new IOException(e.getMessage());
@@ -599,8 +588,8 @@ public final class Cache {
       this.contentType = contentType;
       this.contentLength = contentLength;
 
-      Source in = Okio.source(snapshot.getInputStream(ENTRY_BODY));
-      bodySource = Okio.buffer(new ForwardingSource(in) {
+      Source source = snapshot.getSource(ENTRY_BODY);
+      bodySource = Okio.buffer(new ForwardingSource(source) {
         @Override public void close() throws IOException {
           snapshot.close();
           super.close();

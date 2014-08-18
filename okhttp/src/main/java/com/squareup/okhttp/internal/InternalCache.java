@@ -17,9 +17,9 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.CacheStrategy;
 import java.io.IOException;
-import java.net.CacheRequest;
 
 /**
  * OkHttp's internal cache interface. Applications shouldn't implement this:

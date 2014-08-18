@@ -31,7 +31,6 @@ import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.CacheRequest;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;

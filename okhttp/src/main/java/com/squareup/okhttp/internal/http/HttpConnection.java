@@ -23,8 +23,6 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.CacheRequest;
 import java.net.ProtocolException;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -373,12 +371,12 @@ public final class HttpConnection {
 
   private class AbstractSource {
     private final CacheRequest cacheRequest;
-    protected final OutputStream cacheBody;
+    protected final Sink cacheBody;
     protected boolean closed;
 
     AbstractSource(CacheRequest cacheRequest) throws IOException {
       // Some apps return a null body; for compatibility we treat that like a null cache request.
-      OutputStream cacheBody = cacheRequest != null ? cacheRequest.getBody() : null;
+      Sink cacheBody = cacheRequest != null ? cacheRequest.body() : null;
       if (cacheBody == null) {
         cacheRequest = null;
       }
@@ -390,7 +388,8 @@ public final class HttpConnection {
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
     protected final void cacheWrite(Buffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        source.copyTo(cacheBody, source.size() - byteCount, byteCount);
+        // TODO source.copyTo(cacheBody, byteCount);
+        cacheBody.write(source.clone(), byteCount);
       }
     }
 
