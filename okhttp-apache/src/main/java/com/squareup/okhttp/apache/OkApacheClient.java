@@ -46,8 +46,14 @@ public final class OkApacheClient implements HttpClient {
     String method = requestLine.getMethod();
     builder.url(requestLine.getUri());
 
+    String contentType = null;
     for (Header header : request.getAllHeaders()) {
-      builder.header(header.getName(), header.getValue());
+      String name = header.getName();
+      if ("Content-Type".equals(name)) {
+        contentType = header.getValue();
+      } else {
+        builder.header(name, header.getValue());
+      }
     }
 
     RequestBody body = null;
@@ -55,7 +61,7 @@ public final class OkApacheClient implements HttpClient {
       HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
       if (entity != null) {
         // Wrap the entity in a custom Body which takes care of the content, length, and type.
-        body = new HttpEntityBody(entity);
+        body = new HttpEntityBody(entity, contentType);
 
         Header encoding = entity.getContentEncoding();
         if (encoding != null) {

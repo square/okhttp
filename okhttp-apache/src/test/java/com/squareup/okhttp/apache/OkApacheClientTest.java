@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -112,6 +113,19 @@ public class OkApacheClientTest {
     RecordedRequest request = server.takeRequest();
     assertTrue(Arrays.equals(body, request.getBody()));
     assertEquals(request.getHeader("Content-Length"), "13");
+  }
+
+  @Test public void postOverrideContentType() throws Exception {
+    server.enqueue(new MockResponse());
+
+    HttpPost httpPost = new HttpPost();
+    httpPost.setURI(server.getUrl("/").toURI());
+    httpPost.addHeader("Content-Type", "application/xml");
+    httpPost.setEntity(new StringEntity("<yo/>"));
+    client.execute(httpPost);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals(request.getHeader("Content-Type"), "application/xml");
   }
 
   @Test public void contentType() throws Exception {
