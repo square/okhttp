@@ -15,7 +15,9 @@
  */
 package com.squareup.okhttp;
 
+import java.io.IOException;
 import okio.Buffer;
+import okio.BufferedSink;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -44,6 +46,8 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
+    assertEquals(53, requestBody.contentLength());
+    assertEquals(buffer.size(), requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -73,6 +77,8 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
+    assertEquals(112, requestBody.contentLength());
+    assertEquals(buffer.size(), requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -86,6 +92,7 @@ public final class MultipartBuilderTest {
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"files\"\r\n"
         + "Content-Type: multipart/mixed; boundary=BbC04y\r\n"
+        + "Content-Length: 337\r\n"
         + "\r\n"
         + "--BbC04y\r\n"
         + "Content-Disposition: file; filename=\"file1.txt\"\r\n"
@@ -127,6 +134,8 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
+    assertEquals(568, requestBody.contentLength());
+    assertEquals(buffer.size(), requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -167,6 +176,51 @@ public final class MultipartBuilderTest {
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
+  }
+
+  @Test public void streamingPartHasNoLength() throws Exception {
+    class StreamingBody extends RequestBody {
+      private final String body;
+
+      StreamingBody(String body) {
+        this.body = body;
+      }
+
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8(body);
+      }
+    }
+
+    String expected = ""
+        + "--123\r\n"
+        + "Content-Length: 5\r\n"
+        + "\r\n"
+        + "Quick\r\n"
+        + "--123\r\n"
+        + "\r\n"
+        + "Brown\r\n"
+        + "--123\r\n"
+        + "Content-Length: 3\r\n"
+        + "\r\n"
+        + "Fox\r\n"
+        + "--123--\r\n";
+
+    RequestBody requestBody = new MultipartBuilder("123")
+        .addPart(RequestBody.create(null, "Quick"))
+        .addPart(new StreamingBody("Brown"))
+        .addPart(RequestBody.create(null, "Fox"))
+        .build();
+
+    assertEquals("multipart/mixed; boundary=123", requestBody.contentType().toString());
+
+    Buffer buffer = new Buffer();
+    requestBody.writeTo(buffer);
+    assertEquals(expected, buffer.readUtf8());
+    assertEquals(-1, requestBody.contentLength());
   }
 
   @Test public void contentTypeHeaderIsForbidden() throws Exception {
