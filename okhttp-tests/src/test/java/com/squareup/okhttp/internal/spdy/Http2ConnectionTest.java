@@ -46,7 +46,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class Http2ConnectionTest {
-  private static final Variant HTTP_2 = new Http20Draft13();
+  private static final Variant HTTP_2 = new Http20Draft14();
   private final MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
@@ -143,7 +143,7 @@ public final class Http2ConnectionTest {
 
     // verify the peer's settings were read and applied.
     assertEquals(0, connection.peerSettings.getHeaderTableSize());
-    Http20Draft13.Reader frameReader = (Http20Draft13.Reader) connection.readerRunnable.frameReader;
+    Http20Draft14.Reader frameReader = (Http20Draft14.Reader) connection.readerRunnable.frameReader;
     assertEquals(0, frameReader.hpackReader.maxHeaderTableByteCount());
     // TODO: when supported, check the frameWriter's compression table is unaffected.
   }

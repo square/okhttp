@@ -152,7 +152,7 @@ public final class SpdyConnection implements Closeable {
     hostName = builder.hostName;
 
     if (protocol == Protocol.HTTP_2) {
-      variant = new Http20Draft13();
+      variant = new Http20Draft14();
       // Like newSingleThreadExecutor, except lazy creates the thread.
       pushExecutor = new ThreadPoolExecutor(0, 1,
           0L, TimeUnit.MILLISECONDS,

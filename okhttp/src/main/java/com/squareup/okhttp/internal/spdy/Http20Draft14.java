@@ -27,7 +27,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static okio.ByteString.EMPTY;
@@ -36,8 +36,8 @@ import static okio.ByteString.EMPTY;
  * Read and write HTTP/2 v13 frames.
  * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-13
  */
-public final class Http20Draft13 implements Variant {
-  private static final Logger logger = Logger.getLogger(Http20Draft13.class.getName());
+public final class Http20Draft14 implements Variant {
+  private static final Logger logger = Logger.getLogger(Http20Draft14.class.getName());
 
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
