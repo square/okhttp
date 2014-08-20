@@ -15,19 +15,17 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-
-import com.squareup.okhttp.internal.Util;
-
-import org.junit.Test;
-
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.GzipSink;
 import okio.Okio;
+import org.junit.Test;
+
 import static com.squareup.okhttp.internal.Util.headerEntries;
 import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_COMPRESSED;
 import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_END_HEADERS;
@@ -46,10 +44,7 @@ public class Http20Draft14Test {
   final int expectedStreamId = 15;
 
   @Test public void unknownFrameTypeSkipped() throws IOException {
-    frame.writeShort(4); // has a 4-byte field
-    frame.writeByte(99); // type 99
-    frame.writeByte(0); // no flags
-    frame.writeInt(expectedStreamId);
+    writeFrameHeader(frame, 4, 99, Http20Draft14.FLAG_NONE, expectedStreamId);
     frame.writeInt(111111111); // custom data
 
     fr.nextFrame(new BaseTestHandler()); // Should not callback.
@@ -59,10 +54,8 @@ public class Http20Draft14Test {
     final List<Header> sentHeaders = headerEntries("name", "value");
 
     Buffer headerBytes = literalHeaders(sentHeaders);
-    frame.writeShort((int) headerBytes.size());
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(FLAG_END_HEADERS | FLAG_END_STREAM);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) headerBytes.size(), Http20Draft14.TYPE_HEADERS,
+        (byte) (FLAG_END_HEADERS | FLAG_END_STREAM), expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
     assertEquals(frame, sendHeaderFrames(true, sentHeaders)); // Check writer sends the same bytes.
@@ -85,10 +78,8 @@ public class Http20Draft14Test {
     final List<Header> sentHeaders = headerEntries("name", "value");
 
     Buffer headerBytes = literalHeaders(sentHeaders);
-    frame.writeShort((int) (headerBytes.size() + 5));
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(FLAG_END_HEADERS | FLAG_PRIORITY);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) (headerBytes.size() + 5), Http20Draft14.TYPE_HEADERS,
+        (byte) (FLAG_END_HEADERS | FLAG_PRIORITY), expectedStreamId & 0x7fffffff);
     frame.writeInt(0); // Independent stream.
     frame.writeByte(255); // Heaviest weight, zero-indexed.
     frame.writeAll(headerBytes);
@@ -121,17 +112,13 @@ public class Http20Draft14Test {
     Buffer headerBlock = literalHeaders(sentHeaders);
 
     // Write the first headers frame.
-    frame.writeShort(Http20Draft14.MAX_FRAME_SIZE);
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(0); // no flags
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, Http20Draft14.MAX_FRAME_SIZE, Http20Draft14.TYPE_HEADERS,
+        Http20Draft14.FLAG_NONE, expectedStreamId & 0x7fffffff);
     frame.write(headerBlock, Http20Draft14.MAX_FRAME_SIZE);
 
     // Write the continuation frame, specifying no more frames are expected.
-    frame.writeShort((int) headerBlock.size());
-    frame.writeByte(Http20Draft14.TYPE_CONTINUATION);
-    frame.writeByte(FLAG_END_HEADERS);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) headerBlock.size(), Http20Draft14.TYPE_CONTINUATION,
+        FLAG_END_HEADERS, expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
 
     assertEquals(frame, sendHeaderFrames(false, sentHeaders)); // Check writer sends the same bytes.
@@ -162,10 +149,8 @@ public class Http20Draft14Test {
 
     // Write the push promise frame, specifying the associated stream ID.
     Buffer headerBytes = literalHeaders(pushPromise);
-    frame.writeShort((int) (headerBytes.size() + 4));
-    frame.writeByte(Http20Draft14.TYPE_PUSH_PROMISE);
-    frame.writeByte(Http20Draft14.FLAG_END_PUSH_PROMISE);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) (headerBytes.size() + 4), Http20Draft14.TYPE_PUSH_PROMISE,
+        Http20Draft14.FLAG_END_PUSH_PROMISE, expectedStreamId & 0x7fffffff);
     frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
     frame.writeAll(headerBytes);
 
@@ -190,18 +175,14 @@ public class Http20Draft14Test {
     Buffer headerBlock = literalHeaders(pushPromise);
 
     // Write the first headers frame.
-    frame.writeShort(Http20Draft14.MAX_FRAME_SIZE);
-    frame.writeByte(Http20Draft14.TYPE_PUSH_PROMISE);
-    frame.writeByte(0); // no flags
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, Http20Draft14.MAX_FRAME_SIZE, Http20Draft14.TYPE_PUSH_PROMISE,
+        Http20Draft14.FLAG_NONE, expectedStreamId & 0x7fffffff);
     frame.writeInt(expectedPromisedStreamId & 0x7fffffff);
     frame.write(headerBlock, 16379);
 
     // Write the continuation frame, specifying no more frames are expected.
-    frame.writeShort((int) headerBlock.size());
-    frame.writeByte(Http20Draft14.TYPE_CONTINUATION);
-    frame.writeByte(FLAG_END_HEADERS);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) headerBlock.size(), Http20Draft14.TYPE_CONTINUATION,
+        FLAG_END_HEADERS, expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
 
     assertEquals(frame, sendPushPromiseFrames(expectedPromisedStreamId, pushPromise));
@@ -218,10 +199,8 @@ public class Http20Draft14Test {
   }
 
   @Test public void readRstStreamFrame() throws IOException {
-    frame.writeShort(4);
-    frame.writeByte(Http20Draft14.TYPE_RST_STREAM);
-    frame.writeByte(0); // No flags
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, 4, Http20Draft14.TYPE_RST_STREAM, Http20Draft14.FLAG_NONE,
+        expectedStreamId & 0x7fffffff);
     frame.writeInt(ErrorCode.COMPRESSION_ERROR.httpCode);
 
     fr.nextFrame(new BaseTestHandler() {
@@ -235,10 +214,10 @@ public class Http20Draft14Test {
   @Test public void readSettingsFrame() throws IOException {
     final int reducedTableSizeBytes = 16;
 
-    frame.writeShort(12); // 2 settings * 6 bytes (2 for the code and 4 for the value).
-    frame.writeByte(Http20Draft14.TYPE_SETTINGS);
-    frame.writeByte(0); // No flags
-    frame.writeInt(0); // Settings are always on the connection stream 0.
+    final int length = 12; // 2 settings * 6 bytes (2 for the code and 4 for the value).
+    final int streamId = 0; // Settings are always on the connection stream 0
+
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_SETTINGS, Http20Draft14.FLAG_NONE, streamId);
     frame.writeShort(1); // SETTINGS_HEADER_TABLE_SIZE
     frame.writeInt(reducedTableSizeBytes);
     frame.writeShort(2); // SETTINGS_ENABLE_PUSH
@@ -254,10 +233,10 @@ public class Http20Draft14Test {
   }
 
   @Test public void readSettingsFrameInvalidPushValue() throws IOException {
-    frame.writeShort(6); // 2 for the code and 4 for the value
-    frame.writeByte(Http20Draft14.TYPE_SETTINGS);
-    frame.writeByte(0); // No flags
-    frame.writeInt(0); // Settings are always on the connection stream 0.
+    final int length = 6; // 2 for the code and 4 for the value
+    final int streamId = 0; // Settings are always on the connection stream 0.
+
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_SETTINGS, Http20Draft14.FLAG_NONE, streamId);
     frame.writeShort(2);
     frame.writeInt(2);
 
@@ -270,10 +249,10 @@ public class Http20Draft14Test {
   }
 
   @Test public void readSettingsFrameInvalidSettingId() throws IOException {
-    frame.writeShort(6); // 2 for the code and 4 for the value
-    frame.writeByte(Http20Draft14.TYPE_SETTINGS);
-    frame.writeByte(0); // No flags
-    frame.writeInt(0); // Settings are always on the connection stream 0.
+    final int length = 6; // 2 for the code and 4 for the value
+    final int streamId = 0; // // Settings are always on the connection stream 0.
+
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_SETTINGS, Http20Draft14.FLAG_NONE, streamId);
     frame.writeShort(7); // old number for SETTINGS_INITIAL_WINDOW_SIZE
     frame.writeInt(1);
 
@@ -286,10 +265,10 @@ public class Http20Draft14Test {
   }
 
   @Test public void readSettingsFrameNegativeWindowSize() throws IOException {
-    frame.writeShort(6); // 2 for the code and 4 for the value
-    frame.writeByte(Http20Draft14.TYPE_SETTINGS);
-    frame.writeByte(0); // No flags
-    frame.writeInt(0); // Settings are always on the connection stream 0.
+    final int length = 6; // 2 for the code and 4 for the value
+    final int streamId = 0; // Settings are always on the connection stream 0.
+
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_SETTINGS, Http20Draft14.FLAG_NONE, streamId);
     frame.writeShort(4); // SETTINGS_INITIAL_WINDOW_SIZE
     frame.writeInt(Integer.MIN_VALUE);
 
@@ -305,10 +284,7 @@ public class Http20Draft14Test {
     final int expectedPayload1 = 7;
     final int expectedPayload2 = 8;
 
-    frame.writeShort(8); // length
-    frame.writeByte(Http20Draft14.TYPE_PING);
-    frame.writeByte(Http20Draft14.FLAG_ACK);
-    frame.writeInt(0); // connection-level
+    writeFrameHeader(frame, 8, Http20Draft14.TYPE_PING, Http20Draft14.FLAG_ACK, 0);
     frame.writeInt(expectedPayload1);
     frame.writeInt(expectedPayload2);
 
@@ -328,10 +304,8 @@ public class Http20Draft14Test {
     final byte[] expectedData = new byte[Http20Draft14.MAX_FRAME_SIZE];
     Arrays.fill(expectedData, (byte) 2);
 
-    frame.writeShort(expectedData.length);
-    frame.writeByte(Http20Draft14.TYPE_DATA);
-    frame.writeByte(0); // no flags
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, expectedData.length, Http20Draft14.TYPE_DATA, Http20Draft14.FLAG_NONE,
+        expectedStreamId & 0x7fffffff);
     frame.write(expectedData);
 
     // Check writer sends the same bytes.
@@ -358,10 +332,8 @@ public class Http20Draft14Test {
     Buffer zipped = gzip(expectedData);
     int zippedSize = (int) zipped.size();
 
-    frame.writeShort(zippedSize);
-    frame.writeByte(Http20Draft14.TYPE_DATA);
-    frame.writeByte(FLAG_COMPRESSED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, zippedSize, Http20Draft14.TYPE_DATA, FLAG_COMPRESSED,
+        expectedStreamId & 0x7fffffff);
     zipped.readAll(frame);
 
     try {
@@ -382,10 +354,9 @@ public class Http20Draft14Test {
     byte[] padding = new byte[paddingLength];
     Arrays.fill(padding, (byte) 0);
 
-    frame.writeShort(dataLength + paddingLength + 1);
-    frame.writeByte(Http20Draft14.TYPE_DATA);
-    frame.writeByte(FLAG_PADDED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    final int length = dataLength + paddingLength + 1;
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_DATA, FLAG_PADDED,
+        expectedStreamId & 0x7fffffff);
     frame.writeByte(paddingLength);
     frame.write(expectedData);
     frame.write(padding);
@@ -399,10 +370,8 @@ public class Http20Draft14Test {
     byte[] expectedData = new byte[dataLength];
     Arrays.fill(expectedData, (byte) 2);
 
-    frame.writeShort(dataLength + 1);
-    frame.writeByte(Http20Draft14.TYPE_DATA);
-    frame.writeByte(FLAG_PADDED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, dataLength + 1, Http20Draft14.TYPE_DATA, FLAG_PADDED,
+        expectedStreamId & 0x7fffffff);
     frame.writeByte(0);
     frame.write(expectedData);
 
@@ -415,10 +384,9 @@ public class Http20Draft14Test {
     Arrays.fill(padding, (byte) 0);
 
     Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
-    frame.writeShort((int) headerBlock.size() + paddingLength + 1);
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(FLAG_END_HEADERS | FLAG_PADDED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    final int length = (int) headerBlock.size() + paddingLength + 1;
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_HEADERS, FLAG_END_HEADERS | FLAG_PADDED,
+        expectedStreamId & 0x7fffffff);
     frame.writeByte(paddingLength);
     frame.writeAll(headerBlock);
     frame.write(padding);
@@ -429,10 +397,9 @@ public class Http20Draft14Test {
 
   @Test public void readPaddedHeadersFrameZeroPadding() throws IOException {
     Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
-    frame.writeShort((int) headerBlock.size() + 1);
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(FLAG_END_HEADERS | FLAG_PADDED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    final int length = (int) headerBlock.size() + 1;
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_HEADERS, FLAG_END_HEADERS | FLAG_PADDED,
+        expectedStreamId & 0x7fffffff);
     frame.writeByte(0);
     frame.writeAll(headerBlock);
 
@@ -449,19 +416,16 @@ public class Http20Draft14Test {
     Buffer headerBlock = literalHeaders(headerEntries("foo", "barrr", "baz", "qux"));
 
     // Write the first headers frame.
-    frame.writeShort((int) (headerBlock.size() / 2) + paddingLength + 1);
-    frame.writeByte(Http20Draft14.TYPE_HEADERS);
-    frame.writeByte(FLAG_PADDED);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    final int firstLength = (int) (headerBlock.size() / 2) + paddingLength + 1;
+    writeFrameHeader(frame, firstLength, Http20Draft14.TYPE_HEADERS, FLAG_PADDED,
+        expectedStreamId & 0x7fffffff);
     frame.writeByte(paddingLength);
     frame.write(headerBlock, headerBlock.size() / 2);
     frame.write(padding);
 
     // Write the continuation frame, specifying no more frames are expected.
-    frame.writeShort((int) headerBlock.size());
-    frame.writeByte(Http20Draft14.TYPE_CONTINUATION);
-    frame.writeByte(FLAG_END_HEADERS);
-    frame.writeInt(expectedStreamId & 0x7fffffff);
+    writeFrameHeader(frame, (int) headerBlock.size(), Http20Draft14.TYPE_CONTINUATION,
+        FLAG_END_HEADERS, expectedStreamId & 0x7fffffff);
     frame.writeAll(headerBlock);
 
     fr.nextFrame(assertHeaderBlock());
@@ -480,10 +444,8 @@ public class Http20Draft14Test {
   @Test public void windowUpdateRoundTrip() throws IOException {
     final long expectedWindowSizeIncrement = 0x7fffffff;
 
-    frame.writeShort(4); // length
-    frame.writeByte(Http20Draft14.TYPE_WINDOW_UPDATE);
-    frame.writeByte(0); // No flags.
-    frame.writeInt(expectedStreamId);
+    writeFrameHeader(frame, 4, Http20Draft14.TYPE_WINDOW_UPDATE, Http20Draft14.FLAG_NONE,
+        expectedStreamId);
     frame.writeInt((int) expectedWindowSizeIncrement);
 
     // Check writer sends the same bytes.
@@ -517,10 +479,8 @@ public class Http20Draft14Test {
   @Test public void goAwayWithoutDebugDataRoundTrip() throws IOException {
     final ErrorCode expectedError = ErrorCode.PROTOCOL_ERROR;
 
-    frame.writeShort(8); // Without debug data there's only 2 32-bit fields.
-    frame.writeByte(Http20Draft14.TYPE_GOAWAY);
-    frame.writeByte(0); // no flags.
-    frame.writeInt(0); // connection-scope
+    final int length = 8; // Without debug data there's only 2 32-bit fields.
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_GOAWAY, Http20Draft14.FLAG_NONE, 0);
     frame.writeInt(expectedStreamId); // last good stream.
     frame.writeInt(expectedError.httpCode);
 
@@ -542,10 +502,8 @@ public class Http20Draft14Test {
     final ByteString expectedData = ByteString.encodeUtf8("abcdefgh");
 
     // Compose the expected GOAWAY frame without debug data.
-    frame.writeShort(8 + expectedData.size());
-    frame.writeByte(Http20Draft14.TYPE_GOAWAY);
-    frame.writeByte(0); // no flags.
-    frame.writeInt(0); // connection-scope
+    final int length = 8 + expectedData.size();
+    writeFrameHeader(frame, length, Http20Draft14.TYPE_GOAWAY, Http20Draft14.FLAG_NONE, 0);
     frame.writeInt(0); // never read any stream!
     frame.writeInt(expectedError.httpCode);
     frame.write(expectedData.toByteArray());
@@ -675,5 +633,17 @@ public class Http20Draft14Test {
       nameValues[i++] = nameValues[i++] = String.valueOf(chars);
     }
     return headerEntries(nameValues);
+  }
+
+  private void writeFrameHeader(Buffer frame, int length, int type, int flags, int expectedStreamId) {
+    writeFrameHeader(frame, length, (byte) type, (byte) flags, expectedStreamId);
+  }
+
+  private void writeFrameHeader(Buffer frame, int length, byte type, byte flags, int streamId) {
+    frame.writeInt(length << 8);
+    frame.writeByte(type);
+    frame.writeByte(flags);
+    frame.writeShort(0);  // Skip two bytes
+    frame.writeInt(streamId);
   }
 }
