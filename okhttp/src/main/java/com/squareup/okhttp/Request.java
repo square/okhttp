@@ -60,7 +60,7 @@ public final class Request {
   public URI uri() throws IOException {
     try {
       URI result = uri;
-      return result != null ? result : (uri = Platform.get().toUriLenient(url));
+      return result != null ? result : (uri = Platform.get().toUriLenient(url()));
     } catch (URISyntaxException e) {
       throw new IOException(e.getMessage());
     }
