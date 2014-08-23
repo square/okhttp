@@ -19,6 +19,9 @@ import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+
 import okio.Buffer;
 import org.junit.Test;
 
@@ -102,6 +105,12 @@ public final class RequestTest {
     Request patch = new Request.Builder().url("http://localhost/api").patch(body).build();
     assertEquals("PATCH", patch.method());
     assertEquals(body, patch.body());
+  }
+
+  @Test public void uninitializedURI() throws Exception {
+    Request request = new Request.Builder().url("http://localhost/api").build();
+    assertEquals(new URI("http://localhost/api"), request.uri());
+    assertEquals(new URL("http://localhost/api"), request.url());
   }
 
   private String bodyToHex(RequestBody body) throws IOException {
