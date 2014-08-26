@@ -640,10 +640,8 @@ public class Http20Draft14Test {
   }
 
   private void writeFrameHeader(Buffer frame, int length, byte type, byte flags, int streamId) {
-    frame.writeInt(length << 8);
-    frame.writeByte(type);
+    frame.writeInt((length << 8) | type);
     frame.writeByte(flags);
-    frame.writeShort(0);  // Skip two bytes
     frame.writeInt(streamId);
   }
 }

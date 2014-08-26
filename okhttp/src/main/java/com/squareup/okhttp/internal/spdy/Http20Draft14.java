@@ -126,11 +126,11 @@ public final class Http20Draft14 implements Variant {
        */
 
       int w1;
-      int w2;
+      byte flags;
       int w3;
       try {
         w1 = source.readInt();
-        w2 = source.readInt();
+        flags = source.readByte();
         w3 = source.readInt();
       } catch (IOException e) {
         return false; // This might be a normal socket close.
@@ -147,8 +147,8 @@ public final class Http20Draft14 implements Variant {
             length, MAX_FRAME_SIZE);
       }
 
-      byte type = (byte) (w2 >>> 24);
-      byte flags = (byte) ((w2 & 0xff0000) >>> 16);
+      byte type = (byte) (w1 & 0xff);
+      // byte flags;
 
       // boolean r = (w3 & 0x80000000) != 0; // Reserved: Ignore first bit.
       int streamId = (w3 & 0x7fffffff); // 31-bit opaque identifier.
@@ -583,8 +583,8 @@ public final class Http20Draft14 implements Variant {
         throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", MAX_FRAME_SIZE, length);
       }
       if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
-      sink.writeInt((length & 0xffffff) << 8);
-      sink.writeInt((type & 0xff) << 24 | (flags & 0xff) << 16);
+      sink.writeInt(((length & 0xffffff) << 8) | type);
+      sink.writeByte(flags);
       sink.writeInt(streamId & 0x7fffffff);
     }
   }
@@ -641,11 +641,12 @@ public final class Http20Draft14 implements Variant {
     private void readContinuationHeader() throws IOException {
       int previousStreamId = streamId;
       int w1 = source.readInt();
-      int w2 = source.readInt();
+      flags = source.readByte();
       int w3 = source.readInt();
-      length = left = ((w1 & 0xffffff) >>> 8);
-      byte type = (byte) (w2 >>> 24);
-      flags = (byte) ((w2 & 0xff0000) >> 16);
+
+      length = left = ((w1 & 0xffffff00) >>> 8);
+      byte type = (byte) (w1 & 0xff);
+      // flags
       if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
       streamId = (w3 & 0x7fffffff);
       if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
