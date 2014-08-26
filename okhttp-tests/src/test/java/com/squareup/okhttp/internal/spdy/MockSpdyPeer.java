@@ -278,7 +278,7 @@ public final class MockSpdyPeer implements Closeable {
 
     @Override
     public void pushPromise(int streamId, int associatedStreamId, List<Header> headerBlock) {
-      this.type = Http20Draft13.TYPE_PUSH_PROMISE;
+      this.type = Http20Draft14.TYPE_PUSH_PROMISE;
       this.streamId = streamId;
       this.associatedStreamId = associatedStreamId;
       this.headerBlock = headerBlock;
