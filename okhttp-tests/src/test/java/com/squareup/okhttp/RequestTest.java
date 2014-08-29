@@ -16,6 +16,10 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
+
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,7 +27,6 @@ import java.net.URI;
 import java.net.URL;
 
 import okio.Buffer;
-import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -73,6 +76,19 @@ public final class RequestTest {
     RequestBody body = RequestBody.create(contentType, file);
     assertEquals(contentType, body.contentType());
     assertEquals(3, body.contentLength());
+    assertEquals("616263", bodyToHex(body));
+    assertEquals("Retransmit body", "616263", bodyToHex(body));
+  }
+
+  @Test public void inputStream() throws Exception {
+    byte[] bytes = "abc".getBytes(Util.UTF_8);
+    ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+    MediaType contentType = MediaType.parse("text/plain");
+
+    RequestBody body = RequestBody.create(contentType, inputStream, bytes.length);
+
+    assertEquals(contentType, body.contentType());
+    assertEquals(bytes.length, body.contentLength());
     assertEquals("616263", bodyToHex(body));
     assertEquals("Retransmit body", "616263", bodyToHex(body));
   }

@@ -101,9 +101,9 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits the content of an {@code InputStream}. */
-  public static RequestBody create(final MediaType contentType, final InputStream is,
-                                   final long length) {
-    if (is == null) throw new NullPointerException("inputStream == null");
+  public static RequestBody create(final MediaType contentType, final InputStream inputStream,
+      final long length) {
+    if (inputStream == null) throw new NullPointerException("inputStream == null");
 
     return new RequestBody() {
       @Override public MediaType contentType() {
@@ -117,10 +117,15 @@ public abstract class RequestBody {
       @Override public void writeTo(BufferedSink sink) throws IOException {
         Source source = null;
         try {
-          source = Okio.source(is);
+          source = Okio.source(inputStream);
           sink.writeAll(source);
         } finally {
-          Util.closeQuietly(source);
+            try {
+                inputStream.reset();
+            } catch (IOException e) {
+                // reset might not be supported. do nothing.
+            }
+            Util.closeQuietly(source);
         }
       }
     };
