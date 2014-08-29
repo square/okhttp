@@ -30,7 +30,7 @@ import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -476,7 +476,7 @@ public class OkHttpClient implements Cloneable {
     // etc.) may incorrectly be reflected in the request when it is executed.
     OkHttpClient client = clone();
     // Force HTTP/1.1 until the WebSocket over SPDY/HTTP2 spec is finalized.
-    client.setProtocols(Arrays.asList(Protocol.HTTP_1_1));
+    client.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
 
     return new WebSocket(client, request, new SecureRandom());
   }
