@@ -62,13 +62,23 @@ public final class SettingsTest {
     settings.set(MAX_CONCURRENT_STREAMS, 0, 75);
     assertEquals(75, settings.getMaxConcurrentStreams(-3));
 
+    // WARNING: clash on flags between spdy/3 and HTTP/2!
     assertEquals(-3, settings.getCurrentCwnd(-3));
     settings.set(Settings.CURRENT_CWND, 0, 86);
     assertEquals(86, settings.getCurrentCwnd(-3));
+    settings.clear();
+    assertEquals(16384, settings.getMaxFrameSize(16384));
+    settings.set(Settings.MAX_FRAME_SIZE, 0, 16777215);
+    assertEquals(16777215, settings.getMaxFrameSize(16384));
 
+    // WARNING: clash on flags between spdy/3 and HTTP/2!
     assertEquals(-3, settings.getDownloadRetransRate(-3));
     settings.set(DOWNLOAD_RETRANS_RATE, 0, 97);
     assertEquals(97, settings.getDownloadRetransRate(-3));
+    settings.clear();
+    assertEquals(-1, settings.getMaxHeaderListSize(-1));
+    settings.set(Settings.MAX_HEADER_LIST_SIZE, 0, 16777215);
+    assertEquals(16777215, settings.getMaxHeaderListSize(-1));
 
     assertEquals(DEFAULT_INITIAL_WINDOW_SIZE,
         settings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE));

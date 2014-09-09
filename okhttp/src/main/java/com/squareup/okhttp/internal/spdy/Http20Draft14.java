@@ -26,17 +26,21 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static okio.ByteString.EMPTY;
 
 /**
- * Read and write HTTP/2 v13 frames.
- * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-13
+ * Read and write HTTP/2 v14 frames.
+ * <p>
+ * This implementation assumes we do not send an increased
+ * {@link Settings#getMaxFrameSize frame size setting} to the peer. Hence, we
+ * expect all frames to have a max length of {@link #INITIAL_MAX_FRAME_SIZE}.
+ * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-14
  */
-public final class Http20Draft13 implements Variant {
-  private static final Logger logger = Logger.getLogger(Http20Draft13.class.getName());
+public final class Http20Draft14 implements Variant {
+  private static final Logger logger = Logger.getLogger(Http20Draft14.class.getName());
 
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
@@ -45,7 +49,8 @@ public final class Http20Draft13 implements Variant {
   private static final ByteString CONNECTION_PREFACE
       = ByteString.encodeUtf8("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
 
-  static final int MAX_FRAME_SIZE = 0x3fff; // 16383
+  /** The initial max frame size, applied independently writing to, or reading from the peer. */
+  static final int INITIAL_MAX_FRAME_SIZE = 0x4000; // 16384
 
   static final byte TYPE_DATA = 0x0;
   static final byte TYPE_HEADERS = 0x1;
@@ -61,7 +66,6 @@ public final class Http20Draft13 implements Variant {
   static final byte FLAG_NONE = 0x0;
   static final byte FLAG_ACK = 0x1; // Used for settings and ping.
   static final byte FLAG_END_STREAM = 0x1; // Used for headers and data.
-  static final byte FLAG_END_SEGMENT = 0x2;
   static final byte FLAG_END_HEADERS = 0x4; // Used for headers and continuation.
   static final byte FLAG_END_PUSH_PROMISE = 0x4;
   static final byte FLAG_PADDED = 0x8; // Used for headers and data.
@@ -86,13 +90,13 @@ public final class Http20Draft13 implements Variant {
     private final boolean client;
 
     // Visible for testing.
-    final HpackDraft08.Reader hpackReader;
+    final HpackDraft09.Reader hpackReader;
 
     Reader(BufferedSource source, int headerTableSize, boolean client) {
       this.source = source;
       this.client = client;
       this.continuation = new ContinuationSource(this.source);
-      this.hpackReader = new HpackDraft08.Reader(headerTableSize, continuation);
+      this.hpackReader = new HpackDraft09.Reader(headerTableSize, continuation);
     }
 
     @Override public void readConnectionPreface() throws IOException {
@@ -105,21 +109,31 @@ public final class Http20Draft13 implements Variant {
     }
 
     @Override public boolean nextFrame(Handler handler) throws IOException {
-      int w1;
-      int w2;
       try {
-        w1 = source.readInt();
-        w2 = source.readInt();
+        source.require(9); // Frame header size
       } catch (IOException e) {
         return false; // This might be a normal socket close.
       }
 
-      // boolean r = (w1 & 0xc0000000) != 0; // Reserved: Ignore first 2 bits.
-      short length = (short) ((w1 & 0x3fff0000) >> 16); // 14-bit unsigned == MAX_FRAME_SIZE
-      byte type = (byte) ((w1 & 0xff00) >> 8);
-      byte flags = (byte) (w1 & 0xff);
-      // boolean r = (w2 & 0x80000000) != 0; // Reserved: Ignore first bit.
-      int streamId = (w2 & 0x7fffffff); // 31-bit opaque identifier.
+      /*  0                   1                   2                   3
+       *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+       * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+       * |                 Length (24)                   |
+       * +---------------+---------------+---------------+
+       * |   Type (8)    |   Flags (8)   |
+       * +-+-+-----------+---------------+-------------------------------+
+       * |R|                 Stream Identifier (31)                      |
+       * +=+=============================================================+
+       * |                   Frame Payload (0...)                      ...
+       * +---------------------------------------------------------------+
+       */
+      int length = readMedium(source);
+      if (length < 0 || length > INITIAL_MAX_FRAME_SIZE) {
+        throw ioException("FRAME_SIZE_ERROR: %s", length);
+      }
+      byte type = (byte) (source.readByte() & 0xff);
+      byte flags = (byte) (source.readByte() & 0xff);
+      int streamId = (source.readInt() & 0x7fffffff); // Ignore reserved bit.
       if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
 
       switch (type) {
@@ -166,7 +180,7 @@ public final class Http20Draft13 implements Variant {
       return true;
     }
 
-    private void readHeaders(Handler handler, short length, byte flags, int streamId)
+    private void readHeaders(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (streamId == 0) throw ioException("PROTOCOL_ERROR: TYPE_HEADERS streamId == 0");
 
@@ -186,21 +200,20 @@ public final class Http20Draft13 implements Variant {
       handler.headers(false, endStream, streamId, -1, headerBlock, HeadersMode.HTTP_20_HEADERS);
     }
 
-    private List<Header> readHeaderBlock(short length, short padding, byte flags, int streamId)
+    private List<Header> readHeaderBlock(int length, short padding, byte flags, int streamId)
         throws IOException {
       continuation.length = continuation.left = length;
       continuation.padding = padding;
       continuation.flags = flags;
       continuation.streamId = streamId;
 
-      hpackReader.readHeaders();
-      hpackReader.emitReferenceSet();
       // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
-      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3
-      return hpackReader.getAndReset();
+      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-8.1.2.5
+      hpackReader.readHeaders();
+      return hpackReader.getAndResetHeaderList();
     }
 
-    private void readData(Handler handler, short length, byte flags, int streamId)
+    private void readData(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       // TODO: checkState open or half-closed (local) or raise STREAM_CLOSED
       boolean inFinished = (flags & FLAG_END_STREAM) != 0;
@@ -216,7 +229,7 @@ public final class Http20Draft13 implements Variant {
       source.skip(padding);
     }
 
-    private void readPriority(Handler handler, short length, byte flags, int streamId)
+    private void readPriority(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (length != 5) throw ioException("TYPE_PRIORITY length: %d != 5", length);
       if (streamId == 0) throw ioException("TYPE_PRIORITY streamId == 0");
@@ -231,7 +244,7 @@ public final class Http20Draft13 implements Variant {
       handler.priority(streamId, streamDependency, weight, exclusive);
     }
 
-    private void readRstStream(Handler handler, short length, byte flags, int streamId)
+    private void readRstStream(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_RST_STREAM length: %d != 4", length);
       if (streamId == 0) throw ioException("TYPE_RST_STREAM streamId == 0");
@@ -243,7 +256,7 @@ public final class Http20Draft13 implements Variant {
       handler.rstStream(streamId, errorCode);
     }
 
-    private void readSettings(Handler handler, short length, byte flags, int streamId)
+    private void readSettings(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (streamId != 0) throw ioException("TYPE_SETTINGS streamId != 0");
       if ((flags & FLAG_ACK) != 0) {
@@ -275,8 +288,13 @@ public final class Http20Draft13 implements Variant {
               throw ioException("PROTOCOL_ERROR SETTINGS_INITIAL_WINDOW_SIZE > 2^31 - 1");
             }
             break;
-          case 5: // SETTINGS_COMPRESS_DATA
+          case 5: // SETTINGS_MAX_FRAME_SIZE
+            if (value < INITIAL_MAX_FRAME_SIZE || value > 16777215) {
+              throw ioException("PROTOCOL_ERROR SETTINGS_MAX_FRAME_SIZE: %s", value);
+            }
             break;
+          case 6: // SETTINGS_MAX_HEADER_LIST_SIZE
+            break; // Advisory only, so ignored.
           default:
             throw ioException("PROTOCOL_ERROR invalid settings id: %s", id);
         }
@@ -288,7 +306,7 @@ public final class Http20Draft13 implements Variant {
       }
     }
 
-    private void readPushPromise(Handler handler, short length, byte flags, int streamId)
+    private void readPushPromise(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (streamId == 0) {
         throw ioException("PROTOCOL_ERROR: TYPE_PUSH_PROMISE streamId == 0");
@@ -301,7 +319,7 @@ public final class Http20Draft13 implements Variant {
       handler.pushPromise(streamId, promisedStreamId, headerBlock);
     }
 
-    private void readPing(Handler handler, short length, byte flags, int streamId)
+    private void readPing(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (length != 8) throw ioException("TYPE_PING length != 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_PING streamId != 0");
@@ -311,7 +329,7 @@ public final class Http20Draft13 implements Variant {
       handler.ping(ack, payload1, payload2);
     }
 
-    private void readGoAway(Handler handler, short length, byte flags, int streamId)
+    private void readGoAway(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (length < 8) throw ioException("TYPE_GOAWAY length < 8: %s", length);
       if (streamId != 0) throw ioException("TYPE_GOAWAY streamId != 0");
@@ -329,7 +347,7 @@ public final class Http20Draft13 implements Variant {
       handler.goAway(lastStreamId, errorCode, debugData);
     }
 
-    private void readWindowUpdate(Handler handler, short length, byte flags, int streamId)
+    private void readWindowUpdate(Handler handler, int length, byte flags, int streamId)
         throws IOException {
       if (length != 4) throw ioException("TYPE_WINDOW_UPDATE length !=4: %s", length);
       long increment = (source.readInt() & 0x7fffffffL);
@@ -346,14 +364,16 @@ public final class Http20Draft13 implements Variant {
     private final BufferedSink sink;
     private final boolean client;
     private final Buffer hpackBuffer;
-    private final HpackDraft08.Writer hpackWriter;
+    private final HpackDraft09.Writer hpackWriter;
+    private int maxFrameSize;
     private boolean closed;
 
     Writer(BufferedSink sink, boolean client) {
       this.sink = sink;
       this.client = client;
       this.hpackBuffer = new Buffer();
-      this.hpackWriter = new HpackDraft08.Writer(hpackBuffer);
+      this.hpackWriter = new HpackDraft09.Writer(hpackBuffer);
+      this.maxFrameSize = INITIAL_MAX_FRAME_SIZE;
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -361,8 +381,9 @@ public final class Http20Draft13 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void ackSettings() throws IOException {
+    @Override public synchronized void ackSettings(Settings peerSettings) throws IOException {
       if (closed) throw new IOException("closed");
+      this.maxFrameSize = peerSettings.getMaxFrameSize(maxFrameSize);
       int length = 0;
       byte type = TYPE_SETTINGS;
       byte flags = FLAG_ACK;
@@ -408,7 +429,7 @@ public final class Http20Draft13 implements Variant {
       hpackWriter.writeHeaders(requestHeaders);
 
       long byteCount = hpackBuffer.size();
-      int length = (int) Math.min(MAX_FRAME_SIZE - 4, byteCount);
+      int length = (int) Math.min(maxFrameSize - 4, byteCount);
       byte type = TYPE_PUSH_PROMISE;
       byte flags = byteCount == length ? FLAG_END_HEADERS : 0;
       frameHeader(streamId, length + 4, type, flags);
@@ -424,7 +445,7 @@ public final class Http20Draft13 implements Variant {
       hpackWriter.writeHeaders(headerBlock);
 
       long byteCount = hpackBuffer.size();
-      int length = (int) Math.min(MAX_FRAME_SIZE, byteCount);
+      int length = (int) Math.min(maxFrameSize, byteCount);
       byte type = TYPE_HEADERS;
       byte flags = byteCount == length ? FLAG_END_HEADERS : 0;
       if (outFinished) flags |= FLAG_END_STREAM;
@@ -436,7 +457,7 @@ public final class Http20Draft13 implements Variant {
 
     private void writeContinuationFrames(int streamId, long byteCount) throws IOException {
       while (byteCount > 0) {
-        int length = (int) Math.min(MAX_FRAME_SIZE, byteCount);
+        int length = (int) Math.min(maxFrameSize, byteCount);
         byteCount -= length;
         frameHeader(streamId, length, TYPE_CONTINUATION, byteCount == 0 ? FLAG_END_HEADERS : 0);
         sink.write(hpackBuffer, length);
@@ -457,7 +478,7 @@ public final class Http20Draft13 implements Variant {
     }
 
     @Override public int maxDataLength() {
-      return MAX_FRAME_SIZE;
+      return maxFrameSize;
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, Buffer source,
@@ -546,11 +567,13 @@ public final class Http20Draft13 implements Variant {
 
     void frameHeader(int streamId, int length, byte type, byte flags) throws IOException {
       if (logger.isLoggable(FINE)) logger.fine(formatHeader(false, streamId, length, type, flags));
-      if (length > MAX_FRAME_SIZE) {
-        throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", MAX_FRAME_SIZE, length);
+      if (length > maxFrameSize) {
+        throw illegalArgument("FRAME_SIZE_ERROR length > %d: %d", maxFrameSize, length);
       }
       if ((streamId & 0x80000000) != 0) throw illegalArgument("reserved bit set: %s", streamId);
-      sink.writeInt((length & 0x3fff) << 16 | (type & 0xff) << 8 | (flags & 0xff));
+      writeMedium(sink, length);
+      sink.writeByte(type & 0xff);
+      sink.writeByte(flags & 0xff);
       sink.writeInt(streamId & 0x7fffffff);
     }
   }
@@ -566,16 +589,16 @@ public final class Http20Draft13 implements Variant {
   /**
    * Decompression of the header block occurs above the framing layer. This
    * class lazily reads continuation frames as they are needed by {@link
-   * HpackDraft08.Reader#readHeaders()}.
+   * HpackDraft09.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
     private final BufferedSource source;
 
-    short length;
+    int length;
     byte flags;
     int streamId;
 
-    short left;
+    int left;
     short padding;
 
     public ContinuationSource(BufferedSource source) {
@@ -606,19 +629,18 @@ public final class Http20Draft13 implements Variant {
 
     private void readContinuationHeader() throws IOException {
       int previousStreamId = streamId;
-      int w1 = source.readInt();
-      int w2 = source.readInt();
-      length = left = (short) ((w1 & 0x3fff0000) >> 16);
-      byte type = (byte) ((w1 & 0xff00) >> 8);
-      flags = (byte) (w1 & 0xff);
+
+      length = left = readMedium(source);
+      byte type = (byte) (source.readByte() & 0xff);
+      flags = (byte) (source.readByte() & 0xff);
       if (logger.isLoggable(FINE)) logger.fine(formatHeader(true, streamId, length, type, flags));
-      streamId = (w2 & 0x7fffffff);
+      streamId = (source.readInt() & 0x7fffffff);
       if (type != TYPE_CONTINUATION) throw ioException("%s != TYPE_CONTINUATION", type);
       if (streamId != previousStreamId) throw ioException("TYPE_CONTINUATION streamId changed");
     }
   }
 
-  private static short lengthWithoutPadding(short length, byte flags, short padding)
+  private static int lengthWithoutPadding(int length, byte flags, short padding)
       throws IOException {
     if ((flags & FLAG_PADDED) != 0) length--; // Account for reading the padding length.
     if (padding > length) {
@@ -709,10 +731,8 @@ public final class Http20Draft13 implements Variant {
 
       FLAGS[FLAG_NONE] = "";
       FLAGS[FLAG_END_STREAM] = "END_STREAM";
-      FLAGS[FLAG_END_SEGMENT] = "END_SEGMENT";
-      FLAGS[FLAG_END_STREAM | FLAG_END_SEGMENT] = "END_STREAM|END_SEGMENT";
-      int[] prefixFlags =
-          new int[] {FLAG_END_STREAM, FLAG_END_SEGMENT, FLAG_END_SEGMENT | FLAG_END_STREAM};
+
+      int[] prefixFlags = new int[] {FLAG_END_STREAM};
 
       FLAGS[FLAG_PADDED] = "PADDED";
       for (int prefixFlag : prefixFlags) {
@@ -737,5 +757,17 @@ public final class Http20Draft13 implements Variant {
         if (FLAGS[i] == null) FLAGS[i] = BINARY[i];
       }
     }
+  }
+
+  private static int readMedium(BufferedSource source) throws IOException {
+    return (source.readByte() & 0xff) << 16
+        |  (source.readByte() & 0xff) <<  8
+        |  (source.readByte() & 0xff);
+  }
+
+  private static void writeMedium(BufferedSink sink, int i) throws IOException {
+    sink.writeByte((i >>> 16) & 0xff);
+    sink.writeByte((i >>>  8) & 0xff);
+    sink.writeByte(i          & 0xff);
   }
 }

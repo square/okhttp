@@ -31,9 +31,12 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class HpackDecodeInteropBadTest extends HpackDecodeTestBase {
 
-  private static final String[] BAD_INTEROP_TESTS = { "go-hpack", "haskell-http2-diff-huffman",
-      "haskell-http2-linear-huffman", "haskell-http2-naive-huffman",
-      "haskell-http2-static-huffman", "node-http2-protocol", "twitter-hpack" };
+  private static final String[] BAD_INTEROP_TESTS = {
+      "hyper-hpack",
+      "node-http2-protocol",
+      "raw-data",
+      "twitter-hpack"
+  };
 
   public HpackDecodeInteropBadTest(Story story) {
     super(story);

@@ -50,8 +50,12 @@ public final class Settings {
   static final int MAX_CONCURRENT_STREAMS = 4;
   /** spdy/3: Current CWND in Packets. */
   static final int CURRENT_CWND = 5;
+  /** HTTP/2: Size in bytes of the largest frame payload the sender will accept. */
+  static final int MAX_FRAME_SIZE = 5;
   /** spdy/3: Retransmission rate. Percentage */
   static final int DOWNLOAD_RETRANS_RATE = 6;
+  /** HTTP/2: Advisory only. Size in bytes of the largest header list the sender will accept. */
+  static final int MAX_HEADER_LIST_SIZE = 6;
   /** Window size in bytes. */
   static final int INITIAL_WINDOW_SIZE = 7;
   /** spdy/3: Window size in bytes. */
@@ -171,10 +175,22 @@ public final class Settings {
     return (bit & set) != 0 ? values[CURRENT_CWND] : defaultValue;
   }
 
+  /** HTTP/2 only. */
+  int getMaxFrameSize(int defaultValue) {
+    int bit = 1 << MAX_FRAME_SIZE;
+    return (bit & set) != 0 ? values[MAX_FRAME_SIZE] : defaultValue;
+  }
+
   /** spdy/3 only. */
   int getDownloadRetransRate(int defaultValue) {
     int bit = 1 << DOWNLOAD_RETRANS_RATE;
     return (bit & set) != 0 ? values[DOWNLOAD_RETRANS_RATE] : defaultValue;
+  }
+
+  /** HTTP/2 only. */
+  int getMaxHeaderListSize(int defaultValue) {
+    int bit = 1 << MAX_HEADER_LIST_SIZE;
+    return (bit & set) != 0 ? values[MAX_HEADER_LIST_SIZE] : defaultValue;
   }
 
   int getInitialWindowSize(int defaultValue) {

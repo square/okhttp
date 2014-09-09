@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import com.squareup.okhttp.internal.BitArray;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,16 +29,17 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v08.
+ * Read and write HPACK v09.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09
  *
- * This implementation uses an array for the header table with a bitset for
- * references.  Dynamic entries are added to the array, starting in the last
- * position moving forward.  When the array fills, it is doubled.
+ * This implementation uses an array for the header table and a list for
+ * indexed entries.  Dynamic entries are added to the array, starting in the
+ * last position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft08 {
+final class HpackDraft09 {
   private static final int PREFIX_4_BITS = 0x0f;
+  private static final int PREFIX_5_BITS = 0x1f;
   private static final int PREFIX_6_BITS = 0x3f;
   private static final int PREFIX_7_BITS = 0x7f;
 
@@ -107,13 +107,13 @@ final class HpackDraft08 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft08() {
+  private HpackDraft09() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-3.2
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-3.2
   static final class Reader {
 
-    private final List<Header> emittedHeaders = new ArrayList<>();
+    private final List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
 
     private int maxHeaderTableByteCountSetting;
@@ -123,17 +123,6 @@ final class HpackDraft08 {
     // Array is populated back to front, so new entries always have lowest index.
     int nextHeaderIndex = headerTable.length - 1;
     int headerCount = 0;
-
-    /**
-     * Set bit positions indicate {@code headerTable[pos]} should be emitted.
-     */
-    // Using a BitArray as it has left-shift operator.
-    BitArray referencedHeaders = new BitArray.FixedCapacity();
-
-    /**
-     * Set bit positions indicate {@code headerTable[pos]} was already emitted.
-     */
-    BitArray emittedReferencedHeaders = new BitArray.FixedCapacity();
     int headerTableByteCount = 0;
 
     Reader(int maxHeaderTableByteCountSetting, Source source) {
@@ -170,7 +159,7 @@ final class HpackDraft08 {
     }
 
     private void clearHeaderTable() {
-      clearReferenceSet();
+      headerList.clear();
       Arrays.fill(headerTable, null);
       nextHeaderIndex = headerTable.length - 1;
       headerCount = 0;
@@ -188,8 +177,6 @@ final class HpackDraft08 {
           headerCount--;
           entriesToEvict++;
         }
-        referencedHeaders.shiftLeft(entriesToEvict);
-        emittedReferencedHeaders.shiftLeft(entriesToEvict);
         System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
         nextHeaderIndex += entriesToEvict;
@@ -198,9 +185,8 @@ final class HpackDraft08 {
     }
 
     /**
-     * Read {@code byteCount} bytes of headers from the source stream into the
-     * set of emitted headers. This implementation does not propagate the never
-     * indexed flag of a header.
+     * Read {@code byteCount} bytes of headers from the source stream. This
+     * implementation does not propagate the never indexed flag of a header.
      */
     void readHeaders() throws IOException {
       while (!source.exhausted()) {
@@ -216,17 +202,12 @@ final class HpackDraft08 {
           int index = readInt(b, PREFIX_6_BITS);
           readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
         } else if ((b & 0x20) == 0x20) {  // 001NNNNN
-          if ((b & 0x10) == 0x10) { // 0011NNNN
-            if ((b & 0x0f) != 0) throw new IOException("Invalid header table state change " + b);
-            clearReferenceSet(); // 00110000
-          } else { // 0010NNNN
-            maxHeaderTableByteCount = readInt(b, PREFIX_4_BITS);
-            if (maxHeaderTableByteCount < 0
-                || maxHeaderTableByteCount > maxHeaderTableByteCountSetting) {
-              throw new IOException("Invalid header table byte count " + maxHeaderTableByteCount);
-            }
-            adjustHeaderTableByteCount();
+          maxHeaderTableByteCount = readInt(b, PREFIX_5_BITS);
+          if (maxHeaderTableByteCount < 0
+              || maxHeaderTableByteCount > maxHeaderTableByteCountSetting) {
+            throw new IOException("Invalid header table byte count " + maxHeaderTableByteCount);
           }
+          adjustHeaderTableByteCount();
         } else if (b == 0x10 || b == 0) { // 000?0000 - Ignore never indexed bit.
           readLiteralHeaderWithoutIndexingNewName();
         } else { // 000?NNNN - Ignore never indexed bit.
@@ -236,49 +217,22 @@ final class HpackDraft08 {
       }
     }
 
-    private void clearReferenceSet() {
-      referencedHeaders.clear();
-      emittedReferencedHeaders.clear();
-    }
-
-    void emitReferenceSet() {
-      for (int i = headerTable.length - 1; i != nextHeaderIndex; --i) {
-        if (referencedHeaders.get(i) && !emittedReferencedHeaders.get(i)) {
-          emittedHeaders.add(headerTable[i]);
-        }
-      }
-    }
-
-    /**
-     * Returns all headers emitted since they were last cleared, then clears the
-     * emitted headers.
-     */
-    List<Header> getAndReset() {
-      List<Header> result = new ArrayList<>(emittedHeaders);
-      emittedHeaders.clear();
-      emittedReferencedHeaders.clear();
+    public List<Header> getAndResetHeaderList() {
+      List<Header> result = new ArrayList<>(headerList);
+      headerList.clear();
       return result;
     }
 
     private void readIndexedHeader(int index) throws IOException {
       if (isStaticHeader(index)) {
-        index -= headerCount;
-        if (index > STATIC_HEADER_TABLE.length - 1) {
+        Header staticEntry = STATIC_HEADER_TABLE[index];
+        headerList.add(staticEntry);
+      } else {
+        int headerTableIndex = headerTableIndex(index - STATIC_HEADER_TABLE.length);
+        if (headerTableIndex < 0 || headerTableIndex > headerTable.length - 1) {
           throw new IOException("Header index too large " + (index + 1));
         }
-        Header staticEntry = STATIC_HEADER_TABLE[index];
-        if (maxHeaderTableByteCount == 0) {
-          emittedHeaders.add(staticEntry);
-        } else {
-          insertIntoHeaderTable(-1, staticEntry);
-        }
-      } else {
-        int headerTableIndex = headerTableIndex(index);
-        if (!referencedHeaders.get(headerTableIndex)) { // When re-referencing, emit immediately.
-          emittedHeaders.add(headerTable[headerTableIndex]);
-          emittedReferencedHeaders.set(headerTableIndex);
-        }
-        referencedHeaders.toggle(headerTableIndex);
+        headerList.add(headerTable[headerTableIndex]);
       }
     }
 
@@ -290,13 +244,13 @@ final class HpackDraft08 {
     private void readLiteralHeaderWithoutIndexingIndexedName(int index) throws IOException {
       ByteString name = getName(index);
       ByteString value = readByteString();
-      emittedHeaders.add(new Header(name, value));
+      headerList.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithoutIndexingNewName() throws IOException {
       ByteString name = checkLowercase(readByteString());
       ByteString value = readByteString();
-      emittedHeaders.add(new Header(name, value));
+      headerList.add(new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingIndexedName(int nameIndex)
@@ -314,18 +268,20 @@ final class HpackDraft08 {
 
     private ByteString getName(int index) {
       if (isStaticHeader(index)) {
-        return STATIC_HEADER_TABLE[index - headerCount].name;
+        return STATIC_HEADER_TABLE[index].name;
       } else {
-        return headerTable[headerTableIndex(index)].name;
+        return headerTable[headerTableIndex(index - STATIC_HEADER_TABLE.length)].name;
       }
     }
 
     private boolean isStaticHeader(int index) {
-      return index >= headerCount;
+      return index >= 0 && index <= STATIC_HEADER_TABLE.length - 1;
     }
 
     /** index == -1 when new. */
     private void insertIntoHeaderTable(int index, Header entry) {
+      headerList.add(entry);
+
       int delta = entry.hpackSize;
       if (index != -1) { // Index -1 == new header.
         delta -= headerTable[headerTableIndex(index)].hpackSize;
@@ -334,8 +290,6 @@ final class HpackDraft08 {
       // if the new or replacement header is too big, drop all entries.
       if (delta > maxHeaderTableByteCount) {
         clearHeaderTable();
-        // emit the large header to the callback.
-        emittedHeaders.add(entry);
         return;
       }
 
@@ -347,23 +301,14 @@ final class HpackDraft08 {
         if (headerCount + 1 > headerTable.length) { // Need to grow the header table.
           Header[] doubled = new Header[headerTable.length * 2];
           System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
-          if (doubled.length == 64) {
-            referencedHeaders = ((BitArray.FixedCapacity) referencedHeaders).toVariableCapacity();
-            emittedReferencedHeaders =
-                ((BitArray.FixedCapacity) emittedReferencedHeaders).toVariableCapacity();
-          }
-          referencedHeaders.shiftLeft(headerTable.length);
-          emittedReferencedHeaders.shiftLeft(headerTable.length);
           nextHeaderIndex = headerTable.length - 1;
           headerTable = doubled;
         }
         index = nextHeaderIndex--;
-        referencedHeaders.set(index);
         headerTable[index] = entry;
         headerCount++;
       } else { // Replace value at same position.
         index += headerTableIndex(index) + entriesEvicted;
-        referencedHeaders.set(index);
         headerTable[index] = entry;
       }
       headerTableByteCount += delta;
@@ -429,7 +374,7 @@ final class HpackDraft08 {
     }
 
     /** This does not use "never indexed" semantics for sensitive headers. */
-    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.3.3
+    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-4.3.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -447,7 +392,7 @@ final class HpackDraft08 {
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

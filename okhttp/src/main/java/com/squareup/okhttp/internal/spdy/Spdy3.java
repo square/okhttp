@@ -301,7 +301,7 @@ public final class Spdy3 implements Variant {
       headerBlockOut = Okio.buffer(new DeflaterSink(headerBlockBuffer, deflater));
     }
 
-    @Override public void ackSettings() {
+    @Override public void ackSettings(Settings peerSettings) {
       // Do nothing: no ACK for SPDY/3 settings.
     }
 
