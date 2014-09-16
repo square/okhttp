@@ -86,8 +86,11 @@ public final class WebSocket {
       httpUrl = "http://" + url.substring(5);
     } else if (url.startsWith("wss://")) {
       httpUrl = "https://" + url.substring(6);
+    } else if (url.startsWith("http://") || url.startsWith("https://")) {
+      httpUrl = url;
     } else {
-      throw new IllegalArgumentException("Request url must use 'ws' or 'wss' protocol: " + url);
+      throw new IllegalArgumentException(
+          "Request url must use 'ws', 'wss', 'http', or 'https' scheme: " + url);
     }
 
     byte[] nonce = new byte[16];
