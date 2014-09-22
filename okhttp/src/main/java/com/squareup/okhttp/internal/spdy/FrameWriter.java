@@ -54,15 +54,18 @@ public interface FrameWriter extends Closeable {
   void headers(int streamId, List<Header> headerBlock) throws IOException;
   void rstStream(int streamId, ErrorCode errorCode) throws IOException;
 
+  /** The maximum size of bytes that may be sent in a single call to {@link #data}. */
+  int maxDataLength();
+
   /**
-   * {@code data.length} may be longer than the max length of the variant's data frame.
+   * {@code source.length} may be longer than the max length of the variant's data frame.
    * Implementations must send multiple frames as necessary.
    *
    * @param source the buffer to draw bytes from. May be null if byteCount is 0.
+   * @param byteCount must be between 0 and the minimum of {code source.length}
+   * and {@link #maxDataLength}.
    */
   void data(boolean outFinished, int streamId, Buffer source, int byteCount) throws IOException;
-
-  void data(boolean outFinished, int streamId, Buffer source) throws IOException;
 
   /** Write okhttp's settings to the peer. */
   void settings(Settings okHttpSettings) throws IOException;

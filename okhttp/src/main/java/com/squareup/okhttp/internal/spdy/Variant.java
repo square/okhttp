@@ -34,6 +34,4 @@ public interface Variant {
    * @param client true if this is the HTTP client's writer, writing frames to a server.
    */
   FrameWriter newWriter(BufferedSink sink, boolean client);
-
-  int maxFrameSize();
 }

@@ -15,18 +15,17 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
-
-import com.squareup.okhttp.Protocol;
-
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
+
 import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
@@ -79,10 +78,6 @@ public final class Http20Draft13 implements Variant {
 
   @Override public FrameWriter newWriter(BufferedSink sink, boolean client) {
     return new Writer(sink, client);
-  }
-
-  @Override public int maxFrameSize() {
-    return MAX_FRAME_SIZE;
   }
 
   static final class Reader implements FrameReader {
@@ -461,9 +456,8 @@ public final class Http20Draft13 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source)
-        throws IOException {
-      data(outFinished, streamId, source, (int) source.size());
+    @Override public int maxDataLength() {
+      return MAX_FRAME_SIZE;
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, Buffer source,
