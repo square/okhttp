@@ -25,7 +25,8 @@ import okio.Buffer;
 public interface FrameWriter extends Closeable {
   /** HTTP/2 only. */
   void connectionPreface() throws IOException;
-  void ackSettings() throws IOException;
+  /** Informs the peer that we've applied its latest settings. */
+  void ackSettings(Settings peerSettings) throws IOException;
 
   /**
    * HTTP/2 only. Send a push promise header block.

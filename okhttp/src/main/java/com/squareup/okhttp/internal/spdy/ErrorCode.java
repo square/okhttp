@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-// http://tools.ietf.org/html/draft-ietf-httpbis-http2-13#section-7
+// http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-7
 public enum ErrorCode {
   /** Not an error! For SPDY stream resets, prefer null over NO_ERROR. */
   NO_ERROR(0, -1, 0),

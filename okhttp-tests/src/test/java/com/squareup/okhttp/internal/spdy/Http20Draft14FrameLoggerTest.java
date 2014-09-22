@@ -20,22 +20,22 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_ACK;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_END_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_END_STREAM;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FLAG_NONE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatFlags;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.FrameLogger.formatHeader;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_CONTINUATION;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_DATA;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_GOAWAY;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_PING;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_PUSH_PROMISE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft13.TYPE_SETTINGS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_ACK;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_END_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_END_STREAM;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FLAG_NONE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FrameLogger.formatFlags;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_CONTINUATION;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_DATA;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_PING;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_PUSH_PROMISE;
+import static com.squareup.okhttp.internal.spdy.Http20Draft14.TYPE_SETTINGS;
 import static org.junit.Assert.assertEquals;
 
-public class Http20Draft13FrameLoggerTest {
+public class Http20Draft14FrameLoggerTest {
 
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {
@@ -97,20 +97,20 @@ public class Http20Draft13FrameLoggerTest {
     assertEquals(Arrays.asList(
         "",
         "END_STREAM",
-        "END_SEGMENT",
-        "END_STREAM|END_SEGMENT",
+        "00000010",
+        "00000011",
         "END_HEADERS",
         "END_STREAM|END_HEADERS",
-        "END_SEGMENT|END_HEADERS",
-        "END_STREAM|END_SEGMENT|END_HEADERS",
+        "00000110",
+        "00000111",
         "PADDED",
         "END_STREAM|PADDED",
-        "END_SEGMENT|PADDED",
-        "END_STREAM|END_SEGMENT|PADDED",
+        "00001010",
+        "00001011",
         "00001100",
         "END_STREAM|END_HEADERS|PADDED",
-        "END_SEGMENT|END_HEADERS|PADDED",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PADDED",
+        "00001110",
+        "00001111",
         "00010000",
         "00010001",
         "00010010",
@@ -129,20 +129,20 @@ public class Http20Draft13FrameLoggerTest {
         "00011111",
         "PRIORITY",
         "END_STREAM|PRIORITY",
-        "END_SEGMENT|PRIORITY",
-        "END_STREAM|END_SEGMENT|PRIORITY",
+        "00100010",
+        "00100011",
         "END_HEADERS|PRIORITY",
         "END_STREAM|END_HEADERS|PRIORITY",
-        "END_SEGMENT|END_HEADERS|PRIORITY",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY",
+        "00100110",
+        "00100111",
         "00101000",
         "END_STREAM|PRIORITY|PADDED",
-        "END_SEGMENT|PRIORITY|PADDED",
-        "END_STREAM|END_SEGMENT|PRIORITY|PADDED",
+        "00101010",
+        "00101011",
         "00101100",
         "END_STREAM|END_HEADERS|PRIORITY|PADDED",
-        "END_SEGMENT|END_HEADERS|PRIORITY|PADDED",
-        "END_STREAM|END_SEGMENT|END_HEADERS|PRIORITY|PADDED",
+        "00101110",
+        "00101111",
         "00110000",
         "00110001",
         "00110010",

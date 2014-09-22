@@ -26,27 +26,25 @@ import org.junit.Test;
 import static com.squareup.okhttp.internal.Util.headerEntries;
 import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class HpackDraft08Test {
+public class HpackDraft09Test {
 
   private final Buffer bytesIn = new Buffer();
-  private HpackDraft08.Reader hpackReader;
+  private HpackDraft09.Reader hpackReader;
   private Buffer bytesOut = new Buffer();
-  private HpackDraft08.Writer hpackWriter;
+  private HpackDraft09.Writer hpackWriter;
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new HpackDraft08.Writer(bytesOut);
+    hpackWriter = new HpackDraft09.Writer(bytesOut);
   }
 
   /**
    * Variable-length quantity special cases strings which are longer than 127
    * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
    *
-   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-4.1.1
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-6.1
    */
   @Test public void largeHeaderValue() throws IOException {
     char[] value = new char[4096];
@@ -56,11 +54,10 @@ public class HpackDraft08Test {
     hpackWriter.writeHeaders(headerBlock);
     bytesIn.writeAll(bytesOut);
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerBlock, hpackReader.getAndReset());
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
   }
 
   /**
@@ -77,11 +74,10 @@ public class HpackDraft08Test {
 
     hpackReader.maxHeaderTableByteCountSetting(1);
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndReset());
+    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
   }
 
   /** Oldest entries are evicted to support newer ones. */
@@ -110,22 +106,23 @@ public class HpackDraft08Test {
     // Set to only support 110 bytes (enough for 2 headers).
     hpackReader.maxHeaderTableByteCountSetting(110);
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(2, hpackReader.headerCount);
 
     Header entry = hpackReader.headerTable[headerTableLength() - 1];
     checkEntry(entry, "custom-bar", "custom-header", 55);
-    assertHeaderReferenced(headerTableLength() - 1);
 
     entry = hpackReader.headerTable[headerTableLength() - 2];
     checkEntry(entry, "custom-baz", "custom-header", 55);
-    assertHeaderReferenced(headerTableLength() - 2);
 
-    // foo isn't here as it is no longer in the table.
-    // TODO: emit before eviction?
-    assertEquals(headerEntries("custom-bar", "custom-header", "custom-baz", "custom-header"),
-        hpackReader.getAndReset());
+    // Once a header field is decoded and added to the reconstructed header
+    // list, it cannot be removed from it. Hence, foo is here.
+    assertEquals(
+        headerEntries(
+            "custom-foo", "custom-header",
+            "custom-bar", "custom-header",
+            "custom-baz", "custom-header"),
+        hpackReader.getAndResetHeaderList());
 
     // Simulate receiving a small settings frame, that implies eviction.
     hpackReader.maxHeaderTableByteCountSetting(55);
@@ -145,11 +142,8 @@ public class HpackDraft08Test {
 
     hpackReader.maxHeaderTableByteCountSetting(16384); // Lots of headers need more room!
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(256, hpackReader.headerCount);
-    assertHeaderReferenced(headerTableLength() - 1);
-    assertHeaderReferenced(headerTableLength() - hpackReader.headerCount);
   }
 
   @Test public void huffmanDecodingSupported() throws IOException {
@@ -160,18 +154,16 @@ public class HpackDraft08Test {
     bytesIn.write(decodeHex("f1e3c2e5f23a6ba0ab90f4ff"));
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
     assertEquals(52, hpackReader.headerTableByteCount);
 
     Header entry = hpackReader.headerTable[headerTableLength() - 1];
     checkEntry(entry, ":path", "www.example.com", 52);
-    assertHeaderReferenced(headerTableLength() - 1);
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.1.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     bytesIn.writeByte(0x40); // Literal indexed
@@ -182,20 +174,18 @@ public class HpackDraft08Test {
     bytesIn.writeUtf8("custom-header");
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(1, hpackReader.headerCount);
     assertEquals(55, hpackReader.headerTableByteCount);
 
     Header entry = hpackReader.headerTable[headerTableLength() - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
-    assertHeaderReferenced(headerTableLength() - 1);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndReset());
+    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
   }
 
   /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2.2
+   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.2
    */
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
@@ -209,11 +199,10 @@ public class HpackDraft08Test {
     assertEquals(bytesIn, bytesOut);
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerBlock, hpackReader.getAndReset());
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
   }
 
   @Test public void literalHeaderFieldWithoutIndexingNewName() throws IOException {
@@ -230,11 +219,10 @@ public class HpackDraft08Test {
     assertEquals(bytesIn, bytesOut);
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerBlock, hpackReader.getAndReset());
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
   }
 
   @Test public void literalHeaderFieldNeverIndexedIndexedName() throws IOException {
@@ -244,11 +232,10 @@ public class HpackDraft08Test {
     bytesIn.writeUtf8("/sample/path");
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries(":path", "/sample/path"), hpackReader.getAndReset());
+    assertEquals(headerEntries(":path", "/sample/path"), hpackReader.getAndResetHeaderList());
   }
 
   @Test public void literalHeaderFieldNeverIndexedNewName() throws IOException {
@@ -260,31 +247,24 @@ public class HpackDraft08Test {
     bytesIn.writeUtf8("custom-header");
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndReset());
+    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
   }
 
-  /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.1.3
-   */
-  @Test public void readIndexedHeaderField() throws IOException {
+  @Test public void staticHeaderIsNotCopiedIntoTheIndexedTable() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
 
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
-    assertEquals(1, hpackReader.headerCount);
-    assertEquals(42, hpackReader.headerTableByteCount);
+    assertEquals(0, hpackReader.headerCount);
+    assertEquals(0, hpackReader.headerTableByteCount);
 
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
+    assertEquals(null, hpackReader.headerTable[headerTableLength() - 1]);
 
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }
 
   // Example taken from twitter/hpack DecoderTest.testUnusedIndex
@@ -319,42 +299,30 @@ public class HpackDraft08Test {
     try {
       hpackReader.readHeaders();
       fail();
-    } catch (IllegalArgumentException e) {
-      assertEquals("input must be between 0 and 63: -2147483514", e.getMessage());
-    }
-  }
-
-  // Example taken from twitter/hpack DecoderTest.testIllegalEncodeContextUpdate
-  @Test public void readHeaderTableStateChangeInvalid() throws IOException {
-    bytesIn.writeByte(0x31); // header table state should be 0x30 for empty!
-
-    try {
-      hpackReader.readHeaders();
-      fail();
     } catch (IOException e) {
-      assertEquals("Invalid header table state change 49", e.getMessage());
+      assertEquals("Header index too large -2147483521", e.getMessage());
     }
   }
 
-  // Example taken from twitter/hpack DecoderTest.testMaxHeaderTableSize
+  // Example taken from twitter/hpack DecoderTest.testHeaderTableSizeUpdate
   @Test public void minMaxHeaderTableSize() throws IOException {
     bytesIn.writeByte(0x20);
     hpackReader.readHeaders();
 
     assertEquals(0, hpackReader.maxHeaderTableByteCount());
 
-    bytesIn.writeByte(0x2f); // encode size 4096
-    bytesIn.writeByte(0xf1);
+    bytesIn.writeByte(0x3f); // encode size 4096
+    bytesIn.writeByte(0xe1);
     bytesIn.writeByte(0x1f);
     hpackReader.readHeaders();
 
     assertEquals(4096, hpackReader.maxHeaderTableByteCount());
   }
 
-  // Example taken from twitter/hpack DecoderTest.testIllegalMaxHeaderTableSize
+  // Example taken from twitter/hpack DecoderTest.testIllegalHeaderTableSizeUpdate
   @Test public void cannotSetTableSizeLargerThanSettingsValue() throws IOException {
-    bytesIn.writeByte(0x2f); // encode size 4097
-    bytesIn.writeByte(0xf2);
+    bytesIn.writeByte(0x3f); // encode size 4097
+    bytesIn.writeByte(0xe2);
     bytesIn.writeByte(0x1f);
 
     try {
@@ -367,8 +335,8 @@ public class HpackDraft08Test {
 
   // Example taken from twitter/hpack DecoderTest.testInsidiousMaxHeaderSize
   @Test public void readHeaderTableStateChangeInsidiousMaxHeaderByteCount() throws IOException {
-    bytesIn.writeByte(0x2f); // TODO: header table state change
-    bytesIn.write(decodeHex("f1ffffff07")); // count = -2147483648
+    bytesIn.writeByte(0x3f);
+    bytesIn.write(decodeHex("e1ffffff07")); // count = -2147483648
 
     try {
       hpackReader.readHeaders();
@@ -379,72 +347,7 @@ public class HpackDraft08Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#section-3.2.1
-   */
-  @Test public void toggleIndex() throws IOException {
-    // Static table entries are copied to the top of the reference set.
-    bytesIn.writeByte(0x82); // == Indexed - Add ==
-                             // idx = 2 -> :method: GET
-    // Specifying an index to an entry in the reference set removes it.
-    bytesIn.writeByte(0x81); // == Indexed - Remove ==
-                             // idx = 1 -> :method: GET
-
-    hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
-
-    assertEquals(1, hpackReader.headerCount);
-    assertEquals(42, hpackReader.headerTableByteCount);
-
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderNotReferenced(headerTableLength() - 1);
-
-    assertTrue(hpackReader.getAndReset().isEmpty());
-  }
-
-  /** Ensure a later toggle of the same index emits! */
-  @Test public void toggleIndexOffOn() throws IOException {
-    bytesIn.writeByte(0x82); // Copy static header 1 to the header table as index 1.
-    bytesIn.writeByte(0x81); // Remove index 1 from the reference set.
-
-    hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
-    assertEquals(1, hpackReader.headerCount);
-    assertTrue(hpackReader.getAndReset().isEmpty());
-
-    bytesIn.writeByte(0x81); // Add index 1 back to the reference set.
-
-    hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
-    assertEquals(1, hpackReader.headerCount);
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
-  }
-
-  /** Check later toggle of the same index for large header sets. */
-  @Test public void toggleIndexOffBeyond64Entries() throws IOException {
-    int expectedHeaderCount = 65;
-
-    for (int i = 0; i < expectedHeaderCount; i++) {
-      bytesIn.writeByte(0x82 + i); // Copy static header 1 to the header table as index 1.
-      bytesIn.writeByte(0x81); // Remove index 1 from the reference set.
-    }
-
-    hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
-    assertEquals(expectedHeaderCount, hpackReader.headerCount);
-    assertTrue(hpackReader.getAndReset().isEmpty());
-
-    bytesIn.writeByte(0x81); // Add index 1 back to the reference set.
-
-    hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
-    assertEquals(expectedHeaderCount, hpackReader.headerCount);
-    assertHeaderReferenced(headerTableLength() - expectedHeaderCount);
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
-  }
-
-  /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2.4
+   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -452,138 +355,108 @@ public class HpackDraft08Test {
 
     hpackReader.maxHeaderTableByteCountSetting(0); // SETTINGS_HEADER_TABLE_SIZE == 0
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
 
     // Not buffered in header table.
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndReset());
+    assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     firstRequestWithoutHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadFirstRequestWithoutHuffman();
 
     secondRequestWithoutHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadSecondRequestWithoutHuffman();
 
     thirdRequestWithoutHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadThirdRequestWithoutHuffman();
   }
 
   private void firstRequestWithoutHuffman() {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
-    bytesIn.writeByte(0x87); // == Indexed - Add ==
-                             // idx = 7 -> :scheme: http
     bytesIn.writeByte(0x86); // == Indexed - Add ==
+                             // idx = 7 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
                              // idx = 6 -> :path: /
-    bytesIn.writeByte(0x44); // == Literal indexed ==
+    bytesIn.writeByte(0x41); // == Literal indexed ==
                              // Indexed name (idx = 4) -> :authority
     bytesIn.writeByte(0x0f); // Literal value (len = 15)
     bytesIn.writeUtf8("www.example.com");
   }
 
   private void checkReadFirstRequestWithoutHuffman() {
-    assertEquals(4, hpackReader.headerCount);
+    assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.headerTable[headerTableLength() - 4];
+    Header entry = hpackReader.headerTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
 
-    // [  2] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderReferenced(headerTableLength() - 3);
+    // Table size: 57
+    assertEquals(57, hpackReader.headerTableByteCount);
 
-    // [  3] (s =  43) :scheme: http
-    entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderReferenced(headerTableLength() - 2);
-
-    // [  4] (s =  42) :method: GET
-    entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
-
-    // Table size: 180
-    assertEquals(180, hpackReader.headerTableByteCount);
-
-    // Decoded header set:
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
-        ":authority", "www.example.com"), hpackReader.getAndReset());
+        ":authority", "www.example.com"), hpackReader.getAndResetHeaderList());
   }
 
   private void secondRequestWithoutHuffman() {
-    bytesIn.writeByte(0x5c); // == Literal indexed ==
-                             // Indexed name (idx = 28) -> cache-control
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+                             // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x86); // == Indexed - Add ==
+                             // idx = 7 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
+                             // idx = 6 -> :path: /
+    bytesIn.writeByte(0xbe); // == Indexed - Add ==
+                             // Indexed name (idx = 62) -> :authority: www.example.com
+    bytesIn.writeByte(0x58); // == Literal indexed ==
+                             // Indexed name (idx = 24) -> cache-control
     bytesIn.writeByte(0x08); // Literal value (len = 8)
     bytesIn.writeUtf8("no-cache");
   }
 
   private void checkReadSecondRequestWithoutHuffman() {
-    assertEquals(5, hpackReader.headerCount);
+    assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.headerTable[headerTableLength() - 5];
+    Header entry = hpackReader.headerTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
-    assertHeaderReferenced(headerTableLength() - 5);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 4];
-    checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
-
-    // [  3] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderReferenced(headerTableLength() - 3);
-
-    // [  4] (s =  43) :scheme: http
-    entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderReferenced(headerTableLength() - 2);
-
-    // [  5] (s =  42) :method: GET
     entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
+    checkEntry(entry, ":authority", "www.example.com", 57);
 
-    // Table size: 233
-    assertEquals(233, hpackReader.headerTableByteCount);
+    // Table size: 110
+    assertEquals(110, hpackReader.headerTableByteCount);
 
-    // Decoded header set:
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"), hpackReader.getAndReset());
+        "cache-control", "no-cache"), hpackReader.getAndResetHeaderList());
   }
 
   private void thirdRequestWithoutHuffman() {
-    bytesIn.writeByte(0x30); // == Empty reference set ==
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+                             // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x87); // == Indexed - Add ==
+                             // idx = 7 -> :scheme: http
     bytesIn.writeByte(0x85); // == Indexed - Add ==
-                             // idx = 5 -> :method: GET
-    bytesIn.writeByte(0x8c); // == Indexed - Add ==
-                             // idx = 12 -> :scheme: https
-    bytesIn.writeByte(0x8b); // == Indexed - Add ==
-                             // idx = 11 -> :path: /index.html
-    bytesIn.writeByte(0x84); // == Indexed - Add ==
-                             // idx = 4 -> :authority: www.example.com
+                             // idx = 5 -> :path: /index.html
+    bytesIn.writeByte(0xbf); // == Indexed - Add ==
+                             // Indexed name (idx = 63) -> :authority: www.example.com
     bytesIn.writeByte(0x40); // Literal indexed
     bytesIn.writeByte(0x0a); // Literal name (len = 10)
     bytesIn.writeUtf8("custom-key");
@@ -592,187 +465,129 @@ public class HpackDraft08Test {
   }
 
   private void checkReadThirdRequestWithoutHuffman() {
-    assertEquals(8, hpackReader.headerCount);
+    assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.headerTable[headerTableLength() - 8];
+    Header entry = hpackReader.headerTable[headerTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
-    assertHeaderReferenced(headerTableLength() - 8);
 
-    // [  2] (s =  48) :path: /index.html
-    entry = hpackReader.headerTable[headerTableLength() - 7];
-    checkEntry(entry, ":path", "/index.html", 48);
-    assertHeaderReferenced(headerTableLength() - 7);
-
-    // [  3] (s =  44) :scheme: https
-    entry = hpackReader.headerTable[headerTableLength() - 6];
-    checkEntry(entry, ":scheme", "https", 44);
-    assertHeaderReferenced(headerTableLength() - 6);
-
-    // [  4] (s =  53) cache-control: no-cache
-    entry = hpackReader.headerTable[headerTableLength() - 5];
-    checkEntry(entry, "cache-control", "no-cache", 53);
-    assertHeaderNotReferenced(headerTableLength() - 5);
-
-    // [  5] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 4];
-    checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
-
-    // [  6] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderNotReferenced(headerTableLength() - 3);
-
-    // [  7] (s =  43) :scheme: http
+    // [  2] (s =  53) cache-control: no-cache
     entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderNotReferenced(headerTableLength() - 2);
+    checkEntry(entry, "cache-control", "no-cache", 53);
 
-    // [  8] (s =  42) :method: GET
+    // [  3] (s =  57) :authority: www.example.com
     entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
+    checkEntry(entry, ":authority", "www.example.com", 57);
 
-    // Table size: 379
-    assertEquals(379, hpackReader.headerTableByteCount);
+    // Table size: 164
+    assertEquals(164, hpackReader.headerTableByteCount);
 
-    // Decoded header set:
-    // TODO: order is not correct per docs, but then again, the spec doesn't require ordering.
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
-        ":authority", "www.example.com",
         ":scheme", "https",
         ":path", "/index.html",
-        "custom-key", "custom-value"), hpackReader.getAndReset());
+        ":authority", "www.example.com",
+        "custom-key", "custom-value"), hpackReader.getAndResetHeaderList());
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-08#appendix-D.3
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.4
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     firstRequestWithHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadFirstRequestWithHuffman();
 
     secondRequestWithHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadSecondRequestWithHuffman();
 
     thirdRequestWithHuffman();
     hpackReader.readHeaders();
-    hpackReader.emitReferenceSet();
     checkReadThirdRequestWithHuffman();
   }
 
   private void firstRequestWithHuffman() {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
-    bytesIn.writeByte(0x87); // == Indexed - Add ==
-                             // idx = 7 -> :scheme: http
     bytesIn.writeByte(0x86); // == Indexed - Add ==
-                             // idx = 6 -> :path: /
-    bytesIn.writeByte(0x44); // == Literal indexed ==
-                             // Indexed name (idx = 4) -> :authority
-    bytesIn.writeByte(0x0f); // Literal value Huffman encoded 12 bytes
+                             // idx = 6 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
+                             // idx = 4 -> :path: /
+    bytesIn.writeByte(0x41); // == Literal indexed ==
+                             // Indexed name (idx = 1) -> :authority
+    bytesIn.writeByte(0x8c); // Literal value Huffman encoded 12 bytes
                              // decodes to www.example.com which is length 15
-    bytesIn.write(decodeHex("7777772e6578616d706c652e636f6d"));
+    bytesIn.write(decodeHex("f1e3c2e5f23a6ba0ab90f4ff"));
   }
 
   private void checkReadFirstRequestWithHuffman() {
-    assertEquals(4, hpackReader.headerCount);
+    assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.headerTable[headerTableLength() - 4];
+    Header entry = hpackReader.headerTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
 
-    // [  2] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderReferenced(headerTableLength() - 3);
+    // Table size: 57
+    assertEquals(57, hpackReader.headerTableByteCount);
 
-    // [  3] (s =  43) :scheme: http
-    entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderReferenced(headerTableLength() - 2);
-
-    // [  4] (s =  42) :method: GET
-    entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
-
-    // Table size: 180
-    assertEquals(180, hpackReader.headerTableByteCount);
-
-    // Decoded header set:
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
-        ":authority", "www.example.com"), hpackReader.getAndReset());
+        ":authority", "www.example.com"), hpackReader.getAndResetHeaderList());
   }
 
   private void secondRequestWithHuffman() {
-    bytesIn.writeByte(0x5c); // == Literal indexed ==
-                             // Indexed name (idx = 28) -> cache-control
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+                             // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x86); // == Indexed - Add ==
+                             // idx = 6 -> :scheme: http
+    bytesIn.writeByte(0x84); // == Indexed - Add ==
+                             // idx = 4 -> :path: /
+    bytesIn.writeByte(0xbe); // == Indexed - Add ==
+                             // idx = 62 -> :authority: www.example.com
+    bytesIn.writeByte(0x58); // == Literal indexed ==
+                             // Indexed name (idx = 24) -> cache-control
     bytesIn.writeByte(0x86); // Literal value Huffman encoded 6 bytes
                              // decodes to no-cache which is length 8
     bytesIn.write(decodeHex("a8eb10649cbf"));
   }
 
   private void checkReadSecondRequestWithHuffman() {
-    assertEquals(5, hpackReader.headerCount);
+    assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.headerTable[headerTableLength() - 5];
+    Header entry = hpackReader.headerTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
-    assertHeaderReferenced(headerTableLength() - 5);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 4];
-    checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
-
-    // [  3] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderReferenced(headerTableLength() - 3);
-
-    // [  4] (s =  43) :scheme: http
-    entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderReferenced(headerTableLength() - 2);
-
-    // [  5] (s =  42) :method: GET
     entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
+    checkEntry(entry, ":authority", "www.example.com", 57);
 
-    // Table size: 233
-    assertEquals(233, hpackReader.headerTableByteCount);
+    // Table size: 110
+    assertEquals(110, hpackReader.headerTableByteCount);
 
-    // Decoded header set:
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
         ":scheme", "http",
         ":path", "/",
         ":authority", "www.example.com",
-        "cache-control", "no-cache"), hpackReader.getAndReset());
+        "cache-control", "no-cache"), hpackReader.getAndResetHeaderList());
   }
 
   private void thirdRequestWithHuffman() {
-    bytesIn.writeByte(0x30); // == Empty reference set ==
+    bytesIn.writeByte(0x82); // == Indexed - Add ==
+                             // idx = 2 -> :method: GET
+    bytesIn.writeByte(0x87); // == Indexed - Add ==
+                             // idx = 7 -> :scheme: https
     bytesIn.writeByte(0x85); // == Indexed - Add ==
-                             // idx = 5 -> :method: GET
-    bytesIn.writeByte(0x8c); // == Indexed - Add ==
-                             // idx = 12 -> :scheme: https
-    bytesIn.writeByte(0x8b); // == Indexed - Add ==
-                             // idx = 11 -> :path: /index.html
-    bytesIn.writeByte(0x84); // == Indexed - Add ==
-                             // idx = 4 -> :authority: www.example.com
+                             // idx = 5 -> :path: /index.html
+    bytesIn.writeByte(0xbf); // == Indexed - Add ==
+                             // idx = 63 -> :authority: www.example.com
     bytesIn.writeByte(0x40); // Literal indexed
     bytesIn.writeByte(0x88); // Literal name Huffman encoded 8 bytes
                              // decodes to custom-key which is length 10
@@ -783,59 +598,30 @@ public class HpackDraft08Test {
   }
 
   private void checkReadThirdRequestWithHuffman() {
-    assertEquals(8, hpackReader.headerCount);
+    assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.headerTable[headerTableLength() - 8];
+    Header entry = hpackReader.headerTable[headerTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
-    assertHeaderReferenced(headerTableLength() - 8);
 
-    // [  2] (s =  48) :path: /index.html
-    entry = hpackReader.headerTable[headerTableLength() - 7];
-    checkEntry(entry, ":path", "/index.html", 48);
-    assertHeaderReferenced(headerTableLength() - 7);
-
-    // [  3] (s =  44) :scheme: https
-    entry = hpackReader.headerTable[headerTableLength() - 6];
-    checkEntry(entry, ":scheme", "https", 44);
-    assertHeaderReferenced(headerTableLength() - 6);
-
-    // [  4] (s =  53) cache-control: no-cache
-    entry = hpackReader.headerTable[headerTableLength() - 5];
-    checkEntry(entry, "cache-control", "no-cache", 53);
-    assertHeaderNotReferenced(headerTableLength() - 5);
-
-    // [  5] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 4];
-    checkEntry(entry, ":authority", "www.example.com", 57);
-    assertHeaderReferenced(headerTableLength() - 4);
-
-    // [  6] (s =  38) :path: /
-    entry = hpackReader.headerTable[headerTableLength() - 3];
-    checkEntry(entry, ":path", "/", 38);
-    assertHeaderNotReferenced(headerTableLength() - 3);
-
-    // [  7] (s =  43) :scheme: http
+    // [  2] (s =  53) cache-control: no-cache
     entry = hpackReader.headerTable[headerTableLength() - 2];
-    checkEntry(entry, ":scheme", "http", 43);
-    assertHeaderNotReferenced(headerTableLength() - 2);
+    checkEntry(entry, "cache-control", "no-cache", 53);
 
-    // [  8] (s =  42) :method: GET
+    // [  3] (s =  57) :authority: www.example.com
     entry = hpackReader.headerTable[headerTableLength() - 1];
-    checkEntry(entry, ":method", "GET", 42);
-    assertHeaderReferenced(headerTableLength() - 1);
+    checkEntry(entry, ":authority", "www.example.com", 57);
 
-    // Table size: 379
-    assertEquals(379, hpackReader.headerTableByteCount);
+    // Table size: 164
+    assertEquals(164, hpackReader.headerTableByteCount);
 
-    // Decoded header set:
-    // TODO: order is not correct per docs, but then again, the spec doesn't require ordering.
+    // Decoded header list:
     assertEquals(headerEntries(
         ":method", "GET",
-        ":authority", "www.example.com",
         ":scheme", "https",
         ":path", "/index.html",
-        "custom-key", "custom-value"), hpackReader.getAndReset());
+        ":authority", "www.example.com",
+        "custom-key", "custom-value"), hpackReader.getAndResetHeaderList());
   }
 
   @Test public void readSingleByteInt() throws IOException {
@@ -906,8 +692,8 @@ public class HpackDraft08Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
-  private HpackDraft08.Reader newReader(Buffer source) {
-    return new HpackDraft08.Reader(4096, source);
+  private HpackDraft09.Reader newReader(Buffer source) {
+    return new HpackDraft09.Reader(4096, source);
   }
 
   private Buffer byteStream(int... bytes) {
@@ -932,14 +718,6 @@ public class HpackDraft08Test {
       data[i] = (byte) bytes[i];
     }
     return ByteString.of(data);
-  }
-
-  private void assertHeaderReferenced(int index) {
-    assertTrue(hpackReader.referencedHeaders.get(index));
-  }
-
-  private void assertHeaderNotReferenced(int index) {
-    assertFalse(hpackReader.referencedHeaders.get(index));
   }
 
   private int headerTableLength() {

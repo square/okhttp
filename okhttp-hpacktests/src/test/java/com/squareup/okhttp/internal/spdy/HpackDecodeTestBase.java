@@ -15,18 +15,17 @@
  */
 package com.squareup.okhttp.internal.spdy;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import com.squareup.okhttp.internal.spdy.hpackjson.Case;
 import com.squareup.okhttp.internal.spdy.hpackjson.HpackJsonUtil;
 import com.squareup.okhttp.internal.spdy.hpackjson.Story;
-import okio.Buffer;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import okio.Buffer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Tests Hpack implementation using https://github.com/http2jp/hpack-test-case/
@@ -52,7 +51,7 @@ public class HpackDecodeTestBase {
   }
 
   private final Buffer bytesIn = new Buffer();
-  private final HpackDraft08.Reader hpackReader = new HpackDraft08.Reader(4096, bytesIn);
+  private final HpackDraft09.Reader hpackReader = new HpackDraft09.Reader(4096, bytesIn);
 
   private final Story story;
 
@@ -72,9 +71,8 @@ public class HpackDecodeTestBase {
     for (Case caze : story.getCases()) {
       bytesIn.write(caze.getWire());
       hpackReader.readHeaders();
-      hpackReader.emitReferenceSet();
       assertSetEquals(String.format("seqno=%d", caze.getSeqno()), caze.getHeaders(),
-          hpackReader.getAndReset());
+          hpackReader.getAndResetHeaderList());
     }
   }
   /**

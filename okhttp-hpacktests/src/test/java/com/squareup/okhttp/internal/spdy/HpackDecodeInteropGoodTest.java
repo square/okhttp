@@ -28,11 +28,20 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class HpackDecodeInteropGoodTest extends HpackDecodeTestBase {
 
-
-  private static final String[] GOOD_INTEROP_TESTS = { "haskell-http2-diff",
-      "haskell-http2-linear", "haskell-http2-naive", "haskell-http2-static",
-      "hyper-hpack", "nghttp2", "nghttp2-16384-4096",
-      "nghttp2-change-table-size", "node-http2-hpack" };
+  // TODO: Filter on the json key for draft, which explains some of the failures.
+  private static final String[] GOOD_INTEROP_TESTS = {
+      "go-hpack",
+      "haskell-http2-linear",
+      "haskell-http2-linear-huffman",
+      "haskell-http2-naive",
+      "haskell-http2-naive-huffman",
+      "haskell-http2-static",
+      "haskell-http2-static-huffman",
+      "nghttp2",
+      "nghttp2-16384-4096",
+      "nghttp2-change-table-size",
+      "node-http2-hpack",
+  };
 
   public HpackDecodeInteropGoodTest(Story story) {
     super(story);
