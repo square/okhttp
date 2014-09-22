@@ -63,6 +63,11 @@ public final class MockSpdyPeer implements Closeable {
     frameCount++;
   }
 
+  /** Maximum length of an outbound data frame. */
+  public int maxOutboundDataLength() {
+    return frameWriter.maxDataLength();
+  }
+
   /** Count of frames sent or received. */
   public int frameCount() {
     return frameCount;

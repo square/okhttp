@@ -103,10 +103,6 @@ public final class Spdy3 implements Variant {
     return new Writer(sink, client);
   }
 
-  @Override public int maxFrameSize() {
-    return 16383;
-  }
-
   /** Read spdy/3 frames. */
   static final class Reader implements FrameReader {
     private final BufferedSource source;
@@ -386,9 +382,8 @@ public final class Spdy3 implements Variant {
       sink.flush();
     }
 
-    @Override public synchronized void data(boolean outFinished, int streamId, Buffer source)
-        throws IOException {
-      data(outFinished, streamId, source, (int) source.size());
+    @Override public int maxDataLength() {
+      return 16383;
     }
 
     @Override public synchronized void data(boolean outFinished, int streamId, Buffer source,

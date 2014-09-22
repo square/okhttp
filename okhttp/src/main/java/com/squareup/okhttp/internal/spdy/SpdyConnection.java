@@ -123,7 +123,6 @@ public final class SpdyConnection implements Closeable {
   final Variant variant;
   final Socket socket;
   final FrameWriter frameWriter;
-  final long maxFrameSize;
 
   // Visible for testing
   final Reader readerRunnable;
@@ -169,7 +168,6 @@ public final class SpdyConnection implements Closeable {
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
     socket = builder.socket;
     frameWriter = variant.newWriter(Okio.buffer(Okio.sink(builder.socket)), client);
-    maxFrameSize = variant.maxFrameSize();
 
     readerRunnable = new Reader();
     new Thread(readerRunnable).start(); // Not a daemon thread.
@@ -320,7 +318,8 @@ public final class SpdyConnection implements Closeable {
           throw new InterruptedIOException();
         }
 
-        toWrite = (int) Math.min(Math.min(byteCount, bytesLeftInWriteWindow), maxFrameSize);
+        toWrite = (int) Math.min(byteCount, bytesLeftInWriteWindow);
+        toWrite = Math.min(toWrite, frameWriter.maxDataLength());
         bytesLeftInWriteWindow -= toWrite;
       }
 
