@@ -16,17 +16,9 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
-import com.squareup.okhttp.internal.http.HttpMethod;
-import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.http.RetryableSink;
-import java.io.IOException;
-import java.net.ProtocolException;
-import okio.BufferedSink;
-import okio.BufferedSource;
 
-import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
+import java.io.IOException;
 
 /**
  * A call is a request that has been prepared for execution. A call can be
@@ -35,7 +27,6 @@ import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
  */
 public class Call {
   private final OkHttpClient client;
-  private int redirectionCount;
 
   // Guarded by this.
   private boolean executed;
@@ -151,6 +142,7 @@ public class Call {
         }
       } catch (IOException e) {
         if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
+        request = engine.getRequest(); // sync up the request content
         responseCallback.onFailure(request, e);
       } finally {
         client.getDispatcher().finished(this);
@@ -163,101 +155,13 @@ public class Call {
    * call was canceled.
    */
   private Response getResponse() throws IOException {
-    // Copy body metadata to the appropriate request headers.
-    RequestBody body = request.body();
-    RetryableSink requestBodyOut = null;
-    if (body != null) {
-      Request.Builder requestBuilder = request.newBuilder();
-
-      MediaType contentType = body.contentType();
-      if (contentType != null) {
-        requestBuilder.header("Content-Type", contentType.toString());
+    engine = new HttpEngine(client, request, false, null, null, null, null);
+    Response response = engine.tryGetResponse(new HttpEngine.CancelIndicator() {
+      @Override public boolean isCanceled() {
+        return Call.this.canceled;
       }
-
-      long contentLength = body.contentLength();
-      if (contentLength != -1) {
-        requestBuilder.header("Content-Length", Long.toString(contentLength));
-        requestBuilder.removeHeader("Transfer-Encoding");
-      } else {
-        requestBuilder.header("Transfer-Encoding", "chunked");
-        requestBuilder.removeHeader("Content-Length");
-      }
-
-      request = requestBuilder.build();
-    } else if (HttpMethod.hasRequestBody(request.method())) {
-      requestBodyOut = Util.emptySink();
-    }
-
-    // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, null, null, requestBodyOut, null);
-
-    while (true) {
-      if (canceled) return null;
-
-      try {
-        engine.sendRequest();
-
-        if (request.body() != null) {
-          BufferedSink sink = engine.getBufferedRequestBody();
-          request.body().writeTo(sink);
-        }
-
-        engine.readResponse();
-      } catch (IOException e) {
-        HttpEngine retryEngine = engine.recover(e, null);
-        if (retryEngine != null) {
-          engine = retryEngine;
-          continue;
-        }
-
-        // Give up; recovery is not possible.
-        throw e;
-      }
-
-      Response response = engine.getResponse();
-      Request followUp = engine.followUpRequest();
-
-      if (followUp == null) {
-        engine.releaseConnection();
-        return response.newBuilder()
-            .body(new RealResponseBody(response, engine.getResponseBody()))
-            .build();
-      }
-
-      if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
-        throw new ProtocolException("Too many redirects: " + redirectionCount);
-      }
-
-      if (!engine.sameConnection(followUp.url())) {
-        engine.releaseConnection();
-      }
-
-      Connection connection = engine.close();
-      request = followUp;
-      engine = new HttpEngine(client, request, false, connection, null, null, response);
-    }
-  }
-
-  private static class RealResponseBody extends ResponseBody {
-    private final Response response;
-    private final BufferedSource source;
-
-    RealResponseBody(Response response, BufferedSource source) {
-      this.response = response;
-      this.source = source;
-    }
-
-    @Override public MediaType contentType() {
-      String contentType = response.header("Content-Type");
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return OkHeaders.contentLength(response);
-    }
-
-    @Override public BufferedSource source() {
-      return source;
-    }
+    });
+    request = engine.getRequest(); // sync up the request content
+    return response;
   }
 }
