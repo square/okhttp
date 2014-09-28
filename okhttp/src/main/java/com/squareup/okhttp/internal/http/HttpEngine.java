@@ -29,6 +29,7 @@ import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CookieHandler;
@@ -580,6 +581,10 @@ public final class HttpEngine {
 
       // Add any new cookies to the request.
       OkHeaders.addCookies(result, cookies);
+    }
+
+    if (request.header("User-Agent") == null) {
+      result.header("User-Agent", Version.userAgent());
     }
 
     return result.build();
