@@ -18,6 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -1355,14 +1356,15 @@ public final class CallTest {
     response.body().close();
   }
 
-  @Test public void userAgentIsOmittedByDefault() throws Exception {
+  @Test public void userAgentIsIncludedByDefault() throws Exception {
     server.enqueue(new MockResponse());
     server.play();
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertNull(recordedRequest.getHeader("User-Agent"));
+    assertTrue(recordedRequest.getHeader("User-Agent")
+        .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT)?"));
   }
 
   @Test
