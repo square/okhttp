@@ -46,6 +46,9 @@ public final class Dispatcher {
   /** Running calls. Includes canceled calls that haven't finished yet. */
   private final Deque<AsyncCall> runningCalls = new ArrayDeque<>();
 
+  /** In-flight synchronous calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<Call> executedCalls = new ArrayDeque<>();
+
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
   }
@@ -123,6 +126,12 @@ public final class Dispatcher {
         if (engine != null) engine.disconnect();
       }
     }
+
+    for (Call call : executedCalls) {
+      if (Util.equal(tag, call.tag())) {
+        call.cancel();
+      }
+    }
   }
 
   /** Used by {@code AsyncCall#run} to signal completion. */
@@ -155,5 +164,15 @@ public final class Dispatcher {
       if (c.host().equals(call.host())) result++;
     }
     return result;
+  }
+
+  /** Used by {@code Call#execute} to signal it is in-flight. */
+  synchronized void executed(Call call) {
+    executedCalls.add(call);
+  }
+
+  /** Used by {@code Call#execute} to signal completion. */
+  synchronized void finished(Call call) {
+    if (!executedCalls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
   }
 }
