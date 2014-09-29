@@ -467,8 +467,8 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Cancels all scheduled tasks tagged with {@code tag}. Requests that are already
-   * complete cannot be canceled.
+   * Cancels all scheduled or in-flight calls tagged with {@code tag}. Requests
+   * that are already complete cannot be canceled.
    */
   public OkHttpClient cancel(Object tag) {
     getDispatcher().cancel(tag);

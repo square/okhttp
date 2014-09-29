@@ -77,10 +77,20 @@ public class Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    Response result = getResponse();
-    engine.releaseConnection(); // Transfer ownership of the body to the caller.
-    if (result == null) throw new IOException("Canceled");
-    return result;
+    try {
+      client.getDispatcher().executed(this);
+      Response result = getResponse();
+      System.out.println("releasing");
+      engine.releaseConnection(); // Transfer ownership of the body to the caller.
+      if (result == null) throw new IOException("Canceled");
+      return result;
+    } finally {
+      client.getDispatcher().finished(this);
+    }
+  }
+
+  Object tag() {
+    return request.tag();
   }
 
   /**
