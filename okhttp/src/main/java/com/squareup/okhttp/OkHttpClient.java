@@ -123,6 +123,7 @@ public class OkHttpClient implements Cloneable {
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
+  private boolean cleartextConnectionsPermitted = true;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private HostResolver hostResolver;
@@ -149,6 +150,7 @@ public class OkHttpClient implements Cloneable {
     this.socketFactory = okHttpClient.getSocketFactory();
     this.sslSocketFactory = okHttpClient.getSslSocketFactory();
     this.hostnameVerifier = okHttpClient.getHostnameVerifier();
+    this.cleartextConnectionsPermitted = okHttpClient.getCleartextConnectionsPermitted();
     this.authenticator = okHttpClient.getAuthenticator();
     this.connectionPool = okHttpClient.getConnectionPool();
     this.followSslRedirects = okHttpClient.getFollowSslRedirects();
@@ -323,6 +325,18 @@ public class OkHttpClient implements Cloneable {
 
   public final HostnameVerifier getHostnameVerifier() {
     return hostnameVerifier;
+  }
+
+  /**
+   * Sets whether cleartext traffic is permitted.
+   */
+  public final OkHttpClient setCleartextConnectionsPermitted(boolean permitted) {
+    this.cleartextConnectionsPermitted = permitted;
+    return this;
+  }
+
+  public final boolean getCleartextConnectionsPermitted() {
+    return cleartextConnectionsPermitted;
   }
 
   /**
