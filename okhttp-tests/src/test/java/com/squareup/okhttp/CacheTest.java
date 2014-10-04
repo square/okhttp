@@ -143,9 +143,10 @@ public final class CacheTest {
     assertCached(false, 207);
     assertCached(true, 300);
     assertCached(true, 301);
-    for (int i = 302; i <= 308; ++i) {
+    for (int i = 302; i <= 307; ++i) {
       assertCached(false, i);
     }
+    assertCached(true, 308);
     for (int i = 400; i <= 406; ++i) {
       assertCached(false, i);
     }

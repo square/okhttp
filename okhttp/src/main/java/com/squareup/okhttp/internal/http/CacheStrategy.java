@@ -3,9 +3,14 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.CacheControl;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import java.net.HttpURLConnection;
 import java.util.Date;
 
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
+import static java.net.HttpURLConnection.HTTP_GONE;
+import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
+import static java.net.HttpURLConnection.HTTP_NOT_AUTHORITATIVE;
+import static java.net.HttpURLConnection.HTTP_OK;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -36,11 +41,12 @@ public final class CacheStrategy {
     // Always go to network for uncacheable response codes (RFC 2616, 13.4),
     // This implementation doesn't support caching partial content.
     int responseCode = response.code();
-    if (responseCode != HttpURLConnection.HTTP_OK
-        && responseCode != HttpURLConnection.HTTP_NOT_AUTHORITATIVE
-        && responseCode != HttpURLConnection.HTTP_MULT_CHOICE
-        && responseCode != HttpURLConnection.HTTP_MOVED_PERM
-        && responseCode != HttpURLConnection.HTTP_GONE) {
+    if (responseCode != HTTP_OK
+        && responseCode != HTTP_NOT_AUTHORITATIVE
+        && responseCode != HTTP_MULT_CHOICE
+        && responseCode != HTTP_MOVED_PERM
+        && responseCode != HTTP_GONE
+        && responseCode != HTTP_PERM_REDIRECT) {
       return false;
     }
 

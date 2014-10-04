@@ -9,6 +9,7 @@ import java.net.ProtocolException;
 public final class StatusLine {
   /** Numeric status code, 307: Temporary Redirect. */
   public static final int HTTP_TEMP_REDIRECT = 307;
+  public static final int HTTP_PERM_REDIRECT = 308;
   public static final int HTTP_CONTINUE = 100;
 
   public final Protocol protocol;

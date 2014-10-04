@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.http.OkHeaders;
 import java.util.Collections;
 import java.util.List;
 
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
@@ -136,6 +137,7 @@ public final class Response {
   /** Returns true if this response redirects to another resource. */
   public boolean isRedirect() {
     switch (code) {
+      case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:
       case HTTP_MULT_CHOICE:
       case HTTP_MOVED_PERM:
