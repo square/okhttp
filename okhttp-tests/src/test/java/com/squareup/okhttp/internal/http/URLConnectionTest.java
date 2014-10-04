@@ -89,6 +89,7 @@ import org.junit.Test;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -2044,24 +2045,40 @@ public final class URLConnectionTest {
   }
 
   @Test public void response307WithGet() throws Exception {
-    test307Redirect("GET");
+    testRedirect(true, "GET");
   }
 
   @Test public void response307WithHead() throws Exception {
-    test307Redirect("HEAD");
+    testRedirect(true, "HEAD");
   }
 
   @Test public void response307WithOptions() throws Exception {
-    test307Redirect("OPTIONS");
+    testRedirect(true, "OPTIONS");
   }
 
   @Test public void response307WithPost() throws Exception {
-    test307Redirect("POST");
+    testRedirect(true, "POST");
   }
 
-  private void test307Redirect(String method) throws Exception {
+  @Test public void response308WithGet() throws Exception {
+    testRedirect(false, "GET");
+  }
+
+  @Test public void response308WithHead() throws Exception {
+    testRedirect(false, "HEAD");
+  }
+
+  @Test public void response308WithOptions() throws Exception {
+    testRedirect(false, "OPTIONS");
+  }
+
+  @Test public void response308WithPost() throws Exception {
+    testRedirect(false, "POST");
+  }
+
+  private void testRedirect(boolean temporary, String method) throws Exception {
     MockResponse response1 = new MockResponse()
-        .setResponseCode(HTTP_TEMP_REDIRECT)
+        .setResponseCode(temporary ? HTTP_TEMP_REDIRECT : HTTP_PERM_REDIRECT)
         .addHeader("Location: /page2");
     if (!method.equals("HEAD")) {
       response1.setBody("This page has moved!");
@@ -2086,9 +2103,9 @@ public final class URLConnectionTest {
     assertEquals(method + " /page1 HTTP/1.1", page1.getRequestLine());
 
     if (method.equals("GET")) {
-        assertEquals("Page 2", response);
+      assertEquals("Page 2", response);
     } else if (method.equals("HEAD"))  {
-        assertEquals("", response);
+      assertEquals("", response);
     } else {
       // Methods other than GET/HEAD shouldn't follow the redirect
       if (method.equals("POST")) {
