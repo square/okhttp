@@ -18,6 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import okio.BufferedSink;
 import okio.Okio;
@@ -98,4 +99,36 @@ public abstract class RequestBody {
       }
     };
   }
+
+  /** Returns a new request body that transmits the content of an {@code InputStream}. */
+  public static RequestBody create(final MediaType contentType, final InputStream inputStream,
+      final long length) {
+    if (inputStream == null) throw new NullPointerException("inputStream == null");
+
+    return new RequestBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
+
+      @Override public long contentLength() {
+          return length;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        Source source = null;
+        try {
+          source = Okio.source(inputStream);
+          sink.writeAll(source);
+        } finally {
+            try {
+                inputStream.reset();
+            } catch (IOException e) {
+                // reset might not be supported. do nothing.
+            }
+            Util.closeQuietly(source);
+        }
+      }
+    };
+  }
+
 }
