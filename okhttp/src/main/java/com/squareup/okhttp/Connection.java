@@ -17,6 +17,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
@@ -28,10 +29,14 @@ import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLSocket;
 
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
+import static com.squareup.okhttp.internal.Util.immutableList;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
@@ -62,6 +67,39 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * should the attempt fail.
  */
 public final class Connection {
+  /**
+   * This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5. All of
+   * these suites are available on Android L; earlier releases support a subset of these suites.
+   * https://github.com/square/okhttp/issues/330
+   */
+  private static final List<String> CIPHER_SUITES = immutableList(
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", // 0xC0,0x2B  Android L
+      "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",   // 0xC0,0x2F  Android L
+      "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",     // 0x00,0x9E  Android L
+      "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",    // 0xC0,0x0A  Android 4.0
+      "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",    // 0xC0,0x09  Android 4.0
+      "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",      // 0xC0,0x13  Android 4.0
+      "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",      // 0xC0,0x14  Android 4.0
+      "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",        // 0xC0,0x07  Android 4.0
+      "TLS_ECDHE_RSA_WITH_RC4_128_SHA",          // 0xC0,0x11  Android 4.0
+      "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",        // 0x00,0x33  Android 2.3
+      "TLS_DHE_DSS_WITH_AES_128_CBC_SHA",        // 0x00,0x32  Android 2.3
+      "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",        // 0x00,0x39  Android 2.3
+      "TLS_RSA_WITH_AES_128_GCM_SHA256",         // 0x00,0x9C
+      "TLS_RSA_WITH_AES_128_CBC_SHA",            // 0x00,0x2F  Android 2.3
+      "TLS_RSA_WITH_AES_256_CBC_SHA",            // 0x00,0x35  Android 2.3
+      "SSL_RSA_WITH_3DES_EDE_CBC_SHA",           // 0x00,0x0A  Android 2.3  (Deprecated in L)
+      "SSL_RSA_WITH_RC4_128_SHA",                // 0x00,0x05  Android 2.3
+      "SSL_RSA_WITH_RC4_128_MD5"                 // 0x00,0x04  Android 2.3  (Deprecated in L)
+  );
+
+  /**
+   * Cache of the intersection between {@link #CIPHER_SUITES} and the platform's supported suites.
+   * It's possible that the platform hosts multiple implementations of {@link SSLSocket}, in which
+   * case this cache will be incorrect.
+   */
+  private static final AtomicReference<String[]> SELECTED_CIPHER_SUITES = new AtomicReference<>();
+
   private final ConnectionPool pool;
   private final Route route;
 
@@ -227,6 +265,7 @@ public final class Connection {
     socket = route.address.sslSocketFactory
         .createSocket(socket, route.address.uriHost, route.address.uriPort, true /* autoClose */);
     SSLSocket sslSocket = (SSLSocket) socket;
+    sslSocket.setEnabledCipherSuites(cipherSuites(sslSocket));
     platform.configureTls(sslSocket, route.address.uriHost, route.tlsVersion);
 
     boolean useNpn = route.supportsNpn();
@@ -257,6 +296,17 @@ public final class Connection {
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
     }
+  }
+
+  private String[] cipherSuites(SSLSocket sslSocket) {
+    String[] result = SELECTED_CIPHER_SUITES.get();
+    if (result == null) {
+      List<String> intersection = Util.intersect(CIPHER_SUITES,
+          Arrays.asList(sslSocket.getSupportedCipherSuites()));
+      result = intersection.toArray(new String[intersection.size()]);
+      SELECTED_CIPHER_SUITES.set(result);
+    }
+    return result;
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */

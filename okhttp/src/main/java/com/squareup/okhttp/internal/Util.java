@@ -31,6 +31,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ThreadFactory;
@@ -229,4 +230,18 @@ public final class Util {
   }
 
   private static final RetryableSink EMPTY_SINK = new RetryableSink(0);
+
+  /**
+   * Returns a copy of {@code a} containing only elements also in {@code b}. The returned elements
+   * are in the same order as in {@code a}.
+   */
+  public static <T> List<T> intersect(Collection<T> a, Collection<T> b) {
+    List<T> result = new ArrayList<>();
+    for (T t : a) {
+      if (b.contains(t)) {
+        result.add(t);
+      }
+    }
+    return Collections.unmodifiableList(result);
+  }
 }
