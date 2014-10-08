@@ -6,7 +6,9 @@ An HTTP & SPDY client for Android and Java applications. For more information se
 Download
 --------
 
-Download [the latest JAR][3] or grab via Maven:
+Download [the latest JAR][3] or grab via Maven or Gradle:
+
+#### Maven
 
 ```xml
 <dependency>
@@ -14,6 +16,13 @@ Download [the latest JAR][3] or grab via Maven:
     <artifactId>okhttp</artifactId>
     <version>(insert latest version)</version>
 </dependency>
+```
+
+#### Gradle
+```xml
+dependencies {
+  compile 'com.squareup.okhttp:okhttp:(insert latest version)'
+}
 ```
 
 
