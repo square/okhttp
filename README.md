@@ -7,13 +7,16 @@ Download
 --------
 
 Download [the latest JAR][3] or grab via Maven:
-
 ```xml
 <dependency>
-    <groupId>com.squareup.okhttp</groupId>
-    <artifactId>okhttp</artifactId>
-    <version>(insert latest version)</version>
+  <groupId>com.squareup.okhttp</groupId>
+  <artifactId>okhttp</artifactId>
+  <version>2.0.0</version>
 </dependency>
+```
+or Gradle:
+```groovy
+compile 'com.squareup.okhttp:okhttp:2.0.0'
 ```
 
 
@@ -27,15 +30,19 @@ MockWebServer coupling with OkHttp is essential for proper testing of SPDY and H
 ### Download
 
 Download [the latest JAR][4] or grab via Maven:
-
 ```xml
 <dependency>
-    <groupId>com.squareup.okhttp</groupId>
-    <artifactId>mockwebserver</artifactId>
-    <version>(insert latest version)</version>
-    <scope>test</scope>
+  <groupId>com.squareup.okhttp</groupId>
+  <artifactId>mockwebserver</artifactId>
+  <version>2.0.0</version>
+  <scope>test</scope>
 </dependency>
 ```
+or Gradle:
+```groovy
+testCompile 'com.squareup.okhttp:mockwebserver:2.0.0'
+```
+
 
 
 License
