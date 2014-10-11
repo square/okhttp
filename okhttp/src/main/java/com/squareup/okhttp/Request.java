@@ -185,6 +185,17 @@ public final class Request {
       return this;
     }
 
+    /**
+     * Sets this request's {@code Cache-Control} header, replacing any cache
+     * control headers already present. If {@code cacheControl} doesn't define
+     * any directives, this clears this request's cache-control headers.
+     */
+    public Builder cacheControl(CacheControl cacheControl) {
+      String value = cacheControl.toString();
+      if (value.isEmpty()) return removeHeader("Cache-Control");
+      return header("Cache-Control", value);
+    }
+
     public Builder get() {
       return method("GET", null);
     }

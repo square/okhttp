@@ -21,7 +21,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-
+import java.util.Arrays;
+import java.util.Collections;
 import okio.Buffer;
 import org.junit.Test;
 
@@ -111,6 +112,23 @@ public final class RequestTest {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.uri());
     assertEquals(new URL("http://localhost/api"), request.url());
+  }
+
+  @Test public void cacheControl() throws Exception {
+    Request request = new Request.Builder()
+        .cacheControl(new CacheControl.Builder().noCache().build())
+        .url("https://square.com")
+        .build();
+    assertEquals(Arrays.asList("no-cache"), request.headers("Cache-Control"));
+  }
+
+  @Test public void emptyCacheControlClearsAllCacheControlHeaders() throws Exception {
+    Request request = new Request.Builder()
+        .header("Cache-Control", "foo")
+        .cacheControl(new CacheControl.Builder().build())
+        .url("https://square.com")
+        .build();
+    assertEquals(Collections.<String>emptyList(), request.headers("Cache-Control"));
   }
 
   private String bodyToHex(RequestBody body) throws IOException {
