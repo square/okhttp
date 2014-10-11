@@ -19,7 +19,7 @@ import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.HostResolver;
+import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -89,8 +89,9 @@ public final class RouteSelectorTest {
         .setSslSocketFactory(sslSocketFactory)
         .setHostnameVerifier(hostnameVerifier)
         .setProtocols(protocols)
-        .setConnectionPool(ConnectionPool.getDefault())
-        .setHostResolver(dns);
+        .setConnectionPool(ConnectionPool.getDefault());
+    Internal.instance.setNetwork(client, dns);
+
     routeDatabase = Internal.instance.routeDatabase(client);
 
     httpRequest = new Request.Builder()
@@ -421,11 +422,11 @@ public final class RouteSelectorTest {
     }
   }
 
-  private static class FakeDns implements HostResolver {
+  private static class FakeDns implements Network {
     List<String> requestedHosts = new ArrayList<>();
     InetAddress[] inetAddresses;
 
-    @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
+    @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
       requestedHosts.add(host);
       if (inetAddresses == null) throw new UnknownHostException();
       return inetAddresses;
