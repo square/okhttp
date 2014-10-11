@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
   private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
@@ -163,5 +164,14 @@ public final class OkHttpClientTest {
 
     Response actualResponse = mockClient.newCall(request).execute();
     assertSame(response, actualResponse);
+  }
+
+  @Test public void setProtocolsRejectsHttp10() throws Exception {
+    OkHttpClient client = new OkHttpClient();
+    try {
+      client.setProtocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 }
