@@ -1393,8 +1393,7 @@ public final class CallTest {
         .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT)?"));
   }
 
-  @Test
-  public void setFollowRedirectsFalse() throws Exception {
+  @Test public void setFollowRedirectsFalse() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(302)
         .addHeader("Location: /b")
