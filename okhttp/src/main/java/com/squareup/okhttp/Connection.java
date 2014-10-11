@@ -85,7 +85,7 @@ public final class Connection {
       "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",        // 0x00,0x33  Android 2.3
       "TLS_DHE_DSS_WITH_AES_128_CBC_SHA",        // 0x00,0x32  Android 2.3
       "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",        // 0x00,0x39  Android 2.3
-      "TLS_RSA_WITH_AES_128_GCM_SHA256",         // 0x00,0x9C
+      "TLS_RSA_WITH_AES_128_GCM_SHA256",         // 0x00,0x9C  Android L
       "TLS_RSA_WITH_AES_128_CBC_SHA",            // 0x00,0x2F  Android 2.3
       "TLS_RSA_WITH_AES_256_CBC_SHA",            // 0x00,0x35  Android 2.3
       "SSL_RSA_WITH_3DES_EDE_CBC_SHA",           // 0x00,0x0A  Android 2.3  (Deprecated in L)

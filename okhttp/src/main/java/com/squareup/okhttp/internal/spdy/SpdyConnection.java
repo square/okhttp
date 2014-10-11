@@ -153,8 +153,7 @@ public final class SpdyConnection implements Closeable {
     if (protocol == Protocol.HTTP_2) {
       variant = new Http20Draft14();
       // Like newSingleThreadExecutor, except lazy creates the thread.
-      pushExecutor = new ThreadPoolExecutor(0, 1,
-          0L, TimeUnit.MILLISECONDS,
+      pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>(),
           Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
       // 1 less than SPDY http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-6.9.2
