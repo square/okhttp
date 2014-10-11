@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * Domain name service. Prefer this over {@link InetAddress#getAllByName} to
- * make code more testable.
+ * Services specific to the host device's network interface. Prefer this over {@link
+ * InetAddress#getAllByName} to make code more testable.
  */
-public interface HostResolver {
-  HostResolver DEFAULT = new HostResolver() {
-    @Override public InetAddress[] getAllByName(String host) throws UnknownHostException {
+public interface Network {
+  Network DEFAULT = new Network() {
+    @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
       if (host == null) throw new UnknownHostException("host == null");
       return InetAddress.getAllByName(host);
     }
   };
 
-  InetAddress[] getAllByName(String host) throws UnknownHostException;
+  InetAddress[] resolveInetAddresses(String host) throws UnknownHostException;
 }

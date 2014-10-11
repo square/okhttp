@@ -18,7 +18,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.HostResolver;
+import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
@@ -54,7 +54,7 @@ public final class RouteSelector {
 
   private final Address address;
   private final URI uri;
-  private final HostResolver hostResolver;
+  private final Network network;
   private final OkHttpClient client;
   private final ProxySelector proxySelector;
   private final ConnectionPool pool;
@@ -71,7 +71,7 @@ public final class RouteSelector {
   private Iterator<Proxy> proxySelectorProxies;
 
   /* State for negotiating the next InetSocketAddress to use. */
-  private InetAddress[] socketAddresses;
+  private InetAddress[] inetAddresses;
   private int nextSocketAddressIndex;
   private int socketPort;
 
@@ -88,7 +88,7 @@ public final class RouteSelector {
     this.proxySelector = client.getProxySelector();
     this.pool = client.getConnectionPool();
     this.routeDatabase = Internal.instance.routeDatabase(client);
-    this.hostResolver = client.getHostResolver();
+    this.network = Internal.instance.network(client);
     this.request = request;
 
     resetNextProxy(uri, address.getProxy());
@@ -243,7 +243,7 @@ public final class RouteSelector {
 
   /** Resets {@link #nextInetSocketAddress} to the first option. */
   private void resetNextInetSocketAddress(Proxy proxy) throws UnknownHostException {
-    socketAddresses = null; // Clear the addresses. Necessary if getAllByName() below throws!
+    inetAddresses = null; // Clear the addresses. Necessary if getAllByName() below throws!
 
     String socketHost;
     if (proxy.type() == Proxy.Type.DIRECT) {
@@ -261,21 +261,21 @@ public final class RouteSelector {
     }
 
     // Try each address for best behavior in mixed IPv4/IPv6 environments.
-    socketAddresses = hostResolver.getAllByName(socketHost);
+    inetAddresses = network.resolveInetAddresses(socketHost);
     nextSocketAddressIndex = 0;
   }
 
   /** Returns true if there's another socket address to try. */
   private boolean hasNextInetSocketAddress() {
-    return socketAddresses != null;
+    return inetAddresses != null;
   }
 
   /** Returns the next socket address to try. */
   private InetSocketAddress nextInetSocketAddress() throws UnknownHostException {
     InetSocketAddress result =
-        new InetSocketAddress(socketAddresses[nextSocketAddressIndex++], socketPort);
-    if (nextSocketAddressIndex == socketAddresses.length) {
-      socketAddresses = null; // So that hasNextInetSocketAddress() returns false.
+        new InetSocketAddress(inetAddresses[nextSocketAddressIndex++], socketPort);
+    if (nextSocketAddressIndex == inetAddresses.length) {
+      inetAddresses = null; // So that hasNextInetSocketAddress() returns false.
       nextSocketAddressIndex = 0;
     }
 
