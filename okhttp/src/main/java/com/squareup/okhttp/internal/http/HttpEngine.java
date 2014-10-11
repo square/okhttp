@@ -210,6 +210,15 @@ public final class HttpEngine {
   public void sendRequest() throws IOException {
     if (cacheStrategy != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
+    if ((!userRequest.isHttps()) && (!client.getCleartextConnectionsPermitted())) {
+      // This request is prohibited by HttpClient's settings.
+      // Include the scheme/protocol and host:port in the exception message to help identity
+      // what's responsible for this prohibited request, but do not leak other parts of the URL
+      // because they could contain sensitive information.
+      throw new SecurityException(
+          "Cleartext traffic not permitted: " + userRequest.url().getProtocol()
+              + " to " + hostHeader(userRequest.url()));
+    }
 
     Request request = networkRequest(userRequest);
 
