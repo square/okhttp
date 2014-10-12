@@ -83,7 +83,7 @@ public final class SslContextBuilder {
 
     // Generate public and private keys and use them to make a self-signed certificate.
     KeyPair keyPair = generateKeyPair();
-    X509Certificate certificate = selfSignedCertificate(keyPair);
+    X509Certificate certificate = selfSignedCertificate(keyPair, "1");
 
     // Put 'em in a key store.
     KeyStore keyStore = newEmptyKeyStore(password);
@@ -104,7 +104,7 @@ public final class SslContextBuilder {
     return sslContext;
   }
 
-  private KeyPair generateKeyPair() throws GeneralSecurityException {
+  public KeyPair generateKeyPair() throws GeneralSecurityException {
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
     keyPairGenerator.initialize(1024, new SecureRandom());
     return keyPairGenerator.generateKeyPair();
@@ -115,11 +115,12 @@ public final class SslContextBuilder {
    * public key, signed by {@code keyPair}'s private key.
    */
   @SuppressWarnings("deprecation") // use the old Bouncy Castle APIs to reduce dependencies.
-  private X509Certificate selfSignedCertificate(KeyPair keyPair) throws GeneralSecurityException {
+  public X509Certificate selfSignedCertificate(KeyPair keyPair, String serialNumber)
+      throws GeneralSecurityException {
     X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
     X500Principal issuer = new X500Principal("CN=" + hostName);
     X500Principal subject = new X500Principal("CN=" + hostName);
-    generator.setSerialNumber(BigInteger.ONE);
+    generator.setSerialNumber(new BigInteger(serialNumber));
     generator.setIssuerDN(issuer);
     generator.setNotBefore(new Date(notBefore));
     generator.setNotAfter(new Date(notAfter));

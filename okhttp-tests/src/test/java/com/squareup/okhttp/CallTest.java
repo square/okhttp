@@ -30,6 +30,7 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.cert.Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -59,6 +61,7 @@ import static java.lang.Thread.UncaughtExceptionHandler;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -658,6 +661,51 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     Response response = client.newCall(request).execute();
     assertEquals(301, response.code());
+  }
+
+  @Test public void matchingPinnedCertificate() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+    server.play();
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    // Make a first request without certificate pinning. Use it to collect certificates to pin.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
+    for (Certificate certificate : response1.handshake().peerCertificates()) {
+      certificatePinnerBuilder.add(server.getHostName(), CertificatePinner.pin(certificate));
+    }
+
+    // Make another request with certificate pinning. It should complete normally.
+    client.setCertificatePinner(certificatePinnerBuilder.build());
+    Request request2 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response2 = client.newCall(request2).execute();
+    assertNotSame(response2.handshake(), response1.handshake());
+  }
+
+  @Test public void unmatchingPinnedCertificate() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse());
+    server.play();
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client.setCertificatePinner( new CertificatePinner.Builder()
+        .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=") // publicobject.com's cert.
+        .build());
+
+    // When we pin the wrong certificate, connectivity fails.
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+      assertTrue(expected.getMessage().startsWith("Certificate pinning failure!"));
+    }
   }
 
   @Test public void post_Async() throws Exception {

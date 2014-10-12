@@ -41,12 +41,14 @@ public final class Address {
   final SocketFactory socketFactory;
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
+  final CertificatePinner certificatePinner;
   final Authenticator authenticator;
   final List<Protocol> protocols;
 
   public Address(String uriHost, int uriPort, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      Authenticator authenticator, Proxy proxy, List<Protocol> protocols) {
+      CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
+      List<Protocol> protocols) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
@@ -57,6 +59,7 @@ public final class Address {
     this.socketFactory = socketFactory;
     this.sslSocketFactory = sslSocketFactory;
     this.hostnameVerifier = hostnameVerifier;
+    this.certificatePinner = certificatePinner;
     this.authenticator = authenticator;
     this.protocols = Util.immutableList(protocols);
   }
@@ -126,6 +129,7 @@ public final class Address {
           && this.uriPort == that.uriPort
           && equal(this.sslSocketFactory, that.sslSocketFactory)
           && equal(this.hostnameVerifier, that.hostnameVerifier)
+          && equal(this.certificatePinner, that.certificatePinner)
           && equal(this.authenticator, that.authenticator)
           && equal(this.protocols, that.protocols);
     }
@@ -138,6 +142,7 @@ public final class Address {
     result = 31 * result + uriPort;
     result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
+    result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     result = 31 * result + authenticator.hashCode();
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     result = 31 * result + protocols.hashCode();

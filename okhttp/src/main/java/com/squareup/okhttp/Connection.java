@@ -281,6 +281,10 @@ public final class Connection {
       throw new IOException("Hostname '" + route.address.uriHost + "' was not verified");
     }
 
+    // Check that the certificate pinner is satisfied by the certificates presented.
+    route.address.certificatePinner.check(route.address.uriHost,
+        sslSocket.getSession().getPeerCertificates());
+
     handshake = Handshake.get(sslSocket.getSession());
 
     String maybeProtocol;

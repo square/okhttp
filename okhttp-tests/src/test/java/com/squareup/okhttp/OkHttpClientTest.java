@@ -73,6 +73,7 @@ public final class OkHttpClientTest {
     Authenticator authenticator = new RecordingAuthenticator();
     SocketFactory socketFactory = SocketFactory.getDefault(); // Global isn't configurable.
     OkHostnameVerifier hostnameVerifier = OkHostnameVerifier.INSTANCE; // Global isn't configurable.
+    CertificatePinner certificatePinner = CertificatePinner.DEFAULT; // Global isn't configurable.
 
     CookieManager.setDefault(cookieManager);
     ProxySelector.setDefault(proxySelector);
@@ -85,6 +86,7 @@ public final class OkHttpClientTest {
     assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
     assertSame(socketFactory, client.getSocketFactory());
     assertSame(hostnameVerifier, client.getHostnameVerifier());
+    assertSame(certificatePinner, client.getCertificatePinner());
   }
 
   /** There is no default cache. */

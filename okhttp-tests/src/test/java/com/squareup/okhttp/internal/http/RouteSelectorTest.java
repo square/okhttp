@@ -17,13 +17,14 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Authenticator;
+import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
@@ -140,7 +141,7 @@ public final class RouteSelectorTest {
   }
 
   @Test public void explicitProxyTriesThatProxysAddressesOnly() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator,
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator,
         proxyA, protocols);
     client.setProxy(proxyA);
     RouteSelector routeSelector = RouteSelector.get(httpRequest, client);
@@ -158,7 +159,7 @@ public final class RouteSelectorTest {
   }
 
   @Test public void explicitDirectProxy() throws Exception {
-    Address address = new Address(uriHost, uriPort, socketFactory, null, null, authenticator,
+    Address address = new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator,
         NO_PROXY, protocols);
     client.setProxy(NO_PROXY);
     RouteSelector routeSelector = RouteSelector.get(httpRequest, client);
@@ -322,7 +323,7 @@ public final class RouteSelectorTest {
 
   @Test public void multipleProxiesMultipleInetAddressesMultipleTlsModes() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
-        hostnameVerifier, authenticator, null, protocols);
+        hostnameVerifier, null, authenticator, null, protocols);
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
     RouteSelector routeSelector = RouteSelector.get(httpsRequest, client);
@@ -406,7 +407,8 @@ public final class RouteSelectorTest {
 
   /** Returns an address that's without an SSL socket factory or hostname verifier. */
   private Address httpAddress() {
-    return new Address(uriHost, uriPort, socketFactory, null, null, authenticator, null, protocols);
+    return new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator, null,
+        protocols);
   }
 
   private static InetAddress[] makeFakeAddresses(int prefix, int count) {

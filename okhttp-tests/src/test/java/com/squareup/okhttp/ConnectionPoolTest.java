@@ -75,14 +75,14 @@ public final class ConnectionPoolTest {
 
     httpServer.play();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
-        null, AuthenticatorAdapter.INSTANCE, null,
+        null, null, AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1));
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.play();
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
-        sslContext.getSocketFactory(), new RecordingHostnameVerifier(),
+        sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1));
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),

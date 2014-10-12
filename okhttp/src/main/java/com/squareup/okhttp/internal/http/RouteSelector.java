@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.internal.Network;
@@ -102,14 +103,16 @@ public final class RouteSelector {
 
     SSLSocketFactory sslSocketFactory = null;
     HostnameVerifier hostnameVerifier = null;
+    CertificatePinner certificatePinner = null;
     if (request.isHttps()) {
       sslSocketFactory = client.getSslSocketFactory();
       hostnameVerifier = client.getHostnameVerifier();
+      certificatePinner = client.getCertificatePinner();
     }
 
     Address address = new Address(uriHost, getEffectivePort(request.url()),
-        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, client.getAuthenticator(),
-        client.getProxy(), client.getProtocols());
+        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
+        client.getAuthenticator(), client.getProxy(), client.getProtocols());
 
     return new RouteSelector(address, request.uri(), client, request);
   }

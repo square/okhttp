@@ -132,6 +132,7 @@ public class OkHttpClient implements Cloneable {
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
+  private CertificatePinner certificatePinner;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private Network network;
@@ -158,6 +159,7 @@ public class OkHttpClient implements Cloneable {
     this.socketFactory = okHttpClient.getSocketFactory();
     this.sslSocketFactory = okHttpClient.getSslSocketFactory();
     this.hostnameVerifier = okHttpClient.getHostnameVerifier();
+    this.certificatePinner = okHttpClient.getCertificatePinner();
     this.authenticator = okHttpClient.getAuthenticator();
     this.connectionPool = okHttpClient.getConnectionPool();
     this.followSslRedirects = okHttpClient.getFollowSslRedirects();
@@ -321,9 +323,7 @@ public class OkHttpClient implements Cloneable {
    * Sets the verifier used to confirm that response certificates apply to
    * requested hostnames for HTTPS connections.
    *
-   * <p>If unset, the
-   * {@link javax.net.ssl.HttpsURLConnection#getDefaultHostnameVerifier()
-   * system-wide default} hostname verifier will be used.
+   * <p>If unset, a default hostname verifier will be used.
    */
   public final OkHttpClient setHostnameVerifier(HostnameVerifier hostnameVerifier) {
     this.hostnameVerifier = hostnameVerifier;
@@ -332,6 +332,21 @@ public class OkHttpClient implements Cloneable {
 
   public final HostnameVerifier getHostnameVerifier() {
     return hostnameVerifier;
+  }
+
+  /**
+   * Sets the certificate pinner that constrains which certificates are trusted.
+   * By default HTTPS connections rely on only the {@link #setSslSocketFactory
+   * SSL socket factory} to establish trust. Pinning certificates avoids the
+   * need to trust certificate authorities.
+   */
+  public final OkHttpClient setCertificatePinner(CertificatePinner certificatePinner) {
+    this.certificatePinner = certificatePinner;
+    return this;
+  }
+
+  public final CertificatePinner getCertificatePinner() {
+    return certificatePinner;
   }
 
   /**
@@ -499,6 +514,9 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.hostnameVerifier == null) {
       result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
+    }
+    if (result.certificatePinner == null) {
+      result.certificatePinner = CertificatePinner.DEFAULT;
     }
     if (result.authenticator == null) {
       result.authenticator = AuthenticatorAdapter.INSTANCE;
