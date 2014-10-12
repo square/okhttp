@@ -31,7 +31,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.http.RouteSelector.TLS_V1;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -88,8 +87,10 @@ public final class ConnectionPoolTest {
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
-    Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, TLS_V1);
-    Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress, TLS_V1);
+    Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
+        TlsConfiguration.PREFERRED);
+    Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress,
+        TlsConfiguration.PREFERRED);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
     httpA = new Connection(pool, httpRoute);
     httpA.connect(200, 200, 200, null);
@@ -134,8 +135,8 @@ public final class ConnectionPoolTest {
     Connection connection = pool.get(httpAddress);
     assertNull(connection);
 
-    connection = new Connection(
-        pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, TLS_V1));
+    connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
+        TlsConfiguration.PREFERRED));
     connection.connect(200, 200, 200, null);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());

@@ -369,7 +369,7 @@ public final class MockWebServer {
           openClientSockets.put(socket, true);
 
           if (protocolNegotiationEnabled) {
-            Platform.get().setProtocols(sslSocket, protocols);
+            Platform.get().configureTlsExtensions(sslSocket, null, protocols);
           }
 
           sslSocket.startHandshake();

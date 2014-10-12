@@ -148,25 +148,26 @@ public class OkHttpClient implements Cloneable {
   }
 
   private OkHttpClient(OkHttpClient okHttpClient) {
-    this.routeDatabase = okHttpClient.routeDatabase();
-    this.dispatcher = okHttpClient.getDispatcher();
-    this.proxy = okHttpClient.getProxy();
-    this.protocols = okHttpClient.getProtocols();
-    this.proxySelector = okHttpClient.getProxySelector();
-    this.cookieHandler = okHttpClient.getCookieHandler();
-    this.cache = okHttpClient.getCache();
+    this.routeDatabase = okHttpClient.routeDatabase;
+    this.dispatcher = okHttpClient.dispatcher;
+    this.proxy = okHttpClient.proxy;
+    this.protocols = okHttpClient.protocols;
+    this.proxySelector = okHttpClient.proxySelector;
+    this.cookieHandler = okHttpClient.cookieHandler;
+    this.cache = okHttpClient.cache;
     this.internalCache = cache != null ? cache.internalCache : okHttpClient.internalCache;
-    this.socketFactory = okHttpClient.getSocketFactory();
-    this.sslSocketFactory = okHttpClient.getSslSocketFactory();
-    this.hostnameVerifier = okHttpClient.getHostnameVerifier();
-    this.certificatePinner = okHttpClient.getCertificatePinner();
-    this.authenticator = okHttpClient.getAuthenticator();
-    this.connectionPool = okHttpClient.getConnectionPool();
-    this.followSslRedirects = okHttpClient.getFollowSslRedirects();
-    this.followRedirects = okHttpClient.getFollowRedirects();
-    this.connectTimeout = okHttpClient.getConnectTimeout();
-    this.readTimeout = okHttpClient.getReadTimeout();
-    this.writeTimeout = okHttpClient.getWriteTimeout();
+    this.socketFactory = okHttpClient.socketFactory;
+    this.sslSocketFactory = okHttpClient.sslSocketFactory;
+    this.hostnameVerifier = okHttpClient.hostnameVerifier;
+    this.certificatePinner = okHttpClient.certificatePinner;
+    this.authenticator = okHttpClient.authenticator;
+    this.connectionPool = okHttpClient.connectionPool;
+    this.network = okHttpClient.network;
+    this.followSslRedirects = okHttpClient.followSslRedirects;
+    this.followRedirects = okHttpClient.followRedirects;
+    this.connectTimeout = okHttpClient.connectTimeout;
+    this.readTimeout = okHttpClient.readTimeout;
+    this.writeTimeout = okHttpClient.writeTimeout;
   }
 
   /**
