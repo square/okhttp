@@ -41,6 +41,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -388,8 +389,8 @@ public final class HttpEngine {
   private boolean isRecoverable(IOException e) {
     // If the problem was a CertificateException from the X509TrustManager,
     // do not retry, we didn't have an abrupt server-initiated exception.
-    boolean sslFailure =
-        e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException;
+    boolean sslFailure = e instanceof SSLPeerUnverifiedException
+        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException);
     boolean protocolFailure = e instanceof ProtocolException;
     return !sslFailure && !protocolFailure;
   }

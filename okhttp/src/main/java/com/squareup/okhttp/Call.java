@@ -80,7 +80,6 @@ public class Call {
     try {
       client.getDispatcher().executed(this);
       Response result = getResponse();
-      System.out.println("releasing");
       engine.releaseConnection(); // Transfer ownership of the body to the caller.
       if (result == null) throw new IOException("Canceled");
       return result;
