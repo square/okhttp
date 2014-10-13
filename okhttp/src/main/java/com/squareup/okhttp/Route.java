@@ -37,25 +37,26 @@ public final class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;
-  final TlsConfiguration tlsConfiguration;
-
-  /** @deprecated replaced with a constructor that takes a {@link TlsConfiguration}. */
-  public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      String tlsVersion) {
-    this(address, proxy, inetSocketAddress,
-        tlsVersion.equals("SSLv3") ? TlsConfiguration.FALLBACK : TlsConfiguration.PREFERRED);
-  }
+  final ConnectionConfiguration connectionConfiguration;
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      TlsConfiguration tlsConfiguration) {
-    if (address == null) throw new NullPointerException("address == null");
-    if (proxy == null) throw new NullPointerException("proxy == null");
-    if (inetSocketAddress == null) throw new NullPointerException("inetSocketAddress == null");
-    if (tlsConfiguration == null) throw new NullPointerException("tlsConfiguration == null");
+      ConnectionConfiguration connectionConfiguration) {
+    if (address == null) {
+      throw new NullPointerException("address == null");
+    }
+    if (proxy == null) {
+      throw new NullPointerException("proxy == null");
+    }
+    if (inetSocketAddress == null) {
+      throw new NullPointerException("inetSocketAddress == null");
+    }
+    if (connectionConfiguration == null) {
+      throw new NullPointerException("connectionConfiguration == null");
+    }
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;
-    this.tlsConfiguration = tlsConfiguration;
+    this.connectionConfiguration = connectionConfiguration;
   }
 
   public Address getAddress() {
@@ -73,17 +74,12 @@ public final class Route {
     return proxy;
   }
 
-  /** @deprecated replaced with {@link #getTlsConfiguration()}. */
-  public String getTlsVersion() {
-    return tlsConfiguration.tlsVersions().get(0);
-  }
-
   public InetSocketAddress getSocketAddress() {
     return inetSocketAddress;
   }
 
-  public TlsConfiguration getTlsConfiguration() {
-    return tlsConfiguration;
+  public ConnectionConfiguration getConnectionConfiguration() {
+    return connectionConfiguration;
   }
 
   /**
@@ -100,7 +96,7 @@ public final class Route {
       return address.equals(other.address)
           && proxy.equals(other.proxy)
           && inetSocketAddress.equals(other.inetSocketAddress)
-          && tlsConfiguration.equals(other.tlsConfiguration);
+          && connectionConfiguration.equals(other.connectionConfiguration);
     }
     return false;
   }
@@ -110,7 +106,7 @@ public final class Route {
     result = 31 * result + address.hashCode();
     result = 31 * result + proxy.hashCode();
     result = 31 * result + inetSocketAddress.hashCode();
-    result = 31 * result + tlsConfiguration.hashCode();
+    result = 31 * result + connectionConfiguration.hashCode();
     return result;
   }
 }

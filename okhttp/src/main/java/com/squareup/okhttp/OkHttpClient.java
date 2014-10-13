@@ -49,6 +49,13 @@ import javax.net.ssl.SSLSocketFactory;
  * safely modified with further configuration changes.
  */
 public class OkHttpClient implements Cloneable {
+  private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
+      Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+
+  private static final List<ConnectionConfiguration> DEFAULT_CONNECTION_CONFIGURATIONS =
+      Util.immutableList(ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS,
+          ConnectionConfiguration.CLEARTEXT);
+
   static {
     Internal.instance = new Internal() {
       @Override public Transport newTransport(
@@ -122,6 +129,7 @@ public class OkHttpClient implements Cloneable {
   private Dispatcher dispatcher;
   private Proxy proxy;
   private List<Protocol> protocols;
+  private List<ConnectionConfiguration> connectionConfigurations;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
 
@@ -152,6 +160,7 @@ public class OkHttpClient implements Cloneable {
     this.dispatcher = okHttpClient.dispatcher;
     this.proxy = okHttpClient.proxy;
     this.protocols = okHttpClient.protocols;
+    this.connectionConfigurations = okHttpClient.connectionConfigurations;
     this.proxySelector = okHttpClient.proxySelector;
     this.cookieHandler = okHttpClient.cookieHandler;
     this.cache = okHttpClient.cache;
@@ -479,6 +488,16 @@ public class OkHttpClient implements Cloneable {
     return protocols;
   }
 
+  public final OkHttpClient setConnectionConfigurations(
+      List<ConnectionConfiguration> connectionConfigurations) {
+    this.connectionConfigurations = Util.immutableList(connectionConfigurations);
+    return this;
+  }
+
+  public final List<ConnectionConfiguration> getConnectionConfigurations() {
+    return connectionConfigurations;
+  }
+
   /**
    * Prepares the {@code request} to be executed at some point in the future.
    */
@@ -526,7 +545,10 @@ public class OkHttpClient implements Cloneable {
       result.connectionPool = ConnectionPool.getDefault();
     }
     if (result.protocols == null) {
-      result.protocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+      result.protocols = DEFAULT_PROTOCOLS;
+    }
+    if (result.connectionConfigurations == null) {
+      result.connectionConfigurations = DEFAULT_CONNECTION_CONFIGURATIONS;
     }
     if (result.network == null) {
       result.network = Network.DEFAULT;
