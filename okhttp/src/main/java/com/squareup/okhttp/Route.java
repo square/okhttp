@@ -43,7 +43,7 @@ public final class Route {
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
       String tlsVersion) {
     this(address, proxy, inetSocketAddress,
-        tlsVersion.equals("SSLv3") ? TlsConfiguration.PREFERRED : TlsConfiguration.FALLBACK);
+        tlsVersion.equals("SSLv3") ? TlsConfiguration.FALLBACK : TlsConfiguration.PREFERRED);
   }
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
