@@ -15,8 +15,10 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
+import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -29,6 +31,7 @@ import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.util.Arrays;
@@ -47,6 +50,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLProtocolException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -625,6 +629,7 @@ public final class CallTest {
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
+    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
         .assertBody("abc");
@@ -645,6 +650,43 @@ public final class CallTest {
     client.newCall(request).enqueue(callback);
 
     callback.await(request.url()).assertBody("abc");
+  }
+
+  @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
+    client.setConnectionConfigurations(Arrays.asList(
+        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.CLEARTEXT));
+
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.play();
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (SSLProtocolException expected) {
+    }
+  }
+
+  @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
+    // Configure the client with only TLS configurations. No cleartext!
+    client.setConnectionConfigurations(Arrays.asList(
+        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS));
+
+    server.enqueue(new MockResponse());
+    server.play();
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (SocketException expected) {
+      assertTrue(expected.getMessage().contains("exhausted connection configurations"));
+    }
   }
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
@@ -694,7 +736,7 @@ public final class CallTest {
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setCertificatePinner( new CertificatePinner.Builder()
+    client.setCertificatePinner(new CertificatePinner.Builder()
         .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=") // publicobject.com's cert.
         .build());
 

@@ -19,18 +19,18 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.Challenge;
+import com.squareup.okhttp.ConnectionConfiguration;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.TlsConfiguration;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
+import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.huc.CacheAdapter;
@@ -858,12 +858,12 @@ public final class URLConnectionTest {
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .setBody("bogus proxy connect response content");
 
-    // Configure a single IP address for the host, so we don't retry once for each. Enqueue a
-    // response for all TLS configurations that will be attempted.
-    Internal.instance.setNetwork(client.client(), networkWithFirstAddressOnly());
-    for (TlsConfiguration tlsConfiguration : RouteSelector.TLS_CONFIGURATIONS) {
-      server.enqueue(response);
-    }
+    // Configure a single IP address for the host and a single configuration, so we only need one
+    // failure to fail permanently.
+    Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
+    client.client().setConnectionConfigurations(
+        Util.immutableList(ConnectionConfiguration.MODERN_TLS));
+    server.enqueue(response);
     server.play();
     client.client().setProxy(server.toProxyAddress());
 
@@ -3296,15 +3296,5 @@ public final class URLConnectionTest {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setProtocolNegotiationEnabled(true);
     server.setProtocols(client.client().getProtocols());
-  }
-
-  /** Returns a network that resolves only one IP address per host. */
-  private Network networkWithFirstAddressOnly() {
-    return new Network() {
-      @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
-        InetAddress[] allInetAddresses = Network.DEFAULT.resolveInetAddresses(host);
-        return new InetAddress[] { allInetAddresses[0] };
-      }
-    };
   }
 }
