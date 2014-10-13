@@ -19,12 +19,14 @@ import com.squareup.okhttp.Address;
 import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.TlsConfiguration;
 import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RouteDatabase;
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -50,8 +52,8 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * recycled.
  */
 public final class RouteSelector {
-  public static final String TLS_V1 = "TLSv1";
-  public static final String SSL_V3 = "SSLv3";
+  public static final List<TlsConfiguration> TLS_CONFIGURATIONS = Util.immutableList(
+      TlsConfiguration.PREFERRED, TlsConfiguration.FALLBACK);
 
   private final Address address;
   private final URI uri;
@@ -76,8 +78,8 @@ public final class RouteSelector {
   private int nextSocketAddressIndex;
   private int socketPort;
 
-  /* TLS version to attempt with the connection. */
-  private String nextTlsVersion;
+  /* TLS configuration to attempt with the connection. */
+  private int nextTlsConfigurationIndex = TLS_CONFIGURATIONS.size();
 
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
@@ -122,7 +124,7 @@ public final class RouteSelector {
    * least one route.
    */
   public boolean hasNext() {
-    return hasNextTlsVersion()
+    return hasNextTlsConfiguration()
         || hasNextInetSocketAddress()
         || hasNextProxy()
         || hasNextPostponed();
@@ -148,7 +150,7 @@ public final class RouteSelector {
     }
 
     // Compute the next route to attempt.
-    if (!hasNextTlsVersion()) {
+    if (!hasNextTlsConfiguration()) {
       if (!hasNextInetSocketAddress()) {
         if (!hasNextProxy()) {
           if (!hasNextPostponed()) {
@@ -160,11 +162,11 @@ public final class RouteSelector {
         resetNextInetSocketAddress(lastProxy);
       }
       lastInetSocketAddress = nextInetSocketAddress();
-      resetNextTlsVersion();
+      resetNextTlsConfiguration();
     }
 
-    String tlsVersion = nextTlsVersion();
-    Route route = new Route(address, lastProxy, lastInetSocketAddress, tlsVersion);
+    TlsConfiguration tlsConfiguration = nextTlsConfiguration();
+    Route route = new Route(address, lastProxy, lastInetSocketAddress, tlsConfiguration);
     if (routeDatabase.shouldPostpone(route)) {
       postponedRoutes.add(route);
       // We will only recurse in order to skip previously failed routes. They will be
@@ -195,8 +197,9 @@ public final class RouteSelector {
     // the next route only changes the TLS mode, we shouldn't even attempt it.
     // This suppresses it in both this selector and also in the route database.
     if (!(failure instanceof SSLHandshakeException) && !(failure instanceof SSLProtocolException)) {
-      while (hasNextTlsVersion()) {
-        Route toSuppress = new Route(address, lastProxy, lastInetSocketAddress, nextTlsVersion());
+      while (hasNextTlsConfiguration()) {
+        Route toSuppress = new Route(address, lastProxy, lastInetSocketAddress,
+            nextTlsConfiguration());
         routeDatabase.failed(toSuppress);
       }
     }
@@ -286,31 +289,25 @@ public final class RouteSelector {
   }
 
   /**
-   * Resets {@link #nextTlsVersion} to the first option. For routes that don't
-   * use SSL, this returns {@link #SSL_V3} so that there is no SSL fallback.
+   * Resets {@link #nextTlsConfiguration} to the first option. For routes that
+   * don't use TLS, this returns the fallback parameters so that there are no
+   * unnecessary retries.
    */
-  private void resetNextTlsVersion() {
-    nextTlsVersion = (address.getSslSocketFactory() != null) ? TLS_V1 : SSL_V3;
+  private void resetNextTlsConfiguration() {
+    nextTlsConfigurationIndex = address.getSslSocketFactory() != null
+        ? 0
+        : TLS_CONFIGURATIONS.size() - 1;
   }
 
-  /** Returns true if there's another TLS version to try. */
-  private boolean hasNextTlsVersion() {
-    return nextTlsVersion != null;
+  /** Returns true if there's another TLS configuration to try. */
+  private boolean hasNextTlsConfiguration() {
+    return nextTlsConfigurationIndex < TLS_CONFIGURATIONS.size();
   }
 
-  /** Returns the next TLS mode to try. */
-  private String nextTlsVersion() {
-    if (nextTlsVersion == null) {
-      throw new IllegalStateException("No next TLS version");
-    } else if (nextTlsVersion.equals(TLS_V1)) {
-      nextTlsVersion = SSL_V3;
-      return TLS_V1;
-    } else if (nextTlsVersion.equals(SSL_V3)) {
-      nextTlsVersion = null;  // So that hasNextTlsVersion() returns false.
-      return SSL_V3;
-    } else {
-      throw new AssertionError();
-    }
+  /** Returns the next TLS configuration to try. */
+  private TlsConfiguration nextTlsConfiguration() {
+    if (!hasNextTlsConfiguration()) throw new IllegalStateException("No next TLS configuration");
+    return TLS_CONFIGURATIONS.get(nextTlsConfigurationIndex++);
   }
 
   /** Returns true if there is another postponed route to try. */

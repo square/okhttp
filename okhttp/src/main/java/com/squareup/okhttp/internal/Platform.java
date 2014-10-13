@@ -37,6 +37,7 @@ import okio.Buffer;
 
 /**
  * Access to Platform-specific features necessary for SPDY and advanced TLS.
+ * This includes Server Name Indication (SNI) and session tickets.
  *
  * <h3>ALPN and NPN</h3>
  * This class uses TLS extensions ALPN and NPN to negotiate the upgrade from
@@ -84,29 +85,18 @@ public class Platform {
   }
 
   /**
-   * Configure the TLS connection to use {@code tlsVersion}. We also bundle
-   * certain extensions with certain versions. In particular, we enable Server
-   * Name Indication (SNI) and Next Protocol Negotiation (NPN) with TLSv1 on
-   * platforms that support them.
+   * Configure TLS extensions on {@code sslSocket} for {@code route}.
+   *
+   * @param hostname non-null for client-side handshakes; null for
+   *     server-side handshakes.
    */
-  public void configureTls(SSLSocket socket, String uriHost, String tlsVersion) {
-    // We don't call setEnabledProtocols("TLSv1") on the assumption that that's
-    // the default. TODO: confirm this and support more TLS versions.
-    if (tlsVersion.equals("SSLv3")) {
-      socket.setEnabledProtocols(new String[] {"SSLv3"});
-    }
+  public void configureTlsExtensions(SSLSocket sslSocket, String hostname,
+      List<Protocol> protocols) {
   }
 
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   public String getSelectedProtocol(SSLSocket socket) {
     return null;
-  }
-
-  /**
-   * Sets client-supported protocols on a socket to send to a server. The
-   * protocols are only sent if the socket implementation supports ALPN or NPN.
-   */
-  public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
   }
 
   public void connectSocket(Socket socket, InetSocketAddress address,
@@ -227,31 +217,32 @@ public class Platform {
       }
     }
 
-    @Override public void configureTls(SSLSocket socket, String uriHost, String tlsVersion) {
-      super.configureTls(socket, uriHost, tlsVersion);
+    @Override public void configureTlsExtensions(
+        SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+      if (!openSslSocketClass.isInstance(sslSocket)) return;
 
-      if (tlsVersion.equals("TLSv1") && openSslSocketClass.isInstance(socket)) {
+      // Enable SNI and session tickets.
+      if (hostname != null) {
         try {
-          setUseSessionTickets.invoke(socket, true);
-          setHostname.invoke(socket, uriHost);
+          setUseSessionTickets.invoke(sslSocket, true);
+          setHostname.invoke(sslSocket, hostname);
         } catch (InvocationTargetException e) {
-          throw new RuntimeException(e);
+          throw new RuntimeException(e.getCause());
         } catch (IllegalAccessException e) {
           throw new AssertionError(e);
         }
       }
-    }
 
-    @Override public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
-      if (setNpnProtocols == null) return;
-      if (!openSslSocketClass.isInstance(socket)) return;
-      try {
-        Object[] parameters = { concatLengthPrefixed(protocols) };
-        setNpnProtocols.invoke(socket, parameters);
-      } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
+      // Enable NPN.
+      if (setNpnProtocols != null) {
+        try {
+          Object[] parameters = { concatLengthPrefixed(protocols) };
+          setNpnProtocols.invoke(sslSocket, parameters);
+        } catch (IllegalAccessException e) {
+          throw new AssertionError(e);
+        } catch (InvocationTargetException e) {
+          throw new RuntimeException(e.getCause());
+        }
       }
     }
 
@@ -263,7 +254,7 @@ public class Platform {
         if (npnResult == null) return null;
         return new String(npnResult, Util.UTF_8);
       } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e.getCause());
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
       }
@@ -277,7 +268,7 @@ public class Platform {
       } catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e.getCause());
       }
     }
 
@@ -289,7 +280,7 @@ public class Platform {
       } catch (IllegalAccessException e) {
         throw new RuntimeException(e);
       } catch (InvocationTargetException e) {
-        throw new RuntimeException(e);
+        throw new RuntimeException(e.getCause());
       }
     }
   }
@@ -312,17 +303,18 @@ public class Platform {
       this.serverProviderClass = serverProviderClass;
     }
 
-    @Override public void setProtocols(SSLSocket socket, List<Protocol> protocols) {
+    @Override public void configureTlsExtensions(
+        SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
+      List<String> names = new ArrayList<>(protocols.size());
+      for (int i = 0, size = protocols.size(); i < size; i++) {
+        Protocol protocol = protocols.get(i);
+        if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN or ALPN.
+        names.add(protocol.toString());
+      }
       try {
-        List<String> names = new ArrayList<>(protocols.size());
-        for (int i = 0, size = protocols.size(); i < size; i++) {
-          Protocol protocol = protocols.get(i);
-          if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for NPN or ALPN.
-          names.add(protocol.toString());
-        }
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
             new Class[] { clientProviderClass, serverProviderClass }, new JettyNegoProvider(names));
-        putMethod.invoke(null, socket, provider);
+        putMethod.invoke(null, sslSocket, provider);
       } catch (InvocationTargetException e) {
         throw new AssertionError(e);
       } catch (IllegalAccessException e) {

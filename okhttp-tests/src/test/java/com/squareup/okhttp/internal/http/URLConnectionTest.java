@@ -25,7 +25,9 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.TlsConfiguration;
 import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -856,12 +858,11 @@ public final class URLConnectionTest {
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .setBody("bogus proxy connect response content");
 
-    // Enqueue a pair of responses for every IP address held by localhost, because the
-    // route selector will try each in sequence.
-    // TODO: use the fake Dns implementation instead of a loop
-    for (InetAddress inetAddress : InetAddress.getAllByName(server.getHostName())) {
-      server.enqueue(response); // For the first TLS tolerant connection
-      server.enqueue(response); // For the backwards-compatible SSLv3 retry
+    // Configure a single IP address for the host, so we don't retry once for each. Enqueue a
+    // response for all TLS configurations that will be attempted.
+    Internal.instance.setNetwork(client.client(), networkWithFirstAddressOnly());
+    for (TlsConfiguration tlsConfiguration : RouteSelector.TLS_CONFIGURATIONS) {
+      server.enqueue(response);
     }
     server.play();
     client.client().setProxy(server.toProxyAddress());
@@ -3295,5 +3296,15 @@ public final class URLConnectionTest {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setProtocolNegotiationEnabled(true);
     server.setProtocols(client.client().getProtocols());
+  }
+
+  /** Returns a network that resolves only one IP address per host. */
+  private Network networkWithFirstAddressOnly() {
+    return new Network() {
+      @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
+        InetAddress[] allInetAddresses = Network.DEFAULT.resolveInetAddresses(host);
+        return new InetAddress[] { allInetAddresses[0] };
+      }
+    };
   }
 }
