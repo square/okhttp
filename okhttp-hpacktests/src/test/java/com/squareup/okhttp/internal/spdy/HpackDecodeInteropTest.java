@@ -16,35 +16,23 @@
 package com.squareup.okhttp.internal.spdy;
 
 import com.squareup.okhttp.internal.spdy.hpackjson.Story;
-import org.junit.Ignore;
+import java.util.Collection;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.util.Collection;
+import static com.squareup.okhttp.internal.spdy.hpackjson.HpackJsonUtil.storiesForCurrentDraft;
 
-/**
- * Known bad tests for HPACK interop.
- */
-// TODO: fix these tests (see if the input/test is legit, fix the implementation.)
-@Ignore
 @RunWith(Parameterized.class)
-public class HpackDecodeInteropBadTest extends HpackDecodeTestBase {
+public class HpackDecodeInteropTest extends HpackDecodeTestBase {
 
-  private static final String[] BAD_INTEROP_TESTS = {
-      "hyper-hpack",
-      "node-http2-protocol",
-      "raw-data",
-      "twitter-hpack"
-  };
-
-  public HpackDecodeInteropBadTest(Story story) {
+  public HpackDecodeInteropTest(Story story) {
     super(story);
   }
 
   @Parameterized.Parameters(name="{0}")
   public static Collection<Story[]> createStories() throws Exception {
-    return createStories(BAD_INTEROP_TESTS);
+    return createStories(storiesForCurrentDraft());
   }
 
   @Test
