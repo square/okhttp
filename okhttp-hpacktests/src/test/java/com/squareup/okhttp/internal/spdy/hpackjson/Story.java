@@ -40,6 +40,11 @@ public class Story implements Cloneable {
     return cases;
   }
 
+  /** We only expect stories that match the draft we've implemented to pass. */
+  public int getDraft() {
+    return draft;
+  }
+
   @Override
   public Story clone() throws CloneNotSupportedException {
     Story story = new Story();
