@@ -198,7 +198,7 @@ public final class Connection {
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
+      spdyConnection = new SpdyConnection.Builder(this, route.address.getUriHost(), true, socket)
           .protocol(protocol).build();
       spdyConnection.sendConnectionPreface();
     } else {
