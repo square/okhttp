@@ -168,7 +168,7 @@ public final class Headers {
     return new Headers(namesAndValues);
   }
 
-  public static class Builder {
+  public static final class Builder {
     private final List<String> namesAndValues = new ArrayList<>(20);
 
     /** Add an header line containing a field name, a literal colon, and a value. */
