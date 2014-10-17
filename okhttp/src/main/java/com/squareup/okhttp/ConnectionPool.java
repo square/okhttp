@@ -158,8 +158,8 @@ public final class ConnectionPool {
   }
 
   protected ConnectionObserver getConnectionObserver() {
-        return connectionObserver;
-    }
+    return connectionObserver;
+  }
 
   /** Returns total number of connections in the pool. */
   public synchronized int getConnectionCount() {
