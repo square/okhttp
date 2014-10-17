@@ -735,8 +735,8 @@ public final class SpdyConnection implements Closeable {
 
     private void ackSettingsLater() {
       executor.submit(new NamedRunnable("OkHttp %s ACK Settings", hostName) {
-                @Override
-                public void execute() {
+        @Override
+        public void execute() {
           try {
             frameWriter.ackSettings();
           } catch (IOException ignored) {
