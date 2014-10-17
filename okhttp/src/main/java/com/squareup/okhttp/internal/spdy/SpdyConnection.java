@@ -20,7 +20,6 @@ import com.squareup.okhttp.ConnectionObserver;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -35,7 +34,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -77,14 +75,10 @@ public final class SpdyConnection implements Closeable {
     // Optional callback that will be invoked when a socket gets closed
     private final ConnectionObserver connectionObserver;
 
-    /**
-     * The protocol variant, like {@link com.squareup.okhttp.internal.spdy.Spdy3}.
-     */
+  /** The protocol variant, like {@link com.squareup.okhttp.internal.spdy.Spdy3}. */
   final Protocol protocol;
 
-    /**
-     * True if this peer initiated the connection.
-     */
+  /** True if this peer initiated the connection. */
   final boolean client;
 
   /**
@@ -99,18 +93,12 @@ public final class SpdyConnection implements Closeable {
   private boolean shutdown;
   private long idleStartTimeNs = System.nanoTime();
 
-    /**
-     * Ensures push promise callbacks events are sent in order per stream.
-     */
+  /** Ensures push promise callbacks events are sent in order per stream. */
   private final ExecutorService pushExecutor;
 
-    /**
-     * Lazily-created map of in-flight pings awaiting a response. Guarded by this.
-     */
+  /** Lazily-created map of in-flight pings awaiting a response. Guarded by this. */
   private Map<Integer, Ping> pings;
-    /**
-     * User code to run in response to push promise events.
-     */
+  /** User code to run in response to push promise events. */
   private final SpdyPushObserver pushObserver;
   private int nextPingId;
 
@@ -199,9 +187,7 @@ public final class SpdyConnection implements Closeable {
     new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
-    /**
-     * The protocol as selected using NPN or ALPN.
-     */
+  /** The protocol as selected using NPN or ALPN. */
   public Protocol getProtocol() {
     return protocol;
   }
@@ -230,9 +216,7 @@ public final class SpdyConnection implements Closeable {
     idleStartTimeNs = value ? System.nanoTime() : Long.MAX_VALUE;
   }
 
-    /**
-     * Returns true if this connection is idle.
-     */
+  /** Returns true if this connection is idle. */
   public synchronized boolean isIdle() {
     return idleStartTimeNs != Long.MAX_VALUE;
   }
@@ -650,9 +634,9 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
+    @Override
+    public void headers(boolean outFinished, boolean inFinished, int streamId,
+      int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
       SpdyStream stream;
       SpdyStream associated = null;
       synchronized (SpdyConnection.this) {
@@ -731,8 +715,8 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void settings(boolean clearPrevious, Settings newSettings) {
+    @Override
+    public void settings(boolean clearPrevious, Settings newSettings) {
       long delta = 0;
       SpdyStream[] streamsToNotify = null;
       synchronized (SpdyConnection.this) {
@@ -775,13 +759,13 @@ public final class SpdyConnection implements Closeable {
       });
     }
 
-        @Override
-        public void ackSettings() {
+    @Override
+    public void ackSettings() {
       // TODO: If we don't get this callback after sending settings to the peer, SETTINGS_TIMEOUT.
     }
 
-        @Override
-        public void ping(boolean reply, int payload1, int payload2) {
+    @Override
+    public void ping(boolean reply, int payload1, int payload2) {
       if (reply) {
         Ping ping = removePing(payload1);
         if (ping != null) {
@@ -793,9 +777,10 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
-      if (debugData.size() > 0) { // TODO: log the debugData
+     @Override
+     public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+      if (debugData.size() > 0) {
+        // TODO: log the debugData
       }
       synchronized (SpdyConnection.this) {
         shutdown = true;
@@ -813,8 +798,8 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void windowUpdate(int streamId, long windowSizeIncrement) {
+    @Override
+    public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (streamId == 0) {
         synchronized (SpdyConnection.this) {
           bytesLeftInWriteWindow += windowSizeIncrement;
@@ -830,9 +815,9 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void priority(int streamId, int streamDependency, int weight,
-        boolean exclusive) {
+    @Override
+    public void priority(int streamId, int streamDependency, int weight,
+      boolean exclusive) {
       // TODO: honor priority.
     }
 
@@ -841,9 +826,9 @@ public final class SpdyConnection implements Closeable {
       pushPromiseLater(promisedStreamId, requestHeaders);
     }
 
-        @Override
-        public void alternateService(int streamId, String origin, ByteString protocol,
-        String host, int port, long maxAge) {
+    @Override
+    public void alternateService(int streamId, String origin, ByteString protocol,
+      String host, int port, long maxAge) {
       // TODO: register alternate service.
     }
   }
@@ -857,8 +842,8 @@ public final class SpdyConnection implements Closeable {
 
   private void pushPromiseLater(final int streamId, final List<Header> requestHeaders) {
     pushExecutor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, streamId) {
-            @Override
-            public void execute() {
+      @Override
+      public void execute() {
         boolean cancel = pushObserver.onPromise(streamId, requestHeaders);
         try {
           if (cancel) {
@@ -872,8 +857,8 @@ public final class SpdyConnection implements Closeable {
 
   private void pushStreamLater(final SpdyStream associated, final SpdyStream push) {
     pushExecutor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, push.getId()) {
-            @Override
-            public void execute() {
+      @Override
+      public void execute() {
         SpdyPushObserver streamPushObserver;
         boolean cancel;
         int pushId;
