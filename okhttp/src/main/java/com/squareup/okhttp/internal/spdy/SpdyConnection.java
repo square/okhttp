@@ -52,6 +52,7 @@ import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_
  * was triggered by a certain caller can be caught and handled by that caller.
  */
 public final class SpdyConnection implements Closeable {
+    private static final long PUSH_IDLE_TIMEOUT = 10 * 1000;
 
   // Internal state of this connection is guarded by 'this'. No blocking
   // operations may be performed while holding this lock!
@@ -69,14 +70,10 @@ public final class SpdyConnection implements Closeable {
       Integer.MAX_VALUE, 60, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
       Util.threadFactory("OkHttp SpdyConnection", true));
 
-    // Optional callback that will be invoked when a socket gets closed
-    private static ConnectionObserver connectionObserver = null;
-
-    public static void setConnectionObserver(ConnectionObserver observer) {
-        connectionObserver = observer;
-    }
-
     private final Connection connection;
+
+    // Optional callback that will be invoked when a socket gets closed
+    private final ConnectionObserver connectionObserver;
 
   /** The protocol variant, like {@link com.squareup.okhttp.internal.spdy.Spdy3}. */
   final Protocol protocol;
@@ -139,6 +136,7 @@ public final class SpdyConnection implements Closeable {
 
   private SpdyConnection(Builder builder) throws IOException {
     connection = builder.connection;
+    connectionObserver = builder.connectionObserver;
     protocol = builder.protocol;
     client = builder.client;
     handler = builder.handler;
@@ -165,19 +163,19 @@ public final class SpdyConnection implements Closeable {
     }
     // Like newSingleThreadExecutor, except lazy creates the thread.
     pushExecutor = new ThreadPoolExecutor(0, 1,
-        0L, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>(),
-        Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
+      PUSH_IDLE_TIMEOUT, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<Runnable>(),
+      Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
 
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
     socket = builder.socket;
     frameWriter = variant.newWriter(Okio.buffer(Okio.sink(builder.socket, new IOExceptionObserver() {
-            public void onIOException(IOException e) {
-                if (connectionObserver != null) {
-                    connectionObserver.onIOException(SpdyConnection.this.connection, e);
-                }
-            }
-        })), client);
+      public void onIOException(IOException e) {
+        if (connectionObserver != null) {
+          connectionObserver.onIOException(connection, e);
+        }
+      }
+    })), client);
     maxFrameSize = variant.maxFrameSize();
     pushObserver = builder.pushObserver;
 
@@ -519,6 +517,7 @@ public final class SpdyConnection implements Closeable {
 
   public static class Builder {
     private Connection connection;
+    private ConnectionObserver connectionObserver;
     private String hostName;
     private Socket socket;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
@@ -526,16 +525,15 @@ public final class SpdyConnection implements Closeable {
     private SpdyPushObserver pushObserver = SpdyPushObserver.CANCEL;
     private boolean client;
 
-    public Builder(Connection connection, boolean client, Socket socket) throws IOException {
-      this(connection, ((InetSocketAddress) socket.getRemoteSocketAddress()).getHostName(), client, socket);
+    public Builder(boolean client, Socket socket) throws IOException {
+      this(((InetSocketAddress) socket.getRemoteSocketAddress()).getHostName(), client, socket);
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
      *     peer accepted the connection.
      */
-    public Builder(Connection connection, String hostName, boolean client, Socket socket) throws IOException {
-      this.connection = connection;
+    public Builder(String hostName, boolean client, Socket socket) throws IOException {
       this.hostName = hostName;
       this.client = client;
       this.socket = socket;
@@ -553,6 +551,16 @@ public final class SpdyConnection implements Closeable {
 
     public Builder pushObserver(SpdyPushObserver pushObserver) {
       this.pushObserver = pushObserver;
+      return this;
+    }
+
+    public Builder connection(Connection connection) {
+      this.connection = connection;
+      return this;
+    }
+
+    public Builder connectionObserver(ConnectionObserver connectionObserver) {
+      this.connectionObserver = connectionObserver;
       return this;
     }
 
@@ -578,8 +586,8 @@ public final class SpdyConnection implements Closeable {
       try {
         frameReader = variant.newReader(Okio.buffer(Okio.source(socket, new IOExceptionObserver() {
                 public void onIOException(IOException e) {
-                    if (connectionObserver != null) {
-                        connectionObserver.onIOException(SpdyConnection.this.connection, e);
+                        if (SpdyConnection.this.connectionObserver != null) {
+                            SpdyConnection.this.connectionObserver.onIOException(SpdyConnection.this.connection, e);
                     }
                 }
             })), client);
@@ -603,7 +611,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
-        throws IOException {
+      throws IOException {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
@@ -617,7 +625,7 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
-        int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
+      int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
       SpdyStream stream;
       SpdyStream associated = null;
       synchronized (SpdyConnection.this) {
@@ -727,7 +735,8 @@ public final class SpdyConnection implements Closeable {
 
     private void ackSettingsLater() {
       executor.submit(new NamedRunnable("OkHttp %s ACK Settings", hostName) {
-        @Override public void execute() {
+        @Override
+        public void execute() {
           try {
             frameWriter.ackSettings();
           } catch (IOException ignored) {
@@ -752,8 +761,9 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
-      if (debugData.size() > 0) { // TODO: log the debugData
+     @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+      if (debugData.size() > 0) {
+        // TODO: log the debugData
       }
       synchronized (SpdyConnection.this) {
         shutdown = true;
@@ -788,17 +798,16 @@ public final class SpdyConnection implements Closeable {
     }
 
     @Override public void priority(int streamId, int streamDependency, int weight,
-        boolean exclusive) {
+      boolean exclusive) {
       // TODO: honor priority.
     }
 
-    @Override
-    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
+    @Override public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
       pushPromiseLater(promisedStreamId, requestHeaders);
     }
 
     @Override public void alternateService(int streamId, String origin, ByteString protocol,
-        String host, int port, long maxAge) {
+      String host, int port, long maxAge) {
       // TODO: register alternate service.
     }
   }
