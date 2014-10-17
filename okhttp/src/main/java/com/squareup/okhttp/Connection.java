@@ -63,7 +63,7 @@ public final class Connection {
   private final ConnectionPool pool;
   private final Route route;
 
-    private final ConnectionObserver connectionObserver;
+  private final ConnectionObserver connectionObserver;
   private Socket socket;
   private boolean connected = false;
   private HttpConnection httpConnection;
@@ -83,7 +83,7 @@ public final class Connection {
   public Connection(ConnectionPool pool, Route route) {
     this.pool = pool;
     this.route = route;
-      this.connectionObserver = pool.getConnectionObserver();
+    this.connectionObserver = pool.getConnectionObserver();
   }
 
   Object getOwner() {
@@ -201,9 +201,10 @@ public final class Connection {
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
       spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-              .connection(this)
-              .connectionObserver(connectionObserver)
-          .protocol(protocol).build();
+          .connection(this)
+          .connectionObserver(connectionObserver)
+          .protocol(protocol)
+          .build();
       spdyConnection.sendConnectionPreface();
     } else {
       httpConnection = new HttpConnection(pool, this, socket);

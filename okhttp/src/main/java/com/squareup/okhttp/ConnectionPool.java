@@ -76,7 +76,7 @@ public final class ConnectionPool {
   private final int maxIdleConnections;
   private final long keepAliveDurationNs;
 
-    private final ConnectionObserver connectionObserver;
+  private final ConnectionObserver connectionObserver;
   private final LinkedList<Connection> connections = new LinkedList<Connection>();
 
   /** We use a single background thread to cleanup expired connections. */
@@ -121,10 +121,10 @@ public final class ConnectionPool {
     this(maxIdleConnections, keepAliveDurationMs, null);
   }
 
-    public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs, ConnectionObserver connectionObserver) {
+  public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs, ConnectionObserver connectionObserver) {
     this.maxIdleConnections = maxIdleConnections;
     this.keepAliveDurationNs = keepAliveDurationMs * 1000 * 1000;
-        this.connectionObserver = connectionObserver;
+    this.connectionObserver = connectionObserver;
   }
 
   /**
@@ -157,7 +157,7 @@ public final class ConnectionPool {
     return systemDefault;
   }
 
-    protected ConnectionObserver getConnectionObserver() {
+  protected ConnectionObserver getConnectionObserver() {
         return connectionObserver;
     }
 
