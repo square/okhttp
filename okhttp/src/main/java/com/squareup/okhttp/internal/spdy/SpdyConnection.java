@@ -152,7 +152,7 @@ public final class SpdyConnection implements Closeable {
 
   private SpdyConnection(Builder builder) throws IOException {
     connection = builder.connection;
-        connectionObserver = builder.connectionObserver;
+    connectionObserver = builder.connectionObserver;
     protocol = builder.protocol;
     client = builder.client;
     handler = builder.handler;
@@ -179,19 +179,19 @@ public final class SpdyConnection implements Closeable {
     }
     // Like newSingleThreadExecutor, except lazy creates the thread.
     pushExecutor = new ThreadPoolExecutor(0, 1,
-                PUSH_IDLE_TIMEOUT, TimeUnit.MILLISECONDS,
-        new LinkedBlockingQueue<Runnable>(),
-        Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
+      PUSH_IDLE_TIMEOUT, TimeUnit.MILLISECONDS,
+      new LinkedBlockingQueue<Runnable>(),
+      Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
 
     bytesLeftInWriteWindow = peerSettings.getInitialWindowSize(DEFAULT_INITIAL_WINDOW_SIZE);
     socket = builder.socket;
     frameWriter = variant.newWriter(Okio.buffer(Okio.sink(builder.socket, new IOExceptionObserver() {
-            public void onIOException(IOException e) {
-                if (connectionObserver != null) {
-                    connectionObserver.onIOException(connection, e);
-                }
-            }
-        })), client);
+      public void onIOException(IOException e) {
+        if (connectionObserver != null) {
+          connectionObserver.onIOException(connection, e);
+        }
+      }
+    })), client);
     maxFrameSize = variant.maxFrameSize();
     pushObserver = builder.pushObserver;
 
@@ -541,7 +541,7 @@ public final class SpdyConnection implements Closeable {
 
   public static class Builder {
     private Connection connection;
-        private ConnectionObserver connectionObserver;
+    private ConnectionObserver connectionObserver;
     private String hostName;
     private Socket socket;
     private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
@@ -549,15 +549,15 @@ public final class SpdyConnection implements Closeable {
     private SpdyPushObserver pushObserver = SpdyPushObserver.CANCEL;
     private boolean client;
 
-        public Builder(boolean client, Socket socket) throws IOException {
-            this(((InetSocketAddress) socket.getRemoteSocketAddress()).getHostName(), client, socket);
+    public Builder(boolean client, Socket socket) throws IOException {
+      this(((InetSocketAddress) socket.getRemoteSocketAddress()).getHostName(), client, socket);
     }
 
     /**
      * @param client true if this peer initiated the connection; false if this
      *     peer accepted the connection.
      */
-        public Builder(String hostName, boolean client, Socket socket) throws IOException {
+    public Builder(String hostName, boolean client, Socket socket) throws IOException {
       this.hostName = hostName;
       this.client = client;
       this.socket = socket;
@@ -578,15 +578,15 @@ public final class SpdyConnection implements Closeable {
       return this;
     }
 
-        public Builder connection(Connection connection) {
-            this.connection = connection;
-            return this;
-        }
+    public Builder connection(Connection connection) {
+      this.connection = connection;
+      return this;
+    }
 
-        public Builder connectionObserver(ConnectionObserver connectionObserver) {
-            this.connectionObserver = connectionObserver;
-            return this;
-        }
+    public Builder connectionObserver(ConnectionObserver connectionObserver) {
+      this.connectionObserver = connectionObserver;
+      return this;
+    }
 
     public SpdyConnection build() throws IOException {
       return new SpdyConnection(this);
