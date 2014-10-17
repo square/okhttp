@@ -22,3 +22,11 @@ classes
 obj
 
 .DS_Store
+
+.gradle
+build.gradle
+gradle
+gradlew
+gradlew.bat
+local.properties
+settings.gradle
