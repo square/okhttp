@@ -351,8 +351,7 @@ public final class SpdyConnection implements Closeable {
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
     executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
-            @Override
-            public void execute() {
+      @Override public void execute() {
         try {
           writeSynReset(streamId, errorCode);
         } catch (IOException ignored) {
@@ -367,8 +366,7 @@ public final class SpdyConnection implements Closeable {
 
   void writeWindowUpdateLater(final int streamId, final long unacknowledgedBytesRead) {
     executor.submit(new NamedRunnable("OkHttp Window Update %s stream %d", hostName, streamId) {
-            @Override
-            public void execute() {
+      @Override public void execute() {
         try {
           frameWriter.windowUpdate(streamId, unacknowledgedBytesRead);
         } catch (IOException ignored) {
@@ -401,8 +399,7 @@ public final class SpdyConnection implements Closeable {
       final boolean reply, final int payload1, final int payload2, final Ping ping) {
     executor.submit(new NamedRunnable("OkHttp %s ping %08x%08x",
         hostName, payload1, payload2) {
-            @Override
-            public void execute() {
+      @Override public void execute() {
         try {
           writePing(reply, payload1, payload2, ping);
         } catch (IOException ignored) {
@@ -453,8 +450,7 @@ public final class SpdyConnection implements Closeable {
    * pings. It closes the underlying input and output streams and shuts down
    * internal executor services.
    */
-    @Override
-    public void close() throws IOException {
+  @Override public void close() throws IOException {
     close(ErrorCode.NO_ERROR, ErrorCode.CANCEL);
   }
 
@@ -588,8 +584,7 @@ public final class SpdyConnection implements Closeable {
       super("OkHttp %s", hostName);
     }
 
-        @Override
-        protected void execute() {
+    @Override protected void execute() {
       ErrorCode connectionErrorCode = ErrorCode.INTERNAL_ERROR;
       ErrorCode streamErrorCode = ErrorCode.INTERNAL_ERROR;
       try {
@@ -619,9 +614,8 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-        @Override
-        public void data(boolean inFinished, int streamId, BufferedSource source, int length)
-        throws IOException {
+    @Override public void data(boolean inFinished, int streamId, BufferedSource source, int length)
+      throws IOException {
       SpdyStream dataStream = getStream(streamId);
       if (dataStream == null) {
         writeSynResetLater(streamId, ErrorCode.INVALID_STREAM);
@@ -634,8 +628,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override
-    public void headers(boolean outFinished, boolean inFinished, int streamId,
+    @Override public void headers(boolean outFinished, boolean inFinished, int streamId,
       int associatedStreamId, List<Header> headerBlock, HeadersMode headersMode) {
       SpdyStream stream;
       SpdyStream associated = null;
@@ -682,8 +675,7 @@ public final class SpdyConnection implements Closeable {
 
           // Handle server incoming requests
           executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
-                        @Override
-                        public void execute() {
+            @Override public void execute() {
               try {
                 handler.receive(newStream);
               } catch (IOException e) {
@@ -707,16 +699,14 @@ public final class SpdyConnection implements Closeable {
       if (inFinished) stream.receiveFin();
     }
 
-        @Override
-        public void rstStream(int streamId, ErrorCode errorCode) {
+    @Override public void rstStream(int streamId, ErrorCode errorCode) {
       SpdyStream rstStream = removeStream(streamId);
       if (rstStream != null) {
         rstStream.receiveRstStream(errorCode);
       }
     }
 
-    @Override
-    public void settings(boolean clearPrevious, Settings newSettings) {
+    @Override public void settings(boolean clearPrevious, Settings newSettings) {
       long delta = 0;
       SpdyStream[] streamsToNotify = null;
       synchronized (SpdyConnection.this) {
@@ -759,13 +749,11 @@ public final class SpdyConnection implements Closeable {
       });
     }
 
-    @Override
-    public void ackSettings() {
+    @Override public void ackSettings() {
       // TODO: If we don't get this callback after sending settings to the peer, SETTINGS_TIMEOUT.
     }
 
-    @Override
-    public void ping(boolean reply, int payload1, int payload2) {
+    @Override public void ping(boolean reply, int payload1, int payload2) {
       if (reply) {
         Ping ping = removePing(payload1);
         if (ping != null) {
@@ -777,8 +765,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-     @Override
-     public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
+     @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
       if (debugData.size() > 0) {
         // TODO: log the debugData
       }
@@ -798,8 +785,7 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override
-    public void windowUpdate(int streamId, long windowSizeIncrement) {
+    @Override public void windowUpdate(int streamId, long windowSizeIncrement) {
       if (streamId == 0) {
         synchronized (SpdyConnection.this) {
           bytesLeftInWriteWindow += windowSizeIncrement;
@@ -815,19 +801,16 @@ public final class SpdyConnection implements Closeable {
       }
     }
 
-    @Override
-    public void priority(int streamId, int streamDependency, int weight,
+    @Override public void priority(int streamId, int streamDependency, int weight,
       boolean exclusive) {
       // TODO: honor priority.
     }
 
-    @Override
-    public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
+    @Override public void pushPromise(int streamId, int promisedStreamId, List<Header> requestHeaders) {
       pushPromiseLater(promisedStreamId, requestHeaders);
     }
 
-    @Override
-    public void alternateService(int streamId, String origin, ByteString protocol,
+    @Override public void alternateService(int streamId, String origin, ByteString protocol,
       String host, int port, long maxAge) {
       // TODO: register alternate service.
     }
@@ -842,8 +825,7 @@ public final class SpdyConnection implements Closeable {
 
   private void pushPromiseLater(final int streamId, final List<Header> requestHeaders) {
     pushExecutor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, streamId) {
-      @Override
-      public void execute() {
+      @Override public void execute() {
         boolean cancel = pushObserver.onPromise(streamId, requestHeaders);
         try {
           if (cancel) {
@@ -857,8 +839,7 @@ public final class SpdyConnection implements Closeable {
 
   private void pushStreamLater(final SpdyStream associated, final SpdyStream push) {
     pushExecutor.submit(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, push.getId()) {
-      @Override
-      public void execute() {
+      @Override public void execute() {
         SpdyPushObserver streamPushObserver;
         boolean cancel;
         int pushId;
