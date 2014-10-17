@@ -116,16 +116,12 @@ public final class SpdyConnection implements Closeable {
   // Visible for testing
   long bytesLeftInWriteWindow;
 
-    /**
-     * Settings we communicate to the peer.
-     */
+  /** Settings we communicate to the peer. */
   // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
   final Settings okHttpSettings = new Settings();
       // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
 
-    /**
-     * Settings we receive from the peer.
-     */
+  /** Settings we receive from the peer. */
   // TODO: MWS will need to guard on this setting before attempting to push.
   final Settings peerSettings = new Settings();
 
@@ -816,9 +812,7 @@ public final class SpdyConnection implements Closeable {
     }
   }
 
-    /**
-     * Even, positive numbered streams are pushed streams in HTTP/2 and SPDY/3.
-     */
+  /** Even, positive numbered streams are pushed streams in HTTP/2 and SPDY/3. */
   private boolean pushedStream(int streamId) {
     return (protocol == Protocol.HTTP_2 || client) && streamId > 0 && (streamId & 1) == 0;
   }
