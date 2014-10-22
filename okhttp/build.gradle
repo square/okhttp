@@ -1,0 +1,52 @@
+
+description = 'OkHttp'
+dependencies {
+    compile group: 'com.squareup.okio', name: 'okio', version:'0.9.0-LAYER'
+}
+
+
+/*************************************************
+ * Uploading
+ * e.g. > gradle clean build publish
+ ************************************************/
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.allJava
+}
+
+task testJar(type: Jar) {
+    from sourceSets.test.output
+    exclude "**/*Test*"
+}
+
+task testSourceJar(type: Jar) {
+    from sourceSets.test.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            groupId = group
+            artifactId = 'okhttp'
+            version = version
+            from components.java
+
+            artifact sourceJar {
+                classifier "sources"
+            }
+
+            artifact testJar {
+                classifier "test"
+            }
+
+            artifact testSourceJar {
+                classifier "testsources"
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "file://${rootProject.hasProperty("gitRepoHome") ? property("gitRepoHome") : "${System.env.HOME}/.gitRepos"}/${rootProject.hasProperty("org") ? property("org") : ""}/${rootProject.hasProperty("repo") ? property("repo") : ""}/releases"
+        }
+    }
+}

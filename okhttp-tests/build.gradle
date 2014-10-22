@@ -1,0 +1,9 @@
+
+description = 'OkHttp Tests'
+dependencies {
+    compile group: 'com.squareup.okio', name: 'okio', version:'0.9.0-LAYER'
+  compile project(':okhttp')
+  compile project(':okhttp-urlconnection')
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+  testCompile project(':mockwebserver')
+}
