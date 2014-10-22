@@ -1,7 +1,7 @@
 
 description = 'OkHttp'
 dependencies {
-    compile group: 'com.squareup.okio', name: 'okio', version:'0.9.0-LAYER'
+    compile group: 'com.squareup.okio', name: 'okio', version:'0.9.0.2e5e3837.LAYER'
 }
 
 
@@ -28,7 +28,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = group
             artifactId = 'okhttp'
-            version = version
+            version = rootProject.version
             from components.java
 
             artifact sourceJar {

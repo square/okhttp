@@ -30,7 +30,7 @@ publishing {
         mavenJava(MavenPublication) {
             groupId = group
             artifactId = 'mockwebserver'
-            version = version
+            version = rootProject.version
             from components.java
 
             artifact sourceJar {
