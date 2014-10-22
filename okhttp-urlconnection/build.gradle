@@ -1,0 +1,6 @@
+
+description = 'OkHttp URLConnection'
+dependencies {
+  compile project(':okhttp')
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+}

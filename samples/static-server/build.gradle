@@ -1,0 +1,5 @@
+group = 'com.squareup.okhttp.sample'
+description = 'Sample: Static Server'
+dependencies {
+  compile project(':mockwebserver')
+}

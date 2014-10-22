@@ -1,0 +1,20 @@
+
+description = 'Benchmarks'
+dependencies {
+    compile group: 'com.google.caliper', name: 'caliper', version:'1.0-beta-1'
+    compile group: 'com.google.guava', name: 'guava', version:'14.0.1'
+  compile project(':okhttp')
+  compile project(':okhttp-urlconnection')
+  compile project(':mockwebserver')
+    compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.48'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2.2'
+    compile group: 'io.netty', name: 'netty-transport', version:'4.0.15.Final'
+    compile group: 'io.netty', name: 'netty-handler', version:'4.0.15.Final'
+    compile group: 'io.netty', name: 'netty-codec-http', version:'4.0.15.Final'
+    compile group: 'com.jcraft', name: 'jzlib', version:'1.1.2'
+    compile(group: 'org.mortbay.jetty.npn', name: 'npn-boot', version:'1.1.7.v20140316') {
+       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+       Please review and delete this closure when resolved. */
+    }
+}

@@ -1,0 +1,6 @@
+group = 'com.squareup.okhttp.sample'
+description = 'Sample: Crawler'
+dependencies {
+  compile project(':okhttp')
+    compile group: 'org.jsoup', name: 'jsoup', version:'1.7.3'
+}

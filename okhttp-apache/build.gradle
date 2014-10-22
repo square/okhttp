@@ -1,0 +1,12 @@
+
+description = 'OkHttp Apache HttpClient'
+dependencies {
+  compile project(':okhttp')
+  testCompile project(':mockwebserver')
+    testCompile group: 'junit', name: 'junit', version:'4.11'
+    compile(group: 'org.apache.httpcomponents', name: 'httpclient', version:'4.2.2') {
+       /* This dependency was originally in the Maven provided scope, but the project was not of type war.
+       This behavior is not yet supported by Gradle, so this dependency has been converted to a compile dependency.
+       Please review and delete this closure when resolved. */
+    }
+}
