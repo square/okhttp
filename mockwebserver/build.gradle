@@ -1,5 +1,19 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'git-repo'
 
 description = 'MockWebServer'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    maven { url "${System.env.HOME}/.m2/repository" }
+    github("layerhq", "maven-private", "master", "releases")
+    mavenCentral()
+}
+
 dependencies {
   compile project(':okhttp')
     compile group: 'org.bouncycastle', name: 'bcprov-jdk15on', version:'1.48'

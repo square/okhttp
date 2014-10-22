@@ -10,29 +10,10 @@ buildscript {
 
 allprojects {
     group = 'com.squareup.okhttp'
-    version = '2.0.0-LAYER'
+    version = rootProject.version
 }
 
-subprojects {
-    apply plugin: 'java'
-    apply plugin: 'maven'
-    apply plugin: 'maven-publish'
-    apply plugin: 'git-repo'
-
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
-
-    repositories {
-        github("layerhq", "maven-private", "master", "releases")
-        maven { url "${System.env.HOME}/.m2/repository" }
-        mavenLocal()
-        mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        maven { url "http://repo.maven.apache.org/maven2" }
-    }
-}
-
-ext {
+project.ext {
     gitRepoHome = "${System.env.HOME}/.gitRepos"
     org = "layerhq"
     repo = "maven-private"

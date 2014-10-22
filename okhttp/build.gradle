@@ -1,5 +1,19 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
+apply plugin: 'git-repo'
 
 description = 'OkHttp'
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
+
+repositories {
+    maven { url "${System.env.HOME}/.m2/repository" }
+    github("layerhq", "maven-private", "master", "releases")
+    mavenCentral()
+}
+
 dependencies {
     compile group: 'com.squareup.okio', name: 'okio', version:'0.9.0.2e5e3837.LAYER'
 }
