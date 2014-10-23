@@ -8,15 +8,15 @@ buildscript {
     }
 }
 
+apply from: project.file("version.gradle")
+
 allprojects {
     group = 'com.squareup.okhttp'
     version = rootProject.version
 }
 
 project.ext {
-    gitRepoHome = "${System.env.HOME}/.gitRepos"
-    org = "layerhq"
-    repo = "maven-private"
+    gitRepoHome = project.hasProperty("gitRepoHome") ? project.getProperty("gitRepoHome") : "${System.env.HOME}/.gitRepos"
+    org = project.hasProperty("org") ? project.getProperty("org") : "layerhq"
+    repo = project.hasProperty("repo") ? project.getProperty("repo") : "maven-private"
 }
-
-apply from: project.file("version.gradle")
