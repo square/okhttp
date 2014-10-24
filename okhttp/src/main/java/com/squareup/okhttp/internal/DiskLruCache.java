@@ -223,7 +223,6 @@ public final class DiskLruCache implements Closeable {
       try {
         cache.readJournal();
         cache.processJournal();
-        cache.journalWriter = Okio.buffer(Okio.appendingSink(cache.journalFile));
         return cache;
       } catch (IOException journalIsCorrupt) {
         Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
@@ -266,6 +265,13 @@ public final class DiskLruCache implements Closeable {
         }
       }
       redundantOpCount = lineCount - lruEntries.size();
+
+      // If we ended on a truncated line, rebuild the journal before appending to it.
+      if (!source.exhausted()) {
+        rebuildJournal();
+      } else {
+        journalWriter = Okio.buffer(Okio.appendingSink(journalFile));
+      }
     } finally {
       Util.closeQuietly(source);
     }
