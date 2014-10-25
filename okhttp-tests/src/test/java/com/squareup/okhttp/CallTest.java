@@ -48,6 +48,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
@@ -75,6 +76,7 @@ public final class CallTest {
   private MockWebServer server2 = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
+  private TestLogHandler logHandler = new TestLogHandler();
   private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
@@ -85,6 +87,7 @@ public final class CallTest {
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
     defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+    Logger.getLogger(OkHttpClient.class.getName()).addHandler(logHandler);
   }
 
   @After public void tearDown() throws Exception {
@@ -92,6 +95,7 @@ public final class CallTest {
     server2.shutdown();
     cache.delete();
     Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
+    Logger.getLogger(OkHttpClient.class.getName()).removeHandler(logHandler);
   }
 
   @Test public void get() throws Exception {
@@ -458,23 +462,13 @@ public final class CallTest {
     assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
   }
 
-  @Test public void onResponseThrowsIsHandledByUncaughtExceptionHandler() throws Exception {
+  @Test public void exceptionThrownByOnResponseIsRedactedAndLogged() throws Exception {
     server.enqueue(new MockResponse());
     server.play();
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.getUrl("/secret"))
         .build();
-
-    final AtomicReference<Throwable> uncaughtExceptionRef = new AtomicReference<>();
-    final CountDownLatch latch = new CountDownLatch(1);
-
-    Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-      @Override public void uncaughtException(Thread thread, Throwable throwable) {
-        uncaughtExceptionRef.set(throwable);
-        latch.countDown();
-      }
-    });
 
     client.newCall(request).enqueue(new Callback() {
       @Override public void onFailure(Request request, IOException e) {
@@ -486,11 +480,8 @@ public final class CallTest {
       }
     });
 
-    latch.await();
-    Throwable uncaughtException = uncaughtExceptionRef.get();
-    assertEquals(RuntimeException.class, uncaughtException.getClass());
-    assertEquals(IOException.class, uncaughtException.getCause().getClass());
-    assertEquals("a", uncaughtException.getCause().getMessage());
+    assertEquals("INFO: Callback failure for call to " + server.getUrl("/") + "...",
+        logHandler.take());
   }
 
   @Test public void connectionPooling() throws Exception {
