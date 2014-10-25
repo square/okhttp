@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
@@ -327,8 +328,8 @@ public class Platform {
         JettyNegoProvider provider =
             (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
         if (!provider.unsupported && provider.selected == null) {
-          Logger logger = Logger.getLogger("com.squareup.okhttp.OkHttpClient");
-          logger.log(Level.INFO, "NPN/ALPN callback dropped: SPDY and HTTP/2 are disabled. "
+          Logger.getLogger(OkHttpClient.class.getName()).log(Level.INFO,
+              "NPN/ALPN callback dropped: SPDY and HTTP/2 are disabled. "
                   + "Is npn-boot or alpn-boot on the boot class path?");
           return null;
         }

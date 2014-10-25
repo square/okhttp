@@ -22,7 +22,11 @@ import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
+import java.net.URL;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import okio.BufferedSink;
 import okio.BufferedSource;
 
@@ -159,11 +163,30 @@ public class Call {
           responseCallback.onResponse(response);
         }
       } catch (IOException e) {
-        if (signalledCallback) throw new RuntimeException(e); // Do not signal the callback twice!
-        responseCallback.onFailure(request, e);
+        if (signalledCallback) {
+          // Do not signal the callback twice!
+          Logger.getLogger(OkHttpClient.class.getName())
+              .log(Level.INFO, "Callback failure for " + toLoggableString(), e);
+        } else {
+          responseCallback.onFailure(request, e);
+        }
       } finally {
         client.getDispatcher().finished(this);
       }
+    }
+  }
+
+  /**
+   * Returns a string that describes this call. Doesn't include a full URL as that might contain
+   * sensitive information.
+   */
+  private String toLoggableString() {
+    String string = canceled ? "canceled call" : "call";
+    try {
+      String redactedUrl = new URL(request.url(), "/...").toString();
+      return string + " to " + redactedUrl;
+    } catch (MalformedURLException e) {
+      return string;
     }
   }
 
