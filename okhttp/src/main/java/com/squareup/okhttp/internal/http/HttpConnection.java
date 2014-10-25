@@ -388,8 +388,10 @@ public final class HttpConnection {
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
     protected final void cacheWrite(Buffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        // TODO source.copyTo(cacheBody, byteCount);
-        cacheBody.write(source.clone(), byteCount);
+        // TODO source.copyTo(cacheBody, source.size() - byteCount, byteCount)
+        Buffer sourceCopy = source.clone();
+        sourceCopy.skip(sourceCopy.size() - byteCount);
+        cacheBody.write(sourceCopy, byteCount);
       }
     }
 

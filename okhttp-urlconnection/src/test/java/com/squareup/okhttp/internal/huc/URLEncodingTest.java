@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.huc.CacheAdapter;
 import java.io.IOException;
 import java.net.CacheResponse;
 import java.net.HttpURLConnection;
