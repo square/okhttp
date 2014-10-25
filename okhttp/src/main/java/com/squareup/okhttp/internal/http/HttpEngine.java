@@ -783,7 +783,9 @@ public final class HttpEngine {
       case HTTP_TEMP_REDIRECT:
         // "If the 307 or 308 status code is received in response to a request other than GET
         // or HEAD, the user agent MUST NOT automatically redirect the request"
-        if (!userRequest.method().equals("GET") && !userRequest.method().equals("HEAD")) {
+        if (!userRequest.method().equals("GET") && //
+            !userRequest.method().equals("HEAD") && //
+            !userRequest.method().equals("POST")) {
             return null;
         }
         // fall-through
