@@ -24,7 +24,6 @@ import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -734,18 +733,19 @@ public final class SpdyConnection implements Closeable {
     @Override public void goAway(int lastGoodStreamId, ErrorCode errorCode, ByteString debugData) {
       if (debugData.size() > 0) { // TODO: log the debugData
       }
-      synchronized (SpdyConnection.this) {
-        shutdown = true;
 
-        // Fail all streams created after the last good stream ID.
-        for (Iterator<Map.Entry<Integer, SpdyStream>> i = streams.entrySet().iterator();
-            i.hasNext(); ) {
-          Map.Entry<Integer, SpdyStream> entry = i.next();
-          int streamId = entry.getKey();
-          if (streamId > lastGoodStreamId && entry.getValue().isLocallyInitiated()) {
-            entry.getValue().receiveRstStream(ErrorCode.REFUSED_STREAM);
-            i.remove();
-          }
+      // Copy the streams first. We don't want to hold a lock when we call receiveRstStream().
+      SpdyStream[] streamsCopy;
+      synchronized (SpdyConnection.this) {
+        streamsCopy = streams.values().toArray(new SpdyStream[streams.size()]);
+        shutdown = true;
+      }
+
+      // Fail all streams created after the last good stream ID.
+      for (SpdyStream spdyStream : streamsCopy) {
+        if (spdyStream.getId() > lastGoodStreamId && spdyStream.isLocallyInitiated()) {
+          spdyStream.receiveRstStream(ErrorCode.REFUSED_STREAM);
+          removeStream(spdyStream.getId());
         }
       }
     }
