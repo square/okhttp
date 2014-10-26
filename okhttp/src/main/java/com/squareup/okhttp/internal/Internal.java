@@ -24,6 +24,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
+import java.util.logging.Logger;
 
 /**
  * Escalate internal APIs in {@code com.squareup.okhttp} so they can be used
@@ -31,6 +32,7 @@ import java.io.IOException;
  * interface is in {@link com.squareup.okhttp.OkHttpClient}.
  */
 public abstract class Internal {
+  public static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
   public static Internal instance;
 
   public abstract Transport newTransport(Connection connection, HttpEngine httpEngine)

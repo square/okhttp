@@ -48,7 +48,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
@@ -62,6 +61,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.Internal.logger;
 import static java.lang.Thread.UncaughtExceptionHandler;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
@@ -87,7 +87,7 @@ public final class CallTest {
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
     defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-    Logger.getLogger(OkHttpClient.class.getName()).addHandler(logHandler);
+    logger.addHandler(logHandler);
   }
 
   @After public void tearDown() throws Exception {
@@ -95,7 +95,7 @@ public final class CallTest {
     server2.shutdown();
     cache.delete();
     Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
-    Logger.getLogger(OkHttpClient.class.getName()).removeHandler(logHandler);
+    logger.removeHandler(logHandler);
   }
 
   @Test public void get() throws Exception {
