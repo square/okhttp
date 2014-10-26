@@ -126,6 +126,10 @@ public class Call {
     if (engine != null) engine.disconnect();
   }
 
+  public boolean isCanceled() {
+    return canceled;
+  }
+
   final class AsyncCall extends NamedRunnable {
     private final Callback responseCallback;
 
