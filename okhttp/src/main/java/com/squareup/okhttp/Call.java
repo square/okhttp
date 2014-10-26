@@ -26,10 +26,10 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import okio.BufferedSink;
 import okio.BufferedSource;
 
+import static com.squareup.okhttp.internal.Internal.logger;
 import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
 
 /**
@@ -169,8 +169,7 @@ public class Call {
       } catch (IOException e) {
         if (signalledCallback) {
           // Do not signal the callback twice!
-          Logger.getLogger(OkHttpClient.class.getName())
-              .log(Level.INFO, "Callback failure for " + toLoggableString(), e);
+          logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
         } else {
           responseCallback.onFailure(request, e);
         }
