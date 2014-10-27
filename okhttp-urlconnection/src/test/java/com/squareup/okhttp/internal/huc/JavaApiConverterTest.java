@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.Handshake;
@@ -72,9 +71,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/**
- * Tests for {@link JavaApiConverter}.
- */
 public class JavaApiConverterTest {
 
   // $ openssl req -x509 -nodes -days 36500 -subj '/CN=localhost' -config ./cert.cnf \
@@ -214,16 +210,14 @@ public class JavaApiConverterTest {
     URI uri = new URI("http://foo/bar");
     Request request = new Request.Builder().url(uri.toURL()).build();
     CacheResponse cacheResponse = new CacheResponse() {
-      @Override
-      public Map<String, List<String>> getHeaders() throws IOException {
+      @Override public Map<String, List<String>> getHeaders() throws IOException {
         Map<String, List<String>> headers = new HashMap<>();
         headers.put(null, Collections.singletonList(statusLine));
         headers.put("xyzzy", Arrays.asList("bar", "baz"));
         return headers;
       }
 
-      @Override
-      public InputStream getBody() throws IOException {
+      @Override public InputStream getBody() throws IOException {
         return new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
       }
     };
@@ -249,41 +243,34 @@ public class JavaApiConverterTest {
     URI uri = new URI("https://foo/bar");
     Request request = new Request.Builder().url(uri.toURL()).build();
     SecureCacheResponse cacheResponse = new SecureCacheResponse() {
-      @Override
-      public Map<String, List<String>> getHeaders() throws IOException {
+      @Override public Map<String, List<String>> getHeaders() throws IOException {
         Map<String, List<String>> headers = new HashMap<>();
         headers.put(null, Collections.singletonList(statusLine));
         headers.put("xyzzy", Arrays.asList("bar", "baz"));
         return headers;
       }
 
-      @Override
-      public InputStream getBody() throws IOException {
+      @Override public InputStream getBody() throws IOException {
         return new ByteArrayInputStream("HelloWorld".getBytes(StandardCharsets.UTF_8));
       }
 
-      @Override
-      public String getCipherSuite() {
+      @Override public String getCipherSuite() {
         return "SuperSecure";
       }
 
-      @Override
-      public List<Certificate> getLocalCertificateChain() {
+      @Override public List<Certificate> getLocalCertificateChain() {
         return localCertificates;
       }
 
-      @Override
-      public List<Certificate> getServerCertificateChain() throws SSLPeerUnverifiedException {
+      @Override public List<Certificate> getServerCertificateChain() throws SSLPeerUnverifiedException {
         return serverCertificates;
       }
 
-      @Override
-      public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
+      @Override public Principal getPeerPrincipal() throws SSLPeerUnverifiedException {
         return serverPrincipal;
       }
 
-      @Override
-      public Principal getLocalPrincipal() {
+      @Override public Principal getLocalPrincipal() {
         return localPrincipal;
       }
     };
@@ -725,15 +712,13 @@ public class JavaApiConverterTest {
       this.client = client;
     }
 
-    @Override
-    public HttpURLConnection open(URL serverUrl) {
+    @Override public HttpURLConnection open(URL serverUrl) {
       return new OkUrlFactory(client).open(serverUrl);
     }
   }
 
   private static class JavaHttpURLConnectionFactory implements HttpURLConnectionFactory {
-    @Override
-    public HttpURLConnection open(URL serverUrl) throws IOException {
+    @Override public HttpURLConnection open(URL serverUrl) throws IOException {
       return (HttpURLConnection) serverUrl.openConnection();
     }
   }

@@ -733,8 +733,8 @@ public final class HttpEngine {
     for (int i = 0; i < cachedHeaders.size(); i++) {
       String fieldName = cachedHeaders.name(i);
       String value = cachedHeaders.value(i);
-      if ("Warning".equals(fieldName) && value.startsWith("1")) {
-        continue; // drop 100-level freshness warnings
+      if ("Warning".equalsIgnoreCase(fieldName) && value.startsWith("1")) {
+        continue; // Drop 100-level freshness warnings.
       }
       if (!OkHeaders.isEndToEnd(fieldName) || networkHeaders.get(fieldName) == null) {
         result.add(fieldName, value);
@@ -743,6 +743,9 @@ public final class HttpEngine {
 
     for (int i = 0; i < networkHeaders.size(); i++) {
       String fieldName = networkHeaders.name(i);
+      if ("Content-Length".equalsIgnoreCase(fieldName)) {
+        continue; // Ignore content-length headers of validating responses.
+      }
       if (OkHeaders.isEndToEnd(fieldName)) {
         result.add(fieldName, networkHeaders.value(i));
       }

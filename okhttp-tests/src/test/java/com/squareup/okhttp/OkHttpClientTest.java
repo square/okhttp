@@ -21,11 +21,17 @@ import com.squareup.okhttp.internal.http.RecordingProxySelector;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.Authenticator;
+import java.net.CacheRequest;
+import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
+import java.net.URI;
+import java.net.URLConnection;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import javax.net.SocketFactory;
 import org.junit.After;
 import org.junit.Test;
@@ -95,9 +101,17 @@ public final class OkHttpClientTest {
     assertNull(client.getCache());
   }
 
-  @Test public void copyWithDefaultsDoesNotHonorGlobalResponseCache() throws Exception {
-    ResponseCache responseCache = new AbstractResponseCache();
-    ResponseCache.setDefault(responseCache);
+  @Test public void copyWithDefaultsDoesNotHonorGlobalResponseCache() {
+    ResponseCache.setDefault(new ResponseCache() {
+      @Override public CacheResponse get(URI uri, String requestMethod,
+          Map<String, List<String>> requestHeaders) throws IOException {
+        throw new AssertionError();
+      }
+
+      @Override public CacheRequest put(URI uri, URLConnection connection) {
+        throw new AssertionError();
+      }
+    });
 
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
     assertNull(client.internalCache());
