@@ -243,7 +243,7 @@ public final class RouteSelector {
     String socketHost;
     int socketPort;
     if (proxy.type() == Proxy.Type.DIRECT) {
-      socketHost = uri.getHost();
+      socketHost = address.getUriHost();
       socketPort = getEffectivePort(uri);
     } else {
       SocketAddress proxyAddress = proxy.address();
