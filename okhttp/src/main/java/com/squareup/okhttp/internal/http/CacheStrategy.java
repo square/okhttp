@@ -50,17 +50,8 @@ public final class CacheStrategy {
       return false;
     }
 
-    // Responses to authorized requests aren't cacheable unless they include
-    // a 'public', 'must-revalidate' or 's-maxage' directive.
-    CacheControl responseCaching = response.cacheControl();
-    if (request.header("Authorization") != null
-        && !responseCaching.isPublic()
-        && !responseCaching.mustRevalidate()
-        && responseCaching.sMaxAgeSeconds() == -1) {
-      return false;
-    }
-
     // A 'no-store' directive on request or response prevents the response from being cached.
+    CacheControl responseCaching = response.cacheControl();
     CacheControl requestCaching = request.cacheControl();
     if (responseCaching.noStore() || requestCaching.noStore()) {
       return false;
