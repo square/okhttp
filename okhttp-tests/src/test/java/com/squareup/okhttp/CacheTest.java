@@ -825,6 +825,28 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
   }
 
+  @Test public void clientSideNoStore() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("B"));
+
+    Request request1 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .cacheControl(new CacheControl.Builder().noStore().build())
+        .build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("A", response1.body().string());
+
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+    Response response2 = client.newCall(request2).execute();
+    assertEquals("B", response2.body().string());
+  }
+
   @Test public void nonIdentityEncodingAndConditionalCache() throws Exception {
     assertNonIdentityEncodingCached(
         new MockResponse().addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
@@ -952,6 +974,27 @@ public final class CacheTest {
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .header("Cache-Control", "max-stale=180")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("A", response.body().string());
+    assertEquals("110 HttpURLConnection \"Response is stale\"", response.header("Warning"));
+  }
+
+  @Test public void requestMaxStaleDirectiveWithNoValue() throws IOException {
+    // Add a stale response to the cache.
+    server.enqueue(new MockResponse()
+        .setBody("A")
+        .addHeader("Cache-Control: max-age=120")
+        .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES)));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+
+    assertEquals("A", get(server.getUrl("/")).body().string());
+
+    // With max-stale, we'll return that stale response.
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Cache-Control", "max-stale")
         .build();
     Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());

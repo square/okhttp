@@ -192,17 +192,17 @@ public final class CacheControl {
         } else if ("no-store".equalsIgnoreCase(directive)) {
           noStore = true;
         } else if ("max-age".equalsIgnoreCase(directive)) {
-          maxAgeSeconds = HeaderParser.parseSeconds(parameter);
+          maxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
         } else if ("s-maxage".equalsIgnoreCase(directive)) {
-          sMaxAgeSeconds = HeaderParser.parseSeconds(parameter);
+          sMaxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
         } else if ("public".equalsIgnoreCase(directive)) {
           isPublic = true;
         } else if ("must-revalidate".equalsIgnoreCase(directive)) {
           mustRevalidate = true;
         } else if ("max-stale".equalsIgnoreCase(directive)) {
-          maxStaleSeconds = HeaderParser.parseSeconds(parameter);
+          maxStaleSeconds = HeaderParser.parseSeconds(parameter, Integer.MAX_VALUE);
         } else if ("min-fresh".equalsIgnoreCase(directive)) {
-          minFreshSeconds = HeaderParser.parseSeconds(parameter);
+          minFreshSeconds = HeaderParser.parseSeconds(parameter, -1);
         } else if ("only-if-cached".equalsIgnoreCase(directive)) {
           onlyIfCached = true;
         } else if ("no-transform".equalsIgnoreCase(directive)) {

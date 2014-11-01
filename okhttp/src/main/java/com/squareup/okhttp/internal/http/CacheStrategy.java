@@ -60,7 +60,9 @@ public final class CacheStrategy {
       return false;
     }
 
-    if (responseCaching.noStore()) {
+    // A 'no-store' directive on request or response prevents the response from being cached.
+    CacheControl requestCaching = request.cacheControl();
+    if (responseCaching.noStore() || requestCaching.noStore()) {
       return false;
     }
 
@@ -124,7 +126,7 @@ public final class CacheStrategy {
           } else if ("ETag".equalsIgnoreCase(fieldName)) {
             etag = value;
           } else if ("Age".equalsIgnoreCase(fieldName)) {
-            ageSeconds = HeaderParser.parseSeconds(value);
+            ageSeconds = HeaderParser.parseSeconds(value, -1);
           } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
             sentRequestMillis = Long.parseLong(value);
           } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
