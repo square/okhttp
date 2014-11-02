@@ -46,7 +46,8 @@ public class HttpOverHttp20Draft14Test extends HttpOverSpdyTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
+    assertContains(request.getHeaders(), hostHeader + ": "
+        + server.getHostName() + ":" + server.getPort());
 
     RecordedRequest pushedRequest = server.takeRequest();
     assertEquals("GET /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
@@ -68,7 +69,8 @@ public class HttpOverHttp20Draft14Test extends HttpOverSpdyTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
+    assertContains(request.getHeaders(), hostHeader + ": "
+        + server.getHostName() + ":" + server.getPort());
 
     RecordedRequest pushedRequest = server.takeRequest();
     assertEquals("HEAD /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
