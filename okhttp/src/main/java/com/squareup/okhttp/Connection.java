@@ -141,7 +141,7 @@ public final class Connection {
     if (connected) throw new IllegalStateException("already connected");
 
     if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
-      socket = route.address.socketFactory.createSocket();
+      socket = route.connectionConfiguration.socketFactory.createSocket();
     } else {
       socket = new Socket(route.proxy);
     }
@@ -149,7 +149,7 @@ public final class Connection {
     socket.setSoTimeout(readTimeout);
     Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
 
-    if (route.address.sslSocketFactory != null) {
+    if (route.connectionConfiguration.isTls()) {
       upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
@@ -224,7 +224,7 @@ public final class Connection {
     }
 
     // Create the wrapper over connected socket.
-    socket = route.address.sslSocketFactory
+    socket = route.connectionConfiguration.sslSocketFactory
         .createSocket(socket, route.address.uriHost, route.address.uriPort, true /* autoClose */);
     SSLSocket sslSocket = (SSLSocket) socket;
 
@@ -235,12 +235,13 @@ public final class Connection {
     sslSocket.startHandshake();
 
     // Verify that the socket's certificates are acceptable for the target host.
-    if (!route.address.hostnameVerifier.verify(route.address.uriHost, sslSocket.getSession())) {
+    if (!route.connectionConfiguration.hostnameVerifier.verify(
+        route.address.uriHost, sslSocket.getSession())) {
       throw new IOException("Hostname '" + route.address.uriHost + "' was not verified");
     }
 
     // Check that the certificate pinner is satisfied by the certificates presented.
-    route.address.certificatePinner.check(route.address.uriHost,
+    route.connectionConfiguration.certificatePinner.check(route.address.uriHost,
         sslSocket.getSession().getPeerCertificates());
 
     handshake = Handshake.get(sslSocket.getSession());
@@ -406,7 +407,7 @@ public final class Connection {
 
         case HTTP_PROXY_AUTH:
           request = OkHeaders.processAuthHeader(
-              route.address.authenticator, response, route.proxy);
+              route.connectionConfiguration.authenticator, response, route.proxy);
           if (request != null) continue;
           throw new IOException("Failed to authenticate with proxy");
 

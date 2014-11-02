@@ -780,7 +780,8 @@ public final class HttpEngine {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        return OkHeaders.processAuthHeader(client.getAuthenticator(), userResponse, selectedProxy);
+        return OkHeaders.processAuthHeader(route.getConnectionConfiguration().authenticator(),
+            userResponse, selectedProxy);
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:

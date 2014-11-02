@@ -18,9 +18,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Util;
 import java.net.Proxy;
 import java.util.List;
-import javax.net.SocketFactory;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.equal;
 
@@ -38,31 +35,22 @@ public final class Address {
   final Proxy proxy;
   final String uriHost;
   final int uriPort;
-  final SocketFactory socketFactory;
-  final SSLSocketFactory sslSocketFactory;
-  final HostnameVerifier hostnameVerifier;
-  final CertificatePinner certificatePinner;
-  final Authenticator authenticator;
-  final List<Protocol> protocols;
   final List<ConnectionConfiguration> connectionConfigurations;
 
-  public Address(String uriHost, int uriPort, SocketFactory socketFactory,
-      SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionConfiguration> connectionConfigurations) {
-    if (uriHost == null) throw new NullPointerException("uriHost == null");
-    if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
-    if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
-    if (protocols == null) throw new IllegalArgumentException("protocols == null");
+  public Address(String uriHost, int uriPort, Proxy proxy,
+      List<ConnectionConfiguration> connectionConfigurations) {
+    if (uriHost == null) {
+      throw new NullPointerException("uriHost == null");
+    }
+    if (uriPort <= 0) {
+      throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
+    }
+    if (connectionConfigurations.isEmpty()) {
+      throw new IllegalArgumentException("connectionConfigurations.isEmpty()");
+    }
     this.proxy = proxy;
     this.uriHost = uriHost;
     this.uriPort = uriPort;
-    this.socketFactory = socketFactory;
-    this.sslSocketFactory = sslSocketFactory;
-    this.hostnameVerifier = hostnameVerifier;
-    this.certificatePinner = certificatePinner;
-    this.authenticator = authenticator;
-    this.protocols = Util.immutableList(protocols);
     this.connectionConfigurations = Util.immutableList(connectionConfigurations);
   }
 
@@ -77,42 +65,6 @@ public final class Address {
    */
   public int getUriPort() {
     return uriPort;
-  }
-
-  /** Returns the socket factory for new connections. */
-  public SocketFactory getSocketFactory() {
-    return socketFactory;
-  }
-
-  /**
-   * Returns the SSL socket factory, or null if this is not an HTTPS
-   * address.
-   */
-  public SSLSocketFactory getSslSocketFactory() {
-    return sslSocketFactory;
-  }
-
-  /**
-   * Returns the hostname verifier, or null if this is not an HTTPS
-   * address.
-   */
-  public HostnameVerifier getHostnameVerifier() {
-    return hostnameVerifier;
-  }
-
-  /**
-   * Returns the client's authenticator. This method never returns null.
-   */
-  public Authenticator getAuthenticator() {
-    return authenticator;
-  }
-
-  /**
-   * Returns the protocols the client supports. This method always returns a
-   * non-null list that contains minimally {@link Protocol#HTTP_1_1}.
-   */
-  public List<Protocol> getProtocols() {
-    return protocols;
   }
 
   public List<ConnectionConfiguration> getConnectionConfigurations() {
@@ -133,11 +85,7 @@ public final class Address {
       return equal(this.proxy, that.proxy)
           && this.uriHost.equals(that.uriHost)
           && this.uriPort == that.uriPort
-          && equal(this.sslSocketFactory, that.sslSocketFactory)
-          && equal(this.hostnameVerifier, that.hostnameVerifier)
-          && equal(this.certificatePinner, that.certificatePinner)
-          && equal(this.authenticator, that.authenticator)
-          && equal(this.protocols, that.protocols);
+          && this.connectionConfigurations.equals(that.connectionConfigurations);
     }
     return false;
   }
@@ -146,12 +94,8 @@ public final class Address {
     int result = 17;
     result = 31 * result + uriHost.hashCode();
     result = 31 * result + uriPort;
-    result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
-    result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
-    result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
-    result = 31 * result + authenticator.hashCode();
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
-    result = 31 * result + protocols.hashCode();
+    result = 31 * result + connectionConfigurations.hashCode();
     return result;
   }
 }

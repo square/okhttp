@@ -16,7 +16,6 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
-import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionConfiguration;
 import com.squareup.okhttp.ConnectionPool;
@@ -39,10 +38,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
-import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -100,19 +97,21 @@ public final class RouteSelector {
       throw new UnknownHostException(request.url().toString());
     }
 
-    SSLSocketFactory sslSocketFactory = null;
-    HostnameVerifier hostnameVerifier = null;
-    CertificatePinner certificatePinner = null;
-    if (request.isHttps()) {
-      sslSocketFactory = client.getSslSocketFactory();
-      hostnameVerifier = client.getHostnameVerifier();
-      certificatePinner = client.getCertificatePinner();
+    List<ConnectionConfiguration> availableConfigurations = client.getConnectionConfigurations();
+    List<ConnectionConfiguration> applicableConfigurations = new ArrayList<>();
+    for (ConnectionConfiguration connectionConfiguration : availableConfigurations) {
+      if (connectionConfiguration.isTls() == request.isHttps()) {
+        applicableConfigurations.add(connectionConfiguration);
+      }
     }
 
-    Address address = new Address(uriHost, getEffectivePort(request.url()),
-        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
-        client.getAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionConfigurations());
+    if (applicableConfigurations.isEmpty()) {
+      throw new SocketException("No route to " + uriHost
+          + "; exhausted connection configurations: " + availableConfigurations);
+    }
+
+    Address address = new Address(uriHost, getEffectivePort(request.url()), client.getProxy(),
+        applicableConfigurations);
 
     return new RouteSelector(address, request.uri(), client, request);
   }
@@ -281,12 +280,7 @@ public final class RouteSelector {
 
   /** Prepares the connection configurations to attempt. */
   private void resetConnectionConfigurations() {
-    connectionConfigurations = new ArrayList<>();
-    for (ConnectionConfiguration configuration : address.getConnectionConfigurations()) {
-      if (request.isHttps() == configuration.isTls()) {
-        connectionConfigurations.add(configuration);
-      }
-    }
+    connectionConfigurations = address.getConnectionConfigurations();
     nextConfigurationIndex = 0;
   }
 
