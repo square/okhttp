@@ -80,7 +80,6 @@ public abstract class HttpOverSpdyTest {
 
   private static final SSLContext sslContext = SslContextBuilder.localhost();
   protected final MockWebServer server = new MockWebServer();
-  protected final String hostName = server.getHostName();
   protected final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
   protected HttpURLConnection connection;
   protected Cache cache;
@@ -113,7 +112,8 @@ public abstract class HttpOverSpdyTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": " + hostName + ":" + server.getPort());
+    assertContains(request.getHeaders(), hostHeader + ": "
+        + server.getHostName() + ":" + server.getPort());
   }
 
   @Test public void emptyResponse() throws IOException {
@@ -406,11 +406,12 @@ public abstract class HttpOverSpdyTest {
   @Test public void acceptAndTransmitCookies() throws Exception {
     CookieManager cookieManager = new CookieManager();
     client.client().setCookieHandler(cookieManager);
-    server.enqueue(
-        new MockResponse().addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
-            .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
     server.play();
+    server.enqueue(new MockResponse()
+        .addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     URL url = server.getUrl("/");
     assertContent("A", client.open(url), Integer.MAX_VALUE);
