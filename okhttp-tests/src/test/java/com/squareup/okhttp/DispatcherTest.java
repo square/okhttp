@@ -112,15 +112,6 @@ public final class DispatcherTest {
     executor.assertJobs("http://a/1");
   }
 
-  @Test public void cancelingReadyJobPreventsItFromStarting() throws Exception {
-    dispatcher.setMaxRequestsPerHost(1);
-    client.newCall(newRequest("http://a/1")).enqueue(callback);
-    client.newCall(newRequest("http://a/2", "tag1")).enqueue(callback);
-    dispatcher.cancel("tag1");
-    executor.finishJob("http://a/1");
-    executor.assertJobs();
-  }
-
   @Test public void cancelingRunningJobTakesNoEffectUntilJobFinishes() throws Exception {
     dispatcher.setMaxRequests(1);
     client.newCall(newRequest("http://a/1", "tag1")).enqueue(callback);
