@@ -115,8 +115,10 @@ public final class Dispatcher {
 
   /** Cancel all calls with the tag {@code tag}. */
   public synchronized void cancel(Object tag) {
-    for (Iterator<AsyncCall> i = readyCalls.iterator(); i.hasNext(); ) {
-      if (Util.equal(tag, i.next().tag())) i.remove();
+    for (AsyncCall call : readyCalls) {
+      if (Util.equal(tag, call.tag())) {
+        call.cancel();
+      }
     }
 
     for (AsyncCall call : runningCalls) {
