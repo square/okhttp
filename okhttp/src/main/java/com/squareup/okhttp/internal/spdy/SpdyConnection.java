@@ -695,7 +695,7 @@ public final class SpdyConnection implements Closeable {
         }
       }
       if (streamsToNotify != null && delta != 0) {
-        for (SpdyStream stream : streams.values()) {
+        for (SpdyStream stream : streamsToNotify) {
           synchronized (stream) {
             stream.addBytesToWriteWindow(delta);
           }
