@@ -21,15 +21,15 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
+import okio.BufferedSink;
+import okio.BufferedSource;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
-import java.util.logging.Level;
-import okio.BufferedSink;
-import okio.BufferedSource;
+import java.util.concurrent.Future;
 
-import static com.squareup.okhttp.internal.Internal.logger;
 import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
 
 /**
@@ -48,6 +48,7 @@ public class Call {
   /** The request; possibly a consequence of redirects or auth headers. */
   private Request request;
   HttpEngine engine;
+  private AsyncCall executedAsyncCall;
 
   protected Call(OkHttpClient client, Request request) {
     // Copy the client. Otherwise changes (socket factory, redirect policy,
@@ -114,7 +115,8 @@ public class Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    client.getDispatcher().enqueue(new AsyncCall(responseCallback));
+    executedAsyncCall = new AsyncCall(responseCallback);
+    client.getDispatcher().enqueue(executedAsyncCall);
   }
 
   /**
@@ -124,6 +126,9 @@ public class Call {
   public void cancel() {
     canceled = true;
     if (engine != null) engine.disconnect();
+    if(executedAsyncCall != null && executedAsyncCall.future()  != null) {
+      executedAsyncCall.future().cancel(true);
+    }
   }
 
   public boolean isCanceled() {
@@ -136,6 +141,14 @@ public class Call {
     private AsyncCall(Callback responseCallback) {
       super("OkHttp %s", request.urlString());
       this.responseCallback = responseCallback;
+    }
+
+    private Future future;
+    Future future() {
+      return this.future;
+    }
+    void future(Future<?> future) {
+      this.future = future;
     }
 
     String host() {
@@ -163,22 +176,28 @@ public class Call {
       try {
         Response response = getResponse();
         if (canceled) {
-          signalledCallback = true;
+//          signalledCallback = true;
           responseCallback.onFailure(request, new IOException("Canceled"));
         } else {
-          signalledCallback = true;
+//          signalledCallback = true;
           engine.releaseConnection();
           responseCallback.onResponse(response);
         }
-      } catch (IOException e) {
-        if (signalledCallback) {
+      } catch (Exception e) {
+//        if (signalledCallback) {
           // Do not signal the callback twice!
-          logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
-        } else {
+//          e.printStackTrace();
+//          logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
+//        } else {
           responseCallback.onFailure(request, e);
-        }
+//        }
       } finally {
-        client.getDispatcher().finished(this);
+          try {
+              engine.releaseConnection();
+          } catch (IOException e) {
+              e.printStackTrace();
+          }
+          client.getDispatcher().finished(this);
       }
     }
   }

@@ -15,61 +15,35 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.RecordingHostnameVerifier;
-import com.squareup.okhttp.internal.RecordingOkAuthenticator;
-import com.squareup.okhttp.internal.SingleInetAddressNetwork;
-import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.*;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
-import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.SocketPolicy;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.CookieManager;
-import java.net.HttpCookie;
-import java.net.HttpURLConnection;
-import java.net.SocketException;
-import java.net.URL;
-import java.security.cert.Certificate;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLProtocolException;
-import okio.Buffer;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.GzipSink;
-import okio.Okio;
+import com.squareup.okhttp.mockwebserver.*;
+import okio.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLProtocolException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.*;
+import java.security.cert.Certificate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static com.squareup.okhttp.internal.Internal.logger;
 import static java.lang.Thread.UncaughtExceptionHandler;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public final class CallTest {
   private MockWebServer server = new MockWebServer();
@@ -471,11 +445,11 @@ public final class CallTest {
         .build();
 
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Request request, Exception e) {
         fail();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws Exception {
         throw new IOException("a");
       }
     });
@@ -531,11 +505,11 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Request request, Exception e) {
         throw new AssertionError();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws Exception {
         InputStream bytes = response.body().byteStream();
         assertEquals('a', bytes.read());
         assertEquals('b', bytes.read());
@@ -1375,12 +1349,12 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(request);
     call.enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Request request, Exception e) {
         failureRef.set(true);
         latch.countDown();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws Exception {
         call.cancel();
         try {
           bodyRef.set(response.body().string());
@@ -1451,11 +1425,11 @@ public final class CallTest {
 
     final BlockingQueue<Response> responseRef = new SynchronousQueue<>();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Request request, Exception e) {
         throw new AssertionError();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Response response) throws Exception {
         try {
           responseRef.put(response);
         } catch (InterruptedException e) {
