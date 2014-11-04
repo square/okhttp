@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import java.io.IOException;
-
 public interface Callback {
   /**
    * Called when the request could not be executed due to cancellation, a
@@ -24,7 +22,7 @@ public interface Callback {
    * exchange, it is possible that the remote server accepted the request
    * before the failure.
    */
-  void onFailure(Request request, IOException e);
+  void onFailure(Request request, Exception e);
 
   /**
    * Called when the HTTP response was successfully returned by the remote
@@ -38,5 +36,5 @@ public interface Callback {
    * success: {@code response} may still indicate an unhappy HTTP response
    * code like 404 or 500.
    */
-  void onResponse(Response response) throws IOException;
+  void onResponse(Response response) throws Exception;
 }

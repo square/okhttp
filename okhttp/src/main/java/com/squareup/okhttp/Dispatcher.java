@@ -21,10 +21,7 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Policy on when async requests are executed.
@@ -107,7 +104,8 @@ public final class Dispatcher {
   synchronized void enqueue(AsyncCall call) {
     if (runningCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
       runningCalls.add(call);
-      getExecutorService().execute(call);
+      Future<?> futureCall = getExecutorService().submit(call);
+      call.future(futureCall);
     } else {
       readyCalls.add(call);
     }

@@ -15,13 +15,13 @@
  */
 package com.squareup.okhttp;
 
-import java.io.IOException;
+import okio.Buffer;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import okio.Buffer;
 
 /**
  * Records received HTTP responses so they can be later retrieved by tests.
@@ -31,12 +31,12 @@ public class RecordingCallback implements Callback {
 
   private final List<RecordedResponse> responses = new ArrayList<>();
 
-  @Override public synchronized void onFailure(Request request, IOException e) {
+  @Override public synchronized void onFailure(Request request, Exception e) {
     responses.add(new RecordedResponse(request, null, null, e));
     notifyAll();
   }
 
-  @Override public synchronized void onResponse(Response response) throws IOException {
+  @Override public synchronized void onResponse(Response response) throws Exception {
     Buffer buffer = new Buffer();
     ResponseBody body = response.body();
     body.source().readAll(buffer);

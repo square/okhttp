@@ -15,15 +15,10 @@
  */
 package com.squareup.okhttp;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * A received response or failure recorded by the response recorder.
@@ -32,9 +27,8 @@ public class RecordedResponse {
   public final Request request;
   public final Response response;
   public final String body;
-  public final IOException failure;
-
-  RecordedResponse(Request request, Response response, String body, IOException failure) {
+  public final Exception failure;
+  RecordedResponse(Request request, Response response, String body, Exception failure) {
     this.request = request;
     this.response = response;
     this.body = body;
