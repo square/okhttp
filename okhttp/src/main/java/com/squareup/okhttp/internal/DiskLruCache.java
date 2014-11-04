@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -577,8 +576,9 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Drops the entry for {@code key} if it exists and can be removed. Entries
-   * actively being edited cannot be removed.
+   * Drops the entry for {@code key} if it exists and can be removed. If the
+   * entry for {@code key} is currently being edited, that edit will complete
+   * normally but its value will not be stored.
    *
    * @return true if an entry was removed.
    */
@@ -586,8 +586,13 @@ public final class DiskLruCache implements Closeable {
     checkNotClosed();
     validateKey(key);
     Entry entry = lruEntries.get(key);
-    if (entry == null || entry.currentEditor != null) {
-      return false;
+    if (entry == null) return false;
+    return removeEntry(entry);
+  }
+
+  private boolean removeEntry(Entry entry) throws IOException {
+    if (entry.currentEditor != null) {
+      entry.currentEditor.hasErrors = true; // Prevent the edit from completing normally.
     }
 
     for (int i = 0; i < valueCount; i++) {
@@ -598,8 +603,8 @@ public final class DiskLruCache implements Closeable {
     }
 
     redundantOpCount++;
-    journalWriter.writeUtf8(REMOVE).writeByte(' ').writeUtf8(key).writeByte('\n');
-    lruEntries.remove(key);
+    journalWriter.writeUtf8(REMOVE).writeByte(' ').writeUtf8(entry.key).writeByte('\n');
+    lruEntries.remove(entry.key);
 
     if (journalRebuildRequired()) {
       executorService.execute(cleanupRunnable);
@@ -632,8 +637,7 @@ public final class DiskLruCache implements Closeable {
       return; // Already closed.
     }
     // Copying for safe iteration.
-    for (Object next : lruEntries.values().toArray()) {
-      Entry entry = (Entry) next;
+    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
       if (entry.currentEditor != null) {
         entry.currentEditor.abort();
       }
@@ -645,8 +649,8 @@ public final class DiskLruCache implements Closeable {
 
   private void trimToSize() throws IOException {
     while (size > maxSize) {
-      Map.Entry<String, Entry> toEvict = lruEntries.entrySet().iterator().next();
-      remove(toEvict.getKey());
+      Entry toEvict = lruEntries.values().iterator().next();
+      removeEntry(toEvict);
     }
   }
 
@@ -658,6 +662,17 @@ public final class DiskLruCache implements Closeable {
   public void delete() throws IOException {
     close();
     Util.deleteContents(directory);
+  }
+
+  /**
+   * Deletes all stored values from the cache. In-flight edits will complete
+   * normally but their values will not be stored.
+   */
+  public synchronized void evictAll() throws IOException {
+    // Copying for safe iteration.
+    for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
+      removeEntry(entry);
+    }
   }
 
   private void validateKey(String key) {
@@ -823,13 +838,15 @@ public final class DiskLruCache implements Closeable {
      * edit lock so another edit may be started on the same key.
      */
     public void commit() throws IOException {
-      if (hasErrors) {
-        completeEdit(this, false);
-        remove(entry.key); // The previous entry is stale.
-      } else {
-        completeEdit(this, true);
+      synchronized (DiskLruCache.this) {
+        if (hasErrors) {
+          completeEdit(this, false);
+          removeEntry(entry); // The previous entry is stale.
+        } else {
+          completeEdit(this, true);
+        }
+        committed = true;
       }
-      committed = true;
     }
 
     /**
@@ -837,14 +854,18 @@ public final class DiskLruCache implements Closeable {
      * started on the same key.
      */
     public void abort() throws IOException {
-      completeEdit(this, false);
+      synchronized (DiskLruCache.this) {
+        completeEdit(this, false);
+      }
     }
 
     public void abortUnlessCommitted() {
-      if (!committed) {
-        try {
-          abort();
-        } catch (IOException ignored) {
+      synchronized (DiskLruCache.this) {
+        if (!committed) {
+          try {
+            completeEdit(this, false);
+          } catch (IOException ignored) {
+          }
         }
       }
     }
@@ -858,7 +879,9 @@ public final class DiskLruCache implements Closeable {
         try {
           super.write(source, byteCount);
         } catch (IOException e) {
-          hasErrors = true;
+          synchronized (DiskLruCache.this) {
+            hasErrors = true;
+          }
         }
       }
 
@@ -866,7 +889,9 @@ public final class DiskLruCache implements Closeable {
         try {
           super.flush();
         } catch (IOException e) {
-          hasErrors = true;
+          synchronized (DiskLruCache.this) {
+            hasErrors = true;
+          }
         }
       }
 
@@ -874,7 +899,9 @@ public final class DiskLruCache implements Closeable {
         try {
           super.close();
         } catch (IOException e) {
-          hasErrors = true;
+          synchronized (DiskLruCache.this) {
+            hasErrors = true;
+          }
         }
       }
     }
