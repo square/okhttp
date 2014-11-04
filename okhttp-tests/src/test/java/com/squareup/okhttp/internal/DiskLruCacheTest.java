@@ -271,6 +271,16 @@ public final class DiskLruCacheTest {
     assertFalse(k1.exists());
   }
 
+  @Test public void removePreventsActiveEditFromStoringAValue() throws Exception {
+    set("a", "a", "a");
+    DiskLruCache.Editor a = cache.edit("a");
+    a.set(0, "a1");
+    assertTrue(cache.remove("a"));
+    a.set(1, "a2");
+    a.commit();
+    assertAbsent("a");
+  }
+
   /**
    * Each read sees a snapshot of the file at the time read was called.
    * This means that two reads of the same key can see different data.
@@ -893,8 +903,81 @@ public final class DiskLruCacheTest {
     assertNull(cache.get("a"));
   }
 
+  /**
+   * We had a long-lived bug where {@link DiskLruCache#trimToSize} could
+   * infinite loop if entries being edited required deletion for the operation
+   * to complete.
+   */
+  @Test public void trimToSizeWithActiveEdit() throws Exception {
+    set("a", "a1234", "a1234");
+    DiskLruCache.Editor a = cache.edit("a");
+    a.set(0, "a123");
+
+    cache.setMaxSize(8); // Smaller than the sum of active edits!
+    cache.flush(); // Force trimToSize().
+    assertEquals(0, cache.size());
+    assertNull(cache.get("a"));
+
+    // After the edit is completed, its entry is still gone.
+    a.set(1, "a1");
+    a.commit();
+    assertAbsent("a");
+    assertEquals(0, cache.size());
+  }
+
+  @Test public void evictAll() throws Exception {
+    set("a", "a", "a");
+    set("b", "b", "b");
+    cache.evictAll();
+    assertEquals(0, cache.size());
+    assertAbsent("a");
+    assertAbsent("b");
+  }
+
+  @Test public void evictAllWithPartialCreate() throws Exception {
+    DiskLruCache.Editor a = cache.edit("a");
+    a.set(0, "a1");
+    a.set(1, "a2");
+    cache.evictAll();
+    assertEquals(0, cache.size());
+    a.commit();
+    assertAbsent("a");
+  }
+
+  @Test public void evictAllWithPartialEditDoesNotStoreAValue() throws Exception {
+    set("a", "a", "a");
+    DiskLruCache.Editor a = cache.edit("a");
+    a.set(0, "a1");
+    a.set(1, "a2");
+    cache.evictAll();
+    assertEquals(0, cache.size());
+    a.commit();
+    assertAbsent("a");
+  }
+
+  @Test public void evictAllDoesntInterruptPartialRead() throws Exception {
+    set("a", "a", "a");
+    DiskLruCache.Snapshot a = cache.get("a");
+    assertEquals("a", a.getString(0));
+    cache.evictAll();
+    assertEquals(0, cache.size());
+    assertAbsent("a");
+    assertEquals("a", a.getString(1));
+    a.close();
+  }
+
+  @Test public void editSnapshotAfterEvictAllReturnsNullDueToStaleValue() throws Exception {
+    set("a", "a", "a");
+    DiskLruCache.Snapshot a = cache.get("a");
+    cache.evictAll();
+    assertEquals(0, cache.size());
+    assertAbsent("a");
+    assertNull(a.edit());
+    a.close();
+  }
+
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
-    List<String> expectedLines = new ArrayList<String>();
+    List<String> expectedLines = new ArrayList<>();
     expectedLines.add(MAGIC);
     expectedLines.add(VERSION_1);
     expectedLines.add("100");

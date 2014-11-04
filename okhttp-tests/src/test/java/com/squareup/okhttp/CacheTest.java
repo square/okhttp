@@ -268,7 +268,8 @@ public final class CacheTest {
   }
 
   @Test public void responseCachingAndRedirects() throws Exception {
-    server.enqueue(new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+    server.enqueue(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /foo"));
@@ -276,7 +277,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
-    server.enqueue(new MockResponse().setBody("DEF"));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     Response response1 = client.newCall(request).execute();
@@ -291,7 +293,9 @@ public final class CacheTest {
   }
 
   @Test public void redirectToCachedResult() throws Exception {
-    server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60").setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("ABC"));
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: /foo"));
@@ -332,7 +336,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
-    server.enqueue(new MockResponse().setBody("DEF"));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
@@ -365,7 +370,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
-    server2.enqueue(new MockResponse().setBody("DEF"));
+    server2.enqueue(new MockResponse()
+        .setBody("DEF"));
 
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -518,7 +524,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-105, TimeUnit.SECONDS))
         .addHeader("Date: " + formatDate(-5, TimeUnit.SECONDS))
         .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     URL url = server.getUrl("/?foo=bar");
     assertEquals("A", get(url).body().string());
@@ -535,15 +542,18 @@ public final class CacheTest {
   }
 
   @Test public void expirationDateInThePastWithNoLastModifiedHeader() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
+    assertNotCached(new MockResponse()
+        .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
   }
 
   @Test public void expirationDateInTheFuture() throws Exception {
-    assertFullyCached(new MockResponse().addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    assertFullyCached(new MockResponse()
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
   }
 
   @Test public void maxAgePreferredWithMaxAgeAndExpires() throws Exception {
-    assertFullyCached(new MockResponse().addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
+    assertFullyCached(new MockResponse()
+        .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=60"));
   }
@@ -561,7 +571,8 @@ public final class CacheTest {
   @Test public void maxAgeInThePastWithDateHeaderButNoLastModifiedHeader() throws Exception {
     // Chrome interprets max-age relative to the local clock. Both our cache
     // and Firefox both use the earlier of the local and server's clock.
-    assertNotCached(new MockResponse().addHeader("Date: " + formatDate(-120, TimeUnit.SECONDS))
+    assertNotCached(new MockResponse()
+        .addHeader("Date: " + formatDate(-120, TimeUnit.SECONDS))
         .addHeader("Cache-Control: max-age=60"));
   }
 
@@ -577,26 +588,28 @@ public final class CacheTest {
   }
 
   @Test public void maxAgeWithLastModifiedButNoServedDate() throws Exception {
-    assertFullyCached(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
-            .addHeader("Cache-Control: max-age=60"));
+    assertFullyCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
+        .addHeader("Cache-Control: max-age=60"));
   }
 
   @Test public void maxAgeInTheFutureWithDateAndLastModifiedHeaders() throws Exception {
-    assertFullyCached(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
-            .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
-            .addHeader("Cache-Control: max-age=60"));
+    assertFullyCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-120, TimeUnit.SECONDS))
+        .addHeader("Date: " + formatDate(0, TimeUnit.SECONDS))
+        .addHeader("Cache-Control: max-age=60"));
   }
 
   @Test public void maxAgePreferredOverLowerSharedMaxAge() throws Exception {
-    assertFullyCached(new MockResponse().addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
+    assertFullyCached(new MockResponse()
+        .addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
         .addHeader("Cache-Control: s-maxage=60")
         .addHeader("Cache-Control: max-age=180"));
   }
 
   @Test public void maxAgePreferredOverHigherMaxAge() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
+    assertNotCached(new MockResponse()
+        .addHeader("Date: " + formatDate(-2, TimeUnit.MINUTES))
         .addHeader("Cache-Control: s-maxage=180")
         .addHeader("Cache-Control: max-age=60"));
   }
@@ -705,8 +718,9 @@ public final class CacheTest {
     // 1. seed the cache
     // 2. invalidate it with uncacheable response
     // 3. expect a cache miss
-    server.enqueue(
-        new MockResponse().setBody("A").addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    server.enqueue(new MockResponse()
+        .setBody("A")
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
     server.enqueue(new MockResponse()
         .setBody("B")
         .setResponseCode(500));
@@ -728,8 +742,8 @@ public final class CacheTest {
   }
 
   @Test public void etag() throws Exception {
-    RecordedRequest conditionalRequest = assertConditionallyCached(
-        new MockResponse().addHeader("ETag: v1"));
+    RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
+        .addHeader("ETag: v1"));
     assertTrue(conditionalRequest.getHeaders().contains("If-None-Match: v1"));
   }
 
@@ -745,13 +759,15 @@ public final class CacheTest {
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {
-    assertFullyCached(new MockResponse().addHeader("ETag: v1")
+    assertFullyCached(new MockResponse()
+        .addHeader("ETag: v1")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
   }
 
   @Test public void cacheControlNoCache() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Cache-Control: no-cache"));
+    assertNotCached(new MockResponse()
+        .addHeader("Cache-Control: no-cache"));
   }
 
   @Test public void cacheControlNoCacheAndExpirationDateInTheFuture() throws Exception {
@@ -765,7 +781,8 @@ public final class CacheTest {
   }
 
   @Test public void pragmaNoCache() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Pragma: no-cache"));
+    assertNotCached(new MockResponse()
+        .addHeader("Pragma: no-cache"));
   }
 
   @Test public void pragmaNoCacheAndExpirationDateInTheFuture() throws Exception {
@@ -779,11 +796,13 @@ public final class CacheTest {
   }
 
   @Test public void cacheControlNoStore() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Cache-Control: no-store"));
+    assertNotCached(new MockResponse()
+        .addHeader("Cache-Control: no-store"));
   }
 
   @Test public void cacheControlNoStoreAndExpirationDateInTheFuture() throws Exception {
-    assertNotCached(new MockResponse().addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+    assertNotCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Cache-Control: no-store"));
   }
@@ -796,7 +815,8 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .addHeader("Content-Range: bytes 1000-1001/2000"));
-    server.enqueue(new MockResponse().setBody("BB"));
+    server.enqueue(new MockResponse()
+        .setBody("BB"));
 
     URL url = server.getUrl("/");
 
@@ -848,15 +868,15 @@ public final class CacheTest {
   }
 
   @Test public void nonIdentityEncodingAndConditionalCache() throws Exception {
-    assertNonIdentityEncodingCached(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-            .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
+    assertNonIdentityEncodingCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
   }
 
   @Test public void nonIdentityEncodingAndFullCache() throws Exception {
-    assertNonIdentityEncodingCached(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
-            .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
+    assertNonIdentityEncodingCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
   }
 
   private void assertNonIdentityEncodingCached(MockResponse response) throws Exception {
@@ -882,9 +902,11 @@ public final class CacheTest {
         .addHeader("Content-Encoding: gzip")
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
-    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED)
         .addHeader("Content-Encoding: gzip"));
-    server.enqueue(new MockResponse().setBody("DEFDEFDEF"));
+    server.enqueue(new MockResponse()
+        .setBody("DEFDEFDEF"));
 
     assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
     assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
@@ -898,7 +920,8 @@ public final class CacheTest {
         .addHeader("Content-Encoding: gzip")
         .addHeader("Vary: Accept-Encoding")
         .addHeader("Cache-Control: max-age=60"));
-    server.enqueue(new MockResponse().setBody("FAIL"));
+    server.enqueue(new MockResponse()
+        .setBody("FAIL"));
 
     assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
     assertEquals("ABCABCABC", get(server.getUrl("/")).body().string());
@@ -906,7 +929,8 @@ public final class CacheTest {
 
   @Test public void conditionalCacheHitIsNotDoublePooled() throws Exception {
     server.enqueue(new MockResponse()
-        .addHeader("ETag: v1").setBody("A"));
+        .addHeader("ETag: v1")
+        .setBody("A"));
     server.enqueue(new MockResponse()
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
@@ -921,9 +945,9 @@ public final class CacheTest {
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
-    assertConditionallyCached(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-            .addHeader("Expires: " + formatDate(-2, TimeUnit.HOURS)));
+    assertConditionallyCached(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(-2, TimeUnit.HOURS)));
   }
 
   @Test public void requestMaxAge() throws IOException {
@@ -932,7 +956,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-2, TimeUnit.HOURS))
         .addHeader("Date: " + formatDate(-1, TimeUnit.MINUTES))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS)));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     assertEquals("A", get(server.getUrl("/")).body().string());
 
@@ -949,7 +974,8 @@ public final class CacheTest {
         .setBody("A")
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Date: " + formatDate(0, TimeUnit.MINUTES)));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     assertEquals("A", get(server.getUrl("/")).body().string());
 
@@ -1006,7 +1032,8 @@ public final class CacheTest {
         .setBody("A")
         .addHeader("Cache-Control: max-age=120, must-revalidate")
         .addHeader("Date: " + formatDate(-4, TimeUnit.MINUTES)));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     assertEquals("A", get(server.getUrl("/")).body().string());
 
@@ -1308,7 +1335,8 @@ public final class CacheTest {
 
   @Test public void statisticsFullCacheHit() throws Exception {
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control: max-age=60").setBody("A"));
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("A"));
 
     assertEquals("A", get(server.getUrl("/")).body().string());
     assertEquals(1, cache.getRequestCount());
@@ -1494,7 +1522,8 @@ public final class CacheTest {
   }
 
   @Test public void varyMultipleFieldValuesWithMatch() throws Exception {
-    server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60")
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
         .setBody("A"));
     server.enqueue(new MockResponse()
@@ -1519,10 +1548,12 @@ public final class CacheTest {
   }
 
   @Test public void varyMultipleFieldValuesWithNoMatch() throws Exception {
-    server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60")
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
         .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
 
     URL url = server.getUrl("/");
     Request request1 = new Request.Builder()
@@ -1543,8 +1574,10 @@ public final class CacheTest {
   }
 
   @Test public void varyAsterisk() throws Exception {
-    server.enqueue(
-        new MockResponse().addHeader("Cache-Control: max-age=60").addHeader("Vary: *").setBody("A"));
+    server.enqueue( new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("Vary: *")
+        .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
 
@@ -1622,7 +1655,8 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
         .setBody("A"));
-    server.enqueue(new MockResponse().addHeader("Transfer-Encoding: none")
+    server.enqueue(new MockResponse()
+        .addHeader("Transfer-Encoding: none")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     Response response1 = get(server.getUrl("/"));
@@ -1679,7 +1713,8 @@ public final class CacheTest {
   }
 
   @Test public void cachePlusRange() throws Exception {
-    assertNotCached(new MockResponse().setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+    assertNotCached(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
         .addHeader("Content-Range: bytes 100-100/200")
         .addHeader("Cache-Control: max-age=60"));
@@ -1837,6 +1872,20 @@ public final class CacheTest {
     assertEquals("foo", response.header("etag"));
   }
 
+  @Test public void evictAll() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setBody("B"));
+
+    URL url = server.getUrl("/");
+    assertEquals("A", get(url).body().string());
+    client.getCache().evictAll();
+    assertEquals(0, client.getCache().getSize());
+    assertEquals("B", get(url).body().string());
+  }
+
   private Response get(URL url) throws IOException {
     Request request = new Request.Builder()
         .url(url)
@@ -1883,9 +1932,11 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     // scenario 2: condition fails
-    server.enqueue(response.setBody("B").setStatus("HTTP/1.1 200 B-OK"));
+    server.enqueue(response.setBody("B")
+        .setStatus("HTTP/1.1 200 B-OK"));
     server.enqueue(new MockResponse()
-        .setStatus("HTTP/1.1 200 C-OK").setBody("C"));
+        .setStatus("HTTP/1.1 200 C-OK")
+        .setBody("C"));
 
     URL valid = server.getUrl("/valid");
     Response response1 = get(valid);

@@ -251,6 +251,14 @@ public final class Cache {
     cache.delete();
   }
 
+  /**
+   * Deletes all values stored in the cache. In-flight writes to the cache will
+   * complete normally, but the corresponding responses will not be stored.
+   */
+  public void evictAll() throws IOException {
+    cache.evictAll();
+  }
+
   public synchronized int getWriteAbortCount() {
     return writeAbortCount;
   }
