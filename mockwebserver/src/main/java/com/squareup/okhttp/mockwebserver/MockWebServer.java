@@ -40,7 +40,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -109,25 +108,24 @@ public final class MockWebServer {
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
+  private InetAddress inetAddress;
   private boolean protocolNegotiationEnabled = true;
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
   public int getPort() {
-    if (port == -1) throw new IllegalStateException("Cannot retrieve port before calling play()");
+    if (port == -1) throw new IllegalStateException("Call play() before getPort()");
     return port;
   }
 
   public String getHostName() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      throw new AssertionError(e);
-    }
+    if (inetAddress == null) throw new IllegalStateException("Call play() before getHostName()");
+    return inetAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(getHostName(), getPort()));
+    if (inetAddress == null) throw new IllegalStateException("Call play() before toProxyAddress()");
+    return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(inetAddress, getPort()));
   }
 
   /**
@@ -284,11 +282,12 @@ public final class MockWebServer {
   public void play(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("play() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
-    serverSocket = new ServerSocket(port);
+    inetAddress = InetAddress.getLocalHost();
+    serverSocket = new ServerSocket(port, 50, inetAddress);
     serverSocket.setReuseAddress(true);
 
     this.port = serverSocket.getLocalPort();
-    executor.execute(new NamedRunnable("MockWebServer %s", port) {
+    executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
       @Override protected void execute() {
         try {
           acceptConnections();
@@ -332,8 +331,18 @@ public final class MockWebServer {
   }
 
   public void shutdown() throws IOException {
-    if (serverSocket != null) {
-      serverSocket.close(); // Should cause acceptConnections() to break out.
+    if (serverSocket == null) return;
+
+    // Cause acceptConnections() to break out.
+    serverSocket.close();
+
+    // Await shutdown.
+    try {
+      if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+        throw new IOException("Gave up waiting for executor to shut down");
+      }
+    } catch (InterruptedException e) {
+      throw new AssertionError();
     }
   }
 
@@ -440,7 +449,7 @@ public final class MockWebServer {
           socket.close();
           return false;
         }
-        writeResponse(out, response);
+        writeResponse(socket, out, response);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           in.close();
           out.close();
@@ -525,7 +534,7 @@ public final class MockWebServer {
     MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
       hasBody = contentLength > 0;
-      throttledTransfer(throttlePolicy, in, requestBody, contentLength);
+      throttledTransfer(throttlePolicy, socket, in, requestBody, contentLength);
     } else if (chunked) {
       hasBody = true;
       while (true) {
@@ -535,7 +544,7 @@ public final class MockWebServer {
           break;
         }
         chunkSizes.add(chunkSize);
-        throttledTransfer(throttlePolicy, in, requestBody, chunkSize);
+        throttledTransfer(throttlePolicy, socket, in, requestBody, chunkSize);
         readEmptyLine(in);
       }
     }
@@ -559,7 +568,8 @@ public final class MockWebServer {
         requestBody.toByteArray(), sequenceNumber, socket);
   }
 
-  private void writeResponse(OutputStream out, MockResponse response) throws IOException {
+  private void writeResponse(Socket socket, OutputStream out, MockResponse response)
+      throws IOException {
     out.write((response.getStatus() + "\r\n").getBytes(Util.US_ASCII));
     List<String> headers = response.getHeaders();
     for (int i = 0, size = headers.size(); i < size; i++) {
@@ -571,7 +581,7 @@ public final class MockWebServer {
 
     InputStream in = response.getBodyStream();
     if (in == null) return;
-    throttledTransfer(response, in, out, Long.MAX_VALUE);
+    throttledTransfer(response, socket, in, out, Long.MAX_VALUE);
   }
 
   /**
@@ -579,13 +589,13 @@ public final class MockWebServer {
    * bytes have been transferred or {@code in} is exhausted. The transfer is
    * throttled according to {@code throttlePolicy}.
    */
-  private void throttledTransfer(MockResponse throttlePolicy, InputStream in, OutputStream out,
-      long limit) throws IOException {
+  private void throttledTransfer(MockResponse throttlePolicy, Socket socket, InputStream in,
+      OutputStream out, long limit) throws IOException {
     byte[] buffer = new byte[1024];
     int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
     long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
 
-    while (true) {
+    while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
         int toRead = (int) Math.min(Math.min(buffer.length, limit), bytesPerPeriod - b);
         int read = in.read(buffer, 0, toRead);

@@ -58,7 +58,7 @@ public final class Settings {
   static final int MAX_HEADER_LIST_SIZE = 6;
   /** Window size in bytes. */
   static final int INITIAL_WINDOW_SIZE = 7;
-  /** spdy/3: Window size in bytes. */
+  /** spdy/3: Size of the client certificate vector. Unsupported. */
   static final int CLIENT_CERTIFICATE_VECTOR_SIZE = 8;
   /** Flow control options. */
   static final int FLOW_CONTROL_OPTIONS = 10;

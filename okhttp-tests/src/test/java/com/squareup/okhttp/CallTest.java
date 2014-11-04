@@ -1079,8 +1079,10 @@ public final class CallTest {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server2.play();
 
-    server.enqueue(new MockResponse().setResponseCode(401));
-    server.enqueue(new MockResponse().setResponseCode(302)
+    server.enqueue(new MockResponse()
+        .setResponseCode(401));
+    server.enqueue(new MockResponse()
+        .setResponseCode(302)
         .addHeader("Location: " + server2.getUrl("/b")));
     server.play();
 
@@ -1202,6 +1204,18 @@ public final class CallTest {
     } catch (IOException e){
     }
     assertEquals(0, server.getRequestCount());
+  }
+
+  @Test public void cancelTagImmediatelyAfterEnqueue() throws Exception {
+    server.play();
+    Call call = client.newCall(new Request.Builder()
+        .url(server.getUrl("/a"))
+        .tag("request")
+        .build());
+    call.enqueue(callback);
+    client.cancel("request");
+    assertEquals(0, server.getRequestCount());
+    callback.await(server.getUrl("/a")).assertFailure("Canceled");
   }
 
   @Test public void cancelBeforeBodyIsRead() throws Exception {

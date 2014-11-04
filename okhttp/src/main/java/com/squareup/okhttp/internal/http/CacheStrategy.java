@@ -50,17 +50,10 @@ public final class CacheStrategy {
       return false;
     }
 
-    // Responses to authorized requests aren't cacheable unless they include
-    // a 'public', 'must-revalidate' or 's-maxage' directive.
+    // A 'no-store' directive on request or response prevents the response from being cached.
     CacheControl responseCaching = response.cacheControl();
-    if (request.header("Authorization") != null
-        && !responseCaching.isPublic()
-        && !responseCaching.mustRevalidate()
-        && responseCaching.sMaxAgeSeconds() == -1) {
-      return false;
-    }
-
-    if (responseCaching.noStore()) {
+    CacheControl requestCaching = request.cacheControl();
+    if (responseCaching.noStore() || requestCaching.noStore()) {
       return false;
     }
 
@@ -124,7 +117,7 @@ public final class CacheStrategy {
           } else if ("ETag".equalsIgnoreCase(fieldName)) {
             etag = value;
           } else if ("Age".equalsIgnoreCase(fieldName)) {
-            ageSeconds = HeaderParser.parseSeconds(value);
+            ageSeconds = HeaderParser.parseSeconds(value, -1);
           } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
             sentRequestMillis = Long.parseLong(value);
           } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {

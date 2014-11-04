@@ -917,36 +917,8 @@ public final class ResponseCacheTest {
     assertEquals("", readAscii(connection));
   }
 
-  @Test public void authorizationRequestHeaderPreventsCaching() throws Exception {
-    server.enqueue(
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-2, TimeUnit.MINUTES))
-            .addHeader("Cache-Control: max-age=60")
-            .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
-
-    URL url = server.getUrl("/");
-    URLConnection connection = openConnection(url);
-    connection.addRequestProperty("Authorization", "password");
-    assertEquals("A", readAscii(connection));
-    assertEquals("B", readAscii(openConnection(url)));
-  }
-
-  @Test public void authorizationResponseCachedWithSMaxAge() throws Exception {
-    assertAuthorizationRequestFullyCached(
-        new MockResponse().addHeader("Cache-Control: s-maxage=60"));
-  }
-
-  @Test public void authorizationResponseCachedWithPublic() throws Exception {
-    assertAuthorizationRequestFullyCached(new MockResponse().addHeader("Cache-Control: public"));
-  }
-
-  @Test public void authorizationResponseCachedWithMustRevalidate() throws Exception {
-    assertAuthorizationRequestFullyCached(
-        new MockResponse().addHeader("Cache-Control: must-revalidate"));
-  }
-
-  public void assertAuthorizationRequestFullyCached(MockResponse response) throws Exception {
-    server.enqueue(response.addHeader("Cache-Control: max-age=60").setBody("A"));
+  @Test public void authorizationRequestFullyCached() throws Exception {
+    server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60").setBody("A"));
     server.enqueue(new MockResponse().setBody("B"));
 
     URL url = server.getUrl("/");

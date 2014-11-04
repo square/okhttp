@@ -163,6 +163,10 @@ public class Call {
       return request.tag();
     }
 
+    void cancel() {
+      Call.this.cancel();
+    }
+
     Call get() {
       return Call.this;
     }

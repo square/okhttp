@@ -1109,7 +1109,8 @@ public final class Spdy3ConnectionTest {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
     peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
-    peer.sendTruncatedFrame(8 + 100).data(false, 1, data(1024), 1024);
+    peer.sendFrame().data(false, 1, data(1024), 1024);
+    peer.truncateLastFrame(8 + 100);
     peer.play();
 
     // play it back

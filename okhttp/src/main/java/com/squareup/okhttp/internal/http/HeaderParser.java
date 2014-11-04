@@ -47,9 +47,9 @@ public final class HeaderParser {
 
   /**
    * Returns {@code value} as a positive integer, or 0 if it is negative, or
-   * -1 if it cannot be parsed.
+   * {@code defaultValue} if it cannot be parsed.
    */
-  public static int parseSeconds(String value) {
+  public static int parseSeconds(String value, int defaultValue) {
     try {
       long seconds = Long.parseLong(value);
       if (seconds > Integer.MAX_VALUE) {
@@ -60,7 +60,7 @@ public final class HeaderParser {
         return (int) seconds;
       }
     } catch (NumberFormatException e) {
-      return -1;
+      return defaultValue;
     }
   }
 

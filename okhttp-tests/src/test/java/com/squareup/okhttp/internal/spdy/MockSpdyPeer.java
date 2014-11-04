@@ -74,7 +74,7 @@ public final class MockSpdyPeer implements Closeable {
   }
 
   public FrameWriter sendFrame() {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), false));
     return frameWriter;
   }
 
@@ -83,17 +83,27 @@ public final class MockSpdyPeer implements Closeable {
    * won't be generated naturally.
    */
   public void sendFrame(byte[] frame) throws IOException {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), Integer.MAX_VALUE));
+    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), false));
     bytesOut.write(frame);
   }
 
   /**
-   * Sends a frame, truncated to {@code truncateToLength} bytes. This is only
-   * useful for testing error handling as the truncated frame will be
-   * malformed.
+   * Shortens the last frame from its original length to {@code length}. This
+   * will cause the peer to close the socket as soon as this frame has been
+   * written; otherwise the peer stays open until explicitly closed.
    */
-  public FrameWriter sendTruncatedFrame(int truncateToLength) {
-    outFrames.add(new OutFrame(frameCount++, bytesOut.size(), truncateToLength));
+  public FrameWriter truncateLastFrame(int length) {
+    OutFrame lastFrame = outFrames.remove(outFrames.size() - 1);
+    if (length >= bytesOut.size() - lastFrame.start) throw new IllegalArgumentException();
+
+    // Move everything from bytesOut into a new buffer.
+    Buffer fullBuffer = new Buffer();
+    bytesOut.read(fullBuffer, bytesOut.size());
+
+    // Copy back all but what we're truncating.
+    fullBuffer.read(bytesOut, lastFrame.start + length);
+
+    outFrames.add(new OutFrame(lastFrame.sequence, lastFrame.start, true));
     return frameWriter;
   }
 
@@ -136,18 +146,25 @@ public final class MockSpdyPeer implements Closeable {
 
       if (nextOutFrame != null && nextOutFrame.sequence == i) {
         long start = nextOutFrame.start;
-        int truncateToLength = nextOutFrame.truncateToLength;
+        boolean truncated;
         long end;
         if (outFramesIterator.hasNext()) {
           nextOutFrame = outFramesIterator.next();
           end = nextOutFrame.start;
+          truncated = false;
         } else {
           end = outBytes.length;
+          truncated = nextOutFrame.truncated;
         }
 
-        // write a frame
-        int length = (int) Math.min(end - start, truncateToLength);
+        // Write a frame.
+        int length = (int) (end - start);
         out.write(outBytes, (int) start, length);
+
+        // If the last frame was truncated, immediately close the connection.
+        if (truncated) {
+          socket.close();
+        }
       } else {
         // read a frame
         InFrame inFrame = new InFrame(i, reader);
@@ -155,7 +172,6 @@ public final class MockSpdyPeer implements Closeable {
         inFrames.add(inFrame);
       }
     }
-    Util.closeQuietly(socket);
   }
 
   public Socket openSocket() throws IOException {
@@ -179,12 +195,12 @@ public final class MockSpdyPeer implements Closeable {
   private static class OutFrame {
     private final int sequence;
     private final long start;
-    private final int truncateToLength;
+    private final boolean truncated;
 
-    private OutFrame(int sequence, long start, int truncateToLength) {
+    private OutFrame(int sequence, long start, boolean truncated) {
       this.sequence = sequence;
       this.start = start;
-      this.truncateToLength = truncateToLength;
+      this.truncated = truncated;
     }
   }
 
