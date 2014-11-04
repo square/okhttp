@@ -90,7 +90,7 @@ public final class DiskLruCache implements Closeable {
   static final String MAGIC = "libcore.io.DiskLruCache";
   static final String VERSION_1 = "1";
   static final long ANY_SEQUENCE_NUMBER = -1;
-  static final Pattern LEGAL_KEY_PATTERN = Pattern.compile("[a-z0-9_-]{1,64}");
+  static final Pattern LEGAL_KEY_PATTERN = Pattern.compile("[a-z0-9_-]{1,120}");
   private static final String CLEAN = "CLEAN";
   private static final String DIRTY = "DIRTY";
   private static final String REMOVE = "REMOVE";
@@ -663,7 +663,8 @@ public final class DiskLruCache implements Closeable {
   private void validateKey(String key) {
     Matcher matcher = LEGAL_KEY_PATTERN.matcher(key);
     if (!matcher.matches()) {
-      throw new IllegalArgumentException("keys must match regex [a-z0-9_-]{1,64}: \"" + key + "\"");
+      throw new IllegalArgumentException(
+          "keys must match regex [a-z0-9_-]{1,120}: \"" + key + "\"");
     }
   }
 
