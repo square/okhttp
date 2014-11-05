@@ -1484,7 +1484,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertTrue(recordedRequest.getHeader("User-Agent")
-        .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT)?"));
+        .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT|-RC\\d+)?"));
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
