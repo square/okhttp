@@ -1,6 +1,99 @@
 Change Log
 ==========
 
+## VERSION 2.1.0-RC1
+
+_2014-11-04_
+
+ *  **OkHttp now caches private responses**. We've changed from a shared cache
+    to a private cache, and will now store responses that use an `Authorization`
+    header. This means OkHttp's cache shouldn't be used on middleboxes that sit
+    between user agents and the origin server.
+
+ *  **TLS configuration updated.** OkHttp now explicitly enables TLSv1.2,
+    TLSv1.1 and TLSv1.0 where they are supported. It will continue to perform
+    only one fallback, to SSLv3. Applications can now configure this with the
+    `ConnectionConfiguration` class.
+
+    To disable TLS fallback:
+
+    ```
+    client.setConnectionConfigurations(Arrays.asList(
+        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.CLEARTEXT));
+    ```
+
+    To disable cleartext connections, permitting `https` URLs only:
+
+    ```
+    client.setConnectionConfigurations(Arrays.asList(
+        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS));
+    ```
+
+ *  **New cipher suites.** Please confirm that your webservers are reachable
+    with this limited set of cipher suites.
+
+    ```
+                                             Android
+    Name                                     Version
+
+    TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256  5.0
+    TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256    5.0
+    TLS_DHE_RSA_WITH_AES_128_GCM_SHA256      5.0
+    TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA     4.0
+    TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA     4.0
+    TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA       4.0
+    TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA       4.0
+    TLS_ECDHE_ECDSA_WITH_RC4_128_SHA         4.0
+    TLS_ECDHE_RSA_WITH_RC4_128_SHA           4.0
+    TLS_DHE_RSA_WITH_AES_128_CBC_SHA         2.3
+    TLS_DHE_DSS_WITH_AES_128_CBC_SHA         2.3
+    TLS_DHE_RSA_WITH_AES_256_CBC_SHA         2.3
+    TLS_RSA_WITH_AES_128_GCM_SHA256          5.0
+    TLS_RSA_WITH_AES_128_CBC_SHA             2.3
+    TLS_RSA_WITH_AES_256_CBC_SHA             2.3
+    SSL_RSA_WITH_3DES_EDE_CBC_SHA            2.3  (Deprecated in 5.0)
+    SSL_RSA_WITH_RC4_128_SHA                 2.3
+    SSL_RSA_WITH_RC4_128_MD5                 2.3  (Deprecated in 5.0)
+    ```
+
+ *  **Okio updated to 1.0.1.**
+
+    ```
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.0.1</version>
+    </dependency>
+    ```
+
+ *  **New APIs to permit easy certificate pinning.** Be warned, certificate
+    pinning is dangerous and could prevent your application from trusting your
+    server!
+
+ *  **Cache improvements.** This release fixes some severe cache problems
+    including a bug where the cache could be corrupted upon certain access
+    patterns. We also fixed a bug where the cache was being cleared due to a
+    corrupted journal. We've added APIs to configure a request's `Cache-Control`
+    headers, and to manually clear the cache.
+
+ *  **Request cancellation fixes.** This update fixes a bug where synchronous
+    requests couldn't be canceled by tag. This update avoids crashing when
+    `onResponse()` throws an `IOException`. That failure will now be logged
+    instead of notifying the thread's uncaught exception handler. We've added a
+    new API, `Call.isCanceled()` to check if a call has been canceled.
+
+ *  New: Update `MultipartBuilder` to support content length.
+ *  New: Make it possible to mock `OkHttpClient` and `Call`.
+ *  New: Update to h2-14 and hpack-9.
+ *  New: OkHttp includes a user-agent by default, like `okhttp/2.1.0-RC1`.
+ *  Fix: Handle response code `308 Permanent Redirect`.
+ *  Fix: Don't skip the callback if a call is canceled.
+ *  Fix: Permit hostnames with underscores.
+ *  Fix: Permit overriding the content-type in `OkApacheClient`.
+ *  Fix: Use the socket factory for direct connections.
+ *  Fix: Honor `OkUrlFactory` APIs that disable redirects.
+ *  Fix: Don't crash on concurrent modification of `SPDY` SPDY settings.
+
 ## Version 2.0.0
 
 This release commits to a stable 2.0 API. Read the 2.0.0-RC1 changes for advice
