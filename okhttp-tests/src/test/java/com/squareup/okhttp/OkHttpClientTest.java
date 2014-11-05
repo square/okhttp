@@ -65,8 +65,10 @@ public final class OkHttpClientTest {
     assertEquals(0, client.getWriteTimeout());
     assertTrue(client.getFollowSslRedirects());
     assertNull(client.getProxy());
+
+    ConnectionConfiguration connectionConfiguration = client.getConnectionConfigurations().get(0);
     assertEquals(Arrays.asList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1),
-        client.getProtocols());
+        connectionConfiguration.protocols());
   }
 
   /**
@@ -89,10 +91,11 @@ public final class OkHttpClientTest {
 
     assertSame(proxySelector, client.getProxySelector());
     assertSame(cookieManager, client.getCookieHandler());
-    assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
-    assertSame(socketFactory, client.getSocketFactory());
-    assertSame(hostnameVerifier, client.getHostnameVerifier());
-    assertSame(certificatePinner, client.getCertificatePinner());
+    ConnectionConfiguration connectionConfiguration = client.getConnectionConfigurations().get(0);
+    assertSame(AuthenticatorAdapter.INSTANCE, connectionConfiguration.authenticator());
+    assertSame(socketFactory, connectionConfiguration.socketFactory());
+    assertSame(hostnameVerifier, connectionConfiguration.hostnameVerifier());
+    assertSame(certificatePinner, connectionConfiguration.certificatePinner());
   }
 
   /** There is no default cache. */
@@ -129,7 +132,7 @@ public final class OkHttpClientTest {
     assertNotNull(a.routeDatabase());
     assertNotNull(a.getDispatcher());
     assertNotNull(a.getConnectionPool());
-    assertNotNull(a.getSslSocketFactory());
+    assertNotNull(a.getConnectionConfigurations().get(0).sslSocketFactory());
 
     // Multiple clients share the instances.
     OkHttpClient b = client.clone().copyWithDefaults();
@@ -137,6 +140,8 @@ public final class OkHttpClientTest {
     assertSame(a.getDispatcher(), b.getDispatcher());
     assertSame(a.getConnectionPool(), b.getConnectionPool());
     assertSame(a.getSslSocketFactory(), b.getSslSocketFactory());
+    assertSame(a.getConnectionConfigurations().get(0).sslSocketFactory(),
+        b.getConnectionConfigurations().get(0).sslSocketFactory());
   }
 
   /** We don't want to run user code inside of HttpEngine, etc. */

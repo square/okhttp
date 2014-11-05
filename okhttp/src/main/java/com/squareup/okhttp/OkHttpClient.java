@@ -20,21 +20,18 @@ import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
-import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
-import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -49,9 +46,6 @@ import javax.net.ssl.SSLSocketFactory;
  * safely modified with further configuration changes.
  */
 public class OkHttpClient implements Cloneable {
-  private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
-      Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
-
   private static final List<ConnectionConfiguration> DEFAULT_CONNECTION_CONFIGURATIONS =
       Util.immutableList(ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS,
           ConnectionConfiguration.CLEARTEXT);
@@ -122,13 +116,9 @@ public class OkHttpClient implements Cloneable {
     };
   }
 
-  /** Lazily-initialized. */
-  private static SSLSocketFactory defaultSslSocketFactory;
-
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
   private Proxy proxy;
-  private List<Protocol> protocols;
   private List<ConnectionConfiguration> connectionConfigurations;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
@@ -137,11 +127,14 @@ public class OkHttpClient implements Cloneable {
   private InternalCache internalCache;
   private Cache cache;
 
+  /** Deprecated options; apply these to the connection configuration instead. */
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
   private CertificatePinner certificatePinner;
   private Authenticator authenticator;
+  private List<Protocol> protocols;
+
   private ConnectionPool connectionPool;
   private Network network;
   private boolean followSslRedirects = true;
@@ -495,7 +488,35 @@ public class OkHttpClient implements Cloneable {
   }
 
   public final List<ConnectionConfiguration> getConnectionConfigurations() {
-    return connectionConfigurations;
+    if (connectionConfigurations == null) return null;
+
+    List<ConnectionConfiguration> result = new ArrayList<>();
+    for (ConnectionConfiguration connectionConfiguration : connectionConfigurations) {
+      ConnectionConfiguration.Builder builder
+          = new ConnectionConfiguration.Builder(connectionConfiguration);
+      if (socketFactory != null) {
+        builder.socketFactory(socketFactory);
+      }
+      if (authenticator != null) {
+        builder.authenticator(authenticator);
+      }
+      if (connectionConfiguration.isTls()) {
+        if (sslSocketFactory != null) {
+          builder.sslSocketFactory(sslSocketFactory);
+        }
+        if (hostnameVerifier != null) {
+          builder.hostnameVerifier(hostnameVerifier);
+        }
+        if (certificatePinner != null) {
+          builder.certificatePinner(certificatePinner);
+        }
+        if (protocols != null) {
+          builder.protocols(protocols);
+        }
+      }
+      result.add(builder.build());
+    }
+    return Util.immutableList(result);
   }
 
   /**
@@ -526,26 +547,8 @@ public class OkHttpClient implements Cloneable {
     if (result.cookieHandler == null) {
       result.cookieHandler = CookieHandler.getDefault();
     }
-    if (result.socketFactory == null) {
-      result.socketFactory = SocketFactory.getDefault();
-    }
-    if (result.sslSocketFactory == null) {
-      result.sslSocketFactory = getDefaultSSLSocketFactory();
-    }
-    if (result.hostnameVerifier == null) {
-      result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
-    }
-    if (result.certificatePinner == null) {
-      result.certificatePinner = CertificatePinner.DEFAULT;
-    }
-    if (result.authenticator == null) {
-      result.authenticator = AuthenticatorAdapter.INSTANCE;
-    }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();
-    }
-    if (result.protocols == null) {
-      result.protocols = DEFAULT_PROTOCOLS;
     }
     if (result.connectionConfigurations == null) {
       result.connectionConfigurations = DEFAULT_CONNECTION_CONFIGURATIONS;
@@ -554,30 +557,6 @@ public class OkHttpClient implements Cloneable {
       result.network = Network.DEFAULT;
     }
     return result;
-  }
-
-  /**
-   * Java and Android programs default to using a single global SSL context,
-   * accessible to HTTP clients as {@link SSLSocketFactory#getDefault()}. If we
-   * used the shared SSL context, when OkHttp enables NPN for its SPDY-related
-   * stuff, it would also enable NPN for other usages, which might crash them
-   * because NPN is enabled when it isn't expected to be.
-   *
-   * <p>This code avoids that by defaulting to an OkHttp-created SSL context.
-   * The drawback of this approach is that apps that customize the global SSL
-   * context will lose these customizations.
-   */
-  private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
-    if (defaultSslSocketFactory == null) {
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, null);
-        defaultSslSocketFactory = sslContext.getSocketFactory();
-      } catch (GeneralSecurityException e) {
-        throw new AssertionError(); // The system has no TLS. Just give up.
-      }
-    }
-    return defaultSslSocketFactory;
   }
 
   /** Returns a shallow copy of this OkHttpClient. */
