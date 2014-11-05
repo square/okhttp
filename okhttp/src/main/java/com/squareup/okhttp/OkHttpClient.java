@@ -406,12 +406,7 @@ public class OkHttpClient implements Cloneable {
     return followSslRedirects;
   }
 
-  /**
-   * Configure this client to follow redirects.
-   *
-   * <p>If unset, redirects will not be followed. This is the equivalent as the
-   * built-in {@code HttpURLConnection}'s default.
-   */
+  /** Configure this client to follow redirects. If unset, redirects be followed. */
   public final void setFollowRedirects(boolean followRedirects) {
     this.followRedirects = followRedirects;
   }
