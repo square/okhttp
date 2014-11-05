@@ -13,20 +13,20 @@ _2014-11-04_
  *  **TLS configuration updated.** OkHttp now explicitly enables TLSv1.2,
     TLSv1.1 and TLSv1.0 where they are supported. It will continue to perform
     only one fallback, to SSLv3. Applications can now configure this with the
-    `ConnectionConfiguration` class.
+    `ConnectionSpec` class.
 
     To disable TLS fallback:
 
     ```
-    client.setConnectionConfigurations(Arrays.asList(
-        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.CLEARTEXT));
+    client.setConnectionSpecs(Arrays.asList(
+        ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
     ```
 
     To disable cleartext connections, permitting `https` URLs only:
 
     ```
-    client.setConnectionConfigurations(Arrays.asList(
-        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS));
+    client.setConnectionSpecs(Arrays.asList(
+        ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
     ```
 
  *  **New cipher suites.** Please confirm that your webservers are reachable

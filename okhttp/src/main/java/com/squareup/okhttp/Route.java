@@ -37,10 +37,10 @@ public final class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;
-  final ConnectionConfiguration connectionConfiguration;
+  final ConnectionSpec connectionSpec;
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      ConnectionConfiguration connectionConfiguration) {
+      ConnectionSpec connectionSpec) {
     if (address == null) {
       throw new NullPointerException("address == null");
     }
@@ -50,13 +50,13 @@ public final class Route {
     if (inetSocketAddress == null) {
       throw new NullPointerException("inetSocketAddress == null");
     }
-    if (connectionConfiguration == null) {
+    if (connectionSpec == null) {
       throw new NullPointerException("connectionConfiguration == null");
     }
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;
-    this.connectionConfiguration = connectionConfiguration;
+    this.connectionSpec = connectionSpec;
   }
 
   public Address getAddress() {
@@ -78,8 +78,8 @@ public final class Route {
     return inetSocketAddress;
   }
 
-  public ConnectionConfiguration getConnectionConfiguration() {
-    return connectionConfiguration;
+  public ConnectionSpec getConnectionSpec() {
+    return connectionSpec;
   }
 
   /**
@@ -96,7 +96,7 @@ public final class Route {
       return address.equals(other.address)
           && proxy.equals(other.proxy)
           && inetSocketAddress.equals(other.inetSocketAddress)
-          && connectionConfiguration.equals(other.connectionConfiguration);
+          && connectionSpec.equals(other.connectionSpec);
     }
     return false;
   }
@@ -106,7 +106,7 @@ public final class Route {
     result = 31 * result + address.hashCode();
     result = 31 * result + proxy.hashCode();
     result = 31 * result + inetSocketAddress.hashCode();
-    result = 31 * result + connectionConfiguration.hashCode();
+    result = 31 * result + connectionSpec.hashCode();
     return result;
   }
 }

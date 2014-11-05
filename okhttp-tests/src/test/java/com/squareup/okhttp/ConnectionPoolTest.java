@@ -73,13 +73,13 @@ public final class ConnectionPoolTest {
     httpServer = new MockWebServer();
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
 
-    List<ConnectionConfiguration> connectionConfigurations = Util.immutableList(
-        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.CLEARTEXT);
+    List<ConnectionSpec> connectionSpecs = Util.immutableList(
+        ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
 
     httpServer.play();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
         null, null, AuthenticatorAdapter.INSTANCE, null,
-        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionConfigurations);
+        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionSpecs);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
@@ -87,14 +87,14 @@ public final class ConnectionPoolTest {
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null,
-        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionConfigurations);
+        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionSpecs);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
     Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
-        ConnectionConfiguration.CLEARTEXT);
+        ConnectionSpec.CLEARTEXT);
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress,
-        ConnectionConfiguration.MODERN_TLS);
+        ConnectionSpec.MODERN_TLS);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
     httpA = new Connection(pool, httpRoute);
     httpA.connect(200, 200, 200, null);
@@ -140,7 +140,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
-        ConnectionConfiguration.CLEARTEXT));
+        ConnectionSpec.CLEARTEXT));
     connection.connect(200, 200, 200, null);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());

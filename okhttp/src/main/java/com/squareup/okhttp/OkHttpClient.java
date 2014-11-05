@@ -52,9 +52,8 @@ public class OkHttpClient implements Cloneable {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
-  private static final List<ConnectionConfiguration> DEFAULT_CONNECTION_CONFIGURATIONS =
-      Util.immutableList(ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS,
-          ConnectionConfiguration.CLEARTEXT);
+  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
+      ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
 
   static {
     Internal.instance = new Internal() {
@@ -129,7 +128,7 @@ public class OkHttpClient implements Cloneable {
   private Dispatcher dispatcher;
   private Proxy proxy;
   private List<Protocol> protocols;
-  private List<ConnectionConfiguration> connectionConfigurations;
+  private List<ConnectionSpec> connectionSpecs;
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
 
@@ -160,7 +159,7 @@ public class OkHttpClient implements Cloneable {
     this.dispatcher = okHttpClient.dispatcher;
     this.proxy = okHttpClient.proxy;
     this.protocols = okHttpClient.protocols;
-    this.connectionConfigurations = okHttpClient.connectionConfigurations;
+    this.connectionSpecs = okHttpClient.connectionSpecs;
     this.proxySelector = okHttpClient.proxySelector;
     this.cookieHandler = okHttpClient.cookieHandler;
     this.cache = okHttpClient.cache;
@@ -483,14 +482,13 @@ public class OkHttpClient implements Cloneable {
     return protocols;
   }
 
-  public final OkHttpClient setConnectionConfigurations(
-      List<ConnectionConfiguration> connectionConfigurations) {
-    this.connectionConfigurations = Util.immutableList(connectionConfigurations);
+  public final OkHttpClient setConnectionSpecs(List<ConnectionSpec> connectionSpecs) {
+    this.connectionSpecs = Util.immutableList(connectionSpecs);
     return this;
   }
 
-  public final List<ConnectionConfiguration> getConnectionConfigurations() {
-    return connectionConfigurations;
+  public final List<ConnectionSpec> getConnectionSpecs() {
+    return connectionSpecs;
   }
 
   /**
@@ -542,8 +540,8 @@ public class OkHttpClient implements Cloneable {
     if (result.protocols == null) {
       result.protocols = DEFAULT_PROTOCOLS;
     }
-    if (result.connectionConfigurations == null) {
-      result.connectionConfigurations = DEFAULT_CONNECTION_CONFIGURATIONS;
+    if (result.connectionSpecs == null) {
+      result.connectionSpecs = DEFAULT_CONNECTION_SPECS;
     }
     if (result.network == null) {
       result.network = Network.DEFAULT;

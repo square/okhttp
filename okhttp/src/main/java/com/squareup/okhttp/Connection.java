@@ -229,7 +229,7 @@ public final class Connection {
     SSLSocket sslSocket = (SSLSocket) socket;
 
     // Configure the socket's ciphers, TLS versions, and extensions.
-    route.connectionConfiguration.apply(sslSocket, route);
+    route.connectionSpec.apply(sslSocket, route);
 
     // Force handshake. This can throw!
     sslSocket.startHandshake();
@@ -246,7 +246,7 @@ public final class Connection {
     handshake = Handshake.get(sslSocket.getSession());
 
     String maybeProtocol;
-    if (route.connectionConfiguration.supportsTlsExtensions()
+    if (route.connectionSpec.supportsTlsExtensions()
         && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
       protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
     }
