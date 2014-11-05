@@ -15,14 +15,13 @@
  */
 package com.squareup.okhttp.internal.ws;
 
-import com.squareup.okhttp.WebSocketListener;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import okio.Buffer;
 import okio.BufferedSource;
 
-import static com.squareup.okhttp.WebSocket.PayloadType;
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 import static org.junit.Assert.assertEquals;
 
 public final class RecordingWebSocketListener implements WebSocketListener {

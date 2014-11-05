@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.ws;
 
 import java.io.IOException;
 import okio.BufferedSource;
 
-import static com.squareup.okhttp.WebSocket.PayloadType;
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {

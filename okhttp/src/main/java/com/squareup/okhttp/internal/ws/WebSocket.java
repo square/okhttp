@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp;
+package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.ws.WebSocketReader;
-import com.squareup.okhttp.internal.ws.WebSocketWriter;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Socket;
+import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -41,6 +47,21 @@ public final class WebSocket {
   private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
   /** A close code which indicates that the peer encountered a protocol exception. */
   private static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
+
+  /**
+   * Prepares the {@code request} to create a web socket at some point in the future.
+   * <p>
+   * TODO Move to OkHttpClient as non-static once web sockets are finalized!
+   */
+  public static WebSocket newWebSocket(OkHttpClient client, Request request) {
+    // Copy the client. Otherwise changes (socket factory, redirect policy,
+    // etc.) may incorrectly be reflected in the request when it is executed.
+    client = client.clone();
+    // Force HTTP/1.1 until the WebSocket over SPDY/HTTP2 spec is finalized.
+    client.setProtocols(Collections.singletonList(com.squareup.okhttp.Protocol.HTTP_1_1));
+
+    return new WebSocket(client, request, new SecureRandom());
+  }
 
   /** The format of a message payload. */
   public enum PayloadType {
@@ -131,10 +152,13 @@ public final class WebSocket {
     if (connected) throw new IllegalStateException("Already connected");
     if (writerClosed) throw new IllegalStateException("Closed");
 
-    Call call = new Call(client, request);
-    Response response = call.getResponse(true);
+    // TODO Call call = new Call(client, request);
+    Call call = Internal.instance.newCall(client, request);
+    // TODO Response response = call.getResponse(true);
+    Response response = Internal.instance.callGetResponse(call, true);
     if (response.code() != 101) {
-      call.engine.releaseConnection();
+      // TODO call.engine.releaseConnection();
+      Internal.instance.callEngineReleaseConnection(call);
     } else {
       String headerConnection = response.header("Connection");
       if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
@@ -155,11 +179,14 @@ public final class WebSocket {
             + headerAccept);
       }
 
-      connection = call.engine.getConnection();
-      if (!connection.clearOwner()) {
+      // TODO connection = call.engine.getConnection();
+      connection = Internal.instance.callEngineGetConnection(call);
+      // TODO if (!connection.clearOwner()) {
+      if (!Internal.instance.connectionClearOwner(connection)) {
         throw new IllegalStateException("Unable to take ownership of connection.");
       }
-      connection.setOwner(this);
+      // TODO connection.setOwner(this);
+      Internal.instance.connectionSetOwner(connection, this);
       connected = true;
 
       Socket socket = connection.getSocket();
@@ -258,7 +285,8 @@ public final class WebSocket {
   }
 
   private void closeConnection() throws IOException {
-    connection.closeIfOwnedBy(this);
+    // TODO connection.closeIfOwnedBy(this);
+    Internal.instance.connectionCloseIfOwnedBy(connection, this);
     connection = null;
   }
 

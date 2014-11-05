@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.internal.ws;
 
-import com.squareup.okhttp.WebSocketListener;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -25,7 +24,7 @@ import okio.Okio;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.WebSocket.PayloadType;
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.internal.Util.readFully;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_FIN;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_RSV1;

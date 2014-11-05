@@ -30,8 +30,6 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -119,6 +117,36 @@ public class OkHttpClient implements Cloneable {
       @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
           HttpEngine owner, Request request) throws IOException {
         connection.connectAndSetOwner(client, owner, request);
+      }
+
+      @Override public Call newCall(OkHttpClient client, Request request) {
+        return new Call(client, request);
+      }
+
+      @Override public Response callGetResponse(Call call, boolean forWebSocket)
+          throws IOException {
+        return call.getResponse(forWebSocket);
+      }
+
+      @Override public void callEngineReleaseConnection(Call call) throws IOException {
+        call.engine.releaseConnection();
+      }
+
+      @Override public Connection callEngineGetConnection(Call call) {
+        return call.engine.getConnection();
+      }
+
+      @Override public boolean connectionClearOwner(Connection connection) {
+        return connection.clearOwner();
+      }
+
+      @Override public void connectionSetOwner(Connection connection, Object owner) {
+        connection.setOwner(owner);
+      }
+
+      @Override public void connectionCloseIfOwnedBy(Connection connection, Object owner)
+          throws IOException {
+        connection.closeIfOwnedBy(owner);
       }
     };
   }
@@ -498,19 +526,6 @@ public class OkHttpClient implements Cloneable {
    */
   public Call newCall(Request request) {
     return new Call(this, request);
-  }
-
-  /**
-   * Prepares the {@code request} to create a web socket at some point in the future.
-   */
-  public WebSocket newWebSocket(Request request) {
-    // Copy the client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is executed.
-    OkHttpClient client = clone();
-    // Force HTTP/1.1 until the WebSocket over SPDY/HTTP2 spec is finalized.
-    client.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
-
-    return new WebSocket(client, request, new SecureRandom());
   }
 
   /**

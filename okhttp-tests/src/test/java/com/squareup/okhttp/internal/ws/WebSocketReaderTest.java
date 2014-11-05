@@ -25,7 +25,7 @@ import okio.BufferedSource;
 import okio.ByteString;
 import org.junit.Test;
 
-import static com.squareup.okhttp.WebSocket.PayloadType;
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.internal.ws.RecordingWebSocketListener.MessageDelegate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
