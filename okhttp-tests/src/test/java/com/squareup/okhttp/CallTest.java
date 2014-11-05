@@ -644,8 +644,7 @@ public final class CallTest {
   }
 
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
-    client.setConnectionConfigurations(Arrays.asList(
-        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.CLEARTEXT));
+    client.setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
 
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
@@ -665,8 +664,8 @@ public final class CallTest {
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
-    client.setConnectionConfigurations(Arrays.asList(
-        ConnectionConfiguration.MODERN_TLS, ConnectionConfiguration.COMPATIBLE_TLS));
+    client.setConnectionSpecs(Arrays.asList(
+        ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
 
     server.enqueue(new MockResponse());
     server.play();
@@ -676,7 +675,7 @@ public final class CallTest {
       client.newCall(request).execute();
       fail();
     } catch (SocketException expected) {
-      assertTrue(expected.getMessage().contains("exhausted connection configurations"));
+      assertTrue(expected.getMessage().contains("exhausted connection specs"));
     }
   }
 

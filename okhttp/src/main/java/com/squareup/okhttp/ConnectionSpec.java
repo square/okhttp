@@ -22,18 +22,18 @@ import java.util.List;
 import javax.net.ssl.SSLSocket;
 
 /**
- * Configuration for the socket connection that HTTP traffic travels through.
- * For {@code https:} URLs, this includes the TLS version and ciphers to use
- * when negotiating a secure connection.
+ * Specifies configuration for the socket connection that HTTP traffic travels through. For {@code
+ * https:} URLs, this includes the TLS version and ciphers to use when negotiating a secure
+ * connection.
  */
-public final class ConnectionConfiguration {
+public final class ConnectionSpec {
   private static final String TLS_1_2 = "TLSv1.2"; // 2008.
   private static final String TLS_1_1 = "TLSv1.1"; // 2006.
   private static final String TLS_1_0 = "TLSv1";   // 1999.
   private static final String SSL_3_0 = "SSLv3";   // 1996.
 
-  /** A modern TLS configuration with extensions like SNI and ALPN available. */
-  public static final ConnectionConfiguration MODERN_TLS = new Builder(true)
+  /** A modern TLS connection with extensions like SNI and ALPN available. */
+  public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(
           // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
           // All of these suites are available on Android L; earlier releases support a subset of
@@ -61,13 +61,13 @@ public final class ConnectionConfiguration {
       .supportsTlsExtensions(true)
       .build();
 
-  /** A backwards-compatible fallback configuration for interop with obsolete servers. */
-  public static final ConnectionConfiguration COMPATIBLE_TLS = new Builder(MODERN_TLS)
+  /** A backwards-compatible fallback connection for interop with obsolete servers. */
+  public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
       .tlsVersions(SSL_3_0)
       .build();
 
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
-  public static final ConnectionConfiguration CLEARTEXT = new Builder(false).build();
+  public static final ConnectionSpec CLEARTEXT = new Builder(false).build();
 
   final boolean tls;
   private final String[] cipherSuites;
@@ -75,13 +75,13 @@ public final class ConnectionConfiguration {
   final boolean supportsTlsExtensions;
 
   /**
-   * Caches the subset of this configuration that's supported by the host
-   * platform. It's possible that the platform hosts multiple implementations of
-   * {@link SSLSocket}, in which case this cache will be incorrect.
+   * Caches the subset of this spec that's supported by the host platform. It's possible that the
+   * platform hosts multiple implementations of {@link SSLSocket}, in which case this cache will be
+   * incorrect.
    */
-  private ConnectionConfiguration supportedConfiguration;
+  private ConnectionSpec supportedSpec;
 
-  private ConnectionConfiguration(Builder builder) {
+  private ConnectionSpec(Builder builder) {
     this.tls = builder.tls;
     this.cipherSuites = builder.cipherSuites;
     this.tlsVersions = builder.tlsVersions;
@@ -104,19 +104,19 @@ public final class ConnectionConfiguration {
     return supportsTlsExtensions;
   }
 
-  /** Applies this configuration to {@code sslSocket} for {@code route}. */
+  /** Applies this spec to {@code sslSocket} for {@code route}. */
   void apply(SSLSocket sslSocket, Route route) {
-    ConnectionConfiguration configurationToApply = supportedConfiguration;
-    if (configurationToApply == null) {
-      configurationToApply = supportedConfiguration(sslSocket);
-      supportedConfiguration = configurationToApply;
+    ConnectionSpec specToApply = supportedSpec;
+    if (specToApply == null) {
+      specToApply = supportedSpec(sslSocket);
+      supportedSpec = specToApply;
     }
 
-    sslSocket.setEnabledProtocols(configurationToApply.tlsVersions);
-    sslSocket.setEnabledCipherSuites(configurationToApply.cipherSuites);
+    sslSocket.setEnabledProtocols(specToApply.tlsVersions);
+    sslSocket.setEnabledCipherSuites(specToApply.cipherSuites);
 
     Platform platform = Platform.get();
-    if (configurationToApply.supportsTlsExtensions) {
+    if (specToApply.supportsTlsExtensions) {
       platform.configureTlsExtensions(sslSocket, route.address.uriHost, route.address.protocols);
     }
   }
@@ -125,7 +125,7 @@ public final class ConnectionConfiguration {
    * Returns a copy of this that omits cipher suites and TLS versions not
    * supported by {@code sslSocket}.
    */
-  private ConnectionConfiguration supportedConfiguration(SSLSocket sslSocket) {
+  private ConnectionSpec supportedSpec(SSLSocket sslSocket) {
     List<String> supportedCipherSuites = Util.intersect(Arrays.asList(cipherSuites),
         Arrays.asList(sslSocket.getSupportedCipherSuites()));
     List<String> supportedTlsVersions = Util.intersect(Arrays.asList(tlsVersions),
@@ -137,9 +137,9 @@ public final class ConnectionConfiguration {
   }
 
   @Override public boolean equals(Object other) {
-    if (!(other instanceof ConnectionConfiguration)) return false;
+    if (!(other instanceof ConnectionSpec)) return false;
 
-    ConnectionConfiguration that = (ConnectionConfiguration) other;
+    ConnectionSpec that = (ConnectionSpec) other;
     if (this.tls != that.tls) return false;
 
     if (tls) {
@@ -163,12 +163,12 @@ public final class ConnectionConfiguration {
 
   @Override public String toString() {
     if (tls) {
-      return "ConnectionConfiguration(cipherSuites=" + Arrays.toString(cipherSuites)
+      return "ConnectionSpec(cipherSuites=" + Arrays.toString(cipherSuites)
           + ", tlsVersions=" + Arrays.toString(tlsVersions)
           + ", supportsTlsExtensions=" + supportsTlsExtensions
           + ")";
     } else {
-      return "ConnectionConfiguration()";
+      return "ConnectionSpec()";
     }
   }
 
@@ -182,11 +182,11 @@ public final class ConnectionConfiguration {
       this.tls = tls;
     }
 
-    public Builder(ConnectionConfiguration connectionConfiguration) {
-      this.tls = connectionConfiguration.tls;
-      this.cipherSuites = connectionConfiguration.cipherSuites;
-      this.tlsVersions = connectionConfiguration.tlsVersions;
-      this.supportsTlsExtensions = connectionConfiguration.supportsTlsExtensions;
+    public Builder(ConnectionSpec connectionSpec) {
+      this.tls = connectionSpec.tls;
+      this.cipherSuites = connectionSpec.cipherSuites;
+      this.tlsVersions = connectionSpec.tlsVersions;
+      this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions;
     }
 
     public Builder cipherSuites(String... cipherSuites) {
@@ -207,8 +207,8 @@ public final class ConnectionConfiguration {
       return this;
     }
 
-    public ConnectionConfiguration build() {
-      return new ConnectionConfiguration(this);
+    public ConnectionSpec build() {
+      return new ConnectionSpec(this);
     }
   }
 }

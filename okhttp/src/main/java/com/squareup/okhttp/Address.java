@@ -44,12 +44,12 @@ public final class Address {
   final CertificatePinner certificatePinner;
   final Authenticator authenticator;
   final List<Protocol> protocols;
-  final List<ConnectionConfiguration> connectionConfigurations;
+  final List<ConnectionSpec> connectionSpecs;
 
   public Address(String uriHost, int uriPort, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionConfiguration> connectionConfigurations) {
+      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
@@ -63,7 +63,7 @@ public final class Address {
     this.certificatePinner = certificatePinner;
     this.authenticator = authenticator;
     this.protocols = Util.immutableList(protocols);
-    this.connectionConfigurations = Util.immutableList(connectionConfigurations);
+    this.connectionSpecs = Util.immutableList(connectionSpecs);
   }
 
   /** Returns the hostname of the origin server. */
@@ -115,8 +115,8 @@ public final class Address {
     return protocols;
   }
 
-  public List<ConnectionConfiguration> getConnectionConfigurations() {
-    return connectionConfigurations;
+  public List<ConnectionSpec> getConnectionSpecs() {
+    return connectionSpecs;
   }
 
   /**

@@ -18,7 +18,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.Challenge;
-import com.squareup.okhttp.ConnectionConfiguration;
+import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.OkHttpClient;
@@ -855,8 +855,7 @@ public final class URLConnectionTest {
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
     Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
-    client.client().setConnectionConfigurations(
-        Util.immutableList(ConnectionConfiguration.MODERN_TLS));
+    client.client().setConnectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS));
     server.enqueue(response);
     server.play();
     client.client().setProxy(server.toProxyAddress());
