@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -86,7 +87,7 @@ public final class SpdyConnection implements Closeable {
    * run on the callback executor.
    */
   private final IncomingStreamHandler handler;
-  private final Map<Integer, SpdyStream> streams = new HashMap<Integer, SpdyStream>();
+  private final Map<Integer, SpdyStream> streams = new ConcurrentHashMap<Integer, SpdyStream>();
   private final String hostName;
   private int lastGoodStreamId;
   private int nextStreamId;
