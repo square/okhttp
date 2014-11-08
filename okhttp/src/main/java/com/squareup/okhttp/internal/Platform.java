@@ -108,20 +108,13 @@ public class Platform {
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     // Attempt to find Android 2.3+ APIs.
-    Class<?> openSslSocketClass;
-    Method setUseSessionTickets;
-    Method setHostname;
     try {
       try {
-        openSslSocketClass = Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl");
+        Class.forName("com.android.org.conscrypt.OpenSSLSocketImpl");
       } catch (ClassNotFoundException ignored) {
         // Older platform before being unbundled.
-        openSslSocketClass = Class.forName(
-            "org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
+        Class.forName("org.apache.harmony.xnet.provider.jsse.OpenSSLSocketImpl");
       }
-
-      setUseSessionTickets = openSslSocketClass.getMethod("setUseSessionTickets", boolean.class);
-      setHostname = openSslSocketClass.getMethod("setHostname", String.class);
 
       // Attempt to find Android 4.0+ APIs.
       Method trafficStatsTagSocket = null;
@@ -134,22 +127,9 @@ public class Platform {
       } catch (NoSuchMethodException ignored) {
       }
 
-      // Attempt to find Android 4.1+ APIs.
-      Method setNpnProtocols = null;
-      Method getNpnSelectedProtocol = null;
-      try {
-        setNpnProtocols = openSslSocketClass.getMethod("setNpnProtocols", byte[].class);
-        getNpnSelectedProtocol = openSslSocketClass.getMethod("getNpnSelectedProtocol");
-      } catch (NoSuchMethodException ignored) {
-      }
-
-      return new Android(openSslSocketClass, setUseSessionTickets, setHostname,
-          trafficStatsTagSocket, trafficStatsUntagSocket, setNpnProtocols,
-          getNpnSelectedProtocol);
+      return new Android(trafficStatsTagSocket, trafficStatsUntagSocket);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
-    } catch (NoSuchMethodException ignored) {
-      // This isn't Android 2.3 or better.
     }
 
     try { // to find the Jetty's ALPN or NPN extension for OpenJDK.
@@ -180,29 +160,33 @@ public class Platform {
    * name indication (SNI). Versions 4.1 supports NPN.
    */
   private static class Android extends Platform {
-    // Non-null.
-    protected final Class<?> openSslSocketClass;
-    private final Method setUseSessionTickets;
-    private final Method setHostname;
+
+    // setUseSessionTickets(boolean)
+    private static final OptionalMethod<Socket> SET_USE_SESSION_TICKETS =
+        new OptionalMethod<Socket>(null, "setUseSessionTickets", Boolean.TYPE);
+    // setHostname(String)
+    private static final OptionalMethod<Socket> SET_HOSTNAME =
+        new OptionalMethod<Socket>(null, "setHostname", String.class);
+    // byte[] getAlpnSelectedProtocol()
+    private static final OptionalMethod<Socket> GET_ALPN_SELECTED_PROTOCOL =
+        new OptionalMethod<Socket>(byte[].class, "getAlpnSelectedProtocol");
+    // setAlpnSelectedProtocol(byte[])
+    private static final OptionalMethod<Socket> SET_ALPN_PROTOCOLS =
+        new OptionalMethod<Socket>(null, "setAlpnProtocols", byte[].class);
+    // byte[] getNpnSelectedProtocol()
+    private static final OptionalMethod<Socket> GET_NPN_SELECTED_PROTOCOL =
+        new OptionalMethod<Socket>(byte[].class, "getNpnSelectedProtocol");
+    // setNpnSelectedProtocol(byte[])
+    private static final OptionalMethod<Socket> SET_NPN_PROTOCOLS =
+        new OptionalMethod<Socket>(null, "setNpnProtocols", byte[].class);
 
     // Non-null on Android 4.0+.
     private final Method trafficStatsTagSocket;
     private final Method trafficStatsUntagSocket;
 
-    // Non-null on Android 4.1+.
-    private final Method setNpnProtocols;
-    private final Method getNpnSelectedProtocol;
-
-    private Android(Class<?> openSslSocketClass, Method setUseSessionTickets, Method setHostname,
-        Method trafficStatsTagSocket, Method trafficStatsUntagSocket, Method setNpnProtocols,
-        Method getNpnSelectedProtocol) {
-      this.openSslSocketClass = openSslSocketClass;
-      this.setUseSessionTickets = setUseSessionTickets;
-      this.setHostname = setHostname;
+    private Android(Method trafficStatsTagSocket, Method trafficStatsUntagSocket) {
       this.trafficStatsTagSocket = trafficStatsTagSocket;
       this.trafficStatsUntagSocket = trafficStatsUntagSocket;
-      this.setNpnProtocols = setNpnProtocols;
-      this.getNpnSelectedProtocol = getNpnSelectedProtocol;
     }
 
     @Override public void connectSocket(Socket socket, InetSocketAddress address,
@@ -220,45 +204,51 @@ public class Platform {
 
     @Override public void configureTlsExtensions(
         SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
-      if (!openSslSocketClass.isInstance(sslSocket)) return;
-
       // Enable SNI and session tickets.
       if (hostname != null) {
-        try {
-          setUseSessionTickets.invoke(sslSocket, true);
-          setHostname.invoke(sslSocket, hostname);
-        } catch (InvocationTargetException e) {
-          throw new RuntimeException(e.getCause());
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        }
+        SET_USE_SESSION_TICKETS.invokeOptionalWithoutCheckedException(sslSocket, true);
+        SET_HOSTNAME.invokeOptionalWithoutCheckedException(sslSocket, hostname);
       }
 
-      // Enable NPN.
-      if (setNpnProtocols != null) {
-        try {
-          Object[] parameters = { concatLengthPrefixed(protocols) };
-          setNpnProtocols.invoke(sslSocket, parameters);
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        } catch (InvocationTargetException e) {
-          throw new RuntimeException(e.getCause());
-        }
+      // Enable NPN / ALPN.
+      boolean alpnSupported = SET_ALPN_PROTOCOLS.isSupported(sslSocket);
+      boolean npnSupported = SET_NPN_PROTOCOLS.isSupported(sslSocket);
+      if (!(alpnSupported || npnSupported)) {
+        return;
+      }
+
+      Object[] parameters = { concatLengthPrefixed(protocols) };
+      if (alpnSupported) {
+        SET_ALPN_PROTOCOLS.invokeWithoutCheckedException(sslSocket, parameters);
+      }
+      if (npnSupported) {
+        SET_NPN_PROTOCOLS.invokeWithoutCheckedException(sslSocket, parameters);
       }
     }
 
     @Override public String getSelectedProtocol(SSLSocket socket) {
-      if (getNpnSelectedProtocol == null) return null;
-      if (!openSslSocketClass.isInstance(socket)) return null;
-      try {
-        byte[] npnResult = (byte[]) getNpnSelectedProtocol.invoke(socket);
-        if (npnResult == null) return null;
-        return new String(npnResult, Util.UTF_8);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e.getCause());
-      } catch (IllegalAccessException e) {
-        throw new AssertionError(e);
+      boolean alpnSupported = GET_ALPN_SELECTED_PROTOCOL.isSupported(socket);
+      boolean npnSupported = GET_NPN_SELECTED_PROTOCOL.isSupported(socket);
+      if (!(alpnSupported || npnSupported)) {
+        return null;
       }
+
+      // Prefer ALPN's result if it is present.
+      if (alpnSupported) {
+        byte[] alpnResult =
+            (byte[]) GET_ALPN_SELECTED_PROTOCOL.invokeWithoutCheckedException(socket);
+        if (alpnResult != null) {
+          return new String(alpnResult, Util.UTF_8);
+        }
+      }
+      if (npnSupported) {
+        byte[] npnResult =
+            (byte[]) GET_NPN_SELECTED_PROTOCOL.invokeWithoutCheckedException(socket);
+        if (npnResult != null) {
+          return new String(npnResult, Util.UTF_8);
+        }
+      }
+      return null;
     }
 
     @Override public void tagSocket(Socket socket) throws SocketException {
