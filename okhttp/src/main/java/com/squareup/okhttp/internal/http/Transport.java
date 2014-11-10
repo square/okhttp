@@ -30,23 +30,8 @@ public interface Transport {
    */
   int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
 
-  /**
-   * Returns an output stream where the request body can be written. The
-   * returned stream will of one of two types:
-   * <ul>
-   * <li><strong>Direct.</strong> Bytes are written to the socket and
-   * forgotten. This is most efficient, particularly for large request
-   * bodies. The returned stream may be buffered; the caller must call
-   * {@link #flushRequest} before reading the response.</li>
-   * <li><strong>Buffered.</strong> Bytes are written to an in memory
-   * buffer, and must be explicitly flushed with a call to {@link
-   * #writeRequestBody}. This allows HTTP authorization (401, 407)
-   * responses to be retransmitted transparently.</li>
-   * </ul>
-   */
-  // TODO: don't bother retransmitting the request body? It's quite a corner
-  // case and there's uncertainty whether Firefox or Chrome do this
-  Sink createRequestBody(Request request) throws IOException;
+  /** Returns an output stream where the request body can be streamed. */
+  Sink createRequestBody(Request request, long contentLength) throws IOException;
 
   /** This should update the HTTP engine's sentRequestMillis field. */
   void writeRequestHeaders(Request request) throws IOException;

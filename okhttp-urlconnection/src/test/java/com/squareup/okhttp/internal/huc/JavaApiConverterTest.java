@@ -301,7 +301,6 @@ public class JavaApiConverterTest {
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
     assertFalse(request.isHttps());
     assertEquals(uri, request.uri());
-    assertNull(request.body());
     Headers okRequestHeaders = request.headers();
     assertEquals(0, okRequestHeaders.size());
     assertEquals("POST", request.method());
@@ -315,7 +314,6 @@ public class JavaApiConverterTest {
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
     assertTrue(request.isHttps());
     assertEquals(uri, request.uri());
-    assertNull(request.body());
     Headers okRequestHeaders = request.headers();
     assertEquals(1, okRequestHeaders.size());
     assertEquals("Bar", okRequestHeaders.get("Foo"));
@@ -335,7 +333,6 @@ public class JavaApiConverterTest {
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
     assertTrue(request.isHttps());
     assertEquals(uri, request.uri());
-    assertNull(request.body());
     Headers okRequestHeaders = request.headers();
     assertEquals(1, okRequestHeaders.size());
     assertEquals("Bar", okRequestHeaders.get("Foo"));

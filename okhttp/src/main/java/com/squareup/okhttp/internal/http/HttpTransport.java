@@ -31,36 +31,14 @@ public final class HttpTransport implements Transport {
     this.httpConnection = httpConnection;
   }
 
-  @Override public Sink createRequestBody(Request request) throws IOException {
-    long contentLength = OkHeaders.contentLength(request);
-
-    if (httpEngine.bufferRequestBody) {
-      if (contentLength > Integer.MAX_VALUE) {
-        throw new IllegalStateException("Use setFixedLengthStreamingMode() or "
-            + "setChunkedStreamingMode() for requests larger than 2 GiB.");
-      }
-
-      if (contentLength != -1) {
-        // Buffer a request body of a known length.
-        writeRequestHeaders(request);
-        return new RetryableSink((int) contentLength);
-      } else {
-        // Buffer a request body of an unknown length. Don't write request
-        // headers until the entire body is ready; otherwise we can't set the
-        // Content-Length header correctly.
-        return new RetryableSink();
-      }
-    }
-
+  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
     if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
       // Stream a request body of unknown length.
-      writeRequestHeaders(request);
       return httpConnection.newChunkedSink();
     }
 
     if (contentLength != -1) {
       // Stream a request body of a known length.
-      writeRequestHeaders(request);
       return httpConnection.newFixedLengthSink(contentLength);
     }
 

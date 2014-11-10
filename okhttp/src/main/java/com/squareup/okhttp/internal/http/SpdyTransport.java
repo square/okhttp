@@ -76,9 +76,7 @@ public final class SpdyTransport implements Transport {
     this.spdyConnection = spdyConnection;
   }
 
-  @Override public Sink createRequestBody(Request request) throws IOException {
-    // TODO: if bufferRequestBody is set, we must buffer the whole request
-    writeRequestHeaders(request);
+  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
     return stream.getSink();
   }
 
@@ -86,17 +84,17 @@ public final class SpdyTransport implements Transport {
     if (stream != null) return;
 
     httpEngine.writingRequestHeaders();
-    boolean hasRequestBody = httpEngine.hasRequestBody();
+    boolean permitsRequestBody = httpEngine.permitsRequestBody();
     boolean hasResponseBody = true;
     String version = RequestLine.version(httpEngine.getConnection().getProtocol());
     stream = spdyConnection.newStream(
-        writeNameValueBlock(request, spdyConnection.getProtocol(), version), hasRequestBody,
+        writeNameValueBlock(request, spdyConnection.getProtocol(), version), permitsRequestBody,
         hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
-    throw new UnsupportedOperationException();
+    requestBody.writeToSocket(stream.getSink());
   }
 
   @Override public void flushRequest() throws IOException {
