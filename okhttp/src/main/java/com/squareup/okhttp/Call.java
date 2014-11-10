@@ -16,9 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpEngine;
-import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
@@ -223,8 +221,6 @@ public class Call {
       }
 
       request = requestBuilder.build();
-    } else if (HttpMethod.hasRequestBody(request.method())) {
-      requestBodyOut = Util.emptySink();
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.

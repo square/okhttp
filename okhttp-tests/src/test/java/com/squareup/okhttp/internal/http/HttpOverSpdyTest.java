@@ -126,14 +126,14 @@ public abstract class HttpOverSpdyTest {
 
   byte[] postBytes = "FGHIJ".getBytes(Util.UTF_8);
 
-  /** An output stream can be written to more than once, so we can't guess content length. */
-  @Test public void noDefaultContentLengthOnPost() throws Exception {
+  @Test public void noDefaultContentLengthOnStreamingPost() throws Exception {
     MockResponse response = new MockResponse().setBody("ABCDE");
     server.enqueue(response);
     server.play();
 
     connection = client.open(server.getUrl("/foo"));
     connection.setDoOutput(true);
+    connection.setChunkedStreamingMode(0);
     connection.getOutputStream().write(postBytes);
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
 

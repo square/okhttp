@@ -93,7 +93,7 @@ public final class RequestTest {
 
     Request delete = new Request.Builder().url("http://localhost/api").delete().build();
     assertEquals("DELETE", delete.method());
-    assertNull(delete.body());
+    assertEquals(0L, delete.body().contentLength());
 
     Request post = new Request.Builder().url("http://localhost/api").post(body).build();
     assertEquals("POST", post.method());
