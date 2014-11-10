@@ -338,4 +338,30 @@ public final class MockWebServerTest extends TestCase {
         assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 500);
         assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
     }
+
+    /**
+     * Delay the response body by sleeping 1000ms.
+     */
+    public void testDelayResponse() throws IOException {
+        server.enqueue(new MockResponse()
+                .setBody("ABCDEF")
+                .setBodyDelayTimeMs(1000));
+        server.play();
+
+        long startNanos = System.nanoTime();
+        URLConnection connection = server.getUrl("/").openConnection();
+        InputStream in = connection.getInputStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+        assertEquals('D', in.read());
+        assertEquals('E', in.read());
+        assertEquals('F', in.read());
+        assertEquals(-1, in.read());
+        long elapsedNanos = System.nanoTime() - startNanos;
+        long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
+
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
+    }
 }
