@@ -136,8 +136,8 @@ public class RecordedResponse {
     return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null);
   }
 
-  public void assertFailure(String message) {
+  public void assertFailure(String... messages) {
     assertNotNull(failure);
-    assertEquals(message, failure.getMessage());
+    assertTrue(failure.getMessage(), Arrays.asList(messages).contains(failure.getMessage()));
   }
 }
