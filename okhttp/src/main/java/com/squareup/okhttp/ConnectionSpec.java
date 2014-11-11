@@ -27,10 +27,6 @@ import javax.net.ssl.SSLSocket;
  * connection.
  */
 public final class ConnectionSpec {
-  private static final String TLS_1_2 = "TLSv1.2"; // 2008.
-  private static final String TLS_1_1 = "TLSv1.1"; // 2006.
-  private static final String TLS_1_0 = "TLSv1";   // 1999.
-  private static final String SSL_3_0 = "SSLv3";   // 1996.
 
   /** A modern TLS connection with extensions like SNI and ALPN available. */
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
@@ -38,32 +34,32 @@ public final class ConnectionSpec {
           // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
           // All of these suites are available on Android L; earlier releases support a subset of
           // these suites. https://github.com/square/okhttp/issues/330
-          "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256", // 0xC0,0x2B  Android L
-          "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",   // 0xC0,0x2F  Android L
-          "TLS_DHE_RSA_WITH_AES_128_GCM_SHA256",     // 0x00,0x9E  Android L
-          "TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA",    // 0xC0,0x0A  Android 4.0
-          "TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA",    // 0xC0,0x09  Android 4.0
-          "TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA",      // 0xC0,0x13  Android 4.0
-          "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA",      // 0xC0,0x14  Android 4.0
-          "TLS_ECDHE_ECDSA_WITH_RC4_128_SHA",        // 0xC0,0x07  Android 4.0
-          "TLS_ECDHE_RSA_WITH_RC4_128_SHA",          // 0xC0,0x11  Android 4.0
-          "TLS_DHE_RSA_WITH_AES_128_CBC_SHA",        // 0x00,0x33  Android 2.3
-          "TLS_DHE_DSS_WITH_AES_128_CBC_SHA",        // 0x00,0x32  Android 2.3
-          "TLS_DHE_RSA_WITH_AES_256_CBC_SHA",        // 0x00,0x39  Android 2.3
-          "TLS_RSA_WITH_AES_128_GCM_SHA256",         // 0x00,0x9C  Android L
-          "TLS_RSA_WITH_AES_128_CBC_SHA",            // 0x00,0x2F  Android 2.3
-          "TLS_RSA_WITH_AES_256_CBC_SHA",            // 0x00,0x35  Android 2.3
-          "SSL_RSA_WITH_3DES_EDE_CBC_SHA",           // 0x00,0x0A  Android 2.3  (Deprecated in L)
-          "SSL_RSA_WITH_RC4_128_SHA",                // 0x00,0x05  Android 2.3
-          "SSL_RSA_WITH_RC4_128_MD5"                 // 0x00,0x04  Android 2.3  (Deprecated in L)
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+          CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+          CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+          CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+          CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+          CipherSuite.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+          CipherSuite.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+          CipherSuite.TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+          CipherSuite.TLS_DHE_DSS_WITH_AES_128_CBC_SHA,
+          CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+          CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
+          CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
+          CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
+          CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+          CipherSuite.TLS_RSA_WITH_RC4_128_SHA,
+          CipherSuite.TLS_RSA_WITH_RC4_128_MD5
       )
-      .tlsVersions(TLS_1_2, TLS_1_1, TLS_1_0, SSL_3_0)
+      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0, TlsVersion.SSL_3_0)
       .supportsTlsExtensions(true)
       .build();
 
   /** A backwards-compatible fallback connection for interop with obsolete servers. */
   public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
-      .tlsVersions(SSL_3_0)
+      .tlsVersions(TlsVersion.SSL_3_0)
       .build();
 
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
@@ -92,12 +88,20 @@ public final class ConnectionSpec {
     return tls;
   }
 
-  public List<String> cipherSuites() {
-    return Util.immutableList(cipherSuites);
+  public List<CipherSuite> cipherSuites() {
+    CipherSuite[] result = new CipherSuite[cipherSuites.length];
+    for (int i = 0; i < cipherSuites.length; i++) {
+      result[i] = CipherSuite.forJavaName(cipherSuites[i]);
+    }
+    return Util.immutableList(result);
   }
 
-  public List<String> tlsVersions() {
-    return Util.immutableList(tlsVersions);
+  public List<TlsVersion> tlsVersions() {
+    TlsVersion[] result = new TlsVersion[tlsVersions.length];
+    for (int i = 0; i < tlsVersions.length; i++) {
+      result[i] = TlsVersion.forJavaName(tlsVersions[i]);
+    }
+    return Util.immutableList(result);
   }
 
   public boolean supportsTlsExtensions() {
@@ -163,8 +167,8 @@ public final class ConnectionSpec {
 
   @Override public String toString() {
     if (tls) {
-      return "ConnectionSpec(cipherSuites=" + Arrays.toString(cipherSuites)
-          + ", tlsVersions=" + Arrays.toString(tlsVersions)
+      return "ConnectionSpec(cipherSuites=" + cipherSuites()
+          + ", tlsVersions=" + tlsVersions()
           + ", supportsTlsExtensions=" + supportsTlsExtensions
           + ")";
     } else {
@@ -189,15 +193,37 @@ public final class ConnectionSpec {
       this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions;
     }
 
-    public Builder cipherSuites(String... cipherSuites) {
+    public Builder cipherSuites(CipherSuite... cipherSuites) {
       if (!tls) throw new IllegalStateException("no cipher suites for cleartext connections");
-      this.cipherSuites = cipherSuites.clone(); // Defensive copy.
+
+      // Convert enums to the string names Java wants. This makes a defensive copy!
+      String[] strings = new String[cipherSuites.length];
+      for (int i = 0; i < cipherSuites.length; i++) {
+        strings[i] = cipherSuites[i].javaName;
+      }
+
+      return cipherSuites(strings);
+    }
+
+    Builder cipherSuites(String[] cipherSuites) {
+      this.cipherSuites = cipherSuites; // No defensive copy.
       return this;
     }
 
-    public Builder tlsVersions(String... tlsVersions) {
+    public Builder tlsVersions(TlsVersion... tlsVersions) {
       if (!tls) throw new IllegalStateException("no TLS versions for cleartext connections");
-      this.tlsVersions = tlsVersions.clone(); // Defensive copy.
+
+      // Convert enums to the string names Java wants. This makes a defensive copy!
+      String[] strings = new String[tlsVersions.length];
+      for (int i = 0; i < tlsVersions.length; i++) {
+        strings[i] = tlsVersions[i].javaName;
+      }
+
+      return tlsVersions(strings);
+    }
+
+    Builder tlsVersions(String... tlsVersions) {
+      this.tlsVersions = tlsVersions; // No defensive copy.
       return this;
     }
 
