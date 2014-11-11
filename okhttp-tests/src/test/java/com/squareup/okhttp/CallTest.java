@@ -1402,7 +1402,8 @@ public final class CallTest {
     call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    callback.await(requestA.url()).assertFailure("Canceled");
+    callback.await(requestA.url()).assertFailure(
+        "Canceled", "stream was reset: CANCEL", "Socket closed");
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
