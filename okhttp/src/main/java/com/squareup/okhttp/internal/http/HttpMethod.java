@@ -30,10 +30,14 @@ public final class HttpMethod {
         || method.equals("DELETE");
   }
 
-  public static boolean hasRequestBody(String method) {
+  public static boolean requiresRequestBody(String method) {
     return method.equals("POST")
         || method.equals("PUT")
-        || method.equals("PATCH")
+        || method.equals("PATCH");
+  }
+
+  public static boolean permitsRequestBody(String method) {
+    return requiresRequestBody(method)
         || method.equals("DELETE"); // Permitted as spec is ambiguous.
   }
 
