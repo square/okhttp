@@ -273,6 +273,62 @@ public final class CallTest {
     postZeroLength();
   }
 
+  @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
+    postBodyRetransmittedAfterAuthorizationFail("abc");
+  }
+
+  @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    postBodyRetransmittedAfterAuthorizationFail("abc");
+  }
+
+  @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    postBodyRetransmittedAfterAuthorizationFail("abc");
+  }
+
+  /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131 */
+  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail() throws Exception {
+    postBodyRetransmittedAfterAuthorizationFail("");
+  }
+
+  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    postBodyRetransmittedAfterAuthorizationFail("");
+  }
+
+  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    postBodyRetransmittedAfterAuthorizationFail("");
+  }
+
+  private void postBodyRetransmittedAfterAuthorizationFail(String body) throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse());
+    server.play();
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("POST", RequestBody.create(null, body))
+        .build();
+
+    String credential = Credentials.basic("jesse", "secret");
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    Response response = client.newCall(request).execute();
+    assertEquals(200, response.code());
+
+    RecordedRequest recordedRequest1 = server.takeRequest();
+    assertEquals("POST", recordedRequest1.getMethod());
+    assertEquals(body, recordedRequest1.getUtf8Body());
+    assertNull(recordedRequest1.getHeader("Authorization"));
+
+    RecordedRequest recordedRequest2 = server.takeRequest();
+    assertEquals("POST", recordedRequest2.getMethod());
+    assertEquals(body, recordedRequest2.getUtf8Body());
+    assertEquals(credential, recordedRequest2.getHeader("Authorization"));
+  }
+
   @Test public void delete() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.play();
@@ -1346,7 +1402,8 @@ public final class CallTest {
     call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    callback.await(requestA.url()).assertFailure("Canceled");
+    callback.await(requestA.url()).assertFailure(
+        "Canceled", "stream was reset: CANCEL", "Socket closed");
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {

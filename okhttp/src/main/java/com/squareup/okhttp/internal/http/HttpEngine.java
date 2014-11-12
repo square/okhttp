@@ -28,7 +28,6 @@ import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
 import java.io.InputStream;
@@ -242,8 +241,28 @@ public final class HttpEngine {
 
       // Create a request body if we don't have one already. We'll already have
       // one if we're retrying a failed POST.
-      if (hasRequestBody() && requestBodyOut == null) {
-        requestBodyOut = transport.createRequestBody(request);
+      if (permitsRequestBody() && requestBodyOut == null) {
+        long contentLength = OkHeaders.contentLength(request);
+        if (bufferRequestBody) {
+          if (contentLength > Integer.MAX_VALUE) {
+            throw new IllegalStateException("Use setFixedLengthStreamingMode() or "
+                + "setChunkedStreamingMode() for requests larger than 2 GiB.");
+          }
+
+          if (contentLength != -1) {
+            // Buffer a request body of a known length.
+            transport.writeRequestHeaders(request);
+            requestBodyOut = new RetryableSink((int) contentLength);
+          } else {
+            // Buffer a request body of an unknown length. Don't write request
+            // headers until the entire body is ready; otherwise we can't set the
+            // Content-Length header correctly.
+            requestBodyOut = new RetryableSink();
+          }
+        } else {
+          transport.writeRequestHeaders(request);
+          requestBodyOut = transport.createRequestBody(request, contentLength);
+        }
       }
 
     } else {
@@ -305,9 +324,8 @@ public final class HttpEngine {
     sentRequestMillis = System.currentTimeMillis();
   }
 
-  boolean hasRequestBody() {
-    return HttpMethod.hasRequestBody(userRequest.method())
-        && !Util.emptySink().equals(requestBodyOut);
+  boolean permitsRequestBody() {
+    return HttpMethod.permitsRequestBody(userRequest.method());
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
@@ -637,7 +655,7 @@ public final class HttpEngine {
       } else {
         requestBodyOut.close();
       }
-      if (requestBodyOut instanceof RetryableSink && !Util.emptySink().equals(requestBodyOut)) {
+      if (requestBodyOut instanceof RetryableSink) {
         transport.writeRequestBody((RetryableSink) requestBodyOut);
       }
     }
@@ -810,7 +828,7 @@ public final class HttpEngine {
 
         // Redirects don't include a request body.
         Request.Builder requestBuilder = userRequest.newBuilder();
-        if (HttpMethod.hasRequestBody(userRequest.method())) {
+        if (HttpMethod.permitsRequestBody(userRequest.method())) {
           requestBuilder.method("GET", null);
           requestBuilder.removeHeader("Transfer-Encoding");
           requestBuilder.removeHeader("Content-Length");

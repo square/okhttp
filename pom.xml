@@ -177,6 +177,7 @@
           <failsOnError>true</failsOnError>
           <configLocation>checkstyle.xml</configLocation>
           <consoleOutput>true</consoleOutput>
+          <excludes>**/CipherSuite.java</excludes>
         </configuration>
         <executions>
           <execution>

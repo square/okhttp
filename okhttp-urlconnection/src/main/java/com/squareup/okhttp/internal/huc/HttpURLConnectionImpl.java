@@ -298,14 +298,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         if (method.equals("GET")) {
           // they are requesting a stream to write to. This implies a POST method
           method = "POST";
-        } else if (!HttpMethod.hasRequestBody(method)) {
-          // If the request method is neither POST nor PUT nor PATCH, then you're not writing
+        } else if (!HttpMethod.permitsRequestBody(method)) {
           throw new ProtocolException(method + " does not support writing");
         }
       }
       // If the user set content length to zero, we know there will not be a request body.
-      RetryableSink requestBody = doOutput && fixedContentLength == 0 ? Util.emptySink() : null;
-      httpEngine = newHttpEngine(method, null, requestBody, null);
+      httpEngine = newHttpEngine(method, null, null, null);
     } catch (IOException e) {
       httpEngineFailure = e;
       throw e;
@@ -323,7 +321,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
 
     boolean bufferRequestBody = false;
-    if (HttpMethod.hasRequestBody(method)) {
+    if (HttpMethod.permitsRequestBody(method)) {
       // Specify how the request body is terminated.
       if (fixedContentLength != -1) {
         builder.header("Content-Length", Long.toString(fixedContentLength));

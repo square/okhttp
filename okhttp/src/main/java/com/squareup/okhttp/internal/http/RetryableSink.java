@@ -19,7 +19,6 @@ package com.squareup.okhttp.internal.http;
 import java.io.IOException;
 import java.net.ProtocolException;
 import okio.Buffer;
-import okio.BufferedSink;
 import okio.Sink;
 import okio.Timeout;
 
@@ -72,8 +71,9 @@ public final class RetryableSink implements Sink {
     return content.size();
   }
 
-  public void writeToSocket(BufferedSink socketOut) throws IOException {
+  public void writeToSocket(Sink socketOut) throws IOException {
     // Clone the content; otherwise we won't have data to retry.
-    socketOut.writeAll(content.clone());
+    Buffer buffer = content.clone();
+    socketOut.write(buffer, buffer.size());
   }
 }
