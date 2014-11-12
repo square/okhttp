@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## VERSION 2.1.0
+
+_2014-11-11_
+
+ *  New: Typesafe APIs for interacting with cipher suites and TLS versions.
+ *  Fix: Don't crash when mixing authorization challenges with upload retries.
+
+
 ## VERSION 2.1.0-RC1
 
 _2014-11-04_
