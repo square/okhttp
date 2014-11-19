@@ -29,7 +29,7 @@ cp -R ../website/* .
 # Download the latest javadoc to directories like 'javadoc' or 'javadoc-urlconnection'.
 for DOCUMENTED_ARTIFACT in okhttp okhttp-urlconnection okhttp-apache
 do
-  curl -L "http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=$GROUP_ID&a=$DOCUMENTED_ARTIFACT&v=LATEST&c=javadoc" > javadoc.zip
+  curl -L "https://search.maven.org/remote_content?g=$GROUP_ID&a=$DOCUMENTED_ARTIFACT&v=LATEST&c=javadoc" > javadoc.zip
   JAVADOC_DIR="javadoc${DOCUMENTED_ARTIFACT//okhttp/}"
   mkdir $JAVADOC_DIR
   unzip javadoc.zip -d $JAVADOC_DIR
@@ -37,7 +37,7 @@ do
 done
 
 # Download the 1.6.0 javadoc to '1.x/javadoc'.
-curl -L "http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=$GROUP_ID&a=$ARTIFACT_ID&v=1.6.0&c=javadoc" > javadoc.zip
+curl -L "https://search.maven.org/remote_content?g=$GROUP_ID&a=$ARTIFACT_ID&v=1.6.0&c=javadoc" > javadoc.zip
 mkdir -p 1.x/javadoc
 unzip javadoc.zip -d 1.x/javadoc
 rm javadoc.zip
