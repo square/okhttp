@@ -79,7 +79,7 @@ public final class RequestTest {
   }
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
-  @Test public void crudVerbs() {
+  @Test public void crudVerbs() throws IOException {
     MediaType contentType = MediaType.parse("application/json");
     RequestBody body = RequestBody.create(contentType, "{}");
 

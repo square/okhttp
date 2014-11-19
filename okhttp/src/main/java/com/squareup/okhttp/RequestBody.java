@@ -25,13 +25,13 @@ import okio.Source;
 
 public abstract class RequestBody {
   /** Returns the Content-Type header for this body. */
-  public abstract MediaType contentType();
+  public abstract MediaType contentType() throws IOException;
 
   /**
    * Returns the number of bytes that will be written to {@code out} in a call
    * to {@link #writeTo}, or -1 if that count is unknown.
    */
-  public long contentLength() {
+  public long contentLength() throws IOException {
     return -1;
   }
 

@@ -110,12 +110,12 @@ public final class MultipartBuilder {
   }
 
   /** Add a part to the body. */
-  public MultipartBuilder addPart(RequestBody body) {
+  public MultipartBuilder addPart(RequestBody body) throws IOException {
     return addPart(null, body);
   }
 
   /** Add a part to the body. */
-  public MultipartBuilder addPart(Headers headers, RequestBody body) {
+  public MultipartBuilder addPart(Headers headers, RequestBody body) throws IOException {
     if (body == null) {
       throw new NullPointerException("body == null");
     }
@@ -175,12 +175,13 @@ public final class MultipartBuilder {
   }
 
   /** Add a form data part to the body. */
-  public MultipartBuilder addFormDataPart(String name, String value) {
+  public MultipartBuilder addFormDataPart(String name, String value) throws IOException {
     return addFormDataPart(name, null, RequestBody.create(null, value));
   }
 
   /** Add a form data part to the body. */
-  public MultipartBuilder addFormDataPart(String name, String filename, RequestBody value) {
+  public MultipartBuilder addFormDataPart(String name, String filename, RequestBody value)
+      throws IOException {
     if (name == null) {
       throw new NullPointerException("name == null");
     }
@@ -196,7 +197,8 @@ public final class MultipartBuilder {
   }
 
   /** Creates a part "heading" from the boundary and any real or generated headers. */
-  private Buffer createPartHeading(Headers headers, RequestBody body, boolean isFirst) {
+  private Buffer createPartHeading(Headers headers, RequestBody body, boolean isFirst)
+      throws IOException {
     Buffer sink = new Buffer();
 
     if (!isFirst) {

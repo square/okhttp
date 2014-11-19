@@ -33,14 +33,14 @@ public class MainTest {
     assertNull(request.body());
   }
 
-  @Test public void put() {
+  @Test public void put() throws IOException {
     Request request = fromArgs("-X", "PUT", "http://example.com").createRequest();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com", request.urlString());
     assertEquals(0, request.body().contentLength());
   }
 
-  @Test public void dataPost() {
+  @Test public void dataPost() throws IOException {
     Request request = fromArgs("-d", "foo", "http://example.com").createRequest();
     RequestBody body = request.body();
     assertEquals("POST", request.method());
@@ -49,7 +49,7 @@ public class MainTest {
     assertEquals("foo", bodyAsString(body));
   }
 
-  @Test public void dataPut() {
+  @Test public void dataPut() throws IOException {
     Request request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest();
     RequestBody body = request.body();
     assertEquals("PUT", request.method());
@@ -58,7 +58,7 @@ public class MainTest {
     assertEquals("foo", bodyAsString(body));
   }
 
-  @Test public void contentTypeHeader() {
+  @Test public void contentTypeHeader() throws IOException {
     Request request = fromArgs("-d", "foo", "-H", "Content-Type: application/json",
         "http://example.com").createRequest();
     RequestBody body = request.body();
