@@ -26,20 +26,20 @@ import okio.Source;
 import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Internal.logger;
-import static com.squareup.okhttp.internal.spdy.Http20Draft14.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http20Draft15.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static okio.ByteString.EMPTY;
 
 /**
- * Read and write HTTP/2 v14 frames.
+ * Read and write HTTP/2 v15 frames.
  * <p>
  * This implementation assumes we do not send an increased
  * {@link Settings#getMaxFrameSize frame size setting} to the peer. Hence, we
  * expect all frames to have a max length of {@link #INITIAL_MAX_FRAME_SIZE}.
- * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-14
+ * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-15
  */
-public final class Http20Draft14 implements Variant {
+public final class Http20Draft15 implements Variant {
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
   }
@@ -206,7 +206,7 @@ public final class Http20Draft14 implements Variant {
       continuation.streamId = streamId;
 
       // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
-      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-14#section-8.1.2.5
+      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-15#section-8.1.2.5
       hpackReader.readHeaders();
       return hpackReader.getAndResetHeaderList();
     }
