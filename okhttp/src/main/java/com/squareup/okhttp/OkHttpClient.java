@@ -457,7 +457,7 @@ public final class OkHttpClient implements Cloneable {
    * Returns a shallow copy of this OkHttpClient that uses the system-wide
    * default for each field that hasn't been explicitly configured.
    */
-  OkHttpClient copyWithDefaults() {
+  public OkHttpClient copyWithDefaults() {
     OkHttpClient result = clone();
     if (result.proxySelector == null) {
       result.proxySelector = ProxySelector.getDefault();
