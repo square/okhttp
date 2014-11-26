@@ -21,6 +21,8 @@ import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Credentials;
+import com.squareup.okhttp.DelegatingServerSocketFactory;
+import com.squareup.okhttp.DelegatingSocketFactory;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
@@ -48,6 +50,7 @@ import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ProxySelector;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -68,6 +71,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
+import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -106,15 +110,18 @@ import static org.junit.Assert.fail;
 public final class URLConnectionTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
-  private MockWebServer server = new MockWebServer();
-  private MockWebServer server2 = new MockWebServer();
+  private MockWebServer server;
+  private MockWebServer server2;
 
-  private final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
+  private OkUrlFactory client;
   private HttpURLConnection connection;
   private Cache cache;
 
   @Before public void setUp() throws Exception {
+    server = new MockWebServer();
     server.setProtocolNegotiationEnabled(false);
+    server2 = new MockWebServer();
+    client = new OkUrlFactory(new OkHttpClient());
   }
 
   @After public void tearDown() throws Exception {
@@ -2201,6 +2208,24 @@ public final class URLConnectionTest {
 
   /** Confirm that an unacknowledged write times out. */
   @Test public void writeTimeouts() throws IOException {
+    // Sockets on some platforms can have large buffers that mean writes do not block when
+    // required. These socket factories explicitly set the buffer sizes on sockets created.
+    final int SOCKET_BUFFER_SIZE = 256 * 1024;
+    server.setServerSocketFactory(
+        new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
+          @Override
+          protected void configureServerSocket(ServerSocket serverSocket) throws IOException {
+            serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+          }
+        });
+    client.client().setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+      @Override
+      protected void configureSocket(Socket socket) throws IOException {
+        socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+        socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+      }
+    });
+
     server.enqueue(new MockResponse()
         .throttleBody(1, 1, TimeUnit.SECONDS)); // Prevent the server from reading!
     server.play();

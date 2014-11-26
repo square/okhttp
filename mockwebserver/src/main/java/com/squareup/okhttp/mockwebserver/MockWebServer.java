@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -101,6 +102,7 @@ public final class MockWebServer {
   private final Map<SpdyConnection, Boolean> openSpdyConnections = new ConcurrentHashMap<>();
   private final AtomicInteger requestCount = new AtomicInteger();
   private int bodyLimit = Integer.MAX_VALUE;
+  private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
   private ServerSocket serverSocket;
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
@@ -112,6 +114,11 @@ public final class MockWebServer {
   private boolean protocolNegotiationEnabled = true;
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+
+  public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
+    if (serverSocketFactory == null) throw new IllegalArgumentException("null serverSocketFactory");
+    this.serverSocketFactory = serverSocketFactory;
+  }
 
   public int getPort() {
     if (port == -1) throw new IllegalStateException("Call play() before getPort()");
@@ -283,7 +290,7 @@ public final class MockWebServer {
     if (executor != null) throw new IllegalStateException("play() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     inetAddress = InetAddress.getLocalHost();
-    serverSocket = new ServerSocket(port, 50, inetAddress);
+    serverSocket = serverSocketFactory.createServerSocket(port, 50, inetAddress);
     serverSocket.setReuseAddress(true);
 
     this.port = serverSocket.getLocalPort();
