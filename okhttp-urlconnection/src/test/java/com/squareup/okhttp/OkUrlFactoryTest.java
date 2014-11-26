@@ -1,5 +1,6 @@
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
@@ -146,7 +147,8 @@ public class OkUrlFactoryTest {
   }
 
   private void assertResponseHeader(HttpURLConnection connection, String expected) {
-    assertEquals(expected, connection.getHeaderField("OkHttp-Response-Source"));
+    final String headerFieldPrefix = Platform.get().getPrefix();
+    assertEquals(expected, connection.getHeaderField(headerFieldPrefix + "-Response-Source"));
   }
 
   private void assertResponseCode(HttpURLConnection connection, int expected) throws IOException {
