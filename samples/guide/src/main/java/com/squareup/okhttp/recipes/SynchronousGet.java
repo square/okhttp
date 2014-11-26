@@ -26,7 +26,7 @@ public final class SynchronousGet {
 
   public void run() throws Exception {
     Request request = new Request.Builder()
-        .url("http://publicobject.com/helloworld.txt")
+        .url("https://publicobject.com/helloworld.txt")
         .build();
 
     Response response = client.newCall(request).execute();

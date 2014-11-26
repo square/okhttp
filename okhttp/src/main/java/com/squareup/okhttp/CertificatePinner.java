@@ -134,8 +134,8 @@ public final class CertificatePinner {
         .append("\n  Peer certificate chain:");
     for (Certificate c : peerCertificates) {
       X509Certificate x509Certificate = (X509Certificate) c;
-      message.append("\n    sha1/").append(sha1(x509Certificate).base64()).append(": ")
-          .append(x509Certificate.getSubjectDN().getName());
+      message.append("\n    ").append(pin(x509Certificate))
+          .append(": ").append(x509Certificate.getSubjectDN().getName());
     }
     message.append("\n  Pinned certificates for ").append(hostname).append(":");
     for (ByteString pin : pins) {
