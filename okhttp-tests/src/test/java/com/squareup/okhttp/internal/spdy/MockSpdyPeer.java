@@ -122,7 +122,7 @@ public final class MockSpdyPeer implements Closeable {
           readAndWriteFrames();
         } catch (IOException e) {
           Util.closeQuietly(MockSpdyPeer.this);
-          throw new RuntimeException(e);
+          e.printStackTrace();
         }
       }
     });
