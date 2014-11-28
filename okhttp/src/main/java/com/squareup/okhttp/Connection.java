@@ -24,10 +24,12 @@ import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
+import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
+import java.security.cert.X509Certificate;
 import javax.net.ssl.SSLSocket;
 
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
@@ -236,7 +238,11 @@ public final class Connection {
 
     // Verify that the socket's certificates are acceptable for the target host.
     if (!route.address.hostnameVerifier.verify(route.address.uriHost, sslSocket.getSession())) {
-      throw new IOException("Hostname '" + route.address.uriHost + "' was not verified");
+      X509Certificate cert = (X509Certificate) sslSocket.getSession().getPeerCertificates()[0];
+      throw new IOException("Hostname " + route.address.uriHost + " not verified:"
+          + "\n    certificate: " + CertificatePinner.pin(cert)
+          + "\n    DN: " + cert.getSubjectDN().getName()
+          + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
     }
 
     // Check that the certificate pinner is satisfied by the certificates presented.
