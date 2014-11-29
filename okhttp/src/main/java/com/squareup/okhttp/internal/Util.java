@@ -199,12 +199,12 @@ public final class Util {
     }
   }
 
-  /** Returns a Base 64-encoded string containing a SHA1 hash of {@code s}. */
+  /** Returns a Base 64-encoded string containing a SHA-1 hash of {@code s}. */
   public static String shaBase64(String s) {
     try {
       MessageDigest messageDigest = MessageDigest.getInstance("SHA-1");
-      byte[] md5bytes = messageDigest.digest(s.getBytes("UTF-8"));
-      return ByteString.of(md5bytes).base64();
+      byte[] sha1Bytes = messageDigest.digest(s.getBytes("UTF-8"));
+      return ByteString.of(sha1Bytes).base64();
     } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
       throw new AssertionError(e);
     }

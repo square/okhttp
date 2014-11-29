@@ -226,6 +226,7 @@ public final class WebSocketReader {
   private final class FramedMessageSource implements Source {
     @Override public long read(Buffer sink, long byteCount) throws IOException {
       if (closed) throw new IOException("Closed");
+      if (messageClosed) throw new IllegalStateException("Closed");
 
       if (frameBytesRead == frameLength) {
         if (isFinalFrame) return -1; // We are exhausted and have no continuations.

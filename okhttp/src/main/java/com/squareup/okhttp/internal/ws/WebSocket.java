@@ -83,6 +83,8 @@ public final class WebSocket {
   private volatile boolean writerClosed;
   /** True after a close frame was read by the reader. No frames will follow it. */
   private volatile boolean readerClosed;
+  /** Lock required to close the connection. */
+  private final Object closeLock = new Object();
 
   private boolean connected;
   private Connection connection;
@@ -255,33 +257,69 @@ public final class WebSocket {
    * method more than once has no effect.
    */
   public void close(int code, String reason) throws IOException {
-    if (writerClosed) return;
-    writerClosed = true;
+    boolean closeConnection;
+    synchronized (closeLock) {
+      if (writerClosed) return;
+      writerClosed = true;
 
-    if (writer != null) {
-      writer.writeClose(code, reason);
-      writer = null;
+      // If the reader has also indicated a desire to close we will close the connection.
+      closeConnection = readerClosed;
+    }
 
-      if (readerClosed) {
-        // The reader has also indicated a desire to close, immediately kill the connection.
-        closeConnection();
-      }
+    writer.writeClose(code, reason);
+    writer = null;
+
+    if (closeConnection) {
+      closeConnection();
     }
   }
 
   /** Called on the reader thread when a close frame is encountered. */
   private void peerClose(Buffer buffer) throws IOException {
-    readerClosed = true;
+    boolean closeConnection;
+    synchronized (closeLock) {
+      readerClosed = true;
 
-    if (writerClosed) {
-      // The writer has already indicated a desire to close. Move to kill the connection.
+      // If the writer has already indicated a desire to close we will close the connection.
+      closeConnection = writerClosed;
+      writerClosed = true;
+    }
+
+    if (closeConnection) {
       closeConnection();
     } else {
       // The reader thread will read no more frames so use it to send the response.
       writer.writeClose(buffer);
-      writer = null;
+    }
+  }
+
+  /** Called on the reader thread when an error occurs. */
+  private void readerErrorClose(IOException e, WebSocketListener listener) {
+    boolean closeConnection;
+    synchronized (closeLock) {
+      readerClosed = true;
+
+      // If the writer has not closed we will close the connection.
+      closeConnection = !writerClosed;
       writerClosed = true;
     }
+
+    if (closeConnection) {
+      if (e instanceof ProtocolException) {
+        // For protocol exceptions, try to inform the server of such.
+        try {
+          writer.writeClose(CLOSE_PROTOCOL_EXCEPTION, null);
+        } catch (IOException ignored) {
+        }
+      }
+
+      try {
+        closeConnection();
+      } catch (IOException ignored) {
+      }
+    }
+
+    listener.onFailure(e);
   }
 
   private void closeConnection() throws IOException {
@@ -290,7 +328,13 @@ public final class WebSocket {
     connection = null;
   }
 
-  /** True if this web socket is closed and can no longer be written to. */
+  /**
+   * True if this web socket is closed and can no longer be written to.
+   * <p>
+   * Note: Due to the asynchronous nature of a websocket, a {@code true} value from method does not
+   * guarantee that the connection will be open or even that you will be able to write in a
+   * subsequent call.
+   */
   public boolean isClosed() {
     return writerClosed;
   }
@@ -310,22 +354,8 @@ public final class WebSocket {
         try {
           reader.readMessage();
         } catch (IOException e) {
-          if (e instanceof ProtocolException && !writer.isClosed()) {
-            // For protocol exceptions, try to inform the server of such.
-            try {
-              writer.writeClose(CLOSE_PROTOCOL_EXCEPTION, null);
-            } catch (IOException ignored) {
-            }
-          }
-
-          readerClosed = true;
-          writerClosed = true;
-          try {
-            closeConnection();
-          } catch (IOException ignored) {
-          }
-
-          listener.onFailure(e);
+          readerErrorClose(e, listener);
+          return;
         }
       }
     }

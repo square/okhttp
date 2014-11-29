@@ -276,14 +276,14 @@ public class WebSocketReaderTest {
   @Test public void closedMessageSourceThrows() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
 
-    final AtomicReference<IOException> exception = new AtomicReference<IOException>();
+    final AtomicReference<Exception> exception = new AtomicReference<>();
     listener.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.close();
         try {
           payload.readAll(new Buffer());
           fail();
-        } catch (IOException e) {
+        } catch (IllegalStateException e) {
           exception.set(e);
         }
       }
