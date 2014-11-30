@@ -48,7 +48,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -97,9 +97,10 @@ public final class MockWebServer {
 
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
-  /** All map values are Boolean.TRUE. (Collections.newSetFromMap isn't available in Froyo) */
-  private final Map<Socket, Boolean> openClientSockets = new ConcurrentHashMap<>();
-  private final Map<SpdyConnection, Boolean> openSpdyConnections = new ConcurrentHashMap<>();
+  private final Set<Socket> openClientSockets =
+      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+  private final Set<SpdyConnection> openSpdyConnections =
+      Collections.newSetFromMap(new ConcurrentHashMap<SpdyConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private int bodyLimit = Integer.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -305,11 +306,11 @@ public final class MockWebServer {
         // This gnarly block of code will release all sockets and all thread,
         // even if any close fails.
         Util.closeQuietly(serverSocket);
-        for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext(); ) {
+        for (Iterator<Socket> s = openClientSockets.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
-        for (Iterator<SpdyConnection> s = openSpdyConnections.keySet().iterator(); s.hasNext(); ) {
+        for (Iterator<SpdyConnection> s = openSpdyConnections.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
@@ -329,7 +330,7 @@ public final class MockWebServer {
             dispatchBookkeepingRequest(0, socket);
             socket.close();
           } else {
-            openClientSockets.put(socket, true);
+            openClientSockets.add(socket);
             serveConnection(socket);
           }
         }
@@ -382,7 +383,7 @@ public final class MockWebServer {
               raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
-          openClientSockets.put(socket, true);
+          openClientSockets.add(socket);
 
           if (protocolNegotiationEnabled) {
             Platform.get().configureTlsExtensions(sslSocket, null, protocols);
@@ -406,7 +407,7 @@ public final class MockWebServer {
           SpdyConnection spdyConnection = new SpdyConnection.Builder(false, socket)
               .protocol(protocol)
               .handler(spdySocketHandler).build();
-          openSpdyConnections.put(spdyConnection, Boolean.TRUE);
+          openSpdyConnections.add(spdyConnection);
           openClientSockets.remove(socket);
           return;
         }
