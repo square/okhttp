@@ -118,6 +118,36 @@ public class OkHttpClient implements Cloneable {
           HttpEngine owner, Request request) throws IOException {
         connection.connectAndSetOwner(client, owner, request);
       }
+
+      @Override public Call newCall(OkHttpClient client, Request request) {
+        return new Call(client, request);
+      }
+
+      @Override public Response callGetResponse(Call call, boolean forWebSocket)
+          throws IOException {
+        return call.getResponse(forWebSocket);
+      }
+
+      @Override public void callEngineReleaseConnection(Call call) throws IOException {
+        call.engine.releaseConnection();
+      }
+
+      @Override public Connection callEngineGetConnection(Call call) {
+        return call.engine.getConnection();
+      }
+
+      @Override public boolean connectionClearOwner(Connection connection) {
+        return connection.clearOwner();
+      }
+
+      @Override public void connectionSetOwner(Connection connection, Object owner) {
+        connection.setOwner(owner);
+      }
+
+      @Override public void connectionCloseIfOwnedBy(Connection connection, Object owner)
+          throws IOException {
+        connection.closeIfOwnedBy(owner);
+      }
     };
   }
 

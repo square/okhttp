@@ -426,7 +426,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           ? httpEngine.getConnection().getHandshake()
           : null;
       if (readResponse) {
-        httpEngine.readResponse();
+        httpEngine.readResponse(false);
       }
 
       return true;
