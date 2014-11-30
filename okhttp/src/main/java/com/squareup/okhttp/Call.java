@@ -18,7 +18,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.OkHeaders;
-import com.squareup.okhttp.internal.http.RetryableSink;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -202,7 +201,6 @@ public class Call {
   Response getResponse(boolean forWebSocket) throws IOException {
     // Copy body metadata to the appropriate request headers.
     RequestBody body = request.body();
-    RetryableSink requestBodyOut = null;
     if (body != null) {
       Request.Builder requestBuilder = request.newBuilder();
 
@@ -224,7 +222,7 @@ public class Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, null, null, requestBodyOut, null);
+    engine = new HttpEngine(client, request, false, null, null, null, null);
 
     while (true) {
       if (canceled) return null;
