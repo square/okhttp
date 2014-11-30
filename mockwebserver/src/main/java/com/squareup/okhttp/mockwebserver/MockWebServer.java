@@ -342,6 +342,7 @@ public final class MockWebServer {
 
     // Cause acceptConnections() to break out.
     serverSocket.close();
+    serverSocket = null;
 
     // Await shutdown.
     try {
