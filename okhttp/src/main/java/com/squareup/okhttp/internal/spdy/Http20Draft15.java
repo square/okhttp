@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.spdy;
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -25,7 +26,6 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.internal.Internal.logger;
 import static com.squareup.okhttp.internal.spdy.Http20Draft15.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
@@ -40,6 +40,8 @@ import static okio.ByteString.EMPTY;
  * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-15
  */
 public final class Http20Draft15 implements Variant {
+  private static final Logger logger = Logger.getLogger(FrameLogger.class.getName());
+
   @Override public Protocol getProtocol() {
     return Protocol.HTTP_2;
   }

@@ -266,7 +266,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static void enableHttp2FrameLogging() {
-    Logger logger = Logger.getLogger(Http20Draft15.class.getName());
+    Logger logger = Logger.getLogger(Http20Draft15.class.getName() + "$FrameLogger");
     logger.setLevel(Level.FINE);
     ConsoleHandler handler = new ConsoleHandler();
     handler.setLevel(Level.FINE);
