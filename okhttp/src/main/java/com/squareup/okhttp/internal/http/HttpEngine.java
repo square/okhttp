@@ -368,7 +368,8 @@ public final class HttpEngine {
     }
 
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
-    if (routeSelector == null && connection == null // No connection.
+    if (!client.getRetryPolicy().allowRetry(userRequest)
+        || routeSelector == null && connection == null // No connection.
         || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
         || !isRecoverable(e)
         || !canRetryRequestBody) {

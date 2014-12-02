@@ -148,6 +148,8 @@ public class OkHttpClient implements Cloneable {
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
+  // default to pre-existing behavior
+  private RetryPolicy retryPolicy = new AllowAllRetryPolicy();
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -176,6 +178,7 @@ public class OkHttpClient implements Cloneable {
     this.connectTimeout = okHttpClient.connectTimeout;
     this.readTimeout = okHttpClient.readTimeout;
     this.writeTimeout = okHttpClient.writeTimeout;
+    this.retryPolicy = okHttpClient.retryPolicy;
   }
 
   /**
@@ -489,6 +492,15 @@ public class OkHttpClient implements Cloneable {
 
   public final List<ConnectionSpec> getConnectionSpecs() {
     return connectionSpecs;
+  }
+
+  public final RetryPolicy getRetryPolicy() {
+    return retryPolicy;
+  }
+
+  public final OkHttpClient setRetryPolicy(RetryPolicy retryPolicy) {
+    this.retryPolicy = retryPolicy;
+    return this;
   }
 
   /**
