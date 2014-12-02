@@ -74,8 +74,5 @@ public abstract class Internal {
   public abstract Response callGetResponse(Call call, boolean forWebSocket) throws IOException;
   public abstract void callEngineReleaseConnection(Call call) throws IOException;
   public abstract Connection callEngineGetConnection(Call call);
-  public abstract boolean connectionClearOwner(Connection connection);
   public abstract void connectionSetOwner(Connection connection, Object owner);
-  public abstract void connectionCloseIfOwnedBy(Connection connection, Object owner)
-      throws IOException;
 }

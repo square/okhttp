@@ -58,10 +58,10 @@ public final class WebSocketReader {
   private final boolean isClient;
   private final BufferedSource source;
   private final WebSocketListener listener;
-  private final FrameCallback frameCallback;
 
   private final Source framedMessageSource = new FramedMessageSource();
 
+  private FrameCallback frameCallback;
   private boolean closed;
   private boolean messageClosed;
 
@@ -76,15 +76,22 @@ public final class WebSocketReader {
   private final byte[] maskKey = new byte[4];
   private final byte[] maskBuffer = new byte[2048];
 
-  public WebSocketReader(boolean isClient, BufferedSource source, WebSocketListener listener,
-      FrameCallback frameCallback) {
+  public WebSocketReader(boolean isClient, BufferedSource source, WebSocketListener listener) {
     if (source == null) throw new NullPointerException("source");
     if (listener == null) throw new NullPointerException("listener");
-    if (frameCallback == null) throw new NullPointerException("frameCallback");
     this.isClient = isClient;
     this.source = source;
     this.listener = listener;
+  }
+
+  public void setFrameCallback(FrameCallback frameCallback) {
+    if (frameCallback == null) throw new NullPointerException("frameCallback");
+    if (this.frameCallback != null) throw new IllegalStateException("Frame callback already set.");
     this.frameCallback = frameCallback;
+  }
+
+  public WebSocketListener listener() {
+    return listener;
   }
 
   /**
@@ -92,6 +99,10 @@ public final class WebSocketReader {
    * between frame fragments. This will result in one call to {@link WebSocketListener#onMessage}.
    */
   public void readMessage() throws IOException {
+    if (frameCallback == null) {
+      throw new IllegalStateException("Frame callback missing. Did you call setFrameCallback?");
+    }
+
     readUntilNonControlFrame();
     if (closed) return;
 

@@ -136,17 +136,8 @@ public class OkHttpClient implements Cloneable {
         return call.engine.getConnection();
       }
 
-      @Override public boolean connectionClearOwner(Connection connection) {
-        return connection.clearOwner();
-      }
-
       @Override public void connectionSetOwner(Connection connection, Object owner) {
         connection.setOwner(owner);
-      }
-
-      @Override public void connectionCloseIfOwnedBy(Connection connection, Object owner)
-          throws IOException {
-        connection.closeIfOwnedBy(owner);
       }
     };
   }
