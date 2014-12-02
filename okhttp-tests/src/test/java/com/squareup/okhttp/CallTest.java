@@ -760,7 +760,7 @@ public final class CallTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
+  @Test public void postBodyRetransmittedOnFailureRecoveryWithDefaultPolicy() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("def"));
@@ -823,7 +823,7 @@ public final class CallTest {
     assertEquals(2, server.getRequestCount());
   }
 
-  @Test public void retryGet() throws Exception {
+  @Test public void retryGetAllowedByDefaultPolicy() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("def"));
