@@ -23,28 +23,32 @@ import java.util.concurrent.atomic.AtomicReference;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import org.junit.After;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
-import static com.squareup.okhttp.internal.ws.RecordingWebSocketListener.MessageDelegate;
+import static com.squareup.okhttp.internal.ws.WebSocketRecorder.MessageDelegate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 public class WebSocketReaderTest {
   private final Buffer data = new Buffer();
-  private final RecordingWebSocketListener listener = new RecordingWebSocketListener();
-  private final RecordingReaderFrameCallback callback = new RecordingReaderFrameCallback();
+  private final WebSocketRecorder callback = new WebSocketRecorder();
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketReader serverReader = new WebSocketReader(false, data, listener, callback);
-  private final WebSocketReader clientReader = new WebSocketReader(true, data, listener, callback);
+  private final WebSocketReader serverReader = new WebSocketReader(false, data, callback);
+  private final WebSocketReader clientReader = new WebSocketReader(true, data, callback);
+
+  @After public void tearDown() {
+    callback.assertExhausted();
+  }
 
   @Test public void controlFramesMustBeFinal() throws IOException {
     data.write(ByteString.decodeHex("0a00")); // Empty ping.
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Control frames must be final.", e.getMessage());
@@ -54,7 +58,7 @@ public class WebSocketReaderTest {
   @Test public void reservedFlagsAreUnsupported() throws IOException {
     data.write(ByteString.decodeHex("9a00")); // Empty ping, flag 1 set.
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Reserved flags are unsupported.", e.getMessage());
@@ -62,7 +66,7 @@ public class WebSocketReaderTest {
     data.clear();
     data.write(ByteString.decodeHex("aa00")); // Empty ping, flag 2 set.
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Reserved flags are unsupported.", e.getMessage());
@@ -70,7 +74,7 @@ public class WebSocketReaderTest {
     data.clear();
     data.write(ByteString.decodeHex("ca00")); // Empty ping, flag 3 set.
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Reserved flags are unsupported.", e.getMessage());
@@ -80,7 +84,7 @@ public class WebSocketReaderTest {
   @Test public void clientSentFramesMustBeMasked() throws IOException {
     data.write(ByteString.decodeHex("8100"));
     try {
-      serverReader.readMessage();
+      serverReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Client-sent frames must be masked. Server sent must not.", e.getMessage());
@@ -90,7 +94,7 @@ public class WebSocketReaderTest {
   @Test public void serverSentFramesMustNotBeMasked() throws IOException {
     data.write(ByteString.decodeHex("8180"));
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Client-sent frames must be masked. Server sent must not.", e.getMessage());
@@ -100,7 +104,7 @@ public class WebSocketReaderTest {
   @Test public void controlFramePayloadMax() throws IOException {
     data.write(ByteString.decodeHex("8a7e007e"));
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Control frame must be less than 125B.", e.getMessage());
@@ -109,21 +113,21 @@ public class WebSocketReaderTest {
 
   @Test public void clientSimpleHello() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    clientReader.readMessage();
-    listener.assertTextMessage("Hello");
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hello");
   }
 
   @Test public void serverSimpleHello() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d5158")); // Hello
-    serverReader.readMessage();
-    listener.assertTextMessage("Hello");
+    serverReader.processNextFrame();
+    callback.assertTextMessage("Hello");
   }
 
   @Test public void serverHelloTwoChunks() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Hel
 
     final Buffer sink = new Buffer();
-    listener.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.readFully(sink, 3); // Read "Hel"
         data.write(ByteString.decodeHex("5158")); // lo
@@ -131,7 +135,7 @@ public class WebSocketReaderTest {
         payload.close();
       }
     });
-    serverReader.readMessage();
+    serverReader.processNextFrame();
 
     assertEquals("Hello", sink.readUtf8());
   }
@@ -139,8 +143,8 @@ public class WebSocketReaderTest {
   @Test public void clientTwoFrameHello() throws IOException {
     data.write(ByteString.decodeHex("010348656c")); // Hel
     data.write(ByteString.decodeHex("80026c6f")); // lo
-    clientReader.readMessage();
-    listener.assertTextMessage("Hello");
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hello");
   }
 
   @Test public void clientTwoFrameHelloWithPongs() throws IOException {
@@ -150,14 +154,18 @@ public class WebSocketReaderTest {
     data.write(ByteString.decodeHex("8a00")); // Pong
     data.write(ByteString.decodeHex("8a00")); // Pong
     data.write(ByteString.decodeHex("80026c6f")); // lo
-    clientReader.readMessage();
-    listener.assertTextMessage("Hello");
+    clientReader.processNextFrame();
+    callback.assertPong(null);
+    callback.assertPong(null);
+    callback.assertPong(null);
+    callback.assertPong(null);
+    callback.assertTextMessage("Hello");
   }
 
   @Test public void clientIncompleteMessageBodyThrows() throws IOException {
     data.write(ByteString.decodeHex("810548656c")); // Length = 5, "Hel"
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (EOFException ignored) {
     }
@@ -166,7 +174,7 @@ public class WebSocketReaderTest {
   @Test public void clientIncompleteControlFrameBodyThrows() throws IOException {
     data.write(ByteString.decodeHex("8a0548656c")); // Length = 5, "Hel"
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (EOFException ignored) {
     }
@@ -175,7 +183,7 @@ public class WebSocketReaderTest {
   @Test public void serverIncompleteMessageBodyThrows() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Length = 5, "Hel"
     try {
-      serverReader.readMessage();
+      serverReader.processNextFrame();
       fail();
     } catch (EOFException ignored) {
     }
@@ -184,7 +192,7 @@ public class WebSocketReaderTest {
   @Test public void serverIncompleteControlFrameBodyThrows() throws IOException {
     data.write(ByteString.decodeHex("8a8537fa213d7f9f4d")); // Length = 5, "Hel"
     try {
-      serverReader.readMessage();
+      serverReader.processNextFrame();
       fail();
     } catch (EOFException ignored) {
     }
@@ -193,16 +201,16 @@ public class WebSocketReaderTest {
   @Test public void clientSimpleBinary() throws IOException {
     byte[] bytes = binaryData(256);
     data.write(ByteString.decodeHex("827E0100")).write(bytes);
-    clientReader.readMessage();
-    listener.assertBinaryMessage(bytes);
+    clientReader.processNextFrame();
+    callback.assertBinaryMessage(bytes);
   }
 
   @Test public void clientTwoFrameBinary() throws IOException {
     byte[] bytes = binaryData(200);
     data.write(ByteString.decodeHex("0264")).write(bytes, 0, 100);
     data.write(ByteString.decodeHex("8064")).write(bytes, 100, 100);
-    clientReader.readMessage();
-    listener.assertBinaryMessage(bytes);
+    clientReader.processNextFrame();
+    callback.assertBinaryMessage(bytes);
   }
 
   @Test public void twoFrameNotContinuation() throws IOException {
@@ -210,7 +218,7 @@ public class WebSocketReaderTest {
     data.write(ByteString.decodeHex("0264")).write(bytes, 0, 100);
     data.write(ByteString.decodeHex("8264")).write(bytes, 100, 100);
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (ProtocolException e) {
       assertEquals("Expected continuation opcode. Got: 2", e.getMessage());
@@ -219,13 +227,13 @@ public class WebSocketReaderTest {
 
   @Test public void noCloseErrors() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    listener.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.readAll(new Buffer());
       }
     });
     try {
-      clientReader.readMessage();
+      clientReader.processNextFrame();
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Listener failed to call close on message payload.", e.getMessage());
@@ -237,18 +245,18 @@ public class WebSocketReaderTest {
     data.write(ByteString.decodeHex("810448657921")); // Hey!
 
     final Buffer sink = new Buffer();
-    listener.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.read(sink, 3);
         payload.close();
       }
     });
 
-    clientReader.readMessage();
+    clientReader.processNextFrame();
     assertEquals("Hel", sink.readUtf8());
 
-    clientReader.readMessage();
-    listener.assertTextMessage("Hey!");
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hey!");
   }
 
   @Test public void closeExhaustsMessageOverControlFrames() throws IOException {
@@ -259,25 +267,27 @@ public class WebSocketReaderTest {
     data.write(ByteString.decodeHex("810448657921")); // Hey!
 
     final Buffer sink = new Buffer();
-    listener.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.read(sink, 2);
         payload.close();
       }
     });
 
-    clientReader.readMessage();
+    clientReader.processNextFrame();
     assertEquals("He", sink.readUtf8());
+    callback.assertPong(null);
+    callback.assertPong(null);
 
-    clientReader.readMessage();
-    listener.assertTextMessage("Hey!");
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hey!");
   }
 
   @Test public void closedMessageSourceThrows() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
 
     final AtomicReference<Exception> exception = new AtomicReference<>();
-    listener.setNextMessageDelegate(new MessageDelegate() {
+    callback.setNextMessageDelegate(new MessageDelegate() {
       @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
         payload.close();
         try {
@@ -288,39 +298,33 @@ public class WebSocketReaderTest {
         }
       }
     });
-    clientReader.readMessage();
+    clientReader.processNextFrame();
 
     assertNotNull(exception.get());
   }
 
   @Test public void emptyPingCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8900")); // Empty ping
-    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    clientReader.readMessage();
+    clientReader.processNextFrame();
     callback.assertPing(null);
-    listener.assertTextMessage("Hello");
   }
 
   @Test public void pingCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("890548656c6c6f")); // Ping with "Hello"
-    data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
-    clientReader.readMessage();
+    clientReader.processNextFrame();
     callback.assertPing(new Buffer().writeUtf8("Hello"));
-    listener.assertTextMessage("Hello");
   }
 
   @Test public void emptyCloseCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8800")); // Empty close
-    clientReader.readMessage();
-    callback.assertClose(null);
-    listener.onClose(0, "");
+    clientReader.processNextFrame();
+    callback.assertClose(0, "");
   }
 
   @Test public void closeCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("880703e848656c6c6f")); // Close with code and reason
-    clientReader.readMessage();
-    callback.assertClose(new Buffer().writeShort(1000).writeUtf8("Hello"));
-    listener.onClose(1000, "Hello");
+    clientReader.processNextFrame();
+    callback.assertClose(1000, "Hello");
   }
 
   private byte[] binaryData(int length) {

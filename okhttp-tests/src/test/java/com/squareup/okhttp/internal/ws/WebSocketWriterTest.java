@@ -25,9 +25,9 @@ import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
+import static com.squareup.okhttp.internal.ws.Protocol.toggleMask;
 import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.BINARY;
 import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
-import static com.squareup.okhttp.internal.ws.Protocol.toggleMask;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -263,12 +263,31 @@ public class WebSocketWriterTest {
     assertData("8a8560b420bb28d14cd70f");
   }
 
-  @Test public void controlFrameTooLongThrows() throws IOException {
+  @Test public void pingTooLongThrows() throws IOException {
     try {
       serverWriter.writePing(new Buffer().write(binaryData(1000)));
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Control frame payload must be less than 125B.", e.getMessage());
+      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
+    }
+  }
+
+  @Test public void pongTooLongThrows() throws IOException {
+    try {
+      serverWriter.writePong(new Buffer().write(binaryData(1000)));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
+    }
+  }
+
+  @Test public void closeTooLongThrows() throws IOException {
+    try {
+      String longString = ByteString.of(binaryData(75)).hex();
+      serverWriter.writeClose(1000, longString);
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Payload size must be less than or equal to 125", e.getMessage());
     }
   }
 

@@ -15,18 +15,30 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
+import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 
+// TODO move to public API!
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
+  void onOpen(WebSocket webSocket, Request request, Response response) throws IOException;
+
   /**
    * Called when a server message is received. The {@code type} indicates whether the
    * {@code payload} should be interpreted as UTF-8 text or binary data.
    */
   void onMessage(BufferedSource payload, PayloadType type) throws IOException;
+
+  /**
+   * Called when a server pong is received. This is usually a result of calling {@link
+   * WebSocket#sendPing(Buffer)} but might also be unsolicited.
+   */
+  void onPong(Buffer payload);
 
   /**
    * Called when the server sends a close message. This may have been initiated
@@ -39,9 +51,6 @@ public interface WebSocketListener {
    */
   void onClose(int code, String reason);
 
-  /**
-   * Called when the transport-layer of this web socket errors during
-   * communication.
-   */
+  /** Called when the transport or protocol layer of this web socket errors during communication. */
   void onFailure(IOException e);
 }

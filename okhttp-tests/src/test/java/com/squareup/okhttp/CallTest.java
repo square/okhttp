@@ -1623,7 +1623,7 @@ public final class CallTest {
 
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
-    return new RecordedResponse(request, response, response.body().string(), null);
+    return new RecordedResponse(request, response, null, response.body().string(), null);
   }
 
   /**

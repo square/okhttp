@@ -76,7 +76,7 @@ public class Call {
     }
     try {
       client.getDispatcher().executed(this);
-      Response result = getResponseWithInterceptorChain();
+      Response result = getResponseWithInterceptorChain(false);
       if (result == null) throw new IOException("Canceled");
       return result;
     } finally {
@@ -102,11 +102,15 @@ public class Call {
    * @throws IllegalStateException when the call has already been executed.
    */
   public void enqueue(Callback responseCallback) {
+    enqueue(responseCallback, false);
+  }
+
+  void enqueue(Callback responseCallback, boolean forWebSocket) {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    client.getDispatcher().enqueue(new AsyncCall(responseCallback));
+    client.getDispatcher().enqueue(new AsyncCall(responseCallback, forWebSocket));
   }
 
   /**
@@ -124,10 +128,12 @@ public class Call {
 
   final class AsyncCall extends NamedRunnable {
     private final Callback responseCallback;
+    private final boolean forWebSocket;
 
-    private AsyncCall(Callback responseCallback) {
+    private AsyncCall(Callback responseCallback, boolean forWebSocket) {
       super("OkHttp %s", originalRequest.urlString());
       this.responseCallback = responseCallback;
+      this.forWebSocket = forWebSocket;
     }
 
     String host() {
@@ -153,7 +159,7 @@ public class Call {
     @Override protected void execute() {
       boolean signalledCallback = false;
       try {
-        Response response = getResponseWithInterceptorChain();
+        Response response = getResponseWithInterceptorChain(forWebSocket);
         if (canceled) {
           signalledCallback = true;
           responseCallback.onFailure(originalRequest, new IOException("Canceled"));
@@ -188,17 +194,20 @@ public class Call {
     }
   }
 
-  private Response getResponseWithInterceptorChain() throws IOException {
-    return new ApplicationInterceptorChain(0, originalRequest).proceed(originalRequest);
+  private Response getResponseWithInterceptorChain(boolean forWebSocket) throws IOException {
+    Interceptor.Chain chain = new ApplicationInterceptorChain(0, originalRequest, forWebSocket);
+    return chain.proceed(originalRequest);
   }
 
   class ApplicationInterceptorChain implements Interceptor.Chain {
     private final int index;
     private final Request request;
+    private final boolean forWebSocket;
 
-    ApplicationInterceptorChain(int index, Request request) {
+    ApplicationInterceptorChain(int index, Request request, boolean forWebSocket) {
       this.index = index;
       this.request = request;
+      this.forWebSocket = forWebSocket;
     }
 
     @Override public Connection connection() {
@@ -212,11 +221,11 @@ public class Call {
     @Override public Response proceed(Request request) throws IOException {
       if (index < client.interceptors().size()) {
         // There's another interceptor in the chain. Call that.
-        ApplicationInterceptorChain chain = new ApplicationInterceptorChain(index + 1, request);
+        Interceptor.Chain chain = new ApplicationInterceptorChain(index + 1, request, forWebSocket);
         return client.interceptors().get(index).intercept(chain);
       } else {
         // No more interceptors. Do HTTP.
-        return getResponse(request, false);
+        return getResponse(request, forWebSocket);
       }
     }
   }
