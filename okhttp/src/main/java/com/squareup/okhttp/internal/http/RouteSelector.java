@@ -162,7 +162,9 @@ public final class RouteSelector {
     }
     lastSpec = nextConnectionSpec();
 
-    Route route = new Route(address, lastProxy, lastInetSocketAddress, lastSpec);
+    final boolean shouldSendTlsFallbackIndicator = shouldSendTlsFallbackIndicator(lastSpec);
+    Route route = new Route(address, lastProxy, lastInetSocketAddress, lastSpec,
+        shouldSendTlsFallbackIndicator);
     if (routeDatabase.shouldPostpone(route)) {
       postponedRoutes.add(route);
       // We will only recurse in order to skip previously failed routes. They will be tried last.
@@ -170,6 +172,11 @@ public final class RouteSelector {
     }
 
     return new Connection(pool, route);
+  }
+
+  private boolean shouldSendTlsFallbackIndicator(ConnectionSpec connectionSpec) {
+    return connectionSpec != connectionSpecs.get(0)
+        && connectionSpec.isTls();
   }
 
   /**
@@ -193,8 +200,11 @@ public final class RouteSelector {
     // selector and also in the route database.
     if (!(failure instanceof SSLHandshakeException) && !(failure instanceof SSLProtocolException)) {
       while (nextSpecIndex < connectionSpecs.size()) {
-        Route toSuppress = new Route(address, lastProxy, lastInetSocketAddress,
-            connectionSpecs.get(nextSpecIndex++));
+        ConnectionSpec connectionSpec = connectionSpecs.get(nextSpecIndex++);
+        final boolean shouldSendTlsFallbackIndicator =
+            shouldSendTlsFallbackIndicator(connectionSpec);
+        Route toSuppress = new Route(address, lastProxy, lastInetSocketAddress, connectionSpec,
+            shouldSendTlsFallbackIndicator);
         routeDatabase.failed(toSuppress);
       }
     }
