@@ -251,7 +251,7 @@ public final class RouteSelector {
             "Proxy.address() is not an " + "InetSocketAddress: " + proxyAddress.getClass());
       }
       InetSocketAddress proxySocketAddress = (InetSocketAddress) proxyAddress;
-      socketHost = proxySocketAddress.getHostName();
+      socketHost = getHostString(proxySocketAddress);
       socketPort = proxySocketAddress.getPort();
     }
 
@@ -260,6 +260,24 @@ public final class RouteSelector {
       inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
     }
     nextInetSocketAddressIndex = 0;
+  }
+
+  /**
+   * Obtain a "host" from an {@link InetSocketAddress}. This returns a string containing either an
+   * actual host name or a numeric IP address.
+   */
+  // Visible for testing
+  static String getHostString(InetSocketAddress socketAddress) {
+    InetAddress address = socketAddress.getAddress();
+    if (address == null) {
+      // The InetSocketAddress was specified with a string (either a numeric IP or a host name). If
+      // it is a name, all IPs for that name should be tried. If it is an IP address, only that IP
+      // address should be tried.
+      return socketAddress.getHostName();
+    }
+    // The InetSocketAddress has a specific address: we should only try that address. Therefore we
+    // return the address and ignore any host name that may be available.
+    return address.getHostAddress();
   }
 
   /** Returns true if there's another socket address to try. */
