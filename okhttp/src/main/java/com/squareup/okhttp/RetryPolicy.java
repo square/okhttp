@@ -7,8 +7,7 @@ package com.squareup.okhttp;
  * Implementations should be thread safe.
  *
  * @see com.squareup.okhttp.HttpMethodWhitelistRetryPolicy
- * @see com.squareup.okhttp.AllowAllRetryPolicy
- * @see com.squareup.okhttp.AllowNoneRetryPolicy
+ * @see com.squareup.okhttp.FixedRetryPolicy
  */
 public interface RetryPolicy {
 
