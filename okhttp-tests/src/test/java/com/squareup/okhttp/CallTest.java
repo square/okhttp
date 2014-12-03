@@ -796,7 +796,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("def"));
     server.play();
 
-    client.setRetryPolicy(AllowNoneRetryPolicy.INSTANCE);
+    client.setRetryPolicy(FixedRetryPolicy.getAllowNonePolicy());
 
     // Seed the connection pool so we have something that can fail.
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
@@ -861,7 +861,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("def"));
     server.play();
 
-    client.setRetryPolicy(AllowNoneRetryPolicy.INSTANCE);
+    client.setRetryPolicy(FixedRetryPolicy.getAllowNonePolicy());
 
     // Seed the connection pool so we have something that can fail.
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();

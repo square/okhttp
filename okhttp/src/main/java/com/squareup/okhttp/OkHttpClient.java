@@ -149,7 +149,7 @@ public class OkHttpClient implements Cloneable {
   private int readTimeout;
   private int writeTimeout;
   // default to pre-existing behavior
-  private RetryPolicy retryPolicy = AllowAllRetryPolicy.INSTANCE;
+  private RetryPolicy retryPolicy = FixedRetryPolicy.getAllowAllPolicy();
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
