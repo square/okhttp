@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
+import org.junit.Before;
 import org.junit.Test;
 
 import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
@@ -38,8 +39,13 @@ public class WebSocketReaderTest {
   private final Random random = new Random(0);
 
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
-  private final WebSocketReader serverReader = new WebSocketReader(false, data, listener, callback);
-  private final WebSocketReader clientReader = new WebSocketReader(true, data, listener, callback);
+  private final WebSocketReader serverReader = new WebSocketReader(false, data, listener);
+  private final WebSocketReader clientReader = new WebSocketReader(true, data, listener);
+
+  @Before public void setUp() {
+    serverReader.setFrameCallback(callback);
+    clientReader.setFrameCallback(callback);
+  }
 
   @Test public void controlFramesMustBeFinal() throws IOException {
     data.write(ByteString.decodeHex("0a00")); // Empty ping.

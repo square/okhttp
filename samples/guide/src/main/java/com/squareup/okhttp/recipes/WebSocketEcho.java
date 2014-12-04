@@ -2,8 +2,8 @@ package com.squareup.okhttp.recipes;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.ws.WebSocket;
+import com.squareup.okhttp.internal.ws.WebSocketCall;
 import com.squareup.okhttp.internal.ws.WebSocketListener;
 import java.io.IOException;
 import okio.Buffer;
@@ -23,13 +23,8 @@ public final class WebSocketEcho implements WebSocketListener {
     Request request = new Request.Builder()
         .url("ws://echo.websocket.org")
         .build();
-    WebSocket webSocket = WebSocket.newWebSocket(client, request);
-    Response response = webSocket.connect(this);
-    if (response.code() != 101) {
-      System.err.println("Unable to connect: " + response.code() + " " + response.message());
-      System.err.println(response.body().string());
-      return;
-    }
+    WebSocketCall call = WebSocketCall.newWebSocketCall(client, request);
+    WebSocket webSocket = call.execute(this);
 
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello..."));
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("...World!"));
