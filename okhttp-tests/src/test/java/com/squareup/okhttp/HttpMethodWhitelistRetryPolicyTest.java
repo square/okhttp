@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 public final class HttpMethodWhitelistRetryPolicyTest {
 
-  private RetryPolicy retryPolicy = HttpMethodWhitelistRetryPolicy.forGetOnly();
+  private RetryPolicy retryPolicy = HttpMethodWhitelistRetryPolicy.forIdempotentOnly();
 
   @Test
   public void allowsCorrectly() {
@@ -18,7 +18,8 @@ public final class HttpMethodWhitelistRetryPolicyTest {
 
   @Test
   public void deniesCorrectly() {
-    Request request = new Request.Builder().url("foo").delete().build();
+    Request request = new Request.Builder().url("foo").post(
+        RequestBody.create(MediaType.parse("text/plain"), "foo")).build();
 
     assertFalse(retryPolicy.allowRetry(request));
   }

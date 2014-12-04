@@ -39,10 +39,12 @@ public final class HttpMethodWhitelistRetryPolicy implements RetryPolicy {
   }
 
   /**
-   * @return a RetryPolicy that only allows retries for GET requests.
+   * @return a RetryPolicy that only allows retries for idempotent method types.
+   * @see <a href="http://tools.ietf.org/html/rfc7231#section-4.2">RFC 7231 Section 4.2</a>
    */
-  public static RetryPolicy forGetOnly() {
-    return HttpMethodWhitelistRetryPolicy.forMethods("GET");
+  public static RetryPolicy forIdempotentOnly() {
+    return HttpMethodWhitelistRetryPolicy
+        .forMethods("OPTIONS", "GET", "HEAD", "TRACE", "PUT", "DELETE");
   }
 
   @Override
