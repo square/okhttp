@@ -289,7 +289,7 @@ public final class HostnameVerifierTest {
         + "G9Z6tyMbmfRY+dLSh3a9JwoEcBUso6EWYBakLbq4nG/nvYdYvG9ehrnLVwZFL82e\n"
         + "l3Q/RK95bnA6cuRClGusLad0e6bjkBzx/VQ3VarDEpAkTLUGVAa0CLXtnyc=\n"
         + "-----END CERTIFICATE-----\n");
-    assertTrue(verifier.verify("foo.com", session));
+    assertFalse(verifier.verify("foo.com", session));
     assertTrue(verifier.verify("www.foo.com", session));
     assertTrue(verifier.verify("\u82b1\u5b50.foo.com", session));
     assertFalse(verifier.verify("a.b.foo.com", session));
@@ -510,7 +510,7 @@ public final class HostnameVerifierTest {
     assertFalse(verifier.verify("foo.com", session));
     assertTrue(verifier.verify("bar.com", session));
     assertTrue(verifier.verify("a.baz.com", session));
-    assertTrue(verifier.verify("baz.com", session));
+    assertFalse(verifier.verify("baz.com", session));
     assertFalse(verifier.verify("a.foo.com", session));
     assertFalse(verifier.verify("a.bar.com", session));
     assertFalse(verifier.verify("quux.com", session));
