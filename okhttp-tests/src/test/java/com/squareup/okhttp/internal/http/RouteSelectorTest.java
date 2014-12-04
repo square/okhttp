@@ -401,6 +401,24 @@ public final class RouteSelectorTest {
     assertEquals(regularRoutes.size(), routesWithFailedRoute.size());
   }
 
+  @Test public void getHostString() throws Exception {
+    // Name proxy specification.
+    InetSocketAddress socketAddress = InetSocketAddress.createUnresolved("host", 1234);
+    assertEquals("host", RouteSelector.getHostString(socketAddress));
+    socketAddress = InetSocketAddress.createUnresolved("127.0.0.1", 1234);
+    assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
+
+    // InetAddress proxy specification.
+    socketAddress = new InetSocketAddress(InetAddress.getByName("localhost"), 1234);
+    assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
+    socketAddress = new InetSocketAddress(
+        InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }), 1234);
+    assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
+    socketAddress = new InetSocketAddress(
+        InetAddress.getByAddress("foobar", new byte[] { 127, 0, 0, 1 }), 1234);
+    assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
+  }
+
   private void assertConnection(Connection connection, Address address, Proxy proxy,
       InetAddress socketAddress, int socketPort, ConnectionSpec connectionSpec) {
     assertEquals(address, connection.getRoute().getAddress());
