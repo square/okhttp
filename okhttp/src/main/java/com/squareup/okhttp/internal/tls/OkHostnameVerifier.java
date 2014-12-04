@@ -58,6 +58,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   private OkHostnameVerifier() {
   }
 
+  @Override
   public boolean verify(String host, SSLSession session) {
     try {
       Certificate[] certificates = session.getPeerCertificates();
@@ -151,48 +152,97 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   }
 
   /**
-   * Returns true if {@code hostName} matches the name or pattern {@code cn}.
+   * Returns {@code true} iff {@code hostName} matches the domain name {@code pattern}.
    *
-   * @param hostName lowercase host name.
-   * @param cn certificate host name. May include wildcards like
-   *     {@code *.android.com}.
+   * @param hostName lower-case host name.
+   * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
+   *        {@code *.android.com}.
    */
-  public boolean verifyHostName(String hostName, String cn) {
+  private boolean verifyHostName(String hostName, String pattern) {
+    // Basic sanity checks
     // Check length == 0 instead of .isEmpty() to support Java 5.
-    if (hostName == null || hostName.length() == 0 || cn == null || cn.length() == 0) {
+    if ((hostName == null) || (hostName.length() == 0) || (hostName.startsWith("."))
+        || (hostName.endsWith(".."))) {
+      // Invalid domain name
+      return false;
+    }
+    if ((pattern == null) || (pattern.length() == 0) || (pattern.startsWith("."))
+        || (pattern.endsWith(".."))) {
+      // Invalid pattern/domain name
       return false;
     }
 
-    cn = cn.toLowerCase(Locale.US);
+    // Normalize hostName and pattern by turning them into absolute domain names if they are not
+    // yet absolute. This is needed because server certificates do not normally contain absolute
+    // names or patterns, but they should be treated as absolute. At the same time, any hostName
+    // presented to this method should also be treated as absolute for the purposes of matching
+    // to the server certificate.
+    //   www.android.com  matches www.android.com
+    //   www.android.com  matches www.android.com.
+    //   www.android.com. matches www.android.com.
+    //   www.android.com. matches www.android.com
+    if (!hostName.endsWith(".")) {
+      hostName += '.';
+    }
+    if (!pattern.endsWith(".")) {
+      pattern += '.';
+    }
+    // hostName and pattern are now absolute domain names.
 
-    if (!cn.contains("*")) {
-      return hostName.equals(cn);
+    pattern = pattern.toLowerCase(Locale.US);
+    // hostName and pattern are now in lower case -- domain names are case-insensitive.
+
+    if (!pattern.contains("*")) {
+      // Not a wildcard pattern -- hostName and pattern must match exactly.
+      return hostName.equals(pattern);
+    }
+    // Wildcard pattern
+
+    // WILDCARD PATTERN RULES:
+    // 1. Asterisk (*) is only permitted in the left-most domain name label and must be the
+    //    only character in that label (i.e., must match the whole left-most label).
+    //    For example, *.example.com is permitted, while *a.example.com, a*.example.com,
+    //    a*b.example.com, a.*.example.com are not permitted.
+    // 2. Asterisk (*) cannot match across domain name labels.
+    //    For example, *.example.com matches test.example.com but does not match
+    //    sub.test.example.com.
+    // 3. Wildcard patterns for single-label domain names are not permitted.
+
+    if ((!pattern.startsWith("*.")) || (pattern.indexOf('*', 1) != -1)) {
+      // Asterisk (*) is only permitted in the left-most domain name label and must be the only
+      // character in that label
+      return false;
     }
 
-    if (cn.startsWith("*.") && hostName.regionMatches(0, cn, 2, cn.length() - 2)) {
-      return true; // "*.foo.com" matches "foo.com"
+    // Optimization: check whether hostName is too short to match the pattern. hostName must be at
+    // least as long as the pattern because asterisk must match the whole left-most label and
+    // hostName starts with a non-empty label. Thus, asterisk has to match one or more characters.
+    if (hostName.length() < pattern.length()) {
+      // hostName too short to match the pattern.
+      return false;
     }
 
-    int asterisk = cn.indexOf('*');
-    int dot = cn.indexOf('.');
-    if (asterisk > dot) {
-      return false; // malformed; wildcard must be in the first part of the cn
+    if ("*.".equals(pattern)) {
+      // Wildcard pattern for single-label domain name -- not permitted.
+      return false;
     }
 
-    if (!hostName.regionMatches(0, cn, 0, asterisk)) {
-      return false; // prefix before '*' doesn't match
+    // hostName must end with the region of pattern following the asterisk.
+    String suffix = pattern.substring(1);
+    if (!hostName.endsWith(suffix)) {
+      // hostName does not end with the suffix
+      return false;
     }
 
-    int suffixLength = cn.length() - (asterisk + 1);
-    int suffixStart = hostName.length() - suffixLength;
-    if (hostName.indexOf('.', asterisk) < suffixStart) {
-      return false; // wildcard '*' can't match a '.'
+    // Check that asterisk did not match across domain name labels.
+    int suffixStartIndexInHostName = hostName.length() - suffix.length();
+    if ((suffixStartIndexInHostName > 0)
+        && (hostName.lastIndexOf('.', suffixStartIndexInHostName - 1) != -1)) {
+      // Asterisk is matching across domain name labels -- not permitted.
+      return false;
     }
 
-    if (!hostName.regionMatches(suffixStart, cn, asterisk + 1, suffixLength)) {
-      return false; // suffix after '*' doesn't match
-    }
-
+    // hostName matches pattern
     return true;
   }
 }
