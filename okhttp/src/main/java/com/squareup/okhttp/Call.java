@@ -36,21 +36,20 @@ import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
  */
 public class Call {
   private final OkHttpClient client;
-  private int redirectionCount;
 
   // Guarded by this.
   private boolean executed;
   volatile boolean canceled;
 
-  /** The request; possibly a consequence of redirects or auth headers. */
-  private Request request;
+  /** The application's original request unadulterated by redirects or auth headers. */
+  Request originalRequest;
   HttpEngine engine;
 
-  protected Call(OkHttpClient client, Request request) {
+  protected Call(OkHttpClient client, Request originalRequest) {
     // Copy the client. Otherwise changes (socket factory, redirect policy,
     // etc.) may incorrectly be reflected in the request when it is executed.
     this.client = client.copyWithDefaults();
-    this.request = request;
+    this.originalRequest = originalRequest;
   }
 
   /**
@@ -80,8 +79,7 @@ public class Call {
     }
     try {
       client.getDispatcher().executed(this);
-      Response result = getResponse(false);
-      engine.releaseConnection(); // Transfer ownership of the body to the caller.
+      Response result = getResponseWithInterceptorChain();
       if (result == null) throw new IOException("Canceled");
       return result;
     } finally {
@@ -90,7 +88,7 @@ public class Call {
   }
 
   Object tag() {
-    return request.tag();
+    return originalRequest.tag();
   }
 
   /**
@@ -131,20 +129,20 @@ public class Call {
     private final Callback responseCallback;
 
     private AsyncCall(Callback responseCallback) {
-      super("OkHttp %s", request.urlString());
+      super("OkHttp %s", originalRequest.urlString());
       this.responseCallback = responseCallback;
     }
 
     String host() {
-      return request.url().getHost();
+      return originalRequest.url().getHost();
     }
 
     Request request() {
-      return request;
+      return originalRequest;
     }
 
     Object tag() {
-      return request.tag();
+      return originalRequest.tag();
     }
 
     void cancel() {
@@ -158,13 +156,12 @@ public class Call {
     @Override protected void execute() {
       boolean signalledCallback = false;
       try {
-        Response response = getResponse(false);
+        Response response = getResponseWithInterceptorChain();
         if (canceled) {
           signalledCallback = true;
-          responseCallback.onFailure(request, new IOException("Canceled"));
+          responseCallback.onFailure(originalRequest, new IOException("Canceled"));
         } else {
           signalledCallback = true;
-          engine.releaseConnection();
           responseCallback.onResponse(response);
         }
       } catch (IOException e) {
@@ -172,7 +169,7 @@ public class Call {
           // Do not signal the callback twice!
           logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          responseCallback.onFailure(request, e);
+          responseCallback.onFailure(originalRequest, e);
         }
       } finally {
         client.getDispatcher().finished(this);
@@ -187,10 +184,39 @@ public class Call {
   private String toLoggableString() {
     String string = canceled ? "canceled call" : "call";
     try {
-      String redactedUrl = new URL(request.url(), "/...").toString();
+      String redactedUrl = new URL(originalRequest.url(), "/...").toString();
       return string + " to " + redactedUrl;
     } catch (MalformedURLException e) {
       return string;
+    }
+  }
+
+  private Response getResponseWithInterceptorChain() throws IOException {
+    return new RealInterceptorChain(0, originalRequest).proceed(originalRequest);
+  }
+
+  class RealInterceptorChain implements Interceptor.Chain {
+    private final int index;
+    private final Request request;
+
+    RealInterceptorChain(int index, Request request) {
+      this.index = index;
+      this.request = request;
+    }
+
+    @Override public Request request() {
+      return request;
+    }
+
+    @Override public Response proceed(Request request) throws IOException {
+      if (index < client.interceptors().size()) {
+        // There's another interceptor in the chain. Call that.
+        RealInterceptorChain chain = new RealInterceptorChain(index + 1, request);
+        return client.interceptors().get(index).intercept(chain);
+      } else {
+        // No more interceptors. Do HTTP.
+        return getResponse(request, false);
+      }
     }
   }
 
@@ -198,7 +224,7 @@ public class Call {
    * Performs the request and returns the response. May return null if this
    * call was canceled.
    */
-  Response getResponse(boolean forWebSocket) throws IOException {
+  Response getResponse(Request request, boolean forWebSocket) throws IOException {
     // Copy body metadata to the appropriate request headers.
     RequestBody body = request.body();
     if (body != null) {
@@ -224,8 +250,12 @@ public class Call {
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
     engine = new HttpEngine(client, request, false, null, null, null, null);
 
+    int redirectionCount = 0;
     while (true) {
-      if (canceled) return null;
+      if (canceled) {
+        engine.releaseConnection();
+        return null;
+      }
 
       try {
         engine.sendRequest();

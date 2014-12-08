@@ -30,6 +30,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -125,7 +126,7 @@ public class OkHttpClient implements Cloneable {
 
       @Override public Response callGetResponse(Call call, boolean forWebSocket)
           throws IOException {
-        return call.getResponse(forWebSocket);
+        return call.getResponse(call.originalRequest, forWebSocket);
       }
 
       @Override public void callEngineReleaseConnection(Call call) throws IOException {
@@ -159,6 +160,7 @@ public class OkHttpClient implements Cloneable {
   private Proxy proxy;
   private List<Protocol> protocols;
   private List<ConnectionSpec> connectionSpecs;
+  private final List<Interceptor> interceptors = new ArrayList<>();
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
 
@@ -190,6 +192,7 @@ public class OkHttpClient implements Cloneable {
     this.proxy = okHttpClient.proxy;
     this.protocols = okHttpClient.protocols;
     this.connectionSpecs = okHttpClient.connectionSpecs;
+    this.interceptors.addAll(okHttpClient.interceptors);
     this.proxySelector = okHttpClient.proxySelector;
     this.cookieHandler = okHttpClient.cookieHandler;
     this.cache = okHttpClient.cache;
@@ -519,6 +522,15 @@ public class OkHttpClient implements Cloneable {
 
   public final List<ConnectionSpec> getConnectionSpecs() {
     return connectionSpecs;
+  }
+
+  /**
+   * Returns a modifiable list of interceptors that observe the full span of each call: from before
+   * the connection is established (if any) until after the response source is selected (either the
+   * origin server, cache, or both).
+   */
+  public List<Interceptor> interceptors() {
+    return interceptors;
   }
 
   /**

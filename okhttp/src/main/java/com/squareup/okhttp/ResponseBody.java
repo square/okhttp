@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
@@ -89,5 +90,47 @@ public abstract class ResponseBody implements Closeable {
 
   @Override public void close() throws IOException {
     source().close();
+  }
+
+  /**
+   * Returns a new response body that transmits {@code content}. If {@code
+   * contentType} is non-null and lacks a charset, this will use UTF-8.
+   */
+  public static ResponseBody create(MediaType contentType, String content) {
+    Charset charset = Util.UTF_8;
+    if (contentType != null) {
+      charset = contentType.charset();
+      if (charset == null) {
+        charset = Util.UTF_8;
+        contentType = MediaType.parse(contentType + "; charset=utf-8");
+      }
+    }
+    Buffer buffer = new Buffer().writeString(content, charset);
+    return create(contentType, buffer.size(), buffer);
+  }
+
+  /** Returns a new response body that transmits {@code content}. */
+  public static ResponseBody create(final MediaType contentType, byte[] content) {
+    Buffer buffer = new Buffer().write(content);
+    return create(contentType, content.length, buffer);
+  }
+
+  /** Returns a new response body that transmits {@code content}. */
+  public static ResponseBody create(
+      final MediaType contentType, final long contentLength, final BufferedSource content) {
+    if (content == null) throw new NullPointerException("source == null");
+    return new ResponseBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
+
+      @Override public long contentLength() {
+        return contentLength;
+      }
+
+      @Override public BufferedSource source() {
+        return content;
+      }
+    };
   }
 }
