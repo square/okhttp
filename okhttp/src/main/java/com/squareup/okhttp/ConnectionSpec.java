@@ -53,13 +53,13 @@ public final class ConnectionSpec {
           CipherSuite.TLS_RSA_WITH_RC4_128_SHA,
           CipherSuite.TLS_RSA_WITH_RC4_128_MD5
       )
-      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0, TlsVersion.SSL_3_0)
+      .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
   /** A backwards-compatible fallback connection for interop with obsolete servers. */
   public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
-      .tlsVersions(TlsVersion.SSL_3_0)
+      .tlsVersions(TlsVersion.TLS_1_0)
       .build();
 
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
