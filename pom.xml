@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>parent</artifactId>
-  <version>1.2.2-SNAPSHOT</version>
+  <version>2.2.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -21,23 +21,32 @@
   <modules>
     <module>okhttp</module>
     <module>okhttp-apache</module>
-    <module>okhttp-protocols</module>
+    <module>okhttp-tests</module>
+    <module>okhttp-urlconnection</module>
+    <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
+    <module>benchmarks</module>
   </modules>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <java.version>1.6</java.version>
-    <npn.version>8.1.2.v20120308</npn.version>
-    <bouncycastle.version>1.48</bouncycastle.version>
+    <java.version>1.7</java.version>
+    <okio.version>1.0.1</okio.version>
+    <!-- Targetted to jdk7u60-b13; Oracle jdk7u55-b13. -->
+    <npn.version>1.1.7.v20140316</npn.version>
+    <!-- Targetted to OpenJDK 8 b132 -->
+    <alpn.version>8.0.0.v20140317</alpn.version>
+    <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
+    <airlift.version>0.6</airlift.version>
+    <guava.version>16.0</guava.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.10</junit.version>
+    <junit.version>4.11</junit.version>
   </properties>
 
   <scm>
@@ -62,14 +71,24 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.mortbay.jetty.npn</groupId>
-        <artifactId>npn-boot</artifactId>
-        <version>${npn.version}</version>
+        <groupId>com.squareup.okio</groupId>
+        <artifactId>okio</artifactId>
+        <version>${okio.version}</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty.npn</groupId>
+        <artifactId>npn-boot</artifactId>
+        <version>${npn.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mortbay.jetty.alpn</groupId>
+        <artifactId>alpn-boot</artifactId>
+        <version>${alpn.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -85,6 +104,16 @@
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${apache.http.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.airlift</groupId>
+        <artifactId>airline</artifactId>
+        <version>${airlift.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -105,10 +134,14 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.9</version>
-          <configuration>
-            <argLine>-Xbootclasspath/p:${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</argLine>
-          </configuration>
+          <version>2.17</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>2.17</version>
+            </dependency>
+          </dependencies>
         </plugin>
 
         <plugin>
@@ -116,19 +149,26 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.9</version>
         </plugin>
-
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <version>2.3.2</version>
-          <configuration>
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
 
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.4.2</version>
+        <dependencies>
+          <dependency>
+            <groupId>org.apache.maven.scm</groupId>
+            <artifactId>maven-scm-provider-gitexe</artifactId>
+            <version>1.9</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+        </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -137,6 +177,7 @@
           <failsOnError>true</failsOnError>
           <configLocation>checkstyle.xml</configLocation>
           <consoleOutput>true</consoleOutput>
+          <excludes>**/CipherSuite.java</excludes>
         </configuration>
         <executions>
           <execution>
@@ -150,7 +191,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>animal-sniffer-maven-plugin</artifactId>
-        <version>1.9</version>
+        <version>1.11</version>
         <executions>
           <execution>
             <phase>test</phase>
@@ -162,12 +203,73 @@
         <configuration>
           <signature>
             <groupId>org.codehaus.mojo.signature</groupId>
-            <artifactId>java15</artifactId>
-            <version>1.0</version>
+            <artifactId>java16</artifactId>
+            <version>1.1</version>
           </signature>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>npn-when-jdk7</id>
+      <activation>
+        <jdk>1.7</jdk>
+      </activation>
+      <properties>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</bootclasspathPrefix>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+              </configuration>
+              <dependencies>
+                <dependency>
+                  <groupId>org.mortbay.jetty.npn</groupId>
+                  <artifactId>npn-boot</artifactId>
+                  <version>${npn.version}</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar</bootclasspathPrefix>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+              </configuration>
+              <dependencies>
+                <dependency>
+                  <groupId>org.mortbay.jetty.alpn</groupId>
+                  <artifactId>alpn-boot</artifactId>
+                  <version>${alpn.version}</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
 </project>
 

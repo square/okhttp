@@ -3,5 +3,9 @@ language: java
 notifications:
   email: false
 
+before_install:
+ - mvn -version
+
 jdk:
   - oraclejdk7
+  - oraclejdk8

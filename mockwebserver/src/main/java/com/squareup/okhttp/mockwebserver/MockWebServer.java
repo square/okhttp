@@ -17,8 +17,12 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.spdy.ErrorCode;
+import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
@@ -36,30 +40,35 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.ByteString;
+import okio.Okio;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
@@ -69,21 +78,6 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
  * replays them upon request in sequence.
  */
 public final class MockWebServer {
-  private static final byte[] NPN_PROTOCOLS = {
-      17, 'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '6', '/', '2', '.', '0',
-      6, 's', 'p', 'd', 'y', '/', '3',
-      8, 'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
-  private static final byte[] SPDY3 = new byte[] {
-      's', 'p', 'd', 'y', '/', '3'
-  };
-  private static final byte[] HTTP_20_DRAFT_06 = new byte[] {
-      'H', 'T', 'T', 'P', '-', 'd', 'r', 'a', 'f', 't', '-', '0', '6', '/', '2', '.', '0'
-  };
-  private static final byte[] HTTP_11 = new byte[] {
-      'h', 't', 't', 'p', '/', '1', '.', '1'
-  };
-
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -101,15 +95,15 @@ public final class MockWebServer {
 
   private static final Logger logger = Logger.getLogger(MockWebServer.class.getName());
 
-  private final BlockingQueue<RecordedRequest> requestQueue =
-      new LinkedBlockingQueue<RecordedRequest>();
+  private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
-  /** All map values are Boolean.TRUE. (Collections.newSetFromMap isn't available in Froyo) */
-  private final Map<Socket, Boolean> openClientSockets = new ConcurrentHashMap<Socket, Boolean>();
-  private final Map<SpdyConnection, Boolean> openSpdyConnections
-      = new ConcurrentHashMap<SpdyConnection, Boolean>();
+  private final Set<Socket> openClientSockets =
+      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
+  private final Set<SpdyConnection> openSpdyConnections =
+      Collections.newSetFromMap(new ConcurrentHashMap<SpdyConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private int bodyLimit = Integer.MAX_VALUE;
+  private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
   private ServerSocket serverSocket;
   private SSLSocketFactory sslSocketFactory;
   private ExecutorService executor;
@@ -117,23 +111,29 @@ public final class MockWebServer {
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
-  private boolean npnEnabled = true;
+  private InetAddress inetAddress;
+  private boolean protocolNegotiationEnabled = true;
+  private List<Protocol> protocols
+      = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+
+  public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
+    if (serverSocketFactory == null) throw new IllegalArgumentException("null serverSocketFactory");
+    this.serverSocketFactory = serverSocketFactory;
+  }
 
   public int getPort() {
-    if (port == -1) throw new IllegalStateException("Cannot retrieve port before calling play()");
+    if (port == -1) throw new IllegalStateException("Call play() before getPort()");
     return port;
   }
 
   public String getHostName() {
-    try {
-      return InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
-      throw new AssertionError(e);
-    }
+    if (inetAddress == null) throw new IllegalStateException("Call play() before getHostName()");
+    return inetAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(getHostName(), getPort()));
+    if (inetAddress == null) throw new IllegalStateException("Call play() before toProxyAddress()");
+    return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(inetAddress, getPort()));
   }
 
   /**
@@ -170,11 +170,52 @@ public final class MockWebServer {
 
   /**
    * Sets whether NPN is used on incoming HTTPS connections to negotiate a
-   * transport like HTTP/1.1 or SPDY/3. Call this method to disable NPN and
+   * protocol like HTTP/1.1 or SPDY/3. Call this method to disable NPN and
    * SPDY.
+   * @deprecated Use {@link #setProtocolNegotiationEnabled}.
    */
   public void setNpnEnabled(boolean npnEnabled) {
-    this.npnEnabled = npnEnabled;
+    this.protocolNegotiationEnabled = npnEnabled;
+  }
+
+  /**
+   * Sets whether ALPN or NPN is used on incoming HTTPS connections to
+   * negotiate a protocol like HTTP/1.1 or HTTP/2. Call this method to disable
+   * negotiation and restrict connections to HTTP/1.1.
+   */
+  public void setProtocolNegotiationEnabled(boolean protocolNegotiationEnabled) {
+    this.protocolNegotiationEnabled = protocolNegotiationEnabled;
+  }
+
+  /**
+   * Indicates the protocols supported by NPN on incoming HTTPS connections.
+   * This list is ignored when npn is disabled.
+   *
+   * @param protocols the protocols to use, in order of preference. The list
+   *     must contain "http/1.1". It must not contain null.
+   * @deprecated Use {@link #setProtocols(java.util.List)}.
+   */
+  public void setNpnProtocols(List<Protocol> protocols) {
+    setProtocols(protocols);
+  }
+
+  /**
+   * Indicates the protocols supported by NPN or ALPN on incoming HTTPS
+   * connections. This list is ignored when
+   * {@link #setProtocolNegotiationEnabled negotiation is disabled}.
+   *
+   * @param protocols the protocols to use, in order of preference. The list
+   *     must contain {@linkplain Protocol#HTTP_1_1}. It must not contain null.
+   */
+  public void setProtocols(List<Protocol> protocols) {
+    protocols = Util.immutableList(protocols);
+    if (!protocols.contains(Protocol.HTTP_1_1)) {
+      throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
+    }
+    if (protocols.contains(null)) {
+      throw new IllegalArgumentException("protocols must not contain null");
+    }
+    this.protocols = protocols;
   }
 
   /**
@@ -189,10 +230,28 @@ public final class MockWebServer {
 
   /**
    * Awaits the next HTTP request, removes it, and returns it. Callers should
-   * use this to verify the request was sent as intended.
+   * use this to verify the request was sent as intended. This method will block until the
+   * request is available, possibly forever.
+   *
+   * @return the head of the request queue
    */
   public RecordedRequest takeRequest() throws InterruptedException {
     return requestQueue.take();
+  }
+
+  /**
+   * Awaits the next HTTP request (waiting up to the
+   * specified wait time if necessary), removes it, and returns it. Callers should
+   * use this to verify the request was sent as intended within the given time.
+   *
+   * @param timeout how long to wait before giving up, in units of
+  *        {@code unit}
+   * @param unit a {@code TimeUnit} determining how to interpret the
+   *        {@code timeout} parameter
+   * @return the head of the request queue
+   */
+  public RecordedRequest takeRequest(int timeout, TimeUnit unit) throws InterruptedException {
+    return requestQueue.poll(timeout, unit);
   }
 
   /**
@@ -230,13 +289,14 @@ public final class MockWebServer {
    */
   public void play(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("play() already called");
-    executor = Executors.newCachedThreadPool();
-    serverSocket = new ServerSocket(port);
+    executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
+    inetAddress = InetAddress.getLocalHost();
+    serverSocket = serverSocketFactory.createServerSocket(port, 50, inetAddress);
     serverSocket.setReuseAddress(true);
 
     this.port = serverSocket.getLocalPort();
-    executor.execute(namedRunnable("MockWebServer-accept-" + port, new Runnable() {
-      public void run() {
+    executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
+      @Override protected void execute() {
         try {
           acceptConnections();
         } catch (Throwable e) {
@@ -246,11 +306,11 @@ public final class MockWebServer {
         // This gnarly block of code will release all sockets and all thread,
         // even if any close fails.
         Util.closeQuietly(serverSocket);
-        for (Iterator<Socket> s = openClientSockets.keySet().iterator(); s.hasNext(); ) {
+        for (Iterator<Socket> s = openClientSockets.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
-        for (Iterator<SpdyConnection> s = openSpdyConnections.keySet().iterator(); s.hasNext(); ) {
+        for (Iterator<SpdyConnection> s = openSpdyConnections.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
@@ -265,31 +325,41 @@ public final class MockWebServer {
           } catch (SocketException e) {
             return;
           }
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == DISCONNECT_AT_START) {
             dispatchBookkeepingRequest(0, socket);
             socket.close();
           } else {
-            openClientSockets.put(socket, true);
+            openClientSockets.add(socket);
             serveConnection(socket);
           }
         }
       }
-    }));
+    });
   }
 
   public void shutdown() throws IOException {
-    if (serverSocket != null) {
-      serverSocket.close(); // Should cause acceptConnections() to break out.
+    if (serverSocket == null) return;
+
+    // Cause acceptConnections() to break out.
+    serverSocket.close();
+    serverSocket = null;
+
+    // Await shutdown.
+    try {
+      if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+        throw new IOException("Gave up waiting for executor to shut down");
+      }
+    } catch (InterruptedException e) {
+      throw new AssertionError();
     }
   }
 
   private void serveConnection(final Socket raw) {
-    String name = "MockWebServer-" + raw.getRemoteSocketAddress();
-    executor.execute(namedRunnable(name, new Runnable() {
+    executor.execute(new NamedRunnable("MockWebServer %s", raw.getRemoteSocketAddress()) {
       int sequenceNumber = 0;
 
-      public void run() {
+      @Override protected void execute() {
         try {
           processConnection();
         } catch (Exception e) {
@@ -298,13 +368,13 @@ public final class MockWebServer {
       }
 
       public void processConnection() throws Exception {
-        Transport transport = Transport.HTTP_11;
+        Protocol protocol = Protocol.HTTP_1_1;
         Socket socket;
         if (sslSocketFactory != null) {
           if (tunnelProxy) {
             createTunnel();
           }
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (socketPolicy == FAIL_HANDSHAKE) {
             dispatchBookkeepingRequest(sequenceNumber, raw);
             processHandshakeFailure(raw);
@@ -314,45 +384,32 @@ public final class MockWebServer {
               raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
-          openClientSockets.put(socket, true);
+          openClientSockets.add(socket);
 
-          if (npnEnabled) {
-            Platform.get().setNpnProtocols(sslSocket, NPN_PROTOCOLS);
+          if (protocolNegotiationEnabled) {
+            Platform.get().configureTlsExtensions(sslSocket, null, protocols);
           }
 
           sslSocket.startHandshake();
 
-          if (npnEnabled) {
-            byte[] selectedProtocol = Platform.get().getNpnSelectedProtocol(sslSocket);
-            if (selectedProtocol == null || Arrays.equals(selectedProtocol, HTTP_11)) {
-              transport = Transport.HTTP_11;
-            } else if (Arrays.equals(selectedProtocol, HTTP_20_DRAFT_06)) {
-              transport = Transport.HTTP_20_DRAFT_06;
-            } else if (Arrays.equals(selectedProtocol, SPDY3)) {
-              transport = Transport.SPDY_3;
-            } else {
-              throw new IllegalStateException(
-                  "Unexpected transport: " + new String(selectedProtocol, Util.US_ASCII));
-            }
+          if (protocolNegotiationEnabled) {
+            String protocolString = Platform.get().getSelectedProtocol(sslSocket);
+            protocol = protocolString != null
+                ? Protocol.get(protocolString)
+                : Protocol.HTTP_1_1;
           }
           openClientSockets.remove(raw);
         } else {
           socket = raw;
         }
 
-        if (transport == Transport.SPDY_3 || transport == Transport.HTTP_20_DRAFT_06) {
-          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, transport);
-          SpdyConnection.Builder builder = new SpdyConnection.Builder(false, socket)
-              .handler(spdySocketHandler);
-          if (transport == Transport.SPDY_3) {
-            builder.spdy3();
-          } else {
-            builder.http20Draft06();
-          }
-          SpdyConnection spdyConnection = builder.build();
-          openSpdyConnections.put(spdyConnection, Boolean.TRUE);
+        if (protocol != Protocol.HTTP_1_1) {
+          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, protocol);
+          SpdyConnection spdyConnection = new SpdyConnection.Builder(false, socket)
+              .protocol(protocol)
+              .handler(spdySocketHandler).build();
+          openSpdyConnections.add(spdyConnection);
           openClientSockets.remove(socket);
-          spdyConnection.readConnectionHeader();
           return;
         }
 
@@ -378,7 +435,7 @@ public final class MockWebServer {
        */
       private void createTunnel() throws IOException, InterruptedException {
         while (true) {
-          SocketPolicy socketPolicy = dispatcher.peekSocketPolicy();
+          SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
           if (!processOneRequest(raw, raw.getInputStream(), raw.getOutputStream())) {
             throw new IllegalStateException("Tunnel without any CONNECT!");
           }
@@ -397,7 +454,11 @@ public final class MockWebServer {
         requestCount.incrementAndGet();
         requestQueue.add(request);
         MockResponse response = dispatcher.dispatch(request);
-        writeResponse(out, response);
+        if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AFTER_REQUEST) {
+          socket.close();
+          return false;
+        }
+        writeResponse(socket, out, response);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           in.close();
           out.close();
@@ -406,20 +467,21 @@ public final class MockWebServer {
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
         }
-        logger.info("Received request: " + request + " and responded: " + response);
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info("Received request: " + request + " and responded: " + response);
+        }
         sequenceNumber++;
         return true;
       }
-    }));
+    });
   }
 
   private void processHandshakeFailure(Socket raw) throws Exception {
     SSLContext context = SSLContext.getInstance("TLS");
     context.init(null, new TrustManager[] { UNTRUSTED_TRUST_MANAGER }, new SecureRandom());
     SSLSocketFactory sslSocketFactory = context.getSocketFactory();
-    SSLSocket socket =
-        (SSLSocket) sslSocketFactory.createSocket(raw, raw.getInetAddress().getHostAddress(),
-            raw.getPort(), true);
+    SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket(
+        raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
     try {
       socket.startHandshake(); // we're testing a handshake failure
       throw new AssertionError();
@@ -447,7 +509,7 @@ public final class MockWebServer {
       return null; // no request because the stream is exhausted
     }
 
-    List<String> headers = new ArrayList<String>();
+    List<String> headers = new ArrayList<>();
     long contentLength = -1;
     boolean chunked = false;
     boolean expectContinue = false;
@@ -477,10 +539,11 @@ public final class MockWebServer {
 
     boolean hasBody = false;
     TruncatingOutputStream requestBody = new TruncatingOutputStream();
-    List<Integer> chunkSizes = new ArrayList<Integer>();
+    List<Integer> chunkSizes = new ArrayList<>();
+    MockResponse throttlePolicy = dispatcher.peek();
     if (contentLength != -1) {
-      hasBody = true;
-      transfer(contentLength, in, requestBody);
+      hasBody = contentLength > 0;
+      throttledTransfer(throttlePolicy, socket, in, requestBody, contentLength);
     } else if (chunked) {
       hasBody = true;
       while (true) {
@@ -490,7 +553,7 @@ public final class MockWebServer {
           break;
         }
         chunkSizes.add(chunkSize);
-        transfer(chunkSize, in, requestBody);
+        throttledTransfer(throttlePolicy, socket, in, requestBody, chunkSize);
         readEmptyLine(in);
       }
     }
@@ -498,7 +561,6 @@ public final class MockWebServer {
     if (request.startsWith("OPTIONS ")
         || request.startsWith("GET ")
         || request.startsWith("HEAD ")
-        || request.startsWith("DELETE ")
         || request.startsWith("TRACE ")
         || request.startsWith("CONNECT ")) {
       if (hasBody) {
@@ -506,7 +568,8 @@ public final class MockWebServer {
       }
     } else if (!request.startsWith("POST ")
         && !request.startsWith("PUT ")
-        && !request.startsWith("PATCH ")) {
+        && !request.startsWith("PATCH ")
+        && !request.startsWith("DELETE ")) { // Permitted as spec is ambiguous.
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
@@ -514,9 +577,12 @@ public final class MockWebServer {
         requestBody.toByteArray(), sequenceNumber, socket);
   }
 
-  private void writeResponse(OutputStream out, MockResponse response) throws IOException {
+  private void writeResponse(Socket socket, OutputStream out, MockResponse response)
+      throws IOException {
     out.write((response.getStatus() + "\r\n").getBytes(Util.US_ASCII));
-    for (String header : response.getHeaders()) {
+    List<String> headers = response.getHeaders();
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String header = headers.get(i);
       out.write((header + "\r\n").getBytes(Util.US_ASCII));
     }
     out.write(("\r\n").getBytes(Util.US_ASCII));
@@ -524,43 +590,50 @@ public final class MockWebServer {
 
     InputStream in = response.getBodyStream();
     if (in == null) return;
-    int bytesPerSecond = response.getBytesPerSecond();
+    sleepIfDelayed(response);
+    throttledTransfer(response, socket, in, out, Long.MAX_VALUE);
+  }
 
-    // Stream data in MTU-sized increments, with a minimum of one packet per second.
-    byte[] buffer = bytesPerSecond >= 1452 ? new byte[1452] : new byte[bytesPerSecond];
-    long delayMs = bytesPerSecond == Integer.MAX_VALUE
-        ? 0
-        : (1000 * buffer.length) / bytesPerSecond;
-
-    int read;
-    long sinceDelay = 0;
-    while ((read = in.read(buffer)) != -1) {
-      out.write(buffer, 0, read);
-      out.flush();
-
-      sinceDelay += read;
-      if (sinceDelay >= buffer.length && delayMs > 0) {
-        sinceDelay %= buffer.length;
-        try {
-          Thread.sleep(delayMs);
-        } catch (InterruptedException e) {
-          throw new AssertionError();
-        }
+  private void sleepIfDelayed(MockResponse response) {
+    if (response.getBodyDelayTimeMs() != 0) {
+      try {
+        Thread.sleep(response.getBodyDelayTimeMs());
+      } catch (InterruptedException e) {
+        throw new AssertionError(e);
       }
     }
   }
 
   /**
    * Transfer bytes from {@code in} to {@code out} until either {@code length}
-   * bytes have been transferred or {@code in} is exhausted.
+   * bytes have been transferred or {@code in} is exhausted. The transfer is
+   * throttled according to {@code throttlePolicy}.
    */
-  private void transfer(long length, InputStream in, OutputStream out) throws IOException {
+  private void throttledTransfer(MockResponse throttlePolicy, Socket socket, InputStream in,
+      OutputStream out, long limit) throws IOException {
     byte[] buffer = new byte[1024];
-    while (length > 0) {
-      int count = in.read(buffer, 0, (int) Math.min(buffer.length, length));
-      if (count == -1) return;
-      out.write(buffer, 0, count);
-      length -= count;
+    int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
+    long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
+
+    while (!socket.isClosed()) {
+      for (int b = 0; b < bytesPerPeriod; ) {
+        int toRead = (int) Math.min(Math.min(buffer.length, limit), bytesPerPeriod - b);
+        int read = in.read(buffer, 0, toRead);
+        if (read == -1) return;
+
+        out.write(buffer, 0, read);
+        out.flush();
+        b += read;
+        limit -= read;
+
+        if (limit == 0) return;
+      }
+
+      try {
+        if (delayMs != 0) Thread.sleep(delayMs);
+      } catch (InterruptedException e) {
+        throw new AssertionError();
+      }
     }
   }
 
@@ -616,29 +689,15 @@ public final class MockWebServer {
     }
   }
 
-  private static Runnable namedRunnable(final String name, final Runnable runnable) {
-    return new Runnable() {
-      public void run() {
-        String originalName = Thread.currentThread().getName();
-        Thread.currentThread().setName(name);
-        try {
-          runnable.run();
-        } finally {
-          Thread.currentThread().setName(originalName);
-        }
-      }
-    };
-  }
-
   /** Processes HTTP requests layered over SPDY/3. */
   private class SpdySocketHandler implements IncomingStreamHandler {
     private final Socket socket;
-    private final Transport transport;
+    private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
 
-    private SpdySocketHandler(Socket socket, Transport transport) {
+    private SpdySocketHandler(Socket socket, Protocol protocol) {
       this.socket = socket;
-      this.transport = transport;
+      this.protocol = protocol;
     }
 
     @Override public void receive(SpdyStream stream) throws IOException {
@@ -651,73 +710,126 @@ public final class MockWebServer {
         throw new AssertionError(e);
       }
       writeResponse(stream, response);
-      logger.info("Received request: " + request + " and responded: " + response
-          + " transport is " + transport);
+      if (logger.isLoggable(Level.INFO)) {
+        logger.info("Received request: " + request + " and responded: " + response
+            + " protocol is " + protocol.toString());
+      }
     }
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
-      List<String> spdyHeaders = stream.getRequestHeaders();
-      List<String> httpHeaders = new ArrayList<String>();
+      List<Header> spdyHeaders = stream.getRequestHeaders();
+      List<String> httpHeaders = new ArrayList<>();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
-      String version = "<:version omitted>";
-      for (Iterator<String> i = spdyHeaders.iterator(); i.hasNext(); ) {
-        String name = i.next();
-        String value = i.next();
-        if (":method".equals(name)) {
+      String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
+      for (int i = 0, size = spdyHeaders.size(); i < size; i++) {
+        ByteString name = spdyHeaders.get(i).name;
+        String value = spdyHeaders.get(i).value.utf8();
+        if (name.equals(Header.TARGET_METHOD)) {
           method = value;
-        } else if (":path".equals(name)) {
+        } else if (name.equals(Header.TARGET_PATH)) {
           path = value;
-        } else if (":version".equals(name)) {
+        } else if (name.equals(Header.VERSION)) {
           version = value;
         } else {
-          httpHeaders.add(name + ": " + value);
+          httpHeaders.add(name.utf8() + ": " + value);
         }
       }
 
-      InputStream bodyIn = stream.getInputStream();
-      ByteArrayOutputStream bodyOut = new ByteArrayOutputStream();
-      byte[] buffer = new byte[8192];
-      int count;
-      while ((count = bodyIn.read(buffer)) != -1) {
-        bodyOut.write(buffer, 0, count);
-      }
+      BufferedSource bodyIn = Okio.buffer(stream.getSource());
+      byte[] bodyOut = bodyIn.readByteArray();
       bodyIn.close();
+
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.size(),
-          bodyOut.toByteArray(), sequenceNumber.getAndIncrement(), socket);
+      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.length,
+          bodyOut, sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
-      List<String> spdyHeaders = new ArrayList<String>();
+      if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
+        return;
+      }
+      List<Header> spdyHeaders = new ArrayList<>();
       String[] statusParts = response.getStatus().split(" ", 2);
       if (statusParts.length != 2) {
         throw new AssertionError("Unexpected status: " + response.getStatus());
       }
-      spdyHeaders.add(":status");
-      spdyHeaders.add(statusParts[1]);
-      // TODO: no ":version" header for HTTP/2.0, only SPDY.
-      spdyHeaders.add(":version");
-      spdyHeaders.add(statusParts[0]);
-      for (String header : response.getHeaders()) {
+      // TODO: constants for well-known header names.
+      spdyHeaders.add(new Header(Header.RESPONSE_STATUS, statusParts[1]));
+      if (protocol == Protocol.SPDY_3) {
+        spdyHeaders.add(new Header(Header.VERSION, statusParts[0]));
+      }
+      List<String> headers = response.getHeaders();
+      for (int i = 0, size = headers.size(); i < size; i++) {
+        String header = headers.get(i);
         String[] headerParts = header.split(":", 2);
         if (headerParts.length != 2) {
           throw new AssertionError("Unexpected header: " + header);
         }
-        spdyHeaders.add(headerParts[0].toLowerCase(Locale.US).trim());
-        spdyHeaders.add(headerParts[1].trim());
+        spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
-      byte[] body = response.getBody();
-      stream.reply(spdyHeaders, body.length > 0);
-      if (body.length > 0) {
-        stream.getOutputStream().write(body);
-        stream.getOutputStream().close();
+      Buffer body = response.getBody();
+      if (body == null) body = new Buffer();
+      boolean closeStreamAfterHeaders = body.size() > 0 || !response.getPushPromises().isEmpty();
+      stream.reply(spdyHeaders, closeStreamAfterHeaders);
+      pushPromises(stream, response.getPushPromises());
+      if (body.size() > 0) {
+        if (response.getBodyDelayTimeMs() != 0) {
+          try {
+            Thread.sleep(response.getBodyDelayTimeMs());
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+        }
+        BufferedSink sink = Okio.buffer(stream.getSink());
+        if (response.getThrottleBytesPerPeriod() == Integer.MAX_VALUE) {
+          sink.writeAll(body);
+          sink.flush();
+        } else {
+          while (body.size() > 0) {
+            long toWrite = Math.min(body.size(), response.getThrottleBytesPerPeriod());
+            sink.write(body, toWrite);
+            sink.flush();
+            try {
+              long delayMs = response.getThrottleUnit().toMillis(response.getThrottlePeriod());
+              if (delayMs != 0) Thread.sleep(delayMs);
+            } catch (InterruptedException e) {
+              throw new AssertionError();
+            }
+          }
+        }
+        sink.close();
+      } else if (closeStreamAfterHeaders) {
+        stream.close(ErrorCode.NO_ERROR);
       }
     }
-  }
 
-  enum Transport {
-    HTTP_11, SPDY_3, HTTP_20_DRAFT_06
+    private void pushPromises(SpdyStream stream, List<PushPromise> promises) throws IOException {
+      for (PushPromise pushPromise : promises) {
+        List<Header> pushedHeaders = new ArrayList<>();
+        pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
+            ? Header.TARGET_HOST
+            : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));
+        pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
+        pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
+        for (int i = 0, size = pushPromise.getHeaders().size(); i < size; i++) {
+          String header = pushPromise.getHeaders().get(i);
+          String[] headerParts = header.split(":", 2);
+          if (headerParts.length != 2) {
+            throw new AssertionError("Unexpected header: " + header);
+          }
+          pushedHeaders.add(new Header(headerParts[0], headerParts[1].trim()));
+        }
+        String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
+        List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
+        requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
+            Util.EMPTY_BYTE_ARRAY, sequenceNumber.getAndIncrement(), socket));
+        Buffer pushedBody = pushPromise.getResponse().getBody();
+        SpdyStream pushedStream =
+            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.size() > 0);
+        writeResponse(pushedStream, pushPromise.getResponse());
+      }
+    }
   }
 }

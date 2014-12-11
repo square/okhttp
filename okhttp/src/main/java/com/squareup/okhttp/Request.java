@@ -15,51 +15,68 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.http.RawHeaders;
-import java.io.File;
-import java.io.FileInputStream;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
-import java.util.Set;
 
 /**
  * An HTTP request. Instances of this class are immutable if their {@link #body}
  * is null or itself immutable.
- *
- * <h3>Warning: Experimental OkHttp 2.0 API</h3>
- * This class is in beta. APIs are subject to change!
  */
-/* OkHttp 2.0: public */ final class Request {
-  private final URL url;
+public final class Request {
+  private final String urlString;
   private final String method;
-  private final RawHeaders headers;
-  private final Body body;
+  private final Headers headers;
+  private final RequestBody body;
   private final Object tag;
 
+  private volatile URL url; // Lazily initialized.
+  private volatile URI uri; // Lazily initialized.
+  private volatile CacheControl cacheControl; // Lazily initialized.
+
   private Request(Builder builder) {
-    this.url = builder.url;
+    this.urlString = builder.urlString;
     this.method = builder.method;
-    this.headers = new RawHeaders(builder.headers);
+    this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
+    this.url = builder.url;
   }
 
   public URL url() {
-    return url;
+    try {
+      URL result = url;
+      return result != null ? result : (url = new URL(urlString));
+    } catch (MalformedURLException e) {
+      throw new RuntimeException("Malformed URL: " + urlString, e);
+    }
+  }
+
+  public URI uri() throws IOException {
+    try {
+      URI result = uri;
+      return result != null ? result : (uri = Platform.get().toUriLenient(url()));
+    } catch (URISyntaxException e) {
+      throw new IOException(e.getMessage());
+    }
   }
 
   public String urlString() {
-    return url.toString();
+    return urlString;
   }
 
   public String method() {
     return method;
+  }
+
+  public Headers headers() {
+    return headers;
   }
 
   public String header(String name) {
@@ -70,23 +87,7 @@ import java.util.Set;
     return headers.values(name);
   }
 
-  public Set<String> headerNames() {
-    return headers.names();
-  }
-
-  public int headerCount() {
-    return headers.length();
-  }
-
-  public String headerName(int index) {
-    return headers.getFieldName(index);
-  }
-
-  public String headerValue(int index) {
-    return headers.getValue(index);
-  }
-
-  public Body body() {
+  public RequestBody body() {
     return body;
   }
 
@@ -94,119 +95,65 @@ import java.util.Set;
     return tag;
   }
 
-  public abstract static class Body {
-    /**
-     * Returns the Content-Type header for this body, or null if the content
-     * type is unknown.
-     */
-    public MediaType contentType() {
-      return null;
-    }
+  public Builder newBuilder() {
+    return new Builder(this);
+  }
 
-    /** Returns the number of bytes in this body, or -1 if that count is unknown. */
-    public long contentLength() {
-      return -1;
-    }
+  /**
+   * Returns the cache control directives for this response. This is never null,
+   * even if this response contains no {@code Cache-Control} header.
+   */
+  public CacheControl cacheControl() {
+    CacheControl result = cacheControl;
+    return result != null ? result : (cacheControl = CacheControl.parse(headers));
+  }
 
-    /** Writes the content of this request to {@code out}. */
-    public abstract void writeTo(OutputStream out) throws IOException;
+  public boolean isHttps() {
+    return url().getProtocol().equals("https");
+  }
 
-    /**
-     * Returns a new request body that transmits {@code content}. If {@code
-     * contentType} lacks a charset, this will use UTF-8.
-     */
-    public static Body create(MediaType contentType, String content) {
-      contentType = contentType.charset() != null
-          ? contentType
-          : MediaType.parse(contentType + "; charset=utf-8");
-      try {
-        byte[] bytes = content.getBytes(contentType.charset().name());
-        return create(contentType, bytes);
-      } catch (UnsupportedEncodingException e) {
-        throw new AssertionError();
-      }
-    }
-
-    /** Returns a new request body that transmits {@code content}. */
-    public static Body create(final MediaType contentType, final byte[] content) {
-      if (contentType == null) throw new NullPointerException("contentType == null");
-      if (content == null) throw new NullPointerException("content == null");
-
-      return new Body() {
-        @Override public MediaType contentType() {
-          return contentType;
-        }
-
-        @Override public long contentLength() {
-          return content.length;
-        }
-
-        @Override public void writeTo(OutputStream out) throws IOException {
-          out.write(content);
-        }
-      };
-    }
-
-    /** Returns a new request body that transmits the content of {@code file}. */
-    public static Body create(final MediaType contentType, final File file) {
-      if (contentType == null) throw new NullPointerException("contentType == null");
-      if (file == null) throw new NullPointerException("content == null");
-
-      return new Body() {
-        @Override public MediaType contentType() {
-          return contentType;
-        }
-
-        @Override public long contentLength() {
-          return file.length();
-        }
-
-        @Override public void writeTo(OutputStream out) throws IOException {
-          long length = contentLength();
-          if (length == 0) return;
-
-          InputStream in = null;
-          try {
-            in = new FileInputStream(file);
-            byte[] buffer = new byte[(int) Math.min(8192, length)];
-            for (int c; (c = in.read(buffer)) != -1; ) {
-              out.write(buffer, 0, c);
-            }
-          } finally {
-            Util.closeQuietly(in);
-          }
-        }
-      };
-    }
+  @Override public String toString() {
+    return "Request{method="
+        + method
+        + ", url="
+        + urlString
+        + ", tag="
+        + (tag != this ? tag : null)
+        + '}';
   }
 
   public static class Builder {
+    private String urlString;
     private URL url;
-    private String method = "GET";
-    private final RawHeaders headers = new RawHeaders();
-    private Body body;
+    private String method;
+    private Headers.Builder headers;
+    private RequestBody body;
     private Object tag;
 
-    public Builder(String url) {
-      url(url);
+    public Builder() {
+      this.method = "GET";
+      this.headers = new Headers.Builder();
     }
 
-    public Builder(URL url) {
-      url(url);
+    private Builder(Request request) {
+      this.urlString = request.urlString;
+      this.url = request.url;
+      this.method = request.method;
+      this.body = request.body;
+      this.tag = request.tag;
+      this.headers = request.headers.newBuilder();
     }
 
     public Builder url(String url) {
-      try {
-        this.url = new URL(url);
-        return this;
-      } catch (MalformedURLException e) {
-        throw new IllegalArgumentException("Malformed URL: " + url);
-      }
+      if (url == null) throw new IllegalArgumentException("url == null");
+      urlString = url;
+      return this;
     }
 
     public Builder url(URL url) {
-      if (url == null) throw new IllegalStateException("url == null");
+      if (url == null) throw new IllegalArgumentException("url == null");
       this.url = url;
+      this.urlString = url.toString();
       return this;
     }
 
@@ -228,6 +175,28 @@ import java.util.Set;
       return this;
     }
 
+    public Builder removeHeader(String name) {
+      headers.removeAll(name);
+      return this;
+    }
+
+    /** Removes all headers on this builder and adds {@code headers}. */
+    public Builder headers(Headers headers) {
+      this.headers = headers.newBuilder();
+      return this;
+    }
+
+    /**
+     * Sets this request's {@code Cache-Control} header, replacing any cache
+     * control headers already present. If {@code cacheControl} doesn't define
+     * any directives, this clears this request's cache-control headers.
+     */
+    public Builder cacheControl(CacheControl cacheControl) {
+      String value = cacheControl.toString();
+      if (value.isEmpty()) return removeHeader("Cache-Control");
+      return header("Cache-Control", value);
+    }
+
     public Builder get() {
       return method("GET", null);
     }
@@ -236,17 +205,31 @@ import java.util.Set;
       return method("HEAD", null);
     }
 
-    public Builder post(Body body) {
+    public Builder post(RequestBody body) {
       return method("POST", body);
     }
 
-    public Builder put(Body body) {
+    public Builder delete() {
+      return method("DELETE", null);
+    }
+
+    public Builder put(RequestBody body) {
       return method("PUT", body);
     }
 
-    public Builder method(String method, Body body) {
+    public Builder patch(RequestBody body) {
+      return method("PATCH", body);
+    }
+
+    public Builder method(String method, RequestBody body) {
       if (method == null || method.length() == 0) {
         throw new IllegalArgumentException("method == null || method.length() == 0");
+      }
+      if (body != null && !HttpMethod.permitsRequestBody(method)) {
+        throw new IllegalArgumentException("method " + method + " must not have a request body.");
+      }
+      if (body == null && HttpMethod.permitsRequestBody(method)) {
+        body = RequestBody.create(null, Util.EMPTY_BYTE_ARRAY);
       }
       this.method = method;
       this.body = body;
@@ -264,6 +247,7 @@ import java.util.Set;
     }
 
     public Request build() {
+      if (urlString == null) throw new IllegalStateException("url == null");
       return new Request(this);
     }
   }

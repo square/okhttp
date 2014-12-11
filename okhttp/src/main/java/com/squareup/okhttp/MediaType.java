@@ -29,7 +29,7 @@ public final class MediaType {
   private static final String QUOTED = "\"([^\"]*)\"";
   private static final Pattern TYPE_SUBTYPE = Pattern.compile(TOKEN + "/" + TOKEN);
   private static final Pattern PARAMETER = Pattern.compile(
-      ";\\s*" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + ")");
+      ";\\s*(?:" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + "))?");
 
   private final String mediaType;
   private final String type;
@@ -61,10 +61,13 @@ public final class MediaType {
 
       String name = parameter.group(1);
       if (name == null || !name.equalsIgnoreCase("charset")) continue;
-      if (charset != null) throw new IllegalArgumentException("Multiple charsets: " + string);
-      charset = parameter.group(2) != null
+      String charsetParameter = parameter.group(2) != null
           ? parameter.group(2)  // Value is a token.
           : parameter.group(3); // Value is a quoted string.
+      if (charset != null && !charsetParameter.equalsIgnoreCase(charset)) {
+        throw new IllegalArgumentException("Multiple different charsets: " + string);
+      }
+      charset = charsetParameter;
     }
 
     return new MediaType(string, type, subtype, charset);

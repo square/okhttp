@@ -28,7 +28,10 @@ import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import junit.framework.TestCase;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class MockWebServerTest extends TestCase {
 
@@ -285,5 +288,80 @@ public final class MockWebServerTest extends TestCase {
         assertEquals('C', in.read());
 
         assertEquals(-1, responseBody.read()); // The body is exhausted.
+    }
+
+    /**
+     * Throttle the request body by sleeping 500ms after every 3 bytes. With a
+     * 6-byte request, this should yield one sleep for a total delay of 500ms.
+     */
+    public void testThrottleRequest() throws Exception {
+        server.enqueue(new MockResponse()
+            .throttleBody(3, 500, TimeUnit.MILLISECONDS));
+        server.play();
+
+        long startNanos = System.nanoTime();
+        URLConnection connection = server.getUrl("/").openConnection();
+        connection.setDoOutput(true);
+        connection.getOutputStream().write("ABCDEF".getBytes("UTF-8"));
+        InputStream in = connection.getInputStream();
+        assertEquals(-1, in.read());
+        long elapsedNanos = System.nanoTime() - startNanos;
+        long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
+
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 500);
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
+    }
+
+    /**
+     * Throttle the response body by sleeping 500ms after every 3 bytes. With a
+     * 6-byte response, this should yield one sleep for a total delay of 500ms.
+     */
+    public void testThrottleResponse() throws Exception {
+        server.enqueue(new MockResponse()
+            .setBody("ABCDEF")
+            .throttleBody(3, 500, TimeUnit.MILLISECONDS));
+        server.play();
+
+        long startNanos = System.nanoTime();
+        URLConnection connection = server.getUrl("/").openConnection();
+        InputStream in = connection.getInputStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+        assertEquals('D', in.read());
+        assertEquals('E', in.read());
+        assertEquals('F', in.read());
+        assertEquals(-1, in.read());
+        long elapsedNanos = System.nanoTime() - startNanos;
+        long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
+
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 500);
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
+    }
+
+    /**
+     * Delay the response body by sleeping 1000ms.
+     */
+    public void testDelayResponse() throws IOException {
+        server.enqueue(new MockResponse()
+                .setBody("ABCDEF")
+                .setBodyDelayTimeMs(1000));
+        server.play();
+
+        long startNanos = System.nanoTime();
+        URLConnection connection = server.getUrl("/").openConnection();
+        InputStream in = connection.getInputStream();
+        assertEquals('A', in.read());
+        assertEquals('B', in.read());
+        assertEquals('C', in.read());
+        assertEquals('D', in.read());
+        assertEquals('E', in.read());
+        assertEquals('F', in.read());
+        assertEquals(-1, in.read());
+        long elapsedNanos = System.nanoTime() - startNanos;
+        long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
+
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
+        assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
     }
 }

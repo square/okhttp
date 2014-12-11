@@ -24,8 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * by calling {@link #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
-  protected final BlockingQueue<MockResponse> responseQueue
-      = new LinkedBlockingQueue<MockResponse>();
+  protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
   private MockResponse failFastResponse;
 
   @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
@@ -44,14 +43,11 @@ public class QueueDispatcher extends Dispatcher {
     return responseQueue.take();
   }
 
-  @Override public SocketPolicy peekSocketPolicy() {
+  @Override public MockResponse peek() {
     MockResponse peek = responseQueue.peek();
-    if (peek == null) {
-      return failFastResponse != null
-          ? failFastResponse.getSocketPolicy()
-          : SocketPolicy.KEEP_OPEN;
-    }
-    return peek.getSocketPolicy();
+    if (peek != null) return peek;
+    if (failFastResponse != null) return failFastResponse;
+    return super.peek();
   }
 
   public void enqueueResponse(MockResponse response) {

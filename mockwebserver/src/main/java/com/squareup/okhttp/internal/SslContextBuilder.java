@@ -19,6 +19,8 @@ package com.squareup.okhttp.internal;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -48,6 +50,8 @@ public final class SslContextBuilder {
   }
 
   private static final long ONE_DAY_MILLIS = 1000L * 60 * 60 * 24;
+  private static SSLContext localhost; // Lazily initialized.
+
   private final String hostName;
   private long notBefore = System.currentTimeMillis();
   private long notAfter = System.currentTimeMillis() + ONE_DAY_MILLIS;
@@ -60,12 +64,26 @@ public final class SslContextBuilder {
     this.hostName = hostName;
   }
 
+  /** Returns a new SSL context for this host's current localhost address. */
+  public static synchronized SSLContext localhost() {
+    if (localhost == null) {
+      try {
+        localhost = new SslContextBuilder(InetAddress.getLocalHost().getHostName()).build();
+      } catch (GeneralSecurityException e) {
+        throw new RuntimeException(e);
+      } catch (UnknownHostException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return localhost;
+  }
+
   public SSLContext build() throws GeneralSecurityException {
     char[] password = "password".toCharArray();
 
     // Generate public and private keys and use them to make a self-signed certificate.
     KeyPair keyPair = generateKeyPair();
-    X509Certificate certificate = selfSignedCertificate(keyPair);
+    X509Certificate certificate = selfSignedCertificate(keyPair, "1");
 
     // Put 'em in a key store.
     KeyStore keyStore = newEmptyKeyStore(password);
@@ -86,7 +104,7 @@ public final class SslContextBuilder {
     return sslContext;
   }
 
-  private KeyPair generateKeyPair() throws GeneralSecurityException {
+  public KeyPair generateKeyPair() throws GeneralSecurityException {
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
     keyPairGenerator.initialize(1024, new SecureRandom());
     return keyPairGenerator.generateKeyPair();
@@ -97,11 +115,12 @@ public final class SslContextBuilder {
    * public key, signed by {@code keyPair}'s private key.
    */
   @SuppressWarnings("deprecation") // use the old Bouncy Castle APIs to reduce dependencies.
-  private X509Certificate selfSignedCertificate(KeyPair keyPair) throws GeneralSecurityException {
+  public X509Certificate selfSignedCertificate(KeyPair keyPair, String serialNumber)
+      throws GeneralSecurityException {
     X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
     X500Principal issuer = new X500Principal("CN=" + hostName);
     X500Principal subject = new X500Principal("CN=" + hostName);
-    generator.setSerialNumber(BigInteger.ONE);
+    generator.setSerialNumber(new BigInteger(serialNumber));
     generator.setIssuerDN(issuer);
     generator.setNotBefore(new Date(notBefore));
     generator.setNotAfter(new Date(notAfter));

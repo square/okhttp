@@ -1,51 +1,26 @@
 package com.squareup.okhttp.guide;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
-import java.io.BufferedReader;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 public class PostExample {
+  public static final MediaType JSON
+      = MediaType.parse("application/json; charset=utf-8");
+
   OkHttpClient client = new OkHttpClient();
 
-  void run() throws IOException {
-    byte[] body = bowlingJson("Jesse", "Jake").getBytes("UTF-8");
-    String result = post(new URL("http://www.roundsapp.com/post"), body);
-    System.out.println(result);
-  }
-
-  String post(URL url, byte[] body) throws IOException {
-    HttpURLConnection connection = client.open(url);
-    OutputStream out = null;
-    InputStream in = null;
-    try {
-      // Write the request.
-      connection.setRequestMethod("POST");
-      out = connection.getOutputStream();
-      out.write(body);
-      out.close();
-
-      // Read the response.
-      if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new IOException("Unexpected HTTP response: "
-            + connection.getResponseCode() + " " + connection.getResponseMessage());
-      }
-      in = connection.getInputStream();
-      return readFirstLine(in);
-    } finally {
-      // Clean up.
-      if (out != null) out.close();
-      if (in != null) in.close();
-    }
-  }
-
-  String readFirstLine(InputStream in) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-    return reader.readLine();
+  String post(String url, String json) throws IOException {
+    RequestBody body = RequestBody.create(JSON, json);
+    Request request = new Request.Builder()
+        .url(url)
+        .post(body)
+        .build();
+    Response response = client.newCall(request).execute();
+    return response.body().string();
   }
 
   String bowlingJson(String player1, String player2) {
@@ -61,6 +36,9 @@ public class PostExample {
   }
 
   public static void main(String[] args) throws IOException {
-    new PostExample().run();
+    PostExample example = new PostExample();
+    String json = example.bowlingJson("Jesse", "Jake");
+    String response = example.post("http://www.roundsapp.com/post", json);
+    System.out.println(response);
   }
 }

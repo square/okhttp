@@ -44,6 +44,12 @@ public enum SocketPolicy {
    */
   DISCONNECT_AT_START,
 
+  /**
+   * Close connection after reading the request but before writing the response.
+   * Use this to simulate late connection pool failures.
+   */
+  DISCONNECT_AFTER_REQUEST,
+
   /** Don't trust the client during the SSL handshake. */
   FAIL_HANDSHAKE,
 
@@ -57,5 +63,11 @@ public enum SocketPolicy {
    * Shutdown the socket output after sending the response. For testing bad
    * behavior.
    */
-  SHUTDOWN_OUTPUT_AT_END
+  SHUTDOWN_OUTPUT_AT_END,
+
+  /**
+   * Don't response to the request but keep the socket open. For testing
+   * read response header timeout issue.
+   */
+  NO_RESPONSE
 }

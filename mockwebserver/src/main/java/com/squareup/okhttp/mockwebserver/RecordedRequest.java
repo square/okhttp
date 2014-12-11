@@ -80,7 +80,8 @@ public final class RecordedRequest {
    */
   public String getHeader(String name) {
     name += ":";
-    for (String header : headers) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String header = headers.get(i);
       if (name.regionMatches(true, 0, header, 0, name.length())) {
         return header.substring(name.length()).trim();
       }
@@ -90,9 +91,10 @@ public final class RecordedRequest {
 
   /** Returns the headers named {@code name}. */
   public List<String> getHeaders(String name) {
-    List<String> result = new ArrayList<String>();
+    List<String> result = new ArrayList<>();
     name += ":";
-    for (String header : headers) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String header = headers.get(i);
       if (name.regionMatches(true, 0, header, 0, name.length())) {
         result.add(header.substring(name.length()).trim());
       }

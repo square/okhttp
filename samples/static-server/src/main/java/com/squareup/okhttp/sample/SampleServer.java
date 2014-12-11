@@ -9,12 +9,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
+import okio.Buffer;
+import okio.Okio;
 
 public class SampleServer extends Dispatcher {
   private final SSLContext sslContext;
@@ -81,9 +84,9 @@ public class SampleServer extends Dispatcher {
         .addHeader("content-type: " + contentType(path));
   }
 
-  private byte[] fileToBytes(File file) throws IOException {
-    byte[] result = new byte[(int) file.length()];
-    Util.readFully(new FileInputStream(file), result);
+  private Buffer fileToBytes(File file) throws IOException {
+    Buffer result = new Buffer();
+    result.writeAll(Okio.source(file));
     return result;
   }
 
@@ -116,8 +119,12 @@ public class SampleServer extends Dispatcher {
   private static SSLContext sslContext(String keystoreFile, String password)
       throws GeneralSecurityException, IOException {
     KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-    keystore.load(new FileInputStream(keystoreFile), password.toCharArray());
-
+    InputStream in = new FileInputStream(keystoreFile);
+    try {
+      keystore.load(in, password.toCharArray());
+    } finally {
+      Util.closeQuietly(in);
+    }
     KeyManagerFactory keyManagerFactory =
         KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyManagerFactory.init(keystore, password.toCharArray());

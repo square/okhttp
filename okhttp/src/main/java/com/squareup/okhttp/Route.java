@@ -18,25 +18,47 @@ package com.squareup.okhttp;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 
-/** Represents the route used by a connection to reach an endpoint. */
-public class Route {
+/**
+ * The concrete route used by a connection to reach an abstract origin server.
+ * When creating a connection the client has many options:
+ * <ul>
+ *   <li><strong>HTTP proxy:</strong> a proxy server may be explicitly
+ *       configured for the client. Otherwise the {@linkplain java.net.ProxySelector
+ *       proxy selector} is used. It may return multiple proxies to attempt.
+ *   <li><strong>IP address:</strong> whether connecting directly to an origin
+ *       server or a proxy, opening a socket requires an IP address. The DNS
+ *       server may return multiple IP addresses to attempt.
+ *   <li><strong>TLS configuration:</strong> which cipher suites and TLS
+ *       versions to attempt with the HTTPS connection.
+ * </ul>
+ * Each route is a specific selection of these options.
+ */
+public final class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;
-  final boolean modernTls;
+  final ConnectionSpec connectionSpec;
 
   public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      boolean modernTls) {
-    if (address == null) throw new NullPointerException("address == null");
-    if (proxy == null) throw new NullPointerException("proxy == null");
-    if (inetSocketAddress == null) throw new NullPointerException("inetSocketAddress == null");
+      ConnectionSpec connectionSpec) {
+    if (address == null) {
+      throw new NullPointerException("address == null");
+    }
+    if (proxy == null) {
+      throw new NullPointerException("proxy == null");
+    }
+    if (inetSocketAddress == null) {
+      throw new NullPointerException("inetSocketAddress == null");
+    }
+    if (connectionSpec == null) {
+      throw new NullPointerException("connectionConfiguration == null");
+    }
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;
-    this.modernTls = modernTls;
+    this.connectionSpec = connectionSpec;
   }
 
-  /** Returns the {@link Address} of this route. */
   public Address getAddress() {
     return address;
   }
@@ -44,38 +66,37 @@ public class Route {
   /**
    * Returns the {@link Proxy} of this route.
    *
-   * <strong>Warning:</strong> This may be different than the proxy returned
-   * by {@link #getAddress}! That is the proxy that the user asked to be
-   * connected to; this returns the proxy that they were actually connected
-   * to. The two may disagree when a proxy selector selects a different proxy
-   * for a connection.
+   * <strong>Warning:</strong> This may disagree with {@link Address#getProxy}
+   * when it is null. When the address's proxy is null, the proxy selector is
+   * used.
    */
   public Proxy getProxy() {
     return proxy;
   }
 
-  /** Returns the {@link InetSocketAddress} of this route. */
   public InetSocketAddress getSocketAddress() {
     return inetSocketAddress;
   }
 
-  /** Returns true if this route uses modern TLS. */
-  public boolean isModernTls() {
-    return modernTls;
+  public ConnectionSpec getConnectionSpec() {
+    return connectionSpec;
   }
 
-  /** Returns a copy of this route with flipped TLS mode. */
-  Route flipTlsMode() {
-    return new Route(address, proxy, inetSocketAddress, !modernTls);
+  /**
+   * Returns true if this route tunnels HTTPS through an HTTP proxy. See <a
+   * href="http://www.ietf.org/rfc/rfc2817.txt">RFC 2817, Section 5.2</a>.
+   */
+  public boolean requiresTunnel() {
+    return address.sslSocketFactory != null && proxy.type() == Proxy.Type.HTTP;
   }
 
   @Override public boolean equals(Object obj) {
     if (obj instanceof Route) {
       Route other = (Route) obj;
-      return (address.equals(other.address)
+      return address.equals(other.address)
           && proxy.equals(other.proxy)
           && inetSocketAddress.equals(other.inetSocketAddress)
-          && modernTls == other.modernTls);
+          && connectionSpec.equals(other.connectionSpec);
     }
     return false;
   }
@@ -85,7 +106,7 @@ public class Route {
     result = 31 * result + address.hashCode();
     result = 31 * result + proxy.hashCode();
     result = 31 * result + inetSocketAddress.hashCode();
-    result = result + (modernTls ? (31 * result) : 0);
+    result = 31 * result + connectionSpec.hashCode();
     return result;
   }
 }

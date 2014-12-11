@@ -43,7 +43,7 @@
         <div class="row">
           <div class="span9">
             <h3 id="overview">Overview</h3>
-            <p>HTTP is the way modern applications network. It’s how we exchange data & media.
+            <p>HTTP is the way modern applications network. It’s how we exchange data &amp; media.
                 Doing HTTP efficiently makes your stuff load faster and saves bandwidth.</p>
 
             <p>OkHttp is an HTTP client that’s efficient by default:</p>
@@ -57,78 +57,62 @@
             <p>OkHttp perseveres when the network is troublesome: it will silently recover from
                 common connection problems. If your service has multiple IP addresses OkHttp will
                 attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
-                and for services hosted in redundant data centers. OkHttp also recovers from problematic
-                proxy servers and failed SSL handshakes.</p>
+                and for services hosted in redundant data centers. OkHttp initiates new connections
+                with modern TLS features (SNI, ALPN), and falls back to SSLv3 if the handshake
+                fails.</p>
 
-            <p>You can try OkHttp without rewriting your network code. The core module implements
-                the familiar <code>java.net.HttpURLConnection</code> API. And the optional
-                okhttp-apache module implements the Apache <code>HttpClient</code> API.</p>
+            <p>Using OkHttp is easy. Its 2.0 API is designed with fluent builders and
+                immutability. It supports both synchronous blocking calls and async calls with
+                callbacks.</p>
 
-            <p>OkHttp supports Android 2.2 and above. For Java, the minimum requirement is 1.5.</p>
+            <p>You can try out OkHttp without rewriting your network code. The
+                <code>okhttp-urlconnection</code> module implements the familiar
+                <code>java.net.HttpURLConnection</code> API and the <code>okhttp-apache</code>
+                module implements the Apache <code>HttpClient</code> API.</p>
+
+            <p>OkHttp supports Android 2.3 and above. For Java, the minimum requirement is 1.7.</p>
 
             <h3 id="examples">Examples</h3>
             <h4>Get a URL</h4>
             <p>This program downloads a URL and print its contents as a string. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/GetExample.java">Full source</a>.
 <pre class="prettyprint">
-    OkHttpClient client = new OkHttpClient();
+OkHttpClient client = new OkHttpClient();
 
-    String get(URL url) throws IOException {
-      HttpURLConnection connection = client.open(url);
-      InputStream in = null;
-      try {
-        // Read the response.
-        in = connection.getInputStream();
-        byte[] response = readFully(in);
-        return new String(response, "UTF-8");
-      } finally {
-        if (in != null) in.close();
-      }
-    }
+String run(String url) throws IOException {
+  Request request = new Request.Builder()
+      .url(url)
+      .build();
+
+  Response response = client.newCall(request).execute();
+  return response.body().string();
+}
 </pre>
             <h4>Post to a Server</h4>
             <p>This program posts data to a service. <a href="https://raw.github.com/square/okhttp/master/samples/guide/src/main/java/com/squareup/okhttp/guide/PostExample.java">Full source</a>.
 
 <pre class="prettyprint">
-    OkHttpClient client = new OkHttpClient();
+public static final MediaType JSON
+    = MediaType.parse("application/json; charset=utf-8");
 
-    String post(URL url, byte[] body) throws IOException {
-      HttpURLConnection connection = client.open(url);
-      OutputStream out = null;
-      InputStream in = null;
-      try {
-        // Write the request.
-        connection.setRequestMethod("POST");
-        out = connection.getOutputStream();
-        out.write(body);
-        out.close();
+OkHttpClient client = new OkHttpClient();
 
-        // Read the response.
-        if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-          throw new IOException("Unexpected HTTP response: "
-              + connection.getResponseCode() + " " + connection.getResponseMessage());
-        }
-        in = connection.getInputStream();
-        return readFirstLine(in);
-      } finally {
-        // Clean up.
-        if (out != null) out.close();
-        if (in != null) in.close();
-      }
-    }
+String post(String url, String json) throws IOException {
+  RequestBody body = RequestBody.create(JSON, json);
+  Request request = new Request.Builder()
+      .url(url)
+      .post(body)
+      .build();
+  Response response = client.newCall(request).execute();
+  return response.body().string();
+}
 </pre>
 
-                <!--
-                TODO
-                Error Handling
-                Authentication
-                Cookies
-                Response Caching
-                Captive Gateways
-                -->
-
             <h3 id="download">Download</h3>
-            <p><a href="http://repository.sonatype.org/service/local/artifact/maven/redirect?r=central-proxy&g=com.squareup.okhttp&a=okhttp&c=jar-with-dependencies&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
-            <p>The source code to the OkHttp, its samples, and this website is <a href="http://github.com/square/okhttp">available on GitHub</a>.</p>
+            <p><a href="https://search.maven.org/remote_content?g=com.squareup.okhttp&a=okhttp&v=LATEST" class="dl version-href">&darr; <span class="version-tag">Latest</span> JAR</a></p>
+            <p>You'll also need <a href="http://github.com/square/okio">Okio</a>, which OkHttp
+                uses for fast I/O and resizable buffers. Download the
+                <a href="https://search.maven.org/remote_content?g=com.squareup.okio&a=okio&v=LATEST">latest JAR</a>.
+            <p>The source code to OkHttp, its samples, and this website is <a href="http://github.com/square/okhttp">available on GitHub</a>.</p>
 
             <h4>Maven</h4>
             <pre class="prettyprint">&lt;dependency>
@@ -143,7 +127,7 @@
             <p>Before your code can be accepted into the project you must also sign the <a href="http://squ.re/sign-the-cla">Individual Contributor License Agreement (CLA)</a>.</p>
 
             <h3 id="license">License</h3>
-            <pre>Copyright 2013 Square, Inc.
+            <pre>Copyright 2014 Square, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -167,8 +151,9 @@ limitations under the License.</pre>
                 <li><a href="#license">License</a></li>
               </ul>
               <ul class="nav nav-pills nav-stacked secondary">
+                <li><a href="https://github.com/square/okhttp/wiki">Wiki</a></li>
                 <li><a href="javadoc/index.html">Javadoc</a></li>
-                <li><a href="https://plus.google.com/communities/109244258569782858265/stream/b6d99838-775f-45a6-a259-af04d42d8639">Google+ Community</a></li>
+                <li><a href="http://stackoverflow.com/questions/tagged/okhttp?sort=active">StackOverflow</a></li>
               </ul>
             </div>
           </div>
@@ -210,8 +195,7 @@ limitations under the License.</pre>
         // Look up the latest version of the library.
         $.fn.artifactVersion({
           'groupId': 'com.squareup.okhttp',
-          'artifactId': 'okhttp',
-          'classifier': 'jar-with-dependencies'
+          'artifactId': 'okhttp'
         }, function(version, url) {
           $('.version').text(version);
           $('.version-tag').text('v' + version);
