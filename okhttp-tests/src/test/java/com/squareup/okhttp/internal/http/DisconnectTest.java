@@ -32,32 +32,6 @@ public final class DisconnectTest {
   private final MockWebServer server = new MockWebServer();
   private final OkHttpClient client = new OkHttpClient();
 
-  @Test public void interruptWritingRequestBody() throws Exception {
-    int requestBodySize = 2 * 1024 * 1024; // 2 MiB
-
-    server.enqueue(new MockResponse()
-        .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
-
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
-    disconnectLater(connection, 500);
-
-    connection.setDoOutput(true);
-    connection.setFixedLengthStreamingMode(requestBodySize);
-    OutputStream requestBody = connection.getOutputStream();
-    byte[] buffer = new byte[1024];
-    try {
-      for (int i = 0; i < requestBodySize; i += buffer.length) {
-        requestBody.write(buffer);
-        requestBody.flush();
-      }
-      fail("Expected connection to be closed");
-    } catch (IOException expected) {
-    }
-
-    connection.disconnect();
-  }
-
   @Test public void interruptReadingResponseBody() throws Exception {
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
 
