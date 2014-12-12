@@ -172,7 +172,7 @@ public final class SpdyConnection implements Closeable {
     new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
-  /** The protocol as selected using NPN or ALPN. */
+  /** The protocol as selected using ALPN. */
   public Protocol getProtocol() {
     return protocol;
   }

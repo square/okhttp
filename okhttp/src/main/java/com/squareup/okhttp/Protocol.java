@@ -19,8 +19,7 @@ import java.io.IOException;
 
 /**
  * Protocols that OkHttp implements for <a
- * href="http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-04">NPN</a> and
- * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
+ * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
  * selection.
  *
  * <h3>Protocol vs Scheme</h3>
@@ -91,7 +90,7 @@ public enum Protocol {
   }
 
   /**
-   * Returns the string used to identify this protocol for ALPN and NPN, like
+   * Returns the string used to identify this protocol for ALPN, like
    * "http/1.1", "spdy/3.1" or "h2-15".
    */
   @Override public String toString() {

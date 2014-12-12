@@ -22,7 +22,7 @@ import okio.BufferedSource;
 /** A version and dialect of the framed socket protocol. */
 public interface Variant {
 
-  /** The protocol as selected using NPN or ALPN. */
+  /** The protocol as selected using ALPN. */
   Protocol getProtocol();
 
   /**

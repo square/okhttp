@@ -35,10 +35,10 @@
     <!-- Compilation -->
     <java.version>1.7</java.version>
     <okio.version>1.0.1</okio.version>
-    <!-- Targetted to jdk7u60-b13; Oracle jdk7u55-b13. -->
-    <npn.version>1.1.7.v20140316</npn.version>
-    <!-- Targetted to OpenJDK 8 b132 -->
-    <alpn.version>8.0.0.v20140317</alpn.version>
+    <!-- ALPN library targeted to OpenJDK 7 -->
+    <alpn.jdk7.version>7.0.0.v20140317</alpn.jdk7.version>
+    <!-- ALPN library targeted to OpenJDK 8 b132 -->
+    <alpn.jdk8.version>8.0.0.v20140317</alpn.jdk8.version>
     <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
@@ -80,15 +80,15 @@
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
       </dependency>
-      <dependency>
-        <groupId>org.mortbay.jetty.npn</groupId>
-        <artifactId>npn-boot</artifactId>
-        <version>${npn.version}</version>
+       <dependency>
+        <groupId>org.mortbay.jetty.alpn</groupId>
+        <artifactId>alpn-jdk7-boot</artifactId>
+        <version>${alpn.jdk7.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mortbay.jetty.alpn</groupId>
-        <artifactId>alpn-boot</artifactId>
-        <version>${alpn.version}</version>
+        <artifactId>alpn-jdk8-boot</artifactId>
+        <version>${alpn.jdk8.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -213,41 +213,12 @@
 
   <profiles>
     <profile>
-      <id>npn-when-jdk7</id>
+      <id>alpn-when-jdk7</id>
       <activation>
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</bootclasspathPrefix>
-      </properties>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
-              </configuration>
-              <dependencies>
-                <dependency>
-                  <groupId>org.mortbay.jetty.npn</groupId>
-                  <artifactId>npn-boot</artifactId>
-                  <version>${npn.version}</version>
-                </dependency>
-              </dependencies>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-    <profile>
-      <id>alpn-when-jdk8</id>
-      <activation>
-        <jdk>1.8</jdk>
-      </activation>
-      <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar</bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
@@ -262,7 +233,36 @@
                 <dependency>
                   <groupId>org.mortbay.jetty.alpn</groupId>
                   <artifactId>alpn-boot</artifactId>
-                  <version>${alpn.version}</version>
+                  <version>${alpn.jdk7.version}</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar</bootclasspathPrefix>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+              </configuration>
+              <dependencies>
+                <dependency>
+                  <groupId>org.mortbay.jetty.alpn</groupId>
+                  <artifactId>alpn-boot</artifactId>
+                  <version>${alpn.jdk8.version}</version>
                 </dependency>
               </dependencies>
             </plugin>

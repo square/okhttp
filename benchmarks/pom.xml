@@ -97,14 +97,15 @@
   </build>
   <profiles>
     <profile>
-      <id>npn-when-jdk7</id>
+      <id>alpn-when-jdk7</id>
       <activation>
         <jdk>1.7</jdk>
       </activation>
       <dependencies>
         <dependency>
-          <groupId>org.mortbay.jetty.npn</groupId>
-          <artifactId>npn-boot</artifactId>
+          <groupId>org.mortbay.jetty.alpn</groupId>
+          <artifactId>alpn-boot</artifactId>
+          <version>${alpn.jdk7.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>
@@ -118,6 +119,7 @@
         <dependency>
           <groupId>org.mortbay.jetty.alpn</groupId>
           <artifactId>alpn-boot</artifactId>
+          <version>${alpn.jdk8.version}</version>
           <scope>provided</scope>
         </dependency>
       </dependencies>

@@ -169,17 +169,7 @@ public final class MockWebServer {
   }
 
   /**
-   * Sets whether NPN is used on incoming HTTPS connections to negotiate a
-   * protocol like HTTP/1.1 or SPDY/3. Call this method to disable NPN and
-   * SPDY.
-   * @deprecated Use {@link #setProtocolNegotiationEnabled}.
-   */
-  public void setNpnEnabled(boolean npnEnabled) {
-    this.protocolNegotiationEnabled = npnEnabled;
-  }
-
-  /**
-   * Sets whether ALPN or NPN is used on incoming HTTPS connections to
+   * Sets whether ALPN is used on incoming HTTPS connections to
    * negotiate a protocol like HTTP/1.1 or HTTP/2. Call this method to disable
    * negotiation and restrict connections to HTTP/1.1.
    */
@@ -188,19 +178,7 @@ public final class MockWebServer {
   }
 
   /**
-   * Indicates the protocols supported by NPN on incoming HTTPS connections.
-   * This list is ignored when npn is disabled.
-   *
-   * @param protocols the protocols to use, in order of preference. The list
-   *     must contain "http/1.1". It must not contain null.
-   * @deprecated Use {@link #setProtocols(java.util.List)}.
-   */
-  public void setNpnProtocols(List<Protocol> protocols) {
-    setProtocols(protocols);
-  }
-
-  /**
-   * Indicates the protocols supported by NPN or ALPN on incoming HTTPS
+   * Indicates the protocols supported by ALPN on incoming HTTPS
    * connections. This list is ignored when
    * {@link #setProtocolNegotiationEnabled negotiation is disabled}.
    *

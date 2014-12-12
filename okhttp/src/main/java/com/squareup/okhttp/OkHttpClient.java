@@ -484,8 +484,7 @@ public class OkHttpClient implements Cloneable {
    * successors (h2). The http/1.1 transport will never be dropped.
    *
    * <p>If multiple protocols are specified, <a
-   * href="https://technotes.googlecode.com/git/nextprotoneg.html">NPN</a> or
-   * <a href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
+   * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
    * will be used to negotiate a transport.
    *
    * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are
@@ -594,9 +593,9 @@ public class OkHttpClient implements Cloneable {
   /**
    * Java and Android programs default to using a single global SSL context,
    * accessible to HTTP clients as {@link SSLSocketFactory#getDefault()}. If we
-   * used the shared SSL context, when OkHttp enables NPN for its SPDY-related
-   * stuff, it would also enable NPN for other usages, which might crash them
-   * because NPN is enabled when it isn't expected to be.
+   * used the shared SSL context, when OkHttp enables ALPN for its SPDY-related
+   * stuff, it would also enable ALPN for other usages, which might crash them
+   * because ALPN is enabled when it isn't expected to be.
    *
    * <p>This code avoids that by defaulting to an OkHttp-created SSL context.
    * The drawback of this approach is that apps that customize the global SSL
