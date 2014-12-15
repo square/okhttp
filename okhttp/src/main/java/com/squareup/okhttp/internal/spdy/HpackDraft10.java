@@ -29,15 +29,15 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Read and write HPACK v09.
+ * Read and write HPACK v10.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10
  *
- * This implementation uses an array for the header table and a list for
+ * This implementation uses an array for the dynamic table and a list for
  * indexed entries.  Dynamic entries are added to the array, starting in the
  * last position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft09 {
+final class HpackDraft10 {
   private static final int PREFIX_4_BITS = 0x0f;
   private static final int PREFIX_5_BITS = 0x1f;
   private static final int PREFIX_6_BITS = 0x3f;
@@ -107,63 +107,63 @@ final class HpackDraft09 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft09() {
+  private HpackDraft10() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-3.2
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-3.1
   static final class Reader {
 
     private final List<Header> headerList = new ArrayList<>();
     private final BufferedSource source;
 
-    private int maxHeaderTableByteCountSetting;
-    private int maxHeaderTableByteCount;
+    private int headerTableSizeSetting;
+    private int maxDynamicTableByteCount;
     // Visible for testing.
-    Header[] headerTable = new Header[8];
+    Header[] dynamicTable = new Header[8];
     // Array is populated back to front, so new entries always have lowest index.
-    int nextHeaderIndex = headerTable.length - 1;
+    int nextHeaderIndex = dynamicTable.length - 1;
     int headerCount = 0;
-    int headerTableByteCount = 0;
+    int dynamicTableByteCount = 0;
 
-    Reader(int maxHeaderTableByteCountSetting, Source source) {
-      this.maxHeaderTableByteCountSetting = maxHeaderTableByteCountSetting;
-      this.maxHeaderTableByteCount = maxHeaderTableByteCountSetting;
+    Reader(int headerTableSizeSetting, Source source) {
+      this.headerTableSizeSetting = headerTableSizeSetting;
+      this.maxDynamicTableByteCount = headerTableSizeSetting;
       this.source = Okio.buffer(source);
     }
 
-    int maxHeaderTableByteCount() {
-      return maxHeaderTableByteCount;
+    int maxDynamicTableByteCount() {
+      return maxDynamicTableByteCount;
     }
 
     /**
-     * Called by the reader when the peer sent a new header table size setting.
-     * While this establishes the maximum header table size, the
-     * {@link #maxHeaderTableByteCount} set during processing may limit the
+     * Called by the reader when the peer sent {@link Settings#HEADER_TABLE_SIZE}.
+     * While this establishes the maximum dynamic table size, the
+     * {@link #maxDynamicTableByteCount} set during processing may limit the
      * table size to a smaller amount.
      * <p> Evicts entries or clears the table as needed.
      */
-    void maxHeaderTableByteCountSetting(int newMaxHeaderTableByteCountSetting) {
-      this.maxHeaderTableByteCountSetting = newMaxHeaderTableByteCountSetting;
-      this.maxHeaderTableByteCount = maxHeaderTableByteCountSetting;
-      adjustHeaderTableByteCount();
+    void headerTableSizeSetting(int headerTableSizeSetting) {
+      this.headerTableSizeSetting = headerTableSizeSetting;
+      this.maxDynamicTableByteCount = headerTableSizeSetting;
+      adjustDynamicTableByteCount();
     }
 
-    private void adjustHeaderTableByteCount() {
-      if (maxHeaderTableByteCount < headerTableByteCount) {
-        if (maxHeaderTableByteCount == 0) {
-          clearHeaderTable();
+    private void adjustDynamicTableByteCount() {
+      if (maxDynamicTableByteCount < dynamicTableByteCount) {
+        if (maxDynamicTableByteCount == 0) {
+          clearDynamicTable();
         } else {
-          evictToRecoverBytes(headerTableByteCount - maxHeaderTableByteCount);
+          evictToRecoverBytes(dynamicTableByteCount - maxDynamicTableByteCount);
         }
       }
     }
 
-    private void clearHeaderTable() {
+    private void clearDynamicTable() {
       headerList.clear();
-      Arrays.fill(headerTable, null);
-      nextHeaderIndex = headerTable.length - 1;
+      Arrays.fill(dynamicTable, null);
+      nextHeaderIndex = dynamicTable.length - 1;
       headerCount = 0;
-      headerTableByteCount = 0;
+      dynamicTableByteCount = 0;
     }
 
     /** Returns the count of entries evicted. */
@@ -171,13 +171,13 @@ final class HpackDraft09 {
       int entriesToEvict = 0;
       if (bytesToRecover > 0) {
         // determine how many headers need to be evicted.
-        for (int j = headerTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
-          bytesToRecover -= headerTable[j].hpackSize;
-          headerTableByteCount -= headerTable[j].hpackSize;
+        for (int j = dynamicTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
+          bytesToRecover -= dynamicTable[j].hpackSize;
+          dynamicTableByteCount -= dynamicTable[j].hpackSize;
           headerCount--;
           entriesToEvict++;
         }
-        System.arraycopy(headerTable, nextHeaderIndex + 1, headerTable,
+        System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
             nextHeaderIndex + 1 + entriesToEvict, headerCount);
         nextHeaderIndex += entriesToEvict;
       }
@@ -202,12 +202,12 @@ final class HpackDraft09 {
           int index = readInt(b, PREFIX_6_BITS);
           readLiteralHeaderWithIncrementalIndexingIndexedName(index - 1);
         } else if ((b & 0x20) == 0x20) {  // 001NNNNN
-          maxHeaderTableByteCount = readInt(b, PREFIX_5_BITS);
-          if (maxHeaderTableByteCount < 0
-              || maxHeaderTableByteCount > maxHeaderTableByteCountSetting) {
-            throw new IOException("Invalid header table byte count " + maxHeaderTableByteCount);
+          maxDynamicTableByteCount = readInt(b, PREFIX_5_BITS);
+          if (maxDynamicTableByteCount < 0
+              || maxDynamicTableByteCount > headerTableSizeSetting) {
+            throw new IOException("Invalid dynamic table size update " + maxDynamicTableByteCount);
           }
-          adjustHeaderTableByteCount();
+          adjustDynamicTableByteCount();
         } else if (b == 0x10 || b == 0) { // 000?0000 - Ignore never indexed bit.
           readLiteralHeaderWithoutIndexingNewName();
         } else { // 000?NNNN - Ignore never indexed bit.
@@ -228,16 +228,16 @@ final class HpackDraft09 {
         Header staticEntry = STATIC_HEADER_TABLE[index];
         headerList.add(staticEntry);
       } else {
-        int headerTableIndex = headerTableIndex(index - STATIC_HEADER_TABLE.length);
-        if (headerTableIndex < 0 || headerTableIndex > headerTable.length - 1) {
+        int dynamicTableIndex = dynamicTableIndex(index - STATIC_HEADER_TABLE.length);
+        if (dynamicTableIndex < 0 || dynamicTableIndex > dynamicTable.length - 1) {
           throw new IOException("Header index too large " + (index + 1));
         }
-        headerList.add(headerTable[headerTableIndex]);
+        headerList.add(dynamicTable[dynamicTableIndex]);
       }
     }
 
     // referencedHeaders is relative to nextHeaderIndex + 1.
-    private int headerTableIndex(int index) {
+    private int dynamicTableIndex(int index) {
       return nextHeaderIndex + 1 + index;
     }
 
@@ -257,20 +257,20 @@ final class HpackDraft09 {
         throws IOException {
       ByteString name = getName(nameIndex);
       ByteString value = readByteString();
-      insertIntoHeaderTable(-1, new Header(name, value));
+      insertIntoDynamicTable(-1, new Header(name, value));
     }
 
     private void readLiteralHeaderWithIncrementalIndexingNewName() throws IOException {
       ByteString name = checkLowercase(readByteString());
       ByteString value = readByteString();
-      insertIntoHeaderTable(-1, new Header(name, value));
+      insertIntoDynamicTable(-1, new Header(name, value));
     }
 
     private ByteString getName(int index) {
       if (isStaticHeader(index)) {
         return STATIC_HEADER_TABLE[index].name;
       } else {
-        return headerTable[headerTableIndex(index - STATIC_HEADER_TABLE.length)].name;
+        return dynamicTable[dynamicTableIndex(index - STATIC_HEADER_TABLE.length)].name;
       }
     }
 
@@ -279,39 +279,39 @@ final class HpackDraft09 {
     }
 
     /** index == -1 when new. */
-    private void insertIntoHeaderTable(int index, Header entry) {
+    private void insertIntoDynamicTable(int index, Header entry) {
       headerList.add(entry);
 
       int delta = entry.hpackSize;
       if (index != -1) { // Index -1 == new header.
-        delta -= headerTable[headerTableIndex(index)].hpackSize;
+        delta -= dynamicTable[dynamicTableIndex(index)].hpackSize;
       }
 
       // if the new or replacement header is too big, drop all entries.
-      if (delta > maxHeaderTableByteCount) {
-        clearHeaderTable();
+      if (delta > maxDynamicTableByteCount) {
+        clearDynamicTable();
         return;
       }
 
       // Evict headers to the required length.
-      int bytesToRecover = (headerTableByteCount + delta) - maxHeaderTableByteCount;
+      int bytesToRecover = (dynamicTableByteCount + delta) - maxDynamicTableByteCount;
       int entriesEvicted = evictToRecoverBytes(bytesToRecover);
 
-      if (index == -1) { // Adding a value to the header table.
-        if (headerCount + 1 > headerTable.length) { // Need to grow the header table.
-          Header[] doubled = new Header[headerTable.length * 2];
-          System.arraycopy(headerTable, 0, doubled, headerTable.length, headerTable.length);
-          nextHeaderIndex = headerTable.length - 1;
-          headerTable = doubled;
+      if (index == -1) { // Adding a value to the dynamic table.
+        if (headerCount + 1 > dynamicTable.length) { // Need to grow the dynamic table.
+          Header[] doubled = new Header[dynamicTable.length * 2];
+          System.arraycopy(dynamicTable, 0, doubled, dynamicTable.length, dynamicTable.length);
+          nextHeaderIndex = dynamicTable.length - 1;
+          dynamicTable = doubled;
         }
         index = nextHeaderIndex--;
-        headerTable[index] = entry;
+        dynamicTable[index] = entry;
         headerCount++;
       } else { // Replace value at same position.
-        index += headerTableIndex(index) + entriesEvicted;
-        headerTable[index] = entry;
+        index += dynamicTableIndex(index) + entriesEvicted;
+        dynamicTable[index] = entry;
       }
-      headerTableByteCount += delta;
+      dynamicTableByteCount += delta;
     }
 
     private int readByte() throws IOException {
@@ -374,7 +374,7 @@ final class HpackDraft09 {
     }
 
     /** This does not use "never indexed" semantics for sensitive headers. */
-    // https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-4.3.3
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-6.2.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -392,7 +392,7 @@ final class HpackDraft09 {
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {

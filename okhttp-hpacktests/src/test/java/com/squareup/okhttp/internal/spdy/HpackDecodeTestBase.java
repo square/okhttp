@@ -51,7 +51,7 @@ public class HpackDecodeTestBase {
   }
 
   private final Buffer bytesIn = new Buffer();
-  private final HpackDraft09.Reader hpackReader = new HpackDraft09.Reader(4096, bytesIn);
+  private final HpackDraft10.Reader hpackReader = new HpackDraft10.Reader(4096, bytesIn);
 
   private final Story story;
 

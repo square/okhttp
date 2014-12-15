@@ -28,23 +28,23 @@ import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class HpackDraft09Test {
+public class HpackDraft10Test {
 
   private final Buffer bytesIn = new Buffer();
-  private HpackDraft09.Reader hpackReader;
+  private HpackDraft10.Reader hpackReader;
   private Buffer bytesOut = new Buffer();
-  private HpackDraft09.Writer hpackWriter;
+  private HpackDraft10.Writer hpackWriter;
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new HpackDraft09.Writer(bytesOut);
+    hpackWriter = new HpackDraft10.Writer(bytesOut);
   }
 
   /**
    * Variable-length quantity special cases strings which are longer than 127
    * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
    *
-   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-6.1
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-5.2
    */
   @Test public void largeHeaderValue() throws IOException {
     char[] value = new char[4096];
@@ -72,7 +72,7 @@ public class HpackDraft09Test {
     bytesIn.writeByte(0x0d); // Literal value (len = 13)
     bytesIn.writeUtf8("custom-header");
 
-    hpackReader.maxHeaderTableByteCountSetting(1);
+    hpackReader.headerTableSizeSetting(1);
     hpackReader.readHeaders();
 
     assertEquals(0, hpackReader.headerCount);
@@ -104,15 +104,15 @@ public class HpackDraft09Test {
     bytesIn.writeUtf8("custom-header");
 
     // Set to only support 110 bytes (enough for 2 headers).
-    hpackReader.maxHeaderTableByteCountSetting(110);
+    hpackReader.headerTableSizeSetting(110);
     hpackReader.readHeaders();
 
     assertEquals(2, hpackReader.headerCount);
 
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, "custom-bar", "custom-header", 55);
 
-    entry = hpackReader.headerTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[headerTableLength() - 2];
     checkEntry(entry, "custom-baz", "custom-header", 55);
 
     // Once a header field is decoded and added to the reconstructed header
@@ -125,7 +125,7 @@ public class HpackDraft09Test {
         hpackReader.getAndResetHeaderList());
 
     // Simulate receiving a small settings frame, that implies eviction.
-    hpackReader.maxHeaderTableByteCountSetting(55);
+    hpackReader.headerTableSizeSetting(55);
     assertEquals(1, hpackReader.headerCount);
   }
 
@@ -140,7 +140,7 @@ public class HpackDraft09Test {
       bytesIn.writeUtf8("custom-header");
     }
 
-    hpackReader.maxHeaderTableByteCountSetting(16384); // Lots of headers need more room!
+    hpackReader.headerTableSizeSetting(16384); // Lots of headers need more room!
     hpackReader.readHeaders();
 
     assertEquals(256, hpackReader.headerCount);
@@ -156,14 +156,14 @@ public class HpackDraft09Test {
     hpackReader.readHeaders();
 
     assertEquals(1, hpackReader.headerCount);
-    assertEquals(52, hpackReader.headerTableByteCount);
+    assertEquals(52, hpackReader.dynamicTableByteCount);
 
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":path", "www.example.com", 52);
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     bytesIn.writeByte(0x40); // Literal indexed
@@ -176,16 +176,16 @@ public class HpackDraft09Test {
     hpackReader.readHeaders();
 
     assertEquals(1, hpackReader.headerCount);
-    assertEquals(55, hpackReader.headerTableByteCount);
+    assertEquals(55, hpackReader.dynamicTableByteCount);
 
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
 
     assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
   }
 
   /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.2
    */
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
@@ -260,9 +260,9 @@ public class HpackDraft09Test {
     hpackReader.readHeaders();
 
     assertEquals(0, hpackReader.headerCount);
-    assertEquals(0, hpackReader.headerTableByteCount);
+    assertEquals(0, hpackReader.dynamicTableByteCount);
 
-    assertEquals(null, hpackReader.headerTable[headerTableLength() - 1]);
+    assertEquals(null, hpackReader.dynamicTable[headerTableLength() - 1]);
 
     assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }
@@ -309,14 +309,14 @@ public class HpackDraft09Test {
     bytesIn.writeByte(0x20);
     hpackReader.readHeaders();
 
-    assertEquals(0, hpackReader.maxHeaderTableByteCount());
+    assertEquals(0, hpackReader.maxDynamicTableByteCount());
 
     bytesIn.writeByte(0x3f); // encode size 4096
     bytesIn.writeByte(0xe1);
     bytesIn.writeByte(0x1f);
     hpackReader.readHeaders();
 
-    assertEquals(4096, hpackReader.maxHeaderTableByteCount());
+    assertEquals(4096, hpackReader.maxDynamicTableByteCount());
   }
 
   // Example taken from twitter/hpack DecoderTest.testIllegalHeaderTableSizeUpdate
@@ -347,13 +347,13 @@ public class HpackDraft09Test {
   }
 
   /**
-   * https://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2.4
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
                              // idx = 2 -> :method: GET
 
-    hpackReader.maxHeaderTableByteCountSetting(0); // SETTINGS_HEADER_TABLE_SIZE == 0
+    hpackReader.headerTableSizeSetting(0); // SETTINGS_HEADER_TABLE_SIZE == 0
     hpackReader.readHeaders();
 
     // Not buffered in header table.
@@ -363,7 +363,7 @@ public class HpackDraft09Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     firstRequestWithoutHuffman();
@@ -396,11 +396,11 @@ public class HpackDraft09Test {
     assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
-    assertEquals(57, hpackReader.headerTableByteCount);
+    assertEquals(57, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -429,15 +429,15 @@ public class HpackDraft09Test {
     assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.headerTable[headerTableLength() - 2];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
-    assertEquals(110, hpackReader.headerTableByteCount);
+    assertEquals(110, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -468,19 +468,19 @@ public class HpackDraft09Test {
     assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.headerTable[headerTableLength() - 3];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
 
     // [  2] (s =  53) cache-control: no-cache
-    entry = hpackReader.headerTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  3] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
-    assertEquals(164, hpackReader.headerTableByteCount);
+    assertEquals(164, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -492,7 +492,7 @@ public class HpackDraft09Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-D.4
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.4
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     firstRequestWithHuffman();
@@ -526,11 +526,11 @@ public class HpackDraft09Test {
     assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.headerTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
-    assertEquals(57, hpackReader.headerTableByteCount);
+    assertEquals(57, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -560,15 +560,15 @@ public class HpackDraft09Test {
     assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.headerTable[headerTableLength() - 2];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
-    assertEquals(110, hpackReader.headerTableByteCount);
+    assertEquals(110, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -601,19 +601,19 @@ public class HpackDraft09Test {
     assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.headerTable[headerTableLength() - 3];
+    Header entry = hpackReader.dynamicTable[headerTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
 
     // [  2] (s =  53) cache-control: no-cache
-    entry = hpackReader.headerTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[headerTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  3] (s =  57) :authority: www.example.com
-    entry = hpackReader.headerTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[headerTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
-    assertEquals(164, hpackReader.headerTableByteCount);
+    assertEquals(164, hpackReader.dynamicTableByteCount);
 
     // Decoded header list:
     assertEquals(headerEntries(
@@ -692,8 +692,8 @@ public class HpackDraft09Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
-  private HpackDraft09.Reader newReader(Buffer source) {
-    return new HpackDraft09.Reader(4096, source);
+  private HpackDraft10.Reader newReader(Buffer source) {
+    return new HpackDraft10.Reader(4096, source);
   }
 
   private Buffer byteStream(int... bytes) {
@@ -721,6 +721,6 @@ public class HpackDraft09Test {
   }
 
   private int headerTableLength() {
-    return hpackReader.headerTable.length;
+    return hpackReader.dynamicTable.length;
   }
 }

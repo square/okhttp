@@ -476,11 +476,11 @@ public class OkHttpClient implements Cloneable {
    * <ul>
    *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
    *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
-   *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-15">h2-15</a>
+   *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-16">h2-16</a>
    * </ul>
    *
    * <p><strong>This is an evolving set.</strong> Future releases may drop
-   * support for transitional protocols (like h2-15), in favor of their
+   * support for transitional protocols (like h2-16), in favor of their
    * successors (h2). The http/1.1 transport will never be dropped.
    *
    * <p>If multiple protocols are specified, <a
