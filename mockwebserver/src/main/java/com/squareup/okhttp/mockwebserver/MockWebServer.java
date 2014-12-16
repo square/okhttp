@@ -290,7 +290,7 @@ public final class MockWebServer {
   public void play(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("play() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
-    inetAddress = InetAddress.getLocalHost();
+    inetAddress = InetAddress.getByName(null);
     serverSocket = serverSocketFactory.createServerSocket(port, 50, inetAddress);
     serverSocket.setReuseAddress(true);
 
