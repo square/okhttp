@@ -329,7 +329,7 @@ public class HpackDraft10Test {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Invalid header table byte count 4097", e.getMessage());
+      assertEquals("Invalid dynamic table size update 4097", e.getMessage());
     }
   }
 
@@ -342,7 +342,7 @@ public class HpackDraft10Test {
       hpackReader.readHeaders();
       fail();
     } catch (IOException e) {
-      assertEquals("Invalid header table byte count -2147483648", e.getMessage());
+      assertEquals("Invalid dynamic table size update -2147483648", e.getMessage());
     }
   }
 
