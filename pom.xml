@@ -34,7 +34,7 @@
 
     <!-- Compilation -->
     <java.version>1.7</java.version>
-    <okio.version>1.0.1</okio.version>
+    <okio.version>1.1.0</okio.version>
     <!-- Targetted to jdk7u60-b13; Oracle jdk7u55-b13. -->
     <npn.version>1.1.7.v20140316</npn.version>
     <!-- Targetted to OpenJDK 8 b132 -->

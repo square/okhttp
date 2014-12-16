@@ -34,7 +34,9 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.BufferedSink;
 import okio.ByteString;
+import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import okio.Timeout;
@@ -241,7 +243,7 @@ public final class SpdyTransport implements Transport {
     private final SpdyStream stream;
     private final Source source;
     private final CacheRequest cacheRequest;
-    private final Sink cacheBody;
+    private final BufferedSink cacheBody;
 
     private boolean inputExhausted;
     private boolean closed;
@@ -256,7 +258,7 @@ public final class SpdyTransport implements Transport {
         cacheRequest = null;
       }
 
-      this.cacheBody = cacheBody;
+      this.cacheBody = cacheBody != null ? Okio.buffer(cacheBody) : null;
       this.cacheRequest = cacheRequest;
     }
 
@@ -276,8 +278,8 @@ public final class SpdyTransport implements Transport {
       }
 
       if (cacheBody != null) {
-        // TODO get buffer.copyTo(cacheBody, read);
-        cacheBody.write(buffer.clone(), read);
+        buffer.copyTo(cacheBody.buffer(), buffer.size() - read, read);
+        cacheBody.emitCompleteSegments();
       }
 
       return read;
