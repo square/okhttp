@@ -371,7 +371,7 @@ public final class HttpConnection {
 
   private class AbstractSource {
     private final CacheRequest cacheRequest;
-    protected final Sink cacheBody;
+    protected final BufferedSink cacheBody;
     protected boolean closed;
 
     AbstractSource(CacheRequest cacheRequest) throws IOException {
@@ -381,17 +381,15 @@ public final class HttpConnection {
         cacheRequest = null;
       }
 
-      this.cacheBody = cacheBody;
+      this.cacheBody = cacheBody != null ? Okio.buffer(cacheBody) : null;
       this.cacheRequest = cacheRequest;
     }
 
     /** Copy the last {@code byteCount} bytes of {@code source} to the cache body. */
     protected final void cacheWrite(Buffer source, long byteCount) throws IOException {
       if (cacheBody != null) {
-        // TODO source.copyTo(cacheBody, source.size() - byteCount, byteCount)
-        Buffer sourceCopy = source.clone();
-        sourceCopy.skip(sourceCopy.size() - byteCount);
-        cacheBody.write(sourceCopy, byteCount);
+        source.copyTo(cacheBody.buffer(), source.size() - byteCount, byteCount);
+        cacheBody.emitCompleteSegments();
       }
     }
 

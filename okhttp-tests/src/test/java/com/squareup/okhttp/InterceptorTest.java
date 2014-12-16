@@ -216,9 +216,7 @@ public final class InterceptorTest {
         Sink uppercase = uppercase(sink);
         BufferedSink bufferedSink = Okio.buffer(uppercase);
         original.writeTo(bufferedSink);
-
-        // TODO: add BufferedSink.emit() to drain its buffer into its sink (without flush).
-        uppercase.write(bufferedSink.buffer(), bufferedSink.buffer().size());
+        bufferedSink.emit();
       }
     };
   }
