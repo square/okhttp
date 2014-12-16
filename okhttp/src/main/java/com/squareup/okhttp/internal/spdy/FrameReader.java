@@ -117,7 +117,7 @@ public interface FrameReader extends Closeable {
      * initiated stream are available from a different network location or
      * protocol configuration.
      *
-     * <p>See <a href="https://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01">alt-svc</a>
+     * <p>See <a href="http://tools.ietf.org/html/draft-ietf-httpbis-alt-svc-01">alt-svc</a>
      *
      * @param streamId when a client-initiated stream ID (odd number), the
      *     origin of this alternate service is the origin of the stream. When

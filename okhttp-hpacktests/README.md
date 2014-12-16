@@ -8,9 +8,6 @@ initialize them, you must run:
     git submodule init
     git submodule update
 
-When new interop tests are available, you should update
-HpackDecodeInteropGoodTest#GOOD_INTEROP_TESTS with the directory name.
-
 TODO
 ----
 
