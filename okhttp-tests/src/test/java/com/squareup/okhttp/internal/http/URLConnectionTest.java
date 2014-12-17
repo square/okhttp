@@ -23,6 +23,7 @@ import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.DelegatingServerSocketFactory;
 import com.squareup.okhttp.DelegatingSocketFactory;
+import com.squareup.okhttp.FallbackTestClientSocketFactory;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
@@ -627,7 +628,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("this response comes via SSL"));
     server.play();
 
-    client.client().setSslSocketFactory(sslContext.getSocketFactory());
+    suppressTlsFallbackScsv(client.client());
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.getUrl("/foo"));
 
@@ -651,7 +652,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("def"));
     server.play();
 
-    client.client().setSslSocketFactory(sslContext.getSocketFactory());
+    suppressTlsFallbackScsv(client.client());
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertContent("abc", client.open(server.getUrl("/")));
@@ -3332,5 +3333,16 @@ public final class URLConnectionTest {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setProtocolNegotiationEnabled(true);
     server.setProtocols(client.client().getProtocols());
+  }
+
+  /**
+   * Used during tests that involve TLS connection fallback attempts. OkHttp includes the
+   * TLS_FALLBACK_SCSV cipher on fallback connections. See
+   * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
+   */
+  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+    FallbackTestClientSocketFactory clientSocketFactory =
+        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
+    client.setSslSocketFactory(clientSocketFactory);
   }
 }

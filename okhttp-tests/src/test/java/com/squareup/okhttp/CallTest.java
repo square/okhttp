@@ -34,6 +34,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -49,8 +50,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -83,6 +88,12 @@ public final class CallTest {
   private Cache cache;
 
   @Before public void setUp() throws Exception {
+    server = new MockWebServer();
+    server2 = new MockWebServer();
+    client = new OkHttpClient();
+    callback = new RecordingCallback();
+    logHandler = new TestLogHandler();
+
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
@@ -674,12 +685,45 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.play();
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
+    suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build())
         .assertBody("abc");
+  }
+
+  @Test public void recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() throws Exception {
+    final String tlsFallbackScsv = "TLS_FALLBACK_SCSV";
+    List<String> supportedCiphers =
+        Arrays.asList(sslContext.getSocketFactory().getSupportedCipherSuites());
+    if (!supportedCiphers.contains(tlsFallbackScsv)) {
+      // This only works if the client socket supports TLS_FALLBACK_SCSV.
+      return;
+    }
+
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.play();
+
+    RecordingSSLSocketFactory clientSocketFactory =
+        new RecordingSSLSocketFactory(sslContext.getSocketFactory());
+    client.setSslSocketFactory(clientSocketFactory);
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (SSLHandshakeException expected) {
+    }
+
+    List<SSLSocket> clientSockets = clientSocketFactory.getSocketsCreated();
+    SSLSocket firstSocket = clientSockets.get(0);
+    assertFalse(Arrays.asList(firstSocket.getEnabledCipherSuites()).contains(tlsFallbackScsv));
+    SSLSocket secondSocket = clientSockets.get(1);
+    assertTrue(Arrays.asList(secondSocket.getEnabledCipherSuites()).contains(tlsFallbackScsv));
   }
 
   @Test public void recoverFromTlsHandshakeFailure_Async() throws Exception {
@@ -688,7 +732,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.play();
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
+    suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     Request request = new Request.Builder()
@@ -706,7 +750,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.play();
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
+    suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
 
@@ -715,6 +759,9 @@ public final class CallTest {
       client.newCall(request).execute();
       fail();
     } catch (SSLProtocolException expected) {
+      // RI response to the FAIL_HANDSHAKE
+    } catch (SSLHandshakeException expected) {
+      // Android's response to the FAIL_HANDSHAKE
     }
   }
 
@@ -1600,5 +1647,34 @@ public final class CallTest {
         fail("Header " + header + " matches " + pattern);
       }
     }
+  }
+
+  private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {
+
+    private List<SSLSocket> socketsCreated = new ArrayList<SSLSocket>();
+
+    public RecordingSSLSocketFactory(SSLSocketFactory delegate) {
+      super(delegate);
+    }
+
+    @Override
+    protected void configureSocket(SSLSocket sslSocket) throws IOException {
+      socketsCreated.add(sslSocket);
+    }
+
+    public List<SSLSocket> getSocketsCreated() {
+      return socketsCreated;
+    }
+  }
+
+  /**
+   * Used during tests that involve TLS connection fallback attempts. OkHttp includes the
+   * TLS_FALLBACK_SCSV cipher on fallback connections. See
+   * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
+   */
+  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+    FallbackTestClientSocketFactory clientSocketFactory =
+        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
+    client.setSslSocketFactory(clientSocketFactory);
   }
 }

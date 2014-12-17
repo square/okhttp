@@ -62,6 +62,6 @@ public class DelegatingServerSocketFactory extends ServerSocketFactory {
   }
 
   protected void configureServerSocket(ServerSocket serverSocket) throws IOException {
-    // no-op by default
+    // No-op by default.
   }
 }

@@ -117,7 +117,26 @@ public final class ConnectionSpec {
     }
 
     sslSocket.setEnabledProtocols(specToApply.tlsVersions);
-    sslSocket.setEnabledCipherSuites(specToApply.cipherSuites);
+
+    String[] cipherSuitesToEnable = specToApply.cipherSuites;
+    if (route.shouldSendTlsFallbackIndicator) {
+      // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
+      // the SCSV cipher is added to signal that a protocol fallback has taken place.
+      final String fallbackScsv = "TLS_FALLBACK_SCSV";
+      boolean socketSupportsFallbackScsv =
+          Arrays.asList(sslSocket.getSupportedCipherSuites()).contains(fallbackScsv);
+
+      if (socketSupportsFallbackScsv) {
+        // Add the SCSV cipher to the set of enabled ciphers iff it is supported.
+        String[] oldEnabledCipherSuites = cipherSuitesToEnable;
+        String[] newEnabledCipherSuites = new String[oldEnabledCipherSuites.length + 1];
+        System.arraycopy(oldEnabledCipherSuites, 0,
+            newEnabledCipherSuites, 0, oldEnabledCipherSuites.length);
+        newEnabledCipherSuites[newEnabledCipherSuites.length - 1] = fallbackScsv;
+        cipherSuitesToEnable = newEnabledCipherSuites;
+      }
+    }
+    sslSocket.setEnabledCipherSuites(cipherSuitesToEnable);
 
     Platform platform = Platform.get();
     if (specToApply.supportsTlsExtensions) {
