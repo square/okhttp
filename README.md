@@ -19,6 +19,8 @@ or Gradle:
 compile 'com.squareup.okhttp:okhttp:2.1.0'
 ```
 
+Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
+
 
 MockWebServer
 -------------
@@ -65,3 +67,4 @@ License
  [2]: https://github.com/square/okhttp/wiki
  [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=okhttp&v=LATEST
  [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [snap]: https://oss.sonatype.org/content/repositories/snapshots/
