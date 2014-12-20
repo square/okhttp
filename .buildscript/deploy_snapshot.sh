@@ -20,4 +20,5 @@ elif [ "$TRAVIS_BRANCH" != "$BRANCH" ]; then
 else
   echo "Deploying snapshot..."
   mvn clean source:jar javadoc:jar deploy --settings=".buildscript/settings.xml" -Dmaven.test.skip=true
+  echo "Snapshot deployed!"
 fi
