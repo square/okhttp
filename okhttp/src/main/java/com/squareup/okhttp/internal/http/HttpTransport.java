@@ -108,24 +108,24 @@ public final class HttpTransport implements Transport {
     httpConnection.emptyResponseBody();
   }
 
-  @Override public Source getTransferStream(CacheRequest cacheRequest) throws IOException {
+  @Override public Source getTransferStream() throws IOException {
     if (!httpEngine.hasResponseBody()) {
-      return httpConnection.newFixedLengthSource(cacheRequest, 0);
+      return httpConnection.newFixedLengthSource(0);
     }
 
     if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
-      return httpConnection.newChunkedSource(cacheRequest, httpEngine);
+      return httpConnection.newChunkedSource(httpEngine);
     }
 
     long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
     if (contentLength != -1) {
-      return httpConnection.newFixedLengthSource(cacheRequest, contentLength);
+      return httpConnection.newFixedLengthSource(contentLength);
     }
 
     // Wrap the input stream from the connection (rather than just returning
     // "socketIn" directly here), so that we can control its use after the
     // reference escapes.
-    return httpConnection.newUnknownLengthSource(cacheRequest);
+    return httpConnection.newUnknownLengthSource();
   }
 
   @Override public void disconnect(HttpEngine engine) throws IOException {

@@ -21,6 +21,7 @@ import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,12 +38,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /** Junk drawer of utility methods. */
 public final class Util {
@@ -174,17 +174,44 @@ public final class Util {
     }
   }
 
-  /** Reads until {@code in} is exhausted or the timeout has elapsed. */
-  public static boolean skipAll(Source in, int timeoutMillis) throws IOException {
-    // TODO: Implement deadlines everywhere so they can do this work.
-    long startNanos = System.nanoTime();
-    Buffer skipBuffer = new Buffer();
-    while (NANOSECONDS.toMillis(System.nanoTime() - startNanos) < timeoutMillis) {
-      long read = in.read(skipBuffer, 2048);
-      if (read == -1) return true; // Successfully exhausted the stream.
-      skipBuffer.clear();
+  /**
+   * Attempts to exhaust {@code source}, returning true if successful. This is useful when reading
+   * a complete source is helpful, such as when doing so completes a cache body or frees a socket
+   * connection for reuse.
+   */
+  public static boolean discard(Source source, int timeout, TimeUnit timeUnit) {
+    try {
+      return skipAll(source, timeout, timeUnit);
+    } catch (IOException e) {
+      return false;
     }
-    return false; // Ran out of time.
+  }
+
+  /**
+   * Reads until {@code in} is exhausted or the deadline has been reached. This is careful to not
+   * extend the deadline if one exists already.
+   */
+  public static boolean skipAll(Source source, int duration, TimeUnit timeUnit) throws IOException {
+    long now = System.nanoTime();
+    long originalDuration = source.timeout().hasDeadline()
+        ? source.timeout().deadlineNanoTime() - now
+        : Long.MAX_VALUE;
+    source.timeout().deadlineNanoTime(now + Math.min(originalDuration, timeUnit.toNanos(duration)));
+    try {
+      Buffer skipBuffer = new Buffer();
+      while (source.read(skipBuffer, 2048) != -1) {
+        skipBuffer.clear();
+      }
+      return true; // Success! The source has been exhausted.
+    } catch (InterruptedIOException e) {
+      return false; // We ran out of time before exhausting the source.
+    } finally {
+      if (originalDuration == Long.MAX_VALUE) {
+        source.timeout().clearDeadline();
+      } else {
+        source.timeout().deadlineNanoTime(now + originalDuration);
+      }
+    }
   }
 
   /** Returns a 32 character string containing an MD5 hash of {@code s}. */

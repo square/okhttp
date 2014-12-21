@@ -51,8 +51,7 @@ public interface Transport {
   /** Notify the transport that no response body will be read. */
   void emptyTransferStream() throws IOException;
 
-  // TODO: make this the content stream?
-  Source getTransferStream(CacheRequest cacheRequest) throws IOException;
+  Source getTransferStream() throws IOException;
 
   /**
    * Configures the response body to pool or close the socket connection when

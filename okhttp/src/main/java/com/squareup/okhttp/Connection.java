@@ -31,6 +31,7 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
 import java.security.cert.X509Certificate;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocket;
 
 import okio.Source;
@@ -406,8 +407,8 @@ public final class Connection {
       // it before proceeding.
       long contentLength = OkHeaders.contentLength(response);
       if (contentLength != -1) {
-        Source body = tunnelConnection.newFixedLengthSource(null, contentLength);
-        Util.skipAll(body, Integer.MAX_VALUE);
+        Source body = tunnelConnection.newFixedLengthSource(contentLength);
+        Util.skipAll(body, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
       } else {
         tunnelConnection.emptyResponseBody();
       }

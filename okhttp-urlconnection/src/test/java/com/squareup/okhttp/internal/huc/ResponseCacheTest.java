@@ -556,9 +556,11 @@ public final class ResponseCacheTest {
     HttpURLConnection request1 = openConnection(url);
     request1.setRequestMethod(requestMethod);
     addRequestBodyIfNecessary(requestMethod, request1);
+    request1.getInputStream().close();
     assertEquals("1", request1.getHeaderField("X-Response-ID"));
 
     URLConnection request2 = openConnection(url);
+    request2.getInputStream().close();
     if (expectCached) {
       assertEquals("1", request2.getHeaderField("X-Response-ID"));
     } else {
