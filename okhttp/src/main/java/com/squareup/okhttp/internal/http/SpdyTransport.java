@@ -20,6 +20,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.spdy.ErrorCode;
 import com.squareup.okhttp.internal.spdy.Header;
@@ -34,8 +35,8 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.ByteString;
+import okio.Okio;
 import okio.Sink;
-import okio.Source;
 
 import static com.squareup.okhttp.internal.spdy.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.spdy.Header.TARGET_AUTHORITY;
@@ -95,7 +96,7 @@ public final class SpdyTransport implements Transport {
     requestBody.writeToSocket(stream.getSink());
   }
 
-  @Override public void flushRequest() throws IOException {
+  @Override public void finishRequest() throws IOException {
     stream.getSink().close();
   }
 
@@ -204,12 +205,8 @@ public final class SpdyTransport implements Transport {
         .headers(headersBuilder.build());
   }
 
-  @Override public void emptyTransferStream() {
-    // Do nothing.
-  }
-
-  @Override public Source getTransferStream() throws IOException {
-    return stream.getSource();
+  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+    return new RealResponseBody(response.headers(), Okio.buffer(stream.getSource()));
   }
 
   @Override public void releaseConnectionOnIdle() {

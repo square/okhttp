@@ -33,7 +33,6 @@ import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLSocket;
-
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
@@ -406,12 +405,12 @@ public final class Connection {
       // The response body from a CONNECT should be empty, but if it is not then we should consume
       // it before proceeding.
       long contentLength = OkHeaders.contentLength(response);
-      if (contentLength != -1) {
-        Source body = tunnelConnection.newFixedLengthSource(contentLength);
-        Util.skipAll(body, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
-      } else {
-        tunnelConnection.emptyResponseBody();
+      if (contentLength == -1L) {
+        contentLength = 0L;
       }
+      Source body = tunnelConnection.newFixedLengthSource(contentLength);
+      Util.skipAll(body, Integer.MAX_VALUE, TimeUnit.MILLISECONDS);
+      body.close();
 
       switch (response.code()) {
         case HTTP_OK:

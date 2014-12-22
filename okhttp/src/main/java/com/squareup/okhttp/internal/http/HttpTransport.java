@@ -18,7 +18,9 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
+import okio.Okio;
 import okio.Sink;
 import okio.Source;
 
@@ -46,7 +48,7 @@ public final class HttpTransport implements Transport {
         "Cannot stream a request body without chunked encoding or a known content length!");
   }
 
-  @Override public void flushRequest() throws IOException {
+  @Override public void finishRequest() throws IOException {
     httpConnection.flush();
   }
 
@@ -104,20 +106,21 @@ public final class HttpTransport implements Transport {
     return true;
   }
 
-  @Override public void emptyTransferStream() throws IOException {
-    httpConnection.emptyResponseBody();
+  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+    Source source = getTransferStream(response);
+    return new RealResponseBody(response.headers(), Okio.buffer(source));
   }
 
-  @Override public Source getTransferStream() throws IOException {
-    if (!httpEngine.hasResponseBody()) {
+  private Source getTransferStream(Response response) throws IOException {
+    if (!HttpEngine.hasBody(response)) {
       return httpConnection.newFixedLengthSource(0);
     }
 
-    if ("chunked".equalsIgnoreCase(httpEngine.getResponse().header("Transfer-Encoding"))) {
+    if ("chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
       return httpConnection.newChunkedSource(httpEngine);
     }
 
-    long contentLength = OkHeaders.contentLength(httpEngine.getResponse());
+    long contentLength = OkHeaders.contentLength(response);
     if (contentLength != -1) {
       return httpConnection.newFixedLengthSource(contentLength);
     }

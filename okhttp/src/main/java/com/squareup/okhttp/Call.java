@@ -17,14 +17,11 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.http.HttpEngine;
-import com.squareup.okhttp.internal.http.OkHeaders;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.util.logging.Level;
-import okio.BufferedSink;
-import okio.BufferedSource;
 
 import static com.squareup.okhttp.internal.Internal.logger;
 import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
@@ -248,7 +245,7 @@ public class Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, null, null, null, null);
+    engine = new HttpEngine(client, request, false, false, null, null, null, null);
 
     int redirectionCount = 0;
     while (true) {
@@ -259,13 +256,7 @@ public class Call {
 
       try {
         engine.sendRequest();
-
-        if (request.body() != null) {
-          BufferedSink sink = engine.getBufferedRequestBody();
-          request.body().writeTo(sink);
-        }
-
-        engine.readResponse(forWebSocket);
+        engine.readResponse(forWebSocket, request.body());
       } catch (IOException e) {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
@@ -281,12 +272,10 @@ public class Call {
       Request followUp = engine.followUpRequest();
 
       if (followUp == null) {
-        Response.Builder builder = response.newBuilder();
         if (!forWebSocket) {
           engine.releaseConnection();
-          builder.body(new RealResponseBody(response, engine.getResponseBody()));
         }
-        return builder.build();
+        return response;
       }
 
       if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
@@ -299,30 +288,7 @@ public class Call {
 
       Connection connection = engine.close();
       request = followUp;
-      engine = new HttpEngine(client, request, false, connection, null, null, response);
-    }
-  }
-
-  private static class RealResponseBody extends ResponseBody {
-    private final Response response;
-    private final BufferedSource source;
-
-    RealResponseBody(Response response, BufferedSource source) {
-      this.response = response;
-      this.source = source;
-    }
-
-    @Override public MediaType contentType() {
-      String contentType = response.header("Content-Type");
-      return contentType != null ? MediaType.parse(contentType) : null;
-    }
-
-    @Override public long contentLength() {
-      return OkHeaders.contentLength(response);
-    }
-
-    @Override public BufferedSource source() {
-      return source;
+      engine = new HttpEngine(client, request, false, false, connection, null, null, response);
     }
   }
 }

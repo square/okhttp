@@ -126,8 +126,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final InputStream getErrorStream() {
     try {
       HttpEngine response = getResponse();
-      if (response.hasResponseBody() && response.getResponse().code() >= HTTP_BAD_REQUEST) {
-        return response.getResponseBodyBytes();
+      if (HttpEngine.hasBody(response.getResponse())
+          && response.getResponse().code() >= HTTP_BAD_REQUEST) {
+        return response.getResponse().body().byteStream();
       }
       return null;
     } catch (IOException e) {
@@ -228,11 +229,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw new FileNotFoundException(url.toString());
     }
 
-    InputStream result = response.getResponseBodyBytes();
-    if (result == null) {
-      throw new ProtocolException("No response body exists; responseCode=" + getResponseCode());
-    }
-    return result;
+    return response.getResponse().body().byteStream();
   }
 
   @Override public final OutputStream getOutputStream() throws IOException {
@@ -349,8 +346,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
-        priorResponse);
+    return new HttpEngine(engineClient, request, bufferRequestBody, true, connection, null,
+        requestBody, priorResponse);
   }
 
   private String defaultUserAgent() {
@@ -426,7 +423,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           ? httpEngine.getConnection().getHandshake()
           : null;
       if (readResponse) {
-        httpEngine.readResponse(false);
+        httpEngine.readResponse(false, null);
       }
 
       return true;
