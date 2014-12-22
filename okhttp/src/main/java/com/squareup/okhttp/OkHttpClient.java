@@ -161,6 +161,7 @@ public class OkHttpClient implements Cloneable {
   private List<Protocol> protocols;
   private List<ConnectionSpec> connectionSpecs;
   private final List<Interceptor> interceptors = new ArrayList<>();
+  private final List<Interceptor> networkInterceptors = new ArrayList<>();
   private ProxySelector proxySelector;
   private CookieHandler cookieHandler;
 
@@ -193,6 +194,7 @@ public class OkHttpClient implements Cloneable {
     this.protocols = okHttpClient.protocols;
     this.connectionSpecs = okHttpClient.connectionSpecs;
     this.interceptors.addAll(okHttpClient.interceptors);
+    this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
     this.proxySelector = okHttpClient.proxySelector;
     this.cookieHandler = okHttpClient.cookieHandler;
     this.cache = okHttpClient.cache;
@@ -531,6 +533,15 @@ public class OkHttpClient implements Cloneable {
    */
   public List<Interceptor> interceptors() {
     return interceptors;
+  }
+
+  /**
+   * Returns a modifiable list of interceptors that observe a single network request and response.
+   * These interceptors must call {@link Interceptor.Chain#proceed} exactly once: it is an error for
+   * a network interceptor to short-circuit or repeat a network request.
+   */
+  public List<Interceptor> networkInterceptors() {
+    return networkInterceptors;
   }
 
   /**
