@@ -23,6 +23,7 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
@@ -31,7 +32,6 @@ import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -151,12 +151,6 @@ public final class HttpEngine {
   private Response cacheResponse;
 
   /**
-   * The response read from the network. Null if the network response hasn't
-   * been read yet, or if the network is not used. Never modified by OkHttp.
-   */
-  private Response networkResponse;
-
-  /**
    * The user-visible response. This is derived from either the network
    * response, cache response, or both. It is customized to support OkHttp
    * features like compression and caching.
@@ -165,33 +159,31 @@ public final class HttpEngine {
 
   private Sink requestBodyOut;
   private BufferedSink bufferedRequestBody;
-
-  /** Null until a response is received from the network or the cache. */
-  private Source responseTransferSource;
-  private BufferedSource responseBody;
-  private InputStream responseBodyBytes;
+  private final boolean callerWritesRequestBody;
 
   /** The cache request currently being populated from a network response. */
   private CacheRequest storeRequest;
   private CacheStrategy cacheStrategy;
 
   /**
-   * @param request the HTTP request without a body. The body must be
-   *     written via the engine's request body stream.
-   * @param connection the connection used for an intermediate response
-   *     immediately prior to this request/response pair, such as a same-host
-   *     redirect. This engine assumes ownership of the connection and must
-   *     release it when it is unneeded.
-   * @param routeSelector the route selector used for a failed attempt
-   *     immediately preceding this attempt, or null if this request doesn't
-   *     recover from a failure.
+   * @param request the HTTP request without a body. The body must be written via the engine's
+   *     request body stream.
+   * @param callerWritesRequestBody true for the {@code HttpURLConnection}-style interaction
+   *     model where control flow is returned to the calling application to write the request body
+   *     before the response body is readable.
+   * @param connection the connection used for an intermediate response immediately prior to this
+   *     request/response pair, such as a same-host redirect. This engine assumes ownership of the
+   *     connection and must release it when it is unneeded.
+   * @param routeSelector the route selector used for a failed attempt immediately preceding this
+   *     attempt, or null if this request doesn't
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      Connection connection, RouteSelector routeSelector, RetryableSink requestBodyOut,
-      Response priorResponse) {
+      boolean callerWritesRequestBody, Connection connection, RouteSelector routeSelector,
+      RetryableSink requestBodyOut, Response priorResponse) {
     this.client = client;
     this.userRequest = request;
     this.bufferRequestBody = bufferRequestBody;
+    this.callerWritesRequestBody = callerWritesRequestBody;
     this.connection = connection;
     this.routeSelector = routeSelector;
     this.requestBodyOut = requestBodyOut;
@@ -242,9 +234,11 @@ public final class HttpEngine {
 
       transport = Internal.instance.newTransport(connection, this);
 
-      // Create a request body if we don't have one already. We'll already have
-      // one if we're retrying a failed POST.
-      if (permitsRequestBody() && requestBodyOut == null) {
+      // If the caller's control flow writes the request body, we need to create that stream
+      // immediately. And that means we need to immediately write the request headers, so we can
+      // start streaming the request body. (We may already have a request body if we're retrying a
+      // failed POST.)
+      if (callerWritesRequestBody && permitsRequestBody() && requestBodyOut == null) {
         long contentLength = OkHeaders.contentLength(request);
         if (bufferRequestBody) {
           if (contentLength > Integer.MAX_VALUE) {
@@ -254,7 +248,7 @@ public final class HttpEngine {
 
           if (contentLength != -1) {
             // Buffer a request body of a known length.
-            transport.writeRequestHeaders(request);
+            transport.writeRequestHeaders(networkRequest);
             requestBodyOut = new RetryableSink((int) contentLength);
           } else {
             // Buffer a request body of an unknown length. Don't write request
@@ -263,8 +257,8 @@ public final class HttpEngine {
             requestBodyOut = new RetryableSink();
           }
         } else {
-          transport.writeRequestHeaders(request);
-          requestBodyOut = transport.createRequestBody(request, contentLength);
+          transport.writeRequestHeaders(networkRequest);
+          requestBodyOut = transport.createRequestBody(networkRequest, contentLength);
         }
       }
 
@@ -294,9 +288,7 @@ public final class HttpEngine {
             .build();
       }
 
-      if (userResponse.body() != null) {
-        initContentStream(userResponse.body().source());
-      }
+      userResponse = unzip(userResponse);
     }
   }
 
@@ -361,18 +353,6 @@ public final class HttpEngine {
     return userResponse;
   }
 
-  public BufferedSource getResponseBody() {
-    if (userResponse == null) throw new IllegalStateException();
-    return responseBody;
-  }
-
-  public InputStream getResponseBodyBytes() {
-    InputStream result = responseBodyBytes;
-    return result != null
-        ? result
-        : (responseBodyBytes = Okio.buffer(getResponseBody()).inputStream());
-  }
-
   public Connection getConnection() {
     return connection;
   }
@@ -399,8 +379,8 @@ public final class HttpEngine {
     Connection connection = close();
 
     // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, bufferRequestBody, connection, routeSelector,
-        (RetryableSink) requestBodyOut, priorResponse);
+    return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
+        connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
   }
 
   public HttpEngine recover(IOException e) {
@@ -484,17 +464,14 @@ public final class HttpEngine {
     }
 
     // If this engine never achieved a response body, its connection cannot be reused.
-    if (responseBody == null) {
+    if (userResponse == null) {
       if (connection != null) closeQuietly(connection.getSocket()); // TODO: does this break SPDY?
       connection = null;
       return null;
     }
 
     // Close the response body. This will recycle the connection if it is eligible.
-    closeQuietly(responseBody);
-
-    // Clear the buffer held by the response body input stream adapter.
-    closeQuietly(responseBodyBytes);
+    closeQuietly(userResponse.body());
 
     // Close the connection if it cannot be reused.
     if (transport != null && connection != null && !transport.canReuseConnection()) {
@@ -514,45 +491,49 @@ public final class HttpEngine {
   }
 
   /**
-   * Initialize the response content stream from the response transfer source.
-   * These two sources are the same unless we're doing transparent gzip, in
-   * which case the content source is decompressed.
+   * Returns a new response that does gzip decompression on {@code response}, if transparent gzip
+   * was both offered by OkHttp and used by the origin server.
    *
-   * <p>Whenever we do transparent gzip we also strip the corresponding headers.
-   * We strip the Content-Encoding header to prevent the application from
-   * attempting to double decompress. We strip the Content-Length header because
-   * it is the length of the compressed content, but the application is only
-   * interested in the length of the uncompressed content.
+   * <p>In addition to decompression, this will also strip the corresponding headers. We strip the
+   * Content-Encoding header to prevent the application from attempting to double decompress. We
+   * strip the Content-Length header because it is the length of the compressed content, but the
+   * application is only interested in the length of the uncompressed content.
    *
-   * <p>This method should only be used for non-empty response bodies. Response
-   * codes like "304 Not Modified" can include "Content-Encoding: gzip" without
-   * a response body and we will crash if we attempt to decompress the zero-byte
-   * source.
+   * <p>This method should only be used for non-empty response bodies. Response codes like "304 Not
+   * Modified" can include "Content-Encoding: gzip" without a response body and we will crash if we
+   * attempt to decompress the zero-byte source.
    */
-  private void initContentStream(Source transferSource) throws IOException {
-    responseTransferSource = transferSource;
-    if (transparentGzip && "gzip".equalsIgnoreCase(userResponse.header("Content-Encoding"))) {
-      userResponse = userResponse.newBuilder()
-          .removeHeader("Content-Encoding")
-          .removeHeader("Content-Length")
-          .build();
-      responseBody = Okio.buffer(new GzipSource(transferSource));
-    } else {
-      responseBody = Okio.buffer(transferSource);
+  private Response unzip(final Response response) throws IOException {
+    if (!transparentGzip || !"gzip".equalsIgnoreCase(userResponse.header("Content-Encoding"))) {
+      return response;
     }
+
+    if (response.body() == null) {
+      return response;
+    }
+
+    GzipSource responseBody = new GzipSource(response.body().source());
+    Headers strippedHeaders = response.headers().newBuilder()
+        .removeAll("Content-Encoding")
+        .removeAll("Content-Length")
+        .build();
+    return response.newBuilder()
+        .headers(strippedHeaders)
+        .body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)))
+        .build();
   }
 
   /**
    * Returns true if the response must have a (possibly 0-length) body.
    * See RFC 2616 section 4.3.
    */
-  public boolean hasResponseBody() {
+  public static boolean hasBody(Response response) {
     // HEAD requests never yield a body regardless of the response headers.
-    if (userRequest.method().equals("HEAD")) {
+    if (response.request().method().equals("HEAD")) {
       return false;
     }
 
-    int responseCode = userResponse.code();
+    int responseCode = response.code();
     if ((responseCode < HTTP_CONTINUE || responseCode >= 200)
         && responseCode != HTTP_NO_CONTENT
         && responseCode != HTTP_NOT_MODIFIED) {
@@ -562,8 +543,8 @@ public final class HttpEngine {
     // If the Content-Length or Transfer-Encoding headers disagree with the
     // response code, the response is malformed. For best compatibility, we
     // honor the headers.
-    if (OkHeaders.contentLength(networkResponse) != -1
-        || "chunked".equalsIgnoreCase(networkResponse.header("Transfer-Encoding"))) {
+    if (OkHeaders.contentLength(response) != -1
+        || "chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
       return true;
     }
 
@@ -623,7 +604,7 @@ public final class HttpEngine {
    * Flushes the remaining request header and body, parses the HTTP response
    * headers and starts reading the HTTP response body if it exists.
    */
-  public void readResponse(boolean forWebSocket) throws IOException {
+  public void readResponse(boolean forWebSocket, RequestBody requestBody) throws IOException {
     if (userResponse != null) {
       return; // Already ready.
     }
@@ -634,43 +615,60 @@ public final class HttpEngine {
       return; // No network response to read.
     }
 
-    // Flush the request body if there's data outstanding.
-    if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
-      bufferedRequestBody.flush();
-    }
-
-    if (sentRequestMillis == -1) {
-      if (OkHeaders.contentLength(networkRequest) == -1
-          && requestBodyOut instanceof RetryableSink) {
-        // We might not learn the Content-Length until the request body has been buffered.
-        long contentLength = ((RetryableSink) requestBodyOut).contentLength();
-        networkRequest = networkRequest.newBuilder()
-            .header("Content-Length", Long.toString(contentLength))
-            .build();
-      }
+    if (!callerWritesRequestBody) {
+      // If we haven't written the request body yet, write it now.
       transport.writeRequestHeaders(networkRequest);
-    }
-
-    if (requestBodyOut != null) {
-      if (bufferedRequestBody != null) {
-        // This also closes the wrapped requestBodyOut.
+      if (permitsRequestBody() && requestBody != null) {
+        requestBodyOut = transport.createRequestBody(networkRequest, requestBody.contentLength());
+        bufferedRequestBody = Okio.buffer(requestBodyOut);
+        requestBody.writeTo(bufferedRequestBody);
         bufferedRequestBody.close();
-      } else {
-        requestBodyOut.close();
       }
-      if (requestBodyOut instanceof RetryableSink) {
-        transport.writeRequestBody((RetryableSink) requestBodyOut);
+    } else {
+      // Emit the request body's buffer so that everything is in requestBodyOut.
+      if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
+        bufferedRequestBody.emit();
+      }
+
+      // Emit the request headers if we haven't yet. We might have just learned the Content-Length.
+      if (sentRequestMillis == -1) {
+        if (OkHeaders.contentLength(networkRequest) == -1
+            && requestBodyOut instanceof RetryableSink) {
+          long contentLength = ((RetryableSink) requestBodyOut).contentLength();
+          networkRequest = networkRequest.newBuilder()
+              .header("Content-Length", Long.toString(contentLength))
+              .build();
+        }
+        transport.writeRequestHeaders(networkRequest);
+      }
+
+      // Write the request body to the socket.
+      if (requestBodyOut != null) {
+        if (bufferedRequestBody != null) {
+          // This also closes the wrapped requestBodyOut.
+          bufferedRequestBody.close();
+        } else {
+          requestBodyOut.close();
+        }
+        if (requestBodyOut instanceof RetryableSink) {
+          transport.writeRequestBody((RetryableSink) requestBodyOut);
+        }
       }
     }
 
-    transport.flushRequest();
+    transport.finishRequest();
 
-    networkResponse = transport.readResponseHeaders()
+    Response networkResponse = transport.readResponseHeaders()
         .request(networkRequest)
         .handshake(connection.getHandshake())
         .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .build();
+    if (!forWebSocket) {
+      networkResponse = networkResponse.newBuilder()
+          .body(transport.openResponseBody(networkResponse))
+          .build();
+    }
     Internal.instance.setProtocol(connection, networkResponse.protocol());
     receiveHeaders(networkResponse.headers());
 
@@ -684,7 +682,7 @@ public final class HttpEngine {
             .cacheResponse(stripBody(cacheResponse))
             .networkResponse(stripBody(networkResponse))
             .build();
-        transport.emptyTransferStream();
+        networkResponse.body().close();
         releaseConnection();
 
         // Update the cache after combining headers but before stripping the
@@ -692,10 +690,7 @@ public final class HttpEngine {
         InternalCache responseCache = Internal.instance.internalCache(client);
         responseCache.trackConditionalCacheHit();
         responseCache.update(cacheResponse, stripBody(userResponse));
-
-        if (cacheResponse.body() != null) {
-          initContentStream(cacheResponse.body().source());
-        }
+        userResponse = unzip(userResponse);
         return;
       } else {
         closeQuietly(cacheResponse.body());
@@ -709,17 +704,10 @@ public final class HttpEngine {
         .networkResponse(stripBody(networkResponse))
         .build();
 
-    if (!hasResponseBody()) {
-      if (!forWebSocket) {
-        // Don't call initContentStream() when the response doesn't have any content.
-        responseTransferSource = transport.getTransferStream();
-        responseBody = Okio.buffer(responseTransferSource);
-      }
-      return;
+    if (hasBody(userResponse)) {
+      maybeCache();
+      userResponse = unzip(cacheWritingResponse(storeRequest, userResponse));
     }
-
-    maybeCache();
-    initContentStream(cacheWritingSource(storeRequest, transport.getTransferStream()));
   }
 
   /**
@@ -727,16 +715,17 @@ public final class HttpEngine {
    * consumer. This is careful to discard bytes left over when the stream is closed; otherwise we
    * may never exhaust the source stream and therefore not complete the cached response.
    */
-  private Source cacheWritingSource(final CacheRequest cacheRequest, final Source source)
+  private Response cacheWritingResponse(final CacheRequest cacheRequest, Response response)
       throws IOException {
     // Some apps return a null body; for compatibility we treat that like a null cache request.
-    if (cacheRequest == null) return source;
+    if (cacheRequest == null) return response;
     Sink cacheBodyUnbuffered = cacheRequest.body();
-    if (cacheBodyUnbuffered == null) return source;
+    if (cacheBodyUnbuffered == null) return response;
 
+    final BufferedSource source = response.body().source();
     final BufferedSink cacheBody = Okio.buffer(cacheBodyUnbuffered);
 
-    return new Source() {
+    Source cacheWritingSource = new Source() {
       boolean cacheRequestClosed;
 
       @Override public long read(Buffer sink, long byteCount) throws IOException {
@@ -777,6 +766,10 @@ public final class HttpEngine {
         source.close();
       }
     };
+
+    return response.newBuilder()
+        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+        .build();
   }
 
   /**
