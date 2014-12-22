@@ -660,9 +660,11 @@ public final class CacheTest {
         .method(requestMethod, requestBodyOrNull(requestMethod))
         .build();
     Response response1 = client.newCall(request).execute();
+    response1.body().close();
     assertEquals("1", response1.header("X-Response-ID"));
 
     Response response2 = get(url);
+    response2.body().close();
     if (expectCached) {
       assertEquals("1", response2.header("X-Response-ID"));
     } else {

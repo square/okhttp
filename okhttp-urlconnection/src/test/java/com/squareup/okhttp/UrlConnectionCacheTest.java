@@ -629,9 +629,11 @@ public final class UrlConnectionCacheTest {
     HttpURLConnection request1 = client.open(url);
     request1.setRequestMethod(requestMethod);
     addRequestBodyIfNecessary(requestMethod, request1);
+    request1.getInputStream().close();
     assertEquals("1", request1.getHeaderField("X-Response-ID"));
 
     URLConnection request2 = client.open(url);
+    request2.getInputStream().close();
     if (expectCached) {
       assertEquals("1", request2.getHeaderField("X-Response-ID"));
     } else {

@@ -28,6 +28,7 @@ import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,6 +49,7 @@ import okio.GzipSource;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
+import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
@@ -63,6 +65,7 @@ import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Handles a single HTTP request/response pair. Each HTTP engine follows this
@@ -709,14 +712,71 @@ public final class HttpEngine {
     if (!hasResponseBody()) {
       if (!forWebSocket) {
         // Don't call initContentStream() when the response doesn't have any content.
-        responseTransferSource = transport.getTransferStream(storeRequest);
+        responseTransferSource = transport.getTransferStream();
         responseBody = Okio.buffer(responseTransferSource);
       }
       return;
     }
 
     maybeCache();
-    initContentStream(transport.getTransferStream(storeRequest));
+    initContentStream(cacheWritingSource(storeRequest, transport.getTransferStream()));
+  }
+
+  /**
+   * Returns a new source that writes bytes to {@code cacheRequest} as they are read by the source
+   * consumer. This is careful to discard bytes left over when the stream is closed; otherwise we
+   * may never exhaust the source stream and therefore not complete the cached response.
+   */
+  private Source cacheWritingSource(final CacheRequest cacheRequest, final Source source)
+      throws IOException {
+    // Some apps return a null body; for compatibility we treat that like a null cache request.
+    if (cacheRequest == null) return source;
+    Sink cacheBodyUnbuffered = cacheRequest.body();
+    if (cacheBodyUnbuffered == null) return source;
+
+    final BufferedSink cacheBody = Okio.buffer(cacheBodyUnbuffered);
+
+    return new Source() {
+      boolean cacheRequestClosed;
+
+      @Override public long read(Buffer sink, long byteCount) throws IOException {
+        long bytesRead;
+        try {
+          bytesRead = source.read(sink, byteCount);
+        } catch (IOException e) {
+          if (!cacheRequestClosed) {
+            cacheRequestClosed = true;
+            cacheRequest.abort(); // Failed to write a complete cache response.
+          }
+          throw e;
+        }
+
+        if (bytesRead == -1) {
+          if (!cacheRequestClosed) {
+            cacheRequestClosed = true;
+            cacheBody.close(); // The cache response is complete!
+          }
+          return -1;
+        }
+
+        sink.copyTo(cacheBody.buffer(), sink.size() - bytesRead, bytesRead);
+        cacheBody.emitCompleteSegments();
+        return bytesRead;
+      }
+
+      @Override public Timeout timeout() {
+        return source.timeout();
+      }
+
+      @Override public void close() throws IOException {
+        if (!cacheRequestClosed
+            && !Util.discard(this, Transport.DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+          cacheRequestClosed = true;
+          cacheRequest.abort();
+        }
+        source.close();
+      }
+    };
   }
 
   /**
