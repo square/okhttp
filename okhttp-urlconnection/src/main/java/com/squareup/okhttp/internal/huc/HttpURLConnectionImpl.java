@@ -346,7 +346,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, true, connection, null,
+    return new HttpEngine(engineClient, request, bufferRequestBody, true, false, connection, null,
         requestBody, priorResponse);
   }
 
@@ -423,7 +423,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           ? httpEngine.getConnection().getHandshake()
           : null;
       if (readResponse) {
-        httpEngine.readResponse(false, null);
+        httpEngine.readResponse();
       }
 
       return true;

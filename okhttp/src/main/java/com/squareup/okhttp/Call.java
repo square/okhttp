@@ -189,16 +189,20 @@ public class Call {
   }
 
   private Response getResponseWithInterceptorChain() throws IOException {
-    return new RealInterceptorChain(0, originalRequest).proceed(originalRequest);
+    return new ApplicationInterceptorChain(0, originalRequest).proceed(originalRequest);
   }
 
-  class RealInterceptorChain implements Interceptor.Chain {
+  class ApplicationInterceptorChain implements Interceptor.Chain {
     private final int index;
     private final Request request;
 
-    RealInterceptorChain(int index, Request request) {
+    ApplicationInterceptorChain(int index, Request request) {
       this.index = index;
       this.request = request;
+    }
+
+    @Override public Connection connection() {
+      return null;
     }
 
     @Override public Request request() {
@@ -208,7 +212,7 @@ public class Call {
     @Override public Response proceed(Request request) throws IOException {
       if (index < client.interceptors().size()) {
         // There's another interceptor in the chain. Call that.
-        RealInterceptorChain chain = new RealInterceptorChain(index + 1, request);
+        ApplicationInterceptorChain chain = new ApplicationInterceptorChain(index + 1, request);
         return client.interceptors().get(index).intercept(chain);
       } else {
         // No more interceptors. Do HTTP.
@@ -245,7 +249,7 @@ public class Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, false, null, null, null, null);
+    engine = new HttpEngine(client, request, false, false, forWebSocket, null, null, null, null);
 
     int redirectionCount = 0;
     while (true) {
@@ -256,7 +260,7 @@ public class Call {
 
       try {
         engine.sendRequest();
-        engine.readResponse(forWebSocket, request.body());
+        engine.readResponse();
       } catch (IOException e) {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
@@ -288,7 +292,8 @@ public class Call {
 
       Connection connection = engine.close();
       request = followUp;
-      engine = new HttpEngine(client, request, false, false, connection, null, null, response);
+      engine = new HttpEngine(client, request, false, false, forWebSocket, connection, null, null,
+          response);
     }
   }
 }

@@ -17,13 +17,14 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
@@ -160,6 +161,7 @@ public final class HttpEngine {
   private Sink requestBodyOut;
   private BufferedSink bufferedRequestBody;
   private final boolean callerWritesRequestBody;
+  private final boolean forWebSocket;
 
   /** The cache request currently being populated from a network response. */
   private CacheRequest storeRequest;
@@ -175,15 +177,15 @@ public final class HttpEngine {
    *     request/response pair, such as a same-host redirect. This engine assumes ownership of the
    *     connection and must release it when it is unneeded.
    * @param routeSelector the route selector used for a failed attempt immediately preceding this
-   *     attempt, or null if this request doesn't
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
-      boolean callerWritesRequestBody, Connection connection, RouteSelector routeSelector,
-      RetryableSink requestBodyOut, Response priorResponse) {
+      boolean callerWritesRequestBody, boolean forWebSocket, Connection connection,
+      RouteSelector routeSelector, RetryableSink requestBodyOut, Response priorResponse) {
     this.client = client;
     this.userRequest = request;
     this.bufferRequestBody = bufferRequestBody;
     this.callerWritesRequestBody = callerWritesRequestBody;
+    this.forWebSocket = forWebSocket;
     this.connection = connection;
     this.routeSelector = routeSelector;
     this.requestBodyOut = requestBodyOut;
@@ -380,7 +382,7 @@ public final class HttpEngine {
 
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
-        connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
+        forWebSocket, connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
   }
 
   public HttpEngine recover(IOException e) {
@@ -604,7 +606,7 @@ public final class HttpEngine {
    * Flushes the remaining request header and body, parses the HTTP response
    * headers and starts reading the HTTP response body if it exists.
    */
-  public void readResponse(boolean forWebSocket, RequestBody requestBody) throws IOException {
+  public void readResponse() throws IOException {
     if (userResponse != null) {
       return; // Already ready.
     }
@@ -615,15 +617,15 @@ public final class HttpEngine {
       return; // No network response to read.
     }
 
-    if (!callerWritesRequestBody) {
-      // If we haven't written the request body yet, write it now.
+    Response networkResponse;
+
+    if (forWebSocket) {
       transport.writeRequestHeaders(networkRequest);
-      if (permitsRequestBody() && requestBody != null) {
-        requestBodyOut = transport.createRequestBody(networkRequest, requestBody.contentLength());
-        bufferedRequestBody = Okio.buffer(requestBodyOut);
-        requestBody.writeTo(bufferedRequestBody);
-        bufferedRequestBody.close();
-      }
+      networkResponse = readNetworkResponse();
+
+    } else if (!callerWritesRequestBody) {
+      networkResponse = new NetworkInterceptorChain(0, networkRequest).proceed(networkRequest);
+
     } else {
       // Emit the request body's buffer so that everything is in requestBodyOut.
       if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
@@ -654,22 +656,10 @@ public final class HttpEngine {
           transport.writeRequestBody((RetryableSink) requestBodyOut);
         }
       }
+
+      networkResponse = readNetworkResponse();
     }
 
-    transport.finishRequest();
-
-    Response networkResponse = transport.readResponseHeaders()
-        .request(networkRequest)
-        .handshake(connection.getHandshake())
-        .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
-        .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
-        .build();
-    if (!forWebSocket) {
-      networkResponse = networkResponse.newBuilder()
-          .body(transport.openResponseBody(networkResponse))
-          .build();
-    }
-    Internal.instance.setProtocol(connection, networkResponse.protocol());
     receiveHeaders(networkResponse.headers());
 
     // If we have a cache response too, then we're doing a conditional get.
@@ -708,6 +698,93 @@ public final class HttpEngine {
       maybeCache();
       userResponse = unzip(cacheWritingResponse(storeRequest, userResponse));
     }
+  }
+
+  class NetworkInterceptorChain implements Interceptor.Chain {
+    private final int index;
+    private final Request request;
+    private int calls;
+
+    NetworkInterceptorChain(int index, Request request) {
+      this.index = index;
+      this.request = request;
+    }
+
+    @Override public Connection connection() {
+      return connection;
+    }
+
+    @Override public Request request() {
+      return request;
+    }
+
+    @Override public Response proceed(Request request) throws IOException {
+      calls++;
+
+      if (index > 0) {
+        Interceptor caller = client.networkInterceptors().get(index - 1);
+        Address address = connection().getRoute().getAddress();
+
+        // Confirm that the interceptor uses the connection we've already prepared.
+        if (!request.url().getHost().equals(address.getUriHost())
+            || getEffectivePort(request.url()) != address.getUriPort()) {
+          throw new IllegalStateException("network interceptor " + caller
+              + " must retain the same host and port");
+        }
+
+        // Confirm that this is the interceptor's first call to chain.proceed().
+        if (calls > 1) {
+          throw new IllegalStateException("network interceptor " + caller
+              + " must call proceed() exactly once");
+        }
+      }
+
+      if (index < client.networkInterceptors().size()) {
+        // There's another interceptor in the chain. Call that.
+        NetworkInterceptorChain chain = new NetworkInterceptorChain(index + 1, request);
+        Interceptor interceptor = client.networkInterceptors().get(index);
+        Response interceptedResponse = interceptor.intercept(chain);
+
+        // Confirm that the interceptor made the required call to chain.proceed().
+        if (chain.calls != 1) {
+          throw new IllegalStateException("network interceptor " + interceptor
+              + " must call proceed() exactly once");
+        }
+
+        return interceptedResponse;
+      }
+
+      transport.writeRequestHeaders(request);
+
+      if (permitsRequestBody() && request.body() != null) {
+        Sink requestBodyOut = transport.createRequestBody(request, request.body().contentLength());
+        BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
+        request.body().writeTo(bufferedRequestBody);
+        bufferedRequestBody.close();
+      }
+
+      return readNetworkResponse();
+    }
+  }
+
+  private Response readNetworkResponse() throws IOException {
+    transport.finishRequest();
+
+    Response networkResponse = transport.readResponseHeaders()
+        .request(networkRequest)
+        .handshake(connection.getHandshake())
+        .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
+        .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
+        .build();
+
+    if (!forWebSocket) {
+      networkResponse = networkResponse.newBuilder()
+          .body(transport.openResponseBody(networkResponse))
+          .build();
+    }
+
+    Internal.instance.setProtocol(connection, networkResponse.protocol());
+    return networkResponse;
   }
 
   /**
