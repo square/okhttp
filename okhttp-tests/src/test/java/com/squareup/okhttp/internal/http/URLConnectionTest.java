@@ -24,6 +24,7 @@ import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.DelegatingServerSocketFactory;
 import com.squareup.okhttp.DelegatingSocketFactory;
 import com.squareup.okhttp.FallbackTestClientSocketFactory;
+import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
@@ -3146,6 +3147,20 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertTrue(request.getHeader("User-Agent").startsWith("Java"));
+  }
+
+  @Test public void interceptorsNotInvoked() throws Exception {
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new AssertionError();
+      }
+    };
+    client.client().interceptors().add(interceptor);
+    client.client().networkInterceptors().add(interceptor);
+
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+    assertContent("abc", client.open(server.getUrl("/")));
   }
 
   /** Returns a gzipped copy of {@code bytes}. */

@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -1886,6 +1887,48 @@ public final class CacheTest {
     client.getCache().evictAll();
     assertEquals(0, client.getCache().getSize());
     assertEquals("B", get(url).body().string());
+  }
+
+  @Test public void networkInterceptorInvokedForConditionalGet() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    // Seed the cache.
+    URL url = server.getUrl("/");
+    assertEquals("A", get(url).body().string());
+
+    final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
+    client.networkInterceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
+        return chain.proceed(chain.request());
+      }
+    });
+
+    // Confirm the value is cached and intercepted.
+    assertEquals("A", get(url).body().string());
+    assertEquals("v1", ifNoneMatch.get());
+  }
+
+  @Test public void networkInterceptorNotInvokedForFullyCached() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("A"));
+
+    // Seed the cache.
+    URL url = server.getUrl("/");
+    assertEquals("A", get(url).body().string());
+
+    // Confirm the interceptor isn't exercised.
+    client.networkInterceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new AssertionError();
+      }
+    });
+    assertEquals("A", get(url).body().string());
   }
 
   private Response get(URL url) throws IOException {
