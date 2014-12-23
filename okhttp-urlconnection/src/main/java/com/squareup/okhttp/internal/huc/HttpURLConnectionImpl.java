@@ -47,10 +47,13 @@ import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
 import okio.Sink;
@@ -68,6 +71,8 @@ import okio.Sink;
  * header fields, request method, etc.) are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
+  private static final Set<String> METHODS = new LinkedHashSet<>(
+      Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
 
   final OkHttpClient client;
 
@@ -547,9 +552,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public void setRequestMethod(String method) throws ProtocolException {
-    if (!HttpMethod.METHODS.contains(method)) {
-      throw new ProtocolException(
-          "Expected one of " + HttpMethod.METHODS + " but was " + method);
+    if (!METHODS.contains(method)) {
+      throw new ProtocolException("Expected one of " + METHODS + " but was " + method);
     }
     this.method = method;
   }
