@@ -292,11 +292,11 @@ public final class HttpConnection {
     }
   }
 
-  private static final String CRLF = "\r\n";
+  private static final byte[] CRLF = { '\r', '\n' };
   private static final byte[] HEX_DIGITS = {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
   };
-  private static final byte[] FINAL_CHUNK = new byte[] { '0', '\r', '\n', '\r', '\n' };
+  private static final byte[] FINAL_CHUNK = { '0', '\r', '\n', '\r', '\n' };
 
   /**
    * An HTTP body with alternating chunk sizes and chunk bodies. It is the
@@ -319,7 +319,7 @@ public final class HttpConnection {
 
       writeHex(byteCount);
       sink.write(source, byteCount);
-      sink.writeUtf8(CRLF);
+      sink.write(CRLF);
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -347,8 +347,12 @@ public final class HttpConnection {
     }
   }
 
-  private class AbstractSource {
+  private abstract class AbstractSource implements Source {
     protected boolean closed;
+
+    @Override public Timeout timeout() {
+      return source.timeout();
+    }
 
     /**
      * Closes the cache entry and makes the socket available for reuse. This
@@ -386,7 +390,7 @@ public final class HttpConnection {
   }
 
   /** An HTTP body with a fixed length specified in advance. */
-  private class FixedLengthSource extends AbstractSource implements Source {
+  private class FixedLengthSource extends AbstractSource {
     private long bytesRemaining;
 
     public FixedLengthSource(long length) throws IOException {
@@ -414,10 +418,6 @@ public final class HttpConnection {
       return read;
     }
 
-    @Override public Timeout timeout() {
-      return source.timeout();
-    }
-
     @Override public void close() throws IOException {
       if (closed) return;
 
@@ -431,7 +431,7 @@ public final class HttpConnection {
   }
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
-  private class ChunkedSource extends AbstractSource implements Source {
+  private class ChunkedSource extends AbstractSource {
     private static final int NO_CHUNK_YET = -1;
     private int bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
@@ -484,10 +484,6 @@ public final class HttpConnection {
       }
     }
 
-    @Override public Timeout timeout() {
-      return source.timeout();
-    }
-
     @Override public void close() throws IOException {
       if (closed) return;
       if (hasMoreChunks && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
@@ -498,7 +494,7 @@ public final class HttpConnection {
   }
 
   /** An HTTP message body terminated by the end of the underlying stream. */
-  class UnknownLengthSource extends AbstractSource implements Source {
+  private class UnknownLengthSource extends AbstractSource {
     private boolean inputExhausted;
 
     @Override public long read(Buffer sink, long byteCount)
@@ -514,10 +510,6 @@ public final class HttpConnection {
         return -1;
       }
       return read;
-    }
-
-    @Override public Timeout timeout() {
-      return source.timeout();
     }
 
     @Override public void close() throws IOException {
