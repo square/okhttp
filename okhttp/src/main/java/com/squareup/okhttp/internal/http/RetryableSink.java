@@ -72,8 +72,9 @@ public final class RetryableSink implements Sink {
   }
 
   public void writeToSocket(Sink socketOut) throws IOException {
-    // Clone the content; otherwise we won't have data to retry.
-    Buffer buffer = content.clone();
+    // Copy the content; otherwise we won't have data to retry.
+    Buffer buffer = new Buffer();
+    content.copyTo(buffer, 0, content.size());
     socketOut.write(buffer, buffer.size());
   }
 }
