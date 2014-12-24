@@ -29,7 +29,7 @@ import okio.Source;
 import org.junit.After;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.headerEntries;
+import static com.squareup.okhttp.TestUtil.headerEntries;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.CANCEL;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.spdy.Settings.DEFAULT_INITIAL_WINDOW_SIZE;

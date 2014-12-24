@@ -23,7 +23,7 @@ import okio.ByteString;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.headerEntries;
+import static com.squareup.okhttp.TestUtil.headerEntries;
 import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;

@@ -27,7 +27,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.headerEntries;
+import static com.squareup.okhttp.TestUtil.headerEntries;
 import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_COMPRESSED;
 import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_END_HEADERS;
 import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_END_STREAM;
