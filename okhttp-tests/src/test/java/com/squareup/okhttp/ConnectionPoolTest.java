@@ -149,7 +149,7 @@ public final class ConnectionPoolTest {
     assertNull(connection.getOwner());
     assertEquals(1, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
 
     Connection recycledConnection = pool.get(httpAddress);
     assertNull(connection.getOwner());
@@ -277,27 +277,27 @@ public final class ConnectionPoolTest {
     pool.recycle(httpA);
     assertEquals(1, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
 
     // http B should be added to the pool.
     pool.recycle(httpB);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
 
     // http C should be added and http A should be removed.
     pool.recycle(httpC);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
 
     // spdy A should be added and http B should be removed.
     pool.share(spdyA);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // http C should be removed from the pool.
     Connection recycledHttpConnection = pool.get(httpAddress);
@@ -306,7 +306,7 @@ public final class ConnectionPoolTest {
     assertTrue(recycledHttpConnection.isAlive());
     assertEquals(1, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // spdy A will be returned and kept in the pool.
     Connection sharedSpdyConnection = pool.get(spdyAddress);
@@ -314,14 +314,14 @@ public final class ConnectionPoolTest {
     assertEquals(spdyA, sharedSpdyConnection);
     assertEquals(1, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // Nothing should change.
     pool.recycle(httpC);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // An http connection should be removed from the pool.
     recycledHttpConnection = pool.get(httpAddress);
@@ -329,7 +329,7 @@ public final class ConnectionPoolTest {
     assertTrue(recycledHttpConnection.isAlive());
     assertEquals(1, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // spdy A will be returned and kept in the pool. Pool shouldn't change.
     sharedSpdyConnection = pool.get(spdyAddress);
@@ -337,21 +337,21 @@ public final class ConnectionPoolTest {
     assertNotNull(sharedSpdyConnection);
     assertEquals(1, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // http D should be added to the pool.
     pool.recycle(httpD);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // http E should be added to the pool. spdy A should be removed from the pool.
     pool.recycle(httpE);
     Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
   }
 
   @Test public void connectionCleanup() throws IOException, InterruptedException {
@@ -363,7 +363,7 @@ public final class ConnectionPoolTest {
     pool.share(spdyA);
     assertEquals(3, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // Kill http A.
     Util.closeQuietly(httpA.getSocket());
@@ -374,7 +374,7 @@ public final class ConnectionPoolTest {
 
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getSpdyConnectionCount());
+    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     Thread.sleep(KEEP_ALIVE_DURATION_MS);
     // Force pool to run a clean up.
@@ -385,7 +385,7 @@ public final class ConnectionPoolTest {
 
     assertEquals(0, pool.getConnectionCount());
     assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getSpdyConnectionCount());
+    assertEquals(0, pool.getMultiplexedConnectionCount());
   }
 
   @Test public void evictAllConnections() throws Exception {
