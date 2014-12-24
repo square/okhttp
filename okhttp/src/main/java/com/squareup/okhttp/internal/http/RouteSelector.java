@@ -309,7 +309,9 @@ public final class RouteSelector {
   /** Prepares the connection specs to attempt. */
   private void resetConnectionSpecs() {
     connectionSpecs = new ArrayList<>();
-    for (ConnectionSpec spec : address.getConnectionSpecs()) {
+    List<ConnectionSpec> specs = address.getConnectionSpecs();
+    for (int i = 0, size = specs.size(); i < size; i++) {
+      ConnectionSpec spec = specs.get(i);
       if (request.isHttps() == spec.isTls()) {
         connectionSpecs.add(spec);
       }

@@ -109,8 +109,8 @@ public final class ConnectionPool {
           }
         }
       }
-      for (Connection expiredConnection : expiredConnections) {
-        Util.closeQuietly(expiredConnection.getSocket());
+      for (int i = 0, size = expiredConnections.size(); i < size; i++) {
+        Util.closeQuietly(expiredConnections.get(i).getSocket());
       }
     }
   };
