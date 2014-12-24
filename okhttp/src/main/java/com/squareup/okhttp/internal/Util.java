@@ -18,7 +18,6 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.Closeable;
-import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -40,7 +39,6 @@ import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
-import okio.BufferedSource;
 import okio.ByteString;
 import okio.Source;
 
@@ -292,14 +290,5 @@ public final class Util {
       }
     }
     return Collections.unmodifiableList(result);
-  }
-
-  public static void readFully(BufferedSource source, byte[] sink) throws IOException {
-    int read = 0;
-    do {
-      int got = source.read(sink, read, sink.length - read);
-      if (got == -1) throw new EOFException();
-      read += got;
-    } while (read < sink.length);
   }
 }
