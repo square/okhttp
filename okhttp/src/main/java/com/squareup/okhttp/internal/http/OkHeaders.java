@@ -87,7 +87,7 @@ public final class OkHeaders {
    */
   public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
     Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       String fieldName = headers.name(i);
       String value = headers.value(i);
 
@@ -122,7 +122,7 @@ public final class OkHeaders {
   private static String buildCookieHeader(List<String> cookies) {
     if (cookies.size() == 1) return cookies.get(0);
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < cookies.size(); i++) {
+    for (int i = 0, size = cookies.size(); i < size; i++) {
       if (i > 0) sb.append("; ");
       sb.append(cookies.get(i));
     }
@@ -152,7 +152,7 @@ public final class OkHeaders {
   private static Set<String> varyFields(Response response) {
     Set<String> result = Collections.emptySet();
     Headers headers = response.headers();
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       if (!"Vary".equalsIgnoreCase(headers.name(i))) continue;
 
       String value = headers.value(i);
@@ -180,7 +180,7 @@ public final class OkHeaders {
     Headers requestHeaders = response.networkResponse().request().headers();
 
     Headers.Builder result = new Headers.Builder();
-    for (int i = 0; i < requestHeaders.size(); i++) {
+    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
       String fieldName = requestHeaders.name(i);
       if (varyFields.contains(fieldName)) {
         result.add(fieldName, requestHeaders.value(i));
@@ -215,11 +215,11 @@ public final class OkHeaders {
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
     List<Challenge> result = new ArrayList<>();
-    for (int h = 0; h < responseHeaders.size(); h++) {
-      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
+    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(i))) {
         continue;
       }
-      String value = responseHeaders.value(h);
+      String value = responseHeaders.value(i);
       int pos = 0;
       while (pos < value.length()) {
         int tokenStart = pos;

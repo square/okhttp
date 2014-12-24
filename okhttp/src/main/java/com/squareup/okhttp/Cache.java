@@ -483,7 +483,7 @@ public final class Cache {
       sink.writeByte('\n');
       sink.writeUtf8(Integer.toString(varyHeaders.size()));
       sink.writeByte('\n');
-      for (int i = 0; i < varyHeaders.size(); i++) {
+      for (int i = 0, size = varyHeaders.size(); i < size; i++) {
         sink.writeUtf8(varyHeaders.name(i));
         sink.writeUtf8(": ");
         sink.writeUtf8(varyHeaders.value(i));
@@ -494,7 +494,7 @@ public final class Cache {
       sink.writeByte('\n');
       sink.writeUtf8(Integer.toString(responseHeaders.size()));
       sink.writeByte('\n');
-      for (int i = 0; i < responseHeaders.size(); i++) {
+      for (int i = 0, size = responseHeaders.size(); i < size; i++) {
         sink.writeUtf8(responseHeaders.name(i));
         sink.writeUtf8(": ");
         sink.writeUtf8(responseHeaders.value(i));

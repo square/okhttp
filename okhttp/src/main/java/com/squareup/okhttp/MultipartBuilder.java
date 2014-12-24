@@ -207,7 +207,7 @@ public final class MultipartBuilder {
     sink.write(CRLF);
 
     if (headers != null) {
-      for (int i = 0; i < headers.size(); i++) {
+      for (int i = 0, size = headers.size(); i < size; i++) {
         sink.writeUtf8(headers.name(i))
             .write(COLONSPACE)
             .writeUtf8(headers.value(i))

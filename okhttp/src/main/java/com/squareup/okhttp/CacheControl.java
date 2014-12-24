@@ -150,7 +150,7 @@ public final class CacheControl {
     boolean onlyIfCached = false;
     boolean noTransform = false;
 
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       if (!headers.name(i).equalsIgnoreCase("Cache-Control")
           && !headers.name(i).equalsIgnoreCase("Pragma")) {
         continue;

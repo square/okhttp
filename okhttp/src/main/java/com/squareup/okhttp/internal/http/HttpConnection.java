@@ -167,7 +167,7 @@ public final class HttpConnection {
   public void writeRequest(Headers headers, String requestLine) throws IOException {
     if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
     sink.writeUtf8(requestLine).writeUtf8("\r\n");
-    for (int i = 0; i < headers.size(); i ++) {
+    for (int i = 0, size = headers.size(); i < size; i ++) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))

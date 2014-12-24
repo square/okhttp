@@ -96,7 +96,7 @@ public final class Headers {
   /** Returns an immutable case-insensitive set of header names. */
   public Set<String> names() {
     TreeSet<String> result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
-    for (int i = 0; i < size(); i++) {
+    for (int i = 0, size = size(); i < size; i++) {
       result.add(name(i));
     }
     return Collections.unmodifiableSet(result);
@@ -105,7 +105,7 @@ public final class Headers {
   /** Returns an immutable list of the header values for {@code name}. */
   public List<String> values(String name) {
     List<String> result = null;
-    for (int i = 0; i < size(); i++) {
+    for (int i = 0, size = size(); i < size; i++) {
       if (name.equalsIgnoreCase(name(i))) {
         if (result == null) result = new ArrayList<>(2);
         result.add(value(i));
@@ -124,7 +124,7 @@ public final class Headers {
 
   @Override public String toString() {
     StringBuilder result = new StringBuilder();
-    for (int i = 0; i < size(); i++) {
+    for (int i = 0, size = size(); i < size; i++) {
       result.append(name(i)).append(": ").append(value(i)).append("\n");
     }
     return result.toString();

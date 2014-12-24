@@ -84,7 +84,7 @@ public final class OkApacheClient implements HttpClient {
     httpResponse.setEntity(entity);
 
     Headers headers = response.headers();
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       String name = headers.name(i);
       String value = headers.value(i);
       httpResponse.addHeader(name, value);
