@@ -1,6 +1,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.CacheControl;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.util.Date;
@@ -103,9 +104,10 @@ public final class CacheStrategy {
       this.cacheResponse = cacheResponse;
 
       if (cacheResponse != null) {
-        for (int i = 0; i < cacheResponse.headers().size(); i++) {
-          String fieldName = cacheResponse.headers().name(i);
-          String value = cacheResponse.headers().value(i);
+        Headers headers = cacheResponse.headers();
+        for (int i = 0, size = headers.size(); i < size; i++) {
+          String fieldName = headers.name(i);
+          String value = headers.value(i);
           if ("Date".equalsIgnoreCase(fieldName)) {
             servedDate = HttpDate.parse(value);
             servedDateString = value;

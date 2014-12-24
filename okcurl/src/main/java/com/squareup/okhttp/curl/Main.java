@@ -145,7 +145,7 @@ public class Main extends HelpOption implements Runnable {
       if (showHeaders) {
         System.out.println(StatusLine.get(response));
         Headers headers = response.headers();
-        for (int i = 0, count = headers.size(); i < count; i++) {
+        for (int i = 0, size = headers.size(); i < size; i++) {
           System.out.println(headers.name(i) + ": " + headers.value(i));
         }
         System.out.println();

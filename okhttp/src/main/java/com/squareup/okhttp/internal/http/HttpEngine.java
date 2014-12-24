@@ -880,7 +880,7 @@ public final class HttpEngine {
   private static Headers combine(Headers cachedHeaders, Headers networkHeaders) throws IOException {
     Headers.Builder result = new Headers.Builder();
 
-    for (int i = 0; i < cachedHeaders.size(); i++) {
+    for (int i = 0, size = cachedHeaders.size(); i < size; i++) {
       String fieldName = cachedHeaders.name(i);
       String value = cachedHeaders.value(i);
       if ("Warning".equalsIgnoreCase(fieldName) && value.startsWith("1")) {
@@ -891,7 +891,7 @@ public final class HttpEngine {
       }
     }
 
-    for (int i = 0; i < networkHeaders.size(); i++) {
+    for (int i = 0, size = networkHeaders.size(); i < size; i++) {
       String fieldName = networkHeaders.name(i);
       if ("Content-Length".equalsIgnoreCase(fieldName)) {
         continue; // Ignore content-length headers of validating responses.

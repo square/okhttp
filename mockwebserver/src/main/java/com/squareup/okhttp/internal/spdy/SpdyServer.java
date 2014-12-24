@@ -80,7 +80,7 @@ public final class SpdyServer implements IncomingStreamHandler {
   @Override public void receive(final SpdyStream stream) throws IOException {
     List<Header> requestHeaders = stream.getRequestHeaders();
     String path = null;
-    for (int i = 0; i < requestHeaders.size(); i++) {
+    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
       if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
         path = requestHeaders.get(i).value.utf8();
         break;

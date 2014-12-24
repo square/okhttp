@@ -127,7 +127,7 @@ public final class SpdyTransport implements Transport {
     result.add(new Header(TARGET_SCHEME, request.url().getProtocol()));
 
     Set<ByteString> names = new LinkedHashSet<ByteString>();
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
       ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
       String value = headers.value(i);
@@ -175,7 +175,7 @@ public final class SpdyTransport implements Transport {
 
     Headers.Builder headersBuilder = new Headers.Builder();
     headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.toString());
-    for (int i = 0; i < headerBlock.size(); i++) {
+    for (int i = 0, size = headerBlock.size(); i < size; i++) {
       ByteString name = headerBlock.get(i).name;
       String values = headerBlock.get(i).value.utf8();
       for (int start = 0; start < values.length(); ) {
