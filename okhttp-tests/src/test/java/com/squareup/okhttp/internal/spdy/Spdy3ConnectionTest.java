@@ -32,7 +32,7 @@ import okio.Source;
 import org.junit.After;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.headerEntries;
+import static com.squareup.okhttp.TestUtil.headerEntries;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.CANCEL;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.INTERNAL_ERROR;
 import static com.squareup.okhttp.internal.spdy.ErrorCode.INVALID_STREAM;

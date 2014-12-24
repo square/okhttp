@@ -24,14 +24,13 @@ import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
-
-import static com.squareup.okhttp.internal.Util.headerEntries;
 
 /** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
@@ -104,8 +103,11 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void send404(SpdyStream stream, String path) throws IOException {
-    List<Header> responseHeaders =
-        headerEntries(":status", "404", ":version", "HTTP/1.1", "content-type", "text/plain");
+    List<Header> responseHeaders = Arrays.asList(
+        new Header(":status", "404"),
+        new Header(":version", "HTTP/1.1"),
+        new Header("content-type", "text/plain")
+    );
     stream.reply(responseHeaders, true);
     BufferedSink out = Okio.buffer(stream.getSink());
     out.writeUtf8("Not found: " + path);
@@ -113,9 +115,11 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
-    List<Header> responseHeaders =
-        headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type",
-            "text/html; charset=UTF-8");
+    List<Header> responseHeaders = Arrays.asList(
+        new Header(":status", "200"),
+        new Header(":version", "HTTP/1.1"),
+        new Header("content-type", "text/html; charset=UTF-8")
+    );
     stream.reply(responseHeaders, true);
     BufferedSink out = Okio.buffer(stream.getSink());
     for (String file : files) {
@@ -125,9 +129,12 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private void serveFile(SpdyStream stream, File file) throws IOException {
-    stream.reply(
-        headerEntries(":status", "200", ":version", "HTTP/1.1", "content-type", contentType(file)),
-        true);
+    List<Header> responseHeaders = Arrays.asList(
+        new Header(":status", "200"),
+        new Header(":version", "HTTP/1.1"),
+        new Header("content-type", contentType(file))
+    );
+    stream.reply(responseHeaders, true);
     Source source = Okio.source(file);
     try {
       BufferedSink out = Okio.buffer(stream.getSink());

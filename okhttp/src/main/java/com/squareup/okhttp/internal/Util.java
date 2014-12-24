@@ -16,7 +16,6 @@
 
 package com.squareup.okhttp.internal;
 
-import com.squareup.okhttp.internal.spdy.Header;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -268,14 +267,6 @@ public final class Util {
         return result;
       }
     };
-  }
-
-  public static List<Header> headerEntries(String... elements) {
-    List<Header> result = new ArrayList<>(elements.length / 2);
-    for (int i = 0; i < elements.length; i += 2) {
-      result.add(new Header(elements[i], elements[i + 1]));
-    }
-    return result;
   }
 
   /**

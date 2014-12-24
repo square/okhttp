@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.Util.headerEntries;
+import static com.squareup.okhttp.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
