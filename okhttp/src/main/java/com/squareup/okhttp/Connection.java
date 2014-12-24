@@ -435,4 +435,18 @@ public final class Connection {
       }
     }
   }
+
+  @Override public String toString() {
+    return "Connection{"
+        + route.address.uriHost + ":" + route.address.uriPort
+        + ", proxy="
+        + route.proxy
+        + " hostAddress="
+        + route.inetSocketAddress.getAddress().getHostAddress()
+        + " cipherSuite="
+        + (handshake != null ? handshake.cipherSuite() : "none")
+        + " protocol="
+        + protocol
+        + '}';
+  }
 }
