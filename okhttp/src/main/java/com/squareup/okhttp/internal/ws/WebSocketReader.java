@@ -24,8 +24,6 @@ import okio.Okio;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
-import static com.squareup.okhttp.internal.Util.readFully;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_FIN;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_RSV1;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_RSV2;
@@ -33,7 +31,6 @@ import static com.squareup.okhttp.internal.ws.Protocol.B0_FLAG_RSV3;
 import static com.squareup.okhttp.internal.ws.Protocol.B0_MASK_OPCODE;
 import static com.squareup.okhttp.internal.ws.Protocol.B1_FLAG_MASK;
 import static com.squareup.okhttp.internal.ws.Protocol.B1_MASK_LENGTH;
-import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_MAX;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_BINARY;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_CONTINUATION;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_CONTROL_CLOSE;
@@ -42,8 +39,10 @@ import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_CONTROL_PONG;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_FLAG_CONTROL;
 import static com.squareup.okhttp.internal.ws.Protocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_LONG;
+import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_MAX;
 import static com.squareup.okhttp.internal.ws.Protocol.PAYLOAD_SHORT;
 import static com.squareup.okhttp.internal.ws.Protocol.toggleMask;
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
 import static java.lang.Integer.toHexString;
 
 /**
@@ -170,7 +169,7 @@ public final class WebSocketReader {
 
     if (isMasked) {
       // Read the masking key as bytes so that they can be used directly for unmasking.
-      readFully(source, maskKey);
+      source.readFully(maskKey);
     }
   }
 
