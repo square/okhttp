@@ -22,8 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -93,36 +91,6 @@ public final class Util {
     if (closeable != null) {
       try {
         closeable.close();
-      } catch (RuntimeException rethrown) {
-        throw rethrown;
-      } catch (Exception ignored) {
-      }
-    }
-  }
-
-  /**
-   * Closes {@code socket}, ignoring any checked exceptions. Does nothing if
-   * {@code socket} is null.
-   */
-  public static void closeQuietly(Socket socket) {
-    if (socket != null) {
-      try {
-        socket.close();
-      } catch (RuntimeException rethrown) {
-        throw rethrown;
-      } catch (Exception ignored) {
-      }
-    }
-  }
-
-  /**
-   * Closes {@code serverSocket}, ignoring any checked exceptions. Does nothing if
-   * {@code serverSocket} is null.
-   */
-  public static void closeQuietly(ServerSocket serverSocket) {
-    if (serverSocket != null) {
-      try {
-        serverSocket.close();
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
