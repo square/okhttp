@@ -155,8 +155,14 @@ public final class ConnectionPool {
     return connections.size();
   }
 
-  /** Returns total number of spdy connections in the pool. */
+  /** @deprecated Use {@link #getMultiplexedConnectionCount()}. */
+  @Deprecated
   public synchronized int getSpdyConnectionCount() {
+    return getMultiplexedConnectionCount();
+  }
+
+  /** Returns total number of multiplexed connections in the pool. */
+  public synchronized int getMultiplexedConnectionCount() {
     int total = 0;
     for (Connection connection : connections) {
       if (connection.isSpdy()) total++;
@@ -166,11 +172,7 @@ public final class ConnectionPool {
 
   /** Returns total number of http connections in the pool. */
   public synchronized int getHttpConnectionCount() {
-    int total = 0;
-    for (Connection connection : connections) {
-      if (!connection.isSpdy()) total++;
-    }
-    return total;
+    return connections.size() - getMultiplexedConnectionCount();
   }
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
