@@ -82,8 +82,9 @@ public final class OkHostnameVerifier implements HostnameVerifier {
    * Returns true if {@code certificate} matches {@code ipAddress}.
    */
   private boolean verifyIpAddress(String ipAddress, X509Certificate certificate) {
-    for (String altName : getSubjectAltNames(certificate, ALT_IPA_NAME)) {
-      if (ipAddress.equalsIgnoreCase(altName)) {
+    List<String> altNames = getSubjectAltNames(certificate, ALT_IPA_NAME);
+    for (int i = 0, size = altNames.size(); i < size; i++) {
+      if (ipAddress.equalsIgnoreCase(altNames.get(i))) {
         return true;
       }
     }
@@ -96,9 +97,10 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   private boolean verifyHostName(String hostName, X509Certificate certificate) {
     hostName = hostName.toLowerCase(Locale.US);
     boolean hasDns = false;
-    for (String altName : getSubjectAltNames(certificate, ALT_DNS_NAME)) {
+    List<String> altNames = getSubjectAltNames(certificate, ALT_DNS_NAME);
+    for (int i = 0, size = altNames.size(); i < size; i++) {
       hasDns = true;
-      if (verifyHostName(hostName, altName)) {
+      if (verifyHostName(hostName, altNames.get(i))) {
         return true;
       }
     }
@@ -116,9 +118,11 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   }
 
   public static List<String> allSubjectAltNames(X509Certificate certificate) {
-    List<String> result = new ArrayList<>();
-    result.addAll(getSubjectAltNames(certificate, ALT_IPA_NAME));
-    result.addAll(getSubjectAltNames(certificate, ALT_DNS_NAME));
+    List<String> altIpaNames = getSubjectAltNames(certificate, ALT_IPA_NAME);
+    List<String> altDnsNames = getSubjectAltNames(certificate, ALT_DNS_NAME);
+    List<String> result = new ArrayList<>(altIpaNames.size() + altDnsNames.size());
+    result.addAll(altIpaNames);
+    result.addAll(altDnsNames);
     return result;
   }
 

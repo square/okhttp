@@ -149,10 +149,10 @@ public final class ConnectionSpec {
    * supported by {@code sslSocket}.
    */
   private ConnectionSpec supportedSpec(SSLSocket sslSocket) {
-    List<String> supportedCipherSuites = Util.intersect(Arrays.asList(cipherSuites),
-        Arrays.asList(sslSocket.getSupportedCipherSuites()));
-    List<String> supportedTlsVersions = Util.intersect(Arrays.asList(tlsVersions),
-        Arrays.asList(sslSocket.getSupportedProtocols()));
+    List<String> supportedCipherSuites =
+        Util.intersect(cipherSuites, sslSocket.getSupportedCipherSuites());
+    List<String> supportedTlsVersions =
+        Util.intersect(tlsVersions, sslSocket.getSupportedProtocols());
     return new Builder(this)
         .cipherSuites(supportedCipherSuites.toArray(new String[supportedCipherSuites.size()]))
         .tlsVersions(supportedTlsVersions.toArray(new String[supportedTlsVersions.size()]))

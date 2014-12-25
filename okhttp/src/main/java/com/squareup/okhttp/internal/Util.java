@@ -30,7 +30,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -270,16 +269,19 @@ public final class Util {
   }
 
   /**
-   * Returns a copy of {@code a} containing only elements also in {@code b}. The returned elements
-   * are in the same order as in {@code a}.
+   * Returns a mutable copy of {@code first} containing only elements also in {@code second}. The
+   * returned elements are in the same order as in {@code first}.
    */
-  public static <T> List<T> intersect(Collection<T> a, Collection<T> b) {
+  public static <T> List<T> intersect(T[] first, T[] second) {
     List<T> result = new ArrayList<>();
-    for (T t : a) {
-      if (b.contains(t)) {
-        result.add(t);
+    for (T a : first) {
+      for (T b : second) {
+        if (a.equals(b)) {
+          result.add(b);
+          break;
+        }
       }
     }
-    return Collections.unmodifiableList(result);
+    return result;
   }
 }
