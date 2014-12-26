@@ -48,7 +48,7 @@ public final class ExternalHttp2Example {
     int responseCode = connection.getResponseCode();
     System.out.println(responseCode);
     List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
-    // If null, probably you didn't add jetty's npn jar to your boot classpath!
+    // If null, probably you didn't add jetty's alpn jar to your boot classpath!
     if (protocolValues != null && !protocolValues.isEmpty()) {
       System.out.println("PROTOCOL " + protocolValues.get(0));
     }
