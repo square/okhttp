@@ -264,6 +264,7 @@ public class Call {
       } catch (IOException e) {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
+          logger.log(Level.INFO, "OkHttp recovering from failure", e);
           engine = retryEngine;
           continue;
         }

@@ -29,7 +29,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
@@ -95,6 +97,9 @@ public class Platform {
       List<Protocol> protocols) {
   }
 
+  public void afterHandshake(SSLSocket sslSocket) {
+  }
+
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   public String getSelectedProtocol(SSLSocket socket) {
     return null;
@@ -146,10 +151,17 @@ public class Platform {
       Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
       Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
       Method getMethod = negoClass.getMethod("get", SSLSocket.class);
+      Method removeMethod = negoClass.getMethod("remove", SSLSocket.class);
+      negoClass.getField("debug").setBoolean(null, true);
+
       return new JdkWithJettyBootPlatform(
-          putMethod, getMethod, clientProviderClass, serverProviderClass);
+          putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass);
     } catch (ClassNotFoundException ignored) { // NPN isn't on the classpath.
     } catch (NoSuchMethodException ignored) { // The ALPN or NPN version isn't what we expect.
+    } catch (NoSuchFieldException e) {
+      throw new AssertionError();
+    } catch (IllegalAccessException e) {
+      throw new AssertionError();
     }
 
     return new Platform();
@@ -281,15 +293,17 @@ public class Platform {
    * {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
    */
   private static class JdkWithJettyBootPlatform extends Platform {
-    private final Method getMethod;
     private final Method putMethod;
+    private final Method getMethod;
+    private final Method removeMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod,
+    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
         Class<?> clientProviderClass, Class<?> serverProviderClass) {
       this.putMethod = putMethod;
       this.getMethod = getMethod;
+      this.removeMethod = removeMethod;
       this.clientProviderClass = clientProviderClass;
       this.serverProviderClass = serverProviderClass;
     }
@@ -303,12 +317,25 @@ public class Platform {
         names.add(protocol.toString());
       }
       try {
+        JettyNegoProvider invocationHandler = new JettyNegoProvider(names);
+        logger.info("Configuring TLS extensions, provider=" + invocationHandler.id
+            + " server=" + (hostname == null) + " class=" + clientProviderClass);
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] { clientProviderClass, serverProviderClass }, new JettyNegoProvider(names));
+            new Class[] { clientProviderClass, serverProviderClass }, invocationHandler);
         putMethod.invoke(null, sslSocket, provider);
       } catch (InvocationTargetException e) {
         throw new AssertionError(e);
       } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
+
+    @Override public void afterHandshake(SSLSocket sslSocket) {
+      try {
+        removeMethod.invoke(null, sslSocket);
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      } catch (InvocationTargetException e) {
         throw new AssertionError(e);
       }
     }
@@ -319,7 +346,7 @@ public class Platform {
             (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
         if (!provider.unsupported && provider.selected == null) {
           logger.log(Level.INFO, "NPN/ALPN callback dropped: SPDY and HTTP/2 are disabled. "
-              + "Is npn-boot or alpn-boot on the boot class path?");
+              + "Is npn-boot or alpn-boot on the boot class path? provider=" + provider.id);
           return null;
         }
         return provider.unsupported ? null : provider.selected;
@@ -336,6 +363,9 @@ public class Platform {
    * without a compile-time dependency on those interfaces.
    */
   private static class JettyNegoProvider implements InvocationHandler {
+    private static final AtomicInteger nextId = new AtomicInteger(1);
+
+    private final int id;
     /** This peer's supported protocols. */
     private final List<String> protocols;
     /** Set when remote peer notifies NPN or ALPN is unsupported. */
@@ -345,10 +375,13 @@ public class Platform {
 
     public JettyNegoProvider(List<String> protocols) {
       this.protocols = protocols;
+      this.id = nextId.getAndIncrement();
     }
 
     @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       String methodName = method.getName();
+      logger.info(id + " received " + methodName + Arrays.toString(args));
+
       Class<?> returnType = method.getReturnType();
       if (args == null) {
         args = Util.EMPTY_STRING_ARRAY;
