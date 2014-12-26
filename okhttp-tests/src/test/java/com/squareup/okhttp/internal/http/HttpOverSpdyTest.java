@@ -112,9 +112,10 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": "
-        + server.getHostName() + ":" + server.getPort());
+
+    assertEquals("https", request.getHeaders().get(":scheme"));
+    assertEquals(server.getHostName() + ":" + server.getPort(),
+        request.getHeaders().get(hostHeader));
   }
 
   @Test public void emptyResponse() throws IOException {
@@ -140,8 +141,8 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
-    assertNull(request.getHeader("Content-Length"));
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
+    assertNull(request.getHeaders().get("Content-Length"));
   }
 
   @Test public void userSuppliedContentLengthHeader() throws Exception {
@@ -157,7 +158,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
@@ -176,7 +177,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
@@ -193,7 +194,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
@@ -246,11 +247,11 @@ public abstract class HttpOverSpdyTest {
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
     RecordedRequest denied = server.takeRequest();
-    assertContainsNoneMatching(denied.getHeaders(), "authorization: Basic .*");
+    assertNull(denied.getHeaders().get("authorization"));
     RecordedRequest accepted = server.takeRequest();
     assertEquals("GET / HTTP/1.1", accepted.getRequestLine());
-    assertContains(accepted.getHeaders(),
-        "authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        accepted.getHeaders().get("authorization"));
   }
 
   @Test public void redirect() throws Exception {
@@ -422,9 +423,9 @@ public abstract class HttpOverSpdyTest {
 
     assertContent("B", client.open(url), Integer.MAX_VALUE);
     RecordedRequest requestA = server.takeRequest();
-    assertContainsNoneMatching(requestA.getHeaders(), "Cookie.*");
+    assertNull(requestA.getHeaders().get("Cookie"));
     RecordedRequest requestB = server.takeRequest();
-    assertContains(requestB.getHeaders(), "cookie: c=oreo");
+    assertEquals("c=oreo", requestB.getHeaders().get("Cookie"));
   }
 
   /** https://github.com/square/okhttp/issues/1191 */

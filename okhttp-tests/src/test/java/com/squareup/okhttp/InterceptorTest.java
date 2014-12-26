@@ -236,9 +236,9 @@ public final class InterceptorTest {
     client.newCall(request).execute();
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("ABC", recordedRequest.getUtf8Body());
-    assertEquals("foo", recordedRequest.getHeader("Original-Header"));
-    assertEquals("yep", recordedRequest.getHeader("OkHttp-Intercepted"));
+    assertEquals("ABC", recordedRequest.getBody().readUtf8());
+    assertEquals("foo", recordedRequest.getHeaders().get("Original-Header"));
+    assertEquals("yep", recordedRequest.getHeaders().get("OkHttp-Intercepted"));
     assertEquals("POST", recordedRequest.getMethod());
   }
 
@@ -319,7 +319,7 @@ public final class InterceptorTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(Arrays.asList("Android", "Bob"),
-        recordedRequest.getHeaders("Request-Interceptor"));
+        recordedRequest.getHeaders().values("Request-Interceptor"));
   }
 
   @Test public void asyncApplicationInterceptors() throws Exception {

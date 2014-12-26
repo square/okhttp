@@ -24,6 +24,7 @@ import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.DelegatingServerSocketFactory;
 import com.squareup.okhttp.DelegatingSocketFactory;
 import com.squareup.okhttp.FallbackTestClientSocketFactory;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
@@ -149,8 +150,8 @@ public final class URLConnectionTest {
     assertEquals("f", connection.getRequestProperty("D"));
     assertEquals("f", connection.getRequestProperty("d"));
     Map<String, List<String>> requestHeaders = connection.getRequestProperties();
-    assertEquals(newSet("e", "f"), new HashSet<String>(requestHeaders.get("D")));
-    assertEquals(newSet("e", "f"), new HashSet<String>(requestHeaders.get("d")));
+    assertEquals(newSet("e", "f"), new HashSet<>(requestHeaders.get("D")));
+    assertEquals(newSet("e", "f"), new HashSet<>(requestHeaders.get("d")));
     try {
       requestHeaders.put("G", Arrays.asList("h"));
       fail("Modified an unmodifiable view.");
@@ -178,8 +179,8 @@ public final class URLConnectionTest {
 
     connection.getResponseCode();
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "D: e");
-    assertContains(request.getHeaders(), "D: f");
+    assertEquals("e", request.getHeaders().get("D"));
+    assertEquals("f", request.getHeaders().get("D"));
     assertContainsNoneMatching(request.getHeaders(), "NullValue.*");
     assertContainsNoneMatching(request.getHeaders(), "AnotherNullValue.*");
     assertContainsNoneMatching(request.getHeaders(), "G:.*");
@@ -222,8 +223,8 @@ public final class URLConnectionTest {
     assertEquals("HTTP/1.0 200 Fantastic", connection.getHeaderField(null));
     Map<String, List<String>> responseHeaders = connection.getHeaderFields();
     assertEquals(Arrays.asList("HTTP/1.0 200 Fantastic"), responseHeaders.get(null));
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("A")));
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("a")));
+    assertEquals(newSet("c", "e"), new HashSet<>(responseHeaders.get("A")));
+    assertEquals(newSet("c", "e"), new HashSet<>(responseHeaders.get("a")));
     try {
       responseHeaders.put("N", Arrays.asList("o"));
       fail("Modified an unmodifiable view.");
@@ -325,7 +326,7 @@ public final class URLConnectionTest {
     connection.getOutputStream().write("body".getBytes("UTF-8"));
     assertContent("abc", connection);
 
-    assertEquals("body", server.takeRequest().getUtf8Body());
+    assertEquals("body", server.takeRequest().getBody().readUtf8());
   }
 
   @Test public void getErrorStreamOnSuccessfulRequest() throws Exception {
@@ -682,7 +683,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.get().takeRequest();
     assertEquals("GET http://android.com/foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), "Host: android.com");
+    assertEquals("android.com", request.getHeaders().get("Host"));
   }
 
   @Test public void contentDisagreesWithContentLengthHeader() throws IOException {
@@ -810,11 +811,11 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertEquals("Connect line failure on proxy", "CONNECT android.com:443 HTTP/1.1",
         connect.getRequestLine());
-    assertContains(connect.getHeaders(), "Host: android.com");
+    assertEquals("android.com", connect.getHeaders().get("Host"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
-    assertContains(get.getHeaders(), "Host: android.com");
+    assertEquals("android.com", get.getHeaders().get("Host"));
     assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
   }
 
@@ -844,7 +845,7 @@ public final class URLConnectionTest {
 
     RecordedRequest connect = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect.getRequestLine());
-    assertContains(connect.getHeaders(), "Host: android.com");
+    assertEquals("android.com", connect.getHeaders().get("Host"));
   }
 
   private void initResponseCache() throws IOException {
@@ -877,13 +878,13 @@ public final class URLConnectionTest {
 
     RecordedRequest connect = server.takeRequest();
     assertContainsNoneMatching(connect.getHeaders(), "Private.*");
-    assertContains(connect.getHeaders(), "Proxy-Authorization: bar");
-    assertContains(connect.getHeaders(), "User-Agent: baz");
-    assertContains(connect.getHeaders(), "Host: android.com");
-    assertContains(connect.getHeaders(), "Proxy-Connection: Keep-Alive");
+    assertEquals("bar", connect.getHeaders().get("Proxy-Authorization"));
+    assertEquals("baz", connect.getHeaders().get("User-Agent"));
+    assertEquals("android.com", connect.getHeaders().get("Host"));
+    assertEquals("Keep-Alive", connect.getHeaders().get("Proxy-Connection"));
 
     RecordedRequest get = server.takeRequest();
-    assertContains(get.getHeaders(), "Private: Secret");
+    assertEquals("Secret", get.getHeaders().get("Private"));
     assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
   }
 
@@ -910,8 +911,8 @@ public final class URLConnectionTest {
 
     RecordedRequest connect2 = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect2.getRequestLine());
-    assertContains(connect2.getHeaders(),
-        "Proxy-Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS, connect2.getHeaders()
+        .get("Proxy-Authorization"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
@@ -1104,7 +1105,7 @@ public final class URLConnectionTest {
     assertEquals(-1, connection.getContentLength());
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: gzip");
+    assertEquals("gzip", request.getHeaders().get("Accept-Encoding"));
   }
 
   @Test public void clientConfiguredGzipContentEncoding() throws Exception {
@@ -1120,7 +1121,7 @@ public final class URLConnectionTest {
     assertEquals(bodyBytes.size(), connection.getContentLength());
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: gzip");
+    assertEquals("gzip", request.getHeaders().get("Accept-Encoding"));
   }
 
   @Test public void gzipAndConnectionReuseWithFixedLength() throws Exception {
@@ -1147,7 +1148,7 @@ public final class URLConnectionTest {
     assertEquals("ABCDE", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: custom");
+    assertEquals("custom", request.getHeaders().get("Accept-Encoding"));
   }
 
   /**
@@ -1289,7 +1290,7 @@ public final class URLConnectionTest {
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals(body, new String(request.getBody(), "US-ASCII"));
+    assertEquals(body, request.getBody().readUtf8());
     assertEquals(Arrays.asList(body.length()), request.getChunkSizes());
   }
 
@@ -1328,7 +1329,7 @@ public final class URLConnectionTest {
     // no authorization header for the request...
     RecordedRequest request = server.takeRequest();
     assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody().readByteArray()));
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
@@ -1376,13 +1377,13 @@ public final class URLConnectionTest {
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
-    assertEquals(body, recordedRequest1.getUtf8Body());
-    assertNull(recordedRequest1.getHeader("Authorization"));
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
+    assertNull(recordedRequest1.getHeaders().get("Authorization"));
 
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("POST", recordedRequest2.getMethod());
-    assertEquals(body, recordedRequest2.getUtf8Body());
-    assertEquals(credential, recordedRequest2.getHeader("Authorization"));
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
+    assertEquals(credential, recordedRequest2.getHeaders().get("Authorization"));
   }
 
   @Test public void nonStandardAuthenticationScheme() throws Exception {
@@ -1608,7 +1609,7 @@ public final class URLConnectionTest {
     } else if (streamingMode == StreamingMode.CHUNKED) {
       assertEquals(Arrays.asList(4), request.getChunkSizes());
     }
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody().readByteArray()));
   }
 
   enum StreamingMode {
@@ -1643,9 +1644,9 @@ public final class URLConnectionTest {
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("POST / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
-      assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS, request.getHeaders()
+          .get("Authorization"));
+      assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody().readByteArray()));
     }
   }
 
@@ -1672,8 +1673,8 @@ public final class URLConnectionTest {
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS, request.getHeaders()
+          .get("Authorization"));
     }
   }
 
@@ -1704,8 +1705,8 @@ public final class URLConnectionTest {
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS, request.getHeaders()
+          .get("Authorization"));
     }
   }
 
@@ -1867,8 +1868,8 @@ public final class URLConnectionTest {
 
     String server1Host = server.get().getHostName() + ":" + server.getPort();
     String server2Host = server2.get().getHostName() + ":" + server2.getPort();
-    assertContains(server.takeRequest().getHeaders(), "Host: " + server1Host);
-    assertContains(server2.takeRequest().getHeaders(), "Host: " + server2Host);
+    assertEquals(server1Host, server.takeRequest().getHeaders().get("Host"));
+    assertEquals(server2Host, server2.takeRequest().getHeaders().get("Host"));
     assertEquals("Expected connection reuse", 1, server.takeRequest().getSequenceNumber());
     assertEquals("Expected connection reuse", 1, server2.takeRequest().getSequenceNumber());
   }
@@ -1961,7 +1962,7 @@ public final class URLConnectionTest {
 
     RecordedRequest page1 = server.takeRequest();
     assertEquals("POST /page1 HTTP/1.1", page1.getRequestLine());
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody()));
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody().readByteArray()));
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
@@ -2071,7 +2072,7 @@ public final class URLConnectionTest {
       // Methods other than GET/HEAD shouldn't follow the redirect
       if (method.equals("POST")) {
         assertTrue(connection.getDoOutput());
-        assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody()));
+        assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody().readByteArray()));
       }
       assertEquals(1, server.getRequestCount());
       assertEquals("This page has moved!", response);
@@ -2209,7 +2210,7 @@ public final class URLConnectionTest {
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("ABC", new String(request.getBody(), "UTF-8"));
+    assertEquals("ABC", request.getBody().readUtf8());
   }
 
   @Test public void connectionCloseInRequest() throws IOException, InterruptedException {
@@ -2473,7 +2474,7 @@ public final class URLConnectionTest {
     out.close();
     assertEquals("A", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Content-Length: 3");
+    assertEquals("3", request.getHeaders().get("Content-Length"));
   }
 
   @Test public void getContentLengthConnects() throws Exception {
@@ -2593,7 +2594,7 @@ public final class URLConnectionTest {
     assertEquals("/a", requestA.getPath());
     RecordedRequest requestB = server.takeRequest();
     assertEquals("/b", requestB.getPath());
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody()));
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody().readByteArray()));
   }
 
   @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
@@ -2613,11 +2614,11 @@ public final class URLConnectionTest {
     assertEquals(0, get.getSequenceNumber());
 
     RecordedRequest post1 = server.takeRequest();
-    assertEquals("body!", post1.getUtf8Body());
+    assertEquals("body!", post1.getBody().readUtf8());
     assertEquals(1, post1.getSequenceNumber());
 
     RecordedRequest post2 = server.takeRequest();
-    assertEquals("body!", post2.getUtf8Body());
+    assertEquals("body!", post2.getBody().readUtf8());
     assertEquals(0, post2.getSequenceNumber());
   }
 
@@ -2737,15 +2738,14 @@ public final class URLConnectionTest {
     assertContent("A", client.open(server.getUrl("/private")));
 
     assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
-    assertContains(server.takeRequest().getHeaders(),
-        "Authorization: " + credential);
+    assertEquals(credential, server.takeRequest().getHeaders().get("Authorization"));
 
     assertEquals(Proxy.NO_PROXY, authenticator.onlyProxy());
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().getPath());
     assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
-  
+
   @Test public void customTokenAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
             .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
@@ -2758,7 +2758,7 @@ public final class URLConnectionTest {
     assertContent("A", client.open(server.getUrl("/private")));
 
     assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
-    assertContains(server.takeRequest().getHeaders(), "Authorization: oauthed abc123");
+    assertEquals("oauthed abc123", server.takeRequest().getHeaders().get("Authorization"));
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().getPath());
@@ -2903,9 +2903,9 @@ public final class URLConnectionTest {
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("application/x-www-form-urlencoded", request.getHeader("Content-Type"));
-    assertEquals("3", request.getHeader("Content-Length"));
-    assertEquals("abc", request.getUtf8Body());
+    assertEquals("application/x-www-form-urlencoded", request.getHeaders().get("Content-Type"));
+    assertEquals("3", request.getHeaders().get("Content-Length"));
+    assertEquals("abc", request.getBody().readUtf8());
   }
 
   @Test public void setProtocols() throws Exception {
@@ -3016,7 +3016,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("DELETE", request.getMethod());
-    assertEquals("BODY", new String(request.getBody(), UTF_8));
+    assertEquals("BODY", request.getBody().readUtf8());
   }
 
   @Test public void userAgentPicksUpHttpAgentSystemProperty() throws Exception {
@@ -3026,7 +3026,7 @@ public final class URLConnectionTest {
     assertContent("abc", client.open(server.getUrl("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("foo", request.getHeader("User-Agent"));
+    assertEquals("foo", request.getHeaders().get("User-Agent"));
   }
 
   @Test public void userAgentDefaultsToJavaVersion() throws Exception {
@@ -3035,7 +3035,7 @@ public final class URLConnectionTest {
     assertContent("abc", client.open(server.getUrl("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertTrue(request.getHeader("User-Agent").startsWith("Java"));
+    assertTrue(request.getHeaders().get("User-Agent").startsWith("Java"));
   }
 
   @Test public void interceptorsNotInvoked() throws Exception {
@@ -3074,12 +3074,9 @@ public final class URLConnectionTest {
     assertContent(expected, connection, Integer.MAX_VALUE);
   }
 
-  private void assertContains(List<String> headers, String header) {
-    assertTrue(headers.toString(), headers.contains(header));
-  }
-
-  private void assertContainsNoneMatching(List<String> headers, String pattern) {
-    for (String header : headers) {
+  private void assertContainsNoneMatching(Headers headers, String pattern) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String header = headers.name(i) + ": " + headers.value(i);
       if (header.matches(pattern)) {
         fail("Header " + header + " matches " + pattern);
       }
@@ -3087,7 +3084,7 @@ public final class URLConnectionTest {
   }
 
   private Set<String> newSet(String... elements) {
-    return new HashSet<String>(Arrays.asList(elements));
+    return new HashSet<>(Arrays.asList(elements));
   }
 
   enum TransferKind {

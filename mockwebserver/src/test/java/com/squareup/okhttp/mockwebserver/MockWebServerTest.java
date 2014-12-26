@@ -26,9 +26,9 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
+import okio.BufferedSource;
+import okio.Okio;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -40,27 +40,6 @@ import static org.junit.Assert.fail;
 public final class MockWebServerTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
 
-  @Test public void recordedRequestAccessors() {
-    List<String> headers = Arrays.asList(
-        "User-Agent: okhttp",
-        "Cookie: s=square",
-        "Cookie: a=android",
-        "X-Whitespace:  left",
-        "X-Whitespace:right  ",
-        "X-Whitespace:  both  "
-    );
-    List<Integer> chunkSizes = Collections.emptyList();
-    byte[] body = {'A', 'B', 'C'};
-    String requestLine = "GET / HTTP/1.1";
-    RecordedRequest request = new RecordedRequest(
-        requestLine, headers, chunkSizes, body.length, body, 0, null);
-    assertEquals("s=square", request.getHeader("cookie"));
-    assertEquals(Arrays.asList("s=square", "a=android"), request.getHeaders("cookie"));
-    assertEquals("left", request.getHeader("x-whitespace"));
-    assertEquals(Arrays.asList("left", "right", "both"), request.getHeaders("x-whitespace"));
-    assertEquals("ABC", request.getUtf8Body());
-  }
-
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
     assertEquals(Arrays.asList("Content-Length: 0"), response.getHeaders());
@@ -70,11 +49,11 @@ public final class MockWebServerTest {
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
     assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
-    InputStream in = response.getBodyStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-    assertEquals(-1, in.read());
+    BufferedSource source = Okio.buffer(response.getBody());
+    assertEquals('A', source.readByte());
+    assertEquals('B', source.readByte());
+    assertEquals('C', source.readByte());
+    assertTrue(source.exhausted());
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 
@@ -124,7 +103,7 @@ public final class MockWebServerTest {
     assertEquals(request.getRequestLine(), "PUT / HTTP/1.1");
     assertEquals("5", request.getHeader("Content-Length"));
     assertEquals(5, request.getBodySize());
-    assertEquals("hello", new String(request.getBody()));
+    assertEquals("hello", request.getBody().readUtf8());
     // below fails on JRE 6 unless -Dsun.net.http.allowRestrictedHeaders=true is set
     assertEquals("100-continue", request.getHeader("Expect"));
   }
@@ -164,7 +143,7 @@ public final class MockWebServerTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET / HTTP/1.1", request.getRequestLine());
-    assertTrue(request.getHeaders().contains("Accept-Language: en-US"));
+    assertEquals("en-US", request.getHeaders().get("Accept-Language"));
   }
 
   @Test public void redirect() throws Exception {

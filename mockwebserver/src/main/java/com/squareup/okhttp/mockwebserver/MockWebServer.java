@@ -17,6 +17,7 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
@@ -26,12 +27,7 @@ import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -69,7 +65,10 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
+import okio.ForwardingSink;
 import okio.Okio;
+import okio.Sink;
+import okio.Source;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
@@ -103,7 +102,7 @@ public final class MockWebServer {
   private final Set<SpdyConnection> openSpdyConnections =
       Collections.newSetFromMap(new ConcurrentHashMap<SpdyConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
-  private int bodyLimit = Integer.MAX_VALUE;
+  private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
   private ServerSocket serverSocket;
   private SSLSocketFactory sslSocketFactory;
@@ -161,12 +160,9 @@ public final class MockWebServer {
     return hostName.contains(".") ? hostName : ".local";
   }
 
-  /**
-   * Sets the number of bytes of the POST body to keep in memory to the given
-   * limit.
-   */
-  public void setBodyLimit(int maxBodyLength) {
-    this.bodyLimit = maxBodyLength;
+  /** Sets the number of bytes of the request body to keep in memory to the given limit. */
+  public void setBodyLimit(long byteCount) {
+    this.bodyLimit = byteCount;
   }
 
   /**
@@ -362,8 +358,8 @@ public final class MockWebServer {
             processHandshakeFailure(raw);
             return;
           }
-          socket = sslSocketFactory.createSocket(
-              raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
+          socket = sslSocketFactory.createSocket(raw, raw.getInetAddress().getHostAddress(),
+              raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
           openClientSockets.add(socket);
@@ -395,10 +391,10 @@ public final class MockWebServer {
           return;
         }
 
-        InputStream in = new BufferedInputStream(socket.getInputStream());
-        OutputStream out = new BufferedOutputStream(socket.getOutputStream());
+        BufferedSource source = Okio.buffer(Okio.source(socket));
+        BufferedSink sink = Okio.buffer(Okio.sink(socket));
 
-        while (processOneRequest(socket, in, out)) {
+        while (processOneRequest(socket, source, sink)) {
         }
 
         if (sequenceNumber == 0) {
@@ -406,33 +402,29 @@ public final class MockWebServer {
               + " didn't make a request");
         }
 
-        in.close();
-        out.close();
+        source.close();
+        sink.close();
         socket.close();
         openClientSockets.remove(socket);
       }
 
-      /**
-       * Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is
-       * dispatched.
-       */
+      /** Respond to CONNECT requests until a SWITCH_TO_SSL_AT_END response is dispatched. */
       private void createTunnel() throws IOException, InterruptedException {
         while (true) {
           SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
-          if (!processOneRequest(raw, raw.getInputStream(), raw.getOutputStream())) {
+          BufferedSource source = Okio.buffer(Okio.source(raw));
+          BufferedSink sink = Okio.buffer(Okio.sink(raw));
+          if (!processOneRequest(raw, source, sink)) {
             throw new IllegalStateException("Tunnel without any CONNECT!");
           }
           if (socketPolicy == SocketPolicy.UPGRADE_TO_SSL_AT_END) return;
         }
       }
 
-      /**
-       * Reads a request and writes its response. Returns true if a request was
-       * processed.
-       */
-      private boolean processOneRequest(Socket socket, InputStream in, OutputStream out)
+      /** Reads a request and writes its response. Returns true if a request was processed. */
+      private boolean processOneRequest(Socket socket, BufferedSource source, BufferedSink sink)
           throws IOException, InterruptedException {
-        RecordedRequest request = readRequest(socket, in, out, sequenceNumber);
+        RecordedRequest request = readRequest(socket, source, sink, sequenceNumber);
         if (request == null) return false;
         requestCount.incrementAndGet();
         requestQueue.add(request);
@@ -443,13 +435,13 @@ public final class MockWebServer {
         }
         if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
           // This read should block until the socket is closed. (Because nobody is writing.)
-          if (in.read() == -1) return false;
+          if (source.read(new Buffer(), 1) == -1) return false;
           throw new ProtocolException("unexpected data");
         }
-        writeResponse(socket, out, response);
+        writeResponse(sink, response);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
-          in.close();
-          out.close();
+          source.close();
+          sink.close();
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_INPUT_AT_END) {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
@@ -486,11 +478,11 @@ public final class MockWebServer {
   }
 
   /** @param sequenceNumber the index of this request on this connection. */
-  private RecordedRequest readRequest(Socket socket, InputStream in, OutputStream out,
+  private RecordedRequest readRequest(Socket socket, BufferedSource source, BufferedSink sink,
       int sequenceNumber) throws IOException {
     String request;
     try {
-      request = readAsciiUntilCrlf(in);
+      request = source.readUtf8LineStrict();
     } catch (IOException streamIsClosed) {
       return null; // no request because we closed the stream
     }
@@ -498,12 +490,12 @@ public final class MockWebServer {
       return null; // no request because the stream is exhausted
     }
 
-    List<String> headers = new ArrayList<>();
+    Headers.Builder headers = new Headers.Builder();
     long contentLength = -1;
     boolean chunked = false;
     boolean expectContinue = false;
     String header;
-    while ((header = readAsciiUntilCrlf(in)).length() != 0) {
+    while ((header = source.readUtf8LineStrict()).length() != 0) {
       headers.add(header);
       String lowercaseHeader = header.toLowerCase(Locale.US);
       if (contentLength == -1 && lowercaseHeader.startsWith("content-length:")) {
@@ -520,30 +512,42 @@ public final class MockWebServer {
     }
 
     if (expectContinue) {
-      out.write(("HTTP/1.1 100 Continue\r\n").getBytes(Util.US_ASCII));
-      out.write(("Content-Length: 0\r\n").getBytes(Util.US_ASCII));
-      out.write(("\r\n").getBytes(Util.US_ASCII));
-      out.flush();
+      sink.writeUtf8("HTTP/1.1 100 Continue\r\n");
+      sink.writeUtf8("Content-Length: 0\r\n");
+      sink.writeUtf8("\r\n");
+      sink.flush();
     }
 
-    boolean hasBody = false;
-    TruncatingOutputStream requestBody = new TruncatingOutputStream();
-    List<Integer> chunkSizes = new ArrayList<>();
     MockResponse throttlePolicy = dispatcher.peek();
+
+    boolean hasBody = false;
+    Buffer buffer = new Buffer();
+    TruncatingSink requestBody = new TruncatingSink(buffer, bodyLimit);
+    List<Integer> chunkSizes = new ArrayList<>();
     if (contentLength != -1) {
-      hasBody = contentLength > 0;
-      throttledTransfer(throttlePolicy, socket, in, requestBody, contentLength);
+      if (contentLength > 0) {
+        hasBody = true;
+        BufferedSink throttledSink = Okio.buffer(new ThrottledSink(requestBody, throttlePolicy));
+        throttledSink.write(source, contentLength);
+        throttledSink.flush();
+      }
     } else if (chunked) {
       hasBody = true;
       while (true) {
-        int chunkSize = Integer.parseInt(readAsciiUntilCrlf(in).trim(), 16);
+        int chunkSize = Integer.parseInt(source.readUtf8LineStrict().trim(), 16);
         if (chunkSize == 0) {
-          readEmptyLine(in);
+          readEmptyLine(source);
           break;
         }
         chunkSizes.add(chunkSize);
-        throttledTransfer(throttlePolicy, socket, in, requestBody, chunkSize);
-        readEmptyLine(in);
+
+        if (chunkSize > 0) {
+          BufferedSink throttledSink = Okio.buffer(new ThrottledSink(requestBody, throttlePolicy));
+          throttledSink.write(source, chunkSize);
+          throttledSink.flush();
+        }
+
+        readEmptyLine(source);
       }
     }
 
@@ -562,25 +566,26 @@ public final class MockWebServer {
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
-    return new RecordedRequest(request, headers, chunkSizes, requestBody.numBytesReceived,
-        requestBody.toByteArray(), sequenceNumber, socket);
+    return new RecordedRequest(request, headers.build(), chunkSizes, requestBody.bytesReceived,
+        buffer, sequenceNumber, socket);
   }
 
-  private void writeResponse(Socket socket, OutputStream out, MockResponse response)
-      throws IOException {
-    out.write((response.getStatus() + "\r\n").getBytes(Util.US_ASCII));
+  private void writeResponse(BufferedSink sink, MockResponse response) throws IOException {
+    sink.writeUtf8(response.getStatus()).writeUtf8("\r\n");
     List<String> headers = response.getHeaders();
     for (int i = 0, size = headers.size(); i < size; i++) {
       String header = headers.get(i);
-      out.write((header + "\r\n").getBytes(Util.US_ASCII));
+      sink.writeUtf8(header).writeUtf8("\r\n");
     }
-    out.write(("\r\n").getBytes(Util.US_ASCII));
-    out.flush();
+    sink.writeUtf8("\r\n").flush();
 
-    InputStream in = response.getBodyStream();
-    if (in == null) return;
+    Source source = response.getBody();
+    if (source == null) return;
     sleepIfDelayed(response);
-    throttledTransfer(response, socket, in, out, Long.MAX_VALUE);
+
+    BufferedSink throttledSink = Okio.buffer(new ThrottledSink(sink, response));
+    throttledSink.writeAll(source);
+    throttledSink.flush();
   }
 
   private void sleepIfDelayed(MockResponse response) {
@@ -593,60 +598,63 @@ public final class MockWebServer {
     }
   }
 
-  /**
-   * Transfer bytes from {@code in} to {@code out} until either {@code length}
-   * bytes have been transferred or {@code in} is exhausted. The transfer is
-   * throttled according to {@code throttlePolicy}.
-   */
-  private void throttledTransfer(MockResponse throttlePolicy, Socket socket, InputStream in,
-      OutputStream out, long limit) throws IOException {
-    byte[] buffer = new byte[1024];
-    int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
-    long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
+  private static class ThrottledSink extends ForwardingSink {
+    private final long bytesPerPeriod;
+    private final long delayMs;
+    private long periodRemainingBytes;
 
-    while (!socket.isClosed()) {
-      for (int b = 0; b < bytesPerPeriod; ) {
-        int toRead = (int) Math.min(Math.min(buffer.length, limit), bytesPerPeriod - b);
-        int read = in.read(buffer, 0, toRead);
-        if (read == -1) return;
+    public ThrottledSink(Sink delegate, MockResponse throttlePolicy) {
+      super(delegate);
+      bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
+      delayMs = throttlePolicy.getThrottlePeriod();
+      periodRemainingBytes = bytesPerPeriod;
+    }
 
-        out.write(buffer, 0, read);
-        out.flush();
-        b += read;
-        limit -= read;
+    @Override public void write(Buffer source, long byteCount) throws IOException {
+      while (byteCount > 0) {
+        long actualCount = Math.min(Math.min(bytesPerPeriod, byteCount), periodRemainingBytes);
+        super.write(source, actualCount);
 
-        if (limit == 0) return;
-      }
+        byteCount -= actualCount;
+        periodRemainingBytes -= actualCount;
 
-      try {
-        if (delayMs != 0) Thread.sleep(delayMs);
-      } catch (InterruptedException e) {
-        throw new AssertionError();
+        if (periodRemainingBytes == 0 && byteCount > 0) {
+          periodRemainingBytes = bytesPerPeriod;
+          try {
+            Thread.sleep(delayMs);
+          } catch (InterruptedException e) {
+            throw new AssertionError(e);
+          }
+        }
       }
     }
   }
 
-  /**
-   * Returns the text from {@code in} until the next "\r\n", or null if {@code
-   * in} is exhausted.
-   */
-  private String readAsciiUntilCrlf(InputStream in) throws IOException {
-    StringBuilder builder = new StringBuilder();
-    while (true) {
-      int c = in.read();
-      if (c == '\n' && builder.length() > 0 && builder.charAt(builder.length() - 1) == '\r') {
-        builder.deleteCharAt(builder.length() - 1);
-        return builder.toString();
-      } else if (c == -1) {
-        return builder.toString();
-      } else {
-        builder.append((char) c);
+  /** A sink that drops data after bodyLimit bytes. */
+  private static class TruncatingSink extends ForwardingSink {
+    private final long bodyLimit;
+    private long bytesReceived = 0L;
+
+    TruncatingSink(Sink delegate, long bodyLimit) {
+      super(delegate);
+      this.bodyLimit = bodyLimit;
+    }
+
+    @Override public void write(Buffer source, long byteCount) throws IOException {
+      long toRead = Math.min(byteCount, bodyLimit - bytesReceived);
+      if (toRead > 0) {
+        super.write(source, toRead);
       }
+      long toSkip = byteCount - toRead;
+      if (toSkip > 0) {
+        source.skip(toSkip);
+      }
+      bytesReceived += byteCount;
     }
   }
 
-  private void readEmptyLine(InputStream in) throws IOException {
-    String line = readAsciiUntilCrlf(in);
+  private void readEmptyLine(BufferedSource in) throws IOException {
+    String line = in.readUtf8LineStrict();
     if (line.length() != 0) throw new IllegalStateException("Expected empty but was: " + line);
   }
 
@@ -663,23 +671,6 @@ public final class MockWebServer {
 
   @Override public String toString() {
     return "MockWebServer[" + port + "]";
-  }
-
-  /** An output stream that drops data after bodyLimit bytes. */
-  private class TruncatingOutputStream extends ByteArrayOutputStream {
-    private long numBytesReceived = 0;
-
-    @Override public void write(byte[] buffer, int offset, int len) {
-      numBytesReceived += len;
-      super.write(buffer, offset, Math.min(len, bodyLimit - count));
-    }
-
-    @Override public void write(int oneByte) {
-      numBytesReceived++;
-      if (count < bodyLimit) {
-        super.write(oneByte);
-      }
-    }
   }
 
   /** Processes HTTP requests layered over SPDY/3. */
@@ -711,7 +702,7 @@ public final class MockWebServer {
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
       List<Header> spdyHeaders = stream.getRequestHeaders();
-      List<String> httpHeaders = new ArrayList<>();
+      Headers.Builder headers = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
@@ -725,18 +716,19 @@ public final class MockWebServer {
         } else if (name.equals(Header.VERSION)) {
           version = value;
         } else {
-          httpHeaders.add(name.utf8() + ": " + value);
+          headers.add(name.utf8(), value);
         }
       }
 
-      BufferedSource bodyIn = Okio.buffer(stream.getSource());
-      byte[] bodyOut = bodyIn.readByteArray();
-      bodyIn.close();
+      Buffer buffer = new Buffer();
+      BufferedSource source = Okio.buffer(stream.getSource());
+      buffer.writeAll(source);
+      source.close();
 
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.length,
-          bodyOut, sequenceNumber.getAndIncrement(), socket);
+      return new RecordedRequest(requestLine, headers.build(), chunkSizes, buffer.size(),
+          buffer, sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
@@ -762,36 +754,18 @@ public final class MockWebServer {
         }
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
-      Buffer body = response.getBody();
-      if (body == null) body = new Buffer();
-      boolean closeStreamAfterHeaders = body.size() > 0 || !response.getPushPromises().isEmpty();
+
+      Source body = response.getBody();
+      long bodyLength = response.getBodyLength();
+      boolean hasBody = body != null && bodyLength != 0;
+
+      boolean closeStreamAfterHeaders = hasBody || !response.getPushPromises().isEmpty();
       stream.reply(spdyHeaders, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
-      if (body.size() > 0) {
-        if (response.getBodyDelayTimeMs() != 0) {
-          try {
-            Thread.sleep(response.getBodyDelayTimeMs());
-          } catch (InterruptedException e) {
-            throw new AssertionError(e);
-          }
-        }
-        BufferedSink sink = Okio.buffer(stream.getSink());
-        if (response.getThrottleBytesPerPeriod() == Integer.MAX_VALUE) {
-          sink.writeAll(body);
-          sink.flush();
-        } else {
-          while (body.size() > 0) {
-            long toWrite = Math.min(body.size(), response.getThrottleBytesPerPeriod());
-            sink.write(body, toWrite);
-            sink.flush();
-            try {
-              long delayMs = response.getThrottleUnit().toMillis(response.getThrottlePeriod());
-              if (delayMs != 0) Thread.sleep(delayMs);
-            } catch (InterruptedException e) {
-              throw new AssertionError();
-            }
-          }
-        }
+      if (hasBody) {
+        sleepIfDelayed(response);
+        BufferedSink sink = Okio.buffer(new ThrottledSink(stream.getSink(), response));
+        sink.writeAll(body);
         sink.close();
       } else if (closeStreamAfterHeaders) {
         stream.close(ErrorCode.NO_ERROR);
@@ -806,22 +780,20 @@ public final class MockWebServer {
             : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));
         pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
         pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
-        for (int i = 0, size = pushPromise.getHeaders().size(); i < size; i++) {
-          String header = pushPromise.getHeaders().get(i);
-          String[] headerParts = header.split(":", 2);
-          if (headerParts.length != 2) {
-            throw new AssertionError("Unexpected header: " + header);
-          }
-          pushedHeaders.add(new Header(headerParts[0], headerParts[1].trim()));
+        Headers pushPromiseHeaders = pushPromise.getHeaders();
+        for (int i = 0, size = pushPromiseHeaders.size(); i < size; i++) {
+          pushedHeaders.add(new Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)));
         }
         String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-        requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
-            Util.EMPTY_BYTE_ARRAY, sequenceNumber.getAndIncrement(), socket));
-        Buffer pushedBody = pushPromise.getResponse().getBody();
-        SpdyStream pushedStream =
-            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.size() > 0);
-        writeResponse(pushedStream, pushPromise.getResponse());
+        requestQueue.add(new RecordedRequest(requestLine, pushPromiseHeaders, chunkSizes, 0,
+            new Buffer(), sequenceNumber.getAndIncrement(), socket));
+        MockResponse response = pushPromise.getResponse();
+        Source pushedBody = response.getBody();
+        long pushedBodyLength = response.getBodyLength();
+        SpdyStream pushedStream = stream.getConnection()
+            .pushStream(stream.getId(), pushedHeaders, pushedBody != null && pushedBodyLength != 0);
+        writeResponse(pushedStream, response);
       }
     }
   }

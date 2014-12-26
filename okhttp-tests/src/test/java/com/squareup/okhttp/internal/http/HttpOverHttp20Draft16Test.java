@@ -15,11 +15,11 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.PushPromise;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import java.util.Arrays;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -32,8 +32,10 @@ public class HttpOverHttp20Draft16Test extends HttpOverSpdyTest {
   }
 
   @Test public void serverSendsPushPromise_GET() throws Exception {
-    MockResponse response = new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet")
-        .withPush(new PushPromise("GET", "/foo/bar", Arrays.asList("foo: bar"),
+    Headers pushHeaders = new Headers.Builder().add("foo", "bar").build();
+    MockResponse response = new MockResponse().setBody("ABCDE")
+        .setStatus("HTTP/1.1 200 Sweet")
+        .withPush(new PushPromise("GET", "/foo/bar", pushHeaders,
             new MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet")));
     server.enqueue(response);
     server.play();
@@ -45,18 +47,20 @@ public class HttpOverHttp20Draft16Test extends HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": "
-        + server.getHostName() + ":" + server.getPort());
+    assertEquals("https", request.getHeaders().get(":scheme"));
+    assertEquals(server.getHostName() + ":" + server.getPort(),
+        request.getHeaders().get(hostHeader));
 
     RecordedRequest pushedRequest = server.takeRequest();
     assertEquals("GET /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
-    assertEquals(Arrays.asList("foo: bar"), pushedRequest.getHeaders());
+    assertEquals(pushHeaders, pushedRequest.getHeaders());
   }
 
   @Test public void serverSendsPushPromise_HEAD() throws Exception {
-    MockResponse response = new MockResponse().setBody("ABCDE").setStatus("HTTP/1.1 200 Sweet")
-        .withPush(new PushPromise("HEAD", "/foo/bar", Arrays.asList("foo: bar"),
+    Headers pushHeaders = new Headers.Builder().add("foo", "bar").build();
+    MockResponse response = new MockResponse().setBody("ABCDE")
+        .setStatus("HTTP/1.1 200 Sweet")
+        .withPush(new PushPromise("HEAD", "/foo/bar", pushHeaders,
             new MockResponse().setStatus("HTTP/1.1 204 Sweet")));
     server.enqueue(response);
     server.play();
@@ -68,12 +72,12 @@ public class HttpOverHttp20Draft16Test extends HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": "
-        + server.getHostName() + ":" + server.getPort());
+    assertEquals("https", request.getHeaders().get(":scheme"));
+    assertEquals(server.getHostName() + ":" + server.getPort(),
+        request.getHeaders().get(hostHeader));
 
     RecordedRequest pushedRequest = server.takeRequest();
     assertEquals("HEAD /foo/bar HTTP/1.1", pushedRequest.getRequestLine());
-    assertEquals(Arrays.asList("foo: bar"), pushedRequest.getHeaders());
+    assertEquals(pushHeaders, pushedRequest.getHeaders());
   }
 }

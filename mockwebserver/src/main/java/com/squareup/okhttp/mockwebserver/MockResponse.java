@@ -21,6 +21,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.Okio;
+import okio.Source;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
@@ -29,10 +31,8 @@ public final class MockResponse implements Cloneable {
   private String status = "HTTP/1.1 200 OK";
   private List<String> headers = new ArrayList<>();
 
-  /** The response body content, or null if {@code bodyStream} is set. */
-  private Buffer body;
-  /** The response body content, or null if {@code body} is set. */
-  private InputStream bodyStream;
+  private Source body;
+  private long bodyLength = -1L;
 
   private int throttleBytesPerPeriod = Integer.MAX_VALUE;
   private long throttlePeriod = 1;
@@ -127,14 +127,14 @@ public final class MockResponse implements Cloneable {
     return this;
   }
 
-  /** Returns the raw HTTP payload, or null if this response is streamed. */
-  public Buffer getBody() {
-    return body != null ? body.clone() : null; // Defensive copy.
+  /** Returns the raw HTTP payload. */
+  public Source getBody() {
+    return body;
   }
 
-  /** Returns an input stream containing the raw HTTP payload. */
-  InputStream getBodyStream() {
-    return bodyStream != null ? bodyStream : getBody().inputStream();
+  /** Returns the length of {@link #getBody()} or {@code -1} if streamed. */
+  public long getBodyLength() {
+    return bodyLength;
   }
 
   public MockResponse setBody(byte[] body) {
@@ -142,16 +142,17 @@ public final class MockResponse implements Cloneable {
   }
 
   public MockResponse setBody(Buffer body) {
-    setHeader("Content-Length", body.size());
-    this.body = body.clone(); // Defensive copy.
-    this.bodyStream = null;
-    return this;
+    return setBody(body.clone(), body.size());
   }
 
   public MockResponse setBody(InputStream bodyStream, long bodyLength) {
+    return setBody(Okio.source(bodyStream), bodyLength);
+  }
+
+  public MockResponse setBody(Source body, long bodyLength) {
     setHeader("Content-Length", bodyLength);
-    this.body = null;
-    this.bodyStream = bodyStream;
+    this.bodyLength = bodyLength;
+    this.body = body;
     return this;
   }
 
@@ -179,6 +180,7 @@ public final class MockResponse implements Cloneable {
     bytesOut.writeUtf8("0\r\n\r\n"); // Last chunk + empty trailer + CRLF.
 
     this.body = bytesOut;
+    this.bodyLength = -1L; // Streamed
     return this;
   }
 
