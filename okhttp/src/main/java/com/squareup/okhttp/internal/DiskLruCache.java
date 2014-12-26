@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -154,9 +155,8 @@ public final class DiskLruCache implements Closeable {
    */
   private long nextSequenceNumber = 0;
 
-  /** This cache uses a single background thread to evict entries. */
-  final ThreadPoolExecutor executorService = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
-      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
+  /** Used to run 'cleanupRunnable' for journal rebuilds. */
+  private final Executor executor;
   private final Runnable cleanupRunnable = new Runnable() {
     public void run() {
       synchronized (DiskLruCache.this) {
@@ -176,7 +176,7 @@ public final class DiskLruCache implements Closeable {
     }
   };
 
-  private DiskLruCache(File directory, int appVersion, int valueCount, long maxSize) {
+  DiskLruCache(File directory, int appVersion, int valueCount, long maxSize, Executor executor) {
     this.directory = directory;
     this.appVersion = appVersion;
     this.journalFile = new File(directory, JOURNAL_FILE);
@@ -184,6 +184,36 @@ public final class DiskLruCache implements Closeable {
     this.journalFileBackup = new File(directory, JOURNAL_FILE_BACKUP);
     this.valueCount = valueCount;
     this.maxSize = maxSize;
+    this.executor = executor;
+  }
+
+  // Visible for testing.
+  void initialize() throws IOException {
+    // If a bkp file exists, use it instead.
+    if (journalFileBackup.exists()) {
+      // If journal file also exists just delete backup file.
+      if (journalFile.exists()) {
+        journalFileBackup.delete();
+      } else {
+        renameTo(journalFileBackup, journalFile, false);
+      }
+    }
+
+    // Prefer to pick up where we left off.
+    if (journalFile.exists()) {
+      try {
+        readJournal();
+        processJournal();
+        return;
+      } catch (IOException journalIsCorrupt) {
+        Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
+            + journalIsCorrupt.getMessage() + ", removing");
+        delete();
+      }
+    }
+
+    directory.mkdirs();
+    rebuildJournal();
   }
 
   /**
@@ -204,36 +234,12 @@ public final class DiskLruCache implements Closeable {
       throw new IllegalArgumentException("valueCount <= 0");
     }
 
-    // If a bkp file exists, use it instead.
-    File backupFile = new File(directory, JOURNAL_FILE_BACKUP);
-    if (backupFile.exists()) {
-      File journalFile = new File(directory, JOURNAL_FILE);
-      // If journal file also exists just delete backup file.
-      if (journalFile.exists()) {
-        backupFile.delete();
-      } else {
-        renameTo(backupFile, journalFile, false);
-      }
-    }
+    // Use a single background thread to evict entries.
+    Executor executor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
 
-    // Prefer to pick up where we left off.
-    DiskLruCache cache = new DiskLruCache(directory, appVersion, valueCount, maxSize);
-    if (cache.journalFile.exists()) {
-      try {
-        cache.readJournal();
-        cache.processJournal();
-        return cache;
-      } catch (IOException journalIsCorrupt) {
-        Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
-            + journalIsCorrupt.getMessage() + ", removing");
-        cache.delete();
-      }
-    }
-
-    // Create a new empty cache.
-    directory.mkdirs();
-    cache = new DiskLruCache(directory, appVersion, valueCount, maxSize);
-    cache.rebuildJournal();
+    DiskLruCache cache = new DiskLruCache(directory, appVersion, valueCount, maxSize, executor);
+    cache.initialize();
     return cache;
   }
 
@@ -363,7 +369,7 @@ public final class DiskLruCache implements Closeable {
         } else {
           writer.writeUtf8(CLEAN).writeByte(' ');
           writer.writeUtf8(entry.key);
-          writer.writeUtf8(entry.getLengths());
+          entry.writeLengths(writer);
           writer.writeByte('\n');
         }
       }
@@ -436,7 +442,7 @@ public final class DiskLruCache implements Closeable {
     redundantOpCount++;
     journalWriter.writeUtf8(READ).writeByte(' ').writeUtf8(key).writeByte('\n');
     if (journalRebuildRequired()) {
-      executorService.execute(cleanupRunnable);
+      executor.execute(cleanupRunnable);
     }
 
     return new Snapshot(key, entry.sequenceNumber, sources, entry.lengths);
@@ -493,7 +499,7 @@ public final class DiskLruCache implements Closeable {
    */
   public synchronized void setMaxSize(long maxSize) {
     this.maxSize = maxSize;
-    executorService.execute(cleanupRunnable);
+    executor.execute(cleanupRunnable);
   }
 
   /**
@@ -547,7 +553,7 @@ public final class DiskLruCache implements Closeable {
       entry.readable = true;
       journalWriter.writeUtf8(CLEAN).writeByte(' ');
       journalWriter.writeUtf8(entry.key);
-      journalWriter.writeUtf8(entry.getLengths());
+      entry.writeLengths(journalWriter);
       journalWriter.writeByte('\n');
       if (success) {
         entry.sequenceNumber = nextSequenceNumber++;
@@ -561,7 +567,7 @@ public final class DiskLruCache implements Closeable {
     journalWriter.flush();
 
     if (size > maxSize || journalRebuildRequired()) {
-      executorService.execute(cleanupRunnable);
+      executor.execute(cleanupRunnable);
     }
   }
 
@@ -607,7 +613,7 @@ public final class DiskLruCache implements Closeable {
     lruEntries.remove(entry.key);
 
     if (journalRebuildRequired()) {
-      executorService.execute(cleanupRunnable);
+      executor.execute(cleanupRunnable);
     }
 
     return true;
@@ -943,14 +949,6 @@ public final class DiskLruCache implements Closeable {
       }
     }
 
-    public String getLengths() throws IOException {
-      StringBuilder result = new StringBuilder();
-      for (long size : lengths) {
-        result.append(' ').append(size);
-      }
-      return result.toString();
-    }
-
     /** Set lengths using decimal numbers like "10123". */
     private void setLengths(String[] strings) throws IOException {
       if (strings.length != valueCount) {
@@ -963,6 +961,13 @@ public final class DiskLruCache implements Closeable {
         }
       } catch (NumberFormatException e) {
         throw invalidLengths(strings);
+      }
+    }
+
+    /** Append space-prefixed lengths to {@code writer}. */
+    void writeLengths(BufferedSink writer) throws IOException {
+      for (long length : lengths) {
+        writer.writeByte(' ').writeUtf8(Long.toString(length));
       }
     }
 
