@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
@@ -424,6 +425,26 @@ public abstract class HttpOverSpdyTest {
     assertContainsNoneMatching(requestA.getHeaders(), "Cookie.*");
     RecordedRequest requestB = server.takeRequest();
     assertContains(requestB.getHeaders(), "cookie: c=oreo");
+  }
+
+  /** https://github.com/square/okhttp/issues/1191 */
+  @Test public void disconnectWithStreamNotEstablished() throws Exception {
+    ConnectionPool connectionPool = new ConnectionPool(5, 5000);
+    client.client().setConnectionPool(connectionPool);
+
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.play();
+
+    // Disconnect before the stream is created. A connection is still established!
+    HttpURLConnection connection1 = client.open(server.getUrl("/"));
+    connection1.connect();
+    connection1.disconnect();
+
+    // That connection is pooled, and it works.
+    assertEquals(1, connectionPool.getSpdyConnectionCount());
+    HttpURLConnection connection2 = client.open(server.getUrl("/"));
+    assertContent("abc", connection2, 3);
+    assertEquals(0, server.takeRequest().getSequenceNumber());
   }
 
   <T> void assertContains(Collection<T> collection, T value) {

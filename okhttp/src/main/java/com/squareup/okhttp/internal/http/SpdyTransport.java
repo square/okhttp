@@ -212,7 +212,7 @@ public final class SpdyTransport implements Transport {
   }
 
   @Override public void disconnect(HttpEngine engine) throws IOException {
-    stream.close(ErrorCode.CANCEL);
+    if (stream != null) stream.close(ErrorCode.CANCEL);
   }
 
   @Override public boolean canReuseConnection() {
