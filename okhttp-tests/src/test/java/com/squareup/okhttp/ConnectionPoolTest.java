@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import org.junit.After;
@@ -53,6 +54,7 @@ public final class ConnectionPoolTest {
   private InetSocketAddress httpSocketAddress;
 
   private ConnectionPool pool;
+  private FakeExecutor cleanupExecutor;
   private Connection httpA;
   private Connection httpB;
   private Connection httpC;
@@ -96,6 +98,9 @@ public final class ConnectionPoolTest {
     Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress,
         ConnectionSpec.MODERN_TLS);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
+    // Disable the automatic execution of the cleanup.
+    cleanupExecutor = new FakeExecutor();
+    pool.replaceCleanupExecutorForTests(cleanupExecutor);
     httpA = new Connection(pool, httpRoute);
     httpA.connect(200, 200, 200, null);
     httpB = new Connection(pool, httpRoute);
@@ -160,10 +165,31 @@ public final class ConnectionPoolTest {
     assertNull(recycledConnection);
   }
 
+  @Test public void getDoesNotScheduleCleanup() {
+    Connection connection = pool.get(httpAddress);
+    assertNull(connection);
+    cleanupExecutor.assertExecutionScheduled(false);
+  }
+
+  @Test public void recycleSchedulesCleanup() {
+    cleanupExecutor.assertExecutionScheduled(false);
+    pool.recycle(httpA);
+    cleanupExecutor.assertExecutionScheduled(true);
+  }
+
+  @Test public void shareSchedulesCleanup() {
+    cleanupExecutor.assertExecutionScheduled(false);
+    pool.share(spdyA);
+    cleanupExecutor.assertExecutionScheduled(true);
+  }
+
   @Test public void poolPrefersMostRecentlyRecycled() throws Exception {
     pool.recycle(httpA);
     pool.recycle(httpB);
     pool.recycle(httpC);
+    assertPooled(pool, httpC, httpB, httpA);
+
+    pool.performCleanup();
     assertPooled(pool, httpC, httpB);
   }
 
@@ -179,10 +205,18 @@ public final class ConnectionPoolTest {
     assertPooled(pool);
   }
 
-  @Test public void idleConnectionNotReturned() throws Exception {
+  @Test public void expiredConnectionNotReturned() throws Exception {
     pool.recycle(httpA);
+
+    // Allow enough time to pass so that the connection is now expired.
     Thread.sleep(KEEP_ALIVE_DURATION_MS * 2);
+
+    // The connection is held, but will not be returned.
     assertNull(pool.get(httpAddress));
+    assertPooled(pool, httpA);
+
+    // The connection must be cleaned up.
+    pool.performCleanup();
     assertPooled(pool);
   }
 
@@ -191,21 +225,35 @@ public final class ConnectionPoolTest {
     pool.recycle(httpB);
     pool.recycle(httpC);
     pool.recycle(httpD);
+    assertPooled(pool, httpD, httpC, httpB, httpA);
+
+    pool.performCleanup();
     assertPooled(pool, httpD, httpC);
   }
 
   @Test public void expiredConnectionsAreEvicted() throws Exception {
     pool.recycle(httpA);
     pool.recycle(httpB);
+
+    // Allow enough time to pass so that the connections are now expired.
     Thread.sleep(2 * KEEP_ALIVE_DURATION_MS);
-    pool.get(spdyAddress); // Force the cleanup callable to run.
+    assertPooled(pool, httpB, httpA);
+
+    // The connections must be cleaned up.
+    pool.performCleanup();
     assertPooled(pool);
   }
 
   @Test public void nonAliveConnectionNotReturned() throws Exception {
     pool.recycle(httpA);
+
+    // Close the connection. It is an ex-connection. It has ceased to be.
     httpA.getSocket().close();
+    assertPooled(pool, httpA);
     assertNull(pool.get(httpAddress));
+
+    // The connection must be cleaned up.
+    pool.performCleanup();
     assertPooled(pool);
   }
 
@@ -233,6 +281,10 @@ public final class ConnectionPoolTest {
     httpA.getSocket().shutdownInput();
     pool.recycle(httpA); // Should close httpA.
     assertTrue(httpA.getSocket().isClosed());
+
+    // The pool should remain empty, and there is no need to schedule a cleanup.
+    assertPooled(pool);
+    cleanupExecutor.assertExecutionScheduled(false);
   }
 
   @Test public void shareHttpConnectionFails() throws Exception {
@@ -241,32 +293,43 @@ public final class ConnectionPoolTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+    // The pool should remain empty, and there is no need to schedule a cleanup.
     assertPooled(pool);
+    cleanupExecutor.assertExecutionScheduled(false);
   }
 
   @Test public void recycleSpdyConnectionDoesNothing() throws Exception {
     pool.recycle(spdyA);
+    // The pool should remain empty, and there is no need to schedule the cleanup.
     assertPooled(pool);
+    cleanupExecutor.assertExecutionScheduled(false);
   }
 
   @Test public void validateIdleSpdyConnectionTimeout() throws Exception {
     pool.share(spdyA);
-    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
-    assertNull(pool.get(httpAddress));
+    assertPooled(pool, spdyA); // Connection should be in the pool.
+
+    Thread.sleep((long) (KEEP_ALIVE_DURATION_MS * 0.7));
+    pool.performCleanup();
     assertPooled(pool, spdyA); // Connection should still be in the pool.
-    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.4));
-    assertNull(pool.get(httpAddress));
-    assertPooled(pool);
+
+    Thread.sleep((long) (KEEP_ALIVE_DURATION_MS * 0.4));
+    pool.performCleanup();
+    assertPooled(pool); // Connection should have been removed.
   }
 
   @Test public void validateIdleHttpConnectionTimeout() throws Exception {
     pool.recycle(httpA);
-    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.7));
-    assertNull(pool.get(spdyAddress));
+    assertPooled(pool, httpA); // Connection should be in the pool.
+    cleanupExecutor.assertExecutionScheduled(true);
+
+    Thread.sleep((long) (KEEP_ALIVE_DURATION_MS * 0.7));
+    pool.performCleanup();
     assertPooled(pool, httpA); // Connection should still be in the pool.
-    Thread.sleep((int) (KEEP_ALIVE_DURATION_MS * 0.4));
-    assertNull(pool.get(spdyAddress));
-    assertPooled(pool);
+
+    Thread.sleep((long) (KEEP_ALIVE_DURATION_MS * 0.4));
+    pool.performCleanup();
+    assertPooled(pool); // Connection should have been removed.
   }
 
   @Test public void maxConnections() throws IOException, InterruptedException {
@@ -285,21 +348,33 @@ public final class ConnectionPoolTest {
     assertEquals(2, pool.getHttpConnectionCount());
     assertEquals(0, pool.getMultiplexedConnectionCount());
 
-    // http C should be added and http A should be removed.
+    // http C should be added
     pool.recycle(httpC);
-    Thread.sleep(50);
+    assertEquals(3, pool.getConnectionCount());
+    assertEquals(3, pool.getHttpConnectionCount());
+    assertEquals(0, pool.getSpdyConnectionCount());
+
+    pool.performCleanup();
+
+    // http A should be removed by cleanup.
     assertEquals(2, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
     assertEquals(0, pool.getMultiplexedConnectionCount());
 
-    // spdy A should be added and http B should be removed.
+    // spdy A should be added
     pool.share(spdyA);
-    Thread.sleep(50);
+    assertEquals(3, pool.getConnectionCount());
+    assertEquals(2, pool.getHttpConnectionCount());
+    assertEquals(1, pool.getSpdyConnectionCount());
+
+    pool.performCleanup();
+
+    // http B should be removed by cleanup.
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    // http C should be removed from the pool.
+    // http C should be returned.
     Connection recycledHttpConnection = pool.get(httpAddress);
     recycledHttpConnection.setOwner(owner);
     assertNotNull(recycledHttpConnection);
@@ -308,7 +383,7 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    // spdy A will be returned and kept in the pool.
+    // spdy A will be returned but also kept in the pool.
     Connection sharedSpdyConnection = pool.get(spdyAddress);
     assertNotNull(sharedSpdyConnection);
     assertEquals(spdyA, sharedSpdyConnection);
@@ -316,9 +391,8 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    // Nothing should change.
+    // http C should be added to the pool
     pool.recycle(httpC);
-    Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
@@ -331,7 +405,7 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    // spdy A will be returned and kept in the pool. Pool shouldn't change.
+    // spdy A will be returned but also kept in the pool.
     sharedSpdyConnection = pool.get(spdyAddress);
     assertEquals(spdyA, sharedSpdyConnection);
     assertNotNull(sharedSpdyConnection);
@@ -341,51 +415,52 @@ public final class ConnectionPoolTest {
 
     // http D should be added to the pool.
     pool.recycle(httpD);
-    Thread.sleep(50);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    // http E should be added to the pool. spdy A should be removed from the pool.
+    // http E should be added to the pool.
     pool.recycle(httpE);
-    Thread.sleep(50);
+    assertEquals(3, pool.getConnectionCount());
+    assertEquals(2, pool.getHttpConnectionCount());
+    assertEquals(1, pool.getSpdyConnectionCount());
+
+    pool.performCleanup();
+
+    // spdy A should be removed from the pool by cleanup.
     assertEquals(2, pool.getConnectionCount());
     assertEquals(2, pool.getHttpConnectionCount());
     assertEquals(0, pool.getMultiplexedConnectionCount());
   }
 
-  @Test public void connectionCleanup() throws IOException, InterruptedException {
+  @Test public void connectionCleanup() throws Exception {
     ConnectionPool pool = new ConnectionPool(10, KEEP_ALIVE_DURATION_MS);
 
     // Add 3 connections to the pool.
     pool.recycle(httpA);
     pool.recycle(httpB);
     pool.share(spdyA);
-    assertEquals(3, pool.getConnectionCount());
-    assertEquals(2, pool.getHttpConnectionCount());
-    assertEquals(1, pool.getMultiplexedConnectionCount());
 
     // Kill http A.
     Util.closeQuietly(httpA.getSocket());
 
-    // Force pool to run a clean up.
-    assertNotNull(pool.get(spdyAddress));
-    Thread.sleep(50);
+    assertEquals(3, pool.getConnectionCount());
+    assertEquals(2, pool.getHttpConnectionCount());
+    assertEquals(1, pool.getSpdyConnectionCount());
 
+    // Http A should be removed.
+    pool.performCleanup();
+    assertPooled(pool, spdyA, httpB);
     assertEquals(2, pool.getConnectionCount());
     assertEquals(1, pool.getHttpConnectionCount());
     assertEquals(1, pool.getMultiplexedConnectionCount());
 
-    Thread.sleep(KEEP_ALIVE_DURATION_MS);
-    // Force pool to run a clean up.
-    assertNull(pool.get(httpAddress));
-    assertNull(pool.get(spdyAddress));
+    // Now let enough time pass for the connections to expire.
+    Thread.sleep(2 * KEEP_ALIVE_DURATION_MS);
 
-    Thread.sleep(50);
-
+    // All remaining connections should be removed.
+    pool.performCleanup();
     assertEquals(0, pool.getConnectionCount());
-    assertEquals(0, pool.getHttpConnectionCount());
-    assertEquals(0, pool.getMultiplexedConnectionCount());
   }
 
   @Test public void evictAllConnections() throws Exception {
@@ -421,7 +496,57 @@ public final class ConnectionPoolTest {
     }
   }
 
+  @Test public void cleanupRunnableStopsEventually() throws Exception {
+    pool.recycle(httpA);
+    pool.share(spdyA);
+    assertPooled(pool, spdyA, httpA);
+
+    // The cleanup should terminate once the pool is empty again.
+    cleanupExecutor.fakeExecute();
+    assertPooled(pool);
+
+    cleanupExecutor.assertExecutionScheduled(false);
+
+    // Adding a new connection should cause the cleanup to start up again.
+    pool.recycle(httpB);
+
+    cleanupExecutor.assertExecutionScheduled(true);
+
+    // The cleanup should terminate once the pool is empty again.
+    cleanupExecutor.fakeExecute();
+    assertPooled(pool);
+  }
+
   private void assertPooled(ConnectionPool pool, Connection... connections) throws Exception {
     assertEquals(Arrays.asList(connections), pool.getConnections());
+  }
+
+  /**
+   * An executor that does not actually execute anything by default. See
+   * {@link #fakeExecute()}.
+   */
+  private static class FakeExecutor implements Executor {
+
+    private Runnable runnable;
+    
+    @Override
+    public void execute(Runnable runnable) {
+      // This is a bonus assertion for the invariant: At no time should two runnables be scheduled.
+      assertNull(this.runnable);
+      this.runnable = runnable;
+    }
+
+    public void assertExecutionScheduled(boolean expected) {
+      assertEquals(expected, runnable != null);
+    }
+
+    /**
+     * Executes the runnable.
+     */
+    public void fakeExecute() {
+      Runnable toRun = this.runnable;
+      this.runnable = null;
+      toRun.run();
+    }
   }
 }
