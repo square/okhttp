@@ -106,7 +106,7 @@ public final class ConnectionPool {
         performCleanup();
 
         // See whether this runnable should continue executing.
-        synchronized(ConnectionPool.this) {
+        synchronized (ConnectionPool.this) {
           if (connections.size() == 0) {
             draining = false;
             return;
@@ -271,7 +271,7 @@ public final class ConnectionPool {
   /** Performs a single round of pool cleanup. */
   // VisibleForTesting
   void performCleanup() {
-    List<Connection>expiredConnections = new ArrayList<>(MAX_CONNECTIONS_TO_CLEANUP);
+    List<Connection> expiredConnections = new ArrayList<>(MAX_CONNECTIONS_TO_CLEANUP);
     int idleConnectionCount = 0;
     synchronized (this) {
       for (ListIterator<Connection> i = connections.listIterator(connections.size());
@@ -316,9 +316,8 @@ public final class ConnectionPool {
    * Returns a snapshot of the connections in this pool, ordered from newest to
    * oldest. Only use in tests.
    */
-  List<Connection> getConnections() {
-    synchronized (this) {
-      return new ArrayList<>(connections);
-    }
+  // VisibleForTesting
+  synchronized List<Connection> getConnections() {
+    return new ArrayList<>(connections);
   }
 }
