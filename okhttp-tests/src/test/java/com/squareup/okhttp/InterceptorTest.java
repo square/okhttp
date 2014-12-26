@@ -378,7 +378,7 @@ public final class InterceptorTest {
         return original.contentType();
       }
 
-      @Override public long contentLength() {
+      @Override public long contentLength() throws IOException {
         return original.contentLength();
       }
 

@@ -33,7 +33,7 @@ public class MainTest {
     assertNull(request.body());
   }
 
-  @Test public void put() {
+  @Test public void put() throws IOException {
     Request request = fromArgs("-X", "PUT", "http://example.com").createRequest();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com", request.urlString());

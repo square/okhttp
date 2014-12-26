@@ -46,8 +46,7 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
-    assertEquals(53, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    assertEquals(-1L, requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -77,8 +76,7 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
-    assertEquals(112, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    assertEquals(-1L, requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -92,7 +90,6 @@ public final class MultipartBuilderTest {
         + "--AaB03x\r\n"
         + "Content-Disposition: form-data; name=\"files\"\r\n"
         + "Content-Type: multipart/mixed; boundary=BbC04y\r\n"
-        + "Content-Length: 337\r\n"
         + "\r\n"
         + "--BbC04y\r\n"
         + "Content-Disposition: file; filename=\"file1.txt\"\r\n"
@@ -134,8 +131,7 @@ public final class MultipartBuilderTest {
 
     Buffer buffer = new Buffer();
     requestBody.writeTo(buffer);
-    assertEquals(568, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    assertEquals(-1L, requestBody.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 

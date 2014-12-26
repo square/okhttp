@@ -31,7 +31,7 @@ public abstract class RequestBody {
    * Returns the number of bytes that will be written to {@code out} in a call
    * to {@link #writeTo}, or -1 if that count is unknown.
    */
-  public long contentLength() {
+  public long contentLength() throws IOException {
     return -1;
   }
 
