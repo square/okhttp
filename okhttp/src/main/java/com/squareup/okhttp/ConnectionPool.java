@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -78,39 +78,50 @@ public final class ConnectionPool {
 
   private final LinkedList<Connection> connections = new LinkedList<>();
 
-  /** We use a single background thread to cleanup expired connections. */
-  private final ExecutorService executorService = new ThreadPoolExecutor(0, 1,
-      60L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
-      Util.threadFactory("OkHttp ConnectionPool", true));
+  /**
+   * A background thread is used to cleanup expired connections. There will be, at most, a single
+   * thread running per connection pool.
+   *
+   * <p>A {@link ThreadPoolExecutor} is used and not a
+   * {@link java.util.concurrent.ScheduledThreadPoolExecutor}; ScheduledThreadPoolExecutors do not
+   * shrink. This executor shrinks the thread pool after a period of inactivity, and starts threads
+   * as needed. Delays are instead handled by the {@link #connectionsCleanupRunnable}. It is
+   * important that the {@link #connectionsCleanupRunnable} stops eventually, otherwise it will pin
+   * the thread, and thus the connection pool, in memory.
+   */
+  private Executor executor = new ThreadPoolExecutor(
+      0 /* corePoolSize */, 1 /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
+
+  /** {@code true} if the pool is actively draining, {@code false} if it is currently empty. */
+  private boolean draining;
+
   private final Runnable connectionsCleanupRunnable = new Runnable() {
+    // An executing connectionsCleanupRunnable keeps a reference to the enclosing ConnectionPool,
+    // preventing the ConnectionPool from being garbage collected before all held connections have
+    // been explicitly closed. If this was not the case any open connections in the pool would
+    // trigger StrictMode violations in Android when they were garbage collected. http://b/18369687
     @Override public void run() {
-      List<Connection> expiredConnections = new ArrayList<>(MAX_CONNECTIONS_TO_CLEANUP);
-      int idleConnectionCount = 0;
-      synchronized (ConnectionPool.this) {
-        for (ListIterator<Connection> i = connections.listIterator(connections.size());
-            i.hasPrevious(); ) {
-          Connection connection = i.previous();
-          if (!connection.isAlive() || connection.isExpired(keepAliveDurationNs)) {
-            i.remove();
-            expiredConnections.add(connection);
-            if (expiredConnections.size() == MAX_CONNECTIONS_TO_CLEANUP) break;
-          } else if (connection.isIdle()) {
-            idleConnectionCount++;
+      while (true) {
+        performCleanup();
+
+        // See whether this runnable should continue executing.
+        synchronized(ConnectionPool.this) {
+          if (connections.size() == 0) {
+            draining = false;
+            return;
           }
         }
 
-        for (ListIterator<Connection> i = connections.listIterator(connections.size());
-            i.hasPrevious() && idleConnectionCount > maxIdleConnections; ) {
-          Connection connection = i.previous();
-          if (connection.isIdle()) {
-            expiredConnections.add(connection);
-            i.remove();
-            --idleConnectionCount;
-          }
+        // Pause to avoid checking the pool too regularly, which would drain the battery on mobile
+        // devices.
+        try {
+          // Use the keep alive duration as a rough indicator of a good check interval.
+          long keepAliveDurationMillis = keepAliveDurationNs / (1000 * 1000);
+          Thread.sleep(keepAliveDurationMillis);
+        } catch (InterruptedException e) {
+          // Ignored.
         }
-      }
-      for (int i = 0, size = expiredConnections.size(); i < size; i++) {
-        Util.closeQuietly(expiredConnections.get(i).getSocket());
       }
     }
   };
@@ -118,32 +129,6 @@ public final class ConnectionPool {
   public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs) {
     this.maxIdleConnections = maxIdleConnections;
     this.keepAliveDurationNs = keepAliveDurationMs * 1000 * 1000;
-  }
-
-  /**
-   * Returns a snapshot of the connections in this pool, ordered from newest to
-   * oldest. Waits for the cleanup callable to run if it is currently scheduled.
-   */
-  List<Connection> getConnections() {
-    waitForCleanupCallableToRun();
-    synchronized (this) {
-      return new ArrayList<>(connections);
-    }
-  }
-
-  /**
-   * Blocks until the executor service has processed all currently enqueued
-   * jobs.
-   */
-  private void waitForCleanupCallableToRun() {
-    try {
-      executorService.submit(new Runnable() {
-        @Override public void run() {
-        }
-      }).get();
-    } catch (Exception e) {
-      throw new AssertionError();
-    }
   }
 
   public static ConnectionPool getDefault() {
@@ -203,9 +188,9 @@ public final class ConnectionPool {
 
     if (foundConnection != null && foundConnection.isSpdy()) {
       connections.addFirst(foundConnection); // Add it back after iteration.
+      scheduleCleanupAsRequired();
     }
 
-    executorService.execute(connectionsCleanupRunnable);
     return foundConnection;
   }
 
@@ -242,9 +227,8 @@ public final class ConnectionPool {
       connections.addFirst(connection);
       connection.incrementRecycleCount();
       connection.resetIdleStartTime();
+      scheduleCleanupAsRequired();
     }
-
-    executorService.execute(connectionsCleanupRunnable);
   }
 
   /**
@@ -253,10 +237,10 @@ public final class ConnectionPool {
    */
   void share(Connection connection) {
     if (!connection.isSpdy()) throw new IllegalArgumentException();
-    executorService.execute(connectionsCleanupRunnable);
     if (connection.isAlive()) {
       synchronized (this) {
         connections.addFirst(connection);
+        scheduleCleanupAsRequired();
       }
     }
   }
@@ -271,6 +255,70 @@ public final class ConnectionPool {
 
     for (int i = 0, size = connections.size(); i < size; i++) {
       Util.closeQuietly(connections.get(i).getSocket());
+    }
+  }
+
+  // Callers must synchronize on "this".
+  private void scheduleCleanupAsRequired() {
+    if (!draining) {
+      // A new connection has potentially been offered up to an empty / drained pool.
+      // Start the clean-up immediately.
+      draining = true;
+      executor.execute(connectionsCleanupRunnable);
+    }
+  }
+
+  /** Performs a single round of pool cleanup. */
+  // VisibleForTesting
+  void performCleanup() {
+    List<Connection>expiredConnections = new ArrayList<>(MAX_CONNECTIONS_TO_CLEANUP);
+    int idleConnectionCount = 0;
+    synchronized (this) {
+      for (ListIterator<Connection> i = connections.listIterator(connections.size());
+          i.hasPrevious(); ) {
+        Connection connection = i.previous();
+        if (!connection.isAlive() || connection.isExpired(keepAliveDurationNs)) {
+          i.remove();
+          expiredConnections.add(connection);
+          if (expiredConnections.size() == MAX_CONNECTIONS_TO_CLEANUP) {
+            break;
+          }
+        } else if (connection.isIdle()) {
+          idleConnectionCount++;
+        }
+      }
+
+      for (ListIterator<Connection> i = connections.listIterator(connections.size());
+          i.hasPrevious() && idleConnectionCount > maxIdleConnections; ) {
+        Connection connection = i.previous();
+        if (connection.isIdle()) {
+          expiredConnections.add(connection);
+          i.remove();
+          --idleConnectionCount;
+        }
+      }
+    }
+
+    for (Connection expiredConnection : expiredConnections) {
+      Util.closeQuietly(expiredConnection.getSocket());
+    }
+  }
+
+  /**
+   * Replace the default {@link Executor} with a different one. Only use in tests.
+   */
+  // VisibleForTesting
+  void replaceCleanupExecutorForTests(Executor cleanupExecutor) {
+    this.executor = cleanupExecutor;
+  }
+
+  /**
+   * Returns a snapshot of the connections in this pool, ordered from newest to
+   * oldest. Only use in tests.
+   */
+  List<Connection> getConnections() {
+    synchronized (this) {
+      return new ArrayList<>(connections);
     }
   }
 }
