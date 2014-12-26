@@ -23,10 +23,6 @@
       <artifactId>bcprov-jdk15on</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.mortbay.jetty.npn</groupId>
-      <artifactId>npn-boot</artifactId>
-    </dependency>
-    <dependency>
       <groupId>io.airlift</groupId>
       <artifactId>airline</artifactId>
     </dependency>
