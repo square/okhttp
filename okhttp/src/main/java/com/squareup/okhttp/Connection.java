@@ -32,6 +32,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import okio.Source;
 
@@ -236,8 +237,22 @@ public final class Connection {
     // Configure the socket's ciphers, TLS versions, and extensions.
     route.connectionSpec.apply(sslSocket, route);
 
-    // Force handshake. This can throw!
-    sslSocket.startHandshake();
+    try {
+      // Force handshake. This can throw!
+      sslSocket.startHandshake();
+
+      String maybeProtocol;
+      if (route.connectionSpec.supportsTlsExtensions()
+          && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
+        protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
+      }
+    } finally {
+      platform.afterHandshake(sslSocket);
+    }
+
+    logger.info("OkHttp client connection negotiated " + protocol);
+
+    handshake = Handshake.get(sslSocket.getSession());
 
     // Verify that the socket's certificates are acceptable for the target host.
     if (!route.address.hostnameVerifier.verify(route.address.uriHost, sslSocket.getSession())) {
@@ -249,16 +264,7 @@ public final class Connection {
     }
 
     // Check that the certificate pinner is satisfied by the certificates presented.
-    route.address.certificatePinner.check(route.address.uriHost,
-        sslSocket.getSession().getPeerCertificates());
-
-    handshake = Handshake.get(sslSocket.getSession());
-
-    String maybeProtocol;
-    if (route.connectionSpec.supportsTlsExtensions()
-        && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
-      protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
-    }
+    route.address.certificatePinner.check(route.address.uriHost, handshake.peerCertificates());
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
@@ -269,6 +275,8 @@ public final class Connection {
       httpConnection = new HttpConnection(pool, this, socket);
     }
   }
+
+  static Logger logger = Logger.getLogger(Connection.class.getName());
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
   boolean isConnected() {

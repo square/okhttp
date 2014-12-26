@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.Util;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,13 +119,13 @@ public final class CertificatePinner {
    * @throws SSLPeerUnverifiedException if {@code peerCertificates} don't match
    *     the certificates pinned for {@code hostname}.
    */
-  public void check(String hostname, Certificate... peerCertificates)
+  public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
     List<ByteString> pins = hostnameToPins.get(hostname);
     if (pins == null) return;
 
-    for (Certificate c : peerCertificates) {
-      X509Certificate x509Certificate = (X509Certificate) c;
+    for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+      X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
       if (pins.contains(sha1(x509Certificate))) return; // Success!
     }
 
@@ -132,16 +133,22 @@ public final class CertificatePinner {
     StringBuilder message = new StringBuilder()
         .append("Certificate pinning failure!")
         .append("\n  Peer certificate chain:");
-    for (Certificate c : peerCertificates) {
-      X509Certificate x509Certificate = (X509Certificate) c;
+    for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+      X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
       message.append("\n    ").append(pin(x509Certificate))
           .append(": ").append(x509Certificate.getSubjectDN().getName());
     }
     message.append("\n  Pinned certificates for ").append(hostname).append(":");
-    for (ByteString pin : pins) {
-      message.append("\n    sha1/").append(pin.base64());
+    for (int i = 0, size = pins.size(); i < size; i++) {
+      message.append("\n    sha1/").append(pins.get(i).base64());
     }
     throw new SSLPeerUnverifiedException(message.toString());
+  }
+
+  /** @deprecated prefer {@link #check(String, List)}. */
+  public void check(String hostname, Certificate... peerCertificates)
+      throws SSLPeerUnverifiedException {
+    check(hostname, Arrays.asList(peerCertificates));
   }
 
   /**

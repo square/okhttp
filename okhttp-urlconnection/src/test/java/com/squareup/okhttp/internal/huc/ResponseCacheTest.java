@@ -354,7 +354,6 @@ public final class ResponseCacheTest {
       reader.readLine();
       fail("This implementation silently ignored a truncated HTTP body.");
     } catch (IOException expected) {
-        expected.printStackTrace();
     } finally {
       reader.close();
     }
