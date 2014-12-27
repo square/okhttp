@@ -83,6 +83,13 @@ public class Platform {
       List<Protocol> protocols) {
   }
 
+  /**
+   * Called after the TLS handshake to release resources allocated by {@link
+   * #configureTlsExtensions}.
+   */
+  public void afterHandshake(SSLSocket sslSocket) {
+  }
+
   /** Returns the negotiated protocol, or null if no protocol was negotiated. */
   public String getSelectedProtocol(SSLSocket socket) {
     return null;
@@ -128,8 +135,9 @@ public class Platform {
       Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
       Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
       Method getMethod = negoClass.getMethod("get", SSLSocket.class);
+      Method removeMethod = negoClass.getMethod("remove", SSLSocket.class);
       return new JdkWithJettyBootPlatform(
-          putMethod, getMethod, clientProviderClass, serverProviderClass);
+          putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass);
     } catch (ClassNotFoundException ignored) {
     } catch (NoSuchMethodException ignored) { // The ALPN version isn't what we expect.
     }
@@ -239,15 +247,17 @@ public class Platform {
    * OpenJDK 7+ with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
    */
   private static class JdkWithJettyBootPlatform extends Platform {
-    private final Method getMethod;
     private final Method putMethod;
+    private final Method getMethod;
+    private final Method removeMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod,
+    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
         Class<?> clientProviderClass, Class<?> serverProviderClass) {
       this.putMethod = putMethod;
       this.getMethod = getMethod;
+      this.removeMethod = removeMethod;
       this.clientProviderClass = clientProviderClass;
       this.serverProviderClass = serverProviderClass;
     }
@@ -268,6 +278,16 @@ public class Platform {
         throw new AssertionError(e);
       } catch (IllegalAccessException e) {
         throw new AssertionError(e);
+      }
+    }
+
+    @Override public void afterHandshake(SSLSocket sslSocket) {
+      try {
+        removeMethod.invoke(null, sslSocket);
+      } catch (IllegalAccessException ignored) {
+        throw new AssertionError();
+      } catch (InvocationTargetException ignored) {
+        throw new AssertionError();
       }
     }
 
