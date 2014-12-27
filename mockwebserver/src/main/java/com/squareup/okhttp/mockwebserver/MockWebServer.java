@@ -276,13 +276,13 @@ public final class MockWebServer {
     executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
       @Override protected void execute() {
         try {
+          logger.info(MockWebServer.this + " starting to accept connections");
           acceptConnections();
         } catch (Throwable e) {
-          logger.log(Level.WARNING, "MockWebServer connection failed", e);
+          logger.log(Level.WARNING, MockWebServer.this + " failed unexpectedly", e);
         }
 
-        // This gnarly block of code will release all sockets and all thread,
-        // even if any close fails.
+        // Release all sockets and all threads, even if any close fails.
         Util.closeQuietly(serverSocket);
         for (Iterator<Socket> s = openClientSockets.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
@@ -301,6 +301,7 @@ public final class MockWebServer {
           try {
             socket = serverSocket.accept();
           } catch (SocketException e) {
+            logger.info(MockWebServer.this + " done accepting connections: " + e.getMessage());
             return;
           }
           SocketPolicy socketPolicy = dispatcher.peek().getSocketPolicy();
@@ -317,11 +318,8 @@ public final class MockWebServer {
   }
 
   public void shutdown() throws IOException {
-    if (serverSocket == null) return;
-
     // Cause acceptConnections() to break out.
     serverSocket.close();
-    serverSocket = null;
 
     // Await shutdown.
     try {
@@ -341,7 +339,8 @@ public final class MockWebServer {
         try {
           processConnection();
         } catch (Exception e) {
-          logger.log(Level.WARNING, "MockWebServer connection failed", e);
+          logger.log(Level.WARNING, MockWebServer.this + " connection from "
+              + raw.getInetAddress() + " failed", e);
         }
       }
 
@@ -398,7 +397,8 @@ public final class MockWebServer {
         }
 
         if (sequenceNumber == 0) {
-          logger.warning("MockWebServer connection didn't make a request");
+          logger.warning(MockWebServer.this + " connection from " + raw.getInetAddress()
+              + " didn't make a request");
         }
 
         in.close();
@@ -446,7 +446,8 @@ public final class MockWebServer {
           socket.shutdownOutput();
         }
         if (logger.isLoggable(Level.INFO)) {
-          logger.info("Received request: " + request + " and responded: " + response);
+          logger.info(MockWebServer.this + " received request: " + request
+              + " and responded: " + response);
         }
         sequenceNumber++;
         return true;
@@ -650,6 +651,10 @@ public final class MockWebServer {
     this.dispatcher = dispatcher;
   }
 
+  @Override public String toString() {
+    return "MockWebServer[" + port + "]";
+  }
+
   /** An output stream that drops data after bodyLimit bytes. */
   private class TruncatingOutputStream extends ByteArrayOutputStream {
     private long numBytesReceived = 0;
@@ -689,8 +694,8 @@ public final class MockWebServer {
       }
       writeResponse(stream, response);
       if (logger.isLoggable(Level.INFO)) {
-        logger.info("Received request: " + request + " and responded: " + response
-            + " protocol is " + protocol.toString());
+        logger.info(MockWebServer.this + " received request: " + request
+            + " and responded: " + response + " protocol is " + protocol.toString());
       }
     }
 

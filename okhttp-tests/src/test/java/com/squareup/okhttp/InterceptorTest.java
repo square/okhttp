@@ -120,7 +120,6 @@ public final class InterceptorTest {
       client.newCall(request).execute();
       fail();
     } catch (IllegalStateException expected) {
-      expected.printStackTrace();
       assertEquals("network interceptor " + interceptor + " must call proceed() exactly once",
           expected.getMessage());
     }
