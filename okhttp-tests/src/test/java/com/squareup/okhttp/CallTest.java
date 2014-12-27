@@ -22,9 +22,9 @@ import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +55,6 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -64,10 +63,12 @@ import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
 
 import static com.squareup.okhttp.internal.Internal.logger;
-import static java.lang.Thread.UncaughtExceptionHandler;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -77,19 +78,18 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CallTest {
-  private MockWebServer server = new MockWebServer();
-  private MockWebServer server2 = new MockWebServer();
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
+
+  @Rule public TestRule timeout = new Timeout(30_000);
+
+  @Rule public MockWebServerRule server = new MockWebServerRule();
+  @Rule public MockWebServerRule server2 = new MockWebServerRule();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
-  private UncaughtExceptionHandler defaultUncaughtExceptionHandler;
-
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
   private Cache cache;
 
   @Before public void setUp() throws Exception {
-    server = new MockWebServer();
-    server2 = new MockWebServer();
     client = new OkHttpClient();
     callback = new RecordingCallback();
     logHandler = new TestLogHandler();
@@ -97,21 +97,16 @@ public final class CallTest {
     String tmp = System.getProperty("java.io.tmpdir");
     File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
     cache = new Cache(cacheDir, Integer.MAX_VALUE);
-    defaultUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
     logger.addHandler(logHandler);
   }
 
   @After public void tearDown() throws Exception {
-    server.shutdown();
-    server2.shutdown();
     cache.delete();
-    Thread.setDefaultUncaughtExceptionHandler(defaultUncaughtExceptionHandler);
     logger.removeHandler(logHandler);
   }
 
   @Test public void get() throws Exception {
     server.enqueue(new MockResponse().setBody("abc").addHeader("Content-Type: text/plain"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -133,7 +128,6 @@ public final class CallTest {
 
   @Test public void lazilyEvaluateRequestUrl() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request1 = new Request.Builder()
         .url("foo://bar?baz")
@@ -161,7 +155,6 @@ public final class CallTest {
 
   @Test public void getReturns500() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(500));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -184,7 +177,6 @@ public final class CallTest {
 
   @Test public void getWithRequestBody() throws Exception {
     server.enqueue(new MockResponse());
-    server.play();
 
     try {
       new Request.Builder().method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"));
@@ -195,7 +187,6 @@ public final class CallTest {
 
   @Test public void head() throws Exception {
     server.enqueue(new MockResponse().addHeader("Content-Type: text/plain"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -226,7 +217,6 @@ public final class CallTest {
 
   @Test public void post() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -256,7 +246,6 @@ public final class CallTest {
 
   @Test public void postZeroLength() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -316,7 +305,6 @@ public final class CallTest {
   private void postBodyRetransmittedAfterAuthorizationFail(String body) throws Exception {
     server.enqueue(new MockResponse().setResponseCode(401));
     server.enqueue(new MockResponse());
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -342,7 +330,6 @@ public final class CallTest {
 
   @Test public void delete() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -372,7 +359,6 @@ public final class CallTest {
 
   @Test public void put() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -402,7 +388,6 @@ public final class CallTest {
 
   @Test public void patch() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -432,7 +417,6 @@ public final class CallTest {
 
   @Test public void unspecifiedRequestBodyContentTypeDoesNotGetDefault() throws Exception {
     server.enqueue(new MockResponse());
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -451,7 +435,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -482,7 +465,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -513,7 +495,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -531,7 +512,6 @@ public final class CallTest {
 
   @Test public void exceptionThrownByOnResponseIsRedactedAndLogged() throws Exception {
     server.enqueue(new MockResponse());
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/secret"))
@@ -555,7 +535,6 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
     server.enqueue(new MockResponse().setBody("ghi"));
-    server.play();
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/a")).build())
         .assertBody("abc");
@@ -575,7 +554,6 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
     server.enqueue(new MockResponse().setBody("ghi"));
-    server.play();
 
     client.newCall(new Request.Builder().url(server.getUrl("/a")).build()).enqueue(callback);
     callback.await(server.getUrl("/a")).assertBody("abc");
@@ -594,7 +572,6 @@ public final class CallTest {
   @Test public void connectionReuseWhenResponseBodyConsumed_Async() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
     client.newCall(request).enqueue(new Callback() {
@@ -621,7 +598,6 @@ public final class CallTest {
   @Test public void timeoutsUpdatedOnReusedConnections() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
-    server.play();
 
     // First request: time out after 1000ms.
     client.setReadTimeout(1000, TimeUnit.MILLISECONDS);
@@ -648,11 +624,10 @@ public final class CallTest {
   }
 
   @Test public void tls() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-    server.play();
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -662,11 +637,10 @@ public final class CallTest {
   }
 
   @Test public void tls_Async() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-    server.play();
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -680,10 +654,9 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -702,9 +675,8 @@ public final class CallTest {
       return;
     }
 
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
-    server.play();
 
     RecordingSSLSocketFactory clientSocketFactory =
         new RecordingSSLSocketFactory(sslContext.getSocketFactory());
@@ -727,10 +699,9 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure_Async() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -746,9 +717,8 @@ public final class CallTest {
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
     client.setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
 
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
-    server.play();
 
     suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -771,7 +741,6 @@ public final class CallTest {
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
 
     server.enqueue(new MockResponse());
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/")).build();
     try {
@@ -783,11 +752,10 @@ public final class CallTest {
   }
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: http://square.com"));
-    server.play();
 
     client.setFollowSslRedirects(false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
@@ -799,10 +767,9 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
-    server.play();
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -812,7 +779,7 @@ public final class CallTest {
     Response response1 = client.newCall(request1).execute();
     CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
     for (Certificate certificate : response1.handshake().peerCertificates()) {
-      certificatePinnerBuilder.add(server.getHostName(), CertificatePinner.pin(certificate));
+      certificatePinnerBuilder.add(server.get().getHostName(), CertificatePinner.pin(certificate));
     }
 
     // Make another request with certificate pinning. It should complete normally.
@@ -823,14 +790,15 @@ public final class CallTest {
   }
 
   @Test public void unmatchingPinnedCertificate() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse());
-    server.play();
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    // Pin publicobject.com's cert.
     client.setCertificatePinner(new CertificatePinner.Builder()
-        .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=") // publicobject.com's cert.
+        .add(server.get().getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
         .build());
 
     // When we pin the wrong certificate, connectivity fails.
@@ -845,7 +813,6 @@ public final class CallTest {
 
   @Test public void post_Async() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -867,7 +834,6 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("def"));
-    server.play();
 
     // Seed the connection pool so we have something that can fail.
     Request request1 = new Request.Builder().url(server.getUrl("/")).build();
@@ -899,7 +865,6 @@ public final class CallTest {
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Charset")
         .setBody("A"));
-    server.play();
 
     client.setCache(cache);
 
@@ -953,7 +918,6 @@ public final class CallTest {
         .clearHeaders()
         .addHeader("Donut: b")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
-    server.play();
 
     client.setCache(cache);
 
@@ -1012,7 +976,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
-    server.play();
 
     client.setCache(cache);
 
@@ -1040,7 +1003,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .addHeader("Donut: b")
         .setBody("B"));
-    server.play();
 
     client.setCache(cache);
 
@@ -1086,7 +1048,6 @@ public final class CallTest {
   @Test public void conditionalCacheMiss_Async() throws Exception {
     server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
     server.enqueue(new MockResponse().setBody("B"));
-    server.play();
 
     client.setCache(cache);
 
@@ -1106,8 +1067,6 @@ public final class CallTest {
   }
 
   @Test public void onlyIfCachedReturns504WhenNotCached() throws Exception {
-    server.play();
-
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
         .header("Cache-Control", "only-if-cached")
@@ -1132,7 +1091,6 @@ public final class CallTest {
         .addHeader("Test", "Redirect from /b to /c")
         .setBody("/b has moved!"));
     server.enqueue(new MockResponse().setBody("C"));
-    server.play();
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/a")).build())
         .assertCode(200)
@@ -1155,7 +1113,6 @@ public final class CallTest {
         .addHeader("Location: /page2")
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("Page 2"));
-    server.play();
 
     Response response = client.newCall(new Request.Builder()
         .url(server.getUrl("/page1"))
@@ -1173,16 +1130,13 @@ public final class CallTest {
 
   @Test public void redirectsDoNotIncludeTooManyCookies() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
-    server2.play();
-
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + server2.getUrl("/")));
-    server.play();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
-    cookie.setDomain(server.getCookieDomain());
+    cookie.setDomain(server.get().getCookieDomain());
     cookie.setPath("/");
     String portList = Integer.toString(server.getPort());
     cookie.setPortlist(portList);
@@ -1196,7 +1150,7 @@ public final class CallTest {
 
     RecordedRequest request1 = server.takeRequest();
     assertContains(request1.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.getCookieDomain()
+        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.get().getCookieDomain()
         + "\";$Port=\"" + portList + "\"");
 
     RecordedRequest request2 = server2.takeRequest();
@@ -1205,14 +1159,11 @@ public final class CallTest {
 
   @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
-    server2.play();
-
     server.enqueue(new MockResponse()
         .setResponseCode(401));
     server.enqueue(new MockResponse()
         .setResponseCode(302)
         .addHeader("Location: " + server2.getUrl("/b")));
-    server.play();
 
     client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
 
@@ -1237,7 +1188,6 @@ public final class CallTest {
         .addHeader("Test", "Redirect from /b to /c")
         .setBody("/b has moved!"));
     server.enqueue(new MockResponse().setBody("C"));
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).build();
     client.newCall(request).enqueue(callback);
@@ -1265,7 +1215,6 @@ public final class CallTest {
           .setBody("Redirecting to /" + (i + 1)));
     }
     server.enqueue(new MockResponse().setBody("Success!"));
-    server.play();
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/0")).build())
         .assertCode(200)
@@ -1280,7 +1229,6 @@ public final class CallTest {
           .setBody("Redirecting to /" + (i + 1)));
     }
     server.enqueue(new MockResponse().setBody("Success!"));
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
     client.newCall(request).enqueue(callback);
@@ -1296,13 +1244,12 @@ public final class CallTest {
           .addHeader("Location: /" + (i + 1))
           .setBody("Redirecting to /" + (i + 1)));
     }
-    server.play();
 
     try {
       client.newCall(new Request.Builder().url(server.getUrl("/0")).build()).execute();
       fail();
-    } catch (IOException e) {
-      assertEquals("Too many redirects: 21", e.getMessage());
+    } catch (IOException expected) {
+      assertEquals("Too many redirects: 21", expected.getMessage());
     }
   }
 
@@ -1313,7 +1260,6 @@ public final class CallTest {
           .addHeader("Location: /" + (i + 1))
           .setBody("Redirecting to /" + (i + 1)));
     }
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
     client.newCall(request).enqueue(callback);
@@ -1321,21 +1267,18 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeExecute() throws Exception {
-    server.play();
-
     Call call = client.newCall(new Request.Builder().url(server.getUrl("/a")).build());
     call.cancel();
 
     try {
       call.execute();
       fail();
-    } catch (IOException e){
+    } catch (IOException expected) {
     }
     assertEquals(0, server.getRequestCount());
   }
 
   @Test public void cancelTagImmediatelyAfterEnqueue() throws Exception {
-    server.play();
     Call call = client.newCall(new Request.Builder()
         .url(server.getUrl("/a"))
         .tag("request")
@@ -1348,7 +1291,6 @@ public final class CallTest {
 
   @Test public void cancelBeforeBodyIsRead() throws Exception {
     server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
-    server.play();
 
     final Call call = client.newCall(new Request.Builder().url(server.getUrl("/a")).build());
     ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -1364,25 +1306,24 @@ public final class CallTest {
     try {
       result.get().body().bytes();
       fail();
-    } catch (IOException e) {
+    } catch (IOException expected) {
     }
     assertEquals(1, server.getRequestCount());
   }
 
   @Test public void cancelInFlightBeforeResponseReadThrowsIOE() throws Exception {
-    server.setDispatcher(new Dispatcher() {
+    server.get().setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
         client.cancel("request");
         return new MockResponse().setBody("A");
       }
     });
-    server.play();
 
     Request request = new Request.Builder().url(server.getUrl("/a")).tag("request").build();
     try {
       client.newCall(request).execute();
       fail();
-    } catch (IOException e) {
+    } catch (IOException expected) {
     }
   }
 
@@ -1402,7 +1343,7 @@ public final class CallTest {
    */
   @Test public void canceledBeforeIOSignalsOnFailure() throws Exception {
     client.getDispatcher().setMaxRequests(1); // Force requests to be executed serially.
-    server.setDispatcher(new Dispatcher() {
+    server.get().setDispatcher(new Dispatcher() {
       char nextResponse = 'A';
 
       @Override public MockResponse dispatch(RecordedRequest request) {
@@ -1410,7 +1351,6 @@ public final class CallTest {
         return new MockResponse().setBody(Character.toString(nextResponse++));
       }
     });
-    server.play();
 
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     client.newCall(requestA).enqueue(callback);
@@ -1418,7 +1358,6 @@ public final class CallTest {
 
     Request requestB = new Request.Builder().url(server.getUrl("/b")).tag("request B").build();
     client.newCall(requestB).enqueue(callback);
-    assertEquals("/b", server.takeRequest().getPath());
 
     callback.await(requestA.url()).assertBody("A");
     // At this point we know the callback is ready, and that it will receive a cancel failure.
@@ -1436,10 +1375,9 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure() throws Exception {
-    server.play();
     Request requestA = new Request.Builder().url(server.getUrl("/a")).tag("request A").build();
     final Call call = client.newCall(requestA);
-    server.setDispatcher(new Dispatcher() {
+    server.get().setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
         call.cancel();
         return new MockResponse().setBody("A");
@@ -1469,7 +1407,6 @@ public final class CallTest {
    */
   @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce() throws Exception {
     server.enqueue(new MockResponse().setBody("A"));
-    server.play();
 
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<String> bodyRef = new AtomicReference<>();
@@ -1520,7 +1457,6 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody(gzippedBody)
         .addHeader("Content-Encoding: gzip"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -1545,7 +1481,6 @@ public final class CallTest {
   @Test public void asyncResponseCanBeConsumedLater() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
-    server.play();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
@@ -1582,7 +1517,6 @@ public final class CallTest {
 
   @Test public void userAgentIsIncludedByDefault() throws Exception {
     server.enqueue(new MockResponse());
-    server.play();
 
     executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
 
@@ -1598,7 +1532,6 @@ public final class CallTest {
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));
-    server.play();
 
     client.setFollowRedirects(false);
     RecordedResponse recordedResponse = executeSynchronously(
@@ -1622,8 +1555,8 @@ public final class CallTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
-    server.useHttps(sslContext.getSocketFactory(), false);
-    server.setProtocols(client.getProtocols());
+    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.get().setProtocols(client.getProtocols());
   }
 
   private Buffer gzip(String data) throws IOException {
