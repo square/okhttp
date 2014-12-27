@@ -147,7 +147,7 @@ public final class RouteSelectorTest {
 
   @Test public void explicitProxyTriesThatProxysAddressesOnly() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator,
-        proxyA, protocols, connectionSpecs);
+        proxyA, protocols, connectionSpecs, proxySelector);
     client.setProxy(proxyA);
     RouteSelector routeSelector = RouteSelector.get(httpRequest, client);
 
@@ -165,7 +165,7 @@ public final class RouteSelectorTest {
 
   @Test public void explicitDirectProxy() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator,
-        NO_PROXY, protocols, connectionSpecs);
+        NO_PROXY, protocols, connectionSpecs, proxySelector);
     client.setProxy(NO_PROXY);
     RouteSelector routeSelector = RouteSelector.get(httpRequest, client);
 
@@ -328,7 +328,7 @@ public final class RouteSelectorTest {
 
   @Test public void multipleProxiesMultipleInetAddressesMultipleConfigurations() throws Exception {
     Address address = new Address(uriHost, uriPort, socketFactory, sslSocketFactory,
-        hostnameVerifier, null, authenticator, null, protocols, connectionSpecs);
+        hostnameVerifier, null, authenticator, null, protocols, connectionSpecs, proxySelector);
     proxySelector.proxies.add(proxyA);
     proxySelector.proxies.add(proxyB);
     RouteSelector routeSelector = RouteSelector.get(httpsRequest, client);
@@ -431,7 +431,7 @@ public final class RouteSelectorTest {
   /** Returns an address that's without an SSL socket factory or hostname verifier. */
   private Address httpAddress() {
     return new Address(uriHost, uriPort, socketFactory, null, null, null, authenticator, null,
-        protocols, connectionSpecs);
+        protocols, connectionSpecs, proxySelector);
   }
 
   private static InetAddress[] makeFakeAddresses(int prefix, int count) {

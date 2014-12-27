@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
 import java.net.Proxy;
+import java.net.ProxySelector;
 import java.util.List;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
@@ -45,15 +46,17 @@ public final class Address {
   final Authenticator authenticator;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
+  final ProxySelector proxySelector;
 
   public Address(String uriHost, int uriPort, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs) {
+      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
     if (protocols == null) throw new IllegalArgumentException("protocols == null");
+    if (proxySelector == null) throw new IllegalArgumentException("proxySelector == null");
     this.proxy = proxy;
     this.uriHost = uriHost;
     this.uriPort = uriPort;
@@ -64,6 +67,7 @@ public final class Address {
     this.authenticator = authenticator;
     this.protocols = Util.immutableList(protocols);
     this.connectionSpecs = Util.immutableList(connectionSpecs);
+    this.proxySelector = proxySelector;
   }
 
   /** Returns the hostname of the origin server. */
@@ -121,10 +125,18 @@ public final class Address {
 
   /**
    * Returns this address's explicitly-specified HTTP proxy, or null to
-   * delegate to the HTTP client's proxy selector.
+   * delegate to the {@linkplain #getProxySelector proxy selector}.
    */
   public Proxy getProxy() {
     return proxy;
+  }
+
+  /**
+   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
+   * selector's proxies are reachable, a direct connection will be attempted.
+   */
+  public ProxySelector getProxySelector() {
+    return proxySelector;
   }
 
   @Override public boolean equals(Object other) {
@@ -137,21 +149,25 @@ public final class Address {
           && equal(this.hostnameVerifier, that.hostnameVerifier)
           && equal(this.certificatePinner, that.certificatePinner)
           && equal(this.authenticator, that.authenticator)
-          && equal(this.protocols, that.protocols);
+          && equal(this.protocols, that.protocols)
+          && equal(this.connectionSpecs, that.connectionSpecs)
+          && equal(this.proxySelector, that.proxySelector);
     }
     return false;
   }
 
   @Override public int hashCode() {
     int result = 17;
+    result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     result = 31 * result + uriHost.hashCode();
     result = 31 * result + uriPort;
     result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);
     result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     result = 31 * result + authenticator.hashCode();
-    result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     result = 31 * result + protocols.hashCode();
+    result = 31 * result + connectionSpecs.hashCode();
+    result = 31 * result + proxySelector.hashCode();
     return result;
   }
 }
