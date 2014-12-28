@@ -20,7 +20,7 @@ package com.squareup.okhttp.internal;
  * Runnable implementation which always sets its thread name.
  */
 public abstract class NamedRunnable implements Runnable {
-  private final String name;
+  protected final String name;
 
   public NamedRunnable(String format, Object... args) {
     this.name = String.format(format, args);
