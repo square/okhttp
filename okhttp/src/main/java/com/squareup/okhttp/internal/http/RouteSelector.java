@@ -18,8 +18,8 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.URI;
@@ -56,7 +55,6 @@ public final class RouteSelector {
   private final URI uri;
   private final Network network;
   private final OkHttpClient client;
-  private final ProxySelector proxySelector;
   private final ConnectionPool pool;
   private final RouteDatabase routeDatabase;
   private final Request request;
@@ -85,7 +83,6 @@ public final class RouteSelector {
     this.address = address;
     this.uri = uri;
     this.client = client;
-    this.proxySelector = client.getProxySelector();
     this.pool = client.getConnectionPool();
     this.routeDatabase = Internal.instance.routeDatabase(client);
     this.network = Internal.instance.network(client);
@@ -112,7 +109,7 @@ public final class RouteSelector {
     Address address = new Address(uriHost, getEffectivePort(request.url()),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionSpecs());
+        client.getConnectionSpecs(), client.getProxySelector());
 
     return new RouteSelector(address, request.uri(), client, request);
   }
@@ -188,9 +185,9 @@ public final class RouteSelector {
     if (Internal.instance.recycleCount(connection) > 0) return;
 
     Route failedRoute = connection.getRoute();
-    if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && proxySelector != null) {
+    if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
-      proxySelector.connectFailed(uri, failedRoute.getProxy().address(), failure);
+      address.getProxySelector().connectFailed(uri, failedRoute.getProxy().address(), failure);
     }
 
     routeDatabase.failed(failedRoute);
@@ -219,7 +216,7 @@ public final class RouteSelector {
       // Try each of the ProxySelector choices until one connection succeeds. If none succeed
       // then we'll try a direct connection below.
       proxies = new ArrayList<>();
-      List<Proxy> selectedProxies = proxySelector.select(uri);
+      List<Proxy> selectedProxies = client.getProxySelector().select(uri);
       if (selectedProxies != null) proxies.addAll(selectedProxies);
       // Finally try a direct connection. We only try it once!
       proxies.removeAll(Collections.singleton(Proxy.NO_PROXY));
