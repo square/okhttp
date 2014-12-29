@@ -132,9 +132,12 @@ public final class UrlConnectionCacheTest {
     assertCached(false, 207);
     assertCached(true, 300);
     assertCached(true, 301);
-    for (int i = 302; i <= 307; ++i) {
-      assertCached(false, i);
-    }
+    assertCached(true, 302);
+    assertCached(false, 303);
+    assertCached(false, 304);
+    assertCached(false, 305);
+    assertCached(false, 306);
+    assertCached(true, 307);
     assertCached(true, 308);
     for (int i = 400; i <= 406; ++i) {
       assertCached(false, i);
@@ -158,12 +161,12 @@ public final class UrlConnectionCacheTest {
 
   private void assertCached(boolean shouldPut, int responseCode) throws Exception {
     server = new MockWebServer();
-    MockResponse response =
-        new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
-            .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
-            .setResponseCode(responseCode)
-            .setBody("ABCDE")
-            .addHeader("WWW-Authenticate: challenge");
+    MockResponse response = new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+        .setResponseCode(responseCode)
+        .setBody("ABCDE")
+        .addHeader("WWW-Authenticate: challenge");
     if (responseCode == HttpURLConnection.HTTP_PROXY_AUTH) {
       response.addHeader("Proxy-Authenticate: Basic realm=\"protected area\"");
     } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {

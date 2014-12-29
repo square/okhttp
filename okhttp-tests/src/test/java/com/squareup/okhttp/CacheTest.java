@@ -121,9 +121,12 @@ public final class CacheTest {
     assertCached(false, 207);
     assertCached(true, 300);
     assertCached(true, 301);
-    for (int i = 302; i <= 307; ++i) {
-      assertCached(false, i);
-    }
+    assertCached(true, 302);
+    assertCached(false, 303);
+    assertCached(false, 304);
+    assertCached(false, 305);
+    assertCached(false, 306);
+    assertCached(true, 307);
     assertCached(true, 308);
     for (int i = 400; i <= 406; ++i) {
       assertCached(false, i);
@@ -392,6 +395,63 @@ public final class CacheTest {
 
     assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
     assertEquals(2, cache.getHitCount());
+  }
+
+  @Test public void foundCachedWithExpiresHeader() throws Exception {
+    temporaryRedirectCachedWithCachingHeader(302, "Expires", formatDate(1, TimeUnit.HOURS));
+  }
+
+  @Test public void foundCachedWithCacheControlHeader() throws Exception {
+    temporaryRedirectCachedWithCachingHeader(302, "Cache-Control", "max-age=60");
+  }
+
+  @Test public void temporaryRedirectCachedWithExpiresHeader() throws Exception {
+    temporaryRedirectCachedWithCachingHeader(307, "Expires", formatDate(1, TimeUnit.HOURS));
+  }
+
+  @Test public void temporaryRedirectCachedWithCacheControlHeader() throws Exception {
+    temporaryRedirectCachedWithCachingHeader(307, "Cache-Control", "max-age=60");
+  }
+
+  @Test public void foundNotCachedWithoutCacheHeader() throws Exception {
+    temporaryRedirectNotCachedWithoutCachingHeader(302);
+  }
+
+  @Test public void temporaryRedirectNotCachedWithoutCacheHeader() throws Exception {
+    temporaryRedirectNotCachedWithoutCachingHeader(307);
+  }
+
+  private void temporaryRedirectCachedWithCachingHeader(
+      int responseCode, String headerName, String headerValue) throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(responseCode)
+        .addHeader(headerName, headerValue)
+        .addHeader("Location", "/a"));
+    server.enqueue(new MockResponse()
+        .addHeader(headerName, headerValue)
+        .setBody("a"));
+    server.enqueue(new MockResponse()
+        .setBody("b"));
+    server.enqueue(new MockResponse()
+        .setBody("c"));
+
+    URL url = server.getUrl("/");
+    assertEquals("a", get(url).body().string());
+    assertEquals("a", get(url).body().string());
+  }
+
+  private void temporaryRedirectNotCachedWithoutCachingHeader(int responseCode) throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(responseCode)
+        .addHeader("Location", "/a"));
+    server.enqueue(new MockResponse()
+        .setBody("a"));
+    server.enqueue(new MockResponse()
+        .setBody("b"));
+
+    URL url = server.getUrl("/");
+    assertEquals("a", get(url).body().string());
+    assertEquals("b", get(url).body().string());
   }
 
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
