@@ -21,9 +21,11 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -411,33 +413,10 @@ public final class DiskLruCache implements Closeable {
     checkNotClosed();
     validateKey(key);
     Entry entry = lruEntries.get(key);
-    if (entry == null) {
-      return null;
-    }
+    if (entry == null || !entry.readable) return null;
 
-    if (!entry.readable) {
-      return null;
-    }
-
-    // Open all streams eagerly to guarantee that we see a single published
-    // snapshot. If we opened streams lazily then the streams could come
-    // from different edits.
-    Source[] sources = new Source[valueCount];
-    try {
-      for (int i = 0; i < valueCount; i++) {
-        sources[i] = Okio.source(entry.cleanFiles[i]);
-      }
-    } catch (FileNotFoundException e) {
-      // A file must have been deleted manually!
-      for (int i = 0; i < valueCount; i++) {
-        if (sources[i] != null) {
-          Util.closeQuietly(sources[i]);
-        } else {
-          break;
-        }
-      }
-      return null;
-    }
+    Snapshot snapshot = entry.snapshot();
+    if (snapshot == null) return null;
 
     redundantOpCount++;
     journalWriter.writeUtf8(READ).writeByte(' ').writeUtf8(key).writeByte('\n');
@@ -445,7 +424,7 @@ public final class DiskLruCache implements Closeable {
       executor.execute(cleanupRunnable);
     }
 
-    return new Snapshot(key, entry.sequenceNumber, sources, entry.lengths);
+    return snapshot;
   }
 
   /**
@@ -697,6 +676,66 @@ public final class DiskLruCache implements Closeable {
     }
   }
 
+  /**
+   * Returns an iterator over the cache's current entries. This iterator doesn't throw {@code
+   * ConcurrentModificationException}, but if new entries are added while iterating, those new
+   * entries will not be returned by the iterator. If existing entries are removed during iteration,
+   * they will be absent (unless they were already returned).
+   *
+   * <p>If there are I/O problems during iteration, this iterator fails silently. For example, if
+   * the hosting filesystem becomes unreachable, the iterator will omit elements rather than
+   * throwing exceptions.
+   *
+   * <p>The returned iterator supports {@link Iterator#remove}.
+   */
+  public synchronized Iterator<Snapshot> snapshots() {
+    return new Iterator<Snapshot>() {
+      /** Iterate a copy of the entries to defend against concurrent modification errors. */
+      final Iterator<Entry> delegate = new ArrayList<>(lruEntries.values()).iterator();
+
+      /** The snapshot to return from {@link #next}. Null if we haven't computed that yet. */
+      Snapshot nextSnapshot;
+
+      /** The snapshot to remove with {@link #remove}. Null if removal is illegal. */
+      Snapshot removeSnapshot;
+
+      @Override public boolean hasNext() {
+        if (nextSnapshot != null) return true;
+
+        synchronized (DiskLruCache.this) {
+          while (delegate.hasNext()) {
+            Entry entry = delegate.next();
+            Snapshot snapshot = entry.snapshot();
+            if (snapshot == null) continue; // Evicted since we copied the entries.
+            nextSnapshot = snapshot;
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      @Override public Snapshot next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        removeSnapshot = nextSnapshot;
+        nextSnapshot = null;
+        return removeSnapshot;
+      }
+
+      @Override public void remove() {
+        if (removeSnapshot == null) throw new IllegalStateException("remove() before next()");
+        try {
+          DiskLruCache.this.remove(removeSnapshot.key);
+        } catch (IOException ignored) {
+          // Nothing useful to do here. We failed to remove from the cache. Most likely that's
+          // because we couldn't update the journal, but the cached entry will still be gone.
+        } finally {
+          removeSnapshot = null;
+        }
+      }
+    };
+  }
+
   /** A snapshot of the values for an entry. */
   public final class Snapshot implements Closeable {
     private final String key;
@@ -709,6 +748,10 @@ public final class DiskLruCache implements Closeable {
       this.sequenceNumber = sequenceNumber;
       this.sources = sources;
       this.lengths = lengths;
+    }
+
+    public String key() {
+      return key;
     }
 
     /**
@@ -973,6 +1016,33 @@ public final class DiskLruCache implements Closeable {
 
     private IOException invalidLengths(String[] strings) throws IOException {
       throw new IOException("unexpected journal line: " + Arrays.toString(strings));
+    }
+
+    /**
+     * Returns a snapshot of this entry. This opens all streams eagerly to guarantee that we see a
+     * single published snapshot. If we opened streams lazily then the streams could come from
+     * different edits.
+     */
+    Snapshot snapshot() {
+      if (!Thread.holdsLock(DiskLruCache.this)) throw new AssertionError();
+
+      Source[] sources = new Source[valueCount];
+      try {
+        for (int i = 0; i < valueCount; i++) {
+          sources[i] = Okio.source(cleanFiles[i]);
+        }
+        return new Snapshot(key, sequenceNumber, sources, lengths);
+      } catch (FileNotFoundException e) {
+        // A file must have been deleted manually!
+        for (int i = 0; i < valueCount; i++) {
+          if (sources[i] != null) {
+            Util.closeQuietly(sources[i]);
+          } else {
+            break;
+          }
+        }
+        return null;
+      }
     }
   }
 }
