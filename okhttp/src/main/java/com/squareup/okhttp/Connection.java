@@ -317,14 +317,6 @@ public final class Connection {
   }
 
   /**
-   * Returns true if this connection has been idle for longer than
-   * {@code keepAliveDurationNs}.
-   */
-  boolean isExpired(long keepAliveDurationNs) {
-    return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
-  }
-
-  /**
    * Returns the time in ns when this connection became idle. Undefined if
    * this connection is not idle.
    */

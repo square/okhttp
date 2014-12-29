@@ -52,7 +52,6 @@ import java.util.concurrent.TimeUnit;
  * initialized lazily.
  */
 public final class ConnectionPool {
-  private static final int MAX_CONNECTIONS_TO_CLEANUP = 2;
   private static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
 
   private static final ConnectionPool systemDefault;
@@ -93,36 +92,9 @@ public final class ConnectionPool {
       0 /* corePoolSize */, 1 /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
       new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
 
-  /** {@code true} if the pool is actively draining, {@code false} if it is currently empty. */
-  private boolean draining;
-
   private final Runnable connectionsCleanupRunnable = new Runnable() {
-    // An executing connectionsCleanupRunnable keeps a reference to the enclosing ConnectionPool,
-    // preventing the ConnectionPool from being garbage collected before all held connections have
-    // been explicitly closed. If this was not the case any open connections in the pool would
-    // trigger StrictMode violations in Android when they were garbage collected. http://b/18369687
     @Override public void run() {
-      while (true) {
-        performCleanup();
-
-        // See whether this runnable should continue executing.
-        synchronized (ConnectionPool.this) {
-          if (connections.size() == 0) {
-            draining = false;
-            return;
-          }
-        }
-
-        // Pause to avoid checking the pool too regularly, which would drain the battery on mobile
-        // devices.
-        try {
-          // Use the keep alive duration as a rough indicator of a good check interval.
-          long keepAliveDurationMillis = keepAliveDurationNs / (1000 * 1000);
-          Thread.sleep(keepAliveDurationMillis);
-        } catch (InterruptedException e) {
-          // Ignored.
-        }
-      }
+      runCleanupUntilPoolIsEmpty();
     }
   };
 
@@ -188,7 +160,6 @@ public final class ConnectionPool {
 
     if (foundConnection != null && foundConnection.isSpdy()) {
       connections.addFirst(foundConnection); // Add it back after iteration.
-      scheduleCleanupAsRequired();
     }
 
     return foundConnection;
@@ -224,10 +195,19 @@ public final class ConnectionPool {
     }
 
     synchronized (this) {
-      connections.addFirst(connection);
+      addConnection(connection);
       connection.incrementRecycleCount();
       connection.resetIdleStartTime();
-      scheduleCleanupAsRequired();
+    }
+  }
+
+  private void addConnection(Connection connection) {
+    boolean empty = connections.isEmpty();
+    connections.addFirst(connection);
+    if (empty) {
+      executor.execute(connectionsCleanupRunnable);
+    } else {
+      notifyAll();
     }
   }
 
@@ -237,71 +217,104 @@ public final class ConnectionPool {
    */
   void share(Connection connection) {
     if (!connection.isSpdy()) throw new IllegalArgumentException();
-    if (connection.isAlive()) {
-      synchronized (this) {
-        connections.addFirst(connection);
-        scheduleCleanupAsRequired();
-      }
+    if (!connection.isAlive()) return;
+    synchronized (this) {
+      addConnection(connection);
     }
   }
 
   /** Close and remove all connections in the pool. */
   public void evictAll() {
-    List<Connection> connections;
+    List<Connection> toEvict;
     synchronized (this) {
-      connections = new ArrayList<>(this.connections);
-      this.connections.clear();
+      toEvict = new ArrayList<>(connections);
+      connections.clear();
     }
 
-    for (int i = 0, size = connections.size(); i < size; i++) {
-      Util.closeQuietly(connections.get(i).getSocket());
-    }
-  }
-
-  // Callers must synchronize on "this".
-  private void scheduleCleanupAsRequired() {
-    if (!draining) {
-      // A new connection has potentially been offered up to an empty / drained pool.
-      // Start the clean-up immediately.
-      draining = true;
-      executor.execute(connectionsCleanupRunnable);
+    for (int i = 0, size = toEvict.size(); i < size; i++) {
+      Util.closeQuietly(toEvict.get(i).getSocket());
     }
   }
 
-  /** Performs a single round of pool cleanup. */
+  private void runCleanupUntilPoolIsEmpty() {
+    while (true) {
+      if (!performCleanup()) return; // Halt cleanup.
+    }
+  }
+
+  /**
+   * Attempts to make forward progress on connection eviction. There are three possible outcomes:
+   *
+   * <h3>The pool is empty.</h3>
+   * In this case, this method returns false and the eviction job should exit because there are no
+   * further cleanup tasks coming. (If additional connections are added to the pool, another cleanup
+   * job must be enqueued.)
+   *
+   * <h3>Connections were evicted.</h3>
+   * At least one connections was eligible for immediate eviction and was evicted. The method
+   * returns true and cleanup should continue.
+   *
+   * <h3>We waited to evict.</h3>
+   * None of the pooled connections were eligible for immediate eviction. Instead, we waited until
+   * either a connection became eligible for eviction, or the connections list changed. In either
+   * case, the method returns true and cleanup should continue.
+   */
   // VisibleForTesting
-  void performCleanup() {
-    List<Connection> expiredConnections = new ArrayList<>(MAX_CONNECTIONS_TO_CLEANUP);
-    int idleConnectionCount = 0;
+  boolean performCleanup() {
+    List<Connection> evictableConnections;
+
     synchronized (this) {
+      if (connections.isEmpty()) return false; // Halt cleanup.
+
+      evictableConnections = new ArrayList<>();
+      int idleConnectionCount = 0;
+      long now = System.nanoTime();
+      long nanosUntilNextEviction = keepAliveDurationNs;
+
+      // Collect connections eligible for immediate eviction.
       for (ListIterator<Connection> i = connections.listIterator(connections.size());
           i.hasPrevious(); ) {
         Connection connection = i.previous();
-        if (!connection.isAlive() || connection.isExpired(keepAliveDurationNs)) {
+        long nanosUntilEviction = connection.getIdleStartTimeNs() + keepAliveDurationNs - now;
+        if (nanosUntilEviction <= 0 || !connection.isAlive()) {
           i.remove();
-          expiredConnections.add(connection);
-          if (expiredConnections.size() == MAX_CONNECTIONS_TO_CLEANUP) {
-            break;
-          }
+          evictableConnections.add(connection);
         } else if (connection.isIdle()) {
           idleConnectionCount++;
+          nanosUntilNextEviction = Math.min(nanosUntilNextEviction, nanosUntilEviction);
         }
       }
 
+      // If the pool has too many idle connections, gather more! Oldest to newest.
       for (ListIterator<Connection> i = connections.listIterator(connections.size());
           i.hasPrevious() && idleConnectionCount > maxIdleConnections; ) {
         Connection connection = i.previous();
         if (connection.isIdle()) {
-          expiredConnections.add(connection);
+          evictableConnections.add(connection);
           i.remove();
           --idleConnectionCount;
         }
       }
+
+      // If there's nothing to evict, wait. (This will be interrupted if connections are added.)
+      if (evictableConnections.isEmpty()) {
+        try {
+          long millisUntilNextEviction = nanosUntilNextEviction / (1000 * 1000);
+          long remainderNanos = nanosUntilNextEviction - millisUntilNextEviction * (1000 * 1000);
+          this.wait(millisUntilNextEviction, (int) remainderNanos);
+          return true; // Cleanup continues.
+        } catch (InterruptedException ignored) {
+        }
+      }
     }
 
-    for (Connection expiredConnection : expiredConnections) {
+    // Actually do the eviction. Note that we avoid synchronized() when closing sockets.
+    for (int i = 0, size = evictableConnections.size(); i < size; i++) {
+      Connection expiredConnection = evictableConnections.get(i);
       Util.closeQuietly(expiredConnection.getSocket());
     }
+
+    return true; // Cleanup continues.
   }
 
   /**

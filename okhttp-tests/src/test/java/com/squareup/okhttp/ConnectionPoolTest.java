@@ -443,6 +443,9 @@ public final class ConnectionPoolTest {
     pool.recycle(httpB);
     pool.share(spdyA);
 
+    // Give the cleanup callable time to run and settle down.
+    Thread.sleep(100);
+
     // Kill http A.
     Util.closeQuietly(httpA.getSocket());
 
@@ -463,6 +466,31 @@ public final class ConnectionPoolTest {
     // All remaining connections should be removed.
     pool.performCleanup();
     assertEquals(0, pool.getConnectionCount());
+  }
+
+  @Test public void maxIdleConnectionsLimitEnforced() throws Exception {
+    ConnectionPool pool = new ConnectionPool(2, KEEP_ALIVE_DURATION_MS);
+
+    // Hit the max idle connections limit of 2.
+    pool.recycle(httpA);
+    pool.recycle(httpB);
+    Thread.sleep(100); // Give the cleanup callable time to run.
+    assertPooled(pool, httpB, httpA);
+
+    // Adding httpC bumps httpA.
+    pool.recycle(httpC);
+    Thread.sleep(100); // Give the cleanup callable time to run.
+    assertPooled(pool, httpC, httpB);
+
+    // Adding httpD bumps httpB.
+    pool.recycle(httpD);
+    Thread.sleep(100); // Give the cleanup callable time to run.
+    assertPooled(pool, httpD, httpC);
+
+    // Adding httpE bumps httpC.
+    pool.recycle(httpE);
+    Thread.sleep(100); // Give the cleanup callable time to run.
+    assertPooled(pool, httpE, httpD);
   }
 
   @Test public void evictAllConnections() throws Exception {
