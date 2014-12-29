@@ -27,7 +27,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -947,6 +949,108 @@ public final class DiskLruCacheTest {
     assertAbsent("a");
     assertNull(a.edit());
     a.close();
+  }
+
+  @Test public void iterator() throws Exception {
+    set("a", "a1", "a2");
+    set("b", "b1", "b2");
+    set("c", "c1", "c2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+
+    assertTrue(iterator.hasNext());
+    DiskLruCache.Snapshot a = iterator.next();
+    assertEquals("a", a.key());
+    assertEquals("a1", a.getString(0));
+    assertEquals("a2", a.getString(1));
+
+    assertTrue(iterator.hasNext());
+    DiskLruCache.Snapshot b = iterator.next();
+    assertEquals("b", b.key());
+    assertEquals("b1", b.getString(0));
+    assertEquals("b2", b.getString(1));
+
+    assertTrue(iterator.hasNext());
+    DiskLruCache.Snapshot c = iterator.next();
+    assertEquals("c", c.key());
+    assertEquals("c1", c.getString(0));
+    assertEquals("c2", c.getString(1));
+
+    assertFalse(iterator.hasNext());
+    try {
+      iterator.next();
+      fail();
+    } catch (NoSuchElementException expected) {
+    }
+  }
+
+  @Test public void iteratorElementsAddedDuringIterationAreOmitted() throws Exception {
+    set("a", "a1", "a2");
+    set("b", "b1", "b2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+
+    assertEquals("a", iterator.next().key());
+
+    set("c", "c1", "c2");
+
+    assertEquals("b", iterator.next().key());
+    assertFalse(iterator.hasNext());
+  }
+
+  @Test public void iteratorElementsUpdatedDuringIterationAreUpdated() throws Exception {
+    set("a", "a1", "a2");
+    set("b", "b1", "b2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+
+    assertEquals("a", iterator.next().key());
+
+    set("b", "b3", "b4");
+
+    DiskLruCache.Snapshot b = iterator.next();
+    assertEquals("b", b.key());
+    assertEquals("b3", b.getString(0));
+    assertEquals("b4", b.getString(1));
+  }
+
+  @Test public void iteratorElementsRemovedDuringIterationAreOmitted() throws Exception {
+    set("a", "a1", "a2");
+    set("b", "b1", "b2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+
+    cache.remove("b");
+
+    assertEquals("a", iterator.next().key());
+
+    assertFalse(iterator.hasNext());
+  }
+
+  @Test public void iteratorRemove() throws Exception {
+    set("a", "a1", "a2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+    iterator.next();
+    iterator.remove();
+    assertEquals(null, cache.get("a"));
+  }
+
+  @Test public void iteratorRemoveBeforeNext() throws Exception {
+    set("a", "a1", "a2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+    try {
+      iterator.remove();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test public void iteratorRemoveOncePerCallToNext() throws Exception {
+    set("a", "a1", "a2");
+    Iterator<DiskLruCache.Snapshot> iterator = cache.snapshots();
+    iterator.next();
+    iterator.remove();
+    try {
+      iterator.remove();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
