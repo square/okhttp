@@ -269,8 +269,9 @@ public final class MockWebServer {
     if (executor != null) throw new IllegalStateException("play() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     inetAddress = InetAddress.getByName(null);
-    serverSocket = serverSocketFactory.createServerSocket(port, 50, inetAddress);
-    serverSocket.setReuseAddress(true);
+    serverSocket = serverSocketFactory.createServerSocket();
+    serverSocket.setReuseAddress(port != 0); // Reuse the port if the port number was specified.
+    serverSocket.bind(new InetSocketAddress(inetAddress, port), 50);
 
     this.port = serverSocket.getLocalPort();
     executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
