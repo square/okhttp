@@ -33,7 +33,9 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -257,6 +259,58 @@ public final class Cache {
    */
   public void evictAll() throws IOException {
     cache.evictAll();
+  }
+
+  /**
+   * Returns an iterator over the URLs in this cache. This iterator doesn't throw {@code
+   * ConcurrentModificationException}, but if new responses are added while iterating, their URLs
+   * will not be returned. If existing responses are evicted during iteration, they will be absent
+   * (unless they were already returned).
+   *
+   * <p>The iterator supports {@linkplain Iterator#remove}. Removing a URL from the iterator evicts
+   * the corresponding response from the cache. Use this to evict selected responses.
+   */
+  public Iterator<String> urls() {
+    return new Iterator<String>() {
+      final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
+
+      String nextUrl;
+      boolean canRemove;
+
+      @Override public boolean hasNext() {
+        if (nextUrl != null) return true;
+
+        canRemove = false; // Prevent delegate.remove() on the wrong item!
+        while (delegate.hasNext()) {
+          DiskLruCache.Snapshot snapshot = delegate.next();
+          try {
+            BufferedSource metadata = Okio.buffer(snapshot.getSource(ENTRY_METADATA));
+            nextUrl = metadata.readUtf8LineStrict();
+            return true;
+          } catch (IOException ignored) {
+            // We couldn't read the metadata for this snapshot; possibly because the host filesystem
+            // has disappeared! Skip it.
+          } finally {
+            snapshot.close();
+          }
+        }
+
+        return false;
+      }
+
+      @Override public String next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        String result = nextUrl;
+        nextUrl = null;
+        canRemove = true;
+        return result;
+      }
+
+      @Override public void remove() {
+        if (!canRemove) throw new IllegalStateException("remove() before next()");
+        delegate.remove();
+      }
+    };
   }
 
   public synchronized int getWriteAbortCount() {

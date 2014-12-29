@@ -686,6 +686,9 @@ public final class DiskLruCache implements Closeable {
    * the hosting filesystem becomes unreachable, the iterator will omit elements rather than
    * throwing exceptions.
    *
+   * <p><strong>The caller must {@link Snapshot#close close}</strong> each snapshot returned by
+   * {@link Iterator#next}. Failing to do so leaks open files!
+   *
    * <p>The returned iterator supports {@link Iterator#remove}.
    */
   public synchronized Iterator<Snapshot> snapshots() {
@@ -703,6 +706,9 @@ public final class DiskLruCache implements Closeable {
         if (nextSnapshot != null) return true;
 
         synchronized (DiskLruCache.this) {
+          // If the cache is closed, truncate the iterator.
+          if (isClosed()) return false;
+
           while (delegate.hasNext()) {
             Entry entry = delegate.next();
             Snapshot snapshot = entry.snapshot();
