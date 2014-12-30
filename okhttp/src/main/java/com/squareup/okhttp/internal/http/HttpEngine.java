@@ -391,6 +391,11 @@ public final class HttpEngine {
   }
 
   private boolean isRecoverable(IOException e) {
+    // If the application has opted-out of recovery, don't recover.
+    if (!client.getRetryOnConnectionFailure()) {
+      return false;
+    }
+
     // If the problem was a CertificateException from the X509TrustManager,
     // do not retry, we didn't have an abrupt server-initiated exception.
     if (e instanceof SSLPeerUnverifiedException

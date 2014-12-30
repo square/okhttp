@@ -178,6 +178,7 @@ public class OkHttpClient implements Cloneable {
   private Network network;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
+  private boolean retryOnConnectionFailure = true;
   private int connectTimeout;
   private int readTimeout;
   private int writeTimeout;
@@ -208,6 +209,7 @@ public class OkHttpClient implements Cloneable {
     this.network = okHttpClient.network;
     this.followSslRedirects = okHttpClient.followSslRedirects;
     this.followRedirects = okHttpClient.followRedirects;
+    this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
     this.connectTimeout = okHttpClient.connectTimeout;
     this.readTimeout = okHttpClient.readTimeout;
     this.writeTimeout = okHttpClient.writeTimeout;
@@ -447,6 +449,32 @@ public class OkHttpClient implements Cloneable {
 
   public final boolean getFollowRedirects() {
     return followRedirects;
+  }
+
+  /**
+   * Configure this client to retry or not when a connectivity problem is encountered. By default,
+   * this client silently recovers from the following problems:
+   *
+   * <ul>
+   *   <li><strong>Unreachable IP addresses.</strong> If the URL's host has multiple IP addresses,
+   *       failure to reach any individual IP address doesn't fail the overall request. This can
+   *       increase availability of multi-homed services.
+   *   <li><strong>Stale pooled connections.</strong> The {@link ConnectionPool} reuses sockets
+   *       to decrease request latency, but these connections will occasionally time out.
+   *   <li><strong>Unreachable proxy servers.</strong> A {@link ProxySelector} can be used to
+   *       attempt multiple proxy servers in sequence, eventually falling back to a direct
+   *       connection.
+   * </ul>
+   *
+   * Set this to false to avoid retrying requests when doing so is destructive. In this case the
+   * calling application should do its own recovery of connectivity failures.
+   */
+  public final void setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
+    this.retryOnConnectionFailure = retryOnConnectionFailure;
+  }
+
+  public final boolean getRetryOnConnectionFailure() {
+    return retryOnConnectionFailure;
   }
 
   final RouteDatabase routeDatabase() {

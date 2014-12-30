@@ -704,6 +704,34 @@ public final class CallTest {
     callback.await(request.url()).assertHandshake();
   }
 
+  @Test public void recoverWhenRetryOnConnectionFailureIsTrue() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse().setBody("retry success"));
+
+    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    assertTrue(client.getRetryOnConnectionFailure());
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    Response response = client.newCall(request).execute();
+    assertEquals("retry success", response.body().string());
+  }
+
+  @Test public void noRecoverWhenRetryOnConnectionFailureIsFalse() throws Exception {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse().setBody("unreachable!"));
+
+    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    client.setRetryOnConnectionFailure(false);
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      // If this succeeds, too many requests were made.
+      client.newCall(request).execute();
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
     server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
