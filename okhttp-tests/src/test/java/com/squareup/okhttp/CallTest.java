@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.DoubleInetAddressNetwork;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -28,6 +29,7 @@ import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
@@ -620,6 +622,24 @@ public final class CallTest {
       long elapsedNanos = System.nanoTime() - startNanos;
       long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
       assertTrue(String.format("Timed out: %sms", elapsedMillis), elapsedMillis < 500);
+    }
+  }
+
+  @Test public void timeoutsNotRetried() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.NO_RESPONSE));
+    server.enqueue(new MockResponse()
+        .setBody("unreachable!"));
+
+    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    client.setReadTimeout(100, TimeUnit.MILLISECONDS);
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    try {
+      // If this succeeds, too many requests were made.
+      client.newCall(request).execute();
+      fail();
+    } catch (InterruptedIOException expected) {
     }
   }
 
