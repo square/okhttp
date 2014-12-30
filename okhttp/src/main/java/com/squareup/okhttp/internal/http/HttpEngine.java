@@ -33,6 +33,7 @@ import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
@@ -392,10 +393,22 @@ public final class HttpEngine {
   private boolean isRecoverable(IOException e) {
     // If the problem was a CertificateException from the X509TrustManager,
     // do not retry, we didn't have an abrupt server-initiated exception.
-    boolean sslFailure = e instanceof SSLPeerUnverifiedException
-        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException);
-    boolean protocolFailure = e instanceof ProtocolException;
-    return !sslFailure && !protocolFailure;
+    if (e instanceof SSLPeerUnverifiedException
+        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException)) {
+      return false;
+    }
+
+    // If there was a protocol problem, don't recover.
+    if (e instanceof ProtocolException) {
+      return false;
+    }
+
+    // If there was an interruption or timeout, don't recover.
+    if (e instanceof InterruptedIOException) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

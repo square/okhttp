@@ -35,6 +35,7 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -339,9 +340,12 @@ public final class MockWebServer {
       @Override protected void execute() {
         try {
           processConnection();
+        } catch (IOException e) {
+          logger.info(MockWebServer.this + " connection from "
+              + raw.getInetAddress() + " failed: " + e);
         } catch (Exception e) {
-          logger.log(Level.WARNING, MockWebServer.this + " connection from "
-              + raw.getInetAddress() + " failed", e);
+          logger.log(Level.SEVERE, MockWebServer.this + " connection from "
+              + raw.getInetAddress() + " crashed", e);
         }
       }
 
@@ -436,6 +440,11 @@ public final class MockWebServer {
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AFTER_REQUEST) {
           socket.close();
           return false;
+        }
+        if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
+          // This read should block until the socket is closed. (Because nobody is writing.)
+          if (in.read() == -1) return false;
+          throw new ProtocolException("unexpected data");
         }
         writeResponse(socket, out, response);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
