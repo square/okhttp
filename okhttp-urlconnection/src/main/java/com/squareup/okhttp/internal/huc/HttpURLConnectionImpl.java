@@ -80,7 +80,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
-  private int redirectionCount;
+  private int followUpCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
   /** Lazily created (with synthetic headers) on first call to getHeaders(). */
@@ -385,8 +385,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         return httpEngine;
       }
 
-      if (response.isRedirect() && ++redirectionCount > HttpEngine.MAX_REDIRECTS) {
-        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      if (++followUpCount > HttpEngine.MAX_FOLLOW_UPS) {
+        throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       // The first request was insufficient. Prepare for another...

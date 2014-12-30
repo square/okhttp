@@ -330,6 +330,37 @@ public final class CallTest {
     assertEquals(credential, recordedRequest2.getHeader("Authorization"));
   }
 
+  @Test public void attemptAuthorization20Times() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+
+    String credential = Credentials.basic("jesse", "secret");
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("Success!");
+  }
+
+  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+
+    String credential = Credentials.basic("jesse", "secret");
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    try {
+      client.newCall(new Request.Builder().url(server.getUrl("/0")).build()).execute();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
+    }
+  }
+
   @Test public void delete() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -1269,7 +1300,7 @@ public final class CallTest {
       client.newCall(new Request.Builder().url(server.getUrl("/0")).build()).execute();
       fail();
     } catch (IOException expected) {
-      assertEquals("Too many redirects: 21", expected.getMessage());
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
     }
   }
 
@@ -1283,7 +1314,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
     client.newCall(request).enqueue(callback);
-    callback.await(server.getUrl("/20")).assertFailure("Too many redirects: 21");
+    callback.await(server.getUrl("/20")).assertFailure("Too many follow-up requests: 21");
   }
 
   @Test public void canceledBeforeExecute() throws Exception {

@@ -89,10 +89,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public final class HttpEngine {
   /**
-   * How many redirects should we follow? Chrome follows 21; Firefox, curl,
-   * and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
+   * How many redirects and auth challenges should we attempt? Chrome follows 21 redirects; Firefox,
+   * curl, and wget follow 20; Safari follows 16; and HTTP/1.0 recommends 5.
    */
-  public static final int MAX_REDIRECTS = 20;
+  public static final int MAX_FOLLOW_UPS = 20;
 
   private static final ResponseBody EMPTY_BODY = new ResponseBody() {
     @Override public MediaType contentType() {

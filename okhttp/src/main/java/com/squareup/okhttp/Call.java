@@ -24,7 +24,7 @@ import java.net.URL;
 import java.util.logging.Level;
 
 import static com.squareup.okhttp.internal.Internal.logger;
-import static com.squareup.okhttp.internal.http.HttpEngine.MAX_REDIRECTS;
+import static com.squareup.okhttp.internal.http.HttpEngine.MAX_FOLLOW_UPS;
 
 /**
  * A call is a request that has been prepared for execution. A call can be
@@ -251,7 +251,7 @@ public class Call {
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
     engine = new HttpEngine(client, request, false, false, forWebSocket, null, null, null, null);
 
-    int redirectionCount = 0;
+    int followUpCount = 0;
     while (true) {
       if (canceled) {
         engine.releaseConnection();
@@ -282,8 +282,8 @@ public class Call {
         return response;
       }
 
-      if (engine.getResponse().isRedirect() && ++redirectionCount > MAX_REDIRECTS) {
-        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      if (++followUpCount > MAX_FOLLOW_UPS) {
+        throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       if (!engine.sameConnection(followUp.url())) {

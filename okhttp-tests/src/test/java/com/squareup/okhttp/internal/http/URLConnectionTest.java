@@ -2111,7 +2111,7 @@ public final class URLConnectionTest {
       fail();
     } catch (ProtocolException expected) {
       assertEquals(HttpURLConnection.HTTP_MOVED_TEMP, connection.getResponseCode());
-      assertEquals("Too many redirects: 21", expected.getMessage());
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
       assertContent("Redirecting to /21", connection);
       assertEquals(server.getUrl("/20"), connection.getURL());
     }
@@ -2784,6 +2784,37 @@ public final class URLConnectionTest {
 
     Response redirectedBy = challengeResponse.priorResponse();
     assertEquals("/a", redirectedBy.request().url().getPath());
+  }
+
+  @Test public void attemptAuthorization20Times() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+
+    String credential = Credentials.basic("jesse", "peanutbutter");
+    client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    connection = client.open(server.getUrl("/0"));
+    assertContent("Success!", connection);
+  }
+
+  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+
+    String credential = Credentials.basic("jesse", "peanutbutter");
+    client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    connection = client.open(server.getUrl("/"));
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (ProtocolException expected) {
+      assertEquals(401, connection.getResponseCode());
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
+    }
   }
 
   @Test public void setsNegotiatedProtocolHeader_SPDY_3() throws Exception {
