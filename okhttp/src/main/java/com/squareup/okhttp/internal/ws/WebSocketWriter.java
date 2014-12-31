@@ -58,8 +58,8 @@ public final class WebSocketWriter {
   private boolean closed;
   private boolean activeWriter;
 
-  private final byte[] maskKey = new byte[4];
-  private final byte[] maskBuffer = new byte[2048];
+  private final byte[] maskKey;
+  private final byte[] maskBuffer;
 
   public WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
     if (sink == null) throw new NullPointerException("sink");
@@ -67,6 +67,10 @@ public final class WebSocketWriter {
     this.isClient = isClient;
     this.sink = sink;
     this.random = random;
+
+    // Masks are only a concern for client writers.
+    maskKey = isClient ? new byte[4] : null;
+    maskBuffer = isClient ? new byte[2048] : null;
   }
 
   public boolean isClosed() {
