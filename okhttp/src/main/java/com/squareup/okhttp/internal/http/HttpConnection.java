@@ -235,14 +235,6 @@ public final class HttpConnection {
     return new FixedLengthSource(length);
   }
 
-  /**
-   * Call this to advance past a response body for HTTP responses that do not
-   * have a response body.
-   */
-  public void emptyResponseBody() throws IOException {
-    newFixedLengthSource(0L); // Transition to STATE_IDLE.
-  }
-
   public Source newChunkedSource(HttpEngine httpEngine) throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READING_RESPONSE_BODY;
