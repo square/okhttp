@@ -35,7 +35,7 @@ _2014-12-30_
  *  Fix: Cache 302s and 308s that include appropriate response headers.
  *  Fix: Improve pooling of connections that use proxy selectors.
  *  Fix: Don't leak connections when using ALPN on the desktop.
- *  Fix: Update Jetty ALPN to `7.1.2.v20141202` (Java 7) and 8.1.2.v20141202 (Java 8).
+ *  Fix: Update Jetty ALPN to `7.1.2.v20141202` (Java 7) and `8.1.2.v20141202` (Java 8).
     This fixes a bug in resumed TLS sessions where the wrong protocol could be
     selected.
  *  Fix: Don't crash in SPDY and HTTP/2 when disconnecting before connecting.
