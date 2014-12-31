@@ -909,7 +909,7 @@ public final class CallTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
+  @Test public void postBodyRetransmittedOnFailureRecoveryWithDefaultPolicy() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("def"));
@@ -936,6 +936,102 @@ public final class CallTest {
     RecordedRequest post2 = server.takeRequest();
     assertEquals("body!", post2.getUtf8Body());
     assertEquals(0, post2.getSequenceNumber());
+  }
+
+  @Test public void postBodyNotRetransmittedOnFailureRecoveryIfPolicyDenies() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    client.setRetryPolicy(FixedRetryPolicy.getAllowNonePolicy());
+
+    // Seed the connection pool so we have something that can fail.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("abc", response1.body().string());
+
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "body!"))
+        .build();
+    try {
+      client.newCall(request2).execute();
+      fail();
+    } catch (IOException e) {
+      // success
+    }
+    RecordedRequest get = server.takeRequest();
+    assertEquals(0, get.getSequenceNumber());
+
+    RecordedRequest post1 = server.takeRequest();
+    assertEquals("body!", post1.getUtf8Body());
+    assertEquals(1, post1.getSequenceNumber());
+
+    assertEquals(2, server.getRequestCount());
+  }
+
+  @Test public void retryGetAllowedByDefaultPolicy() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    // Seed the connection pool so we have something that can fail.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("abc", response1.body().string());
+
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/2"))
+        .build();
+
+    Response response2 = client.newCall(request2).execute();
+    assertEquals("def", response2.body().string());
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals(0, get.getSequenceNumber());
+
+    RecordedRequest get2 = server.takeRequest();
+    assertEquals(1, get2.getSequenceNumber());
+    assertEquals("/2", get2.getPath());
+
+    RecordedRequest get2retry = server.takeRequest();
+    assertEquals(0, get2retry.getSequenceNumber());
+    assertEquals("/2", get2retry.getPath());
+
+    assertEquals(3, server.getRequestCount());
+  }
+
+  @Test public void dontRetryGetWhenPolicyDenies() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
+    server.enqueue(new MockResponse().setBody("def"));
+    server.play();
+
+    client.setRetryPolicy(FixedRetryPolicy.getAllowNonePolicy());
+
+    // Seed the connection pool so we have something that can fail.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("abc", response1.body().string());
+
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/2"))
+        .build();
+    try {
+      client.newCall(request2).execute();
+      fail();
+    } catch (IOException e) {
+      // success
+    }
+    RecordedRequest get = server.takeRequest();
+    assertEquals(0, get.getSequenceNumber());
+
+    RecordedRequest get2 = server.takeRequest();
+    assertEquals(1, get2.getSequenceNumber());
+
+    assertEquals(2, server.getRequestCount());
   }
 
   @Test public void cacheHit() throws Exception {
