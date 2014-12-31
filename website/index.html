@@ -48,7 +48,7 @@
 
             <p>OkHttp is an HTTP client that’s efficient by default:</p>
             <ul>
-                <li>SPDY support allows all requests to the same host to share a socket.</li>
+                <li>HTTP/2 and SPDY support allows all requests to the same host to share a socket.</li>
                 <li>Connection pooling reduces request latency (if SPDY isn’t available).</li>
                 <li>Transparent GZIP shrinks download sizes.</li>
                 <li>Response caching avoids the network completely for repeat requests.</li>
@@ -58,7 +58,7 @@
                 common connection problems. If your service has multiple IP addresses OkHttp will
                 attempt alternate addresses if the first connect fails. This is necessary for IPv4+IPv6
                 and for services hosted in redundant data centers. OkHttp initiates new connections
-                with modern TLS features (SNI, ALPN), and falls back to SSLv3 if the handshake
+                with modern TLS features (SNI, ALPN), and falls back to TLS 1.0 if the handshake
                 fails.</p>
 
             <p>Using OkHttp is easy. Its 2.0 API is designed with fluent builders and
