@@ -1,6 +1,48 @@
 Change Log
 ==========
 
+## VERSION 2.2.0
+
+_2014-12-30_
+
+ *  **`RequestBody.contentLength()` now throws `IOException`.**
+    This is a source-incompatible change. If you have code that calls
+    `RequestBody.contentLength()`, your compile will break with this
+    update. The change is binary-compatible, however: code compiled
+    for OkHttp 2.0 and 2.1 will continue work with this update.
+
+ *  **`COMPATIBLE_TLS` no longer supports SSLv3.** In response to the
+    [POODLE](http://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html)
+    vulnerability, OkHttp no longer offers SSLv3 when negotiation an
+    HTTPS connection. If you continue to need to connect to webservers
+    running SSLv3, you must manually configure your own `ConnectionSpec`.
+
+ *  **OkHttp now offers interceptors.** Interceptors are a powerful mechanism
+    that can monitor, rewrite, and retry calls. The [project
+    wiki](https://github.com/square/okhttp/wiki/Interceptors) has a full
+    introduction to this new API.
+
+ *  New: APIs to iterate and selectively clear the response cache.
+ *  New: Support for SOCKS proxies.
+ *  New: Support for `TLS_FALLBACK_SCSV`.
+ *  New: Update HTTP/2 support to to `h2-16` and `hpack-10`.
+ *  New: APIs to prevent retrying non-idempotent requests.
+ *  Fix: Drop NPN support. Going forward we support ALPN only.
+ *  Fix: The hostname verifier is now strict. This is consistent with the hostname
+    verifier in modern browsers.
+ *  Fix: Improve `CONNECT` handling for misbehaving HTTP proxies.
+ *  Fix: Don't retry requests that failed due to timeouts.
+ *  Fix: Cache 302s and 308s that include appropriate response headers.
+ *  Fix: Improve pooling of connections that use proxy selectors.
+ *  Fix: Don't leak connections when using ALPN on the desktop.
+ *  Fix: Update Jetty ALPN to `7.1.2.v20141202` (Java 7) and 8.1.2.v20141202 (Java 8).
+    This fixes a bug in resumed TLS sessions where the wrong protocol could be
+    selected.
+ *  Fix: Don't crash in SPDY and HTTP/2 when disconnecting before connecting.
+ *  Fix: Avoid a reverse DNS-lookup for a numeric proxy address
+ *  Fix: Resurrect http/2 frame logging.
+ *  Fix: Limit to 20 authorization attempts.
+
 ## VERSION 2.1.0
 
 _2014-11-11_
