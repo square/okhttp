@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -130,6 +131,34 @@ public final class Headers {
     return result.toString();
   }
 
+  @Override public int hashCode() {
+    int result = 0;
+    for (int i = 0, size = namesAndValues.length; i < size; i += 2) {
+      result = result * 37 + namesAndValues[i].toLowerCase(Locale.US).hashCode();
+      result = result * 37 + namesAndValues[i + 1].hashCode();
+    }
+    return result;
+  }
+
+  @Override public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (!(obj instanceof Headers)) return false;
+
+    Headers other = (Headers) obj;
+    if (namesAndValues.length != other.namesAndValues.length) {
+      return false;
+    }
+    for (int i = 0, size = namesAndValues.length; i < size; i += 2) {
+      if (!namesAndValues[i].equalsIgnoreCase(other.namesAndValues[i])) {
+        return false;
+      }
+      if (!namesAndValues[i + 1].equals(other.namesAndValues[i + 1])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static String get(String[] namesAndValues, String name) {
     for (int i = namesAndValues.length - 2; i >= 0; i -= 2) {
       if (name.equalsIgnoreCase(namesAndValues[i])) {
@@ -172,7 +201,7 @@ public final class Headers {
     private final List<String> namesAndValues = new ArrayList<>(20);
 
     /** Add an header line containing a field name, a literal colon, and a value. */
-    Builder addLine(String line) {
+    public Builder add(String line) {
       int index = line.indexOf(":", 1);
       if (index != -1) {
         return addLenient(line.substring(0, index), line.substring(index + 1));

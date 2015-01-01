@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -34,24 +35,18 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/** Android's CookiesTest. */
 public class CookiesTest {
 
-  private OkHttpClient client;
-
-  @Before
-  public void setUp() throws Exception {
-    client = new OkHttpClient();
-  }
+  private final OkHttpClient client = new OkHttpClient();
 
   @After
   public void tearDown() throws Exception {
@@ -204,10 +199,15 @@ public class CookiesTest {
     get(server, "/");
     RecordedRequest request = server.takeRequest();
 
-    List<String> receivedHeaders = request.getHeaders();
-    assertContains(receivedHeaders, "Cookie: $Version=\"1\"; "
-        + "a=\"android\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"; "
-        + "b=\"banana\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"");
+    Headers receivedHeaders = request.getHeaders();
+    assertTrue(receivedHeaders.values("Cookie")
+        .contains("$Version=\"1\"; "
+            + "a=\"android\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\"; "
+            + "b=\"banana\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\""));
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
@@ -233,15 +233,15 @@ public class CookiesTest {
     get(redirectSource, "/");
     RecordedRequest request = redirectSource.takeRequest();
 
-    assertContains(request.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + redirectSource.getCookieDomain()
-        + "\";$Port=\"" + portList + "\"");
-
-    for (String header : redirectTarget.takeRequest().getHeaders()) {
-      if (header.startsWith("Cookie")) {
-        fail(header);
-      }
-    }
+    assertTrue(request.getHeaders()
+        .values("Cookie")
+        .contains("$Version=\"1\"; "
+            + "c=\"cookie\";$Path=\"/\";$Domain=\""
+            + redirectSource.getCookieDomain()
+            + "\";$Port=\""
+            + portList
+            + "\""));
+    assertTrue(redirectTarget.takeRequest().getHeaders().values("Cookie").isEmpty());
   }
 
   /**
@@ -255,8 +255,8 @@ public class CookiesTest {
     final Map<String, List<String>> cookieHandlerHeaders = new HashMap<>();
     CookieHandler.setDefault(new CookieManager() {
       @Override
-      public Map<String, List<String>> get(URI uri,
-          Map<String, List<String>> requestHeaders) throws IOException {
+      public Map<String, List<String>> get(URI uri, Map<String, List<String>> requestHeaders)
+          throws IOException {
         cookieHandlerHeaders.putAll(requestHeaders);
         Map<String, List<String>> result = new HashMap<>();
         result.put("Cookie", Collections.singletonList("Bar=bar"));
@@ -270,8 +270,7 @@ public class CookiesTest {
     server.play();
 
     HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
-    assertEquals(Collections.<String, List<String>>emptyMap(),
-        connection.getRequestProperties());
+    assertEquals(Collections.<String, List<String>>emptyMap(), connection.getRequestProperties());
 
     connection.setRequestProperty("Foo", "foo");
     connection.setDoOutput(true);
@@ -300,8 +299,10 @@ public class CookiesTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertContainsAll(request.getHeaders(), "Foo: foo", "Cookie: Bar=bar", "Cookie2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
+    assertEquals("foo", request.getHeaders().get("Foo"));
+    assertEquals("Baz=baz", request.getHeaders().get("Cookie2"));
+    assertEquals("Bar=bar", request.getHeaders().get("Cookie"));
+    assertNotEquals("quux", request.getHeaders().get("Quux"));
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
@@ -321,22 +322,20 @@ public class CookiesTest {
     get(server, "/");
 
     RecordedRequest request = server.takeRequest();
-    assertContainsAll(request.getHeaders(), "COOKIE: Bar=bar", "cooKIE2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
-  }
-
-  private void assertContains(Collection<String> collection, String element) {
-    for (String c : collection) {
-      if (c != null && c.equalsIgnoreCase(element)) {
-        return;
-      }
-    }
-    fail("No " + element + " in " + collection);
+    assertEquals("Baz=baz", request.getHeaders().get("Cookie2"));
+    assertEquals("Bar=bar", request.getHeaders().get("Cookie"));
+    assertNotEquals("quux", request.getHeaders().get("Quux"));
   }
 
   private void assertContainsAll(Collection<String> collection, String... toFind) {
-    for (String s : toFind) {
-      assertContains(collection, s);
+    next:
+    for (String element : toFind) {
+      for (String c : collection) {
+        if (c != null && c.equalsIgnoreCase(element)) {
+          break next;
+        }
+      }
+      fail("No " + element + " in " + collection);
     }
   }
 

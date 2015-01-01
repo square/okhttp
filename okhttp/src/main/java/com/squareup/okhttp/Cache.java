@@ -485,7 +485,7 @@ public final class Cache {
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = readInt(source);
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
-          varyHeadersBuilder.addLine(source.readUtf8LineStrict());
+          varyHeadersBuilder.add(source.readUtf8LineStrict());
         }
         varyHeaders = varyHeadersBuilder.build();
 
@@ -496,7 +496,7 @@ public final class Cache {
         Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = readInt(source);
         for (int i = 0; i < responseHeaderLineCount; i++) {
-          responseHeadersBuilder.addLine(source.readUtf8LineStrict());
+          responseHeadersBuilder.add(source.readUtf8LineStrict());
         }
         responseHeaders = responseHeadersBuilder.build();
 
