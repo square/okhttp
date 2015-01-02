@@ -67,7 +67,6 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.Buffer;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
@@ -563,7 +562,7 @@ public final class MockWebServer {
     }
 
     return new RecordedRequest(request, headers, chunkSizes, requestBody.numBytesReceived,
-        requestBody.toByteArray(), sequenceNumber, socket);
+        new Buffer().write(requestBody.toByteArray()), sequenceNumber, socket);
   }
 
   private void writeResponse(Socket socket, OutputStream out, MockResponse response)
@@ -729,14 +728,14 @@ public final class MockWebServer {
         }
       }
 
-      BufferedSource bodyIn = Okio.buffer(stream.getSource());
-      byte[] bodyOut = bodyIn.readByteArray();
-      bodyIn.close();
+      Buffer body = new Buffer();
+      body.writeAll(stream.getSource());
+      body.close();
 
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, bodyOut.length,
-          bodyOut, sequenceNumber.getAndIncrement(), socket);
+      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, body.size(), body,
+          sequenceNumber.getAndIncrement(), socket);
     }
 
     private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
@@ -817,7 +816,7 @@ public final class MockWebServer {
         String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
-            Util.EMPTY_BYTE_ARRAY, sequenceNumber.getAndIncrement(), socket));
+            new Buffer(), sequenceNumber.getAndIncrement(), socket));
         Buffer pushedBody = pushPromise.getResponse().getBody();
         SpdyStream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.size() > 0);

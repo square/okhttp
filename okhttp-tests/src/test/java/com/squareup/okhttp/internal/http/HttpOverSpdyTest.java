@@ -140,7 +140,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertNull(request.getHeader("Content-Length"));
   }
 
@@ -157,7 +157,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
@@ -176,7 +176,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
@@ -193,7 +193,7 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("POST /foo HTTP/1.1", request.getRequestLine());
-    assertArrayEquals(postBytes, request.getBody());
+    assertArrayEquals(postBytes, request.getBody().readByteArray());
     assertEquals(postBytes.length, Integer.parseInt(request.getHeader("Content-Length")));
   }
 
