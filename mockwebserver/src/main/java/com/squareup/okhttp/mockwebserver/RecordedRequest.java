@@ -17,6 +17,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.TlsVersion;
+import com.squareup.okhttp.internal.Internal;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -140,7 +141,7 @@ public final class RecordedRequest {
 
   /** @deprecated Use {@link #getTlsVersion()}. */
   public String getSslProtocol() {
-    return tlsVersion != null ? tlsVersion.name() : null;
+    return tlsVersion != null ? Internal.instance.tlsVersionJavaName(tlsVersion) : null;
   }
 
   /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
