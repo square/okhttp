@@ -29,6 +29,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.TlsVersion;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
@@ -65,6 +66,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -633,11 +635,14 @@ public final class URLConnectionTest {
     assertContent("abc", client.open(server.getUrl("/")));
     assertContent("def", client.open(server.getUrl("/")));
 
+    Set<TlsVersion> tlsVersions =
+        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2); // v1.2 on OpenJDK 8.
+
     RecordedRequest request1 = server.takeRequest();
-    assertTrue(request1.getSslProtocol().startsWith("TLSv1")); // v1.2 on OpenJDK 8.
+    assertTrue(tlsVersions.contains(request1.getTlsVersion()));
 
     RecordedRequest request2 = server.takeRequest();
-    assertTrue(request2.getSslProtocol().startsWith("TLSv1")); // v1.2 on OpenJDK 8.
+    assertTrue(tlsVersions.contains(request2.getTlsVersion()));
   }
 
   /**

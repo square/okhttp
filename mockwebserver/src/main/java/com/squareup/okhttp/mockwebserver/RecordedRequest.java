@@ -16,6 +16,8 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.TlsVersion;
+import com.squareup.okhttp.internal.Internal;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ public final class RecordedRequest {
   private final long bodySize;
   private final byte[] body;
   private final int sequenceNumber;
-  private final String sslProtocol;
+  private final TlsVersion tlsVersion;
 
   public RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
       long bodySize, byte[] body, int sequenceNumber, Socket socket) {
@@ -42,8 +44,8 @@ public final class RecordedRequest {
     this.bodySize = bodySize;
     this.body = body;
     this.sequenceNumber = sequenceNumber;
-    this.sslProtocol = socket instanceof SSLSocket
-        ? ((SSLSocket) socket).getSession().getProtocol()
+    this.tlsVersion = socket instanceof SSLSocket
+        ? Internal.instance.tlsVersionForJavaName(((SSLSocket) socket).getSession().getProtocol())
         : null;
 
     if (requestLine != null) {
@@ -141,12 +143,14 @@ public final class RecordedRequest {
     return sequenceNumber;
   }
 
-  /**
-   * Returns the connection's SSL protocol like {@code TLSv1}, {@code SSLv3},
-   * {@code NONE} or null if the connection doesn't use SSL.
-   */
+  /** @deprecated Use {@link #getTlsVersion()}. */
   public String getSslProtocol() {
-    return sslProtocol;
+    return tlsVersion != null ? tlsVersion.name() : null;
+  }
+
+  /** Returns the connection's TLS version or null if the connection doesn't use SSL. */
+  public TlsVersion getTlsVersion() {
+    return tlsVersion;
   }
 
   @Override public String toString() {
