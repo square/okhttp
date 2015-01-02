@@ -1617,6 +1617,36 @@ public final class CallTest {
         .assertCode(302);
   }
 
+  @Test public void expect100ContinueNonEmptyRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertSuccessful();
+
+    assertEquals("abc", server.takeRequest().getUtf8Body());
+  }
+
+  @Test public void expect100ContinueEmptyRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("Expect", "100-continue")
+        .post(RequestBody.create(MediaType.parse("text/plain"), ""))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertSuccessful();
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, null, response.body().string(), null);
