@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -1584,10 +1585,10 @@ public final class UrlConnectionCacheTest {
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
-    server.enqueue(new MockResponse()
-        .addHeader("Cache-Control: max-age=120")
-        .addHeader(": A")
-        .setBody("body"));
+    Headers.Builder headers = new Headers.Builder()
+        .add("Cache-Control: max-age=120");
+    Internal.instance.addLenient(headers, ": A");
+    server.enqueue(new MockResponse().setHeaders(headers.build()).setBody("body"));
 
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertEquals("A", connection.getHeaderField(""));
@@ -1747,8 +1748,10 @@ public final class UrlConnectionCacheTest {
     Buffer truncatedBody = new Buffer();
     truncatedBody.write(response.getBody(), numBytesToKeep);
     response.setBody(truncatedBody);
-    response.getHeaders().clear();
-    response.getHeaders().addAll(headers);
+    response.clearHeaders();
+    for (String header : headers) {
+      response.addHeader(header);
+    }
     return response;
   }
 

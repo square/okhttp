@@ -517,7 +517,7 @@ public final class MockWebServer {
       return null; // no request because the stream is exhausted
     }
 
-    List<String> headers = new ArrayList<>();
+    Headers.Builder headers = new Headers.Builder();
     long contentLength = -1;
     boolean chunked = false;
     boolean expectContinue = false;
@@ -581,7 +581,7 @@ public final class MockWebServer {
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
-    return new RecordedRequest(request, headers, chunkSizes, requestBody.receivedByteCount,
+    return new RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,
         requestBody.buffer, sequenceNumber, socket);
   }
 
@@ -604,28 +604,17 @@ public final class MockWebServer {
         };
 
     // Adapt the request and response into our Request and Response domain model.
-    Request.Builder fancyRequestBuilder = new Request.Builder()
-        .get().url(request.getPath());
-    List<String> requestHeaders = request.getHeaders();
-    Headers.Builder fancyRequestHeaders = new Headers.Builder();
-    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
-      fancyRequestHeaders.add(requestHeaders.get(i));
-    }
-    fancyRequestBuilder.headers(fancyRequestHeaders.build());
-    final Request fancyRequest = fancyRequestBuilder.build();
-
-    Response.Builder fancyResponseBuilder = new Response.Builder()
+    final Request fancyRequest = new Request.Builder()
+        .get().url(request.getPath())
+        .headers(request.getNewHeaders())
+        .build();
+    final Response fancyResponse = new Response.Builder()
         .code(Integer.parseInt(response.getStatus().split(" ")[1]))
         .message(response.getStatus().split(" ", 3)[2])
+        .headers(response.getNewHeaders())
         .request(fancyRequest)
-        .protocol(Protocol.HTTP_1_1);
-    List<String> responseHeaders = response.getHeaders();
-    Headers.Builder fancyResponseHeaders = new Headers.Builder();
-    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-      fancyRequestHeaders.add(responseHeaders.get(i));
-    }
-    fancyRequestBuilder.headers(fancyResponseHeaders.build());
-    final Response fancyResponse = fancyResponseBuilder.build();
+        .protocol(Protocol.HTTP_1_1)
+        .build();
 
     // The callback might act synchronously. Give it its own thread.
     new Thread(new Runnable() {
@@ -803,7 +792,7 @@ public final class MockWebServer {
 
     private RecordedRequest readRequest(SpdyStream stream) throws IOException {
       List<Header> spdyHeaders = stream.getRequestHeaders();
-      List<String> httpHeaders = new ArrayList<>();
+      Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
@@ -817,7 +806,7 @@ public final class MockWebServer {
         } else if (name.equals(Header.VERSION)) {
           version = value;
         } else {
-          httpHeaders.add(name.utf8() + ": " + value);
+          httpHeaders.add(name.utf8(), value);
         }
       }
 
@@ -827,7 +816,7 @@ public final class MockWebServer {
 
       String requestLine = method + ' ' + path + ' ' + version;
       List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-      return new RecordedRequest(requestLine, httpHeaders, chunkSizes, body.size(), body,
+      return new RecordedRequest(requestLine, httpHeaders.build(), chunkSizes, body.size(), body,
           sequenceNumber.getAndIncrement(), socket);
     }
 
@@ -845,14 +834,9 @@ public final class MockWebServer {
       if (protocol == Protocol.SPDY_3) {
         spdyHeaders.add(new Header(Header.VERSION, statusParts[0]));
       }
-      List<String> headers = response.getHeaders();
+      Headers headers = response.getNewHeaders();
       for (int i = 0, size = headers.size(); i < size; i++) {
-        String header = headers.get(i);
-        String[] headerParts = header.split(":", 2);
-        if (headerParts.length != 2) {
-          throw new AssertionError("Unexpected header: " + header);
-        }
-        spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
+        spdyHeaders.add(new Header(headers.name(i), headers.value(i)));
       }
 
       Buffer body = response.getBody();
@@ -877,13 +861,9 @@ public final class MockWebServer {
             : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));
         pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
         pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
-        for (int i = 0, size = pushPromise.getHeaders().size(); i < size; i++) {
-          String header = pushPromise.getHeaders().get(i);
-          String[] headerParts = header.split(":", 2);
-          if (headerParts.length != 2) {
-            throw new AssertionError("Unexpected header: " + header);
-          }
-          pushedHeaders.add(new Header(headerParts[0], headerParts[1].trim()));
+        Headers pushPromiseHeaders = pushPromise.getHeaders();
+        for (int i = 0, size = pushPromiseHeaders.size(); i < size; i++) {
+          pushedHeaders.add(new Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)));
         }
         String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.

@@ -15,9 +15,9 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.internal.ws.WebSocketListener;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
@@ -27,7 +27,7 @@ public final class MockResponse implements Cloneable {
   private static final String CHUNKED_BODY_HEADER = "Transfer-encoding: chunked";
 
   private String status = "HTTP/1.1 200 OK";
-  private List<String> headers = new ArrayList<>();
+  private Headers.Builder headers = new Headers.Builder();
 
   private Buffer body;
 
@@ -50,7 +50,7 @@ public final class MockResponse implements Cloneable {
   @Override public MockResponse clone() {
     try {
       MockResponse result = (MockResponse) super.clone();
-      result.headers = new ArrayList<>(headers);
+      result.headers = headers.build().newBuilder();
       result.promises = new ArrayList<>(promises);
       return result;
     } catch (CloneNotSupportedException e) {
@@ -74,7 +74,17 @@ public final class MockResponse implements Cloneable {
 
   /** Returns the HTTP headers, such as "Content-Length: 0". */
   public List<String> getHeaders() {
-    return headers;
+    Headers headers = this.headers.build();
+    int size = headers.size();
+    List<String> headerList = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      headerList.add(headers.name(i) + ": " + headers.value(i));
+    }
+    return headerList;
+  }
+
+  Headers getNewHeaders() {
+    return headers.build();
   }
 
   /**
@@ -82,7 +92,7 @@ public final class MockResponse implements Cloneable {
    * "Transfer-encoding" headers that were added by default.
    */
   public MockResponse clearHeaders() {
-    headers.clear();
+    headers = new Headers.Builder();
     return this;
   }
 
@@ -100,7 +110,8 @@ public final class MockResponse implements Cloneable {
    * headers with the same name.
    */
   public MockResponse addHeader(String name, Object value) {
-    return addHeader(name + ": " + String.valueOf(value));
+    headers.add(name, String.valueOf(value));
+    return this;
   }
 
   /**
@@ -112,15 +123,15 @@ public final class MockResponse implements Cloneable {
     return addHeader(name, value);
   }
 
+  /** Replaces all headers with those specified in {@code headers}. */
+  public MockResponse setHeaders(Headers headers) {
+    this.headers = headers.newBuilder();
+    return this;
+  }
+
   /** Removes all headers named {@code name}. */
   public MockResponse removeHeader(String name) {
-    name += ":";
-    for (Iterator<String> i = headers.iterator(); i.hasNext(); ) {
-      String header = i.next();
-      if (name.regionMatches(true, 0, header, 0, name.length())) {
-        i.remove();
-      }
-    }
+    headers.removeAll(name);
     return this;
   }
 
