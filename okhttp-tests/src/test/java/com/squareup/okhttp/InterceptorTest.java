@@ -236,7 +236,7 @@ public final class InterceptorTest {
     client.newCall(request).execute();
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("ABC", recordedRequest.getUtf8Body());
+    assertEquals("ABC", recordedRequest.getBody().readUtf8());
     assertEquals("foo", recordedRequest.getHeader("Original-Header"));
     assertEquals("yep", recordedRequest.getHeader("OkHttp-Intercepted"));
     assertEquals("POST", recordedRequest.getMethod());

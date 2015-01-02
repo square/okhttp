@@ -327,7 +327,7 @@ public final class URLConnectionTest {
     connection.getOutputStream().write("body".getBytes("UTF-8"));
     assertContent("abc", connection);
 
-    assertEquals("body", server.takeRequest().getUtf8Body());
+    assertEquals("body", server.takeRequest().getBody().readUtf8());
   }
 
   @Test public void getErrorStreamOnSuccessfulRequest() throws Exception {
@@ -1294,7 +1294,7 @@ public final class URLConnectionTest {
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals(body, new String(request.getBody(), "US-ASCII"));
+    assertEquals(body, request.getBody().readUtf8());
     assertEquals(Arrays.asList(body.length()), request.getChunkSizes());
   }
 
@@ -1333,7 +1333,7 @@ public final class URLConnectionTest {
     // no authorization header for the request...
     RecordedRequest request = server.takeRequest();
     assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+    assertEquals("ABCD", request.getBody().readUtf8());
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
@@ -1381,12 +1381,12 @@ public final class URLConnectionTest {
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
-    assertEquals(body, recordedRequest1.getUtf8Body());
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
     assertNull(recordedRequest1.getHeader("Authorization"));
 
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("POST", recordedRequest2.getMethod());
-    assertEquals(body, recordedRequest2.getUtf8Body());
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
     assertEquals(credential, recordedRequest2.getHeader("Authorization"));
   }
 
@@ -1613,7 +1613,7 @@ public final class URLConnectionTest {
     } else if (streamingMode == StreamingMode.CHUNKED) {
       assertEquals(Arrays.asList(4), request.getChunkSizes());
     }
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+    assertEquals("ABCD", request.getBody().readUtf8());
   }
 
   enum StreamingMode {
@@ -1650,7 +1650,7 @@ public final class URLConnectionTest {
       assertEquals("POST / HTTP/1.1", request.getRequestLine());
       assertContains(request.getHeaders(),
           "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
-      assertEquals(Arrays.toString(requestBody), Arrays.toString(request.getBody()));
+      assertEquals("ABCD", request.getBody().readUtf8());
     }
   }
 
@@ -1966,7 +1966,7 @@ public final class URLConnectionTest {
 
     RecordedRequest page1 = server.takeRequest();
     assertEquals("POST /page1 HTTP/1.1", page1.getRequestLine());
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody()));
+    assertEquals("ABCD", page1.getBody().readUtf8());
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
@@ -2076,7 +2076,7 @@ public final class URLConnectionTest {
       // Methods other than GET/HEAD shouldn't follow the redirect
       if (method.equals("POST")) {
         assertTrue(connection.getDoOutput());
-        assertEquals(Arrays.toString(requestBody), Arrays.toString(page1.getBody()));
+        assertEquals("ABCD", page1.getBody().readUtf8());
       }
       assertEquals(1, server.getRequestCount());
       assertEquals("This page has moved!", response);
@@ -2214,7 +2214,7 @@ public final class URLConnectionTest {
     assertEquals(200, connection.getResponseCode());
 
     RecordedRequest request = server.takeRequest();
-    assertEquals("ABC", new String(request.getBody(), "UTF-8"));
+    assertEquals("ABC", request.getBody().readUtf8());
   }
 
   @Test public void connectionCloseInRequest() throws IOException, InterruptedException {
@@ -2598,7 +2598,7 @@ public final class URLConnectionTest {
     assertEquals("/a", requestA.getPath());
     RecordedRequest requestB = server.takeRequest();
     assertEquals("/b", requestB.getPath());
-    assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody()));
+    assertEquals(Arrays.toString(requestBody), Arrays.toString(requestB.getBody().readByteArray()));
   }
 
   @Test public void postBodyRetransmittedOnFailureRecovery() throws Exception {
@@ -2618,11 +2618,11 @@ public final class URLConnectionTest {
     assertEquals(0, get.getSequenceNumber());
 
     RecordedRequest post1 = server.takeRequest();
-    assertEquals("body!", post1.getUtf8Body());
+    assertEquals("body!", post1.getBody().readUtf8());
     assertEquals(1, post1.getSequenceNumber());
 
     RecordedRequest post2 = server.takeRequest();
-    assertEquals("body!", post2.getUtf8Body());
+    assertEquals("body!", post2.getBody().readUtf8());
     assertEquals(0, post2.getSequenceNumber());
   }
 
@@ -2750,7 +2750,7 @@ public final class URLConnectionTest {
     assertEquals("/private", response.request().url().getPath());
     assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
-  
+
   @Test public void customTokenAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
             .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
@@ -2910,7 +2910,7 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("application/x-www-form-urlencoded", request.getHeader("Content-Type"));
     assertEquals("3", request.getHeader("Content-Length"));
-    assertEquals("abc", request.getUtf8Body());
+    assertEquals("abc", request.getBody().readUtf8());
   }
 
   @Test public void setProtocols() throws Exception {
@@ -3021,7 +3021,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("DELETE", request.getMethod());
-    assertEquals("BODY", new String(request.getBody(), UTF_8));
+    assertEquals("BODY", request.getBody().readUtf8());
   }
 
   @Test public void userAgentPicksUpHttpAgentSystemProperty() throws Exception {

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import okio.Buffer;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -50,15 +51,15 @@ public final class MockWebServerTest {
         "X-Whitespace:  both  "
     );
     List<Integer> chunkSizes = Collections.emptyList();
-    byte[] body = {'A', 'B', 'C'};
+    Buffer body = new Buffer().writeUtf8("ABC");
     String requestLine = "GET / HTTP/1.1";
     RecordedRequest request = new RecordedRequest(
-        requestLine, headers, chunkSizes, body.length, body, 0, null);
+        requestLine, headers, chunkSizes, body.size(), body, 0, null);
     assertEquals("s=square", request.getHeader("cookie"));
     assertEquals(Arrays.asList("s=square", "a=android"), request.getHeaders("cookie"));
     assertEquals("left", request.getHeader("x-whitespace"));
     assertEquals(Arrays.asList("left", "right", "both"), request.getHeaders("x-whitespace"));
-    assertEquals("ABC", request.getUtf8Body());
+    assertEquals("ABC", request.getBody().readUtf8());
   }
 
   @Test public void defaultMockResponse() {
@@ -124,7 +125,7 @@ public final class MockWebServerTest {
     assertEquals(request.getRequestLine(), "PUT / HTTP/1.1");
     assertEquals("5", request.getHeader("Content-Length"));
     assertEquals(5, request.getBodySize());
-    assertEquals("hello", new String(request.getBody()));
+    assertEquals("hello", request.getBody().readUtf8());
     // below fails on JRE 6 unless -Dsun.net.http.allowRestrictedHeaders=true is set
     assertEquals("100-continue", request.getHeader("Expect"));
   }

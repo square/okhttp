@@ -124,7 +124,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
@@ -203,7 +203,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("HEAD", recordedRequest.getMethod());
     assertEquals("SyncApiTest", recordedRequest.getHeader("User-Agent"));
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
@@ -231,7 +231,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("POST", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -260,7 +260,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("POST", recordedRequest.getMethod());
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
@@ -321,12 +321,12 @@ public final class CallTest {
 
     RecordedRequest recordedRequest1 = server.takeRequest();
     assertEquals("POST", recordedRequest1.getMethod());
-    assertEquals(body, recordedRequest1.getUtf8Body());
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
     assertNull(recordedRequest1.getHeader("Authorization"));
 
     RecordedRequest recordedRequest2 = server.takeRequest();
     assertEquals("POST", recordedRequest2.getMethod());
-    assertEquals(body, recordedRequest2.getUtf8Body());
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
     assertEquals(credential, recordedRequest2.getHeader("Authorization"));
   }
 
@@ -375,7 +375,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("DELETE", recordedRequest.getMethod());
-    assertEquals(0, recordedRequest.getBody().length);
+    assertEquals(0, recordedRequest.getBody().size());
     assertEquals("0", recordedRequest.getHeader("Content-Length"));
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
@@ -404,7 +404,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("PUT", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -433,7 +433,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("PATCH", recordedRequest.getMethod());
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -461,7 +461,7 @@ public final class CallTest {
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
-    assertEquals("abc", recordedRequest.getUtf8Body());
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
   }
 
   @Test public void illegalToExecuteTwice() throws Exception {
@@ -816,8 +816,8 @@ public final class CallTest {
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
-    client.setConnectionSpecs(Arrays.asList(
-        ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
+    client.setConnectionSpecs(
+        Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
 
     server.enqueue(new MockResponse());
 
@@ -832,9 +832,7 @@ public final class CallTest {
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
     server.get().useHttps(sslContext.getSocketFactory(), false);
-    server.enqueue(new MockResponse()
-        .setResponseCode(301)
-        .addHeader("Location: http://square.com"));
+    server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location: http://square.com"));
 
     client.setFollowSslRedirects(false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
@@ -904,7 +902,7 @@ public final class CallTest {
         .assertBody("abc");
 
     RecordedRequest recordedRequest = server.takeRequest();
-    assertEquals("def", recordedRequest.getUtf8Body());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
     assertEquals("3", recordedRequest.getHeader("Content-Length"));
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
@@ -930,11 +928,11 @@ public final class CallTest {
     assertEquals(0, get.getSequenceNumber());
 
     RecordedRequest post1 = server.takeRequest();
-    assertEquals("body!", post1.getUtf8Body());
+    assertEquals("body!", post1.getBody().readUtf8());
     assertEquals(1, post1.getSequenceNumber());
 
     RecordedRequest post2 = server.takeRequest();
-    assertEquals("body!", post2.getUtf8Body());
+    assertEquals("body!", post2.getBody().readUtf8());
     assertEquals(0, post2.getSequenceNumber());
   }
 
@@ -993,8 +991,7 @@ public final class CallTest {
         .addHeader("Vary: Accept-Charset")
         .addHeader("Donut: a")
         .setBody("A"));
-    server.enqueue(new MockResponse()
-        .clearHeaders()
+    server.enqueue(new MockResponse().clearHeaders()
         .addHeader("Donut: b")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
@@ -1201,7 +1198,7 @@ public final class CallTest {
 
     RecordedRequest page1 = server.takeRequest();
     assertEquals("POST /page1 HTTP/1.1", page1.getRequestLine());
-    assertEquals("Request Body", page1.getUtf8Body());
+    assertEquals("Request Body", page1.getBody().readUtf8());
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
@@ -1228,9 +1225,9 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest request1 = server.takeRequest();
-    assertContains(request1.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.get().getCookieDomain()
-        + "\";$Port=\"" + portList + "\"");
+    assertContains(request1.getHeaders(),
+        "Cookie: $Version=\"1\"; " + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.get()
+            .getCookieDomain() + "\";$Port=\"" + portList + "\"");
 
     RecordedRequest request2 = server2.takeRequest();
     assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
@@ -1466,8 +1463,8 @@ public final class CallTest {
     call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    callback.await(requestA.url()).assertFailure(
-        "Canceled", "stream was reset: CANCEL", "Socket closed");
+    callback.await(requestA.url()).assertFailure("Canceled", "stream was reset: CANCEL",
+        "Socket closed");
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
@@ -1609,8 +1606,7 @@ public final class CallTest {
         .setResponseCode(302)
         .addHeader("Location: /b")
         .setBody("A"));
-    server.enqueue(new MockResponse()
-        .setBody("B"));
+    server.enqueue(new MockResponse().setBody("B"));
 
     client.setFollowRedirects(false);
     RecordedResponse recordedResponse = executeSynchronously(
