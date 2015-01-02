@@ -367,7 +367,7 @@ public enum CipherSuite {
     this.javaName = javaName;
   }
 
-  static CipherSuite forJavaName(String javaName) {
+  public static CipherSuite forJavaName(String javaName) {
     return javaName.startsWith("SSL_")
         ? valueOf("TLS_" + javaName.substring(4))
         : valueOf(javaName);

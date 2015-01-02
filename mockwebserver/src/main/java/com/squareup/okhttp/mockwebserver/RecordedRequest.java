@@ -44,8 +44,9 @@ public final class RecordedRequest {
     this.bodySize = bodySize;
     this.body = body;
     this.sequenceNumber = sequenceNumber;
-    this.tlsVersion = socket instanceof SSLSocket ? Internal.instance.tlsVersionForJavaName(
-        ((SSLSocket) socket).getSession().getProtocol()) : null;
+    this.tlsVersion = socket instanceof SSLSocket
+        ? TlsVersion.forJavaName(((SSLSocket) socket).getSession().getProtocol())
+        : null;
 
     if (requestLine != null) {
       int methodEnd = requestLine.indexOf(' ');
@@ -140,7 +141,7 @@ public final class RecordedRequest {
 
   /** @deprecated Use {@link #getTlsVersion()}. */
   public String getSslProtocol() {
-    return tlsVersion != null ? tlsVersion.name() : null;
+    return tlsVersion != null ? Internal.instance.tlsVersionJavaName(tlsVersion) : null;
   }
 
   /** Returns the connection's TLS version or null if the connection doesn't use SSL. */

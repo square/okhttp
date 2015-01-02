@@ -120,8 +120,8 @@ public class OkHttpClient implements Cloneable {
         connection.connectAndSetOwner(client, owner, request);
       }
 
-      @Override public TlsVersion tlsVersionForJavaName(String name) {
-        return TlsVersion.forJavaName(name);
+      @Override public String tlsVersionJavaName(TlsVersion tlsVersion) {
+        return tlsVersion.javaName;
       }
 
       @Override

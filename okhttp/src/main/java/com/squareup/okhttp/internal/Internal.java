@@ -70,7 +70,7 @@ public abstract class Internal {
   public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
       HttpEngine owner, Request request) throws IOException;
 
-  public abstract TlsVersion tlsVersionForJavaName(String name);
+  public abstract String tlsVersionJavaName(TlsVersion tlsVersion);
 
   // TODO delete the following when web sockets move into the main package.
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
