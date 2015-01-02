@@ -171,8 +171,11 @@ public final class Headers {
   public static final class Builder {
     private final List<String> namesAndValues = new ArrayList<>(20);
 
-    /** Add an header line containing a field name, a literal colon, and a value. */
-    Builder addLine(String line) {
+    /**
+     * Add a header line without any validation. Only appropriate for headers from the remote peer
+     * or cache.
+     */
+    Builder addLenient(String line) {
       int index = line.indexOf(":", 1);
       if (index != -1) {
         return addLenient(line.substring(0, index), line.substring(index + 1));
@@ -183,6 +186,15 @@ public final class Headers {
       } else {
         return addLenient("", line); // No header name.
       }
+    }
+
+    /** Add an header line containing a field name, a literal colon, and a value. */
+    public Builder add(String line) {
+      int index = line.indexOf(":");
+      if (index == -1) {
+        throw new IllegalArgumentException("Unexpected header: " + line);
+      }
+      return add(line.substring(0, index).trim(), line.substring(index + 1));
     }
 
     /** Add a field with the specified value. */

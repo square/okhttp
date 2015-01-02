@@ -87,8 +87,8 @@ public class OkHttpClient implements Cloneable {
         return pooled.isReadable();
       }
 
-      @Override public void addLine(Headers.Builder builder, String line) {
-        builder.addLine(line);
+      @Override public void addLenient(Headers.Builder builder, String line) {
+        builder.addLenient(line);
       }
 
       @Override public void setCache(OkHttpClient client, InternalCache internalCache) {

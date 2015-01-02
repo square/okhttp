@@ -207,7 +207,7 @@ public final class HttpConnection {
   public void readHeaders(Headers.Builder builder) throws IOException {
     // parse the result headers until the first blank line
     for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
-      Internal.instance.addLine(builder, line);
+      Internal.instance.addLenient(builder, line);
     }
   }
 
