@@ -46,16 +46,17 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *   <li>{@link #writeRequest Send request headers}.
  *   <li>Open a sink to write the request body. Either {@link
  *       #newFixedLengthSink fixed-length} or {@link #newChunkedSink chunked}.
- *   <li>Write to and then close that stream.
+ *   <li>Write to and then close that sink.
  *   <li>{@link #readResponse Read response headers}.
- *   <li>Open the HTTP response body input stream. Either {@link
+ *   <li>Open a source to read the response body. Either {@link
  *       #newFixedLengthSource fixed-length}, {@link #newChunkedSource chunked}
  *       or {@link #newUnknownLengthSource unknown length}.
- *   <li>Read from and close that stream.
+ *   <li>Read from and close that source.
  * </ol>
  * <p>Exchanges that do not have a request body may skip creating and closing
- * the request body. Exchanges that do not have a response body must call {@link
- * #emptyResponseBody}.
+ * the request body. Exchanges that do not have a response body can call {@link
+ * #newFixedLengthSource(long) newFixedLengthSource(0)} and may skip reading and
+ * closing that source.
  */
 public final class HttpConnection {
   private static final int STATE_IDLE = 0; // Idle connections are ready to write request headers.
