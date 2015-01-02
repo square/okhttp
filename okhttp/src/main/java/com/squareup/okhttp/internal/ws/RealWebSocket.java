@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.ws;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
@@ -44,12 +45,13 @@ public abstract class RealWebSocket implements WebSocket {
   private final Object closeLock = new Object();
 
   public RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
-      final WebSocketListener listener) {
+      final WebSocketListener listener, final String url) {
     this.listener = listener;
 
     // Pings come in on the reader thread. This executor contends with callers for writing pongs.
-    final ThreadPoolExecutor pongExecutor =
-        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>());
+    final ThreadPoolExecutor pongExecutor = new ThreadPoolExecutor(1, 1, 1, SECONDS,
+        new LinkedBlockingDeque<Runnable>(),
+        Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
     pongExecutor.allowCoreThreadTimeOut(true);
 
     writer = new WebSocketWriter(isClient, sink, random);
@@ -59,7 +61,7 @@ public abstract class RealWebSocket implements WebSocket {
       }
 
       @Override public void onPing(final Buffer buffer) {
-        pongExecutor.execute(new NamedRunnable("WebSocket PongWriter") {
+        pongExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Pong", url) {
           @Override protected void execute() {
             try {
               writer.writePong(buffer);
