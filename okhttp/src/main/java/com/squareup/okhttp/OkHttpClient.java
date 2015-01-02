@@ -120,10 +120,6 @@ public class OkHttpClient implements Cloneable {
         connection.connectAndSetOwner(client, owner, request);
       }
 
-      @Override public TlsVersion tlsVersionForJavaName(String name) {
-        return TlsVersion.forJavaName(name);
-      }
-
       @Override
       public void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket) {
         call.enqueue(responseCallback, forWebSocket);

@@ -34,7 +34,7 @@ public enum TlsVersion {
     this.javaName = javaName;
   }
 
-  static TlsVersion forJavaName(String javaName) {
+  public static TlsVersion forJavaName(String javaName) {
     switch (javaName) {
       case "TLSv1.2": return TLS_1_2;
       case "TLSv1.1": return TLS_1_1;

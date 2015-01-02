@@ -17,7 +17,6 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.TlsVersion;
-import com.squareup.okhttp.internal.Internal;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +43,9 @@ public final class RecordedRequest {
     this.bodySize = bodySize;
     this.body = body;
     this.sequenceNumber = sequenceNumber;
-    this.tlsVersion = socket instanceof SSLSocket ? Internal.instance.tlsVersionForJavaName(
-        ((SSLSocket) socket).getSession().getProtocol()) : null;
+    this.tlsVersion = socket instanceof SSLSocket
+        ? TlsVersion.forJavaName(((SSLSocket) socket).getSession().getProtocol())
+        : null;
 
     if (requestLine != null) {
       int methodEnd = requestLine.indexOf(' ');
