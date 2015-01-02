@@ -21,6 +21,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.spdy.Header;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
@@ -143,6 +144,48 @@ public final class HeadersTest {
     Headers headers = Headers.of("\t User-Agent \n", " \r OkHttp ");
     assertEquals("User-Agent", headers.name(0));
     assertEquals("OkHttp", headers.value(0));
+  }
+
+  @Test public void addParsing() {
+    Headers headers = new Headers.Builder()
+        .add("foo: bar")
+        .add(" foo: baz") // Name leading whitespace is trimmed.
+        .add("foo : bak") // Name trailing whitespace is trimmed.
+        .add("ping:  pong  ") // Value whitespace is trimmed.
+        .add("kit:kat") // Space after colon is not required.
+        .build();
+    assertEquals(Arrays.asList("bar", "baz", "bak"), headers.values("foo"));
+    assertEquals(Arrays.asList("pong"), headers.values("ping"));
+    assertEquals(Arrays.asList("kat"), headers.values("kit"));
+  }
+
+  @Test public void addThrowsOnEmptyName() {
+    try {
+      new Headers.Builder().add(": bar");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      new Headers.Builder().add(" : bar");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void addThrowsOnNoColon() {
+    try {
+      new Headers.Builder().add("foo bar");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void addThrowsOnMultiColon() {
+    try {
+      new Headers.Builder().add(":status: 200 OK");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   @Test public void ofThrowsOddNumberOfHeaders() {

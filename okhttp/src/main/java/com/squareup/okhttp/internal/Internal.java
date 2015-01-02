@@ -52,7 +52,7 @@ public abstract class Internal {
 
   public abstract boolean isReadable(Connection pooled);
 
-  public abstract void addLine(Headers.Builder builder, String line);
+  public abstract void addLenient(Headers.Builder builder, String line);
 
   public abstract void setCache(OkHttpClient client, InternalCache internalCache);
 
