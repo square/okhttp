@@ -103,7 +103,6 @@ import okio.Source;
  * }</pre>
  */
 public final class Cache {
-  // TODO: add APIs to iterate the cache?
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
   private static final int ENTRY_BODY = 1;

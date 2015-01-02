@@ -49,12 +49,14 @@ public final class RealWebSocketTest {
   @Before public void setUp() {
     Random random = new Random(0);
 
-    client = new RealWebSocket(true, server2client, client2Server, random, clientListener) {
+    client = new RealWebSocket(true, server2client, client2Server, random, clientListener,
+        "http://example.com/websocket") {
       @Override protected void closeConnection() throws IOException {
         clientConnectionClosed = true;
       }
     };
-    server = new RealWebSocket(false, client2Server, server2client, random, serverListener) {
+    server = new RealWebSocket(false, client2Server, server2client, random, serverListener,
+        "http://example.com/websocket") {
       @Override protected void closeConnection() throws IOException {
       }
     };

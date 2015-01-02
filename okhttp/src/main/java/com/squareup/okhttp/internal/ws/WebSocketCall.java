@@ -178,10 +178,10 @@ public class WebSocketCall {
     BufferedSink sink = Okio.buffer(Okio.sink(socket));
 
     final RealWebSocket webSocket =
-        new ConnectionWebSocket(connection, source, sink, random, listener);
+        new ConnectionWebSocket(response, connection, source, sink, random, listener);
 
     // Start a dedicated thread for reading the web socket.
-    new Thread(new NamedRunnable("WebSocketReader " + request.urlString()) {
+    new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
       @Override protected void execute() {
         while (webSocket.readMessage()) {
         }
@@ -198,9 +198,9 @@ public class WebSocketCall {
   private static class ConnectionWebSocket extends RealWebSocket {
     private final Connection connection;
 
-    public ConnectionWebSocket(Connection connection, BufferedSource source, BufferedSink sink,
-        Random random, WebSocketListener listener) {
-      super(true /* is client */, source, sink, random, listener);
+    public ConnectionWebSocket(Response response, Connection connection, BufferedSource source,
+        BufferedSink sink, Random random, WebSocketListener listener) {
+      super(true /* is client */, source, sink, random, listener, response.request().urlString());
       this.connection = connection;
     }
 
