@@ -85,7 +85,7 @@ public abstract class RealWebSocket implements WebSocket {
    * Read a single message from the web socket and deliver it to the listener. This method should
    * be called in a loop with the return value indicating whether looping should continue.
    */
-  boolean readMessage() {
+  public boolean readMessage() {
     try {
       reader.processNextFrame();
       return !readerSentClose;
