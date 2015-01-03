@@ -24,12 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.junit.rules.ExternalResource;
 
-/**
- * Allows you to use {@link MockWebServer} as a JUnit test rule.
- *
- * <p>This rule starts {@link MockWebServer} on an available port before your test runs, and shuts
- * it down after it completes.
- */
+/** @deprecated {@link MockWebServer} can now be used directly as a rule. */
 public class MockWebServerRule extends ExternalResource {
   private static final Logger logger = Logger.getLogger(MockWebServerRule.class.getName());
 

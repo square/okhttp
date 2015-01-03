@@ -20,7 +20,7 @@ import com.squareup.okhttp.RecordedResponse;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
@@ -34,7 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 public final class WebSocketCallTest {
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
 
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final OkHttpClient client = new OkHttpClient();
