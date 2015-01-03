@@ -22,20 +22,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class CustomDispatcherTest {
-  private MockWebServer mockWebServer = new MockWebServer();
-
-  @After public void tearDown() throws Exception {
-    mockWebServer.shutdown();
-  }
+  @Rule public final MockWebServer mockWebServer = new MockWebServer();
 
   @Test public void simpleDispatch() throws Exception {
-    mockWebServer.play();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
@@ -56,7 +51,6 @@ public class CustomDispatcherTest {
   @Test public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
-    mockWebServer.play();
     final String secondRequest = "/bar";
     final String firstRequest = "/foo";
     final CountDownLatch latch = new CountDownLatch(1);

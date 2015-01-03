@@ -28,7 +28,7 @@ import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class JavaApiConverterTest {
     }
   };
 
-  @Rule public MockWebServerRule server = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
 
   private OkHttpClient client;
 
@@ -685,7 +685,7 @@ public class JavaApiConverterTest {
   }
 
   private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false /* tunnelProxy */);
+    server.useHttps(sslContext.getSocketFactory(), false /* tunnelProxy */);
     server.enqueue(mockResponse);
     return server.getUrl("/");
   }

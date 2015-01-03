@@ -69,6 +69,9 @@ import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
@@ -76,8 +79,14 @@ import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 /**
  * A scriptable web server. Callers supply canned responses and the server
  * replays them upon request in sequence.
+ *
+ * <p>This class is also a JUnit rule which will automatically start on an available port before
+ * your test runs and shut down after it completes.
+ * <pre>{@code
+ * @Rule public final MockWebServer server = new MockWebServer();
+ * }</pre>
  */
-public final class MockWebServer {
+public final class MockWebServer implements TestRule {
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -109,7 +118,8 @@ public final class MockWebServer {
   private ExecutorService executor;
   private boolean tunnelProxy;
   private Dispatcher dispatcher = new QueueDispatcher();
-
+  private boolean isRule;
+  private boolean started;
   private int port = -1;
   private InetAddress inetAddress;
   private boolean protocolNegotiationEnabled = true;
@@ -122,17 +132,17 @@ public final class MockWebServer {
   }
 
   public int getPort() {
-    if (port == -1) throw new IllegalStateException("Call play() before getPort()");
+    startOrThrow();
     return port;
   }
 
   public String getHostName() {
-    if (inetAddress == null) throw new IllegalStateException("Call play() before getHostName()");
+    startOrThrow();
     return inetAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    if (inetAddress == null) throw new IllegalStateException("Call play() before toProxyAddress()");
+    startOrThrow();
     return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(inetAddress, getPort()));
   }
 
@@ -253,6 +263,34 @@ public final class MockWebServer {
     ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
   }
 
+  @Override public Statement apply(final Statement base, Description description) {
+    isRule = true;
+    return new Statement() {
+      @Override public void evaluate() throws Throwable {
+        startOrThrow();
+        try {
+          base.evaluate();
+        } finally {
+          try {
+            shutdown();
+          } catch (IOException e) {
+            logger.log(Level.WARNING, "Unable to shutdown MockWebServer", e);
+          }
+        }
+      }
+    };
+  }
+
+  private void startOrThrow() {
+    if (started) return;
+    if (!isRule) throw new IllegalStateException("You must call play() before this method.");
+    try {
+      play();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   /** Equivalent to {@code play(0)}. */
   public void play() throws IOException {
     play(0);
@@ -266,7 +304,9 @@ public final class MockWebServer {
    *     is unavailable.
    */
   public void play(int port) throws IOException {
-    if (executor != null) throw new IllegalStateException("play() already called");
+    if (started) throw new IllegalStateException("play() already called");
+    started = true;
+
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     inetAddress = InetAddress.getByName(null);
     serverSocket = serverSocketFactory.createServerSocket();

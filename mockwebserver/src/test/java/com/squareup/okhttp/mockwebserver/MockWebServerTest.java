@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class MockWebServerTest {
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
 
   @Test public void recordedRequestAccessors() {
     List<String> headers = Arrays.asList(
@@ -290,5 +290,27 @@ public final class MockWebServerTest {
 
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
+  }
+
+  @Test public void asRule() throws Throwable {
+    final MockWebServer server = new MockWebServer();
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    // Evaluating should start the server before calling through to inner statement.
+    server.apply(new Statement() {
+      @Override public void evaluate() throws Throwable {
+        HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
+        assertEquals(200, connection.getResponseCode());
+      }
+    }, null).evaluate();
+
+    // After evaluation the server should have been shutdown.
+    HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
+    try {
+      connection.getResponseCode();
+      fail();
+    } catch (IOException ignored) {
+    }
   }
 }
