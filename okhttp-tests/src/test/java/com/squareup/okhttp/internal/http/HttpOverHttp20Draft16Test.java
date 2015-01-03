@@ -36,7 +36,6 @@ public class HttpOverHttp20Draft16Test extends HttpOverSpdyTest {
         .withPush(new PushPromise("GET", "/foo/bar", Arrays.asList("foo: bar"),
             new MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet")));
     server.enqueue(response);
-    server.play();
 
     connection = client.open(server.getUrl("/foo"));
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
@@ -59,7 +58,6 @@ public class HttpOverHttp20Draft16Test extends HttpOverSpdyTest {
         .withPush(new PushPromise("HEAD", "/foo/bar", Arrays.asList("foo: bar"),
             new MockResponse().setStatus("HTTP/1.1 204 Sweet")));
     server.enqueue(response);
-    server.play();
 
     connection = client.open(server.getUrl("/foo"));
     assertContent("ABCDE", connection, Integer.MAX_VALUE);

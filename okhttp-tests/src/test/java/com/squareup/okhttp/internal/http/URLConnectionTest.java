@@ -42,7 +42,6 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,7 +72,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.net.ServerSocketFactory;
@@ -94,6 +92,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
@@ -116,8 +115,9 @@ import static org.junit.Assert.fail;
 public final class URLConnectionTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
-  @Rule public MockWebServerRule server = new MockWebServerRule();
-  @Rule public MockWebServerRule server2 = new MockWebServerRule();
+  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServerRule server2 = new MockWebServerRule();
+  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
 
   private OkUrlFactory client;
   private HttpURLConnection connection;
@@ -853,9 +853,7 @@ public final class URLConnectionTest {
   }
 
   private void initResponseCache() throws IOException {
-    String tmp = System.getProperty("java.io.tmpdir");
-    File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-    cache = new Cache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client.client().setCache(cache);
   }
 

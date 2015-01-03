@@ -54,6 +54,11 @@ public class MockWebServerRule extends ExternalResource {
     }
   }
 
+  public String getHostName() {
+    if (!started) before();
+    return server.getHostName();
+  }
+
   public int getPort() {
     if (!started) before();
     return server.getPort();

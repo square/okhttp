@@ -26,7 +26,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -67,6 +65,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
@@ -82,10 +81,11 @@ import static org.junit.Assert.fail;
 public final class CallTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
-  @Rule public TestRule timeout = new Timeout(30_000);
+  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
+  @Rule public final TestRule timeout = new Timeout(30_000);
 
-  @Rule public MockWebServerRule server = new MockWebServerRule();
-  @Rule public MockWebServerRule server2 = new MockWebServerRule();
+  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServerRule server2 = new MockWebServerRule();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
@@ -96,9 +96,7 @@ public final class CallTest {
     callback = new RecordingCallback();
     logHandler = new TestLogHandler();
 
-    String tmp = System.getProperty("java.io.tmpdir");
-    File cacheDir = new File(tmp, "HttpCache-" + UUID.randomUUID());
-    cache = new Cache(cacheDir, Integer.MAX_VALUE);
+    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     logger.addHandler(logHandler);
   }
 
