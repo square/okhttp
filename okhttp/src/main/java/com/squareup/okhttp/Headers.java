@@ -19,7 +19,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpDate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -118,7 +117,7 @@ public final class Headers {
 
   public Builder newBuilder() {
     Builder result = new Builder();
-    result.namesAndValues.addAll(Arrays.asList(namesAndValues));
+    Collections.addAll(result.namesAndValues, namesAndValues);
     return result;
   }
 
