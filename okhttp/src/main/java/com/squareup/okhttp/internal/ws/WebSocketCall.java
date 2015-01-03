@@ -37,9 +37,6 @@ import okio.Okio;
 
 // TODO move to public API!
 public class WebSocketCall {
-  /** Magic value which must be appended to the {@link #key} in a response header. */
-  private static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-
   /**
    * Prepares the {@code request} to create a web socket at some point in the future.
    * <p>
@@ -157,7 +154,7 @@ public class WebSocketCall {
           "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
     }
     String headerAccept = response.header("Sec-WebSocket-Accept");
-    String acceptExpected = Util.shaBase64(key + ACCEPT_MAGIC);
+    String acceptExpected = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
     if (!acceptExpected.equals(headerAccept)) {
       throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
           + acceptExpected

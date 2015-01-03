@@ -17,7 +17,10 @@
 
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
@@ -26,6 +29,9 @@ import com.squareup.okhttp.internal.spdy.Header;
 import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.spdy.SpdyStream;
+import com.squareup.okhttp.internal.ws.RealWebSocket;
+import com.squareup.okhttp.internal.ws.WebSocketListener;
+import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -52,6 +58,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -67,6 +74,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okio.Buffer;
 import okio.BufferedSink;
+import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 
@@ -433,8 +441,10 @@ public final class MockWebServer {
           throws IOException, InterruptedException {
         RecordedRequest request = readRequest(socket, in, out, sequenceNumber);
         if (request == null) return false;
+
         requestCount.incrementAndGet();
         requestQueue.add(request);
+
         MockResponse response = dispatcher.dispatch(request);
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AFTER_REQUEST) {
           socket.close();
@@ -445,7 +455,16 @@ public final class MockWebServer {
           if (in.read() == -1) return false;
           throw new ProtocolException("unexpected data");
         }
-        writeResponse(socket, out, response);
+
+        boolean requestWantsWebSockets = "Upgrade".equalsIgnoreCase(request.getHeader("Connection"))
+            && "websocket".equalsIgnoreCase(request.getHeader("Upgrade"));
+        boolean responseWantsWebSockets = response.getWebSocketListener() != null;
+        if (requestWantsWebSockets && responseWantsWebSockets) {
+          handleWebSocketUpgrade(socket, in, out, request, response);
+        } else {
+          writeHttpResponse(socket, out, response);
+        }
+
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           in.close();
           out.close();
@@ -458,6 +477,7 @@ public final class MockWebServer {
           logger.info(MockWebServer.this + " received request: " + request
               + " and responded: " + response);
         }
+
         sequenceNumber++;
         return true;
       }
@@ -565,7 +585,79 @@ public final class MockWebServer {
         new Buffer().write(requestBody.toByteArray()), sequenceNumber, socket);
   }
 
-  private void writeResponse(Socket socket, OutputStream out, MockResponse response)
+  private void handleWebSocketUpgrade(Socket socket, InputStream in, OutputStream out,
+      RecordedRequest request, MockResponse response) throws IOException {
+    String key = request.getHeader("Sec-WebSocket-Key");
+    String acceptKey = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
+    response.setHeader("Sec-WebSocket-Accept", acceptKey);
+
+    writeHttpResponse(socket, out, response);
+
+    BufferedSource source = Okio.buffer(Okio.source(in));
+    BufferedSink sink = Okio.buffer(Okio.sink(out));
+
+    final WebSocketListener listener = response.getWebSocketListener();
+    final CountDownLatch connectionClose = new CountDownLatch(1);
+    final RealWebSocket webSocket =
+        new RealWebSocket(false, source, sink, new SecureRandom(), listener,
+            request.getPath()) {
+          @Override protected void closeConnection() throws IOException {
+            connectionClose.countDown();
+          }
+        };
+
+    // Adapt the request and response into our Request and Response domain model.
+    Request.Builder fancyRequestBuilder = new Request.Builder()
+        .get().url(request.getPath());
+    List<String> requestHeaders = request.getHeaders();
+    Headers.Builder fancyRequestHeaders = new Headers.Builder();
+    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
+      fancyRequestHeaders.add(requestHeaders.get(i));
+    }
+    fancyRequestBuilder.headers(fancyRequestHeaders.build());
+    final Request fancyRequest = fancyRequestBuilder.build();
+
+    Response.Builder fancyResponseBuilder = new Response.Builder()
+        .code(Integer.parseInt(response.getStatus().split(" ")[1]))
+        .message(response.getStatus().split(" ", 3)[2])
+        .request(fancyRequest)
+        .protocol(Protocol.HTTP_1_1);
+    List<String> responseHeaders = response.getHeaders();
+    Headers.Builder fancyResponseHeaders = new Headers.Builder();
+    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+      fancyRequestHeaders.add(responseHeaders.get(i));
+    }
+    fancyRequestBuilder.headers(fancyResponseHeaders.build());
+    final Response fancyResponse = fancyResponseBuilder.build();
+
+    // The callback might act synchronously. Give it its own thread.
+    new Thread(new Runnable() {
+      @Override public void run() {
+        try {
+          listener.onOpen(webSocket, fancyRequest, fancyResponse);
+        } catch (IOException e) {
+          // TODO try to write close frame?
+          connectionClose.countDown();
+        }
+      }
+    }, "MockWebServer WebSocket Writer " + request.getPath()).start();
+
+    // Use this thread to continuously read messages.
+    while (webSocket.readMessage()) {
+    }
+
+    // Even if messages are no longer being read we need to wait for the connection close signal.
+    try {
+      connectionClose.await();
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
+
+    Util.closeQuietly(sink);
+    Util.closeQuietly(source);
+  }
+
+  private void writeHttpResponse(Socket socket, OutputStream out, MockResponse response)
       throws IOException {
     out.write((response.getStatus() + "\r\n").getBytes(Util.US_ASCII));
     List<String> headers = response.getHeaders();

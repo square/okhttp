@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.internal.ws.WebSocketListener;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -43,6 +44,7 @@ public final class MockResponse implements Cloneable {
   private int bodyDelayTimeMs = 0;
 
   private List<PushPromise> promises = new ArrayList<>();
+  private WebSocketListener webSocketListener;
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -66,8 +68,7 @@ public final class MockResponse implements Cloneable {
   }
 
   public MockResponse setResponseCode(int code) {
-    this.status = "HTTP/1.1 " + code + " OK";
-    return this;
+    return setStatus("HTTP/1.1 " + code + " OK");
   }
 
   public MockResponse setStatus(String status) {
@@ -134,7 +135,11 @@ public final class MockResponse implements Cloneable {
 
   /** Returns an input stream containing the raw HTTP payload. */
   InputStream getBodyStream() {
-    return bodyStream != null ? bodyStream : getBody().inputStream();
+    if (bodyStream != null) {
+      return bodyStream;
+    }
+    Buffer body = getBody();
+    return body != null ? body.inputStream() : null;
   }
 
   public MockResponse setBody(byte[] body) {
@@ -249,6 +254,24 @@ public final class MockResponse implements Cloneable {
   /** Returns the streams the server will push with this response. */
   public List<PushPromise> getPushPromises() {
     return promises;
+  }
+
+  /**
+   * Attempts to perform a web socket upgrade on the connection. This will overwrite any previously
+   * set status or body.
+   */
+  public MockResponse withWebSocketUpgrade(WebSocketListener listener) {
+    setStatus("HTTP/1.1 101 Switching Protocols");
+    setHeader("Connection", "Upgrade");
+    setHeader("Upgrade", "websocket");
+    body = null;
+    bodyStream = null;
+    webSocketListener = listener;
+    return this;
+  }
+
+  public WebSocketListener getWebSocketListener() {
+    return webSocketListener;
   }
 
   @Override public String toString() {

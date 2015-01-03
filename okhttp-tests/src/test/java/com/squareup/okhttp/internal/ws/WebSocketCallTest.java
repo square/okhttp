@@ -28,10 +28,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import okio.Buffer;
+import okio.BufferedSink;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
 
 public final class WebSocketCallTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
@@ -42,6 +45,66 @@ public final class WebSocketCallTest {
 
   @After public void tearDown() {
     listener.assertExhausted();
+  }
+
+  @Test public void clientPingPong() throws IOException {
+    WebSocketListener serverListener = new EmptyWebSocketListener();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = awaitCall().webSocket;
+    webSocket.sendPing(new Buffer().writeUtf8("Hello, WebSockets!"));
+    listener.assertPong(new Buffer().writeUtf8("Hello, WebSockets!"));
+  }
+
+  @Test public void clientMessage() throws IOException {
+    WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = awaitCall().webSocket;
+    webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+    serverListener.assertTextMessage("Hello, WebSockets!");
+  }
+
+  @Test public void serverMessage() throws IOException {
+    WebSocketListener serverListener = new EmptyWebSocketListener() {
+      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+          throws IOException {
+        webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+      }
+    };
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    awaitCall();
+    listener.assertTextMessage("Hello, WebSockets!");
+  }
+
+  @Test public void clientStreamingMessage() throws IOException {
+    WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    WebSocket webSocket = awaitCall().webSocket;
+    BufferedSink sink = webSocket.newMessageSink(TEXT);
+    sink.writeUtf8("Hello, ").flush();
+    sink.writeUtf8("WebSockets!").flush();
+    sink.close();
+
+    serverListener.assertTextMessage("Hello, WebSockets!");
+  }
+
+  @Test public void serverStreamingMessage() throws IOException {
+    WebSocketListener serverListener = new EmptyWebSocketListener() {
+      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+          throws IOException {
+        BufferedSink sink = webSocket.newMessageSink(TEXT);
+        sink.writeUtf8("Hello, ").flush();
+        sink.writeUtf8("WebSockets!").flush();
+        sink.close();
+      }
+    };
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    awaitCall();
+    listener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void okButNotOk() {
@@ -166,5 +229,24 @@ public final class WebSocketCallTest {
 
     return new RecordedResponse(request, responseRef.get(), webSocketRef.get(), null,
         failureRef.get());
+  }
+
+  private static class EmptyWebSocketListener implements WebSocketListener {
+    @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+        throws IOException {
+    }
+
+    @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
+        throws IOException {
+    }
+
+    @Override public void onPong(Buffer payload) {
+    }
+
+    @Override public void onClose(int code, String reason) {
+    }
+
+    @Override public void onFailure(IOException e) {
+    }
   }
 }
