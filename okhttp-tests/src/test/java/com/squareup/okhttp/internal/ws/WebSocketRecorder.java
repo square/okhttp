@@ -18,8 +18,9 @@ package com.squareup.okhttp.internal.ws;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -34,7 +35,7 @@ final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocke
     void onMessage(BufferedSource payload, WebSocket.PayloadType type) throws IOException;
   }
 
-  private final Deque<Object> events = new ArrayDeque<>();
+  private final BlockingQueue<Object> events = new LinkedBlockingQueue<>();
   private MessageDelegate delegate;
 
   /** Sets a delegate for the next call to {@link #onMessage}. Cleared after invoked. */
@@ -43,7 +44,6 @@ final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocke
   }
 
   @Override public void onOpen(WebSocket webSocket, Request request, Response response) {
-    throw new AssertionError();
   }
 
   @Override public void onMessage(BufferedSource source, WebSocket.PayloadType type)
@@ -75,32 +75,40 @@ final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocke
     events.add(e);
   }
 
+  private Object nextEvent() {
+    try {
+      return events.poll(10, TimeUnit.SECONDS);
+    } catch (InterruptedException e) {
+      throw new AssertionError(e);
+    }
+  }
+
   public void assertTextMessage(String payload) {
     Message message = new Message(TEXT);
     message.buffer.writeUtf8(payload);
-    assertEquals(message, events.pollFirst());
+    assertEquals(message, nextEvent());
   }
 
   public void assertBinaryMessage(byte[] payload) {
     Message message = new Message(BINARY);
     message.buffer.write(payload);
-    assertEquals(message, events.pollFirst());
+    assertEquals(message, nextEvent());
   }
 
   public void assertPing(Buffer payload) {
-    assertEquals(new Ping(payload), events.pollFirst());
+    assertEquals(new Ping(payload), nextEvent());
   }
 
   public void assertPong(Buffer payload) {
-    assertEquals(new Pong(payload), events.pollFirst());
+    assertEquals(new Pong(payload), nextEvent());
   }
 
   public void assertClose(int code, String reason) {
-    assertEquals(new Close(code, reason), events.pollFirst());
+      assertEquals(new Close(code, reason), nextEvent());
   }
 
   public void assertFailure(Class<? extends IOException> cls, String message) {
-    Object event = events.pollFirst();
+    Object event = nextEvent();
     String errorMessage =
         "Expected [" + cls.getName() + ": " + message + "] but was [" + event + "].";
     assertNotNull(errorMessage, event);

@@ -15,7 +15,10 @@
  */
 package com.squareup.okhttp.internal.ws;
 
-final class Protocol {
+public final class WebSocketProtocol {
+  /** Magic value which must be appended to the key in a response header. */
+  public static final String ACCEPT_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+
   /*
   Each frame starts with two bytes of data.
 
@@ -82,7 +85,7 @@ final class Protocol {
     }
   }
 
-  private Protocol() {
+  private WebSocketProtocol() {
     throw new AssertionError("No instances.");
   }
 }
