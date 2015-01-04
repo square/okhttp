@@ -41,9 +41,11 @@ public final class CacheControl {
   private final boolean onlyIfCached;
   private final boolean noTransform;
 
+  String headerValue; // Lazily computed, if absent.
+
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
       boolean isPublic, boolean mustRevalidate, int maxStaleSeconds, int minFreshSeconds,
-      boolean onlyIfCached, boolean noTransform) {
+      boolean onlyIfCached, boolean noTransform, String headerValue) {
     this.noCache = noCache;
     this.noStore = noStore;
     this.maxAgeSeconds = maxAgeSeconds;
@@ -54,6 +56,7 @@ public final class CacheControl {
     this.minFreshSeconds = minFreshSeconds;
     this.onlyIfCached = onlyIfCached;
     this.noTransform = noTransform;
+    this.headerValue = headerValue;
   }
 
   private CacheControl(Builder builder) {
@@ -150,40 +153,54 @@ public final class CacheControl {
     boolean onlyIfCached = false;
     boolean noTransform = false;
 
+    boolean canUseHeaderValue = true;
+    String headerValue = null;
+
     for (int i = 0, size = headers.size(); i < size; i++) {
-      if (!headers.name(i).equalsIgnoreCase("Cache-Control")
-          && !headers.name(i).equalsIgnoreCase("Pragma")) {
+      String name = headers.name(i);
+      String value = headers.value(i);
+
+      if (name.equalsIgnoreCase("Cache-Control")) {
+        if (headerValue != null) {
+          // Multiple cache-control headers means we can't use the raw value.
+          canUseHeaderValue = false;
+        } else {
+          headerValue = value;
+        }
+      } else if (name.equalsIgnoreCase("Pragma")) {
+        // Might specify additional cache-control params. We invalidate just in case.
+        canUseHeaderValue = false;
+      } else {
         continue;
       }
 
-      String string = headers.value(i);
       int pos = 0;
-      while (pos < string.length()) {
+      while (pos < value.length()) {
         int tokenStart = pos;
-        pos = HeaderParser.skipUntil(string, pos, "=,;");
-        String directive = string.substring(tokenStart, pos).trim();
+        pos = HeaderParser.skipUntil(value, pos, "=,;");
+        String directive = value.substring(tokenStart, pos).trim();
         String parameter;
 
-        if (pos == string.length() || string.charAt(pos) == ',' || string.charAt(pos) == ';') {
+        if (pos == value.length() || value.charAt(pos) == ',' || value.charAt(pos) == ';') {
           pos++; // consume ',' or ';' (if necessary)
           parameter = null;
         } else {
           pos++; // consume '='
-          pos = HeaderParser.skipWhitespace(string, pos);
+          pos = HeaderParser.skipWhitespace(value, pos);
 
           // quoted string
-          if (pos < string.length() && string.charAt(pos) == '\"') {
+          if (pos < value.length() && value.charAt(pos) == '\"') {
             pos++; // consume '"' open quote
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(string, pos, "\"");
-            parameter = string.substring(parameterStart, pos);
+            pos = HeaderParser.skipUntil(value, pos, "\"");
+            parameter = value.substring(parameterStart, pos);
             pos++; // consume '"' close quote (if necessary)
 
             // unquoted string
           } else {
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(string, pos, ",;");
-            parameter = string.substring(parameterStart, pos).trim();
+            pos = HeaderParser.skipUntil(value, pos, ",;");
+            parameter = value.substring(parameterStart, pos).trim();
           }
         }
 
@@ -211,11 +228,19 @@ public final class CacheControl {
       }
     }
 
+    if (!canUseHeaderValue) {
+      headerValue = null;
+    }
     return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPublic,
-        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform);
+        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, headerValue);
   }
 
   @Override public String toString() {
+    String result = headerValue;
+    return result != null ? result : (headerValue = headerValue());
+  }
+
+  private String headerValue() {
     StringBuilder result = new StringBuilder();
     if (noCache) result.append("no-cache, ");
     if (noStore) result.append("no-store, ");
