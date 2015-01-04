@@ -123,6 +123,7 @@ public final class MockWebServer {
   private boolean protocolNegotiationEnabled = true;
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
+  private String service;
 
   public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
     if (serverSocketFactory == null) throw new IllegalArgumentException("null serverSocketFactory");
@@ -183,6 +184,7 @@ public final class MockWebServer {
    */
   public void setProtocolNegotiationEnabled(boolean protocolNegotiationEnabled) {
     this.protocolNegotiationEnabled = protocolNegotiationEnabled;
+    this.protocols = Util.immutableList(Protocol.HTTP_1_1);
   }
 
   /**
@@ -275,14 +277,18 @@ public final class MockWebServer {
    */
   public void play(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("play() already called");
-    executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     inetAddress = InetAddress.getByName(null);
     serverSocket = serverSocketFactory.createServerSocket();
     serverSocket.setReuseAddress(port != 0); // Reuse the port if the port number was specified.
     serverSocket.bind(new InetSocketAddress(inetAddress, port), 50);
 
     this.port = serverSocket.getLocalPort();
-    executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
+    this.service = sslSocketFactory != null ? protocols + ":" : "" + this.port;
+    executor = Executors.newCachedThreadPool(
+        Util.threadFactory("MockWebServer " + service + " idle", false)
+    );
+
+    executor.execute(new NamedRunnable("MockWebServer %s accept", service) {
       @Override protected void execute() {
         try {
           logger.info(MockWebServer.this + " starting to accept connections");
@@ -341,7 +347,7 @@ public final class MockWebServer {
   }
 
   private void serveConnection(final Socket raw) {
-    executor.execute(new NamedRunnable("MockWebServer %s", raw.getRemoteSocketAddress()) {
+    executor.execute(new NamedRunnable("MockWebServer %s connected", service) {
       int sequenceNumber = 0;
 
       @Override protected void execute() {
@@ -391,6 +397,8 @@ public final class MockWebServer {
         } else {
           socket = raw;
         }
+
+        Thread.currentThread().setName("MockWebServer " + protocol + ":" + port + " serving");
 
         if (protocol != Protocol.HTTP_1_1) {
           SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, protocol);
@@ -753,7 +761,7 @@ public final class MockWebServer {
   }
 
   @Override public String toString() {
-    return "MockWebServer[" + port + "]";
+    return "MockWebServer[" + service != null ? service : port + "]";
   }
 
   /** An output stream that drops data after bodyLimit bytes. */
