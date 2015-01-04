@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.BufferedSource;
+import okio.Okio;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -71,11 +73,11 @@ public final class MockWebServerTest {
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
     assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
-    InputStream in = response.getBodyStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-    assertEquals(-1, in.read());
+    BufferedSource in = Okio.buffer(response.getBodySource());
+    assertEquals('A', in.readByte());
+    assertEquals('B', in.readByte());
+    assertEquals('C', in.readByte());
+    assertTrue(in.exhausted());
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 

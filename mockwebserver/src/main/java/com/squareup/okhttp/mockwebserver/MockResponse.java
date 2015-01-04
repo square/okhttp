@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.Okio;
+import okio.Source;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
@@ -133,13 +135,8 @@ public final class MockResponse implements Cloneable {
     return body != null ? body.clone() : null; // Defensive copy.
   }
 
-  /** Returns an input stream containing the raw HTTP payload. */
-  InputStream getBodyStream() {
-    if (bodyStream != null) {
-      return bodyStream;
-    }
-    Buffer body = getBody();
-    return body != null ? body.inputStream() : null;
+  Source getBodySource() {
+    return bodyStream != null ? Okio.source(bodyStream) : getBody();
   }
 
   public MockResponse setBody(byte[] body) {

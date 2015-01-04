@@ -45,9 +45,6 @@ public final class Util {
   public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  /** A cheap and type-safe constant for the US-ASCII Charset. */
-  public static final Charset US_ASCII = Charset.forName("US-ASCII");
-
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
