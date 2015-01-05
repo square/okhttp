@@ -17,6 +17,7 @@
 package com.squareup.okhttp.internal.huc;
 
 import com.squareup.okhttp.AbstractResponseCache;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.internal.Internal;
@@ -1212,9 +1213,11 @@ public final class ResponseCacheTest {
   }
 
   @Test public void emptyResponseHeaderNameFromCacheIsLenient() throws Exception {
+    Headers.Builder headers = new Headers.Builder()
+        .add("Cache-Control: max-age=120");
+    Internal.instance.addLenient(headers, ": A");
     server.enqueue(new MockResponse()
-        .addHeader("Cache-Control: max-age=120")
-        .addHeader(": A")
+        .setHeaders(headers.build())
         .setBody("body"));
 
     HttpURLConnection connection = openConnection(server.getUrl("/"));
@@ -1366,8 +1369,10 @@ public final class ResponseCacheTest {
     Buffer truncatedBody = new Buffer();
     truncatedBody.write(response.getBody(), numBytesToKeep);
     response.setBody(truncatedBody);
-    response.getHeaders().clear();
-    response.getHeaders().addAll(headers);
+    response.clearHeaders();
+    for (String header : headers) {
+      response.addHeader(header);
+    }
     return response;
   }
 

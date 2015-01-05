@@ -24,6 +24,7 @@ import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.DelegatingServerSocketFactory;
 import com.squareup.okhttp.DelegatingSocketFactory;
 import com.squareup.okhttp.FallbackTestClientSocketFactory;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
@@ -2708,7 +2709,9 @@ public final class URLConnectionTest {
   }
 
   @Test public void emptyResponseHeaderNameIsLenient() throws Exception {
-    server.enqueue(new MockResponse().addHeader(":A").setBody("body"));
+    Headers.Builder headers = new Headers.Builder();
+    Internal.instance.addLenient(headers, ":A");
+    server.enqueue(new MockResponse().setHeaders(headers.build()).setBody("body"));
     connection = client.open(server.getUrl("/"));
     connection.getResponseCode();
     assertEquals("A", connection.getHeaderField(""));

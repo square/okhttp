@@ -18,6 +18,7 @@ package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.TlsVersion;
 import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.Headers;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,14 +30,14 @@ public final class RecordedRequest {
   private final String requestLine;
   private final String method;
   private final String path;
-  private final List<String> headers;
+  private final Headers headers;
   private final List<Integer> chunkSizes;
   private final long bodySize;
   private final Buffer body;
   private final int sequenceNumber;
   private final TlsVersion tlsVersion;
 
-  public RecordedRequest(String requestLine, List<String> headers, List<Integer> chunkSizes,
+  public RecordedRequest(String requestLine, Headers headers, List<Integer> chunkSizes,
       long bodySize, Buffer body, int sequenceNumber, Socket socket) {
     this.requestLine = requestLine;
     this.headers = headers;
@@ -73,6 +74,15 @@ public final class RecordedRequest {
 
   /** Returns all headers. */
   public List<String> getHeaders() {
+    int size = headers.size();
+    List<String> headerList = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      headerList.add(headers.name(i) + ": " + headers.value(i));
+    }
+    return headerList;
+  }
+
+  Headers getNewHeaders() {
     return headers;
   }
 
@@ -81,27 +91,13 @@ public final class RecordedRequest {
    * exists.
    */
   public String getHeader(String name) {
-    name += ":";
-    for (int i = 0, size = headers.size(); i < size; i++) {
-      String header = headers.get(i);
-      if (name.regionMatches(true, 0, header, 0, name.length())) {
-        return header.substring(name.length()).trim();
-      }
-    }
-    return null;
+    List<String> values = headers.values(name);
+    return values.isEmpty() ? null : values.get(0);
   }
 
   /** Returns the headers named {@code name}. */
   public List<String> getHeaders(String name) {
-    List<String> result = new ArrayList<>();
-    name += ":";
-    for (int i = 0, size = headers.size(); i < size; i++) {
-      String header = headers.get(i);
-      if (name.regionMatches(true, 0, header, 0, name.length())) {
-        result.add(header.substring(name.length()).trim());
-      }
-    }
-    return result;
+    return headers.values(name);
   }
 
   /**

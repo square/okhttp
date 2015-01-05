@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,14 +42,14 @@ public final class MockWebServerTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
 
   @Test public void recordedRequestAccessors() {
-    List<String> headers = Arrays.asList(
-        "User-Agent: okhttp",
-        "Cookie: s=square",
-        "Cookie: a=android",
-        "X-Whitespace:  left",
-        "X-Whitespace:right  ",
-        "X-Whitespace:  both  "
-    );
+    Headers headers = new Headers.Builder()
+        .add("User-Agent", "okhttp")
+        .add("Cookie", "s=square")
+        .add("Cookie", "a=android")
+        .add("X-Whitespace", " left")
+        .add("X-Whitespace", "right ")
+        .add("X-Whitespace", " both ")
+        .build();
     List<Integer> chunkSizes = Collections.emptyList();
     Buffer body = new Buffer().writeUtf8("ABC");
     String requestLine = "GET / HTTP/1.1";
