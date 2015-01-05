@@ -107,7 +107,7 @@ public final class MockWebServer {
   private final Set<SpdyConnection> openSpdyConnections =
       Collections.newSetFromMap(new ConcurrentHashMap<SpdyConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
-  private int bodyLimit = Integer.MAX_VALUE;
+  private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
   private ServerSocket serverSocket;
   private SSLSocketFactory sslSocketFactory;
@@ -169,7 +169,7 @@ public final class MockWebServer {
    * Sets the number of bytes of the POST body to keep in memory to the given
    * limit.
    */
-  public void setBodyLimit(int maxBodyLength) {
+  public void setBodyLimit(long maxBodyLength) {
     this.bodyLimit = maxBodyLength;
   }
 
