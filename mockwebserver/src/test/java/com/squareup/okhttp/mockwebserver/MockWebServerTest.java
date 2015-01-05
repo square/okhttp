@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -64,13 +65,13 @@ public final class MockWebServerTest {
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
-    assertEquals(Arrays.asList("Content-Length: 0"), response.getHeaders());
+    assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
-    assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
+    assertEquals(Arrays.asList("Content-Length: 3"), headersToList(response));
     assertEquals("ABC", response.getBody().readUtf8());
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
@@ -80,7 +81,7 @@ public final class MockWebServerTest {
         .clearHeaders()
         .addHeader("Cookie: s=square")
         .addHeader("Cookie", "a=android");
-    assertEquals(Arrays.asList("Cookie: s=square", "Cookie: a=android"), response.getHeaders());
+    assertEquals(Arrays.asList("Cookie: s=square", "Cookie: a=android"), headersToList(response));
   }
 
   @Test public void mockResponseSetHeader() {
@@ -90,7 +91,7 @@ public final class MockWebServerTest {
         .addHeader("Cookie: a=android")
         .addHeader("Cookies: delicious");
     response.setHeader("cookie", "r=robot");
-    assertEquals(Arrays.asList("Cookies: delicious", "cookie: r=robot"), response.getHeaders());
+    assertEquals(Arrays.asList("Cookies: delicious", "cookie: r=robot"), headersToList(response));
   }
 
   @Test public void regularResponse() throws Exception {
@@ -274,5 +275,15 @@ public final class MockWebServerTest {
 
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
+  }
+
+  private List<String> headersToList(MockResponse response) {
+    Headers headers = response.getHeaders();
+    int size = headers.size();
+    List<String> headerList = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      headerList.add(headers.name(i) + ": " + headers.value(i));
+    }
+    return headerList;
   }
 }

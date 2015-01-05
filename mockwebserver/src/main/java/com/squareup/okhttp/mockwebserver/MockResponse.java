@@ -73,17 +73,7 @@ public final class MockResponse implements Cloneable {
   }
 
   /** Returns the HTTP headers, such as "Content-Length: 0". */
-  public List<String> getHeaders() {
-    Headers headers = this.headers.build();
-    int size = headers.size();
-    List<String> headerList = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) {
-      headerList.add(headers.name(i) + ": " + headers.value(i));
-    }
-    return headerList;
-  }
-
-  Headers getNewHeaders() {
+  public Headers getHeaders() {
     return headers.build();
   }
 

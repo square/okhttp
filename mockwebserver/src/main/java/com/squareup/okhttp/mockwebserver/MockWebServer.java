@@ -611,7 +611,7 @@ public final class MockWebServer {
     final Response fancyResponse = new Response.Builder()
         .code(Integer.parseInt(response.getStatus().split(" ")[1]))
         .message(response.getStatus().split(" ", 3)[2])
-        .headers(response.getNewHeaders())
+        .headers(response.getHeaders())
         .request(fancyRequest)
         .protocol(Protocol.HTTP_1_1)
         .build();
@@ -648,9 +648,11 @@ public final class MockWebServer {
     sink.writeUtf8(response.getStatus());
     sink.writeUtf8("\r\n");
 
-    List<String> headers = response.getHeaders();
+    Headers headers = response.getHeaders();
     for (int i = 0, size = headers.size(); i < size; i++) {
-      sink.writeUtf8(headers.get(i));
+      sink.writeUtf8(headers.name(i));
+      sink.writeUtf8(": ");
+      sink.writeUtf8(headers.value(i));
       sink.writeUtf8("\r\n");
     }
     sink.writeUtf8("\r\n");
@@ -834,7 +836,7 @@ public final class MockWebServer {
       if (protocol == Protocol.SPDY_3) {
         spdyHeaders.add(new Header(Header.VERSION, statusParts[0]));
       }
-      Headers headers = response.getNewHeaders();
+      Headers headers = response.getHeaders();
       for (int i = 0, size = headers.size(); i < size; i++) {
         spdyHeaders.add(new Header(headers.name(i), headers.value(i)));
       }
