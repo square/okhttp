@@ -20,6 +20,8 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -97,6 +99,50 @@ public final class CacheControlTest {
     assertTrue(cacheControl.onlyIfCached());
     assertTrue(cacheControl.noTransform());
     assertEquals(header, cacheControl.toString());
+  }
+
+  @Test public void parseCacheControlAndPragmaAreCombined() {
+    Headers headers =
+        Headers.of("Cache-Control", "max-age=12", "Pragma", "must-revalidate", "Pragma", "public");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertEquals("max-age=12, public, must-revalidate", cacheControl.toString());
+  }
+
+  @SuppressWarnings("RedundantStringConstructorCall") // Testing instance equality.
+  @Test public void parseCacheControlHeaderValueIsRetained() {
+    String value = new String("max-age=12");
+    Headers headers = Headers.of("Cache-Control", value);
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertSame(value, cacheControl.toString());
+  }
+
+  @Test public void parseCacheControlHeaderValueInvalidatedByPragma() {
+    Headers headers = Headers.of("Cache-Control", "max-age=12", "Pragma", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void parseCacheControlHeaderValueInvalidatedByTwoValues() {
+    Headers headers = Headers.of("Cache-Control", "max-age=12", "Cache-Control", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void parsePragmaHeaderValueIsNotRetained() {
+    Headers headers = Headers.of("Pragma", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void computedHeaderValueIsCached() {
+    CacheControl cacheControl = new CacheControl.Builder()
+        .maxAge(2, TimeUnit.DAYS)
+        .build();
+    assertNull(cacheControl.headerValue);
+    assertEquals("max-age=172800", cacheControl.toString());
+    assertEquals("max-age=172800", cacheControl.headerValue);
+    cacheControl.headerValue = "Hi";
+    assertEquals("Hi", cacheControl.toString());
   }
 
   @Test public void timeDurationTruncatedToMaxValue() throws Exception {
