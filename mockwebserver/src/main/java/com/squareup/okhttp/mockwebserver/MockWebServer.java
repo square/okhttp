@@ -675,30 +675,30 @@ public final class MockWebServer {
   }
 
   /**
-   * Transfer bytes from {@code in} to {@code out} until either {@code length}
-   * bytes have been transferred or {@code in} is exhausted. The transfer is
+   * Transfer bytes from {@code source} to {@code sink} until either {@code byteCount}
+   * bytes have been transferred or {@code source} is exhausted. The transfer is
    * throttled according to {@code throttlePolicy}.
    */
   private void throttledTransfer(MockResponse throttlePolicy, Socket socket, BufferedSource source,
-      BufferedSink sink, long limit) throws IOException {
+      BufferedSink sink, long byteCount) throws IOException {
+    if (byteCount == 0) return;
+
     Buffer buffer = new Buffer();
     int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
     long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
 
     while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
-        long toRead = Math.min(Math.min(2048, limit), bytesPerPeriod - b);
-        if (toRead > 0) {
-          long read = source.read(buffer, toRead);
-          if (read == -1) return;
+        long toRead = Math.min(Math.min(2048, byteCount), bytesPerPeriod - b);
+        long read = source.read(buffer, toRead);
+        if (read == -1) return;
 
-          sink.write(buffer, read);
-          sink.flush();
-          b += read;
-          limit -= read;
-        }
+        sink.write(buffer, read);
+        sink.flush();
+        b += read;
+        byteCount -= read;
 
-        if (limit == 0) return;
+        if (byteCount == 0) return;
       }
 
       if (delayMs != 0) {
