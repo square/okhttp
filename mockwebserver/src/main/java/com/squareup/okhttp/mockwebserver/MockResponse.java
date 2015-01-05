@@ -16,14 +16,11 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.internal.ws.WebSocketListener;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
-import okio.Okio;
-import okio.Source;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
@@ -32,10 +29,7 @@ public final class MockResponse implements Cloneable {
   private String status = "HTTP/1.1 200 OK";
   private List<String> headers = new ArrayList<>();
 
-  /** The response body content, or null if {@code bodyStream} is set. */
   private Buffer body;
-  /** The response body content, or null if {@code body} is set. */
-  private InputStream bodyStream;
 
   private int throttleBytesPerPeriod = Integer.MAX_VALUE;
   private long throttlePeriod = 1;
@@ -50,7 +44,7 @@ public final class MockResponse implements Cloneable {
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
-    setBody(new Buffer());
+    setHeader("Content-Length", 0);
   }
 
   @Override public MockResponse clone() {
@@ -130,30 +124,14 @@ public final class MockResponse implements Cloneable {
     return this;
   }
 
-  /** Returns the raw HTTP payload, or null if this response is streamed. */
+  /** Returns a copy of the raw HTTP payload. */
   public Buffer getBody() {
-    return body != null ? body.clone() : null; // Defensive copy.
-  }
-
-  Source getBodySource() {
-    return bodyStream != null ? Okio.source(bodyStream) : getBody();
-  }
-
-  public MockResponse setBody(byte[] body) {
-    return setBody(new Buffer().write(body));
+    return body != null ? body.clone() : null;
   }
 
   public MockResponse setBody(Buffer body) {
     setHeader("Content-Length", body.size());
     this.body = body.clone(); // Defensive copy.
-    this.bodyStream = null;
-    return this;
-  }
-
-  public MockResponse setBody(InputStream bodyStream, long bodyLength) {
-    setHeader("Content-Length", bodyLength);
-    this.body = null;
-    this.bodyStream = bodyStream;
     return this;
   }
 
@@ -262,7 +240,6 @@ public final class MockResponse implements Cloneable {
     setHeader("Connection", "Upgrade");
     setHeader("Upgrade", "websocket");
     body = null;
-    bodyStream = null;
     webSocketListener = listener;
     return this;
   }

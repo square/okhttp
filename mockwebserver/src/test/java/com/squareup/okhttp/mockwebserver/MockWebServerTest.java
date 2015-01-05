@@ -17,7 +17,6 @@ package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
-import okio.BufferedSource;
-import okio.Okio;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -73,11 +70,7 @@ public final class MockWebServerTest {
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
     assertEquals(Arrays.asList("Content-Length: 3"), response.getHeaders());
-    BufferedSource in = Okio.buffer(response.getBodySource());
-    assertEquals('A', in.readByte());
-    assertEquals('B', in.readByte());
-    assertEquals('C', in.readByte());
-    assertTrue(in.exhausted());
+    assertEquals("ABC", response.getBody().readUtf8());
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 
@@ -208,18 +201,6 @@ public final class MockWebServerTest {
     } catch (IOException expected) {
     }
     server.getUrl("/b").openConnection().getInputStream(); // Should succeed.
-  }
-
-  @Test public void streamingResponseBody() throws Exception {
-    InputStream responseBody = new ByteArrayInputStream("ABC".getBytes("UTF-8"));
-    server.enqueue(new MockResponse().setBody(responseBody, 3));
-
-    InputStream in = server.getUrl("/").openConnection().getInputStream();
-    assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-
-    assertEquals(-1, responseBody.read()); // The body is exhausted.
   }
 
   /**
