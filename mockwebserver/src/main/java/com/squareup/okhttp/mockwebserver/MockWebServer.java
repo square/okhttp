@@ -127,17 +127,19 @@ public final class MockWebServer {
   }
 
   public int getPort() {
-    if (port == -1) throw new IllegalStateException("Call play() before getPort()");
+    if (port == -1) throw new IllegalStateException("Call start() before getPort()");
     return port;
   }
 
   public String getHostName() {
-    if (inetAddress == null) throw new IllegalStateException("Call play() before getHostName()");
+    if (inetAddress == null) throw new IllegalStateException("Call start() before getHostName()");
     return inetAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    if (inetAddress == null) throw new IllegalStateException("Call play() before toProxyAddress()");
+    if (inetAddress == null) {
+      throw new IllegalStateException("Call start() before toProxyAddress()");
+    }
     return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(inetAddress, getPort()));
   }
 
@@ -258,20 +260,30 @@ public final class MockWebServer {
     ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
   }
 
-  /** Equivalent to {@code play(0)}. */
+  /** @deprecated Use {@link #start()}. */
   public void play() throws IOException {
-    play(0);
+    start();
+  }
+
+  /** @deprecated Use {@link #start(int)}. */
+  public void play(int port) throws IOException {
+    start(port);
+  }
+
+  /** Equivalent to {@code start(0)}. */
+  public void start() throws IOException {
+    start(0);
   }
 
   /**
-   * Starts the server, serves all enqueued requests, and shuts the server down.
+   * Starts the server.
    *
    * @param port the port to listen to, or 0 for any available port. Automated
    *     tests should always use port 0 to avoid flakiness when a specific port
    *     is unavailable.
    */
-  public void play(int port) throws IOException {
-    if (executor != null) throw new IllegalStateException("play() already called");
+  public void start(int port) throws IOException {
+    if (executor != null) throw new IllegalStateException("start() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     inetAddress = InetAddress.getByName(null);
     serverSocket = serverSocketFactory.createServerSocket();

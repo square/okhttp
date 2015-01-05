@@ -173,7 +173,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
       }
     });
 
-    server.play();
+    server.start();
     return server;
   }
 

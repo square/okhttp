@@ -35,7 +35,7 @@ public final class SocksProxyTest {
   private final MockWebServer server = new MockWebServer();
 
   @Before public void setUp() throws Exception {
-    server.play();
+    server.start();
     socksProxy.play();
   }
 

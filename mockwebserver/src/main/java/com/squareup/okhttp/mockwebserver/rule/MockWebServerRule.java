@@ -40,7 +40,7 @@ public class MockWebServerRule extends ExternalResource {
     if (started) return;
     started = true;
     try {
-      server.play();
+      server.start();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
