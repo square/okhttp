@@ -233,7 +233,7 @@ public final class MockWebServer {
    *        {@code timeout} parameter
    * @return the head of the request queue
    */
-  public RecordedRequest takeRequest(int timeout, TimeUnit unit) throws InterruptedException {
+  public RecordedRequest takeRequest(long timeout, TimeUnit unit) throws InterruptedException {
     return requestQueue.poll(timeout, unit);
   }
 
