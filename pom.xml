@@ -80,16 +80,6 @@
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
       </dependency>
-       <dependency>
-        <groupId>org.mortbay.jetty.alpn</groupId>
-        <artifactId>alpn-jdk7-boot</artifactId>
-        <version>${alpn.jdk7.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mortbay.jetty.alpn</groupId>
-        <artifactId>alpn-jdk8-boot</artifactId>
-        <version>${alpn.jdk8.version}</version>
-      </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
         <artifactId>bcprov-jdk15on</artifactId>
