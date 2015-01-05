@@ -35,6 +35,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -253,12 +254,12 @@ public final class MockWebServerTest {
   }
 
   /**
-   * Delay the response body by sleeping 1000ms.
+   * Delay the response body by sleeping 1s.
    */
   @Test public void delayResponse() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
-        .setBodyDelayTimeMs(1000));
+        .setBodyDelay(1, SECONDS));
 
     long startNanos = System.nanoTime();
     URLConnection connection = server.getUrl("/").openConnection();

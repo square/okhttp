@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -316,7 +317,7 @@ public abstract class HttpOverSpdyTest {
 
   @Test public void spdyConnectionTimeout() throws Exception {
     MockResponse response = new MockResponse().setBody("A");
-    response.setBodyDelayTimeMs(1000);
+    response.setBodyDelay(1, TimeUnit.SECONDS);
     server.enqueue(response);
 
     HttpURLConnection connection1 = client.open(server.getUrl("/"));

@@ -677,9 +677,10 @@ public final class MockWebServer {
   }
 
   private void sleepIfDelayed(MockResponse response) {
-    if (response.getBodyDelayTimeMs() != 0) {
+    long delayMs = response.getBodyDelay(TimeUnit.MILLISECONDS);
+    if (delayMs != 0) {
       try {
-        Thread.sleep(response.getBodyDelayTimeMs());
+        Thread.sleep(delayMs);
       } catch (InterruptedException e) {
         throw new AssertionError(e);
       }
@@ -696,8 +697,8 @@ public final class MockWebServer {
     if (byteCount == 0) return;
 
     Buffer buffer = new Buffer();
-    int bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
-    long delayMs = throttlePolicy.getThrottleUnit().toMillis(throttlePolicy.getThrottlePeriod());
+    long bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
+    long periodDelayMs = throttlePolicy.getThrottlePeriod(TimeUnit.MILLISECONDS);
 
     while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
@@ -713,9 +714,9 @@ public final class MockWebServer {
         if (byteCount == 0) return;
       }
 
-      if (delayMs != 0) {
+      if (periodDelayMs != 0) {
         try {
-          Thread.sleep(delayMs);
+          Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
           throw new AssertionError();
         }
