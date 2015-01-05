@@ -31,13 +31,14 @@ public final class MockResponse implements Cloneable {
 
   private Buffer body;
 
-  private int throttleBytesPerPeriod = Integer.MAX_VALUE;
-  private long throttlePeriod = 1;
-  private TimeUnit throttleUnit = TimeUnit.SECONDS;
+  private long throttleBytesPerPeriod = Long.MAX_VALUE;
+  private long throttlePeriodAmount = 1;
+  private TimeUnit throttlePeriodUnit = TimeUnit.SECONDS;
 
   private SocketPolicy socketPolicy = SocketPolicy.KEEP_OPEN;
 
-  private int bodyDelayTimeMs = 0;
+  private long bodyDelayAmount = 0;
+  private TimeUnit bodyDelayUnit = TimeUnit.MILLISECONDS;
 
   private List<PushPromise> promises = new ArrayList<>();
   private WebSocketListener webSocketListener;
@@ -185,36 +186,33 @@ public final class MockResponse implements Cloneable {
    * series of {@code bytesPerPeriod} bytes are written. Use this to simulate
    * network behavior.
    */
-  public MockResponse throttleBody(int bytesPerPeriod, long period, TimeUnit unit) {
+  public MockResponse throttleBody(long bytesPerPeriod, long period, TimeUnit unit) {
     this.throttleBytesPerPeriod = bytesPerPeriod;
-    this.throttlePeriod = period;
-    this.throttleUnit = unit;
+    this.throttlePeriodAmount = period;
+    this.throttlePeriodUnit = unit;
     return this;
   }
 
-  public int getThrottleBytesPerPeriod() {
+  public long getThrottleBytesPerPeriod() {
     return throttleBytesPerPeriod;
   }
 
-  public long getThrottlePeriod() {
-    return throttlePeriod;
-  }
-
-  public TimeUnit getThrottleUnit() {
-    return throttleUnit;
+  public long getThrottlePeriod(TimeUnit unit) {
+    return unit.convert(throttlePeriodAmount, throttlePeriodUnit);
   }
 
   /**
    * Set the delayed time of the response body to {@code delay}. This applies to the
    * response body only; response headers are not affected.
    */
-  public MockResponse setBodyDelayTimeMs(int delay) {
-    bodyDelayTimeMs = delay;
+  public MockResponse setBodyDelay(long delay, TimeUnit unit) {
+    bodyDelayAmount = delay;
+    bodyDelayUnit = unit;
     return this;
   }
 
-  public int getBodyDelayTimeMs() {
-    return bodyDelayTimeMs;
+  public long getBodyDelay(TimeUnit unit) {
+    return unit.convert(bodyDelayAmount, bodyDelayUnit);
   }
 
   /**
