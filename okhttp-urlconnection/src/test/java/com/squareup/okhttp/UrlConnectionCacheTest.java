@@ -173,7 +173,7 @@ public final class UrlConnectionCacheTest {
       response.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
     }
     server.enqueue(response);
-    server.play();
+    server.start();
 
     URL url = server.getUrl("/");
     HttpURLConnection conn = client.open(url);

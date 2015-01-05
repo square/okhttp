@@ -80,14 +80,14 @@ public final class ConnectionPoolTest {
     List<ConnectionSpec> connectionSpecs = Util.immutableList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
 
-    httpServer.play();
+    httpServer.start();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
         null, null, AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionSpecs, proxySelector);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
-    spdyServer.play();
+    spdyServer.start();
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null, Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1),
@@ -558,7 +558,7 @@ public final class ConnectionPoolTest {
   private static class FakeExecutor implements Executor {
 
     private Runnable runnable;
-    
+
     @Override
     public void execute(Runnable runnable) {
       // This is a bonus assertion for the invariant: At no time should two runnables be scheduled.

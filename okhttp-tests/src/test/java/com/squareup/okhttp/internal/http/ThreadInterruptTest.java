@@ -75,7 +75,7 @@ public final class ThreadInterruptTest {
 
     server.enqueue(new MockResponse()
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     interruptLater(500);
 
@@ -102,7 +102,7 @@ public final class ThreadInterruptTest {
     server.enqueue(new MockResponse()
         .setBody(new Buffer().write(new byte[responseBodySize]))
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     interruptLater(500);
 

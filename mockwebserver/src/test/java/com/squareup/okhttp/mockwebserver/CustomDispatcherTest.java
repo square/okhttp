@@ -35,7 +35,7 @@ public class CustomDispatcherTest {
   }
 
   @Test public void simpleDispatch() throws Exception {
-    mockWebServer.play();
+    mockWebServer.start();
     final List<RecordedRequest> requestsMade = new ArrayList<>();
     final Dispatcher dispatcher = new Dispatcher() {
       @Override
@@ -56,7 +56,7 @@ public class CustomDispatcherTest {
   @Test public void outOfOrderResponses() throws Exception {
     AtomicInteger firstResponseCode = new AtomicInteger();
     AtomicInteger secondResponseCode = new AtomicInteger();
-    mockWebServer.play();
+    mockWebServer.start();
     final String secondRequest = "/bar";
     final String firstRequest = "/foo";
     final CountDownLatch latch = new CountDownLatch(1);

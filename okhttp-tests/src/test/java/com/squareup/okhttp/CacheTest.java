@@ -164,7 +164,7 @@ public final class CacheTest {
       mockResponse.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
     }
     server.enqueue(mockResponse);
-    server.play();
+    server.start();
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))

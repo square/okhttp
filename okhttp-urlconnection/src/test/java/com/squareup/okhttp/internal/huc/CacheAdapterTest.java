@@ -254,14 +254,14 @@ public class CacheAdapterTest {
 
   private URL configureServer(MockResponse mockResponse) throws Exception {
     server.enqueue(mockResponse);
-    server.play();
+    server.start();
     return server.getUrl("/");
   }
 
   private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false /* tunnelProxy */);
     server.enqueue(mockResponse);
-    server.play();
+    server.start();
     return server.getUrl("/");
   }
 }

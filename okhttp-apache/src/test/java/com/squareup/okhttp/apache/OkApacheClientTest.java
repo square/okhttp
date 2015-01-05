@@ -35,7 +35,7 @@ public class OkApacheClientTest {
   @Before public void setUp() throws IOException {
     client = new OkApacheClient();
     server = new MockWebServer();
-    server.play();
+    server.start();
   }
 
   @After public void tearDown() throws IOException {

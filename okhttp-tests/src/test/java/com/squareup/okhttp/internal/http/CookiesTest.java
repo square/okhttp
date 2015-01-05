@@ -63,7 +63,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
         + "expires=Fri, 31-Dec-9999 23:59:59 GMT; "
@@ -91,7 +91,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
         + "Comment=this cookie is delicious; "
@@ -121,7 +121,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie2: a=android; "
         + "Comment=this cookie is delicious; "
@@ -155,7 +155,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie2: a=\"android\"; "
         + "Comment=\"this cookie is delicious\"; "
@@ -188,7 +188,7 @@ public class CookiesTest {
   @Test public void testSendingCookiesFromStore() throws Exception {
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookieA = new HttpCookie("a", "android");
@@ -213,13 +213,13 @@ public class CookiesTest {
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
     MockWebServer redirectTarget = new MockWebServer();
     redirectTarget.enqueue(new MockResponse().setBody("A"));
-    redirectTarget.play();
+    redirectTarget.start();
 
     MockWebServer redirectSource = new MockWebServer();
     redirectSource.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + redirectTarget.getUrl("/")));
-    redirectSource.play();
+    redirectSource.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
@@ -267,7 +267,7 @@ public class CookiesTest {
     });
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     assertEquals(Collections.<String, List<String>>emptyMap(),
@@ -316,7 +316,7 @@ public class CookiesTest {
     });
     MockWebServer server = new MockWebServer();
     server. enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     get(server, "/");
 
