@@ -741,9 +741,8 @@ public final class URLConnectionTest {
   @Test public void contentDisagreesWithChunkedHeader() throws IOException {
     MockResponse mockResponse = new MockResponse();
     mockResponse.setChunkedBody("abc", 3);
-    Buffer buffer = new Buffer();
-    buffer.writeAll(mockResponse.getBody());
-    buffer.write("\r\nYOU SHOULD NOT SEE THIS".getBytes("UTF-8"));
+    Buffer buffer = mockResponse.getBody();
+    buffer.writeUtf8("\r\nYOU SHOULD NOT SEE THIS");
     mockResponse.setBody(buffer);
     mockResponse.clearHeaders();
     mockResponse.addHeader("Transfer-encoding: chunked");

@@ -73,7 +73,6 @@ import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
-import okio.Source;
 import okio.Timeout;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
@@ -668,10 +667,10 @@ public final class MockWebServer {
     sink.writeUtf8("\r\n");
     sink.flush();
 
-    Source source = response.getBodySource();
-    if (source == null) return;
+    Buffer body = response.getBody();
+    if (body == null) return;
     sleepIfDelayed(response);
-    throttledTransfer(response, socket, Okio.buffer(source), sink, Long.MAX_VALUE);
+    throttledTransfer(response, socket, body, sink, Long.MAX_VALUE);
   }
 
   private void sleepIfDelayed(MockResponse response) {
@@ -855,12 +854,12 @@ public final class MockWebServer {
         }
         spdyHeaders.add(new Header(headerParts[0], headerParts[1]));
       }
+
       Buffer body = response.getBody();
-      if (body == null) body = new Buffer();
-      boolean closeStreamAfterHeaders = body.size() > 0 || !response.getPushPromises().isEmpty();
+      boolean closeStreamAfterHeaders = body != null || !response.getPushPromises().isEmpty();
       stream.reply(spdyHeaders, closeStreamAfterHeaders);
       pushPromises(stream, response.getPushPromises());
-      if (body.size() > 0) {
+      if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response);
         throttledTransfer(response, socket, body, sink, bodyLimit);
@@ -890,9 +889,9 @@ public final class MockWebServer {
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
-        Buffer pushedBody = pushPromise.getResponse().getBody();
+        boolean hasBody = pushPromise.getResponse().getBody() != null;
         SpdyStream pushedStream =
-            stream.getConnection().pushStream(stream.getId(), pushedHeaders, pushedBody.size() > 0);
+            stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
         writeResponse(pushedStream, pushPromise.getResponse());
       }
     }
