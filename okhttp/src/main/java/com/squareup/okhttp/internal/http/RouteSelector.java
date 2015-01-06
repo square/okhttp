@@ -16,9 +16,6 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
-import com.squareup.okhttp.CertificatePinner;
-import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -38,10 +35,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLProtocolException;
-import javax.net.ssl.SSLSocketFactory;
 
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
@@ -55,7 +50,6 @@ public final class RouteSelector {
   private final URI uri;
   private final Network network;
   private final OkHttpClient client;
-  private final ConnectionPool pool;
   private final RouteDatabase routeDatabase;
   private final Request request;
 
@@ -83,7 +77,6 @@ public final class RouteSelector {
     this.address = address;
     this.uri = uri;
     this.client = client;
-    this.pool = client.getConnectionPool();
     this.routeDatabase = Internal.instance.routeDatabase(client);
     this.network = Internal.instance.network(client);
     this.request = request;
@@ -91,26 +84,8 @@ public final class RouteSelector {
     resetNextProxy(uri, address.getProxy());
   }
 
-  public static RouteSelector get(Request request, OkHttpClient client) throws IOException {
-    String uriHost = request.url().getHost();
-    if (uriHost == null || uriHost.length() == 0) {
-      throw new UnknownHostException(request.url().toString());
-    }
-
-    SSLSocketFactory sslSocketFactory = null;
-    HostnameVerifier hostnameVerifier = null;
-    CertificatePinner certificatePinner = null;
-    if (request.isHttps()) {
-      sslSocketFactory = client.getSslSocketFactory();
-      hostnameVerifier = client.getHostnameVerifier();
-      certificatePinner = client.getCertificatePinner();
-    }
-
-    Address address = new Address(uriHost, getEffectivePort(request.url()),
-        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
-        client.getAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionSpecs(), client.getProxySelector());
-
+  public static RouteSelector get(Address address, Request request, OkHttpClient client)
+      throws IOException {
     return new RouteSelector(address, request.uri(), client, request);
   }
 
@@ -125,25 +100,7 @@ public final class RouteSelector {
         || hasNextPostponed();
   }
 
-  /** Selects a route to attempt and connects it if it isn't already. */
-  public Connection next(HttpEngine owner) throws IOException {
-    Connection connection = nextUnconnected();
-    Internal.instance.connectAndSetOwner(client, connection, owner, request);
-    return connection;
-  }
-
-  /**
-   * Returns the next connection to attempt.
-   *
-   * @throws NoSuchElementException if there are no more routes to attempt.
-   */
-  Connection nextUnconnected() throws IOException {
-    // Always prefer pooled connections over new connections.
-    for (Connection pooled; (pooled = pool.get(address)) != null; ) {
-      if (request.method().equals("GET") || Internal.instance.isReadable(pooled)) return pooled;
-      pooled.getSocket().close();
-    }
-
+  public Route next() throws IOException {
     // Compute the next route to attempt.
     if (!hasNextConnectionSpec()) {
       if (!hasNextInetSocketAddress()) {
@@ -151,7 +108,7 @@ public final class RouteSelector {
           if (!hasNextPostponed()) {
             throw new NoSuchElementException();
           }
-          return new Connection(pool, nextPostponed());
+          return nextPostponed();
         }
         lastProxy = nextProxy();
       }
@@ -165,10 +122,10 @@ public final class RouteSelector {
     if (routeDatabase.shouldPostpone(route)) {
       postponedRoutes.add(route);
       // We will only recurse in order to skip previously failed routes. They will be tried last.
-      return nextUnconnected();
+      return next();
     }
 
-    return new Connection(pool, route);
+    return route;
   }
 
   private boolean shouldSendTlsFallbackIndicator(ConnectionSpec connectionSpec) {
@@ -180,11 +137,7 @@ public final class RouteSelector {
    * Clients should invoke this method when they encounter a connectivity
    * failure on a connection returned by this route selector.
    */
-  public void connectFailed(Connection connection, IOException failure) {
-    // If this is a recycled connection, don't count its failure against the route.
-    if (Internal.instance.recycleCount(connection) > 0) return;
-
-    Route failedRoute = connection.getRoute();
+  public void connectFailed(Route failedRoute, IOException failure) {
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
       address.getProxySelector().connectFailed(uri, failedRoute.getProxy().address(), failure);
