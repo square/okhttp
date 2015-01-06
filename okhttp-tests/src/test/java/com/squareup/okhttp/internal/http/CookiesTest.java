@@ -40,6 +40,7 @@ import org.junit.Test;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -204,10 +205,13 @@ public class CookiesTest {
     get(server, "/");
     RecordedRequest request = server.takeRequest();
 
-    List<String> receivedHeaders = request.getHeaders();
-    assertContains(receivedHeaders, "Cookie: $Version=\"1\"; "
-        + "a=\"android\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"; "
-        + "b=\"banana\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"");
+    assertEquals("$Version=\"1\"; "
+            + "a=\"android\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\"; "
+            + "b=\"banana\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\"", request.getHeader("Cookie"));
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
@@ -233,11 +237,14 @@ public class CookiesTest {
     get(redirectSource, "/");
     RecordedRequest request = redirectSource.takeRequest();
 
-    assertContains(request.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + redirectSource.getCookieDomain()
-        + "\";$Port=\"" + portList + "\"");
+    assertEquals("$Version=\"1\"; "
+            + "c=\"cookie\";$Path=\"/\";$Domain=\""
+            + redirectSource.getCookieDomain()
+            + "\";$Port=\""
+            + portList
+            + "\"", request.getHeader("Cookie"));
 
-    for (String header : redirectTarget.takeRequest().getHeaders()) {
+    for (String header : redirectTarget.takeRequest().getHeaders().names()) {
       if (header.startsWith("Cookie")) {
         fail(header);
       }
@@ -300,8 +307,10 @@ public class CookiesTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertContainsAll(request.getHeaders(), "Foo: foo", "Cookie: Bar=bar", "Cookie2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
+    assertEquals("foo", request.getHeader("Foo"));
+    assertEquals("Bar=bar", request.getHeader("Cookie"));
+    assertEquals("Baz=baz", request.getHeader("Cookie2"));
+    assertNull(request.getHeader("Quux"));
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
@@ -321,8 +330,9 @@ public class CookiesTest {
     get(server, "/");
 
     RecordedRequest request = server.takeRequest();
-    assertContainsAll(request.getHeaders(), "COOKIE: Bar=bar", "cooKIE2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
+    assertEquals("Bar=bar", request.getHeader("Cookie"));
+    assertEquals("Baz=baz", request.getHeader("Cookie2"));
+    assertNull(request.getHeader("Quux"));
   }
 
   private void assertContains(Collection<String> collection, String element) {

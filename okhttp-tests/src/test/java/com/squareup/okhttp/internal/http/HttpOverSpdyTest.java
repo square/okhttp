@@ -34,7 +34,6 @@ import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +59,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP features. */
@@ -111,9 +109,8 @@ public abstract class HttpOverSpdyTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), ":scheme: https");
-    assertContains(request.getHeaders(), hostHeader + ": "
-        + server.getHostName() + ":" + server.getPort());
+    assertEquals("https", request.getHeader(":scheme"));
+    assertEquals(server.getHostName() + ":" + server.getPort(), request.getHeader(hostHeader));
   }
 
   @Test public void emptyResponse() throws IOException {
@@ -231,11 +228,11 @@ public abstract class HttpOverSpdyTest {
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
     RecordedRequest denied = server.takeRequest();
-    assertContainsNoneMatching(denied.getHeaders(), "authorization: Basic .*");
+    assertNull(denied.getHeader("Authorization"));
     RecordedRequest accepted = server.takeRequest();
     assertEquals("GET / HTTP/1.1", accepted.getRequestLine());
-    assertContains(accepted.getHeaders(),
-        "authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        accepted.getHeader("Authorization"));
   }
 
   @Test public void redirect() throws Exception {
@@ -396,9 +393,9 @@ public abstract class HttpOverSpdyTest {
 
     assertContent("B", client.open(url), Integer.MAX_VALUE);
     RecordedRequest requestA = server.takeRequest();
-    assertContainsNoneMatching(requestA.getHeaders(), "Cookie.*");
+    assertNull(requestA.getHeader("Cookie"));
     RecordedRequest requestB = server.takeRequest();
-    assertContains(requestB.getHeaders(), "cookie: c=oreo");
+    assertEquals("c=oreo", requestB.getHeader("Cookie"));
   }
 
   /** https://github.com/square/okhttp/issues/1191 */
@@ -420,22 +417,10 @@ public abstract class HttpOverSpdyTest {
     assertEquals(0, server.takeRequest().getSequenceNumber());
   }
 
-  <T> void assertContains(Collection<T> collection, T value) {
-    assertTrue(collection.toString(), collection.contains(value));
-  }
-
   void assertContent(String expected, HttpURLConnection connection, int limit)
       throws IOException {
     connection.connect();
     assertEquals(expected, readAscii(connection.getInputStream(), limit));
-  }
-
-  private void assertContainsNoneMatching(List<String> headers, String pattern) {
-    for (String header : headers) {
-      if (header.matches(pattern)) {
-        fail("Header " + header + " matches " + pattern);
-      }
-    }
   }
 
   private String readAscii(InputStream in, int count) throws IOException {

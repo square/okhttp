@@ -180,12 +180,11 @@ public final class URLConnectionTest {
 
     connection.getResponseCode();
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "D: e");
-    assertContains(request.getHeaders(), "D: f");
-    assertContainsNoneMatching(request.getHeaders(), "NullValue.*");
-    assertContainsNoneMatching(request.getHeaders(), "AnotherNullValue.*");
-    assertContainsNoneMatching(request.getHeaders(), "G:.*");
-    assertContainsNoneMatching(request.getHeaders(), "null:.*");
+    assertEquals(Arrays.asList("e", "f"), request.getHeaders().values("D"));
+    assertNull(request.getHeader("NullValue"));
+    assertNull(request.getHeader("AnotherNullValue"));
+    assertNull(request.getHeader("G"));
+    assertNull(request.getHeader("null"));
 
     try {
       connection.addRequestProperty("N", "o");
@@ -687,7 +686,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.get().takeRequest();
     assertEquals("GET http://android.com/foo HTTP/1.1", request.getRequestLine());
-    assertContains(request.getHeaders(), "Host: android.com");
+    assertEquals("android.com", request.getHeader("Host"));
   }
 
   @Test public void contentDisagreesWithContentLengthHeader() throws IOException {
@@ -814,11 +813,11 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertEquals("Connect line failure on proxy", "CONNECT android.com:443 HTTP/1.1",
         connect.getRequestLine());
-    assertContains(connect.getHeaders(), "Host: android.com");
+    assertEquals("android.com", connect.getHeader("Host"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
-    assertContains(get.getHeaders(), "Host: android.com");
+    assertEquals("android.com", get.getHeader("Host"));
     assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
   }
 
@@ -848,7 +847,7 @@ public final class URLConnectionTest {
 
     RecordedRequest connect = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect.getRequestLine());
-    assertContains(connect.getHeaders(), "Host: android.com");
+    assertEquals("android.com", connect.getHeader("Host"));
   }
 
   private void initResponseCache() throws IOException {
@@ -878,14 +877,14 @@ public final class URLConnectionTest {
     assertContent("encrypted response from the origin server", connection);
 
     RecordedRequest connect = server.takeRequest();
-    assertContainsNoneMatching(connect.getHeaders(), "Private.*");
-    assertContains(connect.getHeaders(), "Proxy-Authorization: bar");
-    assertContains(connect.getHeaders(), "User-Agent: baz");
-    assertContains(connect.getHeaders(), "Host: android.com");
-    assertContains(connect.getHeaders(), "Proxy-Connection: Keep-Alive");
+    assertNull(connect.getHeader("Private"));
+    assertEquals("bar", connect.getHeader("Proxy-Authorization"));
+    assertEquals("baz", connect.getHeader("User-Agent"));
+    assertEquals("android.com", connect.getHeader("Host"));
+    assertEquals("Keep-Alive", connect.getHeader("Proxy-Connection"));
 
     RecordedRequest get = server.takeRequest();
-    assertContains(get.getHeaders(), "Private: Secret");
+    assertEquals("Secret", get.getHeader("Private"));
     assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
   }
 
@@ -908,16 +907,16 @@ public final class URLConnectionTest {
 
     RecordedRequest connect1 = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect1.getRequestLine());
-    assertContainsNoneMatching(connect1.getHeaders(), "Proxy\\-Authorization.*");
+    assertNull(connect1.getHeader("Proxy-Authorization"));
 
     RecordedRequest connect2 = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect2.getRequestLine());
-    assertContains(connect2.getHeaders(),
-        "Proxy-Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+    assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+        connect2.getHeader("Proxy-Authorization"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
-    assertContainsNoneMatching(get.getHeaders(), "Proxy\\-Authorization.*");
+    assertNull(get.getHeader("Proxy-Authorization"));
   }
 
   // Don't disconnect after building a tunnel with CONNECT
@@ -1106,7 +1105,7 @@ public final class URLConnectionTest {
     assertEquals(-1, connection.getContentLength());
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: gzip");
+    assertEquals("gzip", request.getHeader("Accept-Encoding"));
   }
 
   @Test public void clientConfiguredGzipContentEncoding() throws Exception {
@@ -1122,7 +1121,7 @@ public final class URLConnectionTest {
     assertEquals(bodyBytes.size(), connection.getContentLength());
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: gzip");
+    assertEquals("gzip", request.getHeader("Accept-Encoding"));
   }
 
   @Test public void gzipAndConnectionReuseWithFixedLength() throws Exception {
@@ -1149,7 +1148,7 @@ public final class URLConnectionTest {
     assertEquals("ABCDE", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Accept-Encoding: custom");
+    assertEquals("custom", request.getHeader("Accept-Encoding"));
   }
 
   /**
@@ -1329,7 +1328,7 @@ public final class URLConnectionTest {
 
     // no authorization header for the request...
     RecordedRequest request = server.takeRequest();
-    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
+    assertNull(request.getHeader("Authorization"));
     assertEquals("ABCD", request.getBody().readUtf8());
   }
 
@@ -1639,14 +1638,14 @@ public final class URLConnectionTest {
 
     // no authorization header for the first request...
     RecordedRequest request = server.takeRequest();
-    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
+    assertNull(request.getHeader("Authorization"));
 
     // ...but the three requests that follow include an authorization header
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("POST / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+          request.getHeader("Authorization"));
       assertEquals("ABCD", request.getBody().readUtf8());
     }
   }
@@ -1668,14 +1667,14 @@ public final class URLConnectionTest {
 
     // no authorization header for the first request...
     RecordedRequest request = server.takeRequest();
-    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
+    assertNull(request.getHeader("Authorization"));
 
     // ...but the three requests that follow requests include an authorization header
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+          request.getHeader("Authorization"));
     }
   }
 
@@ -1700,14 +1699,14 @@ public final class URLConnectionTest {
 
     // no authorization header for the first request...
     RecordedRequest request = server.takeRequest();
-    assertContainsNoneMatching(request.getHeaders(), "Authorization: Basic .*");
+    assertNull(request.getHeader("Authorization"));
 
     // ...but the three requests that follow requests include an authorization header
     for (int i = 0; i < 3; i++) {
       request = server.takeRequest();
       assertEquals("GET / HTTP/1.1", request.getRequestLine());
-      assertContains(request.getHeaders(),
-          "Authorization: Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS);
+      assertEquals("Basic " + RecordingAuthenticator.BASE_64_CREDENTIALS,
+          request.getHeader("Authorization"));
     }
   }
 
@@ -1869,8 +1868,8 @@ public final class URLConnectionTest {
 
     String server1Host = server.get().getHostName() + ":" + server.getPort();
     String server2Host = server2.get().getHostName() + ":" + server2.getPort();
-    assertContains(server.takeRequest().getHeaders(), "Host: " + server1Host);
-    assertContains(server2.takeRequest().getHeaders(), "Host: " + server2Host);
+    assertEquals(server1Host, server.takeRequest().getHeader("Host"));
+    assertEquals(server2Host, server2.takeRequest().getHeader("Host"));
     assertEquals("Expected connection reuse", 1, server.takeRequest().getSequenceNumber());
     assertEquals("Expected connection reuse", 1, server2.takeRequest().getSequenceNumber());
   }
@@ -1915,7 +1914,7 @@ public final class URLConnectionTest {
     assertContent("Page 2", client.open(server.getUrl("/a")));
 
     RecordedRequest redirectRequest = server2.takeRequest();
-    assertContainsNoneMatching(redirectRequest.getHeaders(), "Authorization.*");
+    assertNull(redirectRequest.getHeader("Authorization"));
     assertEquals("/b", redirectRequest.getPath());
   }
 
@@ -1988,9 +1987,9 @@ public final class URLConnectionTest {
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
-    assertContainsNoneMatching(page2.getHeaders(), "Content-Length.*");
-    assertContainsNoneMatching(page2.getHeaders(), "Content-Type.*");
-    assertContainsNoneMatching(page2.getHeaders(), "Transfer-Encoding.*");
+    assertNull(page2.getHeader("Content-Length"));
+    assertNull(page2.getHeader("Content-Type"));
+    assertNull(page2.getHeader("Transfer-Encoding"));
   }
 
   @Test public void response305UseProxy() throws Exception {
@@ -2475,7 +2474,7 @@ public final class URLConnectionTest {
     out.close();
     assertEquals("A", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
     RecordedRequest request = server.takeRequest();
-    assertContains(request.getHeaders(), "Content-Length: 3");
+    assertEquals("3", request.getHeader("Content-Length"));
   }
 
   @Test public void getContentLengthConnects() throws Exception {
@@ -2740,9 +2739,8 @@ public final class URLConnectionTest {
     client.client().setAuthenticator(authenticator);
     assertContent("A", client.open(server.getUrl("/private")));
 
-    assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
-    assertContains(server.takeRequest().getHeaders(),
-        "Authorization: " + credential);
+    assertNull(server.takeRequest().getHeader("Authorization"));
+    assertEquals(credential, server.takeRequest().getHeader("Authorization"));
 
     assertEquals(Proxy.NO_PROXY, authenticator.onlyProxy());
     Response response = authenticator.onlyResponse();
@@ -2761,8 +2759,8 @@ public final class URLConnectionTest {
     client.client().setAuthenticator(authenticator);
     assertContent("A", client.open(server.getUrl("/private")));
 
-    assertContainsNoneMatching(server.takeRequest().getHeaders(), "Authorization: .*");
-    assertContains(server.takeRequest().getHeaders(), "Authorization: oauthed abc123");
+    assertNull(server.takeRequest().getHeader("Authorization"));
+    assertEquals("oauthed abc123", server.takeRequest().getHeader("Authorization"));
 
     Response response = authenticator.onlyResponse();
     assertEquals("/private", response.request().url().getPath());
@@ -3076,18 +3074,6 @@ public final class URLConnectionTest {
 
   private void assertContent(String expected, HttpURLConnection connection) throws IOException {
     assertContent(expected, connection, Integer.MAX_VALUE);
-  }
-
-  private void assertContains(List<String> headers, String header) {
-    assertTrue(headers.toString(), headers.contains(header));
-  }
-
-  private void assertContainsNoneMatching(List<String> headers, String pattern) {
-    for (String header : headers) {
-      if (header.matches(pattern)) {
-        fail("Header " + header + " matches " + pattern);
-      }
-    }
   }
 
   private Set<String> newSet(String... elements) {

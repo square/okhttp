@@ -618,7 +618,7 @@ public final class MockWebServer {
     // Adapt the request and response into our Request and Response domain model.
     final Request fancyRequest = new Request.Builder()
         .get().url(request.getPath())
-        .headers(request.getNewHeaders())
+        .headers(request.getHeaders())
         .build();
     final Response fancyResponse = new Response.Builder()
         .code(Integer.parseInt(response.getStatus().split(" ")[1]))
