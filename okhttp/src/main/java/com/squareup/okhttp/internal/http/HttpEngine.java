@@ -20,6 +20,7 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionFailureException;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
@@ -30,6 +31,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.RouteSelector;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
@@ -41,13 +43,10 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -114,9 +113,7 @@ public final class HttpEngine {
   final OkHttpClient client;
 
   private Connection connection;
-  private Address address;
   private RouteSelector routeSelector;
-  private Route route;
   private final Response priorResponse;
 
   private Transport transport;
@@ -200,9 +197,6 @@ public final class HttpEngine {
 
     if (connection != null) {
       Internal.instance.setOwner(connection, this);
-      this.route = connection.getRoute();
-    } else {
-      this.route = null;
     }
   }
 
@@ -211,7 +205,7 @@ public final class HttpEngine {
    * source if necessary. Prepares the request headers and gets ready to start
    * writing the request body if it exists.
    */
-  public void sendRequest() throws IOException {
+  public void sendRequest() throws IOException, ConnectionFailureException {
     if (cacheStrategy != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
 
@@ -308,41 +302,33 @@ public final class HttpEngine {
   }
 
   /** Connect to the origin server either directly or via a proxy. */
-  private void connect() throws IOException {
+  private void connect() throws ConnectionFailureException {
     if (connection != null) throw new IllegalStateException();
-
-    if (routeSelector == null) {
-      address = createAddress(client, networkRequest);
-      routeSelector = RouteSelector.get(address, networkRequest, client);
-    }
-
-    connection = nextConnection();
-    route = connection.getRoute();
+    connection = createOwnedConnection();
   }
 
-  /**
-   * Returns the next connection to attempt.
-   *
-   * @throws java.util.NoSuchElementException if there are no more routes to attempt.
-   */
-  private Connection nextConnection() throws IOException {
-    Connection connection = createNextConnection();
+  private Connection createOwnedConnection() throws ConnectionFailureException {
+    Connection connection = createConnection();
     Internal.instance.connectAndSetOwner(client, connection, this, networkRequest);
     return connection;
   }
 
-  private Connection createNextConnection() throws IOException {
+  private Connection createConnection() throws ConnectionFailureException {
     ConnectionPool pool = client.getConnectionPool();
+    Address address = createAddress(client, networkRequest);
 
     // Always prefer pooled connections over new connections.
     for (Connection pooled; (pooled = pool.get(address)) != null; ) {
       if (networkRequest.method().equals("GET") || Internal.instance.isReadable(pooled)) {
         return pooled;
       }
-      pooled.getSocket().close();
+      closeQuietly(pooled.getSocket());
     }
-    Route route = routeSelector.next();
-    return new Connection(pool, route);
+
+    if (routeSelector == null) {
+      routeSelector = RouteSelectorImpl.get(address, networkRequest, client);
+    }
+    return new Connection(pool, routeSelector, client.getRetryOnConnectionFailure());
   }
 
   /**
@@ -399,9 +385,8 @@ public final class HttpEngine {
    * body is buffered.
    */
   public HttpEngine recover(IOException e, Sink requestBodyOut) {
-    if (routeSelector != null && connection != null) {
-      connectFailed(routeSelector, e);
-    }
+    // TODO(nfuller):  Note: With this change a failure to issue a request/read a
+    // response will not count against the route.
 
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
     if (routeSelector == null && connection == null // No connection.
@@ -413,16 +398,12 @@ public final class HttpEngine {
 
     Connection connection = close();
 
+    // TODO(nfuller): I'm not convinced about the retention of RouteSelector in HttpEngine. Its use
+    // suggests that an arbitrary failure to stream a request / response will perform a retry on a
+    // different route or with a worse protocol, when the problem could be something else.
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
         forWebSocket, connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
-  }
-
-  private void connectFailed(RouteSelector routeSelector, IOException e) {
-    // If this is a recycled connection, don't count its failure against the route.
-    if (Internal.instance.recycleCount(connection) > 0) return;
-    Route failedRoute = connection.getRoute();
-    routeSelector.connectFailed(failedRoute, e);
   }
 
   public HttpEngine recover(IOException e) {
@@ -432,13 +413,6 @@ public final class HttpEngine {
   private boolean isRecoverable(IOException e) {
     // If the application has opted-out of recovery, don't recover.
     if (!client.getRetryOnConnectionFailure()) {
-      return false;
-    }
-
-    // If the problem was a CertificateException from the X509TrustManager,
-    // do not retry, we didn't have an abrupt server-initiated exception.
-    if (e instanceof SSLPeerUnverifiedException
-        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException)) {
       return false;
     }
 
@@ -460,7 +434,7 @@ public final class HttpEngine {
    * connected yet, or if no connection was necessary.
    */
   public Route getRoute() {
-    return route;
+    return connection == null ? null : connection.getRoute();
   }
 
   private void maybeCache() throws IOException {
@@ -1050,10 +1024,10 @@ public final class HttpEngine {
   }
 
   private static Address createAddress(OkHttpClient client, Request request)
-      throws UnknownHostException {
+      throws ConnectionFailureException {
     String uriHost = request.url().getHost();
     if (uriHost == null || uriHost.length() == 0) {
-      throw new UnknownHostException(request.url().toString());
+      throw new ConnectionFailureException(new UnknownHostException(request.url().toString()));
     }
 
     SSLSocketFactory sslSocketFactory = null;

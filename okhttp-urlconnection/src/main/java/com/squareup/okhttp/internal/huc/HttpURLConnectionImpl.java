@@ -25,6 +25,7 @@ import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
+import com.squareup.okhttp.ConnectionFailureException;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
@@ -432,6 +433,10 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       return true;
+    } catch (ConnectionFailureException e) {
+      // TODO(nfuller): It would be nice to log or expose all exceptions somehow. E.g. >= JDK1.7
+      // with "suppressed" exceptions.
+      throw e.getLastConnectException();
     } catch (IOException e) {
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {

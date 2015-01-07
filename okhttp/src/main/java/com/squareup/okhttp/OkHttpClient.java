@@ -116,7 +116,7 @@ public class OkHttpClient implements Cloneable {
       }
 
       @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
-          HttpEngine owner, Request request) throws IOException {
+          HttpEngine owner, Request request) throws ConnectionFailureException {
         connection.connectAndSetOwner(client, owner, request);
       }
 

@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
@@ -103,17 +104,18 @@ public final class ConnectionPoolTest {
     // Disable the automatic execution of the cleanup.
     cleanupExecutor = new FakeExecutor();
     pool.replaceCleanupExecutorForTests(cleanupExecutor);
-    httpA = new Connection(pool, httpRoute);
+    final boolean connectionRetriesEnabled = false;
+    httpA = new Connection(pool, new SingleRouteSelector(httpRoute), connectionRetriesEnabled);
     httpA.connect(200, 200, 200, null);
-    httpB = new Connection(pool, httpRoute);
+    httpB = new Connection(pool, new SingleRouteSelector(httpRoute), connectionRetriesEnabled);
     httpB.connect(200, 200, 200, null);
-    httpC = new Connection(pool, httpRoute);
+    httpC = new Connection(pool, new SingleRouteSelector(httpRoute), connectionRetriesEnabled);
     httpC.connect(200, 200, 200, null);
-    httpD = new Connection(pool, httpRoute);
+    httpD = new Connection(pool, new SingleRouteSelector(httpRoute), connectionRetriesEnabled);
     httpD.connect(200, 200, 200, null);
-    httpE = new Connection(pool, httpRoute);
+    httpE = new Connection(pool, new SingleRouteSelector(httpRoute), connectionRetriesEnabled);
     httpE.connect(200, 200, 200, null);
-    spdyA = new Connection(pool, spdyRoute);
+    spdyA = new Connection(pool, new SingleRouteSelector(spdyRoute), connectionRetriesEnabled);
     spdyA.connect(20000, 20000, 2000, null);
 
     owner = new Object();
@@ -146,8 +148,9 @@ public final class ConnectionPoolTest {
     Connection connection = pool.get(httpAddress);
     assertNull(connection);
 
-    connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
-        ConnectionSpec.CLEARTEXT));
+    RouteSelector routeSelector = new SingleRouteSelector(
+        new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress, ConnectionSpec.CLEARTEXT));
+    connection = new Connection(pool, routeSelector, false /* connectionRetriesEnabled */);
     connection.connect(200, 200, 200, null);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
@@ -577,6 +580,35 @@ public final class ConnectionPoolTest {
       Runnable toRun = this.runnable;
       this.runnable = null;
       toRun.run();
+    }
+  }
+
+  private static class SingleRouteSelector implements RouteSelector {
+
+    private final Route singleRoute;
+    private boolean hasReturnedRoute = false;
+
+    public SingleRouteSelector(Route singleRoute) {
+      this.singleRoute = singleRoute;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return !hasReturnedRoute;
+    }
+
+    @Override
+    public Route next() throws IOException {
+      if (hasReturnedRoute) {
+        throw new NoSuchElementException();
+      }
+      hasReturnedRoute = true;
+      return singleRoute;
+    }
+
+    @Override
+    public void connectFailed(Route failedRoute, IOException failure) {
+      // Ignored
     }
   }
 }
