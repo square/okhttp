@@ -39,7 +39,7 @@ public void test() throws Exception {
   server.enqueue(new MockResponse().setBody("yo dog"));
 
   // Start the server.
-  server.start();
+  server.play();
 
   // Ask the server for its URL. You'll need this to make HTTP requests.
   URL baseUrl = server.getUrl("/v1/chat/");
