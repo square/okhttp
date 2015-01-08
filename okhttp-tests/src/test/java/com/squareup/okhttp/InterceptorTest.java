@@ -319,7 +319,7 @@ public final class InterceptorTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals(Arrays.asList("Android", "Bob"),
-        recordedRequest.getHeaders("Request-Interceptor"));
+        recordedRequest.getHeaders().values("Request-Interceptor"));
   }
 
   @Test public void asyncApplicationInterceptors() throws Exception {

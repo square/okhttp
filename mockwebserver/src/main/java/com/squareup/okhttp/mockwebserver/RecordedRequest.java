@@ -19,7 +19,6 @@ package com.squareup.okhttp.mockwebserver;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.TlsVersion;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
@@ -72,31 +71,14 @@ public final class RecordedRequest {
   }
 
   /** Returns all headers. */
-  public List<String> getHeaders() {
-    int size = headers.size();
-    List<String> headerList = new ArrayList<>(size);
-    for (int i = 0; i < size; i++) {
-      headerList.add(headers.name(i) + ": " + headers.value(i));
-    }
-    return headerList;
-  }
-
-  Headers getNewHeaders() {
+  public Headers getHeaders() {
     return headers;
   }
 
-  /**
-   * Returns the first header named {@code name}, or null if no such header
-   * exists.
-   */
+  /** Returns the first header named {@code name}, or null if no such header exists. */
   public String getHeader(String name) {
     List<String> values = headers.values(name);
     return values.isEmpty() ? null : values.get(0);
-  }
-
-  /** Returns the headers named {@code name}. */
-  public List<String> getHeaders(String name) {
-    return headers.values(name);
   }
 
   /**

@@ -489,7 +489,7 @@ public final class CallTest {
       assertEquals("Already Executed", e.getMessage());
     }
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: SyncApiTest"));
+    assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void illegalToExecuteTwice_Async() throws Exception {
@@ -519,7 +519,7 @@ public final class CallTest {
       assertEquals("Already Executed", e.getMessage());
     }
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: SyncApiTest"));
+    assertEquals("SyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void get_Async() throws Exception {
@@ -538,7 +538,7 @@ public final class CallTest {
         .assertHeader("Content-Type", "text/plain")
         .assertBody("abc");
 
-    assertTrue(server.takeRequest().getHeaders().contains("User-Agent: AsyncApiTest"));
+    assertEquals("AsyncApiTest", server.takeRequest().getHeader("User-Agent"));
   }
 
   @Test public void exceptionThrownByOnResponseIsRedactedAndLogged() throws Exception {
@@ -1223,12 +1223,14 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest request1 = server.takeRequest();
-    assertContains(request1.getHeaders(),
-        "Cookie: $Version=\"1\"; " + "c=\"cookie\";$Path=\"/\";$Domain=\"" + server.get()
-            .getCookieDomain() + "\";$Port=\"" + portList + "\"");
+    assertEquals("$Version=\"1\"; c=\"cookie\";$Path=\"/\";$Domain=\""
+        + server.get().getCookieDomain()
+        + "\";$Port=\""
+        + portList
+        + "\"", request1.getHeader("Cookie"));
 
     RecordedRequest request2 = server2.takeRequest();
-    assertContainsNoneMatching(request2.getHeaders(), "Cookie.*");
+    assertNull(request2.getHeader("Cookie"));
   }
 
   @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
@@ -1246,7 +1248,7 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest redirectRequest = server2.takeRequest();
-    assertContainsNoneMatching(redirectRequest.getHeaders(), "Authorization.*");
+    assertNull(redirectRequest.getHeader("Authorization"));
     assertEquals("/b", redirectRequest.getPath());
   }
 

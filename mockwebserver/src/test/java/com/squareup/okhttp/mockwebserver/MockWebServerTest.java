@@ -27,10 +27,8 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import okio.Buffer;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -42,27 +40,6 @@ import static org.junit.Assert.fail;
 
 public final class MockWebServerTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
-
-  @Test public void recordedRequestAccessors() {
-    Headers headers = new Headers.Builder()
-        .add("User-Agent", "okhttp")
-        .add("Cookie", "s=square")
-        .add("Cookie", "a=android")
-        .add("X-Whitespace", " left")
-        .add("X-Whitespace", "right ")
-        .add("X-Whitespace", " both ")
-        .build();
-    List<Integer> chunkSizes = Collections.emptyList();
-    Buffer body = new Buffer().writeUtf8("ABC");
-    String requestLine = "GET / HTTP/1.1";
-    RecordedRequest request = new RecordedRequest(
-        requestLine, headers, chunkSizes, body.size(), body, 0, null);
-    assertEquals("s=square", request.getHeader("cookie"));
-    assertEquals(Arrays.asList("s=square", "a=android"), request.getHeaders("cookie"));
-    assertEquals("left", request.getHeader("x-whitespace"));
-    assertEquals(Arrays.asList("left", "right", "both"), request.getHeaders("x-whitespace"));
-    assertEquals("ABC", request.getBody().readUtf8());
-  }
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
@@ -108,7 +85,7 @@ public final class MockWebServerTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET / HTTP/1.1", request.getRequestLine());
-    assertTrue(request.getHeaders().contains("Accept-Language: en-US"));
+    assertEquals("en-US", request.getHeader("Accept-Language"));
   }
 
   @Test public void redirect() throws Exception {
