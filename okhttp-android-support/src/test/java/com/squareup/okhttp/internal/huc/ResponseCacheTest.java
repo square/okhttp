@@ -77,6 +77,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -158,6 +159,31 @@ public final class ResponseCacheTest {
 
     assertEquals(-1, in.read());
     in.close();
+  }
+
+  @Test public void responseCachingWithoutBody() throws IOException {
+    MockResponse response =
+        new MockResponse().addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+            .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
+            .setStatus("HTTP/1.1 200 Fantastic");
+    server.enqueue(response);
+
+    // Make sure that calling skip() doesn't omit bytes from the cache.
+    HttpURLConnection urlConnection = openConnection(server.getUrl("/"));
+    assertEquals(200, urlConnection.getResponseCode());
+    assertEquals("Fantastic", urlConnection.getResponseMessage());
+    assertTrue(urlConnection.getDoInput());
+    InputStream is = urlConnection.getInputStream();
+    assertEquals(-1, is.read());
+    is.close();
+
+    urlConnection = openConnection(server.getUrl("/")); // cached!
+    assertTrue(urlConnection.getDoInput());
+    InputStream cachedIs = urlConnection.getInputStream();
+    assertEquals(-1, cachedIs.read());
+    cachedIs.close();
+    assertEquals(200, urlConnection.getResponseCode());
+    assertEquals("Fantastic", urlConnection.getResponseMessage());
   }
 
   @Test public void secureResponseCaching() throws IOException {

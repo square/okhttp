@@ -15,13 +15,14 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.huc.CacheAdapter;
 
 import java.net.ResponseCache;
 
 /**
- * A class for back doors for Android's use of OkHttp within the Android platform.
+ * Back doors to enable the use of OkHttp within the Android platform libraries. OkHttp is used to
+ * provide the default {@link java.net.HttpURLConnection} / {@link javax.net.ssl.HttpsURLConnection}
+ * implementation including support for a custom {@link ResponseCache}.
  */
 public class AndroidInternal {
 
@@ -30,12 +31,15 @@ public class AndroidInternal {
 
   /** Sets the response cache to be used to read and write cached responses. */
   public static void setResponseCache(OkUrlFactory okUrlFactory, ResponseCache responseCache) {
-    okUrlFactory.client().setInternalCache(
-        responseCache != null ? new CacheAdapter(responseCache) : null);
-  }
-
-  public static ResponseCache getResponseCache(OkUrlFactory okUrlFactory) {
-    InternalCache cache = okUrlFactory.client().internalCache();
-    return cache instanceof CacheAdapter ? ((CacheAdapter) cache).getDelegate() : null;
+    OkHttpClient client = okUrlFactory.client();
+    if (responseCache instanceof OkCacheContainer) {
+      // Avoid adding layers of wrappers. Rather than wrap the ResponseCache in yet another layer to
+      // make the ResponseCache look like an InternalCache, we can unwrap the Cache instead.
+      // This means that Cache stats will be correctly updated.
+      OkCacheContainer okCacheContainer = (OkCacheContainer) responseCache;
+      client.setCache(okCacheContainer.getCache());
+    } else {
+      client.setInternalCache(responseCache != null ? new CacheAdapter(responseCache) : null);
+    }
   }
 }
