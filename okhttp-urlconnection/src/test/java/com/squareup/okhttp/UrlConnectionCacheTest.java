@@ -1832,4 +1832,32 @@ public final class UrlConnectionCacheTest {
     sink.close();
     return result;
   }
+
+  @Test
+  public void cachedEntryDoesNotNeedClose() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Cache-Control: max-age=60")
+        .setBody("A"));
+
+    URLConnection c1 = client.open(server.getUrl("/"));
+    InputStream inputStream = c1.getInputStream();
+    assertEquals('A', inputStream.read());
+
+    // TODO: This wasn't required before. It is now
+    // inputStream.close();
+
+    assertEquals(1, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(0, cache.getHitCount());
+
+    URLConnection c2 = client.open(server.getUrl("/"));
+    assertEquals('A', c2.getInputStream().read());
+
+    URLConnection c3 = client.open(server.getUrl("/"));
+    assertEquals('A', c3.getInputStream().read());
+    assertEquals(3, cache.getRequestCount());
+    assertEquals(1, cache.getNetworkCount());
+    assertEquals(2, cache.getHitCount());
+  }
+
 }
