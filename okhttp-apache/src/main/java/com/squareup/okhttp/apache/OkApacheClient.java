@@ -74,7 +74,7 @@ public final class OkApacheClient implements HttpClient {
     return builder.build();
   }
 
-  private static HttpResponse transformResponse(Response response) {
+  private static HttpResponse transformResponse(Response response) throws IOException {
     int code = response.code();
     String message = response.message();
     BasicHttpResponse httpResponse = new BasicHttpResponse(HTTP_1_1, code, message);
