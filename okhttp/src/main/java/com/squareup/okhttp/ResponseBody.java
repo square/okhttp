@@ -37,13 +37,13 @@ public abstract class ResponseBody implements Closeable {
    * Returns the number of bytes in that will returned by {@link #bytes}, or
    * {@link #byteStream}, or -1 if unknown.
    */
-  public abstract long contentLength();
+  public abstract long contentLength() throws IOException;
 
-  public final InputStream byteStream() {
+  public final InputStream byteStream() throws IOException {
     return source().inputStream();
   }
 
-  public abstract BufferedSource source();
+  public abstract BufferedSource source() throws IOException;
 
   public final byte[] bytes() throws IOException {
     long contentLength = contentLength();
@@ -69,7 +69,7 @@ public abstract class ResponseBody implements Closeable {
    * of the Content-Type header. If that header is either absent or lacks a
    * charset, this will attempt to decode the response body as UTF-8.
    */
-  public final Reader charStream() {
+  public final Reader charStream() throws IOException {
     Reader r = reader;
     return r != null ? r : (reader = new InputStreamReader(byteStream(), charset()));
   }

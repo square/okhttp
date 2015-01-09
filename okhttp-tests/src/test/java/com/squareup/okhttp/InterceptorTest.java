@@ -398,7 +398,7 @@ public final class InterceptorTest {
     };
   }
 
-  static ResponseBody uppercase(ResponseBody original) {
+  static ResponseBody uppercase(ResponseBody original) throws IOException {
     return ResponseBody.create(original.contentType(), original.contentLength(),
         Okio.buffer(uppercase(original.source())));
   }
