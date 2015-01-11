@@ -150,6 +150,9 @@ public final class DiskLruCache implements Closeable {
   private final LinkedHashMap<String, Entry> lruEntries = new LinkedHashMap<>(0, 0.75f, true);
   private int redundantOpCount;
 
+  // Must be read and written when synchronized on 'this'.
+  private boolean initialized;
+
   /**
    * To differentiate between old and current snapshots, each entry is given
    * a sequence number each time an edit is committed. A snapshot is stale if
@@ -162,7 +165,7 @@ public final class DiskLruCache implements Closeable {
   private final Runnable cleanupRunnable = new Runnable() {
     public void run() {
       synchronized (DiskLruCache.this) {
-        if (journalWriter == null) {
+        if (isClosed()) {
           return; // Closed.
         }
         try {
@@ -191,6 +194,12 @@ public final class DiskLruCache implements Closeable {
 
   // Visible for testing.
   void initialize() throws IOException {
+    assert Thread.holdsLock(this);
+
+    if (initialized) {
+      return; // Already initialized.
+    }
+
     // If a bkp file exists, use it instead.
     if (journalFileBackup.exists()) {
       // If journal file also exists just delete backup file.
@@ -206,6 +215,7 @@ public final class DiskLruCache implements Closeable {
       try {
         readJournal();
         processJournal();
+        initialized = true;
         return;
       } catch (IOException journalIsCorrupt) {
         Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
@@ -216,19 +226,19 @@ public final class DiskLruCache implements Closeable {
 
     directory.mkdirs();
     rebuildJournal();
+
+    initialized = true;
   }
 
   /**
-   * Opens the cache in {@code directory}, creating a cache if none exists
-   * there.
+   * Create a cache which will reside in {@code directory}. This cache is lazily initialized on
+   * first access and will be created if it does not exist.
    *
    * @param directory a writable directory
    * @param valueCount the number of values per cache entry. Must be positive.
    * @param maxSize the maximum number of bytes this cache should use to store
-   * @throws IOException if reading or writing the cache directory fails
    */
-  public static DiskLruCache open(File directory, int appVersion, int valueCount, long maxSize)
-      throws IOException {
+  public static DiskLruCache create(File directory, int appVersion, int valueCount, long maxSize) {
     if (maxSize <= 0) {
       throw new IllegalArgumentException("maxSize <= 0");
     }
@@ -240,9 +250,7 @@ public final class DiskLruCache implements Closeable {
     Executor executor = new ThreadPoolExecutor(0, 1, 60L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp DiskLruCache", true));
 
-    DiskLruCache cache = new DiskLruCache(directory, appVersion, valueCount, maxSize, executor);
-    cache.initialize();
-    return cache;
+    return new DiskLruCache(directory, appVersion, valueCount, maxSize, executor);
   }
 
   private void readJournal() throws IOException {
@@ -410,6 +418,8 @@ public final class DiskLruCache implements Closeable {
    * the head of the LRU queue.
    */
   public synchronized Snapshot get(String key) throws IOException {
+    initialize();
+
     checkNotClosed();
     validateKey(key);
     Entry entry = lruEntries.get(key);
@@ -436,6 +446,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   private synchronized Editor edit(String key, long expectedSequenceNumber) throws IOException {
+    initialize();
+
     checkNotClosed();
     validateKey(key);
     Entry entry = lruEntries.get(key);
@@ -486,7 +498,8 @@ public final class DiskLruCache implements Closeable {
    * this cache. This may be greater than the max size if a background
    * deletion is pending.
    */
-  public synchronized long size() {
+  public synchronized long size() throws IOException {
+    initialize();
     return size;
   }
 
@@ -568,6 +581,8 @@ public final class DiskLruCache implements Closeable {
    * @return true if an entry was removed.
    */
   public synchronized boolean remove(String key) throws IOException {
+    initialize();
+
     checkNotClosed();
     validateKey(key);
     Entry entry = lruEntries.get(key);
@@ -599,18 +614,20 @@ public final class DiskLruCache implements Closeable {
   }
 
   /** Returns true if this cache has been closed. */
-  public boolean isClosed() {
+  public synchronized boolean isClosed() {
     return journalWriter == null;
   }
 
-  private void checkNotClosed() {
-    if (journalWriter == null) {
+  private synchronized void checkNotClosed() {
+    if (isClosed()) {
       throw new IllegalStateException("cache is closed");
     }
   }
 
   /** Force buffered operations to the filesystem. */
   public synchronized void flush() throws IOException {
+    if (!initialized) return;
+
     checkNotClosed();
     trimToSize();
     journalWriter.flush();
@@ -618,7 +635,7 @@ public final class DiskLruCache implements Closeable {
 
   /** Closes this cache. Stored values will remain on the filesystem. */
   public synchronized void close() throws IOException {
-    if (journalWriter == null) {
+    if (isClosed()) {
       return; // Already closed.
     }
     // Copying for safe iteration.
@@ -654,6 +671,7 @@ public final class DiskLruCache implements Closeable {
    * normally but their values will not be stored.
    */
   public synchronized void evictAll() throws IOException {
+    initialize();
     // Copying for safe iteration.
     for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
       removeEntry(entry);
@@ -691,7 +709,8 @@ public final class DiskLruCache implements Closeable {
    *
    * <p>The returned iterator supports {@link Iterator#remove}.
    */
-  public synchronized Iterator<Snapshot> snapshots() {
+  public synchronized Iterator<Snapshot> snapshots() throws IOException {
+    initialize();
     return new Iterator<Snapshot>() {
       /** Iterate a copy of the entries to defend against concurrent modification errors. */
       final Iterator<Entry> delegate = new ArrayList<>(lruEntries.values()).iterator();

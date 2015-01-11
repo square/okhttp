@@ -138,8 +138,8 @@ public final class Cache {
   private int hitCount;
   private int requestCount;
 
-  public Cache(File directory, long maxSize) throws IOException {
-    cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
+  public Cache(File directory, long maxSize) {
+    cache = DiskLruCache.create(directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
   private static String urlToKey(Request request) {
@@ -269,7 +269,7 @@ public final class Cache {
    * <p>The iterator supports {@linkplain Iterator#remove}. Removing a URL from the iterator evicts
    * the corresponding response from the cache. Use this to evict selected responses.
    */
-  public Iterator<String> urls() {
+  public Iterator<String> urls() throws IOException {
     return new Iterator<String>() {
       final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
 
@@ -320,7 +320,7 @@ public final class Cache {
     return writeSuccessCount;
   }
 
-  public long getSize() {
+  public long getSize() throws IOException {
     return cache.size();
   }
 
