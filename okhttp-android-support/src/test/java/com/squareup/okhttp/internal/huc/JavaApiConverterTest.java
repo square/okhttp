@@ -676,7 +676,8 @@ public class JavaApiConverterTest {
     javaResponseHeaders.put("key2", Arrays.asList("value2"));
     assertEquals("StatusLine", JavaApiConverter.extractStatusLine(javaResponseHeaders));
 
-    assertNull(JavaApiConverter.extractStatusLine(Collections.<String, List<String>>emptyMap()));
+    assertNull(
+        JavaApiConverter.extractStatusLine(Collections.<String, List<String>>emptyMap()));
   }
 
   private URL configureServer(MockResponse mockResponse) throws Exception {

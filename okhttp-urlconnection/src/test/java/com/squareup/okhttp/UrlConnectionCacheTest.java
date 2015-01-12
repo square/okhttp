@@ -107,7 +107,6 @@ public final class UrlConnectionCacheTest {
 
   @Test public void responseCacheAccessWithOkHttpMember() throws IOException {
     assertSame(cache, client.client().getCache());
-    assertNull(client.getResponseCache());
   }
 
   /**

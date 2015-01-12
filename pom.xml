@@ -23,6 +23,7 @@
     <module>okhttp-apache</module>
     <module>okhttp-tests</module>
     <module>okhttp-urlconnection</module>
+    <module>okhttp-android-support</module>
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
