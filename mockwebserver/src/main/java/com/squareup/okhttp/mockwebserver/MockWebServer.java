@@ -285,7 +285,7 @@ public final class MockWebServer {
   public void start(int port) throws IOException {
     if (executor != null) throw new IllegalStateException("start() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
-    inetAddress = InetAddress.getByName(null);
+    inetAddress = InetAddress.getLocalHost(); // Get IPv4 local host
     serverSocket = serverSocketFactory.createServerSocket();
     serverSocket.setReuseAddress(port != 0); // Reuse the port if the port number was specified.
     serverSocket.bind(new InetSocketAddress(inetAddress, port), 50);
