@@ -152,6 +152,7 @@ public final class DiskLruCache implements Closeable {
 
   // Must be read and written when synchronized on 'this'.
   private boolean initialized;
+  private boolean closed;
 
   /**
    * To differentiate between old and current snapshots, each entry is given
@@ -165,8 +166,8 @@ public final class DiskLruCache implements Closeable {
   private final Runnable cleanupRunnable = new Runnable() {
     public void run() {
       synchronized (DiskLruCache.this) {
-        if (isClosed()) {
-          return; // Closed.
+        if (!initialized | closed) {
+          return; // Nothing to do
         }
         try {
           trimToSize();
@@ -221,6 +222,7 @@ public final class DiskLruCache implements Closeable {
         Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
             + journalIsCorrupt.getMessage() + ", removing");
         delete();
+        closed = false;
       }
     }
 
@@ -490,7 +492,9 @@ public final class DiskLruCache implements Closeable {
    */
   public synchronized void setMaxSize(long maxSize) {
     this.maxSize = maxSize;
-    executor.execute(cleanupRunnable);
+    if (initialized) {
+      executor.execute(cleanupRunnable);
+    }
   }
 
   /**
@@ -615,7 +619,7 @@ public final class DiskLruCache implements Closeable {
 
   /** Returns true if this cache has been closed. */
   public synchronized boolean isClosed() {
-    return journalWriter == null;
+    return closed;
   }
 
   private synchronized void checkNotClosed() {
@@ -635,8 +639,9 @@ public final class DiskLruCache implements Closeable {
 
   /** Closes this cache. Stored values will remain on the filesystem. */
   public synchronized void close() throws IOException {
-    if (isClosed()) {
-      return; // Already closed.
+    if (!initialized || closed) {
+      closed = true;
+      return;
     }
     // Copying for safe iteration.
     for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
@@ -647,6 +652,7 @@ public final class DiskLruCache implements Closeable {
     trimToSize();
     journalWriter.close();
     journalWriter = null;
+    closed = true;
   }
 
   private void trimToSize() throws IOException {
@@ -726,7 +732,7 @@ public final class DiskLruCache implements Closeable {
 
         synchronized (DiskLruCache.this) {
           // If the cache is closed, truncate the iterator.
-          if (isClosed()) return false;
+          if (closed) return false;
 
           while (delegate.hasNext()) {
             Entry entry = delegate.next();

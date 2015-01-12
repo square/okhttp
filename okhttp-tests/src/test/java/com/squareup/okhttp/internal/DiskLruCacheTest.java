@@ -1081,6 +1081,16 @@ public final class DiskLruCacheTest {
     assertFalse(iterator.hasNext());
   }
 
+  @Test public void isClosed_uninitializedCache() throws Exception {
+    // Create an uninitialized cache.
+    cache = new DiskLruCache(cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    toClose.add(cache);
+
+    assertFalse(cache.isClosed());
+    cache.close();
+    assertTrue(cache.isClosed());
+  }
+
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
     List<String> expectedLines = new ArrayList<>();
     expectedLines.add(MAGIC);
