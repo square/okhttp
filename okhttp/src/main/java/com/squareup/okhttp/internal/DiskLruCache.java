@@ -686,14 +686,6 @@ public final class DiskLruCache implements Closeable {
     }
   }
 
-  private static String sourceToString(Source in) throws IOException {
-    try {
-      return Okio.buffer(in).readUtf8();
-    } finally {
-      Util.closeQuietly(in);
-    }
-  }
-
   /**
    * Returns an iterator over the cache's current entries. This iterator doesn't throw {@code
    * ConcurrentModificationException}, but if new entries are added while iterating, those new
@@ -793,11 +785,6 @@ public final class DiskLruCache implements Closeable {
       return sources[index];
     }
 
-    /** Returns the string value for {@code index}. */
-    public String getString(int index) throws IOException {
-      return sourceToString(getSource(index));
-    }
-
     /** Returns the byte length of the value for {@code index}. */
     public long getLength(int index) {
       return lengths[index];
@@ -859,15 +846,6 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns the last committed value as a string, or null if no value
-     * has been committed.
-     */
-    public String getString(int index) throws IOException {
-      Source source = newSource(index);
-      return source != null ? sourceToString(source) : null;
-    }
-
-    /**
      * Returns a new unbuffered output stream to write the value at
      * {@code index}. If the underlying output stream encounters errors
      * when writing to the filesystem, this edit will be aborted when
@@ -898,13 +876,6 @@ public final class DiskLruCache implements Closeable {
         }
         return new FaultHidingSink(sink);
       }
-    }
-
-    /** Sets the value at {@code index} to {@code value}. */
-    public void set(int index, String value) throws IOException {
-      BufferedSink writer = Okio.buffer(newSink(index));
-      writer.writeUtf8(value);
-      writer.close();
     }
 
     /**
@@ -1052,6 +1023,7 @@ public final class DiskLruCache implements Closeable {
       if (!Thread.holdsLock(DiskLruCache.this)) throw new AssertionError();
 
       Source[] sources = new Source[valueCount];
+      long[] lengths = this.lengths.clone(); // Defensive copy since these can be zeroed out.
       try {
         for (int i = 0; i < valueCount; i++) {
           sources[i] = Okio.source(cleanFiles[i]);
