@@ -229,6 +229,7 @@ public final class ConnectionPool {
     synchronized (this) {
       toEvict = new ArrayList<>(connections);
       connections.clear();
+      notifyAll();
     }
 
     for (int i = 0, size = toEvict.size(); i < size; i++) {
