@@ -60,6 +60,7 @@ public final class ConnectionSpec {
   /** A backwards-compatible fallback connection for interop with obsolete servers. */
   public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
       .tlsVersions(TlsVersion.TLS_1_0)
+      .supportsTlsExtensions(true)
       .build();
 
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
