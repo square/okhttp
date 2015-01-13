@@ -18,7 +18,9 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
+import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
@@ -38,12 +40,15 @@ import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocketFactory;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -109,6 +114,7 @@ public final class HttpEngine {
   final OkHttpClient client;
 
   private Connection connection;
+  private Address address;
   private RouteSelector routeSelector;
   private Route route;
   private final Response priorResponse;
@@ -232,7 +238,7 @@ public final class HttpEngine {
     if (networkRequest != null) {
       // Open a connection unless we inherited one from a redirect.
       if (connection == null) {
-        connect(networkRequest);
+        connect();
       }
 
       transport = Internal.instance.newTransport(connection, this);
@@ -302,15 +308,41 @@ public final class HttpEngine {
   }
 
   /** Connect to the origin server either directly or via a proxy. */
-  private void connect(Request request) throws IOException {
+  private void connect() throws IOException {
     if (connection != null) throw new IllegalStateException();
 
     if (routeSelector == null) {
-      routeSelector = RouteSelector.get(request, client);
+      address = createAddress(client, networkRequest);
+      routeSelector = RouteSelector.get(address, networkRequest, client);
     }
 
-    connection = routeSelector.next(this);
+    connection = nextConnection();
     route = connection.getRoute();
+  }
+
+  /**
+   * Returns the next connection to attempt.
+   *
+   * @throws java.util.NoSuchElementException if there are no more routes to attempt.
+   */
+  private Connection nextConnection() throws IOException {
+    Connection connection = createNextConnection();
+    Internal.instance.connectAndSetOwner(client, connection, this, networkRequest);
+    return connection;
+  }
+
+  private Connection createNextConnection() throws IOException {
+    ConnectionPool pool = client.getConnectionPool();
+
+    // Always prefer pooled connections over new connections.
+    for (Connection pooled; (pooled = pool.get(address)) != null; ) {
+      if (networkRequest.method().equals("GET") || Internal.instance.isReadable(pooled)) {
+        return pooled;
+      }
+      pooled.getSocket().close();
+    }
+    Route route = routeSelector.next();
+    return new Connection(pool, route);
   }
 
   /**
@@ -368,7 +400,7 @@ public final class HttpEngine {
    */
   public HttpEngine recover(IOException e, Sink requestBodyOut) {
     if (routeSelector != null && connection != null) {
-      routeSelector.connectFailed(connection, e);
+      connectFailed(routeSelector, e);
     }
 
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
@@ -384,6 +416,13 @@ public final class HttpEngine {
     // For failure recovery, use the same route selector with a new connection.
     return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
         forWebSocket, connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
+  }
+
+  private void connectFailed(RouteSelector routeSelector, IOException e) {
+    // If this is a recycled connection, don't count its failure against the route.
+    if (Internal.instance.recycleCount(connection) > 0) return;
+    Route failedRoute = connection.getRoute();
+    routeSelector.connectFailed(failedRoute, e);
   }
 
   public HttpEngine recover(IOException e) {
@@ -1008,5 +1047,27 @@ public final class HttpEngine {
     return url.getHost().equals(followUp.getHost())
         && getEffectivePort(url) == getEffectivePort(followUp)
         && url.getProtocol().equals(followUp.getProtocol());
+  }
+
+  private static Address createAddress(OkHttpClient client, Request request)
+      throws UnknownHostException {
+    String uriHost = request.url().getHost();
+    if (uriHost == null || uriHost.length() == 0) {
+      throw new UnknownHostException(request.url().toString());
+    }
+
+    SSLSocketFactory sslSocketFactory = null;
+    HostnameVerifier hostnameVerifier = null;
+    CertificatePinner certificatePinner = null;
+    if (request.isHttps()) {
+      sslSocketFactory = client.getSslSocketFactory();
+      hostnameVerifier = client.getHostnameVerifier();
+      certificatePinner = client.getCertificatePinner();
+    }
+
+    return new Address(uriHost, getEffectivePort(request.url()),
+        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
+        client.getAuthenticator(), client.getProxy(), client.getProtocols(),
+        client.getConnectionSpecs(), client.getProxySelector());
   }
 }
