@@ -818,7 +818,7 @@ public final class DiskLruCache implements Closeable {
 
   private static final Sink NULL_SINK = new Sink() {
     @Override public void write(Buffer source, long byteCount) throws IOException {
-      // Eat all writes silently. Nom nom.
+      source.skip(byteCount);
     }
 
     @Override public void flush() throws IOException {
