@@ -16,10 +16,15 @@
 
 package com.squareup.okhttp.internal.huc;
 
-import com.squareup.okhttp.AbstractResponseCache;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.internal.InternalCache;
+import com.squareup.okhttp.internal.http.CacheRequest;
+import com.squareup.okhttp.internal.http.CacheStrategy;
+
 import java.io.IOException;
 import java.net.CacheResponse;
 import java.net.HttpURLConnection;
@@ -124,13 +129,38 @@ public final class URLEncodingTest {
     final AtomicReference<URI> uriReference = new AtomicReference<>();
 
     OkHttpClient client = new OkHttpClient();
-    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
-      @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        uriReference.set(uri);
+    Internal.instance.setCache(client, new InternalCache() {
+      @Override
+      public Response get(Request request) throws IOException {
+        uriReference.set(request.uri());
         throw new UnsupportedOperationException();
       }
-    }));
+
+      @Override
+      public CacheRequest put(Response response) throws IOException {
+        return null;
+      }
+
+      @Override
+      public void remove(Request request) throws IOException {
+
+      }
+
+      @Override
+      public void update(Response cached, Response network) throws IOException {
+
+      }
+
+      @Override
+      public void trackConditionalCacheHit() {
+
+      }
+
+      @Override
+      public void trackResponse(CacheStrategy cacheStrategy) {
+
+      }
+    });
 
     try {
       HttpURLConnection connection = new OkUrlFactory(client).open(url);
