@@ -209,6 +209,10 @@ public final class Request {
       return method("POST", body);
     }
 
+    public Builder delete(RequestBody body) {
+      return method("DELETE", body);
+    }
+
     public Builder delete() {
       return method("DELETE", null);
     }
