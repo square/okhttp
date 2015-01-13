@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -1598,7 +1599,7 @@ public final class CallTest {
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertTrue(recordedRequest.getHeader("User-Agent")
-        .matches("okhttp/\\d\\.\\d\\.\\d(-SNAPSHOT|-RC\\d+)?"));
+        .matches(Version.userAgent()));
   }
 
   @Test public void setFollowRedirectsFalse() throws Exception {
