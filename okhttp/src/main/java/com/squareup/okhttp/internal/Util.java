@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
@@ -266,10 +267,20 @@ public final class Util {
   }
 
   /**
-   * Returns a mutable copy of {@code first} containing only elements also in {@code second}. The
-   * returned elements are in the same order as in {@code first}.
+   * Returns an array containing containing only elements found in {@code first}  and also in
+   * {@code second}. The returned elements are in the same order as in {@code first}.
    */
-  public static <T> List<T> intersect(T[] first, T[] second) {
+  @SuppressWarnings("unchecked")
+  public static <T> T[] intersect(Class<T> arrayType, T[] first, T[] second) {
+    List<T> result = intersect(first, second);
+    return result.toArray((T[]) Array.newInstance(arrayType, result.size()));
+  }
+
+  /**
+   * Returns a list containing containing only elements found in {@code first}  and also in
+   * {@code second}. The returned elements are in the same order as in {@code first}.
+   */
+  private static <T> List<T> intersect(T[] first, T[] second) {
     List<T> result = new ArrayList<>();
     for (T a : first) {
       for (T b : second) {

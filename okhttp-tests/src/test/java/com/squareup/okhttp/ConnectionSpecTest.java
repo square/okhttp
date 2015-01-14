@@ -23,7 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -167,6 +167,6 @@ public final class ConnectionSpecTest {
   }
 
   private static Set<String> createSet(String... values) {
-    return new HashSet<String>(Arrays.asList(values));
+    return new LinkedHashSet<String>(Arrays.asList(values));
   }
 }

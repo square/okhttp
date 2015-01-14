@@ -90,6 +90,10 @@ public final class ConnectionSpec {
     return tls;
   }
 
+  /**
+   * Return the cipher suites to use with the connection. This method can return {@code null} if the
+   * ciphers enabled by default should be used.
+   */
   public List<CipherSuite> cipherSuites() {
     if (cipherSuites == null) {
       return null;
@@ -129,10 +133,9 @@ public final class ConnectionSpec {
 
       if (socketSupportsFallbackScsv) {
         // Add the SCSV cipher to the set of enabled ciphers iff it is supported.
-        String[] oldEnabledCipherSuites = cipherSuitesToEnable;
-        if (cipherSuitesToEnable == null) {
-          oldEnabledCipherSuites = sslSocket.getEnabledCipherSuites();
-        }
+        String[] oldEnabledCipherSuites = cipherSuitesToEnable != null
+            ? cipherSuitesToEnable
+            : sslSocket.getEnabledCipherSuites();
         String[] newEnabledCipherSuites = new String[oldEnabledCipherSuites.length + 1];
         System.arraycopy(oldEnabledCipherSuites, 0,
             newEnabledCipherSuites, 0, oldEnabledCipherSuites.length);
@@ -159,17 +162,15 @@ public final class ConnectionSpec {
     String[] cipherSuitesToEnable = null;
     if (cipherSuites != null) {
       String[] cipherSuitesToSelectFrom = sslSocket.getEnabledCipherSuites();
-      List<String> cipherSuitesToEnableList =
-          Util.intersect(cipherSuites, cipherSuitesToSelectFrom);
-      cipherSuitesToEnable = cipherSuitesToEnableList.toArray(
-          new String[cipherSuitesToEnableList.size()]);
+      cipherSuitesToEnable =
+          Util.intersect(String.class, cipherSuites, cipherSuitesToSelectFrom);
     }
 
     String[] protocolsToSelectFrom = sslSocket.getEnabledProtocols();
-    List<String> tlsVersionsToEnable = Util.intersect(tlsVersions, protocolsToSelectFrom);
+    String[] tlsVersionsToEnable = Util.intersect(String.class, tlsVersions, protocolsToSelectFrom);
     return new Builder(this)
         .cipherSuites(cipherSuitesToEnable)
-        .tlsVersions(tlsVersionsToEnable.toArray(new String[tlsVersionsToEnable.size()]))
+        .tlsVersions(tlsVersionsToEnable)
         .build();
   }
 
