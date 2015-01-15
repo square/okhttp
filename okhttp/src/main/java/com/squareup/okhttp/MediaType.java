@@ -31,6 +31,38 @@ public final class MediaType {
   private static final Pattern PARAMETER = Pattern.compile(
       ";\\s*(?:" + TOKEN + "=(?:" + TOKEN + "|" + QUOTED + "))?");
 
+  /**
+   * A {@link MediaType} constant representing the "application/xml; charset=utf-8" media type.
+   */
+  public static final MediaType APPLICATION_XML =
+                  new MediaType("application/xml; charset=utf-8", "application", "xml", "utf-8");
+  /**
+   * A {@link MediaType} constant representing the "application/json; charset=utf-8" media type.
+   */
+  public static final MediaType APPLICATION_JSON =
+                  new MediaType("application/json; charset=utf-8", "application", "json", "utf-8");
+  /**
+   * A {@link MediaType} constant representing the "application/x-www-form-urlencoded" media type.
+   */
+  public static final MediaType APPLICATION_FORM_URLENCODED =
+                  new MediaType("application/x-www-form-urlencoded",
+                                "application", "x-www-form-urlencoded", null);
+  /**
+   * A {@link MediaType} constant representing the "multipart/form-data" media type.
+   */
+  public static final MediaType MULTIPART_FORM_DATA =
+                  new MediaType("multipart/form-data", "multipart", "form-data", null);
+  /**
+   * A {@link MediaType} constant representing the "application/octet-stream" media type.
+   */
+  public static final MediaType APPLICATION_OCTET_STREAM =
+                  new MediaType("application/octet-stream", "application", "octet-stream", null);
+  /**
+   * A {@link MediaType} constant representing the "text/plain; charset=utf-8" media type.
+   */
+  public static final MediaType TEXT_PLAIN =
+                  new MediaType("text/plain; charset=utf-8", "text", "plain", "utf-8");
+
   private final String mediaType;
   private final String type;
   private final String subtype;
