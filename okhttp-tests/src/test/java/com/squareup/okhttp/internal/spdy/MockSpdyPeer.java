@@ -44,10 +44,10 @@ public final class MockSpdyPeer implements Closeable {
   private FrameWriter frameWriter = variant.newWriter(bytesOut, client);
   private final List<OutFrame> outFrames = new ArrayList<>();
   private final BlockingQueue<InFrame> inFrames = new LinkedBlockingQueue<>();
-  private int port;
   private final ExecutorService executor = Executors.newSingleThreadExecutor(
       Util.threadFactory("MockSpdyPeer", false));
-  private ServerSocket serverSocket;
+  private volatile ServerSocket serverSocket;
+  private volatile int port;
   private Socket socket;
 
   public void setVariantAndClient(Variant variant, boolean client) {
