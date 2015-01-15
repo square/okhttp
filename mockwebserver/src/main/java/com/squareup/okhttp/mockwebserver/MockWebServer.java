@@ -480,6 +480,9 @@ public final class MockWebServer {
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           source.close();
           sink.close();
+          // Workaround for bug on Android: closing the input/output streams should close an
+          // SSLSocket but does not. https://code.google.com/p/android/issues/detail?id=97564
+          socket.close();
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_INPUT_AT_END) {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
