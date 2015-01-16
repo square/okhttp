@@ -177,13 +177,14 @@ public final class Headers {
     }
 
     // Make a defensive copy and clean it up.
-    final String[] namesAndValues = new String[headers.size() * 2];
+    String[] namesAndValues = new String[headers.size() * 2];
     int i = 0;
     for (Map.Entry<String, String> header : headers.entrySet()) {
-      if (header.getKey() == null || header.getValue() == null)
+      if (header.getKey() == null || header.getValue() == null) {
         throw new IllegalArgumentException("Headers cannot be null");
-      final String name = header.getKey().trim();
-      final String value = header.getValue().trim();
+      }
+      String name = header.getKey().trim();
+      String value = header.getValue().trim();
       if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
         throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
       }
