@@ -36,7 +36,7 @@
     <java.version>1.7</java.version>
     <okio.version>1.2.0</okio.version>
     <!-- ALPN library targeted to Java 7 -->
-    <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
+    <alpn.jdk7.version>7.1.0.v20141016</alpn.jdk7.version>
     <!-- ALPN library targeted to Java 8 update 25. -->
     <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
     <bouncycastle.version>1.50</bouncycastle.version>
