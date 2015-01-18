@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpConnection;
@@ -27,14 +28,21 @@ import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
+
 import okio.Source;
 
+import static com.squareup.okhttp.internal.Util.closeQuietly;
 import static com.squareup.okhttp.internal.Util.getDefaultPort;
 import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static java.net.HttpURLConnection.HTTP_OK;
@@ -68,8 +76,10 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  */
 public final class Connection {
   private final ConnectionPool pool;
-  private final Route route;
+  private final RouteSelector routeSelector;
+  private final boolean connectionRetriesEnabled;
 
+  private Route route;
   private Socket socket;
   private boolean connected = false;
   private HttpConnection httpConnection;
@@ -86,9 +96,11 @@ public final class Connection {
    */
   private Object owner;
 
-  public Connection(ConnectionPool pool, Route route) {
+  public Connection(ConnectionPool pool, RouteSelector routeSelector,
+      boolean connectionRetriesEnabled) {
     this.pool = pool;
-    this.route = route;
+    this.routeSelector = routeSelector;
+    this.connectionRetriesEnabled = connectionRetriesEnabled;
   }
 
   Object getOwner() {
@@ -141,45 +153,110 @@ public final class Connection {
     socket.close();
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
-      throws IOException {
+  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request request)
+      throws ConnectionFailureException {
     if (connected) throw new IllegalStateException("already connected");
 
-    if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
-      socket = route.address.socketFactory.createSocket();
-    } else {
-      socket = new Socket(route.proxy);
+    ConnectionFailureException connectionFailureException = null;
+    while (true) {
+      try {
+        route = routeSelector.next();
+
+        if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
+          socket = route.address.socketFactory.createSocket();
+        } else {
+          socket = new Socket(route.proxy);
+        }
+
+        socket.setSoTimeout(readTimeout);
+        Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
+
+        if (route.address.sslSocketFactory != null) {
+          Request tunnelRequest = tunnelRequest(request);
+          upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
+        } else {
+          httpConnection = new HttpConnection(pool, this, socket);
+        }
+        connected = true;
+        return;
+      } catch (IOException e) {
+        // Record the failure to connect.
+        if (route != null) {
+          connectFailed(route, e);
+        }
+
+        closeQuietly(socket);
+        socket = null;
+        route = null;
+
+        if (connectionFailureException == null) {
+          connectionFailureException = new ConnectionFailureException(e);
+        } else {
+          connectionFailureException.addConnectException(e);
+        }
+
+        if (!routeSelector.hasNext() // No more routes to attempt.
+            || !isRecoverable(e)) {
+          throw connectionFailureException;
+        }
+      }
+    }
+  }
+
+  private void connectFailed(Route failedRoute, IOException e) {
+    // If this is a recycled connection, don't count its failure against the route.
+    if (Internal.instance.recycleCount(this) > 0) return;
+    routeSelector.connectFailed(failedRoute, e);
+  }
+
+  private boolean isRecoverable(IOException e) {
+    // If the application has opted-out of recovery, don't recover.
+    if (!connectionRetriesEnabled) {
+      return false;
     }
 
-    socket.setSoTimeout(readTimeout);
-    Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
-
-    if (route.address.sslSocketFactory != null) {
-      upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket);
+    // If the problem was a CertificateException from the X509TrustManager,
+    // do not retry, we didn't have an abrupt server-initiated exception.
+    if (e instanceof SSLPeerUnverifiedException
+        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException)) {
+      return false;
     }
-    connected = true;
+
+    // If there was a protocol problem, don't recover.
+    if (e instanceof ProtocolException) {
+      return false;
+    }
+
+    // If there was an interruption or timeout, don't recover.
+    if (e instanceof InterruptedIOException) {
+      return false;
+    }
+
+    return true;
   }
 
   /**
    * Connects this connection if it isn't already. This creates tunnels, shares
    * the connection with the connection pool, and configures timeouts.
    */
-  void connectAndSetOwner(OkHttpClient client, Object owner, Request request) throws IOException {
+  void connectAndSetOwner(OkHttpClient client, Object owner, Request request)
+      throws ConnectionFailureException {
     setOwner(owner);
 
     if (!isConnected()) {
-      Request tunnelRequest = tunnelRequest(request);
       connect(client.getConnectTimeout(), client.getReadTimeout(),
-          client.getWriteTimeout(), tunnelRequest);
+          client.getWriteTimeout(), request);
       if (isSpdy()) {
         client.getConnectionPool().share(this);
       }
       client.routeDatabase().connected(getRoute());
     }
 
-    setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
+    try {
+      setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
+    } catch (IOException e) {
+      throw new ConnectionFailureException(e);
+    }
   }
 
   /**
@@ -432,6 +509,9 @@ public final class Connection {
   }
 
   @Override public String toString() {
+    if (!connected) {
+      return "Connection{unconnected}";
+    }
     return "Connection{"
         + route.address.uriHost + ":" + route.address.uriPort
         + ", proxy="

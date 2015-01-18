@@ -270,6 +270,10 @@ public class Call {
       try {
         engine.sendRequest();
         engine.readResponse();
+      } catch (ConnectionFailureException e) {
+        // TODO(nfuller): It would be nice to log or expose all exceptions somehow. E.g. >= JDK1.7
+        // with "suppressed" exceptions.
+        throw e.getLastConnectException();
       } catch (IOException e) {
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {

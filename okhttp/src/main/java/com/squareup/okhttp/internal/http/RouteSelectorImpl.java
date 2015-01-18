@@ -16,6 +16,8 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.RouteSelector;
+import com.squareup.okhttp.ConnectionFailureException;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -45,7 +47,7 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  * choice of proxy server, IP address, and TLS mode. Connections may also be
  * recycled.
  */
-public final class RouteSelector {
+public final class RouteSelectorImpl implements RouteSelector {
   private final Address address;
   private final URI uri;
   private final Network network;
@@ -73,7 +75,7 @@ public final class RouteSelector {
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
 
-  private RouteSelector(Address address, URI uri, OkHttpClient client, Request request) {
+  private RouteSelectorImpl(Address address, URI uri, OkHttpClient client, Request request) {
     this.address = address;
     this.uri = uri;
     this.client = client;
@@ -85,14 +87,15 @@ public final class RouteSelector {
   }
 
   public static RouteSelector get(Address address, Request request, OkHttpClient client)
-      throws IOException {
-    return new RouteSelector(address, request.uri(), client, request);
+      throws ConnectionFailureException {
+    try {
+      return new RouteSelectorImpl(address, request.uri(), client, request);
+    } catch (IOException e) {
+      throw new ConnectionFailureException(e);
+    }
   }
 
-  /**
-   * Returns true if there's another route to attempt. Every address has at
-   * least one route.
-   */
+  @Override
   public boolean hasNext() {
     return hasNextConnectionSpec()
         || hasNextInetSocketAddress()
@@ -100,6 +103,7 @@ public final class RouteSelector {
         || hasNextPostponed();
   }
 
+  @Override
   public Route next() throws IOException {
     // Compute the next route to attempt.
     if (!hasNextConnectionSpec()) {
@@ -133,10 +137,7 @@ public final class RouteSelector {
         && connectionSpec.isTls();
   }
 
-  /**
-   * Clients should invoke this method when they encounter a connectivity
-   * failure on a connection returned by this route selector.
-   */
+  @Override
   public void connectFailed(Route failedRoute, IOException failure) {
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.

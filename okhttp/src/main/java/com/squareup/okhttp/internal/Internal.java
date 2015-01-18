@@ -23,6 +23,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.ConnectionFailureException;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
@@ -67,7 +68,7 @@ public abstract class Internal {
   public abstract void setNetwork(OkHttpClient client, Network network);
 
   public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
-      HttpEngine owner, Request request) throws IOException;
+      HttpEngine owner, Request request) throws ConnectionFailureException;
 
   // TODO delete the following when web sockets move into the main package.
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
