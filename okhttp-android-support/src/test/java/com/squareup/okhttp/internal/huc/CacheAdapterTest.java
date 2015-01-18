@@ -30,6 +30,7 @@ import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,8 @@ import javax.net.ssl.SSLSession;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import okio.Buffer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -130,17 +133,19 @@ public class CacheAdapterTest {
 
   @Test public void put_httpGet() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
+    final byte[] response = "ResponseString".getBytes(StandardCharsets.UTF_8);
     final URL serverUrl = configureServer(
         new MockResponse()
             .setStatus(statusLine)
-            .addHeader("A", "c"));
+            .addHeader("A", "c")
+            .setBody(new Buffer().write(response)));
 
     ResponseCache responseCache = new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         assertTrue(connection instanceof HttpURLConnection);
         assertFalse(connection instanceof HttpsURLConnection);
 
-        assertEquals(0, connection.getContentLength());
+        assertEquals(response.length, connection.getContentLength());
 
         HttpURLConnection httpUrlConnection = (HttpURLConnection) connection;
         assertEquals("GET", httpUrlConnection.getRequestMethod());

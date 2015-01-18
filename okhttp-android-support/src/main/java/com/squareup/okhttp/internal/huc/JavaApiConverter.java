@@ -22,6 +22,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSource;
 import okio.Okio;
+import okio.Sink;
 
 /**
  * Helper methods that convert between Java and OkHttp representations.
@@ -79,7 +81,7 @@ public final class JavaApiConverter {
     okResponseBuilder.headers(okHeaders);
 
     // Response body
-    ResponseBody okBody = createOkBody(okHeaders, urlConnection.getInputStream());
+    ResponseBody okBody = createOkBody(urlConnection);
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -126,7 +128,7 @@ public final class JavaApiConverter {
     okResponseBuilder.headers(okHeaders);
 
     // Response body
-    ResponseBody okBody = createOkBody(okHeaders, javaResponse.getBody());
+    ResponseBody okBody = createOkBody(okHeaders, javaResponse);
     okResponseBuilder.body(okBody);
 
     // Handle SSL handshake information as needed.
@@ -245,6 +247,23 @@ public final class JavaApiConverter {
     }
   }
 
+  public static java.net.CacheRequest createJavaCacheRequest(final CacheRequest okCacheRequest) {
+    return new java.net.CacheRequest() {
+      @Override
+      public void abort() {
+        okCacheRequest.abort();
+      }
+      @Override
+      public OutputStream getBody() throws IOException {
+        Sink body = okCacheRequest.body();
+        if (body == null) {
+          return null;
+        }
+        return Okio.buffer(body).outputStream();
+      }
+    };
+  }
+
   /**
    * Creates an {@link java.net.HttpURLConnection} of the correct subclass from the supplied OkHttp
    * {@link Response}.
@@ -339,18 +358,55 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static ResponseBody createOkBody(final Headers okHeaders, InputStream body) {
-    final BufferedSource source = Okio.buffer(Okio.source(body));
+  private static ResponseBody createOkBody(final Headers okHeaders,
+      final CacheResponse cacheResponse) {
     return new ResponseBody() {
-      @Override public MediaType contentType() {
+      private BufferedSource body;
+
+      @Override
+      public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
       }
-      @Override public long contentLength() {
+
+      @Override
+      public long contentLength() {
         return OkHeaders.contentLength(okHeaders);
       }
-      @Override public BufferedSource source() {
-        return source;
+      @Override public BufferedSource source() throws IOException {
+        if (body == null) {
+          InputStream is = cacheResponse.getBody();
+          body = Okio.buffer(Okio.source(is));
+        }
+        return body;
+      }
+    };
+  }
+
+  /**
+   * Creates an OkHttp Response.Body containing the supplied information.
+   */
+  private static ResponseBody createOkBody(final URLConnection urlConnection) {
+    if (!urlConnection.getDoInput()) {
+      return null;
+    }
+    return new ResponseBody() {
+      private BufferedSource body;
+
+      @Override public MediaType contentType() {
+        String contentTypeHeader = urlConnection.getContentType();
+        return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
+      }
+      @Override public long contentLength() {
+        String s = urlConnection.getHeaderField("Content-Length");
+        return stringToLong(s);
+      }
+      @Override public BufferedSource source() throws IOException {
+        if (body == null) {
+          InputStream is = urlConnection.getInputStream();
+          body = Okio.buffer(Okio.source(is));
+        }
+        return body;
       }
     };
   }
@@ -376,7 +432,9 @@ public final class JavaApiConverter {
 
       // Configure URLConnection inherited fields.
       this.connected = true;
-      this.doOutput = response.body() == null;
+      this.doOutput = request.body() != null;
+      this.doInput = true;
+      this.useCaches = true;
 
       // Configure HttpUrlConnection inherited fields.
       this.method = request.method();
@@ -567,7 +625,7 @@ public final class JavaApiConverter {
 
     @Override
     public boolean getDoInput() {
-      return true;
+      return doInput;
     }
 
     @Override
@@ -577,7 +635,7 @@ public final class JavaApiConverter {
 
     @Override
     public boolean getDoOutput() {
-      return request.body() != null;
+      return doOutput;
     }
 
     @Override
@@ -607,7 +665,7 @@ public final class JavaApiConverter {
 
     @Override
     public long getIfModifiedSince() {
-      return 0;
+      return stringToLong(request.headers().get("If-Modified-Since"));
     }
 
     @Override
@@ -683,4 +741,12 @@ public final class JavaApiConverter {
     return elements == null ? Collections.<T>emptyList() : Util.immutableList(elements);
   }
 
+  private static long stringToLong(String s) {
+    if (s == null) return -1;
+    try {
+      return Long.parseLong(s);
+    } catch (NumberFormatException e) {
+      return -1;
+    }
+  }
 }
