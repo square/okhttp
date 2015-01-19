@@ -29,23 +29,22 @@ public final class AddressTest {
   private SocketFactory socketFactory = SocketFactory.getDefault();
   private Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
   private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
-  private List<ConnectionSpec> connectionSpecs = Util.immutableList(ConnectionSpec.MODERN_TLS);
   private RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void equalsAndHashcode() throws Exception {
     Address a = new Address("square.com", 80, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, proxySelector);
     Address b = new Address("square.com", 80, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, proxySelector);
     assertEquals(a, b);
     assertEquals(a.hashCode(), b.hashCode());
   }
 
   @Test public void differentProxySelectorsAreDifferent() throws Exception {
     Address a = new Address("square.com", 80, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
+        authenticator, null, protocols, new RecordingProxySelector());
     Address b = new Address("square.com", 80, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
+        authenticator, null, protocols, new RecordingProxySelector());
     assertFalse(a.equals(b));
   }
 }
