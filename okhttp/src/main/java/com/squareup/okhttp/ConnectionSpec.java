@@ -176,6 +176,7 @@ public final class ConnectionSpec {
 
   @Override public boolean equals(Object other) {
     if (!(other instanceof ConnectionSpec)) return false;
+    if (other == this) return true;
 
     ConnectionSpec that = (ConnectionSpec) other;
     if (this.tls != that.tls) return false;
