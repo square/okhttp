@@ -67,10 +67,12 @@ public final class CacheStrategy {
       case HTTP_MOVED_TEMP:
       case HTTP_TEMP_REDIRECT:
         // These codes can only be cached with the right response headers.
+        // http://tools.ietf.org/html/rfc7234#section-3
+        // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
         if (response.header("Expires") != null
             || response.cacheControl().maxAgeSeconds() != -1
-            || response.cacheControl().sMaxAgeSeconds() != -1
-            || response.cacheControl().isPublic()) {
+            || response.cacheControl().isPublic()
+            || response.cacheControl().isPrivate()) {
           break;
         }
         // Fall-through.

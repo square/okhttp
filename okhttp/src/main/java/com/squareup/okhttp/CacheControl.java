@@ -34,6 +34,7 @@ public final class CacheControl {
   private final boolean noStore;
   private final int maxAgeSeconds;
   private final int sMaxAgeSeconds;
+  private final boolean isPrivate;
   private final boolean isPublic;
   private final boolean mustRevalidate;
   private final int maxStaleSeconds;
@@ -44,12 +45,13 @@ public final class CacheControl {
   String headerValue; // Lazily computed, if absent.
 
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
-      boolean isPublic, boolean mustRevalidate, int maxStaleSeconds, int minFreshSeconds,
-      boolean onlyIfCached, boolean noTransform, String headerValue) {
+      boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
+      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, String headerValue) {
     this.noCache = noCache;
     this.noStore = noStore;
     this.maxAgeSeconds = maxAgeSeconds;
     this.sMaxAgeSeconds = sMaxAgeSeconds;
+    this.isPrivate = isPrivate;
     this.isPublic = isPublic;
     this.mustRevalidate = mustRevalidate;
     this.maxStaleSeconds = maxStaleSeconds;
@@ -64,6 +66,7 @@ public final class CacheControl {
     this.noStore = builder.noStore;
     this.maxAgeSeconds = builder.maxAgeSeconds;
     this.sMaxAgeSeconds = -1;
+    this.isPrivate = false;
     this.isPublic = false;
     this.mustRevalidate = false;
     this.maxStaleSeconds = builder.maxStaleSeconds;
@@ -106,6 +109,10 @@ public final class CacheControl {
     return sMaxAgeSeconds;
   }
 
+  public boolean isPrivate() {
+    return isPrivate;
+  }
+
   public boolean isPublic() {
     return isPublic;
   }
@@ -146,6 +153,7 @@ public final class CacheControl {
     boolean noStore = false;
     int maxAgeSeconds = -1;
     int sMaxAgeSeconds = -1;
+    boolean isPrivate = false;
     boolean isPublic = false;
     boolean mustRevalidate = false;
     int maxStaleSeconds = -1;
@@ -212,6 +220,8 @@ public final class CacheControl {
           maxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
         } else if ("s-maxage".equalsIgnoreCase(directive)) {
           sMaxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
+        } else if ("private".equalsIgnoreCase(directive)) {
+          isPrivate = true;
         } else if ("public".equalsIgnoreCase(directive)) {
           isPublic = true;
         } else if ("must-revalidate".equalsIgnoreCase(directive)) {
@@ -231,7 +241,7 @@ public final class CacheControl {
     if (!canUseHeaderValue) {
       headerValue = null;
     }
-    return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPublic,
+    return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
         mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, headerValue);
   }
 
@@ -246,6 +256,7 @@ public final class CacheControl {
     if (noStore) result.append("no-store, ");
     if (maxAgeSeconds != -1) result.append("max-age=").append(maxAgeSeconds).append(", ");
     if (sMaxAgeSeconds != -1) result.append("s-maxage=").append(sMaxAgeSeconds).append(", ");
+    if (isPrivate) result.append("private, ");
     if (isPublic) result.append("public, ");
     if (mustRevalidate) result.append("must-revalidate, ");
     if (maxStaleSeconds != -1) result.append("max-stale=").append(maxStaleSeconds).append(", ");
