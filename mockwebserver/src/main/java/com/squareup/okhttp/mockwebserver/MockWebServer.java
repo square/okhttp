@@ -477,6 +477,7 @@ public final class MockWebServer {
           writeHttpResponse(socket, sink, response);
         }
 
+        // See warnings associated with these socket policies in SocketPolicy.
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           source.close();
           sink.close();

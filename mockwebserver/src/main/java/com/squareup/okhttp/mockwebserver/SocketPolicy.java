@@ -16,7 +16,19 @@
 
 package com.squareup.okhttp.mockwebserver;
 
-/** What should be done with the incoming socket. */
+/**
+ * What should be done with the incoming socket.
+ *
+ * <p>Be careful when using values like {@link #DISCONNECT_AT_END}, {@link #SHUTDOWN_INPUT_AT_END}
+ * and {@link #SHUTDOWN_OUTPUT_AT_END} that close a socket after a response, and where there are
+ * follow-up requests. The client is unblocked and free to continue as soon as it has received the
+ * entire response body. If and when the client makes a subsequent request using a pooled socket the
+ * server may not have had time to close the socket. The socket will be closed at an indeterminate
+ * point before or during the second request. It may be closed after client has started sending the
+ * request body. If a request body is not retryable then the client may fail the request, making
+ * client behavior non-deterministic. Add delays in the client to improve the chances that the
+ * server has closed the socket before follow up requests are made.
+ */
 public enum SocketPolicy {
 
   /**
@@ -28,6 +40,8 @@ public enum SocketPolicy {
   /**
    * Close the socket after the response. This is the default HTTP/1.0
    * behavior.
+   *
+   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   DISCONNECT_AT_END,
 
@@ -56,17 +70,21 @@ public enum SocketPolicy {
   /**
    * Shutdown the socket input after sending the response. For testing bad
    * behavior.
+   *
+   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_INPUT_AT_END,
 
   /**
    * Shutdown the socket output after sending the response. For testing bad
    * behavior.
+   *
+   * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_OUTPUT_AT_END,
 
   /**
-   * Don't response to the request but keep the socket open. For testing
+   * Don't respond to the request but keep the socket open. For testing
    * read response header timeout issue.
    */
   NO_RESPONSE
