@@ -33,6 +33,7 @@ public final class CacheControlTest {
     assertFalse(cacheControl.noStore());
     assertEquals(-1, cacheControl.maxAgeSeconds());
     assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertFalse(cacheControl.isPrivate());
     assertFalse(cacheControl.isPublic());
     assertFalse(cacheControl.mustRevalidate());
     assertEquals(-1, cacheControl.maxStaleSeconds());
@@ -62,6 +63,7 @@ public final class CacheControlTest {
 
     // These members are accessible to response headers only.
     assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertFalse(cacheControl.isPrivate());
     assertFalse(cacheControl.isPublic());
     assertFalse(cacheControl.mustRevalidate());
   }
@@ -83,7 +85,7 @@ public final class CacheControlTest {
   }
 
   @Test public void parse() throws Exception {
-    String header = "no-cache, no-store, max-age=1, s-maxage=2, public, must-revalidate, "
+    String header = "no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, "
         + "max-stale=3, min-fresh=4, only-if-cached, no-transform";
     CacheControl cacheControl = CacheControl.parse(new Headers.Builder()
         .set("Cache-Control", header)
@@ -92,12 +94,33 @@ public final class CacheControlTest {
     assertTrue(cacheControl.noStore());
     assertEquals(1, cacheControl.maxAgeSeconds());
     assertEquals(2, cacheControl.sMaxAgeSeconds());
+    assertTrue(cacheControl.isPrivate());
     assertTrue(cacheControl.isPublic());
     assertTrue(cacheControl.mustRevalidate());
     assertEquals(3, cacheControl.maxStaleSeconds());
     assertEquals(4, cacheControl.minFreshSeconds());
     assertTrue(cacheControl.onlyIfCached());
     assertTrue(cacheControl.noTransform());
+    assertEquals(header, cacheControl.toString());
+  }
+
+  @Test public void parseIgnoreCacheControlExtensions() throws Exception {
+    // Example from http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.6
+    String header = "private, community=\"UCI\"";
+    CacheControl cacheControl = CacheControl.parse(new Headers.Builder()
+        .set("Cache-Control", header)
+        .build());
+    assertFalse(cacheControl.noCache());
+    assertFalse(cacheControl.noStore());
+    assertEquals(-1, cacheControl.maxAgeSeconds());
+    assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertTrue(cacheControl.isPrivate());
+    assertFalse(cacheControl.isPublic());
+    assertFalse(cacheControl.mustRevalidate());
+    assertEquals(-1, cacheControl.maxStaleSeconds());
+    assertEquals(-1, cacheControl.minFreshSeconds());
+    assertFalse(cacheControl.onlyIfCached());
+    assertFalse(cacheControl.noTransform());
     assertEquals(header, cacheControl.toString());
   }
 
