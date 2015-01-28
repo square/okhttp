@@ -116,7 +116,7 @@ public final class MockWebServer {
   private Dispatcher dispatcher = new QueueDispatcher();
 
   private int port = -1;
-  private InetAddress inetAddress;
+  private InetSocketAddress inetSocketAddress;
   private boolean protocolNegotiationEnabled = true;
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
@@ -132,15 +132,18 @@ public final class MockWebServer {
   }
 
   public String getHostName() {
-    if (inetAddress == null) throw new IllegalStateException("Call start() before getHostName()");
-    return inetAddress.getHostName();
+    if (inetSocketAddress == null) {
+      throw new IllegalStateException("Call start() before getHostName()");
+    }
+    return inetSocketAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    if (inetAddress == null) {
+    if (inetSocketAddress == null) {
       throw new IllegalStateException("Call start() before toProxyAddress()");
     }
-    return new Proxy(Proxy.Type.HTTP, new InetSocketAddress(inetAddress, getPort()));
+    InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
+    return new Proxy(Proxy.Type.HTTP, address);
   }
 
   /**
@@ -276,22 +279,45 @@ public final class MockWebServer {
   }
 
   /**
-   * Starts the server.
+   * Starts the server on the loopback interface for the given port.
    *
    * @param port the port to listen to, or 0 for any available port. Automated
    *     tests should always use port 0 to avoid flakiness when a specific port
    *     is unavailable.
    */
   public void start(int port) throws IOException {
+    start(InetAddress.getByName("localhost"), port);
+  }
+
+  /**
+   * Starts the server on the given address and port.
+   *
+   * @param inetAddress the address to create the server socket on
+   *
+   * @param port the port to listen to, or 0 for any available port. Automated
+   *     tests should always use port 0 to avoid flakiness when a specific port
+   *     is unavailable.
+   */
+  public void start(InetAddress inetAddress, int port) throws IOException {
+    start(new InetSocketAddress(inetAddress, port));
+  }
+
+  /**
+   * Starts the server and binds to the given socket address.
+   *
+   * @param inetSocketAddress the socket address to bind the server on
+   */
+  private void start(InetSocketAddress inetSocketAddress) throws IOException {
     if (executor != null) throw new IllegalStateException("start() already called");
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
-    inetAddress = InetAddress.getByName("localhost");
+    this.inetSocketAddress = inetSocketAddress;
     serverSocket = serverSocketFactory.createServerSocket();
-    serverSocket.setReuseAddress(port != 0); // Reuse the port if the port number was specified.
-    serverSocket.bind(new InetSocketAddress(inetAddress, port), 50);
+    // Reuse if the user specified a port
+    serverSocket.setReuseAddress(inetSocketAddress.getPort() != 0);
+    serverSocket.bind(inetSocketAddress, 50);
 
-    this.port = serverSocket.getLocalPort();
-    executor.execute(new NamedRunnable("MockWebServer %s", this.port) {
+    port = serverSocket.getLocalPort();
+    executor.execute(new NamedRunnable("MockWebServer %s", port) {
       @Override protected void execute() {
         try {
           logger.info(MockWebServer.this + " starting to accept connections");
