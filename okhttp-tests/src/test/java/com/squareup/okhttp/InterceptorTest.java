@@ -371,6 +371,65 @@ public final class InterceptorTest {
     assertEquals(response.body().string(), "b");
   }
 
+  /** Make sure interceptors can interact with the OkHttp client. */
+  @Test public void interceptorMakesAnUnrelatedRequest() throws Exception {
+    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
+    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+
+    client.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        if (chain.request().url().getPath().equals("/b")) {
+          Request requestA = new Request.Builder()
+              .url(server.getUrl("/a"))
+              .build();
+          Response responseA = client.newCall(requestA).execute();
+          assertEquals("a", responseA.body().string());
+        }
+
+        return chain.proceed(chain.request());
+      }
+    });
+
+    Request requestB = new Request.Builder()
+        .url(server.getUrl("/b"))
+        .build();
+    Response responseB = client.newCall(requestB).execute();
+    assertEquals("b", responseB.body().string());
+  }
+
+  /** Make sure interceptors can interact with the OkHttp client asynchronously. */
+  @Test public void interceptorMakesAnUnrelatedAsyncRequest() throws Exception {
+    server.enqueue(new MockResponse().setBody("a")); // Fetched by interceptor.
+    server.enqueue(new MockResponse().setBody("b")); // Fetched directly.
+
+    client.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        if (chain.request().url().getPath().equals("/b")) {
+          Request requestA = new Request.Builder()
+              .url(server.getUrl("/a"))
+              .build();
+
+          try {
+            RecordingCallback callbackA = new RecordingCallback();
+            client.newCall(requestA).enqueue(callbackA);
+            callbackA.await(requestA.url()).assertBody("a");
+          } catch (Exception e) {
+            throw new RuntimeException(e);
+          }
+        }
+
+        return chain.proceed(chain.request());
+      }
+    });
+
+    Request requestB = new Request.Builder()
+        .url(server.getUrl("/b"))
+        .build();
+    RecordingCallback callbackB = new RecordingCallback();
+    client.newCall(requestB).enqueue(callbackB);
+    callbackB.await(requestB.url()).assertBody("b");
+  }
+
   private RequestBody uppercase(final RequestBody original) {
     return new RequestBody() {
       @Override public MediaType contentType() {
