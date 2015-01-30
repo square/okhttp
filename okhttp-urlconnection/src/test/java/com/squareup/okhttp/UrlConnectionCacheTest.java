@@ -717,7 +717,7 @@ public final class UrlConnectionCacheTest {
             .addHeader("Last-Modified: " + lastModifiedDate)
             .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertNull(conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {
