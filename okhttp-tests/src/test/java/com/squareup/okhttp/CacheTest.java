@@ -23,20 +23,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
-import okio.Buffer;
-import okio.BufferedSink;
-import okio.BufferedSource;
-import okio.GzipSink;
-import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -59,6 +45,19 @@ import java.util.NoSuchElementException;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.GzipSink;
+import okio.Okio;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static org.junit.Assert.assertEquals;
@@ -819,6 +818,7 @@ public final class CacheTest {
     assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
   }
 
+  /** If both If-Modified-Since and If-None-Match conditions apply, send only If-None-Match. */
   @Test public void etagAndExpirationDateInThePast() throws Exception {
     String lastModifiedDate = formatDate(-2, TimeUnit.HOURS);
     RecordedRequest conditionalRequest = assertConditionallyCached(new MockResponse()
@@ -826,7 +826,7 @@ public final class CacheTest {
         .addHeader("Last-Modified: " + lastModifiedDate)
         .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertNull(conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {

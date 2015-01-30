@@ -225,14 +225,12 @@ public final class CacheStrategy {
 
       Request.Builder conditionalRequestBuilder = request.newBuilder();
 
-      if (lastModified != null) {
+      if (etag != null) {
+        conditionalRequestBuilder.header("If-None-Match", etag);
+      } else if (lastModified != null) {
         conditionalRequestBuilder.header("If-Modified-Since", lastModifiedString);
       } else if (servedDate != null) {
         conditionalRequestBuilder.header("If-Modified-Since", servedDateString);
-      }
-
-      if (etag != null) {
-        conditionalRequestBuilder.header("If-None-Match", etag);
       }
 
       Request conditionalRequest = conditionalRequestBuilder.build();

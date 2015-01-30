@@ -77,7 +77,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -628,7 +627,7 @@ public final class ResponseCacheTest {
             .addHeader("Last-Modified: " + lastModifiedDate)
             .addHeader("Expires: " + formatDate(-1, TimeUnit.HOURS)));
     assertEquals("v1", conditionalRequest.getHeader("If-None-Match"));
-    assertEquals(lastModifiedDate, conditionalRequest.getHeader("If-Modified-Since"));
+    assertNull(conditionalRequest.getHeader("If-Modified-Since"));
   }
 
   @Test public void etagAndExpirationDateInTheFuture() throws Exception {
