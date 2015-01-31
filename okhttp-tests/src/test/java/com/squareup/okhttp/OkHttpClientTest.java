@@ -32,6 +32,7 @@ import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import org.junit.After;
 import org.junit.Test;
@@ -54,6 +55,34 @@ public final class OkHttpClientTest {
     CookieManager.setDefault(DEFAULT_COOKIE_HANDLER);
     ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
     Authenticator.setDefault(DEFAULT_AUTHENTICATOR);
+  }
+
+  @Test public void timeoutValidRange() {
+    OkHttpClient client = new OkHttpClient();
+    try {
+      client.setConnectTimeout(1, TimeUnit.NANOSECONDS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      client.setWriteTimeout(1, TimeUnit.NANOSECONDS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      client.setReadTimeout(1, TimeUnit.NANOSECONDS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      client.setConnectTimeout(365, TimeUnit.DAYS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      client.setWriteTimeout(365, TimeUnit.DAYS);
+    } catch (IllegalArgumentException ignored) {
+    }
+    try {
+      client.setReadTimeout(365, TimeUnit.DAYS);
+    } catch (IllegalArgumentException ignored) {
+    }
   }
 
   /** Confirm that {@code copyWithDefaults} gets expected constant values. */
