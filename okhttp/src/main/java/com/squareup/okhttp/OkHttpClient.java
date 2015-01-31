@@ -203,8 +203,8 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Sets the default connect timeout for new connections. A value of 0 means no timeout. Values
-   * must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+   * Sets the default connect timeout for new connections. A value of 0 means no timeout, otherwise
+   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
    *
    * @see URLConnection#setConnectTimeout(int)
    */
@@ -223,8 +223,8 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Sets the default read timeout for new connections. A value of 0 means no timeout. Values must
-   * be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+   * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
+   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
    *
    * @see URLConnection#setReadTimeout(int)
    */
@@ -243,8 +243,8 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Sets the default write timeout for new connections. A value of 0 means no timeout. Values must
-   * be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+   * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
+   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
    */
   public final void setWriteTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
