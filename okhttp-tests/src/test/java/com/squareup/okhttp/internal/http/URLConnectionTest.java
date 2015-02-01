@@ -115,6 +115,16 @@ import static org.junit.Assert.fail;
 public final class URLConnectionTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
+  private static final ConnectionSpec TLS_1_1_AND_BELOW =
+      new ConnectionSpec.Builder(ConnectionSpec.TLS_1_1_AND_BELOW)
+          .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+          .build();
+  private static final ConnectionSpec TLS_1_0_ONLY =
+      new ConnectionSpec.Builder(TLS_1_1_AND_BELOW)
+          .tlsVersions(TlsVersion.TLS_1_0)
+          .build();
+  private static final ConnectionSpec CLEARTEXT = ConnectionSpec.CLEARTEXT;
+
   @Rule public final MockWebServerRule server = new MockWebServerRule();
   @Rule public final MockWebServerRule server2 = new MockWebServerRule();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
@@ -605,7 +615,8 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("this response comes via SSL"));
 
-    suppressTlsFallbackScsv(client.client());
+    installTestClientSocketFactory(client.client(), TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
+    client.client().setConnectionSpecs(Arrays.asList(TLS_1_1_AND_BELOW, TLS_1_0_ONLY, CLEARTEXT));
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.getUrl("/foo"));
 
@@ -613,6 +624,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    assertEquals(TlsVersion.TLS_1_0, request.getTlsVersion());
   }
 
   /**
@@ -628,20 +640,18 @@ public final class URLConnectionTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
     server.enqueue(new MockResponse().setBody("def"));
 
-    suppressTlsFallbackScsv(client.client());
+    installTestClientSocketFactory(client.client(), TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
+    client.client().setConnectionSpecs(Arrays.asList(TLS_1_1_AND_BELOW, TLS_1_0_ONLY, CLEARTEXT));
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertContent("abc", client.open(server.getUrl("/")));
     assertContent("def", client.open(server.getUrl("/")));
 
-    Set<TlsVersion> tlsVersions =
-        EnumSet.of(TlsVersion.TLS_1_0, TlsVersion.TLS_1_2); // v1.2 on OpenJDK 8.
-
     RecordedRequest request1 = server.takeRequest();
-    assertTrue(tlsVersions.contains(request1.getTlsVersion()));
+    assertEquals(TlsVersion.TLS_1_1, request1.getTlsVersion());
 
     RecordedRequest request2 = server.takeRequest();
-    assertTrue(tlsVersions.contains(request2.getTlsVersion()));
+    assertEquals(TlsVersion.TLS_1_1, request2.getTlsVersion());
   }
 
   /**
@@ -837,7 +847,7 @@ public final class URLConnectionTest {
     // failure to fail permanently.
     Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
-    client.client().setConnectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS));
+    client.client().setConnectionSpecs(Arrays.asList(TLS_1_1_AND_BELOW, TLS_1_0_ONLY, CLEARTEXT));
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     client.client().setProxy(server.get().toProxyAddress());
 
@@ -3228,9 +3238,12 @@ public final class URLConnectionTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See
    * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
    */
-  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+  private static void installTestClientSocketFactory(OkHttpClient client,
+      TlsVersion... tlsVersions) {
+    assertTrue(tlsVersions.length > 0);
+    String[] enabledProtocols = TlsVersion.javaNames(tlsVersions);
     FallbackTestClientSocketFactory clientSocketFactory =
-        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
+        new FallbackTestClientSocketFactory(sslContext.getSocketFactory(), enabledProtocols);
     client.setSslSocketFactory(clientSocketFactory);
   }
 }

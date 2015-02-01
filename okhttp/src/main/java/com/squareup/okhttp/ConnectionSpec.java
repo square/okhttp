@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.util.Arrays;
 import java.util.List;
@@ -23,44 +22,47 @@ import javax.net.ssl.SSLSocket;
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For {@code
- * https:} URLs, this includes the TLS version and ciphers to use when negotiating a secure
+ * https:} URLs, this includes the TLS version and cipher suites to use when negotiating a secure
  * connection.
  */
 public final class ConnectionSpec {
 
-  /** A modern TLS connection with extensions like SNI and ALPN available. */
-  public static final ConnectionSpec MODERN_TLS = new Builder(true)
-      .cipherSuites(
-          // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
-          // All of these suites are available on Android L; earlier releases support a subset of
-          // these suites. https://github.com/square/okhttp/issues/330
-          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-          CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-          CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
-          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-          CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-          CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-          CipherSuite.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-          CipherSuite.TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
-          CipherSuite.TLS_DHE_DSS_WITH_AES_128_CBC_SHA,
-          CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
-          CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_RC4_128_SHA,
-          CipherSuite.TLS_RSA_WITH_RC4_128_MD5
-      )
+  // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
+  // All of these suites are available on Android L; earlier releases support a subset of
+  // these suites. https://github.com/square/okhttp/issues/330
+  private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+      CipherSuite.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
+      CipherSuite.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
+      CipherSuite.TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_DHE_DSS_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
+      CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
+      CipherSuite.TLS_RSA_WITH_RC4_128_SHA,
+      CipherSuite.TLS_RSA_WITH_RC4_128_MD5,
+  };
+
+  public static final ConnectionSpec TLS_1_2_AND_BELOW = new Builder(true)
+      .cipherSuites(APPROVED_CIPHER_SUITES)
       .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
       .build();
 
-  /** A backwards-compatible fallback connection for interop with obsolete servers. */
-  public static final ConnectionSpec COMPATIBLE_TLS = new Builder(MODERN_TLS)
+  public static final ConnectionSpec TLS_1_1_AND_BELOW = new Builder(TLS_1_2_AND_BELOW)
+      .tlsVersions(TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
+      .build();
+
+  public static final ConnectionSpec TLS_1_0_ONLY = new Builder(TLS_1_2_AND_BELOW)
       .tlsVersions(TlsVersion.TLS_1_0)
-      .supportsTlsExtensions(true)
       .build();
 
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
@@ -91,8 +93,8 @@ public final class ConnectionSpec {
   }
 
   /**
-   * Return the cipher suites to use with the connection. This method can return {@code null} if the
-   * ciphers enabled by default should be used.
+   * Returns the cipher suites to use for a connection. This method can return {@code null} if the
+   * cipher suites enabled by default should be used.
    */
   public List<CipherSuite> cipherSuites() {
     if (cipherSuites == null) {
@@ -105,6 +107,10 @@ public final class ConnectionSpec {
     return Util.immutableList(result);
   }
 
+  /**
+   * Returns the TLS versions to use for a connection. Ordering is important. See {@link
+   * #isCompatible(javax.net.ssl.SSLSocket)}.
+   */
   public List<TlsVersion> tlsVersions() {
     TlsVersion[] result = new TlsVersion[tlsVersions.length];
     for (int i = 0; i < tlsVersions.length; i++) {
@@ -117,14 +123,32 @@ public final class ConnectionSpec {
     return supportsTlsExtensions;
   }
 
-  /** Applies this spec to {@code sslSocket} for {@code route}. */
-  void apply(SSLSocket sslSocket, Route route) {
-    ConnectionSpec specToApply = supportedSpec(sslSocket);
+  /** Applies this spec to {@code sslSocket}. */
+  void apply(SSLSocket sslSocket, boolean isFallback) {
+    ConnectionSpec specToApply = supportedSpec(sslSocket, isFallback);
 
     sslSocket.setEnabledProtocols(specToApply.tlsVersions);
 
     String[] cipherSuitesToEnable = specToApply.cipherSuites;
-    if (route.shouldSendTlsFallbackIndicator) {
+    // null means "use default set".
+    if (cipherSuitesToEnable != null) {
+      sslSocket.setEnabledCipherSuites(cipherSuitesToEnable);
+    }
+  }
+
+  /**
+   * Returns a copy of this that omits cipher suites and TLS versions not enabled by
+   * {@code sslSocket}.
+   */
+  private ConnectionSpec supportedSpec(SSLSocket sslSocket, boolean isFallback) {
+    String[] cipherSuitesToEnable = null;
+    if (cipherSuites != null) {
+      String[] cipherSuitesToSelectFrom = sslSocket.getEnabledCipherSuites();
+      cipherSuitesToEnable =
+          Util.intersect(String.class, cipherSuites, cipherSuitesToSelectFrom);
+    }
+
+    if (isFallback) {
       // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
       // the SCSV cipher is added to signal that a protocol fallback has taken place.
       final String fallbackScsv = "TLS_FALLBACK_SCSV";
@@ -132,7 +156,7 @@ public final class ConnectionSpec {
           Arrays.asList(sslSocket.getSupportedCipherSuites()).contains(fallbackScsv);
 
       if (socketSupportsFallbackScsv) {
-        // Add the SCSV cipher to the set of enabled ciphers iff it is supported.
+        // Add the SCSV cipher to the set of enabled cipher suites iff it is supported.
         String[] oldEnabledCipherSuites = cipherSuitesToEnable != null
             ? cipherSuitesToEnable
             : sslSocket.getEnabledCipherSuites();
@@ -143,35 +167,65 @@ public final class ConnectionSpec {
         cipherSuitesToEnable = newEnabledCipherSuites;
       }
     }
-    // null means "use default set".
-    if (cipherSuitesToEnable != null) {
-      sslSocket.setEnabledCipherSuites(cipherSuitesToEnable);
-    }
 
-    Platform platform = Platform.get();
-    if (specToApply.supportsTlsExtensions) {
-      platform.configureTlsExtensions(sslSocket, route.address.uriHost, route.address.protocols);
-    }
+    String[] protocolsToSelectFrom = sslSocket.getEnabledProtocols();
+    String[] protocolsToEnable = Util.intersect(String.class, tlsVersions, protocolsToSelectFrom);
+    return new Builder(this)
+        .cipherSuites(cipherSuitesToEnable)
+        .tlsVersions(protocolsToEnable)
+        .build();
   }
 
   /**
-   * Returns a copy of this that omits cipher suites and TLS versions not
-   * enabled by {@code sslSocket}.
+   * Returns {@code true} if the socket, as currently configured, supports this ConnectionSpec.
+   * In order for a socket to be compatible the enabled cipher suites and protocols must match.
+   *
+   * <p>For cipher suites, at least one of the {@link #cipherSuites() required cipher suites} must
+   * match the socket's enabled cipher suites. If there are no required cipher suites the socket
+   * must have at least one cipher suite enable.
+   *
+   * <p>For protocols, the first {@link #tlsVersions() TLS version} is considered a minimum
+   * requirement and must be be present in the socket's enabled protocols. For example, a
+   * connection spec containing [TLSv1.2, TLSv1.1, etc.] is only compatible if the socket has
+   * TLSv1.2 enabled.
    */
-  private ConnectionSpec supportedSpec(SSLSocket sslSocket) {
-    String[] cipherSuitesToEnable = null;
-    if (cipherSuites != null) {
-      String[] cipherSuitesToSelectFrom = sslSocket.getEnabledCipherSuites();
-      cipherSuitesToEnable =
-          Util.intersect(String.class, cipherSuites, cipherSuitesToSelectFrom);
+  public boolean isCompatible(SSLSocket socket) {
+    if (!tls) {
+      return false;
     }
 
-    String[] protocolsToSelectFrom = sslSocket.getEnabledProtocols();
-    String[] tlsVersionsToEnable = Util.intersect(String.class, tlsVersions, protocolsToSelectFrom);
-    return new Builder(this)
-        .cipherSuites(cipherSuitesToEnable)
-        .tlsVersions(tlsVersionsToEnable)
-        .build();
+    // We use enabled protocols here, not supported, to avoid re-enabling a protocol that has
+    // been disabled. Just because something is supported does not make it desirable to use.
+    String[] enabledProtocols = socket.getEnabledProtocols();
+    // The protocols must contain the leading protocol from the connection spec to be considered
+    // compatible. e.g. a connection spec containing [TLSv1.2, TLSv1.1, etc.] is only compatible
+    // if the socket has TLSv1.2 enabled.
+    String requiredProtocol = tlsVersions[0];
+    boolean requiredProtocolEnabled = contains(enabledProtocols, requiredProtocol);
+
+    boolean requiredCiphersEnabled;
+    if (cipherSuites == null) {
+      requiredCiphersEnabled = socket.getEnabledCipherSuites().length > 0;
+    } else {
+      String[] enabledCipherSuites = socket.getEnabledCipherSuites();
+      requiredCiphersEnabled = false;
+      for (String requiredCipher : cipherSuites) {
+        if (contains(enabledCipherSuites, requiredCipher)) {
+          requiredCiphersEnabled = true;
+          break;
+        }
+      }
+    }
+    return requiredProtocolEnabled && requiredCiphersEnabled;
+  }
+
+  private static <T> boolean contains(T[] array, T value) {
+    for (T arrayValue : array) {
+      if (value == arrayValue || (value != null && value.equals(arrayValue))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override public boolean equals(Object other) {
@@ -247,8 +301,15 @@ public final class ConnectionSpec {
       return this;
     }
 
+    /**
+     * Sets the TLS versions to use. Ordering is important. See
+     * {@link #isCompatible(javax.net.ssl.SSLSocket)}.
+     */
     public Builder tlsVersions(TlsVersion... tlsVersions) {
       if (!tls) throw new IllegalStateException("no TLS versions for cleartext connections");
+      if (tlsVersions.length == 0) {
+        throw new IllegalArgumentException("At least one TlsVersion is required");
+      }
 
       // Convert enums to the string names Java wants. This makes a defensive copy!
       String[] strings = new String[tlsVersions.length];

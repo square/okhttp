@@ -45,13 +45,12 @@ public final class Address {
   final CertificatePinner certificatePinner;
   final Authenticator authenticator;
   final List<Protocol> protocols;
-  final List<ConnectionSpec> connectionSpecs;
   final ProxySelector proxySelector;
 
   public Address(String uriHost, int uriPort, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
+      List<Protocol> protocols, ProxySelector proxySelector) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
     if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
@@ -66,7 +65,6 @@ public final class Address {
     this.certificatePinner = certificatePinner;
     this.authenticator = authenticator;
     this.protocols = Util.immutableList(protocols);
-    this.connectionSpecs = Util.immutableList(connectionSpecs);
     this.proxySelector = proxySelector;
   }
 
@@ -119,10 +117,6 @@ public final class Address {
     return protocols;
   }
 
-  public List<ConnectionSpec> getConnectionSpecs() {
-    return connectionSpecs;
-  }
-
   /**
    * Returns this address's explicitly-specified HTTP proxy, or null to
    * delegate to the {@linkplain #getProxySelector proxy selector}.
@@ -139,6 +133,13 @@ public final class Address {
     return proxySelector;
   }
 
+  /**
+   * Returns this address's certificate pinner. Only used for secure connections.
+   */
+  public CertificatePinner getCertificatePinner() {
+    return certificatePinner;
+  }
+
   @Override public boolean equals(Object other) {
     if (other instanceof Address) {
       Address that = (Address) other;
@@ -150,7 +151,6 @@ public final class Address {
           && equal(this.certificatePinner, that.certificatePinner)
           && equal(this.authenticator, that.authenticator)
           && equal(this.protocols, that.protocols)
-          && equal(this.connectionSpecs, that.connectionSpecs)
           && equal(this.proxySelector, that.proxySelector);
     }
     return false;
@@ -166,7 +166,6 @@ public final class Address {
     result = 31 * result + (certificatePinner != null ? certificatePinner.hashCode() : 0);
     result = 31 * result + authenticator.hashCode();
     result = 31 * result + protocols.hashCode();
-    result = 31 * result + connectionSpecs.hashCode();
     result = 31 * result + proxySelector.hashCode();
     return result;
   }

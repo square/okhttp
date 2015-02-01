@@ -43,4 +43,12 @@ public enum TlsVersion {
     }
     throw new IllegalArgumentException("Unexpected TLS version: " + javaName);
   }
+
+  public static String[] javaNames(TlsVersion... tlsVersions) {
+    String[] protocols = new String[tlsVersions.length];
+    for (int i = 0; i < tlsVersions.length; i++) {
+      protocols[i] = tlsVersions[i].javaName;
+    }
+    return protocols;
+  }
 }

@@ -41,13 +41,10 @@ import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -210,8 +207,15 @@ public final class HttpEngine {
    * Figures out what the response source will be, and opens a socket to that
    * source if necessary. Prepares the request headers and gets ready to start
    * writing the request body if it exists.
+   *
+   * @throws RequestException if there was a problem with request setup. Unrecoverable.
+   * @throws RouteException if the was a problem during connection via a specific route. Sometimes
+   *     recoverable. See {@link #recover(RouteException)}.
+   * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
+   *     {@link #recover(IOException)}.
+   *
    */
-  public void sendRequest() throws IOException {
+  public void sendRequest() throws RequestException, RouteException, IOException {
     if (cacheStrategy != null) return; // Already sent.
     if (transport != null) throw new IllegalStateException();
 
@@ -308,12 +312,16 @@ public final class HttpEngine {
   }
 
   /** Connect to the origin server either directly or via a proxy. */
-  private void connect() throws IOException {
+  private void connect() throws RequestException, RouteException {
     if (connection != null) throw new IllegalStateException();
 
     if (routeSelector == null) {
       address = createAddress(client, networkRequest);
-      routeSelector = RouteSelector.get(address, networkRequest, client);
+      try {
+        routeSelector = RouteSelector.get(address, networkRequest, client);
+      } catch (IOException e) {
+        throw new RequestException(e);
+      }
     }
 
     connection = nextConnection();
@@ -325,13 +333,13 @@ public final class HttpEngine {
    *
    * @throws java.util.NoSuchElementException if there are no more routes to attempt.
    */
-  private Connection nextConnection() throws IOException {
+  private Connection nextConnection() throws RouteException {
     Connection connection = createNextConnection();
     Internal.instance.connectAndSetOwner(client, connection, this, networkRequest);
     return connection;
   }
 
-  private Connection createNextConnection() throws IOException {
+  private Connection createNextConnection() throws RouteException {
     ConnectionPool pool = client.getConnectionPool();
 
     // Always prefer pooled connections over new connections.
@@ -339,10 +347,15 @@ public final class HttpEngine {
       if (networkRequest.method().equals("GET") || Internal.instance.isReadable(pooled)) {
         return pooled;
       }
-      pooled.getSocket().close();
+      closeQuietly(pooled.getSocket());
     }
-    Route route = routeSelector.next();
-    return new Connection(pool, route);
+
+    try {
+      Route route = routeSelector.next();
+      return new Connection(pool, route);
+    } catch (IOException e) {
+      throw new RouteException(e);
+    }
   }
 
   /**
@@ -393,8 +406,46 @@ public final class HttpEngine {
   }
 
   /**
-   * Report and attempt to recover from {@code e}. Returns a new HTTP engine
-   * that should be used for the retry if {@code e} is recoverable, or null if
+   * Attempt to recover from failure to connect via a route. Returns a new HTTP engine
+   * that should be used for the retry if there are other routes to try, or null if
+   * there are no more routes to try.
+   */
+  public HttpEngine recover(RouteException e) {
+    if (routeSelector != null && connection != null) {
+      connectFailed(routeSelector, e.getLastConnectException());
+    }
+
+    if (routeSelector == null && connection == null // No connection.
+        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
+        || !isRecoverable(e)) {
+      return null;
+    }
+
+    Connection connection = close();
+
+    // For failure recovery, use the same route selector with a new connection.
+    return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
+        forWebSocket, connection, routeSelector, (RetryableSink) requestBodyOut, priorResponse);
+  }
+
+  private boolean isRecoverable(RouteException e) {
+    // If the application has opted-out of recovery, don't recover.
+    if (!client.getRetryOnConnectionFailure()) {
+      return false;
+    }
+
+    // If there was an interruption or timeout, don't recover.
+    IOException ioe = e.getLastConnectException();
+    if (ioe instanceof InterruptedIOException) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Report and attempt to recover from a failure to communicate with a server. Returns a new
+   * HTTP engine that should be used for the retry if {@code e} is recoverable, or null if
    * the failure is permanent. Requests with a body can only be recovered if the
    * body is buffered.
    */
@@ -432,13 +483,6 @@ public final class HttpEngine {
   private boolean isRecoverable(IOException e) {
     // If the application has opted-out of recovery, don't recover.
     if (!client.getRetryOnConnectionFailure()) {
-      return false;
-    }
-
-    // If the problem was a CertificateException from the X509TrustManager,
-    // do not retry, we didn't have an abrupt server-initiated exception.
-    if (e instanceof SSLPeerUnverifiedException
-        || (e instanceof SSLHandshakeException && e.getCause() instanceof CertificateException)) {
       return false;
     }
 
@@ -1050,10 +1094,10 @@ public final class HttpEngine {
   }
 
   private static Address createAddress(OkHttpClient client, Request request)
-      throws UnknownHostException {
+      throws RequestException {
     String uriHost = request.url().getHost();
     if (uriHost == null || uriHost.length() == 0) {
-      throw new UnknownHostException(request.url().toString());
+      throw new RequestException(new UnknownHostException(request.url().toString()));
     }
 
     SSLSocketFactory sslSocketFactory = null;
@@ -1068,6 +1112,6 @@ public final class HttpEngine {
     return new Address(uriHost, getEffectivePort(request.url()),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionSpecs(), client.getProxySelector());
+        client.getProxySelector());
   }
 }

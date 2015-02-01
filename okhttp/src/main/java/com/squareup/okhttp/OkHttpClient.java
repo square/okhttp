@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -53,8 +55,12 @@ public class OkHttpClient implements Cloneable {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
-  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
-      ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
+  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS =
+      Util.immutableList(
+          ConnectionSpec.TLS_1_2_AND_BELOW,
+          ConnectionSpec.TLS_1_1_AND_BELOW,
+          ConnectionSpec.TLS_1_0_ONLY,
+          ConnectionSpec.CLEARTEXT);
 
   static {
     Internal.instance = new Internal() {
@@ -116,7 +122,7 @@ public class OkHttpClient implements Cloneable {
       }
 
       @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
-          HttpEngine owner, Request request) throws IOException {
+          HttpEngine owner, Request request) throws RouteException {
         connection.connectAndSetOwner(client, owner, request);
       }
 
@@ -135,6 +141,11 @@ public class OkHttpClient implements Cloneable {
 
       @Override public void connectionSetOwner(Connection connection, Object owner) {
         connection.setOwner(owner);
+      }
+
+      @Override
+      public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
+        tlsConfiguration.apply(sslSocket, isFallback);
       }
     };
   }
