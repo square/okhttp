@@ -166,6 +166,16 @@ public final class ConnectionSpecTest {
     assertEquals(expectedCipherSet, expectedCipherSet);
   }
 
+  @Test
+  public void tls_stringCiphersAndVersions() throws Exception {
+    // Supporting arbitrary input strings allows users to enable suites and versions that are not
+    // yet known to the library, but are supported by the platform.
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .cipherSuites("MAGIC-CIPHER")
+        .tlsVersions("TLS9k")
+        .build();
+  }
+
   private static Set<String> createSet(String... values) {
     return new LinkedHashSet<String>(Arrays.asList(values));
   }
