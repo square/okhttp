@@ -43,4 +43,8 @@ public enum TlsVersion {
     }
     throw new IllegalArgumentException("Unexpected TLS version: " + javaName);
   }
+
+  public String javaName() {
+    return javaName;
+  }
 }

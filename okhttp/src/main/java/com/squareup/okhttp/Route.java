@@ -28,8 +28,6 @@ import java.net.Proxy;
  *   <li><strong>IP address:</strong> whether connecting directly to an origin
  *       server or a proxy, opening a socket requires an IP address. The DNS
  *       server may return multiple IP addresses to attempt.
- *   <li><strong>TLS configuration:</strong> which cipher suites and TLS
- *       versions to attempt with the HTTPS connection.
  * </ul>
  * Each route is a specific selection of these options.
  */
@@ -37,17 +35,8 @@ public final class Route {
   final Address address;
   final Proxy proxy;
   final InetSocketAddress inetSocketAddress;
-  final ConnectionSpec connectionSpec;
-  final boolean shouldSendTlsFallbackIndicator;
 
-  public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      ConnectionSpec connectionSpec) {
-    this(address, proxy, inetSocketAddress, connectionSpec,
-        false /* shouldSendTlsFallbackIndicator */);
-  }
-
-  public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress,
-      ConnectionSpec connectionSpec, boolean shouldSendTlsFallbackIndicator) {
+  public Route(Address address, Proxy proxy, InetSocketAddress inetSocketAddress) {
     if (address == null) {
       throw new NullPointerException("address == null");
     }
@@ -57,14 +46,9 @@ public final class Route {
     if (inetSocketAddress == null) {
       throw new NullPointerException("inetSocketAddress == null");
     }
-    if (connectionSpec == null) {
-      throw new NullPointerException("connectionConfiguration == null");
-    }
     this.address = address;
     this.proxy = proxy;
     this.inetSocketAddress = inetSocketAddress;
-    this.connectionSpec = connectionSpec;
-    this.shouldSendTlsFallbackIndicator = shouldSendTlsFallbackIndicator;
   }
 
   public Address getAddress() {
@@ -86,14 +70,6 @@ public final class Route {
     return inetSocketAddress;
   }
 
-  public ConnectionSpec getConnectionSpec() {
-    return connectionSpec;
-  }
-
-  public boolean getShouldSendTlsFallbackIndicator() {
-    return shouldSendTlsFallbackIndicator;
-  }
-
   /**
    * Returns true if this route tunnels HTTPS through an HTTP proxy. See <a
    * href="http://www.ietf.org/rfc/rfc2817.txt">RFC 2817, Section 5.2</a>.
@@ -107,9 +83,7 @@ public final class Route {
       Route other = (Route) obj;
       return address.equals(other.address)
           && proxy.equals(other.proxy)
-          && inetSocketAddress.equals(other.inetSocketAddress)
-          && connectionSpec.equals(other.connectionSpec)
-          && shouldSendTlsFallbackIndicator == other.shouldSendTlsFallbackIndicator;
+          && inetSocketAddress.equals(other.inetSocketAddress);
     }
     return false;
   }
@@ -119,8 +93,6 @@ public final class Route {
     result = 31 * result + address.hashCode();
     result = 31 * result + proxy.hashCode();
     result = 31 * result + inetSocketAddress.hashCode();
-    result = 31 * result + connectionSpec.hashCode();
-    result = 31 * result + (shouldSendTlsFallbackIndicator ? 1 : 0);
     return result;
   }
 }

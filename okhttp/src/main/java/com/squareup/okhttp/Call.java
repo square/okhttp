@@ -16,7 +16,9 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.RequestException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -270,7 +272,20 @@ public class Call {
       try {
         engine.sendRequest();
         engine.readResponse();
+      } catch (RequestException e) {
+        // The attempt to interpret the request failed. Give up.
+        throw e.getCause();
+      } catch (RouteException e) {
+        // The attempt to connect via a route failed. The request will not have been sent.
+        HttpEngine retryEngine = engine.recover(e);
+        if (retryEngine != null) {
+          engine = retryEngine;
+          continue;
+        }
+        // Give up; recovery is not possible.
+        throw e.getLastConnectException();
       } catch (IOException e) {
+        // An attempt to communicate with a server failed. The request may have been sent.
         HttpEngine retryEngine = engine.recover(e, null);
         if (retryEngine != null) {
           engine = retryEngine;

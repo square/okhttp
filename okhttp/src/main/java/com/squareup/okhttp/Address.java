@@ -139,6 +139,13 @@ public final class Address {
     return proxySelector;
   }
 
+  /**
+   * Returns this address's certificate pinner. Only used for secure connections.
+   */
+  public CertificatePinner getCertificatePinner() {
+    return certificatePinner;
+  }
+
   @Override public boolean equals(Object other) {
     if (other instanceof Address) {
       Address that = (Address) other;

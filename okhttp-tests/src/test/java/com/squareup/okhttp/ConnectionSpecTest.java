@@ -15,13 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
-
 import org.junit.Test;
 
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.ProxySelector;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -34,14 +29,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public final class ConnectionSpecTest {
-
-  private static final Proxy PROXY = Proxy.NO_PROXY;
-  private static final InetSocketAddress INET_SOCKET_ADDRESS =
-      InetSocketAddress.createUnresolved("host", 443);
-  private static final Address HTTPS_ADDRESS = new Address(
-      INET_SOCKET_ADDRESS.getHostString(), INET_SOCKET_ADDRESS.getPort(), null, null, null, null,
-      AuthenticatorAdapter.INSTANCE, PROXY, Arrays.asList(Protocol.HTTP_1_1),
-      Arrays.asList(ConnectionSpec.MODERN_TLS), ProxySelector.getDefault());
 
   @Test
   public void cleartextBuilder() throws Exception {
@@ -89,9 +76,8 @@ public final class ConnectionSpecTest {
         TlsVersion.TLS_1_1.javaName,
     });
 
-    Route route = new Route(HTTPS_ADDRESS, PROXY, INET_SOCKET_ADDRESS, tlsSpec,
-        false /* shouldSendTlsFallbackIndicator */);
-    tlsSpec.apply(socket, route);
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, false /* isFallback */);
 
     assertEquals(createSet(TlsVersion.TLS_1_2.javaName), createSet(socket.getEnabledProtocols()));
 
@@ -119,9 +105,8 @@ public final class ConnectionSpecTest {
         TlsVersion.TLS_1_1.javaName,
     });
 
-    Route route = new Route(HTTPS_ADDRESS, PROXY, INET_SOCKET_ADDRESS, tlsSpec,
-        true /* shouldSendTlsFallbackIndicator */);
-    tlsSpec.apply(socket, route);
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, true /* isFallback */);
 
     assertEquals(createSet(TlsVersion.TLS_1_2.javaName), createSet(socket.getEnabledProtocols()));
 
@@ -153,9 +138,8 @@ public final class ConnectionSpecTest {
         TlsVersion.TLS_1_1.javaName,
     });
 
-    Route route = new Route(HTTPS_ADDRESS, PROXY, INET_SOCKET_ADDRESS, tlsSpec,
-        true /* shouldSendTlsFallbackIndicator */);
-    tlsSpec.apply(socket, route);
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, true /* isFallback */);
 
     assertEquals(createSet(TlsVersion.TLS_1_2.javaName), createSet(socket.getEnabledProtocols()));
 
@@ -174,6 +158,52 @@ public final class ConnectionSpecTest {
         .cipherSuites("MAGIC-CIPHER")
         .tlsVersions("TLS9k")
         .build();
+  }
+
+  public void tls_missingRequiredCipher() throws Exception {
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
+        .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
+        .tlsVersions(TlsVersion.TLS_1_2)
+        .supportsTlsExtensions(false)
+        .build();
+
+    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
+    socket.setEnabledProtocols(new String[] {
+        TlsVersion.TLS_1_2.javaName,
+        TlsVersion.TLS_1_1.javaName,
+    });
+
+    socket.setEnabledCipherSuites(new String[] {
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+    });
+    assertTrue(tlsSpec.isCompatible(socket));
+
+    socket.setEnabledCipherSuites(new String[] {
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+    });
+    assertFalse(tlsSpec.isCompatible(socket));
+  }
+
+  @Test
+  public void tls_missingTlsVersion() throws Exception {
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
+        .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)
+        .tlsVersions(TlsVersion.TLS_1_2)
+        .supportsTlsExtensions(false)
+        .build();
+
+    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
+    socket.setEnabledCipherSuites(new String[] {
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName,
+    });
+
+    socket.setEnabledProtocols(
+        new String[] { TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName });
+    assertTrue(tlsSpec.isCompatible(socket));
+
+    socket.setEnabledProtocols(new String[] { TlsVersion.TLS_1_1.javaName });
+    assertFalse(tlsSpec.isCompatible(socket));
   }
 
   private static Set<String> createSet(String... values) {

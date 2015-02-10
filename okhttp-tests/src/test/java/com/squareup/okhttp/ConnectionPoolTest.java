@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
@@ -43,6 +44,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ConnectionPoolTest {
+  static {
+    Internal.initializeInstanceForTests();
+  }
+
+  private static final List<ConnectionSpec> CONNECTION_SPECS = Util.immutableList(
+      ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
+
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
@@ -77,13 +85,10 @@ public final class ConnectionPoolTest {
     httpServer = new MockWebServer();
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
 
-    List<ConnectionSpec> connectionSpecs = Util.immutableList(
-        ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
-
     httpServer.start();
     httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
         null, null, AuthenticatorAdapter.INSTANCE, null,
-        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), connectionSpecs, proxySelector);
+        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), CONNECTION_SPECS, proxySelector);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
@@ -91,30 +96,28 @@ public final class ConnectionPoolTest {
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null, Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1),
-        connectionSpecs, proxySelector);
+        CONNECTION_SPECS, proxySelector);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
         spdyServer.getPort());
 
-    Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
-        ConnectionSpec.CLEARTEXT);
-    Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress,
-        ConnectionSpec.MODERN_TLS);
+    Route httpRoute = new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress);
+    Route spdyRoute = new Route(spdyAddress, Proxy.NO_PROXY, spdySocketAddress);
     pool = new ConnectionPool(poolSize, KEEP_ALIVE_DURATION_MS);
     // Disable the automatic execution of the cleanup.
     cleanupExecutor = new FakeExecutor();
     pool.replaceCleanupExecutorForTests(cleanupExecutor);
     httpA = new Connection(pool, httpRoute);
-    httpA.connect(200, 200, 200, null);
+    httpA.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpB = new Connection(pool, httpRoute);
-    httpB.connect(200, 200, 200, null);
+    httpB.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpC = new Connection(pool, httpRoute);
-    httpC.connect(200, 200, 200, null);
+    httpC.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpD = new Connection(pool, httpRoute);
-    httpD.connect(200, 200, 200, null);
+    httpD.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpE = new Connection(pool, httpRoute);
-    httpE.connect(200, 200, 200, null);
+    httpE.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     spdyA = new Connection(pool, spdyRoute);
-    spdyA.connect(20000, 20000, 2000, null);
+    spdyA.connect(20000, 20000, 2000, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
 
     owner = new Object();
     httpA.setOwner(owner);
@@ -146,9 +149,8 @@ public final class ConnectionPoolTest {
     Connection connection = pool.get(httpAddress);
     assertNull(connection);
 
-    connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress,
-        ConnectionSpec.CLEARTEXT));
-    connection.connect(200, 200, 200, null);
+    connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress));
+    connection.connect(200, 200, 200, null, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
 
