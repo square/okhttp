@@ -32,6 +32,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import okio.Source;
 
@@ -254,7 +255,7 @@ public final class Connection {
     // Verify that the socket's certificates are acceptable for the target host.
     if (!route.address.hostnameVerifier.verify(route.address.uriHost, sslSocket.getSession())) {
       X509Certificate cert = (X509Certificate) sslSocket.getSession().getPeerCertificates()[0];
-      throw new IOException("Hostname " + route.address.uriHost + " not verified:"
+      throw new SSLPeerUnverifiedException("Hostname " + route.address.uriHost + " not verified:"
           + "\n    certificate: " + CertificatePinner.pin(cert)
           + "\n    DN: " + cert.getSubjectDN().getName()
           + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
