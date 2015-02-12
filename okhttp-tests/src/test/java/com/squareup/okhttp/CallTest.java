@@ -31,7 +31,7 @@ import java.io.InputStream;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.SocketException;
+import java.net.UnknownServiceException;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.util.Arrays;
@@ -730,8 +730,8 @@ public final class CallTest {
     try {
       client.newCall(request).execute();
       fail();
-    } catch (SocketException expected) {
-      assertTrue(expected.getMessage().contains("exhausted connection specs"));
+    } catch (UnknownServiceException expected) {
+      assertTrue(expected.getMessage().contains("no connection specs"));
     }
   }
 
