@@ -17,6 +17,8 @@ package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.internal.ws.WebSocketListener;
+
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,7 +26,7 @@ import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
 public final class MockResponse implements Cloneable {
-  private static final String CHUNKED_BODY_HEADER = "Transfer-encoding: chunked";
+  private static final String CHUNKED_BODY_HEADER = "transfer-encoding: chunked";
 
   private String status = "HTTP/1.1 200 OK";
   private Headers.Builder headers = new Headers.Builder();
@@ -161,6 +163,26 @@ public final class MockResponse implements Cloneable {
     bytesOut.writeUtf8("0\r\n\r\n"); // Last chunk + empty trailer + CRLF.
 
     this.body = bytesOut;
+    return this;
+  }
+
+    /**
+     * Provide a list of chunks to be streamed back to the client.
+     *
+     * @param chunks
+     * @return
+     */
+  public MockResponse setChunkedBody(List<String> chunks) {
+    removeHeader("Content-Length");
+    headers.add(CHUNKED_BODY_HEADER);
+      Buffer bytesOut = new Buffer();
+    for (String s : chunks) {
+        bytesOut.writeUtf8(Integer.toHexString(s.getBytes(Charset.forName("UTF-8")).length));
+        bytesOut.writeUtf8("\r\n");
+        bytesOut.writeUtf8(s);
+        bytesOut.writeUtf8("\r\n");
+    }
+      this.body = bytesOut;
     return this;
   }
 

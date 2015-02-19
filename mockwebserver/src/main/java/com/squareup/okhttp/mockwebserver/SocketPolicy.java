@@ -66,6 +66,18 @@ public enum SocketPolicy {
   SHUTDOWN_OUTPUT_AT_END,
 
   /**
+   * Response body should be split into chunks based on {@code \r\n}, and each chunk should be
+   * streamed individually back to the server, with
+   * {@link MockResponse#setBodyDelay(long, java.util.concurrent.TimeUnit)} between each
+   * transmission.
+   * <p>
+   * This policy means that the final chunk will be re-sent constantly until the socket is
+   * closed.
+   * </p>
+   */
+  STREAM_REPEAT_FINAL_CHUNK,
+
+  /**
    * Don't response to the request but keep the socket open. For testing
    * read response header timeout issue.
    */

@@ -701,8 +701,48 @@ public final class MockWebServer {
 
     Buffer body = response.getBody();
     if (body == null) return;
-    sleepIfDelayed(response);
-    throttledTransfer(response, socket, body, sink, Long.MAX_VALUE);
+    if (response.getSocketPolicy() == SocketPolicy.STREAM_REPEAT_FINAL_CHUNK) {
+      // In this case, we are assuming that the body has been set as per
+      // MockResponse#setChunkedBody(List<String>), otherwise this will not go so well
+      String[] chunks = body.readUtf8().split("\r\n");
+      if (chunks.length % 2 != 0) {
+        logger.info("Chunked Body has non-even length [" + chunks.length + "] - "
+            + "adding \\r\\n as the last bit of data");
+        String[] tmp = chunks;
+        chunks = new String[chunks.length + 1];
+        System.arraycopy(tmp, 0, chunks, 0, tmp.length);
+        chunks[chunks.length - 2] = "2";
+        chunks[chunks.length - 1] = "\r\n";
+      }
+
+      for (int i = 0; i < chunks.length - 1; i += 2) {
+        try {
+          Long.parseLong(chunks[i]);
+        } catch (NumberFormatException e) {
+          throw new IOException("Chunked body badly formatted - "
+              + "expected first element in pair to be chunk length", e);
+        }
+        sleepIfDelayed(response);
+        throttledTransfer(response,
+            socket,
+            new Buffer().writeUtf8(chunks[i] + "\r\n" + chunks[i + 1] + "\r\n"),
+            sink,
+            Long.MAX_VALUE);
+      }
+
+      while (!socket.isClosed()) {
+        sleepIfDelayed(response);
+        throttledTransfer(response,
+            socket,
+            new Buffer().writeUtf8(chunks[chunks.length - 2]
+                + "\r\n" + chunks[chunks.length - 1] + "\r\n"),
+            sink,
+            Long.MAX_VALUE);
+      }
+    } else {
+      sleepIfDelayed(response);
+      throttledTransfer(response, socket, body, sink, Long.MAX_VALUE);
+    }
   }
 
   private void sleepIfDelayed(MockResponse response) {
