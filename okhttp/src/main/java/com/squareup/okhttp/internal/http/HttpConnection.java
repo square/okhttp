@@ -285,21 +285,12 @@ public final class HttpConnection {
     }
   }
 
-  private static final byte[] CRLF = { '\r', '\n' };
-  private static final byte[] HEX_DIGITS = {
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-  };
-  private static final byte[] FINAL_CHUNK = { '0', '\r', '\n', '\r', '\n' };
-
   /**
    * An HTTP body with alternating chunk sizes and chunk bodies. It is the
    * caller's responsibility to buffer chunks; typically by using a buffered
    * sink with this sink.
    */
   private final class ChunkedSink implements Sink {
-    /** Scratch space for up to 16 hex digits, and then a constant CRLF. */
-    private final byte[] hex = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '\r', '\n' };
-
     private boolean closed;
 
     @Override public Timeout timeout() {
@@ -310,9 +301,10 @@ public final class HttpConnection {
       if (closed) throw new IllegalStateException("closed");
       if (byteCount == 0) return;
 
-      writeHex(byteCount);
+      sink.writeHexadecimalUnsignedLong(byteCount);
+      sink.writeUtf8("\r\n");
       sink.write(source, byteCount);
-      sink.write(CRLF);
+      sink.writeUtf8("\r\n");
     }
 
     @Override public synchronized void flush() throws IOException {
@@ -323,20 +315,8 @@ public final class HttpConnection {
     @Override public synchronized void close() throws IOException {
       if (closed) return;
       closed = true;
-      sink.write(FINAL_CHUNK);
+      sink.writeUtf8("0\r\n\r\n");
       state = STATE_READ_RESPONSE_HEADERS;
-    }
-
-    /**
-     * Equivalent to, but cheaper than writing Long.toHexString().getBytes()
-     * followed by CRLF.
-     */
-    private void writeHex(long i) throws IOException {
-      int cursor = 16;
-      do {
-        hex[--cursor] = HEX_DIGITS[((int) (i & 0xf))];
-      } while ((i >>>= 4) != 0);
-      sink.write(hex, cursor, hex.length - cursor);
     }
   }
 
@@ -425,8 +405,8 @@ public final class HttpConnection {
 
   /** An HTTP body with alternating chunk sizes and chunk bodies. */
   private class ChunkedSource extends AbstractSource {
-    private static final int NO_CHUNK_YET = -1;
-    private int bytesRemainingInChunk = NO_CHUNK_YET;
+    private static final long NO_CHUNK_YET = -1L;
+    private long bytesRemainingInChunk = NO_CHUNK_YET;
     private boolean hasMoreChunks = true;
     private final HttpEngine httpEngine;
 
@@ -458,17 +438,17 @@ public final class HttpConnection {
       if (bytesRemainingInChunk != NO_CHUNK_YET) {
         source.readUtf8LineStrict();
       }
-      String chunkSizeString = source.readUtf8LineStrict();
-      int index = chunkSizeString.indexOf(";");
-      if (index != -1) {
-        chunkSizeString = chunkSizeString.substring(0, index);
-      }
       try {
-        bytesRemainingInChunk = Integer.parseInt(chunkSizeString.trim(), 16);
+        bytesRemainingInChunk = source.readHexadecimalUnsignedLong();
+        String extensions = source.readUtf8LineStrict().trim();
+        if (bytesRemainingInChunk < 0 || (!extensions.isEmpty() && !extensions.startsWith(";"))) {
+          throw new ProtocolException("expected chunk size and optional extensions but was \""
+              + bytesRemainingInChunk + extensions + "\"");
+        }
       } catch (NumberFormatException e) {
-        throw new ProtocolException("Expected a hex chunk size but was " + chunkSizeString);
+        throw new ProtocolException(e.getMessage());
       }
-      if (bytesRemainingInChunk == 0) {
+      if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
         Headers.Builder trailersBuilder = new Headers.Builder();
         readHeaders(trailersBuilder);

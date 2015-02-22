@@ -369,8 +369,8 @@ public final class DiskLruCache implements Closeable {
     try {
       writer.writeUtf8(MAGIC).writeByte('\n');
       writer.writeUtf8(VERSION_1).writeByte('\n');
-      writer.writeUtf8(Integer.toString(appVersion)).writeByte('\n');
-      writer.writeUtf8(Integer.toString(valueCount)).writeByte('\n');
+      writer.writeDecimalLong(appVersion).writeByte('\n');
+      writer.writeDecimalLong(valueCount).writeByte('\n');
       writer.writeByte('\n');
 
       for (Entry entry : lruEntries.values()) {
@@ -1012,7 +1012,7 @@ public final class DiskLruCache implements Closeable {
     /** Append space-prefixed lengths to {@code writer}. */
     void writeLengths(BufferedSink writer) throws IOException {
       for (long length : lengths) {
-        writer.writeByte(' ').writeUtf8(Long.toString(length));
+        writer.writeByte(' ').writeDecimalLong(length);
       }
     }
 
