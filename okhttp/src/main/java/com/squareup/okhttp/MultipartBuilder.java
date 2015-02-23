@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
 
@@ -197,6 +198,7 @@ public final class MultipartBuilder {
     private final MediaType contentType;
     private final List<Headers> partHeaders;
     private final List<RequestBody> partBodies;
+    private long contentLength = -1L;
 
     public MultipartRequestBody(MediaType type, ByteString boundary, List<Headers> partHeaders,
         List<RequestBody> partBodies) {
@@ -213,10 +215,25 @@ public final class MultipartBuilder {
     }
 
     @Override public long contentLength() throws IOException {
-      return -1L;
+      long result = contentLength;
+      if (result != -1L) return result;
+      return contentLength = writeOrCountBytes(null, true);
     }
 
-    @Override public void writeTo(BufferedSink sink) throws IOException {
+    /**
+     * Either writes this request to {@code sink} or measures its content length. We have one method
+     * do double-duty to make sure the counting and content are consistent, particularly when it
+     * comes to awkward operations like measuring the encoded length of header strings, or the
+     * length-in-digits of an encoded integer.
+     */
+    private long writeOrCountBytes(BufferedSink sink, boolean countBytes) throws IOException {
+      long byteCount = 0L;
+
+      Buffer byteCountBuffer = null;
+      if (countBytes) {
+        sink = byteCountBuffer = new Buffer();
+      }
+
       for (int p = 0, partCount = partHeaders.size(); p < partCount; p++) {
         Headers headers = partHeaders.get(p);
         RequestBody body = partBodies.get(p);
@@ -246,10 +263,20 @@ public final class MultipartBuilder {
           sink.writeUtf8("Content-Length: ")
               .writeDecimalLong(contentLength)
               .write(CRLF);
+        } else if (countBytes) {
+          // We can't measure the body's size without the sizes of its components.
+          byteCountBuffer.clear();
+          return -1L;
         }
 
         sink.write(CRLF);
-        partBodies.get(p).writeTo(sink);
+
+        if (countBytes) {
+          byteCount += contentLength;
+        } else {
+          partBodies.get(p).writeTo(sink);
+        }
+
         sink.write(CRLF);
       }
 
@@ -257,6 +284,17 @@ public final class MultipartBuilder {
       sink.write(boundary);
       sink.write(DASHDASH);
       sink.write(CRLF);
+
+      if (countBytes) {
+        byteCount += byteCountBuffer.size();
+        byteCountBuffer.clear();
+      }
+
+      return byteCount;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      writeOrCountBytes(sink, false);
     }
   }
 }
