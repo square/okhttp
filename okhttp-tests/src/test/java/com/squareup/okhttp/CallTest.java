@@ -33,8 +33,8 @@ import java.io.InterruptedIOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.UnknownServiceException;
 import java.net.URL;
+import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -152,6 +152,15 @@ public final class CallTest {
       fail();
     } catch (IllegalArgumentException expected) {
     }
+  }
+
+  @Test public void invalidPort() throws Exception {
+    Request request = new Request.Builder()
+        .url("http://localhost:65536/")
+        .build();
+    client.newCall(request).enqueue(callback);
+    callback.await(request.url())
+        .assertFailure("No route to localhost:65536; port is out of range");
   }
 
   @Test public void getReturns500() throws Exception {
