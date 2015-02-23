@@ -534,7 +534,7 @@ public final class Cache {
       sink.writeByte('\n');
       sink.writeUtf8(requestMethod);
       sink.writeByte('\n');
-      sink.writeUtf8(Integer.toString(varyHeaders.size()));
+      sink.writeDecimalLong(varyHeaders.size());
       sink.writeByte('\n');
       for (int i = 0, size = varyHeaders.size(); i < size; i++) {
         sink.writeUtf8(varyHeaders.name(i));
@@ -545,7 +545,7 @@ public final class Cache {
 
       sink.writeUtf8(new StatusLine(protocol, code, message).toString());
       sink.writeByte('\n');
-      sink.writeUtf8(Integer.toString(responseHeaders.size()));
+      sink.writeDecimalLong(responseHeaders.size());
       sink.writeByte('\n');
       for (int i = 0, size = responseHeaders.size(); i < size; i++) {
         sink.writeUtf8(responseHeaders.name(i));
@@ -589,7 +589,7 @@ public final class Cache {
     private void writeCertArray(BufferedSink sink, List<Certificate> certificates)
         throws IOException {
       try {
-        sink.writeUtf8(Integer.toString(certificates.size()));
+        sink.writeDecimalLong(certificates.size());
         sink.writeByte('\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
@@ -629,11 +629,15 @@ public final class Cache {
   }
 
   private static int readInt(BufferedSource source) throws IOException {
-    String line = source.readUtf8LineStrict();
     try {
-      return Integer.parseInt(line);
+      long result = source.readDecimalLong();
+      String line = source.readUtf8LineStrict();
+      if (result < 0 || result > Integer.MAX_VALUE || !line.isEmpty()) {
+        throw new IOException("expected an int but was \"" + result + line + "\"");
+      }
+      return (int) result;
     } catch (NumberFormatException e) {
-      throw new IOException("Expected an integer but was \"" + line + "\"");
+      throw new IOException(e.getMessage());
     }
   }
 

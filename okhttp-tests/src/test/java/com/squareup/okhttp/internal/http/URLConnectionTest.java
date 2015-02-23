@@ -1075,6 +1075,28 @@ public final class URLConnectionTest {
     }
   }
 
+  @Test public void malformedChunkSize() throws IOException {
+    server.enqueue(new MockResponse().setBody("5:x\r\nABCDE\r\n0\r\n\r\n")
+        .clearHeaders()
+        .addHeader("Transfer-encoding: chunked"));
+
+    URLConnection connection = client.open(server.getUrl("/"));
+    try {
+      readAscii(connection.getInputStream(), Integer.MAX_VALUE);
+      fail();
+    } catch (IOException e) {
+    }
+  }
+
+  @Test public void extensionAfterChunkSize() throws IOException {
+    server.enqueue(new MockResponse().setBody("5;x\r\nABCDE\r\n0\r\n\r\n")
+        .clearHeaders()
+        .addHeader("Transfer-encoding: chunked"));
+
+    HttpURLConnection connection = client.open(server.getUrl("/"));
+    assertContent("ABCDE", connection);
+  }
+
   @Test public void missingChunkBody() throws IOException {
     server.enqueue(new MockResponse().setBody("5")
         .clearHeaders()

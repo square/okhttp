@@ -244,7 +244,7 @@ public final class MultipartBuilder {
         long contentLength = body.contentLength();
         if (contentLength != -1) {
           sink.writeUtf8("Content-Length: ")
-              .writeUtf8(Long.toString(contentLength))
+              .writeDecimalLong(contentLength)
               .write(CRLF);
         }
 
