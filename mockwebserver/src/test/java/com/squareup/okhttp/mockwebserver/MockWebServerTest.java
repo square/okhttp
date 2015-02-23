@@ -255,6 +255,22 @@ public final class MockWebServerTest {
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
   }
 
+  @Test public void streamResponseReaptingFinalChunk() throws IOException, InterruptedException {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.STREAM_REPEAT_FINAL_CHUNK)
+        .setChunkedBody(Arrays.asList("{\"name\":\"stuff\"}", ""))
+        .setBodyDelay(100, TimeUnit.MILLISECONDS));
+
+    URLConnection connection = server.getUrl("/").openConnection();
+    InputStream in = connection.getInputStream();
+    BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+    String s = bufferedReader.readLine();
+    assertEquals("{\"name\":\"stuff\"}", s);
+    assertEquals("", bufferedReader.readLine());
+    assertEquals("", bufferedReader.readLine());
+    in.close();
+  }
+
   private List<String> headersToList(MockResponse response) {
     Headers headers = response.getHeaders();
     int size = headers.size();
