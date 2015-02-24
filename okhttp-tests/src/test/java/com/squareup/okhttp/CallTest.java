@@ -389,6 +389,23 @@ public final class CallTest {
     delete();
   }
 
+  @Test public void deleteWithRequestBody() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("DELETE", RequestBody.create(MediaType.parse("text/plain"), "def"))
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("abc");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("DELETE", recordedRequest.getMethod());
+    assertEquals("def", recordedRequest.getBody().readUtf8());
+  }
+
   @Test public void put() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
 
