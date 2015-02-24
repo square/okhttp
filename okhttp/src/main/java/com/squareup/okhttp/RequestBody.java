@@ -73,6 +73,26 @@ public abstract class RequestBody {
       }
     };
   }
+  
+    /** Returns a new request body that transmits {@code content}. */
+  public static RequestBody create(final MediaType contentType, final byte[] content, final int offset, 
+  final int size) {
+    if (content == null) throw new NullPointerException("content == null");
+
+    return new RequestBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
+
+      @Override public long contentLength() {
+        return size;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.write(content, offset, size);
+      }
+    };
+  }
 
   /** Returns a new request body that transmits the content of {@code file}. */
   public static RequestBody create(final MediaType contentType, final File file) {
