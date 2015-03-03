@@ -100,9 +100,9 @@ public class WebSocketWriterTest {
   }
 
   @Test public void serverSendBinaryShort() throws IOException {
-    byte[] payload = binaryData(1000);
+    byte[] payload = binaryData(0xffff);
     serverWriter.sendMessage(BINARY, new Buffer().write(payload));
-    assertData("827e03e8");
+    assertData("827effff");
     assertData(payload);
   }
 

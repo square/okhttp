@@ -135,9 +135,13 @@ public final class WebSocketReader {
     // Get frame length, optionally reading from follow-up bytes if indicated by special values.
     frameLength = b1 & B1_MASK_LENGTH;
     if (frameLength == PAYLOAD_SHORT) {
-      frameLength = source.readShort();
+      frameLength = source.readShort() & 0xffffL; // Value is unsigned.
     } else if (frameLength == PAYLOAD_LONG) {
       frameLength = source.readLong();
+      if (frameLength < 0) {
+        throw new ProtocolException(
+            "Frame length 0x" + Long.toHexString(frameLength) + " > 0x7FFFFFFFFFFFFFFF");
+      }
     }
     frameBytesRead = 0;
 

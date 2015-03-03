@@ -123,6 +123,28 @@ public class WebSocketReaderTest {
     callback.assertTextMessage("Hello");
   }
 
+  @Test public void clientFramePayloadShort() throws IOException {
+    data.write(ByteString.decodeHex("817E000548656c6c6f")); // Hello
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void clientFramePayloadLong() throws IOException {
+    data.write(ByteString.decodeHex("817f000000000000000548656c6c6f")); // Hello
+    clientReader.processNextFrame();
+    callback.assertTextMessage("Hello");
+  }
+
+  @Test public void clientFramePayloadTooLongThrows() throws IOException {
+    data.write(ByteString.decodeHex("817f8000000000000000"));
+    try {
+      clientReader.processNextFrame();
+      fail();
+    } catch (ProtocolException e) {
+      assertEquals("Frame length 0x8000000000000000 > 0x7FFFFFFFFFFFFFFF", e.getMessage());
+    }
+  }
+
   @Test public void serverHelloTwoChunks() throws IOException {
     data.write(ByteString.decodeHex("818537fa213d7f9f4d")); // Hel
 

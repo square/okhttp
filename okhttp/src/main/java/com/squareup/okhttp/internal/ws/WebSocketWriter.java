@@ -215,7 +215,7 @@ public final class WebSocketWriter {
       if (byteCount <= PAYLOAD_MAX) {
         b1 |= (int) byteCount;
         sink.writeByte(b1);
-      } else if (byteCount <= Short.MAX_VALUE) {
+      } else if (byteCount <= 0xffffL) { // Unsigned short.
         b1 |= PAYLOAD_SHORT;
         sink.writeByte(b1);
         sink.writeShort((int) byteCount);
