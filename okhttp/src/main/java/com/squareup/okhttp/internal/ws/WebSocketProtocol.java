@@ -72,9 +72,14 @@ public final class WebSocketProtocol {
    * {@link #PAYLOAD_SHORT} or {@link #PAYLOAD_LONG}.
    */
   static final int PAYLOAD_MAX = 125;
-  /** Value for {@link #B1_MASK_LENGTH} which indicates the next two bytes are the length. */
+  /**
+   * Value for {@link #B1_MASK_LENGTH} which indicates the next two bytes are the unsigned length.
+   */
   static final int PAYLOAD_SHORT = 126;
-  /** Value for {@link #B1_MASK_LENGTH} which indicates the next eight bytes are the length. */
+  /**
+   * Value for {@link #B1_MASK_LENGTH} which indicates the next eight bytes are the unsigned
+   * length.
+   */
   static final int PAYLOAD_LONG = 127;
 
   static void toggleMask(byte[] buffer, long byteCount, byte[] key, long frameBytesRead) {
