@@ -146,7 +146,8 @@ public final class Request {
 
     public Builder url(String url) {
       if (url == null) throw new IllegalArgumentException("url == null");
-      urlString = url;
+      this.urlString = url;
+      this.url = null;
       return this;
     }
 
