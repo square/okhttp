@@ -114,6 +114,18 @@ public final class RequestTest {
     assertEquals(new URL("http://localhost/api"), request.url());
   }
 
+  @Test public void newBuilderUrlResetsUrl() throws Exception {
+    Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
+    Request builtRequestWithoutCache = requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
+    assertEquals(new URL("http://localhost/api/foo"), builtRequestWithoutCache.url());
+
+    Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
+    // cache url object
+    requestWithCache.url();
+    Request builtRequestWithCache = requestWithCache.newBuilder().url("http://localhost/api/foo").build();
+    assertEquals(new URL("http://localhost/api/foo"), builtRequestWithCache.url());
+  }
+
   @Test public void cacheControl() throws Exception {
     Request request = new Request.Builder()
         .cacheControl(new CacheControl.Builder().noCache().build())
