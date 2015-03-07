@@ -68,7 +68,7 @@ public final class SslContextBuilder {
   public static synchronized SSLContext localhost() {
     if (localhost == null) {
       try {
-        localhost = new SslContextBuilder(InetAddress.getByName(null).getHostName()).build();
+        localhost = new SslContextBuilder(InetAddress.getByName("localhost").getHostName()).build();
       } catch (GeneralSecurityException e) {
         throw new RuntimeException(e);
       } catch (UnknownHostException e) {
