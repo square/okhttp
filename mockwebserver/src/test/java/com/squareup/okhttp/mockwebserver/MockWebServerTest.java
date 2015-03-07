@@ -264,4 +264,19 @@ public final class MockWebServerTest {
     }
     return headerList;
   }
+
+  @Test public void shutdownWithoutStart() throws IOException {
+    MockWebServer server = new MockWebServer();
+    try {
+      server.shutdown();
+      fail();
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test public void shutdownWithoutEnqueue() throws IOException {
+    MockWebServer server = new MockWebServer();
+    server.start();
+    server.shutdown();
+  }
 }
