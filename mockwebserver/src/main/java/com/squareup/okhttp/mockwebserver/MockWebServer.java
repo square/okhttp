@@ -362,6 +362,8 @@ public final class MockWebServer {
   }
 
   public void shutdown() throws IOException {
+    if (serverSocket == null) throw new IllegalStateException("shutdown() before start()");
+
     // Cause acceptConnections() to break out.
     serverSocket.close();
 
