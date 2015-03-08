@@ -96,28 +96,28 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   @Override public BufferedSink newMessageSink(PayloadType type) {
-    if (writerSentClose) throw new IllegalStateException("Closed");
+    if (writerSentClose) throw new IllegalStateException("closed");
     return writer.newMessageSink(type);
   }
 
   @Override public void sendMessage(PayloadType type, Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("Closed");
+    if (writerSentClose) throw new IllegalStateException("closed");
     writer.sendMessage(type, payload);
   }
 
   @Override public void sendPing(Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("Closed");
+    if (writerSentClose) throw new IllegalStateException("closed");
     writer.writePing(payload);
   }
 
   /** Send an unsolicited pong with the specified payload. */
   public void sendPong(Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("Closed");
+    if (writerSentClose) throw new IllegalStateException("closed");
     writer.writePong(payload);
   }
 
   @Override public void close(int code, String reason) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("Closed");
+    if (writerSentClose) throw new IllegalStateException("closed");
 
     boolean closeConnection;
     synchronized (closeLock) {

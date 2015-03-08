@@ -130,25 +130,25 @@ public final class RealWebSocketTest {
       client.sendPing(new Buffer().writeUtf8("Pong?"));
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       client.close(1000, "Hello!");
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       client.sendMessage(TEXT, new Buffer().writeUtf8("Hello!"));
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       client.newMessageSink(TEXT);
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
   }
 
@@ -161,19 +161,19 @@ public final class RealWebSocketTest {
       client.sendPing(new Buffer().writeUtf8("Pong?"));
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       client.sendMessage(TEXT, new Buffer().writeUtf8("Hi!"));
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       client.close(1000, "Bye!");
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
   }
 
@@ -190,20 +190,20 @@ public final class RealWebSocketTest {
       sink.writeUtf8("lo!").emit(); // No writing to the underlying sink.
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
       sink.buffer().clear();
     }
     try {
       sink.flush(); // No flushing.
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
     try {
       sink.close(); // No closing because this requires writing a frame.
       fail();
     } catch (IOException e) {
-      assertEquals("Closed", e.getMessage());
+      assertEquals("closed", e.getMessage());
     }
   }
 
