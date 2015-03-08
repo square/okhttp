@@ -973,7 +973,7 @@ public final class HttpEngine {
    * response. This will either add authentication headers or follow redirects.
    * If a follow-up is either unnecessary or not applicable, this returns null.
    */
-  public Request followUpRequest() throws IOException {
+  public Request followUpRequest(int followUpNumber) throws IOException {
     if (userResponse == null) throw new IllegalStateException();
     Proxy selectedProxy = getRoute() != null
         ? getRoute().getProxy()
@@ -987,7 +987,13 @@ public final class HttpEngine {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        return OkHeaders.processAuthHeader(client.getAuthenticator(), userResponse, selectedProxy);
+        if (followUpNumber == 0)
+          return OkHeaders.processAuthHeader(
+              client.getAuthenticator(),
+              userResponse,
+              selectedProxy);
+        else
+          return null;
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:

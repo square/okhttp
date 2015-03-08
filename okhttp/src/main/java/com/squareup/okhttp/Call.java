@@ -282,7 +282,7 @@ public class Call {
       }
 
       Response response = engine.getResponse();
-      Request followUp = engine.followUpRequest();
+      Request followUp = engine.followUpRequest(followUpCount);
 
       if (followUp == null) {
         if (!forWebSocket) {
