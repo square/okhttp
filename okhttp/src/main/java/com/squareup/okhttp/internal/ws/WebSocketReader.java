@@ -77,8 +77,8 @@ public final class WebSocketReader {
   private final byte[] maskBuffer = new byte[2048];
 
   public WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
-    if (source == null) throw new NullPointerException("source");
-    if (frameCallback == null) throw new NullPointerException("frameCallback");
+    if (source == null) throw new NullPointerException("source == null");
+    if (frameCallback == null) throw new NullPointerException("frameCallback == null");
     this.isClient = isClient;
     this.source = source;
     this.frameCallback = frameCallback;
@@ -103,7 +103,7 @@ public final class WebSocketReader {
   }
 
   private void readHeader() throws IOException {
-    if (closed) throw new IOException("Closed");
+    if (closed) throw new IOException("closed");
 
     int b0 = source.readByte() & 0xff;
 
@@ -234,8 +234,8 @@ public final class WebSocketReader {
    */
   private final class FramedMessageSource implements Source {
     @Override public long read(Buffer sink, long byteCount) throws IOException {
-      if (closed) throw new IOException("Closed");
-      if (messageClosed) throw new IllegalStateException("Closed");
+      if (closed) throw new IOException("closed");
+      if (messageClosed) throw new IllegalStateException("closed");
 
       if (frameBytesRead == frameLength) {
         if (isFinalFrame) return -1; // We are exhausted and have no continuations.

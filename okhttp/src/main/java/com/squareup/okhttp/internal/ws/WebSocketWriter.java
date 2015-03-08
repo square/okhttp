@@ -62,8 +62,8 @@ public final class WebSocketWriter {
   private final byte[] maskBuffer;
 
   public WebSocketWriter(boolean isClient, BufferedSink sink, Random random) {
-    if (sink == null) throw new NullPointerException("sink");
-    if (random == null) throw new NullPointerException("random");
+    if (sink == null) throw new NullPointerException("sink == null");
+    if (random == null) throw new NullPointerException("random == null");
     this.isClient = isClient;
     this.sink = sink;
     this.random = random;
@@ -117,7 +117,7 @@ public final class WebSocketWriter {
   }
 
   private void writeControlFrame(int opcode, Buffer payload) throws IOException {
-    if (closed) throw new IOException("Closed");
+    if (closed) throw new IOException("closed");
 
     int length = 0;
     if (payload != null) {
@@ -184,7 +184,7 @@ public final class WebSocketWriter {
 
   private void writeFrame(PayloadType payloadType, Buffer source, long byteCount,
       boolean isFirstFrame, boolean isFinal) throws IOException {
-    if (closed) throw new IOException("Closed");
+    if (closed) throw new IOException("closed");
 
     int opcode = OPCODE_CONTINUATION;
     if (isFirstFrame) {
@@ -258,7 +258,7 @@ public final class WebSocketWriter {
     }
 
     @Override public void flush() throws IOException {
-      if (closed) throw new IOException("Closed");
+      if (closed) throw new IOException("closed");
 
       synchronized (sink) {
         sink.flush();
@@ -271,7 +271,7 @@ public final class WebSocketWriter {
 
     @SuppressWarnings("PointlessBitwiseExpression")
     @Override public void close() throws IOException {
-      if (closed) throw new IOException("Closed");
+      if (closed) throw new IOException("closed");
 
       int length = 0;
 
