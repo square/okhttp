@@ -32,26 +32,26 @@ public final class ConnectionSpec {
   public static final ConnectionSpec MODERN_TLS = new Builder(true)
       .cipherSuites(
           // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
-          // All of these suites are available on Android L; earlier releases support a subset of
+          // All of these suites are available on Android 5.0; earlier releases support a subset of
           // these suites. https://github.com/square/okhttp/issues/330
           CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
           CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
           CipherSuite.TLS_DHE_RSA_WITH_AES_128_GCM_SHA256,
+
+          // Note that the following cipher suites are all on HTTP/2's bad cipher suites list. We'll
+          // continue to include them until better suites are commonly available. For example, none
+          // of the better cipher suites listed above shipped with Android 4.4 or Java 7.
           CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
           CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
           CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
           CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-          CipherSuite.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
           CipherSuite.TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
           CipherSuite.TLS_DHE_DSS_WITH_AES_128_CBC_SHA,
           CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
           CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
           CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
           CipherSuite.TLS_RSA_WITH_AES_256_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-          CipherSuite.TLS_RSA_WITH_RC4_128_SHA,
-          CipherSuite.TLS_RSA_WITH_RC4_128_MD5
+          CipherSuite.TLS_RSA_WITH_3DES_EDE_CBC_SHA
       )
       .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0)
       .supportsTlsExtensions(true)
