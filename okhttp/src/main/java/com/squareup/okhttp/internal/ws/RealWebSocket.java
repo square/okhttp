@@ -75,7 +75,7 @@ public abstract class RealWebSocket implements WebSocket {
         listener.onPong(buffer);
       }
 
-      @Override public void onClose(int code, String reason) throws IOException {
+      @Override public void onClose(int code, String reason) {
         peerClose(code, reason);
       }
     });
@@ -135,7 +135,7 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   /** Called on the reader thread when a close frame is encountered. */
-  private void peerClose(int code, String reason) throws IOException {
+  private void peerClose(int code, String reason) {
     boolean writeCloseResponse;
     synchronized (closeLock) {
       readerSentClose = true;
@@ -145,11 +145,17 @@ public abstract class RealWebSocket implements WebSocket {
     }
 
     if (writeCloseResponse) {
-      // The reader thread will read no more frames so use it to send the response.
-      writer.writeClose(code, reason);
+      try {
+        // The reader thread will read no more frames so use it to send the response.
+        writer.writeClose(code, reason);
+      } catch (IOException ignored) {
+      }
     }
 
-    closeConnection();
+    try {
+      closeConnection();
+    } catch (IOException ignored) {
+    }
 
     listener.onClose(code, reason);
   }
