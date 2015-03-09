@@ -53,7 +53,7 @@ public final class WebSocketReader {
     void onMessage(BufferedSource source, PayloadType type) throws IOException;
     void onPing(Buffer buffer);
     void onPong(Buffer buffer);
-    void onClose(int code, String reason) throws IOException;
+    void onClose(int code, String reason);
   }
 
   private final boolean isClient;

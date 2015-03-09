@@ -33,11 +33,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class RealWebSocketTest {
-  // NOTE: Types are named 'client' and 'server' for cognitive simplicity. This differentiation has
+  // NOTE: Fields are named 'client' and 'server' for cognitive simplicity. This differentiation has
   // zero effect on the behavior of the WebSocket API which is why tests are only written once
   // from the perspective of a single peer.
 
   private RealWebSocket client;
+  private boolean clientConnectionCloseThrows;
   private boolean clientConnectionClosed;
   private final Buffer client2Server = new Buffer();
   private final WebSocketRecorder clientListener = new WebSocketRecorder();
@@ -48,15 +49,16 @@ public final class RealWebSocketTest {
 
   @Before public void setUp() {
     Random random = new Random(0);
-
-    client = new RealWebSocket(true, server2client, client2Server, random, clientListener,
-        "http://example.com/websocket") {
+    String url = "http://example.com/websocket";
+    client = new RealWebSocket(true, server2client, client2Server, random, clientListener, url) {
       @Override protected void closeConnection() throws IOException {
         clientConnectionClosed = true;
+        if (clientConnectionCloseThrows) {
+          throw new IOException("Oops!");
+        }
       }
     };
-    server = new RealWebSocket(false, client2Server, server2client, random, serverListener,
-        "http://example.com/websocket") {
+    server = new RealWebSocket(false, client2Server, server2client, random, serverListener, url) {
       @Override protected void closeConnection() throws IOException {
       }
     };
@@ -276,5 +278,17 @@ public final class RealWebSocketTest {
 
     server.readMessage();
     serverListener.assertClose(1000, "Hello!");
+  }
+
+  @Test public void peerConnectionCloseThrowingDoesNotPropagate() throws IOException {
+    clientConnectionCloseThrows = true;
+
+    server.close(1000, "Bye!");
+    client.readMessage();
+    clientListener.assertClose(1000, "Bye!");
+    assertTrue(clientConnectionClosed);
+
+    server.readMessage();
+    serverListener.assertClose(1000, "Bye!");
   }
 }
