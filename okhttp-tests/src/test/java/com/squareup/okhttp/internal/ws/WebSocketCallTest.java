@@ -219,12 +219,11 @@ public final class WebSocketCallTest {
     });
 
     try {
-      latch.await(10, TimeUnit.SECONDS);
+      if (!latch.await(10, TimeUnit.SECONDS)) {
+        throw new AssertionError("Timed out.");
+      }
     } catch (InterruptedException e) {
       throw new AssertionError(e);
-    }
-    if (latch.getCount() > 0) {
-      throw new AssertionError("Timed out.");
     }
 
     return new RecordedResponse(request, responseRef.get(), webSocketRef.get(), null,
