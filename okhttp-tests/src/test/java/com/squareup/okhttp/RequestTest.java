@@ -64,6 +64,15 @@ public final class RequestTest {
     assertEquals("Retransmit body", "616263", bodyToHex(body));
   }
 
+  @Test public void byteArrayRange() throws Exception {
+    MediaType contentType = MediaType.parse("text/plain");
+    RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(Util.UTF_8), 1, 3);
+    assertEquals(contentType, body.contentType());
+    assertEquals(3, body.contentLength());
+    assertEquals("616263", bodyToHex(body));
+    assertEquals("Retransmit body", "616263", bodyToHex(body));
+  }
+
   @Test public void file() throws Exception {
     File file = File.createTempFile("RequestTest", "tmp");
     FileWriter writer = new FileWriter(file);
