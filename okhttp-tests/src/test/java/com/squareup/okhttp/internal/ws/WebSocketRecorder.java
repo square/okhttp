@@ -77,7 +77,11 @@ final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocke
 
   private Object nextEvent() {
     try {
-      return events.poll(10, TimeUnit.SECONDS);
+      Object event = events.poll(10, TimeUnit.SECONDS);
+      if (event == null) {
+        throw new AssertionError("Timed out.");
+      }
+      return event;
     } catch (InterruptedException e) {
       throw new AssertionError(e);
     }
