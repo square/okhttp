@@ -474,8 +474,8 @@ public final class MockWebServer {
       }
 
       /**
-       * Reads a request and writes its response. Returns true if a request was
-       * processed.
+       * Reads a request and writes its response. Returns true if further calls should be attempted
+       * on the socket.
        */
       private boolean processOneRequest(Socket socket, BufferedSource source, BufferedSink sink)
           throws IOException, InterruptedException {
@@ -505,20 +505,18 @@ public final class MockWebServer {
           writeHttpResponse(socket, sink, response);
         }
 
+        if (logger.isLoggable(Level.INFO)) {
+          logger.info(MockWebServer.this + " received request: " + request
+              + " and responded: " + response);
+        }
+
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
-          source.close();
-          sink.close();
-          // Workaround for bug on Android: closing the input/output streams should close an
-          // SSLSocket but does not. https://code.google.com/p/android/issues/detail?id=97564
           socket.close();
+          return false;
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_INPUT_AT_END) {
           socket.shutdownInput();
         } else if (response.getSocketPolicy() == SocketPolicy.SHUTDOWN_OUTPUT_AT_END) {
           socket.shutdownOutput();
-        }
-        if (logger.isLoggable(Level.INFO)) {
-          logger.info(
-              MockWebServer.this + " received request: " + request + " and responded: " + response);
         }
 
         sequenceNumber++;
