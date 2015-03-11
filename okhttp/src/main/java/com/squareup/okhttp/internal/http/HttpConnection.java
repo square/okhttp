@@ -22,6 +22,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Socket;
@@ -184,23 +185,31 @@ public final class HttpConnection {
       throw new IllegalStateException("state: " + state);
     }
 
-    while (true) {
-      StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
+    try {
+      while (true) {
+        StatusLine statusLine = StatusLine.parse(source.readUtf8LineStrict());
 
-      Response.Builder responseBuilder = new Response.Builder()
-          .protocol(statusLine.protocol)
-          .code(statusLine.code)
-          .message(statusLine.message);
+        Response.Builder responseBuilder = new Response.Builder()
+            .protocol(statusLine.protocol)
+            .code(statusLine.code)
+            .message(statusLine.message);
 
-      Headers.Builder headersBuilder = new Headers.Builder();
-      readHeaders(headersBuilder);
-      headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol.toString());
-      responseBuilder.headers(headersBuilder.build());
+        Headers.Builder headersBuilder = new Headers.Builder();
+        readHeaders(headersBuilder);
+        headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol.toString());
+        responseBuilder.headers(headersBuilder.build());
 
-      if (statusLine.code != HTTP_CONTINUE) {
-        state = STATE_OPEN_RESPONSE_BODY;
-        return responseBuilder;
+        if (statusLine.code != HTTP_CONTINUE) {
+          state = STATE_OPEN_RESPONSE_BODY;
+          return responseBuilder;
+        }
       }
+    } catch (EOFException e) {
+      // Provide more context if the server ends the stream before sending a response.
+      IOException exception = new IOException("unexpected end of stream on " + connection
+          + " (recycle count=" + Internal.instance.recycleCount(connection) + ")");
+      exception.initCause(e);
+      throw exception;
     }
   }
 
