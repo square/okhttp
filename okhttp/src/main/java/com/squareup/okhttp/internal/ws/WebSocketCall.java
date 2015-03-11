@@ -30,10 +30,15 @@ import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 // TODO move to public API!
 public class WebSocketCall {
@@ -175,7 +180,7 @@ public class WebSocketCall {
     BufferedSink sink = Okio.buffer(Okio.sink(socket));
 
     final RealWebSocket webSocket =
-        new ConnectionWebSocket(response, connection, source, sink, random, listener);
+        ConnectionWebSocket.create(response, connection, source, sink, random, listener);
 
     // Start a dedicated thread for reading the web socket.
     new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
@@ -193,11 +198,23 @@ public class WebSocketCall {
 
   // Keep static so that the WebSocketCall instance can be garbage collected.
   private static class ConnectionWebSocket extends RealWebSocket {
+    static RealWebSocket create(Response response, Connection connection, BufferedSource source,
+        BufferedSink sink, Random random, WebSocketListener listener) {
+      String url = response.request().urlString();
+      ThreadPoolExecutor replyExecutor =
+          new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
+              Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
+      replyExecutor.allowCoreThreadTimeOut(true);
+
+      return new ConnectionWebSocket(connection, source, sink, random, replyExecutor, listener,
+          url);
+    }
+
     private final Connection connection;
 
-    public ConnectionWebSocket(Response response, Connection connection, BufferedSource source,
-        BufferedSink sink, Random random, WebSocketListener listener) {
-      super(true /* is client */, source, sink, random, listener, response.request().urlString());
+    private ConnectionWebSocket(Connection connection, BufferedSource source, BufferedSink sink,
+        Random random, Executor replyExecutor, WebSocketListener listener, String url) {
+      super(true /* is client */, source, sink, random, replyExecutor, listener, url);
       this.connection = connection;
     }
 

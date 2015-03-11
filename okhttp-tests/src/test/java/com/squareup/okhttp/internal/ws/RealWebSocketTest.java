@@ -18,6 +18,7 @@ package com.squareup.okhttp.internal.ws;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
+import java.util.concurrent.Executor;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -50,7 +51,15 @@ public final class RealWebSocketTest {
   @Before public void setUp() {
     Random random = new Random(0);
     String url = "http://example.com/websocket";
-    client = new RealWebSocket(true, server2client, client2Server, random, clientListener, url) {
+
+    Executor synchronousExecutor = new Executor() {
+      @Override public void execute(Runnable command) {
+        command.run();
+      }
+    };
+
+    client = new RealWebSocket(true, server2client, client2Server, random, synchronousExecutor,
+        clientListener, url) {
       @Override protected void closeConnection() throws IOException {
         clientConnectionClosed = true;
         if (clientConnectionCloseThrows) {
@@ -58,7 +67,8 @@ public final class RealWebSocketTest {
         }
       }
     };
-    server = new RealWebSocket(false, client2Server, server2client, random, serverListener, url) {
+    server = new RealWebSocket(false, client2Server, server2client, random, synchronousExecutor,
+        serverListener, url) {
       @Override protected void closeConnection() throws IOException {
       }
     };
@@ -98,16 +108,14 @@ public final class RealWebSocketTest {
     sink.close();
     server.readMessage();
     serverListener.assertTextMessage("Hello!");
-    Thread.sleep(1000); // Wait for pong to be written.
     client.readMessage();
     clientListener.assertPong(new Buffer().writeUtf8("Pong?"));
   }
 
   @Test public void pingWritesPong() throws IOException, InterruptedException {
     client.sendPing(new Buffer().writeUtf8("Hello!"));
-    server.readMessage(); // Read the ping, enqueue the pong.
-    Thread.sleep(1000); // Wait for pong to be written.
-    client.readMessage();
+    server.readMessage(); // Read the ping, write the pong.
+    client.readMessage(); // Read the pong.
     clientListener.assertPong(new Buffer().writeUtf8("Hello!"));
   }
 

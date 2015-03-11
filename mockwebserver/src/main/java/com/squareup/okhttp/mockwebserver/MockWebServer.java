@@ -56,7 +56,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -77,6 +79,7 @@ import okio.Timeout;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A scriptable web server. Callers supply canned responses and the server
@@ -636,9 +639,15 @@ public final class MockWebServer {
 
     final WebSocketListener listener = response.getWebSocketListener();
     final CountDownLatch connectionClose = new CountDownLatch(1);
+
+    ThreadPoolExecutor replyExecutor =
+        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
+            Util.threadFactory(String.format("MockWebServer %s WebSocket", request.getPath()),
+                true));
+    replyExecutor.allowCoreThreadTimeOut(true);
     final RealWebSocket webSocket =
-        new RealWebSocket(false, source, sink, new SecureRandom(), listener,
-            request.getPath()) {
+        new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
+            listener, request.getPath()) {
           @Override protected void closeConnection() throws IOException {
             connectionClose.countDown();
           }
