@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.ws.WebSocket;
+import com.squareup.okhttp.ws.WebSocket;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;

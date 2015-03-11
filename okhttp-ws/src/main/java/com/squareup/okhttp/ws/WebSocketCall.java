@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.ws;
+package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
@@ -24,6 +24,8 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.ws.RealWebSocket;
+import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Socket;
@@ -40,14 +42,11 @@ import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-// TODO move to public API!
 public class WebSocketCall {
   /**
    * Prepares the {@code request} to create a web socket at some point in the future.
-   * <p>
-   * TODO Move to OkHttpClient as non-static once web sockets are finalized!
    */
-  public static WebSocketCall newWebSocketCall(OkHttpClient client, Request request) {
+  public static WebSocketCall create(OkHttpClient client, Request request) {
     return new WebSocketCall(client, request);
   }
 

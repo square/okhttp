@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.ws;
+package com.squareup.okhttp.ws;
 
 import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSink;
 
-// TODO move to public API!
 /** Blocking interface to connect and write to a web socket. */
 public interface WebSocket {
   /** The format of a message payload. */

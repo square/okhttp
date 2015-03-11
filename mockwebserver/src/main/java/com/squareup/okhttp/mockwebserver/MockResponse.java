@@ -16,7 +16,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.internal.ws.WebSocketListener;
+import com.squareup.okhttp.ws.WebSocketListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;

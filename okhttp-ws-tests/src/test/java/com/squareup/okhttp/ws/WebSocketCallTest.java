@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.ws;
+package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.RecordedResponse;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -34,7 +33,7 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 
 public final class WebSocketCallTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
@@ -51,7 +50,7 @@ public final class WebSocketCallTest {
     WebSocketListener serverListener = new EmptyWebSocketListener();
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    WebSocket webSocket = awaitCall().webSocket;
+    WebSocket webSocket = awaitWebSocket();
     webSocket.sendPing(new Buffer().writeUtf8("Hello, WebSockets!"));
     listener.assertPong(new Buffer().writeUtf8("Hello, WebSockets!"));
   }
@@ -60,7 +59,7 @@ public final class WebSocketCallTest {
     WebSocketRecorder serverListener = new WebSocketRecorder();
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    WebSocket webSocket = awaitCall().webSocket;
+    WebSocket webSocket = awaitWebSocket();
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
@@ -74,7 +73,7 @@ public final class WebSocketCallTest {
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    awaitCall();
+    awaitWebSocket();
     listener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -82,7 +81,7 @@ public final class WebSocketCallTest {
     WebSocketRecorder serverListener = new WebSocketRecorder();
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    WebSocket webSocket = awaitCall().webSocket;
+    WebSocket webSocket = awaitWebSocket();
     BufferedSink sink = webSocket.newMessageSink(TEXT);
     sink.writeUtf8("Hello, ").flush();
     sink.writeUtf8("WebSockets!").flush();
@@ -103,19 +102,19 @@ public final class WebSocketCallTest {
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    awaitCall();
+    awaitWebSocket();
     listener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void okButNotOk() {
     server.enqueue(new MockResponse());
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class, "Expected HTTP 101 response but was '200 OK'");
   }
 
   @Test public void notFound() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 404 Not Found"));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected HTTP 101 response but was '404 Not Found'");
   }
@@ -125,7 +124,7 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
   }
@@ -135,7 +134,7 @@ public final class WebSocketCallTest {
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
   }
@@ -145,7 +144,7 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
   }
@@ -156,7 +155,7 @@ public final class WebSocketCallTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
   }
@@ -166,7 +165,7 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket"));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
   }
@@ -177,12 +176,12 @@ public final class WebSocketCallTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "magic"));
-    awaitCall();
+    awaitWebSocket();
     listener.assertFailure(ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
 
-  private RecordedResponse awaitCall() {
+  private WebSocket awaitWebSocket() {
     Request request = new Request.Builder().get().url(server.getUrl("/")).build();
     WebSocketCall call = new WebSocketCall(client, request, random);
 
@@ -226,8 +225,7 @@ public final class WebSocketCallTest {
       throw new AssertionError(e);
     }
 
-    return new RecordedResponse(request, responseRef.get(), webSocketRef.get(), null,
-        failureRef.get());
+    return webSocketRef.get();
   }
 
   private static class EmptyWebSocketListener implements WebSocketListener {

@@ -16,6 +16,8 @@
 package com.squareup.okhttp.internal.ws;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.ws.WebSocket;
+import com.squareup.okhttp.ws.WebSocketListener;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;

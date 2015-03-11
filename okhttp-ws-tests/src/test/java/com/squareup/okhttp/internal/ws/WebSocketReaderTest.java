@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.ws.WebSocketRecorder;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -26,13 +27,13 @@ import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
-import static com.squareup.okhttp.internal.ws.WebSocketRecorder.MessageDelegate;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType;
+import static com.squareup.okhttp.ws.WebSocketRecorder.MessageDelegate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-public class WebSocketReaderTest {
+public final class WebSocketReaderTest {
   private final Buffer data = new Buffer();
   private final WebSocketRecorder callback = new WebSocketRecorder();
   private final Random random = new Random(0);

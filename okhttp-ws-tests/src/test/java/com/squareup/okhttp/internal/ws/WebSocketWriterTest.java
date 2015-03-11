@@ -25,13 +25,13 @@ import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class WebSocketWriterTest {
+public final class WebSocketWriterTest {
   private final Buffer data = new Buffer();
   private final Random random = new Random(0);
 

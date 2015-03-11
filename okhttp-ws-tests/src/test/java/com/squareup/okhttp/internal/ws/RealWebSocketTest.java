@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.ws.WebSocketRecorder;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
@@ -26,8 +27,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
