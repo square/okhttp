@@ -24,7 +24,7 @@ import okio.Okio;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_RSV1;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_RSV2;

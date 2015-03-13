@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.ws;
+package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -21,9 +21,8 @@ import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSource;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 
-// TODO move to public API!
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
   void onOpen(WebSocket webSocket, Request request, Response response) throws IOException;

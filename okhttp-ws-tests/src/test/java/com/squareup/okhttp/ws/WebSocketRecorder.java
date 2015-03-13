@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.ws;
+package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.ws.WebSocketReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -24,13 +25,13 @@ import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
 
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.internal.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocketListener {
+public final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocketListener {
   public interface MessageDelegate {
     void onMessage(BufferedSource payload, WebSocket.PayloadType type) throws IOException;
   }

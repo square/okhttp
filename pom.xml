@@ -20,10 +20,16 @@
 
   <modules>
     <module>okhttp</module>
-    <module>okhttp-apache</module>
     <module>okhttp-tests</module>
-    <module>okhttp-urlconnection</module>
+
     <module>okhttp-android-support</module>
+
+    <module>okhttp-apache</module>
+    <module>okhttp-urlconnection</module>
+
+    <module>okhttp-ws</module>
+    <module>okhttp-ws-tests</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
