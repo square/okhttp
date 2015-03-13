@@ -46,61 +46,86 @@ import okio.Sink;
 import okio.Source;
 
 /**
- * Caches HTTP and HTTPS responses to the filesystem so they may be reused,
- * saving time and bandwidth.
+ * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
+ * bandwidth.
  *
  * <h3>Cache Optimization</h3>
  * To measure cache effectiveness, this class tracks three statistics:
  * <ul>
- *     <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the
- *         number of HTTP requests issued since this cache was created.
- *     <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the
- *         number of those requests that required network use.
- *     <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of
- *         those requests whose responses were served by the cache.
+ *   <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the number of HTTP
+ *     requests issued since this cache was created.
+ *   <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the number of those
+ *     requests that required network use.
+ *   <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of those requests whose
+ *     responses were served by the cache.
  * </ul>
- * Sometimes a request will result in a conditional cache hit. If the cache
- * contains a stale copy of the response, the client will issue a conditional
- * {@code GET}. The server will then send either the updated response if it has
- * changed, or a short 'not modified' response if the client's copy is still
- * valid. Such responses increment both the network count and hit count.
  *
- * <p>The best way to improve the cache hit rate is by configuring the web
- * server to return cacheable responses. Although this client honors all <a
- * href="http://www.ietf.org/rfc/rfc2616.txt">HTTP/1.1 (RFC 2068)</a> cache
- * headers, it doesn't cache partial responses.
+ * Sometimes a request will result in a conditional cache hit. If the cache contains a stale copy of
+ * the response, the client will issue a conditional {@code GET}. The server will then send either
+ * the updated response if it has changed, or a short 'not modified' response if the client's copy
+ * is still valid. Such responses increment both the network count and hit count.
+ *
+ * <p>The best way to improve the cache hit rate is by configuring the web server to return
+ * cacheable responses. Although this client honors all <a
+ * href="http://tools.ietf.org/html/rfc7234">HTTP/1.1 (RFC 7234)</a> cache headers, it doesn't cache
+ * partial responses.
  *
  * <h3>Force a Network Response</h3>
- * In some situations, such as after a user clicks a 'refresh' button, it may be
- * necessary to skip the cache, and fetch data directly from the server. To force
- * a full refresh, add the {@code no-cache} directive: <pre>   {@code
- *         connection.addRequestProperty("Cache-Control", "no-cache");
+ * In some situations, such as after a user clicks a 'refresh' button, it may be necessary to skip
+ * the cache, and fetch data directly from the server. To force a full refresh, add the {@code
+ * no-cache} directive: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder().noCache().build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
- * If it is only necessary to force a cached response to be validated by the
- * server, use the more efficient {@code max-age=0} instead: <pre>   {@code
- *         connection.addRequestProperty("Cache-Control", "max-age=0");
+ *
+ * If it is only necessary to force a cached response to be validated by the server, use the more
+ * efficient {@code max-age=0} directive instead: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder()
+ *           .maxAge(0, TimeUnit.SECONDS)
+ *           .build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
  *
  * <h3>Force a Cache Response</h3>
- * Sometimes you'll want to show resources if they are available immediately,
- * but not otherwise. This can be used so your application can show
- * <i>something</i> while waiting for the latest data to be downloaded. To
- * restrict a request to locally-cached resources, add the {@code
+ * Sometimes you'll want to show resources if they are available immediately, but not otherwise.
+ * This can be used so your application can show <i>something</i> while waiting for the latest data
+ * to be downloaded. To restrict a request to locally-cached resources, add the {@code
  * only-if-cached} directive: <pre>   {@code
- *     try {
- *         connection.addRequestProperty("Cache-Control", "only-if-cached");
- *         InputStream cached = connection.getInputStream();
- *         // the resource was cached! show it
- *     } catch (FileNotFoundException e) {
- *         // the resource was not cached
+ *
+ *     Request request = new Request.Builder()
+ *         .cacheControl(new CacheControl.Builder()
+ *             .onlyIfCached()
+ *             .build())
+ *         .url("http://publicobject.com/helloworld.txt")
+ *         .build();
+ *     Response forceCacheResponse = client.newCall(request).execute();
+ *     if (forceCacheResponse.code() != 504) {
+ *       // The resource was cached! Show it.
+ *     } else {
+ *       // The resource was not cached.
  *     }
  * }</pre>
- * This technique works even better in situations where a stale response is
- * better than no response. To permit stale cached responses, use the {@code
- * max-stale} directive with the maximum staleness in seconds: <pre>   {@code
- *         int maxStale = 60 * 60 * 24 * 28; // tolerate 4-weeks stale
- *         connection.addRequestProperty("Cache-Control", "max-stale=" + maxStale);
+ * This technique works even better in situations where a stale response is better than no response.
+ * To permit stale cached responses, use the {@code max-stale} directive with the maximum staleness
+ * in seconds: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder()
+ *           .maxStale(365, TimeUnit.DAYS)
+ *           .build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
+ *
+ * <p>The {@link CacheControl} class can configure request caching directives and parse response
+ * caching directives. It even offers convenient constants {@link CacheControl#FORCE_NETWORK} and
+ * {@link CacheControl#FORCE_CACHE} that address the use cases above.
  */
 public final class Cache {
   private static final int VERSION = 201105;
