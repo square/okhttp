@@ -28,23 +28,23 @@ import static okio.ByteString.decodeHex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class HpackDraft10Test {
+public class HpackTest {
 
   private final Buffer bytesIn = new Buffer();
-  private HpackDraft10.Reader hpackReader;
+  private Hpack.Reader hpackReader;
   private Buffer bytesOut = new Buffer();
-  private HpackDraft10.Writer hpackWriter;
+  private Hpack.Writer hpackWriter;
 
   @Before public void reset() {
     hpackReader = newReader(bytesIn);
-    hpackWriter = new HpackDraft10.Writer(bytesOut);
+    hpackWriter = new Hpack.Writer(bytesOut);
   }
 
   /**
    * Variable-length quantity special cases strings which are longer than 127
    * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
    *
-   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-5.2
+   * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-5.2
    */
   @Test public void largeHeaderValue() throws IOException {
     char[] value = new char[4096];
@@ -163,7 +163,7 @@ public class HpackDraft10Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.1
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2.1
    */
   @Test public void readLiteralHeaderFieldWithIndexing() throws IOException {
     bytesIn.writeByte(0x40); // Literal indexed
@@ -185,7 +185,7 @@ public class HpackDraft10Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2.2
    */
   @Test public void literalHeaderFieldWithoutIndexingIndexedName() throws IOException {
     List<Header> headerBlock = headerEntries(":path", "/sample/path");
@@ -347,7 +347,7 @@ public class HpackDraft10Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2.4
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2.4
    */
   @Test public void readIndexedHeaderFieldFromStaticTableWithoutBuffering() throws IOException {
     bytesIn.writeByte(0x82); // == Indexed - Add ==
@@ -363,7 +363,7 @@ public class HpackDraft10Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.2
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.2
    */
   @Test public void readRequestExamplesWithoutHuffman() throws IOException {
     firstRequestWithoutHuffman();
@@ -492,7 +492,7 @@ public class HpackDraft10Test {
   }
 
   /**
-   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#appendix-C.4
+   * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-C.4
    */
   @Test public void readRequestExamplesWithHuffman() throws IOException {
     firstRequestWithHuffman();
@@ -692,8 +692,8 @@ public class HpackDraft10Test {
     assertEquals(ByteString.EMPTY, newReader(byteStream(0)).readByteString());
   }
 
-  private HpackDraft10.Reader newReader(Buffer source) {
-    return new HpackDraft10.Reader(4096, source);
+  private Hpack.Reader newReader(Buffer source) {
+    return new Hpack.Reader(4096, source);
   }
 
   private Buffer byteStream(int... bytes) {

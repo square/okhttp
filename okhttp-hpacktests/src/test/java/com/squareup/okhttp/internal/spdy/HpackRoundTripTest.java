@@ -42,7 +42,7 @@ public class HpackRoundTripTest extends HpackDecodeTestBase {
   }
 
   private Buffer bytesOut = new Buffer();
-  private HpackDraft10.Writer hpackWriter = new HpackDraft10.Writer(bytesOut);
+  private Hpack.Writer hpackWriter = new Hpack.Writer(bytesOut);
 
   public HpackRoundTripTest(Story story) {
     super(story);

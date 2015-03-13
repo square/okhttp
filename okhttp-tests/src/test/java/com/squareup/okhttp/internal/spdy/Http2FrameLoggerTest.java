@@ -20,22 +20,22 @@ import java.util.Arrays;
 import java.util.List;
 import org.junit.Test;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_ACK;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_END_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_END_STREAM;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FLAG_NONE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FrameLogger.formatFlags;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FrameLogger.formatHeader;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_CONTINUATION;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_DATA;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_GOAWAY;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_HEADERS;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_PING;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_PUSH_PROMISE;
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.TYPE_SETTINGS;
+import static com.squareup.okhttp.internal.spdy.Http2.FLAG_ACK;
+import static com.squareup.okhttp.internal.spdy.Http2.FLAG_END_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http2.FLAG_END_STREAM;
+import static com.squareup.okhttp.internal.spdy.Http2.FLAG_NONE;
+import static com.squareup.okhttp.internal.spdy.Http2.FrameLogger.formatFlags;
+import static com.squareup.okhttp.internal.spdy.Http2.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_CONTINUATION;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_DATA;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_GOAWAY;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_HEADERS;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_PING;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_PUSH_PROMISE;
+import static com.squareup.okhttp.internal.spdy.Http2.TYPE_SETTINGS;
 import static org.junit.Assert.assertEquals;
 
-public class Http20Draft16FrameLoggerTest {
+public class Http2FrameLoggerTest {
 
   /** Real stream traffic applied to the log format. */
   @Test public void exampleStream() {

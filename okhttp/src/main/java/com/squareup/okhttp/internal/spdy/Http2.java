@@ -26,20 +26,20 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.internal.spdy.Http20Draft16.FrameLogger.formatHeader;
+import static com.squareup.okhttp.internal.spdy.Http2.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
 import static okio.ByteString.EMPTY;
 
 /**
- * Read and write HTTP/2 v16 frames.
+ * Read and write HTTP/2 frames.
  * <p>
  * This implementation assumes we do not send an increased
  * {@link Settings#getMaxFrameSize frame size setting} to the peer. Hence, we
  * expect all frames to have a max length of {@link #INITIAL_MAX_FRAME_SIZE}.
- * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-16
+ * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-17
  */
-public final class Http20Draft16 implements Variant {
+public final class Http2 implements Variant {
   private static final Logger logger = Logger.getLogger(FrameLogger.class.getName());
 
   @Override public Protocol getProtocol() {
@@ -90,13 +90,13 @@ public final class Http20Draft16 implements Variant {
     private final boolean client;
 
     // Visible for testing.
-    final HpackDraft10.Reader hpackReader;
+    final Hpack.Reader hpackReader;
 
     Reader(BufferedSource source, int headerTableSize, boolean client) {
       this.source = source;
       this.client = client;
       this.continuation = new ContinuationSource(this.source);
-      this.hpackReader = new HpackDraft10.Reader(headerTableSize, continuation);
+      this.hpackReader = new Hpack.Reader(headerTableSize, continuation);
     }
 
     @Override public void readConnectionPreface() throws IOException {
@@ -208,7 +208,7 @@ public final class Http20Draft16 implements Variant {
       continuation.streamId = streamId;
 
       // TODO: Concat multi-value headers with 0x0, except COOKIE, which uses 0x3B, 0x20.
-      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-16#section-8.1.2.5
+      // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-8.1.2.5
       hpackReader.readHeaders();
       return hpackReader.getAndResetHeaderList();
     }
@@ -364,7 +364,7 @@ public final class Http20Draft16 implements Variant {
     private final BufferedSink sink;
     private final boolean client;
     private final Buffer hpackBuffer;
-    private final HpackDraft10.Writer hpackWriter;
+    private final Hpack.Writer hpackWriter;
     private int maxFrameSize;
     private boolean closed;
 
@@ -372,7 +372,7 @@ public final class Http20Draft16 implements Variant {
       this.sink = sink;
       this.client = client;
       this.hpackBuffer = new Buffer();
-      this.hpackWriter = new HpackDraft10.Writer(hpackBuffer);
+      this.hpackWriter = new Hpack.Writer(hpackBuffer);
       this.maxFrameSize = INITIAL_MAX_FRAME_SIZE;
     }
 
@@ -589,7 +589,7 @@ public final class Http20Draft16 implements Variant {
   /**
    * Decompression of the header block occurs above the framing layer. This
    * class lazily reads continuation frames as they are needed by {@link
-   * HpackDraft10.Reader#readHeaders()}.
+   * Hpack.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
     private final BufferedSource source;

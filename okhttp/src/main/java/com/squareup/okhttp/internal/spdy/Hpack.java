@@ -31,13 +31,13 @@ import okio.Source;
 /**
  * Read and write HPACK v10.
  *
- * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10
+ * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12
  *
  * This implementation uses an array for the dynamic table and a list for
  * indexed entries.  Dynamic entries are added to the array, starting in the
  * last position moving forward.  When the array fills, it is doubled.
  */
-final class HpackDraft10 {
+final class Hpack {
   private static final int PREFIX_4_BITS = 0x0f;
   private static final int PREFIX_5_BITS = 0x1f;
   private static final int PREFIX_6_BITS = 0x3f;
@@ -107,10 +107,10 @@ final class HpackDraft10 {
       new Header("www-authenticate", "")
   };
 
-  private HpackDraft10() {
+  private Hpack() {
   }
 
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-3.1
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-3.1
   static final class Reader {
 
     private final List<Header> headerList = new ArrayList<>();
@@ -374,7 +374,7 @@ final class HpackDraft10 {
     }
 
     /** This does not use "never indexed" semantics for sensitive headers. */
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-6.2.3
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-6.2.3
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
@@ -392,7 +392,7 @@ final class HpackDraft10 {
       }
     }
 
-    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-10#section-4.1.1
+    // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-4.1.1
     void writeInt(int value, int prefixMask, int bits) throws IOException {
       // Write the raw value for a single byte value.
       if (value < prefixMask) {
