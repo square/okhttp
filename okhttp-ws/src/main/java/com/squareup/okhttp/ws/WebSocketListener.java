@@ -44,7 +44,7 @@ public interface WebSocketListener {
    * from a call to {@link WebSocket#close(int, String) close()} or as an unprompted
    * message from the server.
    *
-   * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1>RFC-compliant</a>
+   * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1">RFC-compliant</a>
    * status code.
    * @param reason Reason for close or an empty string.
    */
