@@ -36,7 +36,6 @@ import java.util.regex.Pattern;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import okio.ForwardingSink;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
@@ -151,6 +150,7 @@ public final class DiskLruCache implements Closeable {
   private BufferedSink journalWriter;
   private final LinkedHashMap<String, Entry> lruEntries = new LinkedHashMap<>(0, 0.75f, true);
   private int redundantOpCount;
+  private boolean hasJournalErrors;
 
   // Must be read and written when synchronized on 'this'.
   private boolean initialized;
@@ -291,11 +291,22 @@ public final class DiskLruCache implements Closeable {
       if (!source.exhausted()) {
         rebuildJournal();
       } else {
-        journalWriter = Okio.buffer(fileSystem.appendingSink(journalFile));
+        journalWriter = newJournalWriter();
       }
     } finally {
       Util.closeQuietly(source);
     }
+  }
+
+  private BufferedSink newJournalWriter() throws FileNotFoundException {
+    Sink fileSink = fileSystem.appendingSink(journalFile);
+    Sink faultHidingSink = new FaultHidingSink(fileSink) {
+      @Override protected void onException(IOException e) {
+        assert (Thread.holdsLock(DiskLruCache.this));
+        hasJournalErrors = true;
+      }
+    };
+    return Okio.buffer(faultHidingSink);
   }
 
   private void readJournalLine(String line) throws IOException {
@@ -399,7 +410,8 @@ public final class DiskLruCache implements Closeable {
     fileSystem.rename(journalFileTmp, journalFile);
     fileSystem.delete(journalFileBackup);
 
-    journalWriter = Okio.buffer(fileSystem.appendingSink(journalFile));
+    journalWriter = newJournalWriter();
+    hasJournalErrors = false;
   }
 
   /**
@@ -445,19 +457,24 @@ public final class DiskLruCache implements Closeable {
         || entry.sequenceNumber != expectedSequenceNumber)) {
       return null; // Snapshot is stale.
     }
-    if (entry == null) {
-      entry = new Entry(key);
-      lruEntries.put(key, entry);
-    } else if (entry.currentEditor != null) {
+    if (entry != null && entry.currentEditor != null) {
       return null; // Another edit is in progress.
     }
-
-    Editor editor = new Editor(entry);
-    entry.currentEditor = editor;
 
     // Flush the journal before creating files to prevent file leaks.
     journalWriter.writeUtf8(DIRTY).writeByte(' ').writeUtf8(key).writeByte('\n');
     journalWriter.flush();
+
+    if (hasJournalErrors) {
+      return null; // Don't edit; the journal can't be written.
+    }
+
+    if (entry == null) {
+      entry = new Entry(key);
+      lruEntries.put(key, entry);
+    }
+    Editor editor = new Editor(entry);
+    entry.currentEditor = editor;
     return editor;
   }
 
@@ -860,7 +877,13 @@ public final class DiskLruCache implements Closeable {
         } catch (FileNotFoundException e) {
           return NULL_SINK;
         }
-        return new FaultHidingSink(sink);
+        return new FaultHidingSink(sink) {
+          @Override protected void onException(IOException e) {
+            synchronized (DiskLruCache.this) {
+              hasErrors = true;
+            }
+          }
+        };
       }
     }
 
@@ -896,42 +919,6 @@ public final class DiskLruCache implements Closeable {
           try {
             completeEdit(this, false);
           } catch (IOException ignored) {
-          }
-        }
-      }
-    }
-
-    private class FaultHidingSink extends ForwardingSink {
-      public FaultHidingSink(Sink delegate) {
-        super(delegate);
-      }
-
-      @Override public void write(Buffer source, long byteCount) throws IOException {
-        try {
-          super.write(source, byteCount);
-        } catch (IOException e) {
-          synchronized (DiskLruCache.this) {
-            hasErrors = true;
-          }
-        }
-      }
-
-      @Override public void flush() throws IOException {
-        try {
-          super.flush();
-        } catch (IOException e) {
-          synchronized (DiskLruCache.this) {
-            hasErrors = true;
-          }
-        }
-      }
-
-      @Override public void close() throws IOException {
-        try {
-          super.close();
-        } catch (IOException e) {
-          synchronized (DiskLruCache.this) {
-            hasErrors = true;
           }
         }
       }
