@@ -24,6 +24,7 @@ import com.squareup.okhttp.internal.http.CacheStrategy;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.internal.io.FileSystem;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -164,7 +165,7 @@ public final class Cache {
   private int requestCount;
 
   public Cache(File directory, long maxSize) {
-    cache = DiskLruCache.create(directory, VERSION, ENTRY_COUNT, maxSize);
+    cache = DiskLruCache.create(FileSystem.SYSTEM, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
   private static String urlToKey(Request request) {

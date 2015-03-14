@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
@@ -147,25 +146,6 @@ public final class Util {
     if (thrown instanceof RuntimeException) throw (RuntimeException) thrown;
     if (thrown instanceof Error) throw (Error) thrown;
     throw new AssertionError(thrown);
-  }
-
-  /**
-   * Deletes the contents of {@code dir}. Throws an IOException if any file
-   * could not be deleted, or if {@code dir} is not a readable directory.
-   */
-  public static void deleteContents(File dir) throws IOException {
-    File[] files = dir.listFiles();
-    if (files == null) {
-      throw new IOException("not a readable directory: " + dir);
-    }
-    for (File file : files) {
-      if (file.isDirectory()) {
-        deleteContents(file);
-      }
-      if (!file.delete()) {
-        throw new IOException("failed to delete file: " + file);
-      }
-    }
   }
 
   /**
