@@ -16,7 +16,6 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.internal.io.FileSystem;
-import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -53,7 +52,7 @@ public final class DiskLruCacheTest {
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final Timeout timeout = new Timeout(30 * 1000);
 
-  private final FileSystem fileSystem = FileSystem.SYSTEM;
+  private final FaultyFileSystem fileSystem = new FaultyFileSystem(FileSystem.SYSTEM);
   private final int appVersion = 100;
   private File cacheDir;
   private File journalFile;
@@ -1068,6 +1067,95 @@ public final class DiskLruCacheTest {
     assertFalse(cache.isClosed());
     cache.close();
     assertTrue(cache.isClosed());
+  }
+
+  @Test public void journalWriteFailsDuringEdit() throws Exception {
+    set("a", "a", "a");
+    set("b", "b", "b");
+
+    // We can't begin the edit if writing 'DIRTY' fails.
+    fileSystem.setFaulty(journalFile, true);
+    assertNull(cache.edit("c"));
+
+    // Once the journal has a failure, subsequent writes aren't permitted.
+    fileSystem.setFaulty(journalFile, false);
+    assertNull(cache.edit("d"));
+
+    // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
+    cache.close();
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    assertValue("a", "a", "a");
+    assertValue("b", "b", "b");
+    assertAbsent("c");
+    assertAbsent("d");
+  }
+
+  /**
+   * We had a bug where the cache was left in an inconsistent state after a journal write failed.
+   * https://github.com/square/okhttp/issues/1211
+   */
+  @Test public void journalWriteFailsDuringEditorCommit() throws Exception {
+    set("a", "a", "a");
+    set("b", "b", "b");
+
+    // Create an entry that fails to write to the journal during commit.
+    DiskLruCache.Editor editor = cache.edit("c");
+    setString(editor, 0, "c");
+    setString(editor, 1, "c");
+    fileSystem.setFaulty(journalFile, true);
+    editor.commit();
+
+    // Once the journal has a failure, subsequent writes aren't permitted.
+    fileSystem.setFaulty(journalFile, false);
+    assertNull(cache.edit("d"));
+
+    // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
+    cache.close();
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    assertValue("a", "a", "a");
+    assertValue("b", "b", "b");
+    assertAbsent("c");
+    assertAbsent("d");
+  }
+
+  @Test public void journalWriteFailsDuringEditorAbort() throws Exception {
+    set("a", "a", "a");
+    set("b", "b", "b");
+
+    // Create an entry that fails to write to the journal during abort.
+    DiskLruCache.Editor editor = cache.edit("c");
+    setString(editor, 0, "c");
+    setString(editor, 1, "c");
+    fileSystem.setFaulty(journalFile, true);
+    editor.abort();
+
+    // Once the journal has a failure, subsequent writes aren't permitted.
+    fileSystem.setFaulty(journalFile, false);
+    assertNull(cache.edit("d"));
+
+    // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
+    cache.close();
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    assertValue("a", "a", "a");
+    assertValue("b", "b", "b");
+    assertAbsent("c");
+    assertAbsent("d");
+  }
+
+  @Test public void journalWriteFailsDuringRemove() throws Exception {
+    set("a", "a", "a");
+    set("b", "b", "b");
+
+    // Remove, but the journal write will fail.
+    fileSystem.setFaulty(journalFile, true);
+    assertTrue(cache.remove("a"));
+
+    // Confirm that the entry was still removed.
+    fileSystem.setFaulty(journalFile, false);
+    cache.close();
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    assertAbsent("a");
+    assertValue("b", "b", "b");
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
