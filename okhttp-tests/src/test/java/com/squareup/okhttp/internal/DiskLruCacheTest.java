@@ -15,14 +15,10 @@
  */
 package com.squareup.okhttp.internal;
 
-import java.io.BufferedReader;
+import com.squareup.okhttp.internal.io.FileSystem;
+import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,6 +53,7 @@ public final class DiskLruCacheTest {
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final Timeout timeout = new Timeout(30 * 1000);
 
+  private final FileSystem fileSystem = FileSystem.SYSTEM;
   private final int appVersion = 100;
   private File cacheDir;
   private File journalFile;
@@ -71,7 +68,7 @@ public final class DiskLruCacheTest {
   }
 
   private void createNewCacheWithSize(int maxSize) throws IOException {
-    cache = new DiskLruCache(cacheDir, appVersion, 2, maxSize, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, maxSize, executor);
     synchronized (cache) {
       cache.initialize();
     }
@@ -272,7 +269,7 @@ public final class DiskLruCacheTest {
     File k1 = getCleanFile("k1", 0);
     assertEquals("ABC", readFile(k1));
     cache.remove("k1");
-    assertFalse(k1.exists());
+    assertFalse(fileSystem.exists(k1));
   }
 
   @Test public void removePreventsActiveEditFromStoringAValue() throws Exception {
@@ -328,10 +325,10 @@ public final class DiskLruCacheTest {
     writeFile(dirtyFile1, "D");
     createJournal("CLEAN k1 1 1", "DIRTY   k1");
     createNewCache();
-    assertFalse(cleanFile0.exists());
-    assertFalse(cleanFile1.exists());
-    assertFalse(dirtyFile0.exists());
-    assertFalse(dirtyFile1.exists());
+    assertFalse(fileSystem.exists(cleanFile0));
+    assertFalse(fileSystem.exists(cleanFile1));
+    assertFalse(fileSystem.exists(dirtyFile0));
+    assertFalse(fileSystem.exists(dirtyFile1));
     assertNull(cache.get("k1"));
   }
 
@@ -389,9 +386,10 @@ public final class DiskLruCacheTest {
     cache.close();
     writeFile(getCleanFile("k1", 0), "A");
     writeFile(getCleanFile("k1", 1), "B");
-    Writer writer = new FileWriter(journalFile);
-    writer.write(MAGIC + "\n" + VERSION_1 + "\n100\n2\n\nCLEAN k1 1 1"); // no trailing newline
-    writer.close();
+
+    BufferedSink sink = Okio.buffer(fileSystem.sink(journalFile));
+    sink.writeUtf8(MAGIC + "\n" + VERSION_1 + "\n100\n2\n\nCLEAN k1 1 1"); // no trailing newline
+    sink.close();
     createNewCache();
     assertNull(cache.get("k1"));
 
@@ -453,10 +451,10 @@ public final class DiskLruCacheTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertFalse(getCleanFile("k1", 0).exists());
-    assertFalse(getCleanFile("k1", 1).exists());
-    assertFalse(getDirtyFile("k1", 0).exists());
-    assertFalse(getDirtyFile("k1", 1).exists());
+    assertFalse(fileSystem.exists(getCleanFile("k1", 0)));
+    assertFalse(fileSystem.exists(getCleanFile("k1", 1)));
+    assertFalse(fileSystem.exists(getDirtyFile("k1", 0)));
+    assertFalse(fileSystem.exists(getDirtyFile("k1", 1)));
     assertNull(cache.get("k1"));
 
     DiskLruCache.Editor creator2 = cache.edit("k1");
@@ -469,10 +467,10 @@ public final class DiskLruCacheTest {
     DiskLruCache.Editor creator = cache.edit("k1");
     setString(creator, 1, "A");
     creator.abort();
-    assertFalse(getCleanFile("k1", 0).exists());
-    assertFalse(getCleanFile("k1", 1).exists());
-    assertFalse(getDirtyFile("k1", 0).exists());
-    assertFalse(getDirtyFile("k1", 1).exists());
+    assertFalse(fileSystem.exists(getCleanFile("k1", 0)));
+    assertFalse(fileSystem.exists(getCleanFile("k1", 1)));
+    assertFalse(fileSystem.exists(getDirtyFile("k1", 0)));
+    assertFalse(fileSystem.exists(getDirtyFile("k1", 1)));
     assertNull(cache.get("k1"));
   }
 
@@ -632,7 +630,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroCacheSize() throws Exception {
     try {
-      DiskLruCache.create(cacheDir, appVersion, 2, 0);
+      DiskLruCache.create(fileSystem, cacheDir, appVersion, 2, 0);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -640,7 +638,7 @@ public final class DiskLruCacheTest {
 
   @Test public void constructorDoesNotAllowZeroValuesPerEntry() throws Exception {
     try {
-      DiskLruCache.create(cacheDir, appVersion, 0, 10);
+      DiskLruCache.create(fileSystem, cacheDir, appVersion, 0, 10);
       fail();
     } catch (IllegalArgumentException expected) {
     }
@@ -707,8 +705,8 @@ public final class DiskLruCacheTest {
     creator.commit();
     cache.close();
 
-    assertTrue(journalFile.renameTo(journalBkpFile));
-    assertFalse(journalFile.exists());
+    fileSystem.rename(journalFile, journalBkpFile);
+    assertFalse(fileSystem.exists(journalFile));
 
     createNewCache();
 
@@ -716,8 +714,8 @@ public final class DiskLruCacheTest {
     assertSnapshotValue(snapshot, 0, "ABC");
     assertSnapshotValue(snapshot, 1, "DE");
 
-    assertFalse(journalBkpFile.exists());
-    assertTrue(journalFile.exists());
+    assertFalse(fileSystem.exists(journalBkpFile));
+    assertTrue(fileSystem.exists(journalFile));
   }
 
   @Test public void journalFileIsPreferredOverBackupFile() throws Exception {
@@ -735,8 +733,8 @@ public final class DiskLruCacheTest {
     creator.commit();
     cache.close();
 
-    assertTrue(journalFile.exists());
-    assertTrue(journalBkpFile.exists());
+    assertTrue(fileSystem.exists(journalFile));
+    assertTrue(fileSystem.exists(journalBkpFile));
 
     createNewCache();
 
@@ -748,23 +746,23 @@ public final class DiskLruCacheTest {
     assertSnapshotValue(snapshotB, 0, "F");
     assertSnapshotValue(snapshotB, 1, "GH");
 
-    assertFalse(journalBkpFile.exists());
-    assertTrue(journalFile.exists());
+    assertFalse(fileSystem.exists(journalBkpFile));
+    assertTrue(fileSystem.exists(journalFile));
   }
 
   @Test public void openCreatesDirectoryIfNecessary() throws Exception {
     cache.close();
     File dir = tempDir.newFolder("testOpenCreatesDirectoryIfNecessary");
-    cache = DiskLruCache.create(dir, appVersion, 2, Integer.MAX_VALUE);
+    cache = DiskLruCache.create(fileSystem, dir, appVersion, 2, Integer.MAX_VALUE);
     set("a", "a", "a");
-    assertTrue(new File(dir, "a.0").exists());
-    assertTrue(new File(dir, "a.1").exists());
-    assertTrue(new File(dir, "journal").exists());
+    assertTrue(fileSystem.exists(new File(dir, "a.0")));
+    assertTrue(fileSystem.exists(new File(dir, "a.1")));
+    assertTrue(fileSystem.exists(new File(dir, "journal")));
   }
 
   @Test public void fileDeletedExternally() throws Exception {
     set("a", "a", "a");
-    getCleanFile("a", 1).delete();
+    fileSystem.delete(getCleanFile("a", 1));
     assertNull(cache.get("a"));
   }
 
@@ -823,7 +821,7 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesWrite() throws Exception {
-    tempDir.delete();
+    fileSystem.deleteContents(tempDir.getRoot());
     set("a", "a", "a");
     assertValue("a", "a", "a");
   }
@@ -832,7 +830,7 @@ public final class DiskLruCacheTest {
   @Test public void aggressiveClearingHandlesEdit() throws Exception {
     set("a", "a", "a");
     DiskLruCache.Editor a = cache.get("a").edit();
-    tempDir.delete();
+    fileSystem.deleteContents(tempDir.getRoot());
     setString(a, 1, "a2");
     a.commit();
   }
@@ -849,7 +847,7 @@ public final class DiskLruCacheTest {
     set("b", "b", "b");
     DiskLruCache.Editor a = cache.get("a").edit();
     setString(a, 0, "a1");
-    tempDir.delete();
+    fileSystem.deleteContents(tempDir.getRoot());
     setString(a, 1, "a2");
     a.commit();
     assertNull(cache.get("a"));
@@ -857,7 +855,7 @@ public final class DiskLruCacheTest {
 
   /** @see <a href="https://github.com/JakeWharton/DiskLruCache/issues/2">Issue #2</a> */
   @Test public void aggressiveClearingHandlesRead() throws Exception {
-    tempDir.delete();
+    fileSystem.deleteContents(tempDir.getRoot());
     assertNull(cache.get("a"));
   }
 
@@ -1064,7 +1062,7 @@ public final class DiskLruCacheTest {
 
   @Test public void isClosed_uninitializedCache() throws Exception {
     // Create an uninitialized cache.
-    cache = new DiskLruCache(cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
+    cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
     toClose.add(cache);
 
     assertFalse(cache.isClosed());
@@ -1089,27 +1087,26 @@ public final class DiskLruCacheTest {
 
   private void createJournalWithHeader(String magic, String version, String appVersion,
       String valueCount, String blank, String... bodyLines) throws Exception {
-    Writer writer = new FileWriter(journalFile);
-    writer.write(magic + "\n");
-    writer.write(version + "\n");
-    writer.write(appVersion + "\n");
-    writer.write(valueCount + "\n");
-    writer.write(blank + "\n");
+    BufferedSink sink = Okio.buffer(fileSystem.sink(journalFile));
+    sink.writeUtf8(magic + "\n");
+    sink.writeUtf8(version + "\n");
+    sink.writeUtf8(appVersion + "\n");
+    sink.writeUtf8(valueCount + "\n");
+    sink.writeUtf8(blank + "\n");
     for (String line : bodyLines) {
-      writer.write(line);
-      writer.write('\n');
+      sink.writeUtf8(line);
+      sink.writeUtf8("\n");
     }
-    writer.close();
+    sink.close();
   }
 
   private List<String> readJournalLines() throws Exception {
     List<String> result = new ArrayList<>();
-    BufferedReader reader = new BufferedReader(new FileReader(journalFile));
-    String line;
-    while ((line = reader.readLine()) != null) {
+    BufferedSource source = Okio.buffer(fileSystem.source(journalFile));
+    for (String line; (line = source.readUtf8Line()) != null; ) {
       result.add(line);
     }
-    reader.close();
+    source.close();
     return result;
   }
 
@@ -1121,22 +1118,17 @@ public final class DiskLruCacheTest {
     return new File(cacheDir, key + "." + index + ".tmp");
   }
 
-  private static String readFile(File file) throws Exception {
-    Reader reader = new FileReader(file);
-    StringWriter writer = new StringWriter();
-    char[] buffer = new char[1024];
-    int count;
-    while ((count = reader.read(buffer)) != -1) {
-      writer.write(buffer, 0, count);
-    }
-    reader.close();
-    return writer.toString();
+  private String readFile(File file) throws Exception {
+    BufferedSource source = Okio.buffer(fileSystem.source(file));
+    String result = source.readUtf8();
+    source.close();
+    return result;
   }
 
-  public static void writeFile(File file, String content) throws Exception {
-    FileWriter writer = new FileWriter(file);
-    writer.write(content);
-    writer.close();
+  public void writeFile(File file, String content) throws Exception {
+    BufferedSink sink = Okio.buffer(fileSystem.sink(file));
+    sink.writeUtf8(content);
+    sink.close();
   }
 
   private static void assertInoperable(DiskLruCache.Editor editor) throws Exception {
@@ -1176,18 +1168,16 @@ public final class DiskLruCacheTest {
     writeFile(getCleanFile("g2", 1), "D");
     writeFile(getCleanFile("g2", 1), "D");
     writeFile(new File(cacheDir, "otherFile0"), "E");
-    dir1.mkdir();
-    dir2.mkdir();
     writeFile(new File(dir2, "otherFile1"), "F");
   }
 
   private void assertGarbageFilesAllDeleted() throws Exception {
-    assertFalse(getCleanFile("g1", 0).exists());
-    assertFalse(getCleanFile("g1", 1).exists());
-    assertFalse(getCleanFile("g2", 0).exists());
-    assertFalse(getCleanFile("g2", 1).exists());
-    assertFalse(new File(cacheDir, "otherFile0").exists());
-    assertFalse(new File(cacheDir, "dir1").exists());
+    assertFalse(fileSystem.exists(getCleanFile("g1", 0)));
+    assertFalse(fileSystem.exists(getCleanFile("g1", 1)));
+    assertFalse(fileSystem.exists(getCleanFile("g2", 0)));
+    assertFalse(fileSystem.exists(getCleanFile("g2", 1)));
+    assertFalse(fileSystem.exists(new File(cacheDir, "otherFile0")));
+    assertFalse(fileSystem.exists(new File(cacheDir, "dir1")));
   }
 
   private void set(String key, String value0, String value1) throws Exception {
@@ -1209,18 +1199,18 @@ public final class DiskLruCacheTest {
       snapshot.close();
       fail();
     }
-    assertFalse(getCleanFile(key, 0).exists());
-    assertFalse(getCleanFile(key, 1).exists());
-    assertFalse(getDirtyFile(key, 0).exists());
-    assertFalse(getDirtyFile(key, 1).exists());
+    assertFalse(fileSystem.exists(getCleanFile(key, 0)));
+    assertFalse(fileSystem.exists(getCleanFile(key, 1)));
+    assertFalse(fileSystem.exists(getDirtyFile(key, 0)));
+    assertFalse(fileSystem.exists(getDirtyFile(key, 1)));
   }
 
   private void assertValue(String key, String value0, String value1) throws Exception {
     DiskLruCache.Snapshot snapshot = cache.get(key);
     assertSnapshotValue(snapshot, 0, value0);
     assertSnapshotValue(snapshot, 1, value1);
-    assertTrue(getCleanFile(key, 0).exists());
-    assertTrue(getCleanFile(key, 1).exists());
+    assertTrue(fileSystem.exists(getCleanFile(key, 0)));
+    assertTrue(fileSystem.exists(getCleanFile(key, 1)));
     snapshot.close();
   }
 
@@ -1235,8 +1225,8 @@ public final class DiskLruCacheTest {
   }
 
   private void copyFile(File from, File to) throws IOException {
-    Source source = Okio.source(from);
-    BufferedSink sink = Okio.buffer(Okio.sink(to));
+    Source source = fileSystem.source(from);
+    BufferedSink sink = Okio.buffer(fileSystem.sink(to));
     sink.writeAll(source);
     source.close();
     sink.close();
