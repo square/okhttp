@@ -22,10 +22,13 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import java.io.File;
 import java.io.IOException;
+import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
@@ -34,17 +37,15 @@ import okio.Source;
 
 /** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
 public final class SpdyServer implements IncomingStreamHandler {
+  static final Logger logger = Logger.getLogger(SpdyServer.class.getName());
+
   private final List<Protocol> spdyProtocols = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3);
 
   private final File baseDirectory;
-  private SSLSocketFactory sslSocketFactory;
-  private Protocol protocol;
+  private final SSLSocketFactory sslSocketFactory;
 
-  public SpdyServer(File baseDirectory) {
+  public SpdyServer(File baseDirectory, SSLSocketFactory sslSocketFactory) {
     this.baseDirectory = baseDirectory;
-  }
-
-  public void useHttps(SSLSocketFactory sslSocketFactory) {
     this.sslSocketFactory = sslSocketFactory;
   }
 
@@ -53,52 +54,67 @@ public final class SpdyServer implements IncomingStreamHandler {
     serverSocket.setReuseAddress(true);
 
     while (true) {
-      Socket socket = serverSocket.accept();
-      if (sslSocketFactory != null) {
-        socket = doSsl(socket);
+      Socket socket = null;
+      try {
+        socket = serverSocket.accept();
+
+        SSLSocket sslSocket = doSsl(socket);
+        String protocolString = Platform.get().getSelectedProtocol(sslSocket);
+        Protocol protocol = protocolString != null ? Protocol.get(protocolString) : null;
+        if (protocol == null || !spdyProtocols.contains(protocol)) {
+          throw new ProtocolException("Protocol " + protocol + " unsupported");
+        }
+        SpdyConnection spdyConnection = new SpdyConnection.Builder(false, sslSocket)
+            .protocol(protocol)
+            .handler(this)
+            .build();
+        spdyConnection.sendConnectionPreface();
+      } catch (IOException e) {
+        logger.log(Level.INFO, "SpdyServer connection failure: " + e);
+        Util.closeQuietly(socket);
+      } catch (Exception e) {
+        logger.log(Level.WARNING, "SpdyServer unexpected failure", e);
+        Util.closeQuietly(socket);
       }
-      new SpdyConnection.Builder(false, socket).protocol(protocol).handler(this).build();
     }
   }
 
-  private Socket doSsl(Socket socket) throws IOException {
-    SSLSocket sslSocket =
-        (SSLSocket) sslSocketFactory.createSocket(socket, socket.getInetAddress().getHostAddress(),
-            socket.getPort(), true);
+  private SSLSocket doSsl(Socket socket) throws IOException {
+    SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(
+        socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
     sslSocket.setUseClientMode(false);
     Platform.get().configureTlsExtensions(sslSocket, null, spdyProtocols);
     sslSocket.startHandshake();
-    String protocolString = Platform.get().getSelectedProtocol(sslSocket);
-    protocol = protocolString != null ? Protocol.get(protocolString) : null;
-    if (protocol == null || !spdyProtocols.contains(protocol)) {
-      throw new IllegalStateException("Protocol " + protocol + " unsupported");
-    }
     return sslSocket;
   }
 
   @Override public void receive(final SpdyStream stream) throws IOException {
-    List<Header> requestHeaders = stream.getRequestHeaders();
-    String path = null;
-    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
-      if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
-        path = requestHeaders.get(i).value.utf8();
-        break;
+    try {
+      List<Header> requestHeaders = stream.getRequestHeaders();
+      String path = null;
+      for (int i = 0, size = requestHeaders.size(); i < size; i++) {
+        if (requestHeaders.get(i).name.equals(Header.TARGET_PATH)) {
+          path = requestHeaders.get(i).value.utf8();
+          break;
+        }
       }
-    }
 
-    if (path == null) {
-      // TODO: send bad request error
-      throw new AssertionError();
-    }
+      if (path == null) {
+        // TODO: send bad request error
+        throw new AssertionError();
+      }
 
-    File file = new File(baseDirectory + path);
+      File file = new File(baseDirectory + path);
 
-    if (file.isDirectory()) {
-      serveDirectory(stream, file.list());
-    } else if (file.exists()) {
-      serveFile(stream, file);
-    } else {
-      send404(stream, path);
+      if (file.isDirectory()) {
+        serveDirectory(stream, file.listFiles());
+      } else if (file.exists()) {
+        serveFile(stream, file);
+      } else {
+        send404(stream, path);
+      }
+    } catch (IOException e) {
+      System.out.println(e.getMessage());
     }
   }
 
@@ -114,7 +130,7 @@ public final class SpdyServer implements IncomingStreamHandler {
     out.close();
   }
 
-  private void serveDirectory(SpdyStream stream, String[] files) throws IOException {
+  private void serveDirectory(SpdyStream stream, File[] files) throws IOException {
     List<Header> responseHeaders = Arrays.asList(
         new Header(":status", "200"),
         new Header(":version", "HTTP/1.1"),
@@ -122,8 +138,9 @@ public final class SpdyServer implements IncomingStreamHandler {
     );
     stream.reply(responseHeaders, true);
     BufferedSink out = Okio.buffer(stream.getSink());
-    for (String file : files) {
-      out.writeUtf8("<a href='" + file + "'>" + file + "</a><br>");
+    for (File file : files) {
+      String target = file.isDirectory() ? (file.getName() + "/") : file.getName();
+      out.writeUtf8("<a href='" + target + "'>" + target + "</a><br>");
     }
     out.close();
   }
@@ -146,7 +163,14 @@ public final class SpdyServer implements IncomingStreamHandler {
   }
 
   private String contentType(File file) {
-    return file.getName().endsWith(".html") ? "text/html" : "text/plain";
+    if (file.getName().endsWith(".css")) return "text/css";
+    if (file.getName().endsWith(".gif")) return "image/gif";
+    if (file.getName().endsWith(".html")) return "text/html";
+    if (file.getName().endsWith(".jpeg")) return "image/jpeg";
+    if (file.getName().endsWith(".jpg")) return "image/jpeg";
+    if (file.getName().endsWith(".js")) return "application/javascript";
+    if (file.getName().endsWith(".png")) return "image/png";
+    return "text/plain";
   }
 
   public static void main(String... args) throws Exception {
@@ -155,8 +179,8 @@ public final class SpdyServer implements IncomingStreamHandler {
       return;
     }
 
-    SpdyServer server = new SpdyServer(new File(args[0]));
-    server.useHttps(SslContextBuilder.localhost().getSocketFactory());
+    SpdyServer server = new SpdyServer(new File(args[0]),
+        SslContextBuilder.localhost().getSocketFactory());
     server.run();
   }
 }
