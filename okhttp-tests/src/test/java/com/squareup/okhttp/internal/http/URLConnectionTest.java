@@ -38,6 +38,7 @@ import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -73,6 +74,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
@@ -93,6 +95,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.TestName;
 
 import static com.squareup.okhttp.internal.Util.UTF_8;
 import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
@@ -118,12 +121,17 @@ public final class URLConnectionTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
   @Rule public final MockWebServerRule server2 = new MockWebServerRule();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
+  @Rule public final TestName testName = new TestName();
 
   private OkUrlFactory client;
   private HttpURLConnection connection;
   private Cache cache;
 
+  private static final Logger logger = Logger.getLogger(URLConnectionTest.class.getName());
+
   @Before public void setUp() throws Exception {
+    logger.info(testName.getMethodName());
+
     server.get().setProtocolNegotiationEnabled(false);
     client = new OkUrlFactory(new OkHttpClient());
   }
