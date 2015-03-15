@@ -49,7 +49,9 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.BufferedSource;
 import okio.Okio;
+import okio.Sink;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -151,9 +153,15 @@ public class Main extends HelpOption implements Runnable {
         System.out.println();
       }
 
-      response.body().source().readAll(Okio.sink(System.out));
+      // Stream the response to the System.out as it is returned from the server.
+      Sink out = Okio.sink(System.out);
+      BufferedSource source = response.body().source();
+      while (!source.exhausted()) {
+        out.write(source.buffer(), source.buffer().size());
+        out.flush();
+      }
+
       response.body().close();
-      System.out.flush();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
