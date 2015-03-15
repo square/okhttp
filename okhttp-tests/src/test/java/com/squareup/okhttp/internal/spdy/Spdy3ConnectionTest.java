@@ -21,8 +21,10 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -884,6 +886,7 @@ public final class Spdy3ConnectionTest {
     } catch (InterruptedIOException expected) {
     }
     long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
     assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
     assertEquals(0, connection.openStreamCount());
 
@@ -911,6 +914,7 @@ public final class Spdy3ConnectionTest {
     } catch (InterruptedIOException expected) {
     }
     long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
     assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
     assertEquals(0, connection.openStreamCount());
 
@@ -948,6 +952,7 @@ public final class Spdy3ConnectionTest {
     } catch (InterruptedIOException expected) {
     }
     long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
     assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
     assertEquals(0, connection.openStreamCount());
 
@@ -1299,6 +1304,23 @@ public final class Spdy3ConnectionTest {
         }
       }
     }.start();
+  }
+
+  /**
+   * Returns true when all work currently in progress by the watchdog have completed. This method
+   * creates more work for the watchdog and waits for that work to be executed. When it is, we know
+   * work that preceded this call is complete.
+   */
+  private void awaitWatchdogIdle() throws InterruptedException {
+    final CountDownLatch latch = new CountDownLatch(1);
+    AsyncTimeout watchdogJob = new AsyncTimeout() {
+      @Override protected void timedOut() {
+        latch.countDown();
+      }
+    };
+    watchdogJob.deadlineNanoTime(System.nanoTime()); // Due immediately!
+    watchdogJob.enter();
+    latch.await();
   }
 
   static int roundUp(int num, int divisor) {
