@@ -23,6 +23,11 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -430,6 +435,73 @@ public final class InterceptorTest {
     callbackB.await(requestB.url()).assertBody("b");
   }
 
+  @Test public void applicationkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionSynchronous(client.interceptors());
+  }
+
+  @Test public void networkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionSynchronous(client.networkInterceptors());
+  }
+
+  /**
+   * When an interceptor throws an unexpected exception, synchronous callers can catch it and deal
+   * with it.
+   *
+   * TODO(jwilson): test that resources are not leaked when this happens.
+   */
+  private void interceptorThrowsRuntimeExceptionSynchronous(
+      List<Interceptor> interceptors) throws Exception {
+    interceptors.add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new RuntimeException("boom!");
+      }
+    });
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (RuntimeException expected) {
+      assertEquals("boom!", expected.getMessage());
+    }
+  }
+
+  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
+  }
+
+  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
+  }
+
+  /**
+   * When an interceptor throws an unexpected exception, asynchronous callers are left hanging. The
+   * exception goes to the uncaught exception handler.
+   *
+   * TODO(jwilson): test that resources are not leaked when this happens.
+   */
+  private void interceptorThrowsRuntimeExceptionAsynchronous(
+        List<Interceptor> interceptors) throws Exception {
+    interceptors.add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new RuntimeException("boom!");
+      }
+    });
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .build();
+    client.newCall(request).enqueue(callback);
+
+    assertEquals("boom!", executor.takeException().getMessage());
+  }
+
   private RequestBody uppercase(final RequestBody original) {
     return new RequestBody() {
       @Override public MediaType contentType() {
@@ -479,5 +551,30 @@ public final class InterceptorTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
+  }
+
+  /** Catches exceptions that are otherwise headed for the uncaught exception handler. */
+  private static class ExceptionCatchingExecutor extends ThreadPoolExecutor {
+    private final BlockingQueue<Exception> exceptions = new LinkedBlockingQueue<>();
+
+    public ExceptionCatchingExecutor() {
+      super(1, 1, 0, TimeUnit.SECONDS, new SynchronousQueue<Runnable>());
+    }
+
+    @Override public void execute(final Runnable runnable) {
+      super.execute(new Runnable() {
+        @Override public void run() {
+          try {
+            runnable.run();
+          } catch (Exception e) {
+            exceptions.add(e);
+          }
+        }
+      });
+    }
+
+    public Exception takeException() throws InterruptedException {
+      return exceptions.take();
+    }
   }
 }
