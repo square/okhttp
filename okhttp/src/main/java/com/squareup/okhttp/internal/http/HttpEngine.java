@@ -45,6 +45,7 @@ import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -392,6 +393,8 @@ public final class HttpEngine {
     return connection;
   }
 
+  private static final Logger logger = Logger.getLogger(HttpEngine.class.getName());
+
   /**
    * Report and attempt to recover from {@code e}. Returns a new HTTP engine
    * that should be used for the retry if {@code e} is recoverable, or null if
@@ -403,11 +406,21 @@ public final class HttpEngine {
       connectFailed(routeSelector, e);
     }
 
+    int recycleCount = connection != null ? Internal.instance.recycleCount(connection) : -1;
+
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
-    if (routeSelector == null && connection == null // No connection.
-        || routeSelector != null && !routeSelector.hasNext() // No more routes to attempt.
-        || !isRecoverable(e)
-        || !canRetryRequestBody) {
+    if (routeSelector == null && connection == null) {
+      logger.info("cannot recover, route selector is null and connection is null");
+      return null;
+    } else if (routeSelector != null && !routeSelector.hasNext()) {
+      logger.info("cannot recover, route selector has no further connections. recycle count: "
+          + recycleCount);
+      return null;
+    } else if (!isRecoverable(e)) {
+      logger.info("cannot recover, exception is not recoverable");
+      return null;
+    } else if (!canRetryRequestBody) {
+      logger.info("cannot recover, cannot retry request body");
       return null;
     }
 

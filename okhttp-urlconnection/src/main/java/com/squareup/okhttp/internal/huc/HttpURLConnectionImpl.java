@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import okio.BufferedSink;
 import okio.Sink;
 
@@ -415,6 +417,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
+  private static final Logger logger = Logger.getLogger(HttpURLConnectionImpl.class.getName());
+
   /**
    * Sends a request and optionally reads a response. Returns true if the
    * request was successfully executed, and false if the request can be
@@ -435,9 +439,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     } catch (IOException e) {
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
+        logger.log(Level.INFO, "attempting to recover", e);
         httpEngine = retryEngine;
         return false;
       }
+      logger.log(Level.INFO, "recovery is not possible", e);
 
       // Give up; recovery is not possible.
       httpEngineFailure = e;
