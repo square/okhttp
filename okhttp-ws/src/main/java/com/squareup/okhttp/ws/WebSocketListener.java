@@ -30,6 +30,10 @@ public interface WebSocketListener {
   /**
    * Called when a server message is received. The {@code type} indicates whether the
    * {@code payload} should be interpreted as UTF-8 text or binary data.
+   *
+   * <p>Implementations <strong>must</strong> call {@code source.close()} before returning. This
+   * indicates completion of parsing the message payload and will consume any remaining bytes in
+   * the message.
    */
   void onMessage(BufferedSource payload, PayloadType type) throws IOException;
 
