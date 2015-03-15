@@ -941,8 +941,9 @@ public final class Spdy3ConnectionTest {
     sink.write(new Buffer().writeUtf8("abcde"), 5);
     stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS);
     long startNanos = System.nanoTime();
+    sink.write(new Buffer().writeUtf8("f"), 1);
     try {
-      sink.write(new Buffer().writeUtf8("f"), 1); // This will time out waiting on the write window.
+      sink.flush(); // This will time out waiting on the write window.
       fail();
     } catch (InterruptedIOException expected) {
     }
@@ -955,6 +956,31 @@ public final class Spdy3ConnectionTest {
     assertEquals(TYPE_HEADERS, peer.takeFrame().type);
     assertEquals(TYPE_DATA, peer.takeFrame().type);
     assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
+  @Test public void outgoingWritesAreBatched() throws Exception {
+    // write the mocking script
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.acceptFrame(); // DATA
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = connection(peer, SPDY3);
+    SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
+
+    // two outgoing writes
+    Sink sink = stream.getSink();
+    sink.write(new Buffer().writeUtf8("abcde"), 5);
+    sink.write(new Buffer().writeUtf8("fghij"), 5);
+    sink.close();
+
+    // verify the peer received one incoming frame
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    MockSpdyPeer.InFrame data = peer.takeFrame();
+    assertEquals(TYPE_DATA, data.type);
+    assertTrue(Arrays.equals("abcdefghij".getBytes("UTF-8"), data.data));
+    assertTrue(data.inFinished);
   }
 
   @Test public void headers() throws Exception {
