@@ -25,7 +25,6 @@ import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import com.squareup.okhttp.internal.io.FileSystem;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.security.cert.Certificate;
@@ -37,6 +36,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -584,8 +584,8 @@ public final class Cache {
         sink.writeByte('\n');
         sink.writeUtf8(handshake.cipherSuite());
         sink.writeByte('\n');
-        writeCertArray(sink, handshake.peerCertificates());
-        writeCertArray(sink, handshake.localCertificates());
+        writeCertList(sink, handshake.peerCertificates());
+        writeCertList(sink, handshake.localCertificates());
       }
       sink.close();
     }
@@ -603,8 +603,9 @@ public final class Cache {
         List<Certificate> result = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
           String line = source.readUtf8LineStrict();
-          byte[] bytes = ByteString.decodeBase64(line).toByteArray();
-          result.add(certificateFactory.generateCertificate(new ByteArrayInputStream(bytes)));
+          Buffer bytes = new Buffer();
+          bytes.write(ByteString.decodeBase64(line));
+          result.add(certificateFactory.generateCertificate(bytes.inputStream()));
         }
         return result;
       } catch (CertificateException e) {
@@ -612,7 +613,7 @@ public final class Cache {
       }
     }
 
-    private void writeCertArray(BufferedSink sink, List<Certificate> certificates)
+    private void writeCertList(BufferedSink sink, List<Certificate> certificates)
         throws IOException {
       try {
         sink.writeDecimalLong(certificates.size());
