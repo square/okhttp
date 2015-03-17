@@ -1,7 +1,64 @@
 Change Log
 ==========
 
-## VERSION 2.2.0
+## Version 2.3.0
+
+_2015-03-16_
+
+ *  **HTTP/2 support.** We've done interop testing and haven't seen any
+    problems. HTTP/2 support has been a big effort and we're particularly
+    thankful to Adrian Cole who has helped us to reach this milestone.
+
+ *  **RC4 cipher suites are no longer supported by default.** To connect to
+    old, obsolete servers relying on these cipher suites, you must create a
+    custom `ConnectionSpec`.
+
+ *  **Beta WebSockets support.**. The `okhttp-ws` subproject offers a new
+    websockets client. Please try it out! When it's ready we intend to include
+    it with the core OkHttp library.
+
+ *  **Okio updated to 1.3.0.**
+
+    ```
+    <dependency>
+      <groupId>com.squareup.okio</groupId>
+      <artifactId>okio</artifactId>
+      <version>1.3.0</version>
+    </dependency>
+    ```
+
+ *  **Fix: improve parallelism of async requests.** OkHttp's Dispatcher had a
+    misconfigured `ExecutorService` that limited the number of worker threads.
+    If you're using `Call.enqueue()` this update should significantly improve
+    request concurrency.
+
+ *  **Fix: Lazily initialize the response cache.** This avoids strict mode
+    warnings when initializing OkHttp on Android‘s main thread.
+
+ *  **Fix: Disable ALPN on Android 4.4.** That release of the feature was
+    unstable and prone to native crashes in the underlying OpenSSL code.
+ *  Fix: Don't send both `If-None-Match` and `If-Modified-Since` cache headers
+    when both are applicable.
+ *  Fix: Fail early when a port is out of range.
+ *  Fix: Offer `Content-Length` headers for multipart request bodies.
+ *  Fix: Throw `UnknownServiceException` if a cleartext connection is attempted
+    when explicitly forbidden.
+ *  Fix: Throw a `SSLPeerUnverifiedException` when host verification fails.
+ *  Fix: MockWebServer explicitly closes sockets. (On some Android releases,
+    closing the input stream and output stream of a socket is not sufficient.
+ *  Fix: Buffer outgoing HTTP/2 frames to limit how many outgoing frames are
+    created.
+ *  Fix: Avoid crashing when cache writing fails due to a full disk.
+ *  Fix: Improve caching of private responses.
+ *  Fix: Update cache-by-default response codes.
+ *  Fix: Reused `Request.Builder` instances no longer hold stale URL fields.
+ *  New: ConnectionSpec can now be configured to use the SSL socket's default
+    cipher suites. To use, set the cipher suites to `null`.
+ *  New: Support `DELETE` with a request body.
+ *  New: `Headers.of(Map)` creates headers from a Map.
+
+
+## Version 2.2.0
 
 _2014-12-30_
 
@@ -43,7 +100,7 @@ _2014-12-30_
  *  Fix: Resurrect http/2 frame logging.
  *  Fix: Limit to 20 authorization attempts.
 
-## VERSION 2.1.0
+## Version 2.1.0
 
 _2014-11-11_
 
@@ -51,7 +108,7 @@ _2014-11-11_
  *  Fix: Don't crash when mixing authorization challenges with upload retries.
 
 
-## VERSION 2.1.0-RC1
+## Version 2.1.0-RC1
 
 _2014-11-04_
 
