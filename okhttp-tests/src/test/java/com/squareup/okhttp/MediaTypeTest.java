@@ -156,6 +156,15 @@ public class MediaTypeTest {
     assertEquals("text/plain;", mediaType.toString());
   }
 
+  @Test public void testValidTypes() throws Exception {
+    assertEquals(MediaType.parse("application/x-www-form-urlencoded"), MediaType.APPLICATION_FORM_URLENCODED);
+    assertEquals(MediaType.parse("application/octet-stream"), MediaType.APPLICATION_OCTET_STREAM);
+    assertEquals(MediaType.parse("multipart/form-data"), MediaType.MULTIPART_FORM_DATA);
+    assertEquals(MediaType.parse("application/json; charset=utf-8"), MediaType.APPLICATION_JSON);
+    assertEquals(MediaType.parse("application/xml; charset=utf-8"), MediaType.APPLICATION_XML);
+    assertEquals(MediaType.parse("text/plain; charset=utf-8"), MediaType.TEXT_PLAIN);
+  }
+
   private void assertMediaType(String string) {
     MediaType mediaType = MediaType.parse(string);
     assertEquals(string, mediaType.toString());
