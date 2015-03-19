@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSocket;
 
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For {@code
- * https:} URLs, this includes the TLS version and ciphers to use when negotiating a secure
+ * https:} URLs, this includes the TLS version and ciphers（密码\暗号） to use when negotiating（谈判、意思是请求） a secure
  * connection.
  */
 public final class ConnectionSpec {

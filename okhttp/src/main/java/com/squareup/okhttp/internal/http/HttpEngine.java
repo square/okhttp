@@ -33,7 +33,6 @@ import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.CookieHandler;
@@ -647,7 +646,7 @@ public final class HttpEngine {
     }
 
     if (request.header("User-Agent") == null) {
-      result.header("User-Agent", Version.userAgent());
+      result.header("User-Agent", /*Version.userAgent()*/"");
     }
 
     return result.build();

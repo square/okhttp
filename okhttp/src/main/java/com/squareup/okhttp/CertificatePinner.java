@@ -29,7 +29,7 @@ import okio.ByteString;
 import static java.util.Collections.unmodifiableList;
 
 /**
- * Constrains which certificates are trusted. Pinning certificates defends
+ * Constrains which certificates(约束证书) are trusted. Pinning certificates(固定的证书) defends
  * against attacks on certificate authorities. It also prevents connections
  * through man-in-the-middle certificate authorities either known or unknown to
  * the application's user.

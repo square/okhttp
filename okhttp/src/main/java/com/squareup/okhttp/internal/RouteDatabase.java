@@ -25,6 +25,8 @@ import java.util.Set;
  * there was a failure attempting to connect to a specific IP address, proxy
  * server or TLS mode, that failure is remembered and alternate routes are
  * preferred.
+ *
+ * 当创建一个新的连接的时候会去检查当前连接失败的黑名单
  */
 public final class RouteDatabase {
   private final Set<Route> failedRoutes = new LinkedHashSet<>();
