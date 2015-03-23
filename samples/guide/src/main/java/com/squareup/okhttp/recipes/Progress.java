@@ -38,8 +38,7 @@ public final class Progress {
         .build();
 
     final ProgressListener progressListener = new ProgressListener() {
-      @Override
-      public void update(long bytesRead, long contentLength, boolean done) {
+      @Override public void update(long bytesRead, long contentLength, boolean done) {
         System.out.println(bytesRead);
         System.out.println(contentLength);
         System.out.println(done);
@@ -99,7 +98,7 @@ public final class Progress {
           long bytesRead = super.read(sink, byteCount);
           // read() returns the number of bytes read, or -1 if this source is exhausted.
           totalBytesRead += bytesRead != -1 ? bytesRead : 0;
-          progressListener.update(totalBytesRead, responseBody.contentLength(), bytesRead != -1);
+          progressListener.update(totalBytesRead, responseBody.contentLength(), bytesRead == -1);
           return bytesRead;
         }
       };
