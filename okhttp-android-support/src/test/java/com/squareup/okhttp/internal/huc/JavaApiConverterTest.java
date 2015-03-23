@@ -233,6 +233,30 @@ public class JavaApiConverterTest {
     assertNull(response.handshake());
   }
 
+  /** Test for https://code.google.com/p/android/issues/detail?id=160522 */
+  @Test public void createOkResponse_fromCacheResponseWithMissingStatusLine() throws Exception {
+    URI uri = new URI("http://foo/bar");
+    Request request = new Request.Builder().url(uri.toURL()).build();
+    CacheResponse cacheResponse = new CacheResponse() {
+      @Override public Map<String, List<String>> getHeaders() throws IOException {
+        Map<String, List<String>> headers = new HashMap<>();
+        // Headers is deliberately missing an entry with a null key.
+        headers.put("xyzzy", Arrays.asList("bar", "baz"));
+        return headers;
+      }
+
+      @Override public InputStream getBody() throws IOException {
+        return null; // Should never be called
+      }
+    };
+
+    try {
+      JavaApiConverter.createOkResponse(request, cacheResponse);
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
   @Test public void createOkResponse_fromSecureCacheResponse() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
     final Principal localPrincipal = LOCAL_CERT.getSubjectX500Principal();
@@ -669,15 +693,18 @@ public class JavaApiConverterTest {
     assertEquals(Arrays.asList("value2"), okHeaders.values("key2"));
   }
 
-  @Test public void extractStatusLine() {
+  @Test public void extractStatusLine() throws Exception {
     Map<String, List<String>> javaResponseHeaders = new HashMap<>();
     javaResponseHeaders.put(null, Arrays.asList("StatusLine"));
     javaResponseHeaders.put("key1", Arrays.asList("value1_1", "value1_2"));
     javaResponseHeaders.put("key2", Arrays.asList("value2"));
     assertEquals("StatusLine", JavaApiConverter.extractStatusLine(javaResponseHeaders));
 
-    assertNull(
-        JavaApiConverter.extractStatusLine(Collections.<String, List<String>>emptyMap()));
+    try {
+      JavaApiConverter.extractStatusLine(Collections.<String, List<String>>emptyMap());
+      fail();
+    } catch (IOException expected) {
+    }
   }
 
   private URL configureServer(MockResponse mockResponse) throws Exception {

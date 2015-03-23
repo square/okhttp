@@ -40,12 +40,14 @@ import java.net.CacheResponse;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.ResponseCache;
 import java.net.SecureCacheResponse;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -1301,6 +1303,48 @@ public final class ResponseCacheTest {
     assertEquals("abc", readAscii(connection, 3));
     connection.getInputStream().close();
     assertFalse(aborted.get()); // The best behavior is ambiguous, but RI 6 doesn't abort here
+  }
+
+  /**
+   * Fail if a badly-behaved cache returns a null status line header.
+   * https://code.google.com/p/android/issues/detail?id=160522
+   */
+  @Test public void responseCacheReturnsNullStatusLine() throws Exception {
+    String cachedContentString = "Hello";
+    final byte[] cachedContent = cachedContentString.getBytes(StandardCharsets.US_ASCII);
+
+    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
+      @Override
+      public CacheResponse get(URI uri, String requestMethod,
+          Map<String, List<String>> requestHeaders)
+          throws IOException {
+        return new CacheResponse() {
+          @Override public Map<String, List<String>> getHeaders() throws IOException {
+            String contentType = "text/plain";
+            Map<String, List<String>> headers = new HashMap<>();
+            headers.put("Content-Length", Arrays.asList(Integer.toString(cachedContent.length)));
+            headers.put("Content-Type", Arrays.asList(contentType));
+            headers.put("Expires", Arrays.asList(formatDate(-1, TimeUnit.HOURS)));
+            headers.put("Cache-Control", Arrays.asList("max-age=60"));
+            // Crucially, the header with a null key is missing, which renders the cache response
+            // unusable because OkHttp only caches responses with cacheable response codes.
+            return headers;
+          }
+
+          @Override public InputStream getBody() throws IOException {
+            return new ByteArrayInputStream(cachedContent);
+          }
+        };
+      }
+    }));
+    HttpURLConnection connection = openConnection(server.getUrl("/"));
+    // If there was no status line from the cache an exception will be thrown. No network request
+    // should be made.
+    try {
+      connection.getResponseCode();
+      fail();
+    } catch (ProtocolException expected) {
+    }
   }
 
   /**

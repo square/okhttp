@@ -338,8 +338,8 @@ public final class JavaApiConverter {
 
   /**
    * Extracts the status line from the supplied Java API {@link java.net.CacheResponse}.
-   * As per the spec, the status line is held as the header with the null key. Returns {@code null}
-   * if there is no status line.
+   * As per the spec, the status line is held as the header with the null key. Throws a
+   * {@link ProtocolException} if there is no status line.
    */
   private static String extractStatusLine(CacheResponse javaResponse) throws IOException {
     Map<String, List<String>> javaResponseHeaders = javaResponse.getHeaders();
@@ -347,10 +347,14 @@ public final class JavaApiConverter {
   }
 
   // VisibleForTesting
-  static String extractStatusLine(Map<String, List<String>> javaResponseHeaders) {
+  static String extractStatusLine(Map<String, List<String>> javaResponseHeaders)
+      throws ProtocolException {
     List<String> values = javaResponseHeaders.get(null);
     if (values == null || values.size() == 0) {
-      return null;
+      // The status line is missing. This suggests a badly behaving cache.
+      throw new ProtocolException(
+          "CacheResponse is missing a \'null\' header containing the status line. Headers="
+          + javaResponseHeaders);
     }
     return values.get(0);
   }
