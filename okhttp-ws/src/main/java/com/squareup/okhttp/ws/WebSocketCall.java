@@ -42,7 +42,7 @@ import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class WebSocketCall {
+public final class WebSocketCall {
   /**
    * Prepares the {@code request} to create a web socket at some point in the future.
    */
@@ -55,7 +55,7 @@ public class WebSocketCall {
   private final Random random;
   private final String key;
 
-  protected WebSocketCall(OkHttpClient client, Request request) {
+  WebSocketCall(OkHttpClient client, Request request) {
     this(client, request, new SecureRandom());
   }
 
