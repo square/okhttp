@@ -35,6 +35,8 @@ public enum Protocol {
    */
   HTTP_1_0("http/1.0"),
 
+  SHOUTCAST("icy"),
+
   /**
    * A plaintext framing that includes persistent connections.
    *
@@ -84,6 +86,7 @@ public enum Protocol {
     if (protocol.equals(HTTP_1_1.protocol)) return HTTP_1_1;
     if (protocol.equals(HTTP_2.protocol)) return HTTP_2;
     if (protocol.equals(SPDY_3.protocol)) return SPDY_3;
+    if (protocol.equals(SHOUTCAST.protocol)) return SHOUTCAST;
     throw new IOException("Unexpected protocol: " + protocol);
   }
 

@@ -48,7 +48,7 @@ public final class StatusLine {
       }
     } else if (statusLine.startsWith("ICY ")) {
       // Shoutcast uses ICY instead of "HTTP/1.0".
-      protocol = Protocol.HTTP_1_0;
+      protocol = Protocol.SHOUTCAST;
       codeStart = 4;
     } else {
       throw new ProtocolException("Unexpected status line: " + statusLine);
