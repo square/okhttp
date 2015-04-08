@@ -813,6 +813,9 @@ public final class HttpEngine {
 
       transport.writeRequestHeaders(request);
 
+      //Update the networkRequest with the possibly updated interceptor request.
+      networkRequest = request;
+
       if (permitsRequestBody() && request.body() != null) {
         Sink requestBodyOut = transport.createRequestBody(request, request.body().contentLength());
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
