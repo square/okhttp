@@ -477,6 +477,30 @@ public final class InterceptorTest {
     interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
   }
 
+  @Test public void networkInterceptorModifiedRequestIsReturned() throws IOException {
+    server.enqueue(new MockResponse());
+
+    Interceptor modifyHeaderInterceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request().newBuilder()
+          .header("User-Agent", "intercepted request")
+          .build());
+      }
+    };
+
+    client.networkInterceptors().add(modifyHeaderInterceptor);
+
+    Request request = new Request.Builder()
+        .url(server.getUrl("/"))
+        .header("User-Agent", "user request")
+        .build();
+
+    Response response = client.newCall(request).execute();
+    assertNotNull(response.request().header("User-Agent"));
+    assertEquals("user request", response.request().header("User-Agent"));
+    assertEquals("intercepted request", response.networkResponse().request().header("User-Agent"));
+  }
+
   /**
    * When an interceptor throws an unexpected exception, asynchronous callers are left hanging. The
    * exception goes to the uncaught exception handler.
