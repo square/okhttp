@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
@@ -116,7 +118,7 @@ public final class OkHttpClient implements Cloneable {
       }
 
       @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
-          HttpEngine owner, Request request) throws IOException {
+          HttpEngine owner, Request request) throws RouteException {
         connection.connectAndSetOwner(client, owner, request);
       }
 
@@ -135,6 +137,11 @@ public final class OkHttpClient implements Cloneable {
 
       @Override public void connectionSetOwner(Connection connection, Object owner) {
         connection.setOwner(owner);
+      }
+
+      @Override
+      public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
+        tlsConfiguration.apply(sslSocket, isFallback);
       }
     };
   }

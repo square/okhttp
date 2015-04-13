@@ -38,7 +38,6 @@ import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -681,6 +680,7 @@ public final class CallTest {
     }
   }
 
+  // https://github.com/square/okhttp/issues/442
   @Test public void timeoutsNotRetried() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.NO_RESPONSE));
@@ -851,7 +851,7 @@ public final class CallTest {
       client.newCall(request).execute();
       fail();
     } catch (UnknownServiceException expected) {
-      assertTrue(expected.getMessage().contains("no connection specs"));
+      assertTrue(expected.getMessage().contains("CLEARTEXT communication not supported"));
     }
   }
 
@@ -1697,21 +1697,6 @@ public final class CallTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
-  }
-
-  private void assertContains(Collection<String> collection, String element) {
-    for (String c : collection) {
-      if (c != null && c.equalsIgnoreCase(element)) return;
-    }
-    fail("No " + element + " in " + collection);
-  }
-
-  private void assertContainsNoneMatching(List<String> headers, String pattern) {
-    for (String header : headers) {
-      if (header.matches(pattern)) {
-        fail("Header " + header + " matches " + pattern);
-      }
-    }
   }
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {

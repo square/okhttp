@@ -27,11 +27,13 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.RequestException;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.FileNotFoundException;
@@ -432,7 +434,25 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       return true;
+    } catch (RequestException e) {
+      // An attempt to interpret a request failed.
+      IOException toThrow = e.getCause();
+      httpEngineFailure = toThrow;
+      throw toThrow;
+    } catch (RouteException e) {
+      // The attempt to connect via a route failed. The request will not have been sent.
+      HttpEngine retryEngine = httpEngine.recover(e);
+      if (retryEngine != null) {
+        httpEngine = retryEngine;
+        return false;
+      }
+
+      // Give up; recovery is not possible.
+      IOException toThrow = e.getLastConnectException();
+      httpEngineFailure = toThrow;
+      throw toThrow;
     } catch (IOException e) {
+      // An attempt to communicate with a server failed. The request may have been sent.
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
         httpEngine = retryEngine;

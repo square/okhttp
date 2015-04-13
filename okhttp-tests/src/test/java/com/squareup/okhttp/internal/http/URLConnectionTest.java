@@ -613,6 +613,7 @@ public final class URLConnectionTest {
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
+    assertEquals(TlsVersion.TLS_1_0, request.getTlsVersion());
   }
 
   /**
