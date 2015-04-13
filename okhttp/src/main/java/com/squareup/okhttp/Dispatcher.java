@@ -177,4 +177,12 @@ public final class Dispatcher {
   synchronized void finished(Call call) {
     if (!executedCalls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
   }
+
+  public synchronized int getRunningCallCount() {
+    return runningCalls.size();
+  }
+
+  public synchronized int getQueuedCallCount() {
+    return readyCalls.size();
+  }
 }
