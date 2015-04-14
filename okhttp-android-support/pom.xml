@@ -16,6 +16,12 @@
   <dependencies>
     <dependency>
       <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp-testing-support</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
       <artifactId>okhttp-urlconnection</artifactId>
       <version>${project.version}</version>
     </dependency>
