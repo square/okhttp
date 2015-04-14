@@ -667,7 +667,7 @@ public final class MockWebServer {
         .build();
 
     // The callback might act synchronously. Give it its own thread.
-    new Thread(new Runnable() {
+    Runnable webSocketWriterRunnable = new Runnable() {
       @Override public void run() {
         try {
           listener.onOpen(webSocket, fancyRequest, fancyResponse);
@@ -676,7 +676,9 @@ public final class MockWebServer {
           connectionClose.countDown();
         }
       }
-    }, "MockWebServer WebSocket Writer " + request.getPath()).start();
+    };
+    Util.newThread("MockWebServer WebSocket Writer " + request.getPath(), false /* daemon */,
+        webSocketWriterRunnable).start();
 
     // Use this thread to continuously read messages.
     while (webSocket.readMessage()) {

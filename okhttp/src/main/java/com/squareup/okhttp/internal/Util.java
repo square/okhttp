@@ -19,6 +19,8 @@ package com.squareup.okhttp.internal;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.ServerSocket;
@@ -47,6 +49,22 @@ public final class Util {
 
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
+
+  /**
+   * An UncaughtExceptionHandler to use for OkHttp threads. Android's default handler kills the
+   * process.
+   */
+  private static final Thread.UncaughtExceptionHandler UNCAUGHT_EXCEPTION_HANDLER
+      = new Thread.UncaughtExceptionHandler() {
+    @Override public void uncaughtException(Thread thread, Throwable ex) {
+      StringWriter errorText = new StringWriter(256);
+      errorText.append("Uncaught exception in OkHttp thread \"");
+      errorText.append(thread.getName());
+      errorText.append("\"\n");
+      ex.printStackTrace(new PrintWriter(errorText));
+      System.err.println(errorText.toString());
+    }
+  };
 
   private Util() {
   }
@@ -239,11 +257,16 @@ public final class Util {
   public static ThreadFactory threadFactory(final String name, final boolean daemon) {
     return new ThreadFactory() {
       @Override public Thread newThread(Runnable runnable) {
-        Thread result = new Thread(runnable, name);
-        result.setDaemon(daemon);
-        return result;
+        return Util.newThread(name, daemon, runnable);
       }
     };
+  }
+
+  public static Thread newThread(String name, boolean daemon, Runnable runnable) {
+    Thread result = new Thread(runnable, name);
+    result.setDaemon(daemon);
+    result.setUncaughtExceptionHandler(UNCAUGHT_EXCEPTION_HANDLER);
+    return result;
   }
 
   /**

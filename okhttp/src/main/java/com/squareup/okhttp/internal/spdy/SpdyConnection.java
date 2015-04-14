@@ -169,7 +169,7 @@ public final class SpdyConnection implements Closeable {
     frameWriter = variant.newWriter(Okio.buffer(Okio.sink(builder.socket)), client);
 
     readerRunnable = new Reader();
-    new Thread(readerRunnable).start(); // Not a daemon thread.
+    Util.newThread("SpdyConnection Reader", false /* daemon */, readerRunnable).start();
   }
 
   /** The protocol as selected using ALPN. */
