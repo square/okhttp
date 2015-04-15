@@ -259,7 +259,7 @@ public final class CallTest {
 
     Request request = new Request.Builder()
         .url(server.getUrl("/"))
-        .method("POST", null)
+        .method("POST", RequestBody.create(null, new byte[0]))
         .build();
 
     executeSynchronously(request)

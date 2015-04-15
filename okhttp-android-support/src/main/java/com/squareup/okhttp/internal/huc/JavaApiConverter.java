@@ -19,10 +19,12 @@ import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.CacheRequest;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.IOException;
@@ -51,6 +53,7 @@ import okio.Sink;
  * Helper methods that convert between Java and OkHttp representations.
  */
 public final class JavaApiConverter {
+  private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
 
   private JavaApiConverter() {
   }
@@ -163,10 +166,14 @@ public final class JavaApiConverter {
    */
   public static Request createOkRequest(
       URI uri, String requestMethod, Map<String, List<String>> requestHeaders) {
+    // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
+    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+        ? EMPTY_REQUEST_BODY
+        : null;
 
     Request.Builder builder = new Request.Builder()
         .url(uri.toString())
-        .method(requestMethod, null);
+        .method(requestMethod, placeholderBody);
 
     if (requestHeaders != null) {
       Headers headers = extractOkHeaders(requestHeaders);
