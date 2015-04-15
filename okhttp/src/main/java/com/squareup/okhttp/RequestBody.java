@@ -51,7 +51,7 @@ public abstract class RequestBody {
         contentType = MediaType.parse(contentType + "; charset=utf-8");
       }
     }
-    byte[] bytes = content.getBytes(charset);
+    byte[] bytes = (null == content ? "" : content).getBytes(charset);
     return create(contentType, bytes);
   }
 
