@@ -15,18 +15,18 @@
  */
 package com.squareup.okhttp;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import okio.Buffer;
-import okio.BufferedSink;
-import okio.ByteString;
 
 /**
  * Fluent API to build <a href="http://www.w3.org/MarkUp/html-spec/html-spec_8.html#SEC8.2.1">HTML
  * 2.0</a>-compliant form data.
  */
 public final class FormEncodingBuilder {
+  private static final MediaType CONTENT_TYPE =
+      MediaType.parse("application/x-www-form-urlencoded");
+
   private final Buffer content = new Buffer();
 
   /** Add new key-value pair. */
@@ -48,29 +48,6 @@ public final class FormEncodingBuilder {
     if (content.size() == 0) {
       throw new IllegalStateException("Form encoded body must have at least one part.");
     }
-    return new FormEncodingRequestBody(content.snapshot());
-  }
-
-  private static final class FormEncodingRequestBody extends RequestBody {
-    private static final MediaType CONTENT_TYPE =
-        MediaType.parse("application/x-www-form-urlencoded");
-
-    private final ByteString snapshot;
-
-    public FormEncodingRequestBody(ByteString snapshot) {
-      this.snapshot = snapshot;
-    }
-
-    @Override public MediaType contentType() {
-      return CONTENT_TYPE;
-    }
-
-    @Override public long contentLength() throws IOException {
-      return snapshot.size();
-    }
-
-    @Override public void writeTo(BufferedSink sink) throws IOException {
-      sink.write(snapshot);
-    }
+    return RequestBody.create(CONTENT_TYPE, content.snapshot());
   }
 }
