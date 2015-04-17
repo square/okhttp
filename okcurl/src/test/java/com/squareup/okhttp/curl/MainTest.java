@@ -34,10 +34,10 @@ public class MainTest {
   }
 
   @Test public void put() throws IOException {
-    Request request = fromArgs("-X", "PUT", "http://example.com").createRequest();
+    Request request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com", request.urlString());
-    assertEquals(0, request.body().contentLength());
+    assertEquals(3, request.body().contentLength());
   }
 
   @Test public void dataPost() {
