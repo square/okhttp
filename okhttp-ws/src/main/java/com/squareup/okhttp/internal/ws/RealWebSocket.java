@@ -69,6 +69,7 @@ public abstract class RealWebSocket implements WebSocket {
       }
 
       @Override public void onClose(final int code, final String reason) {
+        readerSentClose = true;
         replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Close Reply", url) {
           @Override protected void execute() {
             peerClose(code, reason);
