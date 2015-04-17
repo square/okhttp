@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import okio.BufferedSink;
+import okio.ByteString;
 import okio.Okio;
 import okio.Source;
 
@@ -53,6 +54,23 @@ public abstract class RequestBody {
     }
     byte[] bytes = content.getBytes(charset);
     return create(contentType, bytes);
+  }
+
+  /** Returns a new request body that transmits {@code content}. */
+  public static RequestBody create(final MediaType contentType, final ByteString content) {
+    return new RequestBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
+
+      @Override public long contentLength() throws IOException {
+        return content.size();
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.write(content);
+      }
+    };
   }
 
   /** Returns a new request body that transmits {@code content}. */
