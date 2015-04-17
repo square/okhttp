@@ -6,6 +6,7 @@ import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.zip.GZIPInputStream;
 import okio.Buffer;
 import okio.GzipSink;
@@ -154,6 +155,15 @@ public class OkApacheClientTest {
     Header[] headers3 = response3.getHeaders("Content-Type");
     assertEquals(0, headers3.length);
     assertNull(response3.getEntity().getContentType());
+  }
+
+  @Test public void contentTypeIsCaseInsensitive() throws URISyntaxException, IOException {
+    server.enqueue(new MockResponse().setBody("{\"Message\": { \"text\": \"Hello, World!\" } }")
+        .setHeader("cONTENT-tYPE", "application/json"));
+
+    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpResponse response = client.execute(request);
+    assertEquals("application/json", response.getEntity().getContentType().getValue());
   }
 
   @Test public void contentEncoding() throws Exception {
