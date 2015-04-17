@@ -49,7 +49,7 @@ public final class OkApacheClient implements HttpClient {
     String contentType = null;
     for (Header header : request.getAllHeaders()) {
       String name = header.getName();
-      if ("Content-Type".equals(name)) {
+      if ("Content-Type".equalsIgnoreCase(name)) {
         contentType = header.getValue();
       } else {
         builder.header(name, header.getValue());
