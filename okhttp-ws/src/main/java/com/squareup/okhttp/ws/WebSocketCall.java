@@ -22,7 +22,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
@@ -182,12 +181,14 @@ public final class WebSocketCall {
         ConnectionWebSocket.create(response, connection, source, sink, random, listener);
 
     // Start a dedicated thread for reading the web socket.
-    new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
-      @Override protected void execute() {
+    Runnable webSocketReaderRunnable = new Runnable() {
+      @Override public void run() {
         while (webSocket.readMessage()) {
         }
       }
-    }).start();
+    };
+    Util.newThread(String.format("OkHttp WebSocket reader %s", request.urlString()),
+        false /* daemon */, webSocketReaderRunnable).start();
 
     // TODO connection.setOwner(webSocket);
     Internal.instance.connectionSetOwner(connection, webSocket);
