@@ -69,9 +69,17 @@ public abstract class RealWebSocket implements WebSocket {
       }
 
       @Override public void onClose(final int code, final String reason) {
+        final boolean writeCloseResponse;
+        synchronized (closeLock) {
+          readerSentClose = true;
+
+          // If the writer has not indicated a desire to close we will write a close response.
+          writeCloseResponse = !writerSentClose;
+        }
+
         replyExecutor.execute(new NamedRunnable("OkHttp %s WebSocket Close Reply", url) {
           @Override protected void execute() {
-            peerClose(code, reason);
+            peerClose(code, reason, writeCloseResponse);
           }
         });
       }
@@ -132,15 +140,7 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   /** Replies and closes this web socket when a close frame is read from the peer. */
-  private void peerClose(int code, String reason) {
-    boolean writeCloseResponse;
-    synchronized (closeLock) {
-      readerSentClose = true;
-
-      // If the writer has not indicated a desire to close we will write a close response.
-      writeCloseResponse = !writerSentClose;
-    }
-
+  private void peerClose(int code, String reason, boolean writeCloseResponse) {
     if (writeCloseResponse) {
       try {
         writer.writeClose(code, reason);
