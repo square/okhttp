@@ -194,6 +194,7 @@ public final class SpdyConnection implements Closeable {
     if (stream != null && streams.isEmpty()) {
       setIdle(true);
     }
+    notifyAll(); // The removed stream may be blocked on a connection-wide window update.
     return stream;
   }
 
@@ -285,19 +286,16 @@ public final class SpdyConnection implements Closeable {
   }
 
   /**
-   * Callers of this method are not thread safe, and sometimes on application
-   * threads.  Most often, this method will be called to send a buffer worth of
-   * data to the peer.
-   * <p>
-   * Writes are subject to the write window of the stream and the connection.
-   * Until there is a window sufficient to send {@code byteCount}, the caller
-   * will block.  For example, a user of {@code HttpURLConnection} who flushes
-   * more bytes to the output stream than the connection's write window will
-   * block.
-   * <p>
-   * Zero {@code byteCount} writes are not subject to flow control and
-   * will not block.  The only use case for zero {@code byteCount} is closing
-   * a flushed output stream.
+   * Callers of this method are not thread safe, and sometimes on application threads. Most often,
+   * this method will be called to send a buffer worth of data to the peer.
+   *
+   * <p>Writes are subject to the write window of the stream and the connection. Until there is a
+   * window sufficient to send {@code byteCount}, the caller will block. For example, a user of
+   * {@code HttpURLConnection} who flushes more bytes to the output stream than the connection's
+   * write window will block.
+   *
+   * <p>Zero {@code byteCount} writes are not subject to flow control and will not block. The only
+   * use case for zero {@code byteCount} is closing a flushed output stream.
    */
   public void writeData(int streamId, boolean outFinished, Buffer buffer, long byteCount)
       throws IOException {
@@ -311,6 +309,11 @@ public final class SpdyConnection implements Closeable {
       synchronized (SpdyConnection.this) {
         try {
           while (bytesLeftInWriteWindow <= 0) {
+            // Before blocking, confirm that the stream we're writing is still open. It's possible
+            // that the stream has since been closed (such as if this write timed out.)
+            if (!streams.containsKey(streamId)) {
+              throw new IOException("stream closed");
+            }
             SpdyConnection.this.wait(); // Wait until we receive a WINDOW_UPDATE.
           }
         } catch (InterruptedException e) {

@@ -963,6 +963,47 @@ public final class Spdy3ConnectionTest {
     assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
   }
 
+  @Test public void writeTimesOutAwaitingConnectionWindow() throws Exception {
+    // Set the peer's receive window to 5 bytes. Give the stream 5 bytes back, so only the
+    // connection-level window is applicable.
+    Settings peerSettings = new Settings().set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 5);
+
+    // write the mocking script
+    peer.sendFrame().settings(peerSettings);
+    peer.acceptFrame(); // SYN_STREAM
+    peer.sendFrame().synReply(false, 1, headerEntries("a", "android"));
+    peer.sendFrame().windowUpdate(1, 5);
+    peer.acceptFrame(); // PING
+    peer.sendFrame().ping(true, 1, 0);
+    peer.acceptFrame(); // DATA
+    peer.acceptFrame(); // RST_STREAM
+    peer.play();
+
+    // play it back
+    SpdyConnection connection = connection(peer, SPDY3);
+    SpdyStream stream = connection.newStream(headerEntries("b", "banana"), true, true);
+    connection.ping().roundTripTime(); // Make sure the window update has been received.
+    Sink sink = stream.getSink();
+    stream.writeTimeout().timeout(500, TimeUnit.MILLISECONDS);
+    sink.write(new Buffer().writeUtf8("abcdef"), 6);
+    long startNanos = System.nanoTime();
+    try {
+      sink.flush(); // This will time out waiting on the write window.
+      fail();
+    } catch (InterruptedIOException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    awaitWatchdogIdle();
+    assertEquals(500d, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 200d /* 200ms delta */);
+    assertEquals(0, connection.openStreamCount());
+
+    // verify the peer received what was expected
+    assertEquals(TYPE_HEADERS, peer.takeFrame().type);
+    assertEquals(TYPE_PING, peer.takeFrame().type);
+    assertEquals(TYPE_DATA, peer.takeFrame().type);
+    assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
+  }
+
   @Test public void outgoingWritesAreBatched() throws Exception {
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM
