@@ -73,6 +73,7 @@ import static com.squareup.okhttp.internal.Internal.logger;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -1551,6 +1552,25 @@ public final class CallTest {
       throws Exception {
     enableProtocol(Protocol.SPDY_3);
     canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
+  }
+
+  @Test public void cancelWithInterceptor() throws Exception {
+    client.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        chain.proceed(chain.request());
+        throw new AssertionError(); // We expect an exception.
+      }
+    });
+
+    Call call = client.newCall(new Request.Builder().url(server.getUrl("/a")).build());
+    call.cancel();
+
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+    assertEquals(0, server.getRequestCount());
   }
 
   @Test public void gzip() throws Exception {
