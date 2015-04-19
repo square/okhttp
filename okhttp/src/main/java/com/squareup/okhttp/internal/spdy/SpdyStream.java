@@ -501,7 +501,7 @@ public final class SpdyStream {
         writeTimeout.enter();
         try {
           while (bytesLeftInWriteWindow <= 0 && !finished && !closed && errorCode == null) {
-            waitForIo(); // Wait until we receive a WINDOW_UPDATE.
+            waitForIo(); // Wait until we receive a WINDOW_UPDATE for this stream.
           }
         } finally {
           writeTimeout.exitAndThrowIfTimedOut();
@@ -512,7 +512,12 @@ public final class SpdyStream {
         bytesLeftInWriteWindow -= toWrite;
       }
 
-      connection.writeData(id, outFinished && toWrite == sendBuffer.size(), sendBuffer, toWrite);
+      writeTimeout.enter();
+      try {
+        connection.writeData(id, outFinished && toWrite == sendBuffer.size(), sendBuffer, toWrite);
+      } finally {
+        writeTimeout.exitAndThrowIfTimedOut();
+      }
     }
 
     @Override public void flush() throws IOException {
@@ -522,8 +527,8 @@ public final class SpdyStream {
       }
       while (sendBuffer.size() > 0) {
         emitDataFrame(false);
+        connection.flush();
       }
-      connection.flush();
     }
 
     @Override public Timeout timeout() {
