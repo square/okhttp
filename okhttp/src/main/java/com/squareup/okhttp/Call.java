@@ -266,7 +266,7 @@ public final class Call {
     while (true) {
       if (canceled) {
         engine.releaseConnection();
-        return null;
+        throw new IOException("Canceled");
       }
 
       try {
