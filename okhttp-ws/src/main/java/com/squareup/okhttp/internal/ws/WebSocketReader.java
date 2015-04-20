@@ -89,7 +89,7 @@ public final class WebSocketReader {
    * <ul>
    * <li>If it is a control frame this will result in a single call to {@link FrameCallback}.</li>
    * <li>If it is a message frame this will result in a single call to {@link
-   * WebSocketListener#onMessage}. If the message spans multiple frames, each interleaved control
+   * FrameCallback#onMessage}. If the message spans multiple frames, each interleaved control
    * frame will result in a corresponding call to {@link FrameCallback}.
    * </ul>
    */
@@ -185,14 +185,21 @@ public final class WebSocketReader {
         int code = 0;
         String reason = "";
         if (buffer != null) {
+          if (buffer.size() < 2) {
+            throw new ProtocolException("Close payload must be at least two bytes.");
+          }
           code = buffer.readShort();
+          if (code < 1000 || code >= 5000) {
+            throw new ProtocolException("Code must be in range [1000,5000): " + code);
+          }
+
           reason = buffer.readUtf8();
         }
         frameCallback.onClose(code, reason);
         closed = true;
         break;
       default:
-        throw new IllegalStateException("Unknown control opcode: " + toHexString(opcode));
+        throw new ProtocolException("Unknown control opcode: " + toHexString(opcode));
     }
   }
 
@@ -206,7 +213,7 @@ public final class WebSocketReader {
         type = PayloadType.BINARY;
         break;
       default:
-        throw new IllegalStateException("Unknown opcode: " + toHexString(opcode));
+        throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
     }
 
     messageClosed = false;

@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownServiceException;
 import java.util.List;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
 /**
  * The sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection. May be
@@ -207,6 +209,16 @@ public final class Connection {
    */
   public Socket getSocket() {
     return socket;
+  }
+
+  BufferedSource rawSource() {
+    if (httpConnection == null) throw new UnsupportedOperationException();
+    return httpConnection.rawSource();
+  }
+
+  BufferedSink rawSink() {
+    if (httpConnection == null) throw new UnsupportedOperationException();
+    return httpConnection.rawSink();
   }
 
   /** Returns true if this connection is alive. */

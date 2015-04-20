@@ -257,6 +257,14 @@ public final class HttpConnection {
     return new UnknownLengthSource();
   }
 
+  public BufferedSink rawSink() {
+    return sink;
+  }
+
+  public BufferedSource rawSource() {
+    return source;
+  }
+
   /** An HTTP body with a fixed length known in advance. */
   private final class FixedLengthSink implements Sink {
     private boolean closed;
