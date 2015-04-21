@@ -93,12 +93,12 @@ public final class WebSocketWriter {
    * @param code Status code as defined by
    * <a href="http://tools.ietf.org/html/rfc6455#section-7.4">Section 7.4 of RFC 6455</a> or
    * {@code 0}.
-   * @param reason Reason for shutting down or {@code null}. {@code code} is required if set.
+   * @param reason Reason for shutting down or {@code null}.
    */
   public void writeClose(int code, String reason) throws IOException {
     Buffer payload = null;
-    if (code != 0) {
-      if (code < 1000 || code >= 5000) {
+    if (code != 0 || reason != null) {
+      if (code != 0 && (code < 1000 || code >= 5000)) {
         throw new IllegalArgumentException("Code must be in range [1000,5000).");
       }
       payload = new Buffer();
@@ -106,8 +106,6 @@ public final class WebSocketWriter {
       if (reason != null) {
         payload.writeUtf8(reason);
       }
-    } else if (reason != null) {
-      throw new IllegalArgumentException("Code required to include reason.");
     }
 
     synchronized (sink) {

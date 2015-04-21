@@ -39,6 +39,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
 /**
  * Configures and creates HTTP connections. Most applications can use a single
@@ -133,6 +135,14 @@ public final class OkHttpClient implements Cloneable {
 
       @Override public Connection callEngineGetConnection(Call call) {
         return call.engine.getConnection();
+      }
+
+      @Override public BufferedSource connectionRawSource(Connection connection) {
+        return connection.rawSource();
+      }
+
+      @Override public BufferedSink connectionRawSink(Connection connection) {
+        return connection.rawSink();
       }
 
       @Override public void connectionSetOwner(Connection connection, Object owner) {

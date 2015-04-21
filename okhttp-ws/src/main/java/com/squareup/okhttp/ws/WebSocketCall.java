@@ -28,7 +28,6 @@ import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.net.Socket;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
@@ -38,7 +37,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
-import okio.Okio;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -174,12 +172,16 @@ public final class WebSocketCall {
       throw new IllegalStateException("Unable to take ownership of connection.");
     }
 
-    Socket socket = connection.getSocket();
-    BufferedSource source = Okio.buffer(Okio.source(socket));
-    BufferedSink sink = Okio.buffer(Okio.sink(socket));
+    BufferedSource source = Internal.instance.connectionRawSource(connection);
+    BufferedSink sink = Internal.instance.connectionRawSink(connection);
 
     final RealWebSocket webSocket =
         ConnectionWebSocket.create(response, connection, source, sink, random, listener);
+
+    // TODO connection.setOwner(webSocket);
+    Internal.instance.connectionSetOwner(connection, webSocket);
+
+    listener.onOpen(webSocket, request, response);
 
     // Start a dedicated thread for reading the web socket.
     new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
@@ -188,11 +190,6 @@ public final class WebSocketCall {
         }
       }
     }).start();
-
-    // TODO connection.setOwner(webSocket);
-    Internal.instance.connectionSetOwner(connection, webSocket);
-
-    listener.onOpen(webSocket, request, response);
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.

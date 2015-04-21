@@ -206,12 +206,8 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void closeWithOnlyReasonThrows() throws IOException {
-    try {
-      clientWriter.writeClose(0, "Hello");
-      fail();
-    } catch (IllegalArgumentException e) {
-      assertEquals("Code required to include reason.", e.getMessage());
-    }
+    clientWriter.writeClose(0, "Hello");
+    assertData("888760b420bb60b468de0cd84f");
   }
 
   @Test public void closeCodeOutOfRangeThrows() throws IOException {

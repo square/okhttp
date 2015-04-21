@@ -30,6 +30,8 @@ import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
 /**
  * Escalate internal APIs in {@code com.squareup.okhttp} so they can be used
@@ -85,5 +87,7 @@ public abstract class Internal {
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
   public abstract void callEngineReleaseConnection(Call call) throws IOException;
   public abstract Connection callEngineGetConnection(Call call);
+  public abstract BufferedSource connectionRawSource(Connection connection);
+  public abstract BufferedSink connectionRawSink(Connection connection);
   public abstract void connectionSetOwner(Connection connection, Object owner);
 }
