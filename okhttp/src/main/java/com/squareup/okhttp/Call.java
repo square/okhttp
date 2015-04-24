@@ -33,7 +33,7 @@ import static com.squareup.okhttp.internal.http.HttpEngine.MAX_FOLLOW_UPS;
  * canceled. As this object represents a single request/response pair (stream),
  * it cannot be executed twice.
  */
-public final class Call {
+public class Call {
   private final OkHttpClient client;
 
   // Guarded by this.

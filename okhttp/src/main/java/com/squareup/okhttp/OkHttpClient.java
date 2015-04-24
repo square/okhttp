@@ -53,7 +53,7 @@ import okio.BufferedSource;
  * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
  * safely modified with further configuration changes.
  */
-public final class OkHttpClient implements Cloneable {
+public class OkHttpClient implements Cloneable {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
