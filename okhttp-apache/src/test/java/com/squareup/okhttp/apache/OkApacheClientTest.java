@@ -121,11 +121,19 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse());
     final HttpPost post = new HttpPost(server.getUrl("/").toURI());
     client.execute(post);
+    
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
   }
   @Test public void putEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
     final HttpPut put = new HttpPut(server.getUrl("/").toURI());
     client.execute(put);
+    
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
   }
 
   @Test public void postOverrideContentType() throws Exception {
