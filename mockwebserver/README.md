@@ -140,12 +140,7 @@ server.setDispatcher(dispatcher);
 
 ### Download
 
-The best way to get MockWebServer is via Gradle:
-```groovy
-testCompile 'com.squareup.okhttp:mockwebserver:(insert latest version)'
-```
-
-or via Maven 
+Get MockWebServer via Maven:
 ```xml
 <dependency>
   <groupId>com.squareup.okhttp</groupId>
@@ -153,6 +148,11 @@ or via Maven
   <version>(insert latest version)</version>
   <scope>test</scope>
 </dependency>
+```
+
+or via Gradle 
+```groovy
+testCompile 'com.squareup.okhttp:mockwebserver:(insert latest version)'
 ```
 
 ### License
