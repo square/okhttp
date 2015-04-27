@@ -125,7 +125,7 @@ final Dispatcher dispatcher = new Dispatcher() {
     public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
 
         if (request.getPath().equals("/v1/login/auth/")){
-            return new MockResponse().setResponseCode(200));
+            return new MockResponse().setResponseCode(200);
         } else if (request.getPath().equals("v1/check/version/")){
             return new MockResponse().setResponseCode(200).setBody("version=9");
         } else if (request.getPath().equals("/v1/profile/info")) {
@@ -140,8 +140,12 @@ server.setDispatcher(dispatcher);
 
 ### Download
 
-The best way to get MockWebServer is via Maven:
+The best way to get MockWebServer is via Gradle:
+```groovy
+testCompile 'com.squareup.okhttp:mockwebserver:(insert latest version)'
+```
 
+or via Maven 
 ```xml
 <dependency>
   <groupId>com.squareup.okhttp</groupId>
