@@ -65,6 +65,8 @@ public abstract class Internal {
 
   public abstract void addLenient(Headers.Builder builder, String line);
 
+  public abstract void addLenient(Headers.Builder builder, String name, String value);
+
   public abstract void setCache(OkHttpClient client, InternalCache internalCache);
 
   public abstract InternalCache internalCache(OkHttpClient client);

@@ -66,7 +66,11 @@ public class AndroidShimResponseCache extends ResponseCache {
   }
 
   @Override public CacheRequest put(URI uri, URLConnection urlConnection) throws IOException {
-    Response okResponse = JavaApiConverter.createOkResponse(uri, urlConnection);
+    Response okResponse = JavaApiConverter.createOkResponseForCachePut(uri, urlConnection);
+    if (okResponse == null) {
+      // The URLConnection is not cacheable or could not be converted. Stop.
+      return null;
+    }
     com.squareup.okhttp.internal.http.CacheRequest okCacheRequest =
         delegate.internalCache.put(okResponse);
     if (okCacheRequest == null) {

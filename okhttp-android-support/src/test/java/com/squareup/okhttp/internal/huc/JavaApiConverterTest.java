@@ -18,16 +18,13 @@ package com.squareup.okhttp.internal.huc;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
-import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,7 +34,6 @@ import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.net.SecureCacheResponse;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -51,14 +47,10 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSession;
 import okio.Buffer;
 import okio.BufferedSource;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -68,7 +60,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -102,109 +93,13 @@ public class JavaApiConverterTest {
       + "fl2WRY8hb4x+zRrwsFaLEpdEvqcjOQ==\n"
       + "-----END CERTIFICATE-----");
 
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    public boolean verify(String hostname, SSLSession session) {
-      return true;
-    }
-  };
-
   @Rule public MockWebServerRule server = new MockWebServerRule();
 
-  private OkHttpClient client;
-
-  private HttpURLConnection connection;
-
   @Before public void setUp() throws Exception {
-    client = new OkHttpClient();
+    Internal.initializeInstanceForTests();
   }
 
-  @After public void tearDown() throws Exception {
-    if (connection != null) {
-      connection.disconnect();
-    }
-  }
-
-  @Test public void createOkResponse_fromOkHttpUrlConnection() throws Exception {
-    testCreateOkResponseInternal(new OkHttpURLConnectionFactory(client), false /* isSecure */);
-  }
-
-  @Test public void createOkResponse_fromJavaHttpUrlConnection() throws Exception {
-    testCreateOkResponseInternal(new JavaHttpURLConnectionFactory(), false /* isSecure */);
-  }
-
-  @Test public void createOkResponse_fromOkHttpsUrlConnection() throws Exception {
-    testCreateOkResponseInternal(new OkHttpURLConnectionFactory(client), true /* isSecure */);
-  }
-
-  @Test public void createOkResponse_fromJavaHttpsUrlConnection() throws Exception {
-    testCreateOkResponseInternal(new JavaHttpURLConnectionFactory(), true /* isSecure */);
-  }
-
-  private void testCreateOkResponseInternal(HttpURLConnectionFactory httpUrlConnectionFactory,
-      boolean isSecure) throws Exception {
-    String statusLine = "HTTP/1.1 200 Fantastic";
-    String body = "Nothing happens";
-    final URL serverUrl;
-    MockResponse mockResponse = new MockResponse()
-        .setStatus(statusLine)
-        .addHeader("xyzzy", "baz")
-        .setBody(body);
-    if (isSecure) {
-      serverUrl = configureHttpsServer(
-          mockResponse);
-
-      assertEquals("https", serverUrl.getProtocol());
-    } else {
-      serverUrl = configureServer(
-          mockResponse);
-      assertEquals("http", serverUrl.getProtocol());
-    }
-
-    connection = httpUrlConnectionFactory.open(serverUrl);
-    if (isSecure) {
-      HttpsURLConnection httpsUrlConnection = (HttpsURLConnection) connection;
-      httpsUrlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
-      httpsUrlConnection.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    }
-    connection.setRequestProperty("snake", "bird");
-    connection.connect();
-    Response response = JavaApiConverter.createOkResponse(serverUrl.toURI(), connection);
-
-    // Check the response.request()
-    Request request = response.request();
-    assertEquals(isSecure, request.isHttps());
-    assertEquals(serverUrl.toURI(), request.uri());
-    assertNull(request.body());
-    Headers okRequestHeaders = request.headers();
-    // In Java the request headers are unavailable for a connected HttpURLConnection.
-    assertEquals(0, okRequestHeaders.size());
-    assertEquals("GET", request.method());
-
-    // Check the response
-    assertEquals(Protocol.HTTP_1_1, response.protocol());
-    assertEquals(200, response.code());
-    assertEquals("Fantastic", response.message());
-    Headers okResponseHeaders = response.headers();
-    assertEquals("baz", okResponseHeaders.get("xyzzy"));
-    if (isSecure) {
-      Handshake handshake = response.handshake();
-      assertNotNull(handshake);
-      HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
-      assertNotNullAndEquals(httpsURLConnection.getCipherSuite(), handshake.cipherSuite());
-      assertEquals(httpsURLConnection.getLocalPrincipal(), handshake.localPrincipal());
-      assertNotNullAndEquals(httpsURLConnection.getPeerPrincipal(), handshake.peerPrincipal());
-      assertNotNull(httpsURLConnection.getServerCertificates());
-      assertEquals(Arrays.asList(httpsURLConnection.getServerCertificates()),
-          handshake.peerCertificates());
-      assertNull(httpsURLConnection.getLocalCertificates());
-    } else {
-      assertNull(response.handshake());
-    }
-    assertEquals(body, response.body().string());
-  }
-
-  @Test public void createOkResponse_fromCacheResponse() throws Exception {
+  @Test public void createOkResponseForCacheGet() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
     URI uri = new URI("http://foo/bar");
     Request request = new Request.Builder().url(uri.toURL()).build();
@@ -221,8 +116,11 @@ public class JavaApiConverterTest {
       }
     };
 
-    Response response = JavaApiConverter.createOkResponse(request, cacheResponse);
-    assertSame(request, response.request());
+    Response response = JavaApiConverter.createOkResponseForCacheGet(request, cacheResponse);
+    Request cacheRequest = response.request();
+    assertEquals(request.url(), cacheRequest.url());
+    assertEquals(request.method(), cacheRequest.method());
+    assertEquals(0, request.headers().size());
 
     assertEquals(Protocol.HTTP_1_1, response.protocol());
     assertEquals(200, response.code());
@@ -234,7 +132,7 @@ public class JavaApiConverterTest {
   }
 
   /** Test for https://code.google.com/p/android/issues/detail?id=160522 */
-  @Test public void createOkResponse_fromCacheResponseWithMissingStatusLine() throws Exception {
+  @Test public void createOkResponseForCacheGet_withMissingStatusLine() throws Exception {
     URI uri = new URI("http://foo/bar");
     Request request = new Request.Builder().url(uri.toURL()).build();
     CacheResponse cacheResponse = new CacheResponse() {
@@ -251,13 +149,13 @@ public class JavaApiConverterTest {
     };
 
     try {
-      JavaApiConverter.createOkResponse(request, cacheResponse);
+      JavaApiConverter.createOkResponseForCacheGet(request, cacheResponse);
       fail();
     } catch (IOException expected) {
     }
   }
 
-  @Test public void createOkResponse_fromSecureCacheResponse() throws Exception {
+  @Test public void createOkResponseForCacheGet_secure() throws Exception {
     final String statusLine = "HTTP/1.1 200 Fantastic";
     final Principal localPrincipal = LOCAL_CERT.getSubjectX500Principal();
     final List<Certificate> localCertificates = Arrays.<Certificate>asList(LOCAL_CERT);
@@ -298,8 +196,11 @@ public class JavaApiConverterTest {
       }
     };
 
-    Response response = JavaApiConverter.createOkResponse(request, cacheResponse);
-    assertSame(request, response.request());
+    Response response = JavaApiConverter.createOkResponseForCacheGet(request, cacheResponse);
+    Request cacheRequest = response.request();
+    assertEquals(request.url(), cacheRequest.url());
+    assertEquals(request.method(), cacheRequest.method());
+    assertEquals(0, request.headers().size());
 
     assertEquals(Protocol.HTTP_1_1, response.protocol());
     assertEquals(200, response.code());
@@ -364,7 +265,8 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_requestChangesForbidden() throws Exception {
     Response okResponse = createArbitraryOkResponse();
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
     // Check an arbitrary (not complete) set of methods that can be used to modify the
     // request.
     try {
@@ -396,7 +298,8 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_connectionChangesForbidden() throws Exception {
     Response okResponse = createArbitraryOkResponse();
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
     try {
       httpUrlConnection.connect();
       fail();
@@ -411,7 +314,8 @@ public class JavaApiConverterTest {
 
   @Test public void createJavaUrlConnection_responseChangesForbidden() throws Exception {
     Response okResponse = createArbitraryOkResponse();
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
     // Check an arbitrary (not complete) set of methods that can be used to access the response
     // body.
     try {
@@ -455,7 +359,8 @@ public class JavaApiConverterTest {
         .body(responseBody)
         .build();
 
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
     assertEquals(200, httpUrlConnection.getResponseCode());
     assertEquals("Fantastic", httpUrlConnection.getResponseMessage());
     assertEquals(responseBody.contentLength(), httpUrlConnection.getContentLength());
@@ -530,7 +435,8 @@ public class JavaApiConverterTest {
         .get()
         .build();
     Response okResponse = createArbitraryOkResponse(okRequest);
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
 
     assertEquals("GET", httpUrlConnection.getRequestMethod());
     assertTrue(httpUrlConnection.getDoInput());
@@ -542,7 +448,8 @@ public class JavaApiConverterTest {
         .post(createRequestBody("PostBody"))
         .build();
     Response okResponse = createArbitraryOkResponse(okRequest);
-    HttpURLConnection httpUrlConnection = JavaApiConverter.createJavaUrlConnection(okResponse);
+    HttpURLConnection httpUrlConnection =
+        JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
 
     assertEquals("POST", httpUrlConnection.getRequestMethod());
     assertTrue(httpUrlConnection.getDoInput());
@@ -560,7 +467,7 @@ public class JavaApiConverterTest {
         .handshake(handshake)
         .build();
     HttpsURLConnection httpsUrlConnection =
-        (HttpsURLConnection) JavaApiConverter.createJavaUrlConnection(okResponse);
+        (HttpsURLConnection) JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
 
     assertEquals("SecureCipher", httpsUrlConnection.getCipherSuite());
     assertEquals(SERVER_CERT.getSubjectX500Principal(), httpsUrlConnection.getPeerPrincipal());
@@ -576,7 +483,7 @@ public class JavaApiConverterTest {
         .build();
     Response okResponse = createArbitraryOkResponse(okRequest);
     HttpsURLConnection httpsUrlConnection =
-        (HttpsURLConnection) JavaApiConverter.createJavaUrlConnection(okResponse);
+        (HttpsURLConnection) JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
 
     try {
       httpsUrlConnection.getHostnameVerifier();
@@ -707,42 +614,9 @@ public class JavaApiConverterTest {
     }
   }
 
-  private URL configureServer(MockResponse mockResponse) throws Exception {
-    server.enqueue(mockResponse);
-    return server.getUrl("/");
-  }
-
-  private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false /* tunnelProxy */);
-    server.enqueue(mockResponse);
-    return server.getUrl("/");
-  }
-
   private static <T> void assertNotNullAndEquals(T expected, T actual) {
     assertNotNull(actual);
     assertEquals(expected, actual);
-  }
-
-  private interface HttpURLConnectionFactory {
-    public HttpURLConnection open(URL serverUrl) throws IOException;
-  }
-
-  private static class OkHttpURLConnectionFactory implements HttpURLConnectionFactory {
-    protected final OkHttpClient client;
-
-    private OkHttpURLConnectionFactory(OkHttpClient client) {
-      this.client = client;
-    }
-
-    @Override public HttpURLConnection open(URL serverUrl) {
-      return new OkUrlFactory(client).open(serverUrl);
-    }
-  }
-
-  private static class JavaHttpURLConnectionFactory implements HttpURLConnectionFactory {
-    @Override public HttpURLConnection open(URL serverUrl) throws IOException {
-      return (HttpURLConnection) serverUrl.openConnection();
-    }
   }
 
   private static X509Certificate certificate(String certificate) {
@@ -755,6 +629,7 @@ public class JavaApiConverterTest {
     }
   }
 
+  @SafeVarargs
   private static <T> Set<T> newSet(T... elements) {
     return newSet(Arrays.asList(elements));
   }

@@ -95,6 +95,10 @@ public class OkHttpClient implements Cloneable {
         builder.addLenient(line);
       }
 
+      @Override public void addLenient(Headers.Builder builder, String name, String value) {
+        builder.addLenient(name, value);
+      }
+
       @Override public void setCache(OkHttpClient client, InternalCache internalCache) {
         client.setInternalCache(internalCache);
       }
