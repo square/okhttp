@@ -100,6 +100,13 @@ import static java.util.Collections.unmodifiableList;
  * complexity and limit your ability to migrate between certificate authorities.
  * Do not use certificate pinning without the blessing of your server's TLS
  * administrator!
+ *
+ * <h4>Note about self-signed certificates</h4>
+ * {@link CertificatePinner} can not be used to pin self-signed certificate
+ * if such certificate is not accepted by {@link javax.net.ssl.TrustManager}.
+ *
+ * @see <a href="https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning">
+ *     OWASP: Certificate and Public Key Pinning</a>
  */
 public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
