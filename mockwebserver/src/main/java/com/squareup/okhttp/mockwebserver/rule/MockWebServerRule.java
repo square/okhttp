@@ -34,13 +34,22 @@ public class MockWebServerRule extends ExternalResource {
   private static final Logger logger = Logger.getLogger(MockWebServerRule.class.getName());
 
   private final MockWebServer server = new MockWebServer();
+  private final int port;
   private boolean started;
+
+  public MockWebServerRule() {
+    port = 0;
+  }
+
+  public MockWebServerRule(final int port) {
+    this.port = port;
+  }
 
   @Override protected void before() {
     if (started) return;
     started = true;
     try {
-      server.start();
+      server.start(port);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
