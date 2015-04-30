@@ -22,6 +22,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.HttpMethod;
@@ -41,6 +42,7 @@ import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -60,17 +62,35 @@ public final class JavaApiConverter {
 
   /**
    * Creates an OkHttp {@link Response} using the supplied {@link URI} and {@link URLConnection}
-   * to supply the data. The URLConnection is assumed to already be connected.
+   * to supply the data. The URLConnection is assumed to already be connected. If this method
+   * returns {@code null} the response is uncacheable.
    */
-  public static Response createOkResponse(URI uri, URLConnection urlConnection) throws IOException {
+  public static Response createOkResponseForCachePut(URI uri, URLConnection urlConnection)
+      throws IOException {
+
     HttpURLConnection httpUrlConnection = (HttpURLConnection) urlConnection;
 
     Response.Builder okResponseBuilder = new Response.Builder();
 
     // Request: Create one from the URL connection.
-    // A connected HttpURLConnection does not permit access to request headers.
-    Map<String, List<String>> requestHeaders = null;
-    Request okRequest = createOkRequest(uri, httpUrlConnection.getRequestMethod(), requestHeaders);
+    Headers responseHeaders = createHeaders(urlConnection.getHeaderFields());
+    // Some request headers are needed for Vary caching.
+    Headers varyHeaders = varyHeaders(urlConnection, responseHeaders);
+    if (varyHeaders == null) {
+      return null;
+    }
+
+    // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
+    String requestMethod = httpUrlConnection.getRequestMethod();
+    RequestBody placeholderBody = HttpMethod.requiresRequestBody(requestMethod)
+        ? EMPTY_REQUEST_BODY
+        : null;
+
+    Request okRequest = new Request.Builder()
+        .url(uri.toString())
+        .method(requestMethod, placeholderBody)
+        .headers(varyHeaders)
+        .build();
     okResponseBuilder.request(okRequest);
 
     // Status line
@@ -78,6 +98,10 @@ public final class JavaApiConverter {
     okResponseBuilder.protocol(statusLine.protocol);
     okResponseBuilder.code(statusLine.code);
     okResponseBuilder.message(statusLine.message);
+
+    // A network response is required for the Cache to find any Vary headers it needs.
+    Response networkResponse = okResponseBuilder.build();
+    okResponseBuilder.networkResponse(networkResponse);
 
     // Response headers
     Headers okHeaders = extractOkResponseHeaders(httpUrlConnection);
@@ -110,15 +134,91 @@ public final class JavaApiConverter {
   }
 
   /**
+   * Returns headers for the header names and values in the {@link Map}.
+   */
+  private static Headers createHeaders(Map<String, List<String>> headers) {
+    Headers.Builder builder = new Headers.Builder();
+    for (Map.Entry<String, List<String>> header : headers.entrySet()) {
+      if (header.getKey() == null || header.getValue() == null) {
+        continue;
+      }
+      String name = header.getKey().trim();
+      for (String value : header.getValue()) {
+        String trimmedValue = value.trim();
+        Internal.instance.addLenient(builder, name, trimmedValue);
+      }
+    }
+    return builder.build();
+  }
+
+  private static Headers varyHeaders(URLConnection urlConnection, Headers responseHeaders) {
+    if (OkHeaders.hasVaryAll(responseHeaders)) {
+      // "*" means that this will be treated as uncacheable anyway.
+      return null;
+    }
+    Set<String> varyFields = OkHeaders.varyFields(responseHeaders);
+    if (varyFields.isEmpty()) {
+      return new Headers.Builder().build();
+    }
+
+    // This probably indicates another HTTP stack is trying to use the shared ResponseCache.
+    // We cannot guarantee this case will work properly because we cannot reliably extract *all*
+    // the request header values, and we can't get multiple Vary request header values.
+    // We also can't be sure about the Accept-Encoding behavior of other stacks.
+    if (!(urlConnection instanceof CacheHttpURLConnection
+        || urlConnection instanceof CacheHttpsURLConnection)) {
+      return null;
+    }
+
+    // This is the case we expect: The URLConnection is from a call to
+    // JavaApiConverter.createJavaUrlConnection() and we have access to the user's request headers.
+    Map<String, List<String>> requestProperties = urlConnection.getRequestProperties();
+    Headers.Builder result = new Headers.Builder();
+    for (String fieldName : varyFields) {
+      List<String> fieldValues = requestProperties.get(fieldName);
+      if (fieldValues == null) {
+        if (fieldName.equals("Accept-Encoding")) {
+          // Accept-Encoding is special. If OkHttp sees Accept-Encoding is unset it will add
+          // "gzip". We don't have access to the request that was actually made so we must do the
+          // same.
+          result.add("Accept-Encoding", "gzip");
+        }
+      } else {
+        for (String fieldValue : fieldValues) {
+          Internal.instance.addLenient(result, fieldName, fieldValue);
+        }
+      }
+    }
+    return result.build();
+  }
+
+  /**
    * Creates an OkHttp {@link Response} using the supplied {@link Request} and {@link CacheResponse}
    * to supply the data.
    */
-  static Response createOkResponse(Request request, CacheResponse javaResponse)
+  static Response createOkResponseForCacheGet(Request request, CacheResponse javaResponse)
       throws IOException {
+
+    // Build a cache request for the response to use.
+    Headers responseHeaders = createHeaders(javaResponse.getHeaders());
+    Headers varyHeaders;
+    if (OkHeaders.hasVaryAll(responseHeaders)) {
+      // "*" means that this will be treated as uncacheable anyway.
+      varyHeaders = new Headers.Builder().build();
+    } else {
+      varyHeaders = OkHeaders.varyHeaders(request.headers(), responseHeaders);
+    }
+
+    Request cacheRequest = new Request.Builder()
+        .url(request.url())
+        .method(request.method(), null)
+        .headers(varyHeaders)
+        .build();
+
     Response.Builder okResponseBuilder = new Response.Builder();
 
-    // Request: Use the one provided.
-    okResponseBuilder.request(request);
+    // Request: Use the cacheRequest we built.
+    okResponseBuilder.request(cacheRequest);
 
     // Status line: Java has this as one of the headers.
     StatusLine statusLine = StatusLine.parse(extractStatusLine(javaResponse));
@@ -275,7 +375,7 @@ public final class JavaApiConverter {
    * Creates an {@link java.net.HttpURLConnection} of the correct subclass from the supplied OkHttp
    * {@link Response}.
    */
-  static HttpURLConnection createJavaUrlConnection(Response okResponse) {
+  static HttpURLConnection createJavaUrlConnectionForCachePut(Response okResponse) {
     Request request = okResponse.request();
     // Create an object of the correct class in case the ResponseCache uses instanceof.
     if (request.isHttps()) {
@@ -327,7 +427,7 @@ public final class JavaApiConverter {
         continue;
       }
       for (String value : javaHeader.getValue()) {
-        okHeadersBuilder.add(name, value);
+        Internal.instance.addLenient(okHeadersBuilder, name, value);
       }
     }
     return okHeadersBuilder.build();
@@ -482,9 +582,11 @@ public final class JavaApiConverter {
 
     @Override
     public Map<String, List<String>> getRequestProperties() {
-      // This is to preserve RI and compatibility with OkHttp's HttpURLConnectionImpl. There seems
-      // no good reason why this should fail while getRequestProperty() is ok.
-      throw throwRequestHeaderAccessException();
+      // The RI and OkHttp's HttpURLConnectionImpl fail this call after connect() as required by the
+      // spec. There seems no good reason why this should fail while getRequestProperty() is ok.
+      // We don't fail here, because we need all request header values for caching Vary responses
+      // correctly.
+      return OkHeaders.toMultimap(request.headers(), null);
     }
 
     @Override
