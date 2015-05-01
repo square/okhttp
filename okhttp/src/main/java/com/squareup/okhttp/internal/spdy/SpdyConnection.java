@@ -578,7 +578,7 @@ public final class SpdyConnection implements Closeable {
         }
         connectionErrorCode = ErrorCode.NO_ERROR;
         streamErrorCode = ErrorCode.CANCEL;
-      } catch (IOException e) {
+      } catch (RuntimeException | IOException e) {
         connectionErrorCode = ErrorCode.PROTOCOL_ERROR;
         streamErrorCode = ErrorCode.PROTOCOL_ERROR;
       } finally {
@@ -643,8 +643,11 @@ public final class SpdyConnection implements Closeable {
             @Override public void execute() {
               try {
                 handler.receive(newStream);
-              } catch (IOException e) {
-                throw new RuntimeException(e);
+              } catch (RuntimeException | IOException e) {
+                try {
+                  newStream.close(ErrorCode.PROTOCOL_ERROR);
+                } catch (IOException ignored) {
+                }
               }
             }
           });
