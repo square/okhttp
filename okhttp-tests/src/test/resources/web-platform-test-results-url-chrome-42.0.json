@@ -1,0 +1,1341 @@
+{
+  "results": [
+    {
+      "test": "/url/a-element.html",
+      "subtests": [
+        {
+          "name": "Loading data…",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example\t.\norg> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://user:pass@foo:21/bar;par?b#c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:foo.com> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <\t   :foo.com   \n> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: < foo.com  > against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <a:\t foo.com> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:21/ b ? d # e > against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:0/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:00000000000000/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:00000000000000000000080/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:b/c> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://f: /c> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://f:\n/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://f:fifty-two/c> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: scheme expected \"http:\" but got \":\""
+        },
+        {
+          "name": "Parsing: <http://f: 21 / b ? d # e > against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <  \t> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:foo.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:foo.com\\> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:a> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:\\> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:#> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <#> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <#/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <#\\> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <#;?> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <?> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <:23> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </:23> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <::> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <::23> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo://> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://a:b@c:29/d> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http::@c:29> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://&a:foo(b]c@d:2/> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://&a:foo(b]c@d:2/\" but got \"http://&a:foo(b%5Dc@d:2/\""
+        },
+        {
+          "name": "Parsing: <http://::@c@d:2> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://::%40c@d:2/\" but got \"http://:%3A%40c@d:2/\""
+        },
+        {
+          "name": "Parsing: <http://foo.com:b@d/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo.com/\\@> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:\\\\foo.com\\> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:\\\\a\\b:c\\d@foo.com\\> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo:/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo:/bar.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo://///////> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo://///////bar.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <foo:////://///> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <c:/foo> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <//foo/bar> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo/path;a??e#f#g> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo/abcd?efgh?ijkl> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo/abcd#foo?bar> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <[61:24:74]:98> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:[61:27]/:foo> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://[1::2]:3:4> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://2001::1> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://2001::1]> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://2001::1]\" but got \"http://2001::1]/\""
+        },
+        {
+          "name": "Parsing: <http://2001::1]:80> against <http://example.org/foo/bar>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://2001::1]:80\" but got \"http://2001::1]/\""
+        },
+        {
+          "name": "Parsing: <http://[2001::1]> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://[2001::1]:80> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <https:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <madeupscheme:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftps:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <javascript:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <mailto:/example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <https:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <madeupscheme:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftps:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <javascript:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <mailto:example.com/> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </a/b/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </a/ /c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </a%2fc> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </a/%2f/c> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <#β> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:text/html,test#test> against <http://example.org/foo/bar>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:c:\\foo\\bar.html> against <file:///tmp/mock/path>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/c:/foo/bar.html\" but got \"/tmp/mock/c:/foo/bar.html\""
+        },
+        {
+          "name": "Parsing: <  File:c|////foo\\bar.html> against <file:///tmp/mock/path>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/c:////foo/bar.html\" but got \"/tmp/mock/c%7C////foo/bar.html\""
+        },
+        {
+          "name": "Parsing: <C|/foo/bar> against <file:///tmp/mock/path>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/C:/foo/bar\" but got \"/tmp/mock/C%7C/foo/bar\""
+        },
+        {
+          "name": "Parsing: </C|\\foo\\bar> against <file:///tmp/mock/path>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/C:/foo/bar\" but got \"/C%7C/foo/bar\""
+        },
+        {
+          "name": "Parsing: <//C|/foo/bar> against <file:///tmp/mock/path>",
+          "status": "FAIL",
+          "message": "assert_equals: host expected \"\" but got \"c%7C\""
+        },
+        {
+          "name": "Parsing: <//server/file> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <\\\\server\\file> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </\\server/file> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:///foo/bar.txt> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:///home/me> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <//> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <///> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <///test> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file://test> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file://localhost> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file://localhost/> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file://localhost/test> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <test> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:test> against <file:///tmp/mock/path>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/././foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/./.foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/.> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/./> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar/..> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar/../> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/..bar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar/../ton> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar/../ton/../../a> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/../../..> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/../../../ton> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/%2e> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/%2e%2> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/foo/%2e%2\" but got \"/foo/.%2\""
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/%2e.bar\" but got \"/..bar\""
+        },
+        {
+          "name": "Parsing: <http://example.com////../..> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar//../..> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo/bar//..> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/%20foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%2> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%2zbar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%2Â©zbar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%41%7a> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/foo%41%7a\" but got \"/fooAz\""
+        },
+        {
+          "name": "Parsing: <http://example.com/foo\t%91> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo%00%51> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: scheme expected \"http:\" but got \":\""
+        },
+        {
+          "name": "Parsing: <http://example.com/(%28:%3A%29)> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/%3A%3a%3C%3c> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/foo\tbar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com\\\\foo\\\\bar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/@asdf%40> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/你好你好> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/‥/foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/﻿/foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example.com/‮/foo/‭/bar> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www.google.com/foo?bar=baz#> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www.google.com/foo?bar=baz# »> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:test# »> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: hash expected \"# »\" but got \"# %C2%BB\""
+        },
+        {
+          "name": "Parsing: <http://[www.google.com]/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www.google.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://192.0x00A80001> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www/foo%2Ehtml> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: path expected \"/foo%2Ehtml\" but got \"/foo.html\""
+        },
+        {
+          "name": "Parsing: <http://www/foo/%2E/html> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://user:pass@/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://%25DOMAIN:foobar@foodomain.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:\\\\www.google.com\\foo> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo:81/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <httpa://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://foo:-80/> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <https://foo:443/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <https://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp://foo:21/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher://foo:70/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher://foo:443/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws://foo:81/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws://foo:443/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws://foo:815/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss://foo:80/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss://foo:81/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss://foo:443/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss://foo:815/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <https:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <madeupscheme:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <file:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftps:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <javascript:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <mailto:/example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftp:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <https:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <madeupscheme:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ftps:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <gopher:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <ws:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <wss:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <data:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <javascript:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <mailto:example.com/> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:a:b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/a:b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://a:b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://@pple.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http::b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/:b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://:b@www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:/:@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http:/:@/www.example.com\" but got \"http:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <http://user@/www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http:@/www.example.com\" but got \"http:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <http:/@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http:/@/www.example.com\" but got \"http:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <http://@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://@/www.example.com\" but got \"http:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <https:@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"https:@/www.example.com\" but got \"https:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <http:a:b@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http:a:b@/www.example.com\" but got \"http://a:b@/www.example.com\""
+        },
+        {
+          "name": "Parsing: <http:/a:b@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http:/a:b@/www.example.com\" but got \"http://a:b@/www.example.com\""
+        },
+        {
+          "name": "Parsing: <http://a:b@/www.example.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http::@/www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http::@/www.example.com\" but got \"http:///www.example.com\""
+        },
+        {
+          "name": "Parsing: <http:a:@www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://a:@www.example.com/\" but got \"http://a@www.example.com/\""
+        },
+        {
+          "name": "Parsing: <http:/a:@www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://a:@www.example.com/\" but got \"http://a@www.example.com/\""
+        },
+        {
+          "name": "Parsing: <http://a:@www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://a:@www.example.com/\" but got \"http://a@www.example.com/\""
+        },
+        {
+          "name": "Parsing: <http://www.@pple.com> against <about:blank>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http:@:www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http:/@:www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://@:www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: port expected \"\" but got \"0\""
+        },
+        {
+          "name": "Parsing: <http://:@www.example.com> against <about:blank>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://:@www.example.com/\" but got \"http://www.example.com/\""
+        },
+        {
+          "name": "Parsing: </> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: </test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <.> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <..> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <./test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <../test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <../aaa/test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <../../test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <中/test.txt> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www.example2.com> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <//www.example2.com> against <http://www.example.com/test>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://ExAmPlE.CoM> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://example example.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://Goo%20 goo%7C|.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://GOO 　goo.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://GOO​⁠﻿goo.com> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://www.foo。bar.com> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://﷐zyx.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://﷐zyx.com\" but got \"http://%EF%BF%BDzyx.com/\""
+        },
+        {
+          "name": "Parsing: <http://%ef%b7%90zyx.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://%ef%b7%90zyx.com\" but got \"http://%EF%BF%BDzyx.com/\""
+        },
+        {
+          "name": "Parsing: <http://Ｇｏ.com> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://％４１.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://%ef%bc%85%ef%bc%94%ef%bc%91.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://％００.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://％００.com\" but got \"http://%00.com/\""
+        },
+        {
+          "name": "Parsing: <http://%ef%bc%85%ef%bc%90%ef%bc%90.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://%ef%bc%85%ef%bc%90%ef%bc%90.com\" but got \"http://%00.com/\""
+        },
+        {
+          "name": "Parsing: <http://你好你好> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://%zz%66%a.com> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://%zz%66%a.com\" but got \"http://%25zzf%25a.com/\""
+        },
+        {
+          "name": "Parsing: <http://%25> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://%25\" but got \"http://%25/\""
+        },
+        {
+          "name": "Parsing: <http://hello%00> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://hello%00\" but got \"http://hello%00/\""
+        },
+        {
+          "name": "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01%2e> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: host expected \"0xc0.0250.01.\" but got \"192.168.0.1\""
+        },
+        {
+          "name": "Parsing: <http://192.168.0.257> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://192.168.0.257\" but got \"http://192.168.0.257/\""
+        },
+        {
+          "name": "Parsing: <http://%3g%78%63%30%2e%30%32%35%30%2E.01> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://%3g%78%63%30%2e%30%32%35%30%2E.01\" but got \"http://%253gxc0.0250..01/\""
+        },
+        {
+          "name": "Parsing: <http://192.168.0.1 hello> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_unreached: Expected URL to fail parsing Reached unreachable code"
+        },
+        {
+          "name": "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <http://[google.com]> against <http://other.com/>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"http://[google.com]\" but got \"http://[google.com]/\""
+        },
+        {
+          "name": "Parsing: <http://foo:💩@example.com/bar> against <http://other.com/>",
+          "status": "PASS",
+          "message": null
+        },
+        {
+          "name": "Parsing: <x> against <test:test>",
+          "status": "FAIL",
+          "message": "assert_equals: href expected \"x\" but got \"\""
+        }
+      ],
+      "status": "OK",
+      "message": null
+    }
+  ]
+}
