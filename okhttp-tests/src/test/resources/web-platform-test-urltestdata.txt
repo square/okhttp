@@ -1,0 +1,342 @@
+# FORMAT NOT DOCUMENTED YET (parser is urltestparser.js)
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/segments.js
+http://example\t.\norg http://example.org/foo/bar s:http h:example.org p:/
+http://user:pass@foo:21/bar;par?b#c  s:http u:user pass:pass h:foo port:21 p:/bar;par q:?b f:#c
+http:foo.com  s:http h:example.org p:/foo/foo.com
+\t\s\s\s:foo.com\s\s\s\n  s:http h:example.org p:/foo/:foo.com
+\sfoo.com\s\s  s:http h:example.org p:/foo/foo.com
+a:\t\sfoo.com  s:a p:\sfoo.com
+http://f:21/\sb\s?\sd\s#\se\s  s:http h:f port:21 p:/%20b%20 q:?%20d%20 f:#\se
+http://f:/c  s:http h:f p:/c
+http://f:0/c  s:http h:f port:0 p:/c
+http://f:00000000000000/c  s:http h:f port:0 p:/c
+http://f:00000000000000000000080/c  s:http h:f p:/c
+http://f:b/c
+http://f:\s/c
+http://f:\n/c  s:http h:f p:/c
+http://f:fifty-two/c
+http://f:999999/c  s:http h:f port:999999 p:/c
+http://f:\s21\s/\sb\s?\sd\s#\se\s
+  s:http h:example.org p:/foo/bar
+\s\s\t  s:http h:example.org p:/foo/bar
+:foo.com/  s:http h:example.org p:/foo/:foo.com/
+:foo.com\\  s:http h:example.org p:/foo/:foo.com/
+:  s:http h:example.org p:/foo/:
+:a  s:http h:example.org p:/foo/:a
+:/  s:http h:example.org p:/foo/:/
+:\\  s:http h:example.org p:/foo/:/
+:#  s:http h:example.org p:/foo/: f:#
+\#  s:http h:example.org p:/foo/bar f:#
+\#/  s:http h:example.org p:/foo/bar f:#/
+\#\\  s:http h:example.org p:/foo/bar f:#\\
+\#;?  s:http h:example.org p:/foo/bar f:#;?
+?  s:http h:example.org p:/foo/bar q:?
+/  s:http h:example.org p:/
+:23  s:http h:example.org p:/foo/:23
+/:23  s:http h:example.org p:/:23
+::  s:http h:example.org p:/foo/::
+::23  s:http h:example.org p:/foo/::23
+foo://  s:foo p://
+http://a:b@c:29/d  s:http u:a pass:b h:c port:29 p:/d
+http::@c:29  s:http h:example.org p:/foo/:@c:29
+http://&a:foo(b]c@d:2/  s:http u:&a pass:foo(b]c h:d port:2 p:/
+http://::@c@d:2  s:http pass::%40c h:d port:2 p:/
+http://foo.com:b@d/  s:http u:foo.com pass:b h:d p:/
+http://foo.com/\\@  s:http h:foo.com p://@
+http:\\\\foo.com\\  s:http h:foo.com p:/
+http:\\\\a\\b:c\\d@foo.com\\  s:http h:a p:/b:c/d@foo.com/
+foo:/  s:foo p:/
+foo:/bar.com/  s:foo p:/bar.com/
+foo://///////  s:foo p://///////
+foo://///////bar.com/  s:foo p://///////bar.com/
+foo:////://///  s:foo p:////://///
+c:/foo  s:c p:/foo
+//foo/bar  s:http h:foo p:/bar
+http://foo/path;a??e#f#g  s:http h:foo p:/path;a q:??e f:#f#g
+http://foo/abcd?efgh?ijkl  s:http h:foo p:/abcd q:?efgh?ijkl
+http://foo/abcd#foo?bar  s:http h:foo p:/abcd f:#foo?bar
+[61:24:74]:98  s:http h:example.org p:/foo/[61:24:74]:98
+http:[61:27]/:foo  s:http h:example.org p:/foo/[61:27]/:foo
+http://[1::2]:3:4
+http://2001::1
+http://2001::1]
+http://2001::1]:80
+http://[2001::1]  s:http h:[2001::1] p:/
+http://[2001::1]:80  s:http h:[2001::1] p:/
+http:/example.com/  s:http h:example.org p:/example.com/
+ftp:/example.com/  s:ftp h:example.com p:/
+https:/example.com/  s:https h:example.com p:/
+madeupscheme:/example.com/  s:madeupscheme p:/example.com/
+file:/example.com/  s:file p:/example.com/
+ftps:/example.com/  s:ftps p:/example.com/
+gopher:/example.com/  s:gopher h:example.com p:/
+ws:/example.com/  s:ws h:example.com p:/
+wss:/example.com/  s:wss h:example.com p:/
+data:/example.com/  s:data p:/example.com/
+javascript:/example.com/  s:javascript p:/example.com/
+mailto:/example.com/  s:mailto p:/example.com/
+http:example.com/  s:http h:example.org p:/foo/example.com/
+ftp:example.com/  s:ftp h:example.com p:/
+https:example.com/  s:https h:example.com p:/
+madeupscheme:example.com/  s:madeupscheme p:example.com/
+ftps:example.com/  s:ftps p:example.com/
+gopher:example.com/  s:gopher h:example.com p:/
+ws:example.com/  s:ws h:example.com p:/
+wss:example.com/  s:wss h:example.com p:/
+data:example.com/  s:data p:example.com/
+javascript:example.com/  s:javascript p:example.com/
+mailto:example.com/  s:mailto p:example.com/
+/a/b/c  s:http h:example.org p:/a/b/c
+/a/\s/c  s:http h:example.org p:/a/%20/c
+/a%2fc  s:http h:example.org p:/a%2fc
+/a/%2f/c  s:http h:example.org p:/a/%2f/c
+\#\u03B2  s:http h:example.org p:/foo/bar f:#\u03B2
+data:text/html,test#test  s:data p:text/html,test f:#test
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html
+
+# Basic canonicalization, uppercase should be converted to lowercase
+file:c:\\foo\\bar.html file:///tmp/mock/path s:file p:/c:/foo/bar.html
+
+# Spaces should fail
+\s\sFile:c|////foo\\bar.html  s:file p:/c:////foo/bar.html
+
+# This should fail
+C|/foo/bar  s:file p:/C:/foo/bar
+
+# This should fail
+/C|\\foo\\bar  s:file p:/C:/foo/bar
+//C|/foo/bar  s:file p:/C:/foo/bar
+//server/file  s:file h:server p:/file
+\\\\server\\file  s:file h:server p:/file
+/\\server/file  s:file h:server p:/file
+file:///foo/bar.txt  s:file p:/foo/bar.txt
+file:///home/me  s:file p:/home/me
+//  s:file p:/
+///  s:file p:/
+///test  s:file p:/test
+file://test  s:file h:test p:/
+file://localhost  s:file h:localhost p:/
+file://localhost/  s:file h:localhost p:/
+file://localhost/test  s:file h:localhost p:/test
+test  s:file p:/tmp/mock/test
+file:test  s:file p:/tmp/mock/test
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/path.js
+http://example.com/././foo about:blank s:http h:example.com p:/foo
+http://example.com/./.foo  s:http h:example.com p:/.foo
+http://example.com/foo/.  s:http h:example.com p:/foo/
+http://example.com/foo/./  s:http h:example.com p:/foo/
+http://example.com/foo/bar/..  s:http h:example.com p:/foo/
+http://example.com/foo/bar/../  s:http h:example.com p:/foo/
+http://example.com/foo/..bar  s:http h:example.com p:/foo/..bar
+http://example.com/foo/bar/../ton  s:http h:example.com p:/foo/ton
+http://example.com/foo/bar/../ton/../../a  s:http h:example.com p:/a
+http://example.com/foo/../../..  s:http h:example.com p:/
+http://example.com/foo/../../../ton  s:http h:example.com p:/ton
+http://example.com/foo/%2e  s:http h:example.com p:/foo/
+http://example.com/foo/%2e%2  s:http h:example.com p:/foo/%2e%2
+http://example.com/foo/%2e./%2e%2e/.%2e/%2e.bar  s:http h:example.com p:/%2e.bar
+http://example.com////../..  s:http h:example.com p://
+http://example.com/foo/bar//../..  s:http h:example.com p:/foo/
+http://example.com/foo/bar//..  s:http h:example.com p:/foo/bar/
+http://example.com/foo  s:http h:example.com p:/foo
+http://example.com/%20foo  s:http h:example.com p:/%20foo
+http://example.com/foo%  s:http h:example.com p:/foo%
+http://example.com/foo%2  s:http h:example.com p:/foo%2
+http://example.com/foo%2zbar  s:http h:example.com p:/foo%2zbar
+http://example.com/foo%2\u00C2\u00A9zbar  s:http h:example.com p:/foo%2%C3%82%C2%A9zbar
+http://example.com/foo%41%7a  s:http h:example.com p:/foo%41%7a
+http://example.com/foo\t\u0091%91  s:http h:example.com p:/foo%C2%91%91
+http://example.com/foo%00%51  s:http h:example.com p:/foo%00%51
+http://example.com/(%28:%3A%29)  s:http h:example.com p:/(%28:%3A%29)
+http://example.com/%3A%3a%3C%3c  s:http h:example.com p:/%3A%3a%3C%3c
+http://example.com/foo\tbar  s:http h:example.com p:/foobar
+http://example.com\\\\foo\\\\bar  s:http h:example.com p://foo//bar
+http://example.com/%7Ffp3%3Eju%3Dduvgw%3Dd  s:http h:example.com p:/%7Ffp3%3Eju%3Dduvgw%3Dd
+http://example.com/@asdf%40  s:http h:example.com p:/@asdf%40
+http://example.com/\u4F60\u597D\u4F60\u597D  s:http h:example.com p:/%E4%BD%A0%E5%A5%BD%E4%BD%A0%E5%A5%BD
+http://example.com/\u2025/foo  s:http h:example.com p:/%E2%80%A5/foo
+http://example.com/\uFEFF/foo  s:http h:example.com p:/%EF%BB%BF/foo
+http://example.com/\u202E/foo/\u202D/bar  s:http h:example.com p:/%E2%80%AE/foo/%E2%80%AD/bar
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/script-tests/relative.js
+http://www.google.com/foo?bar=baz# about:blank s:http h:www.google.com p:/foo q:?bar=baz f:#
+http://www.google.com/foo?bar=baz#\s\u00BB  s:http h:www.google.com p:/foo q:?bar=baz f:#\s\u00BB
+data:test#\s\u00BB  s:data p:test f:#\s\u00BB
+http://[www.google.com]/
+http://www.google.com  s:http h:www.google.com p:/
+http://192.0x00A80001  s:http h:192.168.0.1 p:/
+http://www/foo%2Ehtml  s:http h:www p:/foo%2Ehtml
+http://www/foo/%2E/html  s:http h:www p:/foo/html
+http://user:pass@/
+http://%25DOMAIN:foobar@foodomain.com/  s:http u:%25DOMAIN pass:foobar h:foodomain.com p:/
+http:\\\\www.google.com\\foo  s:http h:www.google.com p:/foo
+http://foo:80/  s:http h:foo p:/
+http://foo:81/  s:http h:foo port:81 p:/
+httpa://foo:80/  s:httpa p://foo:80/
+http://foo:-80/
+https://foo:443/  s:https h:foo p:/
+https://foo:80/  s:https h:foo port:80 p:/
+ftp://foo:21/  s:ftp h:foo p:/
+ftp://foo:80/  s:ftp h:foo port:80 p:/
+gopher://foo:70/  s:gopher h:foo p:/
+gopher://foo:443/  s:gopher h:foo port:443 p:/
+ws://foo:80/  s:ws h:foo p:/
+ws://foo:81/  s:ws h:foo port:81 p:/
+ws://foo:443/  s:ws h:foo port:443 p:/
+ws://foo:815/  s:ws h:foo port:815 p:/
+wss://foo:80/  s:wss h:foo port:80 p:/
+wss://foo:81/  s:wss h:foo port:81 p:/
+wss://foo:443/  s:wss h:foo p:/
+wss://foo:815/  s:wss h:foo port:815 p:/
+http:/example.com/  s:http h:example.com p:/
+ftp:/example.com/  s:ftp h:example.com p:/
+https:/example.com/  s:https h:example.com p:/
+madeupscheme:/example.com/  s:madeupscheme p:/example.com/
+file:/example.com/  s:file p:/example.com/
+ftps:/example.com/  s:ftps p:/example.com/
+gopher:/example.com/  s:gopher h:example.com p:/
+ws:/example.com/  s:ws h:example.com p:/
+wss:/example.com/  s:wss h:example.com p:/
+data:/example.com/  s:data p:/example.com/
+javascript:/example.com/  s:javascript p:/example.com/
+mailto:/example.com/  s:mailto p:/example.com/
+http:example.com/  s:http h:example.com p:/
+ftp:example.com/  s:ftp h:example.com p:/
+https:example.com/  s:https h:example.com p:/
+madeupscheme:example.com/  s:madeupscheme p:example.com/
+ftps:example.com/  s:ftps p:example.com/
+gopher:example.com/  s:gopher h:example.com p:/
+ws:example.com/  s:ws h:example.com p:/
+wss:example.com/  s:wss h:example.com p:/
+data:example.com/  s:data p:example.com/
+javascript:example.com/  s:javascript p:example.com/
+mailto:example.com/  s:mailto p:example.com/
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/segments-userinfo-vs-host.html
+http:@www.example.com about:blank s:http h:www.example.com p:/
+http:/@www.example.com  s:http h:www.example.com p:/
+http://@www.example.com  s:http h:www.example.com p:/
+http:a:b@www.example.com  s:http u:a pass:b h:www.example.com p:/
+http:/a:b@www.example.com  s:http u:a pass:b h:www.example.com p:/
+http://a:b@www.example.com  s:http u:a pass:b h:www.example.com p:/
+http://@pple.com  s:http h:pple.com p:/
+http::b@www.example.com  s:http pass:b h:www.example.com p:/
+http:/:b@www.example.com  s:http pass:b h:www.example.com p:/
+http://:b@www.example.com  s:http pass:b h:www.example.com p:/
+http:/:@/www.example.com
+http://user@/www.example.com
+http:@/www.example.com
+http:/@/www.example.com
+http://@/www.example.com
+https:@/www.example.com
+http:a:b@/www.example.com
+http:/a:b@/www.example.com
+http://a:b@/www.example.com
+http::@/www.example.com
+http:a:@www.example.com  s:http u:a pass: h:www.example.com p:/
+http:/a:@www.example.com  s:http u:a pass: h:www.example.com p:/
+http://a:@www.example.com  s:http u:a pass: h:www.example.com p:/
+http://www.@pple.com  s:http u:www. h:pple.com p:/
+http:@:www.example.com
+http:/@:www.example.com
+http://@:www.example.com
+http://:@www.example.com  s:http pass: h:www.example.com p:/
+
+#Others
+/ http://www.example.com/test s:http h:www.example.com p:/
+/test.txt  s:http h:www.example.com p:/test.txt
+.  s:http h:www.example.com p:/
+..  s:http h:www.example.com p:/
+test.txt  s:http h:www.example.com p:/test.txt
+./test.txt  s:http h:www.example.com p:/test.txt
+../test.txt  s:http h:www.example.com p:/test.txt
+../aaa/test.txt  s:http h:www.example.com p:/aaa/test.txt
+../../test.txt  s:http h:www.example.com p:/test.txt
+\u4E2D/test.txt  s:http h:www.example.com p:/%E4%B8%AD/test.txt
+http://www.example2.com  s:http h:www.example2.com p:/
+//www.example2.com  s:http h:www.example2.com p:/
+
+# Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/host.html
+
+# Basic canonicalization, uppercase should be converted to lowercase
+http://ExAmPlE.CoM http://other.com/ s:http p:/ h:example.com
+
+# Spaces should fail
+http://example\sexample.com
+
+# This should fail
+http://Goo%20\sgoo%7C|.com
+
+# U+3000 is mapped to U+0020 (space) which is disallowed
+http://GOO\u00a0\u3000goo.com
+
+# Other types of space (no-break, zero-width, zero-width-no-break) are
+# name-prepped away to nothing.
+# U+200B, U+2060, and U+FEFF, are ignored
+http://GOO\u200b\u2060\ufeffgoo.com  s:http p:/ h:googoo.com
+
+# Ideographic full stop (full-width period for Chinese, etc.) should be
+# treated as a dot.
+# U+3002 is mapped to U+002E (dot)
+http://www.foo\u3002bar.com  s:http p:/ h:www.foo.bar.com
+
+# Invalid unicode characters should fail...
+# U+FDD0 is disallowed; %ef%b7%90 is U+FDD0
+http://\ufdd0zyx.com
+
+# ...This is the same as previous but escaped.
+http://%ef%b7%90zyx.com
+
+# Test name prepping, fullwidth input should be converted to ASCII and NOT
+# IDN-ized. This is "Go" in fullwidth UTF-8/UTF-16.
+http://\uff27\uff4f.com  s:http p:/ h:go.com
+
+# URL spec forbids the following.
+# https://www.w3.org/Bugs/Public/show_bug.cgi?id=24257
+http://\uff05\uff14\uff11.com
+http://%ef%bc%85%ef%bc%94%ef%bc%91.com
+
+# ...%00 in fullwidth should fail (also as escaped UTF-8 input)
+http://\uff05\uff10\uff10.com
+http://%ef%bc%85%ef%bc%90%ef%bc%90.com
+
+# Basic IDN support, UTF-8 and UTF-16 input should be converted to IDN
+http://\u4f60\u597d\u4f60\u597d  s:http p:/ h:xn--6qqa088eba
+
+# Invalid escaped characters should fail and the percents should be
+# escaped. https://www.w3.org/Bugs/Public/show_bug.cgi?id=24191
+http://%zz%66%a.com
+
+# If we get an invalid character that has been escaped.
+http://%25
+http://hello%00
+
+# Escaped numbers should be treated like IP addresses if they are.
+# No special handling for IPv4 or IPv4-like URLs
+http://%30%78%63%30%2e%30%32%35%30.01  s:http p:/ h:192.168.0.1
+http://%30%78%63%30%2e%30%32%35%30.01%2e  s:http p:/ h:0xc0.0250.01.
+http://192.168.0.257
+
+# Invalid escaping should trigger the regular host error handling.
+http://%3g%78%63%30%2e%30%32%35%30%2E.01
+
+# Something that isn't exactly an IP should get treated as a host and
+# spaces escaped.
+http://192.168.0.1\shello
+
+# Fullwidth and escaped UTF-8 fullwidth should still be treated as IP.
+# These are "0Xc0.0250.01" in fullwidth.
+http://\uff10\uff38\uff43\uff10\uff0e\uff10\uff12\uff15\uff10\uff0e\uff10\uff11  s:http p:/ h:192.168.0.1
+
+# Broken IPv6
+http://[google.com]
+
+# Misc Unicode
+http://foo:\uD83D\uDCA9@example.com/bar  s:http h:example.com p:/bar u:foo pass:%F0%9F%92%A9
+
+# resolving a relative reference against an unknown scheme results in an error
+x test:test
+
