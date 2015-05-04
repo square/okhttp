@@ -20,16 +20,18 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore // HttpUrl isn't implemented yet.
 public final class HttpUrlTest {
   @Test public void parseTrimsAsciiWhitespace() throws Exception {
     HttpUrl expected = HttpUrl.parse("http://host/");
     assertEquals(expected, HttpUrl.parse("http://host/\f\n\t \r")); // Leading.
     assertEquals(expected, HttpUrl.parse("\r\n\f \thttp://host/")); // Trailing.
     assertEquals(expected, HttpUrl.parse(" http://host/ ")); // Both.
+    assertEquals(expected, HttpUrl.parse("    http://host/    ")); // Both.
+    assertEquals(expected, HttpUrl.parse("http://host/").resolve("   "));
+    assertEquals(expected, HttpUrl.parse("http://host/").resolve("  .  "));
   }
 
-  @Ignore // Need to define expected results.
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void parseDoesNotTrimOtherWhitespaceCharacters() throws Exception {
     // Whitespace characters list from Google's Guava team: http://goo.gl/IcR9RD
     assertEquals(null, HttpUrl.parse("http://host/\u000b")); // line tabulation
@@ -176,7 +178,7 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://user@host/path"), HttpUrl.parse("http://user@host/path"));
   }
 
-  @Ignore // Different from Firefox and Chrome.
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void authorityWithMultipleAtSigns() throws Exception {
     assertEquals(HttpUrl.parse("http://foo%40bar@baz/path"),
         HttpUrl.parse("http://foo@bar@baz/path"));
@@ -191,21 +193,31 @@ public final class HttpUrlTest {
         HttpUrl.parse("http://username:@host/path"));
   }
 
-  @Ignore // Different from Firefox and Chrome.
   @Test public void passwordWithEmptyUsername() throws Exception {
     // Chrome doesn't mind, but Firefox rejects URLs with empty usernames and non-empty passwords.
     assertEquals(HttpUrl.parse("http://host/path"), HttpUrl.parse("http://:@host/path"));
-    assertEquals(HttpUrl.parse("http://:password@@host/path"),
-        HttpUrl.parse("http://:password@host/path"));
+    assertEquals("password%40", HttpUrl.parse("http://:password@@host/path").password());
   }
 
-  @Ignore // Different from Firefox and Chrome.
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void unprintableCharactersArePercentEncoded() throws Exception {
-    assertEquals("%00", HttpUrl.parse("http://host/\u0000").pathSegments().get(0));
-    assertEquals("%08", HttpUrl.parse("http://host/\u0008").pathSegments().get(0));
-    assertEquals("%EF%BF%BD", HttpUrl.parse("http://host/\ufffd").pathSegments().get(0));
+    assertEquals("/%00", HttpUrl.parse("http://host/\u0000").path());
+    assertEquals("/%08", HttpUrl.parse("http://host/\u0008").path());
+    assertEquals("/%EF%BF%BD", HttpUrl.parse("http://host/\ufffd").path());
   }
 
+  @Test public void port() throws Exception {
+    assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("http://host:80/"));
+    assertEquals(HttpUrl.parse("http://host:99/"), HttpUrl.parse("http://host:99/"));
+    assertEquals(65535, HttpUrl.parse("http://host:65535/").port());
+    assertEquals(null, HttpUrl.parse("http://host:0/"));
+    assertEquals(null, HttpUrl.parse("http://host:65536/"));
+    assertEquals(null, HttpUrl.parse("http://host:-1/"));
+    assertEquals(null, HttpUrl.parse("http://host:a/"));
+    assertEquals(null, HttpUrl.parse("http://host:%39%39/"));
+  }
+
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void usernameCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(UrlComponentEncodingTester.Encoding.PERCENT, '[', ']', '{', '}', '|', '^')
@@ -213,6 +225,7 @@ public final class HttpUrlTest {
         .test(UrlComponentEncodingTester.Component.USER);
   }
 
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void passwordCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(UrlComponentEncodingTester.Encoding.PERCENT, '[', ']', '{', '}', '|', '^')
@@ -220,9 +233,45 @@ public final class HttpUrlTest {
         .test(UrlComponentEncodingTester.Component.PASSWORD);
   }
 
+  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void pathCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(UrlComponentEncodingTester.Encoding.SKIP, '.', '/', '\\')
         .test(UrlComponentEncodingTester.Component.PATH);
+  }
+
+  @Test public void relativePath() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals(HttpUrl.parse("http://host/a/b/d/e/f"), base.resolve("d/e/f"));
+    assertEquals(HttpUrl.parse("http://host/d/e/f"), base.resolve("../../d/e/f"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve(".."));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../.."));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../.."));
+    assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve("."));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("././.."));
+    assertEquals(HttpUrl.parse("http://host/a/b/c/"), base.resolve("c/d/../e/../"));
+    assertEquals(HttpUrl.parse("http://host/a/b/..e/"), base.resolve("..e/"));
+    assertEquals(HttpUrl.parse("http://host/a/b/e/f../"), base.resolve("e/f../"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("%2E."));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve(".%2E"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("%2E%2E"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("%2e."));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve(".%2e"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("%2e%2e"));
+    assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve("%2E"));
+    assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve("%2e"));
+  }
+
+  @Test public void pathWithBackslash() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals(HttpUrl.parse("http://host/a/b/d/e/f"), base.resolve("d\\e\\f"));
+    assertEquals(HttpUrl.parse("http://host/d/e/f"), base.resolve("../..\\d\\e\\f"));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("..\\.."));
+  }
+
+  @Test public void relativePathWithSameScheme() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals(HttpUrl.parse("http://host/a/b/d/e/f"), base.resolve("http:d/e/f"));
+    assertEquals(HttpUrl.parse("http://host/d/e/f"), base.resolve("http:../../d/e/f"));
   }
 }
