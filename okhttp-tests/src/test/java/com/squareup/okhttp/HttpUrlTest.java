@@ -15,7 +15,8 @@
  */
 package com.squareup.okhttp;
 
-import org.junit.Ignore;
+import com.squareup.okhttp.UrlComponentEncodingTester.Component;
+import com.squareup.okhttp.UrlComponentEncodingTester.Encoding;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,39 +32,38 @@ public final class HttpUrlTest {
     assertEquals(expected, HttpUrl.parse("http://host/").resolve("  .  "));
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void parseDoesNotTrimOtherWhitespaceCharacters() throws Exception {
     // Whitespace characters list from Google's Guava team: http://goo.gl/IcR9RD
-    assertEquals(null, HttpUrl.parse("http://host/\u000b")); // line tabulation
-    assertEquals(null, HttpUrl.parse("http://host/\u001c")); // information separator 4
-    assertEquals(null, HttpUrl.parse("http://host/\u001d")); // information separator 3
-    assertEquals(null, HttpUrl.parse("http://host/\u001e")); // information separator 2
-    assertEquals(null, HttpUrl.parse("http://host/\u001f")); // information separator 1
-    assertEquals(null, HttpUrl.parse("http://host/\u0085")); // next line
-    assertEquals(null, HttpUrl.parse("http://host/\u00a0")); // non-breaking space
-    assertEquals(null, HttpUrl.parse("http://host/\u1680")); // ogham space mark
-    assertEquals(null, HttpUrl.parse("http://host/\u180e")); // mongolian vowel separator
-    assertEquals(null, HttpUrl.parse("http://host/\u2000")); // en quad
-    assertEquals(null, HttpUrl.parse("http://host/\u2001")); // em quad
-    assertEquals(null, HttpUrl.parse("http://host/\u2002")); // en space
-    assertEquals(null, HttpUrl.parse("http://host/\u2003")); // em space
-    assertEquals(null, HttpUrl.parse("http://host/\u2004")); // three-per-em space
-    assertEquals(null, HttpUrl.parse("http://host/\u2005")); // four-per-em space
-    assertEquals(null, HttpUrl.parse("http://host/\u2006")); // six-per-em space
-    assertEquals(null, HttpUrl.parse("http://host/\u2007")); // figure space
-    assertEquals(null, HttpUrl.parse("http://host/\u2008")); // punctuation space
-    assertEquals(null, HttpUrl.parse("http://host/\u2009")); // thin space
-    assertEquals(null, HttpUrl.parse("http://host/\u200a")); // hair space
-    assertEquals(null, HttpUrl.parse("http://host/\u200b")); // zero-width space
-    assertEquals(null, HttpUrl.parse("http://host/\u200c")); // zero-width non-joiner
-    assertEquals(null, HttpUrl.parse("http://host/\u200d")); // zero-width joiner
-    assertEquals(null, HttpUrl.parse("http://host/\u200e")); // left-to-right mark
-    assertEquals(null, HttpUrl.parse("http://host/\u200f")); // right-to-left mark
-    assertEquals(null, HttpUrl.parse("http://host/\u2028")); // line separator
-    assertEquals(null, HttpUrl.parse("http://host/\u2029")); // paragraph separator
-    assertEquals(null, HttpUrl.parse("http://host/\u202f")); // narrow non-breaking space
-    assertEquals(null, HttpUrl.parse("http://host/\u205f")); // medium mathematical space
-    assertEquals(null, HttpUrl.parse("http://host/\u3000")); // ideographic space
+    assertEquals("/%0B", HttpUrl.parse("http://h/\u000b").path()); // line tabulation
+    assertEquals("/%1C", HttpUrl.parse("http://h/\u001c").path()); // information separator 4
+    assertEquals("/%1D", HttpUrl.parse("http://h/\u001d").path()); // information separator 3
+    assertEquals("/%1E", HttpUrl.parse("http://h/\u001e").path()); // information separator 2
+    assertEquals("/%1F", HttpUrl.parse("http://h/\u001f").path()); // information separator 1
+    assertEquals("/%C2%85", HttpUrl.parse("http://h/\u0085").path()); // next line
+    assertEquals("/%C2%A0", HttpUrl.parse("http://h/\u00a0").path()); // non-breaking space
+    assertEquals("/%E1%9A%80", HttpUrl.parse("http://h/\u1680").path()); // ogham space mark
+    assertEquals("/%E1%A0%8E", HttpUrl.parse("http://h/\u180e").path()); // mongolian vowel separator
+    assertEquals("/%E2%80%80", HttpUrl.parse("http://h/\u2000").path()); // en quad
+    assertEquals("/%E2%80%81", HttpUrl.parse("http://h/\u2001").path()); // em quad
+    assertEquals("/%E2%80%82", HttpUrl.parse("http://h/\u2002").path()); // en space
+    assertEquals("/%E2%80%83", HttpUrl.parse("http://h/\u2003").path()); // em space
+    assertEquals("/%E2%80%84", HttpUrl.parse("http://h/\u2004").path()); // three-per-em space
+    assertEquals("/%E2%80%85", HttpUrl.parse("http://h/\u2005").path()); // four-per-em space
+    assertEquals("/%E2%80%86", HttpUrl.parse("http://h/\u2006").path()); // six-per-em space
+    assertEquals("/%E2%80%87", HttpUrl.parse("http://h/\u2007").path()); // figure space
+    assertEquals("/%E2%80%88", HttpUrl.parse("http://h/\u2008").path()); // punctuation space
+    assertEquals("/%E2%80%89", HttpUrl.parse("http://h/\u2009").path()); // thin space
+    assertEquals("/%E2%80%8A", HttpUrl.parse("http://h/\u200a").path()); // hair space
+    assertEquals("/%E2%80%8B", HttpUrl.parse("http://h/\u200b").path()); // zero-width space
+    assertEquals("/%E2%80%8C", HttpUrl.parse("http://h/\u200c").path()); // zero-width non-joiner
+    assertEquals("/%E2%80%8D", HttpUrl.parse("http://h/\u200d").path()); // zero-width joiner
+    assertEquals("/%E2%80%8E", HttpUrl.parse("http://h/\u200e").path()); // left-to-right mark
+    assertEquals("/%E2%80%8F", HttpUrl.parse("http://h/\u200f").path()); // right-to-left mark
+    assertEquals("/%E2%80%A8", HttpUrl.parse("http://h/\u2028").path()); // line separator
+    assertEquals("/%E2%80%A9", HttpUrl.parse("http://h/\u2029").path()); // paragraph separator
+    assertEquals("/%E2%80%AF", HttpUrl.parse("http://h/\u202f").path()); // narrow non-breaking space
+    assertEquals("/%E2%81%9F", HttpUrl.parse("http://h/\u205f").path()); // medium mathematical space
+    assertEquals("/%E3%80%80", HttpUrl.parse("http://h/\u3000").path()); // ideographic space
   }
 
   @Test public void scheme() throws Exception {
@@ -178,7 +178,6 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://user@host/path"), HttpUrl.parse("http://user@host/path"));
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void authorityWithMultipleAtSigns() throws Exception {
     assertEquals(HttpUrl.parse("http://foo%40bar@baz/path"),
         HttpUrl.parse("http://foo@bar@baz/path"));
@@ -199,7 +198,6 @@ public final class HttpUrlTest {
     assertEquals("password%40", HttpUrl.parse("http://:password@@host/path").password());
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void unprintableCharactersArePercentEncoded() throws Exception {
     assertEquals("/%00", HttpUrl.parse("http://host/\u0000").path());
     assertEquals("/%08", HttpUrl.parse("http://host/\u0008").path());
@@ -217,27 +215,40 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("http://host:%39%39/"));
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void usernameCharacters() throws Exception {
     new UrlComponentEncodingTester()
-        .override(UrlComponentEncodingTester.Encoding.PERCENT, '[', ']', '{', '}', '|', '^')
-        .override(UrlComponentEncodingTester.Encoding.SKIP, ':', '@', '/', '\\')
-        .test(UrlComponentEncodingTester.Component.USER);
+        .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ';', '=', '@')
+        .override(Encoding.SKIP, ':', '/', '\\', '?', '#')
+        .test(Component.USER);
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void passwordCharacters() throws Exception {
     new UrlComponentEncodingTester()
-        .override(UrlComponentEncodingTester.Encoding.PERCENT, '[', ']', '{', '}', '|', '^')
-        .override(UrlComponentEncodingTester.Encoding.SKIP, '@', '/', '\\')
-        .test(UrlComponentEncodingTester.Component.PASSWORD);
+        .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ':', ';', '=', '@')
+        .override(Encoding.SKIP, '/', '\\', '?', '#')
+        .test(Component.PASSWORD);
   }
 
-  @Ignore // TODO(jwilson): implement character encoding.
   @Test public void pathCharacters() throws Exception {
     new UrlComponentEncodingTester()
-        .override(UrlComponentEncodingTester.Encoding.SKIP, '.', '/', '\\')
-        .test(UrlComponentEncodingTester.Component.PATH);
+        .override(Encoding.PERCENT, '^', '{', '}', '|')
+        .override(Encoding.SKIP, '\\', '?', '#')
+        .test(Component.PATH);
+  }
+
+  @Test public void queryCharacters() throws Exception {
+    new UrlComponentEncodingTester()
+        .override(Encoding.IDENTITY, '?', '`')
+        .override(Encoding.PERCENT, '\'')
+        .override(Encoding.SKIP, '#')
+        .test(Component.QUERY);
+  }
+
+  @Test public void fragmentCharacters() throws Exception {
+    new UrlComponentEncodingTester()
+        .override(Encoding.IDENTITY, ' ', '"', '#', '<', '>', '?', '`')
+        .test(Component.FRAGMENT);
+    // TODO(jwilson): don't percent-encode non-ASCII characters. (But do encode control characters!)
   }
 
   @Test public void relativePath() throws Exception {

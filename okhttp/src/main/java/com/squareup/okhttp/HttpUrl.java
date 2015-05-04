@@ -21,6 +21,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Set;
+import okio.Buffer;
 
 /**
  * A <a href="https://url.spec.whatwg.org/">URL</a> with an {@code http} or {@code https} scheme.
@@ -32,6 +33,9 @@ import java.util.Set;
  * TODO: discussion on this vs. java.net.URL vs. java.net.URI
  */
 public final class HttpUrl {
+  private static final char[] HEX_DIGITS =
+      { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+
   /** Either "http" or "https". */
   private final String scheme;
 
@@ -505,7 +509,7 @@ public final class HttpUrl {
           default:
             pathBuilder.append(base.path);
             pathBuilder.append('/'); // Because pop wants the input to end with '/'.
-            pop(pathBuilder);
+            pop();
             break;
         }
       }
@@ -520,15 +524,15 @@ public final class HttpUrl {
             || (segmentLength == 4 && input.regionMatches(true, pos, "%2e.", 0, 4))
             || (segmentLength == 4 && input.regionMatches(true, pos, ".%2e", 0, 4))
             || (segmentLength == 6 && input.regionMatches(true, pos, "%2e%2e", 0, 6))) {
-          pop(pathBuilder);
+          pop();
         } else if ((segmentLength == 1 && input.regionMatches(false, pos, ".", 0, 1))
             || (segmentLength == 3 && input.regionMatches(true, pos, "%2e", 0, 3))) {
           // Skip '.' path segments.
         } else if (pathSegmentDelimiterOffset < pathDelimiterOffset) {
-          pathBuilder.append(input, pos, pathSegmentDelimiterOffset);
+          pathSegment(input, pos, pathSegmentDelimiterOffset);
           pathBuilder.append('/');
         } else {
-          pathBuilder.append(input, pos, pathSegmentDelimiterOffset);
+          pathSegment(input, pos, pathSegmentDelimiterOffset);
         }
 
         pos = pathSegmentDelimiterOffset;
@@ -553,12 +557,12 @@ public final class HttpUrl {
     }
 
     /** Remove the last character '/' of path, plus all characters after the preceding '/'. */
-    private void pop(StringBuilder path) {
-      if (path.charAt(path.length() - 1) != '/') throw new IllegalStateException();
+    private void pop() {
+      if (pathBuilder.charAt(pathBuilder.length() - 1) != '/') throw new IllegalStateException();
 
-      for (int i = path.length() - 2; i >= 0; i--) {
-        if (path.charAt(i) == '/') {
-          path.delete(i + 1, path.length());
+      for (int i = pathBuilder.length() - 2; i >= 0; i--) {
+        if (pathBuilder.charAt(i) == '/') {
+          pathBuilder.delete(i + 1, pathBuilder.length());
           return;
         }
       }
@@ -661,21 +665,22 @@ public final class HttpUrl {
       return limit;
     }
 
-    private static String username(String input, int pos, int limit) {
-      return input.substring(pos, limit); // TODO: encode
+    private String username(String input, int pos, int limit) {
+      return encode(input, pos, limit, " \"';<=>@[]^`{}|");
     }
 
-    private static String password(String input, int pos, int limit) {
-      return pos < limit ? input.substring(pos, limit) : ""; // TODO: encode
+    private String password(String input, int pos, int limit) {
+      return encode(input, pos, limit, " \"':;<=>@[]\\^`{}|");
     }
 
     private static String host(String input, int pos, int limit) {
       return input.substring(pos, limit); // TODO: encode
     }
 
-    private static int port(String input, int pos, int limit) {
+    private int port(String input, int pos, int limit) {
       try {
-        int i = Integer.parseInt(input.substring(pos, limit));
+        String portString = encode(input, pos, limit, ""); // To skip '\n' etc.
+        int i = Integer.parseInt(portString);
         if (i > 0 && i <= 65535) return i;
         return -1;
       } catch (NumberFormatException e) {
@@ -683,12 +688,76 @@ public final class HttpUrl {
       }
     }
 
-    private static String query(String input, int pos, int limit) {
-      return input.substring(pos, limit); // TODO: encode
+    private void pathSegment(String input, int pos, int limit) {
+      encode(pathBuilder, input, pos, limit, " \"<>^`{}|");
     }
 
-    private static String fragment(String input, int pos, int limit) {
-      return input.substring(pos, limit); // TODO: encode
+    private String query(String input, int pos, int limit) {
+      return encode(input, pos, limit, " \"'<>");
+    }
+
+    private String fragment(String input, int pos, int limit) {
+      return encode(input, pos, limit, ""); // To skip '\n' etc.
+    }
+
+    /**
+     * Returns a substring of {@code input} on the range {@code [pos..limit)} with the following
+     * transformations:
+     * <ul>
+     *   <li>Tabs, newlines, form feeds and carriage returns are skipped.
+     *   <li>Characters in {@code encodeSet} are percent-encoded.
+     *   <li>Control characters and non-ASCII characters are percent-encoded.
+     *   <li>All other characters are copied without transformation.
+     * </ul>
+     */
+    private String encode(String input, int pos, int limit, String encodeSet) {
+      int codePoint;
+      for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+        codePoint = input.codePointAt(i);
+        if (codePoint < 0x20
+            || codePoint >= 0x7f
+            || encodeSet.indexOf(codePoint) != -1) {
+          // Slow path: the character at i requires encoding!
+          StringBuilder out = new StringBuilder();
+          out.append(input, pos, i);
+          encode(out, input, i, limit, encodeSet);
+          return out.toString();
+        }
+      }
+
+      // Fast path: no characters in [pos..limit) required encoding.
+      return input.substring(pos, limit);
+    }
+
+    private void encode(StringBuilder out, String input, int pos, int limit, String encodeSet) {
+      Buffer utf8Buffer = null; // Lazily allocated.
+      int codePoint;
+      for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+        codePoint = input.codePointAt(i);
+        if (codePoint == '\t'
+            || codePoint == '\n'
+            || codePoint == '\f'
+            || codePoint == '\r') {
+          // Skip this character.
+        } else if (codePoint < 0x20
+            || codePoint >= 0x7f
+            || encodeSet.indexOf(codePoint) != -1) {
+          // Percent encode this character.
+          if (utf8Buffer == null) {
+            utf8Buffer = new Buffer();
+          }
+          utf8Buffer.writeUtf8CodePoint(codePoint);
+          while (!utf8Buffer.exhausted()) {
+            int b = utf8Buffer.readByte() & 0xff;
+            out.append('%');
+            out.append(HEX_DIGITS[(b >> 4) & 0xf]);
+            out.append(HEX_DIGITS[b & 0xf]);
+          }
+        } else {
+          // This character doesn't need encoding. Just copy it over.
+          out.append((char) codePoint);
+        }
+      }
     }
   }
 }

@@ -43,11 +43,11 @@ class UrlComponentEncodingTester {
     map.put(       0x6, Encoding.PERCENT); // Acknowledgment
     map.put(       0x7, Encoding.PERCENT); // Bell
     map.put((int) '\b', Encoding.PERCENT); // Backspace
-    map.put((int) '\t', Encoding.PERCENT); // Horizontal Tab
-    map.put((int) '\n', Encoding.PERCENT); // Line feed
+    map.put((int) '\t', Encoding.SKIP);    // Horizontal Tab
+    map.put((int) '\n', Encoding.SKIP);    // Line feed
     map.put(       0xb, Encoding.PERCENT); // Vertical Tab
-    map.put((int) '\f', Encoding.PERCENT); // Form feed
-    map.put((int) '\r', Encoding.PERCENT); // Carriage return
+    map.put((int) '\f', Encoding.SKIP);    // Form feed
+    map.put((int) '\r', Encoding.SKIP);    // Carriage return
     map.put(       0xe, Encoding.PERCENT); // Shift Out
     map.put(       0xf, Encoding.PERCENT); // Shift In
     map.put(      0x10, Encoding.PERCENT); // Data Link Escape
@@ -205,8 +205,10 @@ class UrlComponentEncodingTester {
     String identity = Encoding.IDENTITY.encode(codePoint);
     String urlString = component.urlString(identity);
     HttpUrl url = HttpUrl.parse(urlString);
-    if (!component.decodedValue(url).equals(encoded)) {
-      assertEquals(String.format("Encoding %s %#x using %s", component, codePoint, encoding),
+
+    String s = component.decodedValue(url);
+    if (!s.equals(encoded)) {
+      assertEquals(String.format("Encoding %s %#02x using %s", component, codePoint, encoding),
           encoded, component.decodedValue(url));
     }
   }
@@ -280,28 +282,31 @@ class UrlComponentEncodingTester {
     },
     PATH {
       @Override public String urlString(String value) {
-        return "http://example.com/" + value;
+        return "http://example.com/a" + value + "z/";
       }
       @Override public String decodedValue(HttpUrl url) {
-        return url.path().substring(1);
+        String path = url.path();
+        return path.substring(2, path.length() - 2);
       }
     },
     QUERY {
       @Override public String urlString(String value) {
-        throw new UnsupportedOperationException("TODO");
+        return "http://example.com/?a" + value + "z";
       }
 
       @Override public String decodedValue(HttpUrl url) {
-        throw new UnsupportedOperationException("TODO");
+        String query = url.query();
+        return query.substring(1, query.length() - 1);
       }
     },
     FRAGMENT {
       @Override public String urlString(String value) {
-        throw new UnsupportedOperationException("TODO");
+        return "http://example.com/#a" + value + "z";
       }
 
       @Override public String decodedValue(HttpUrl url) {
-        throw new UnsupportedOperationException("TODO");
+        String fragment = url.fragment();
+        return fragment.substring(1, fragment.length() - 1);
       }
     };
 
