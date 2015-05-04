@@ -17,6 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.UrlComponentEncodingTester.Component;
 import com.squareup.okhttp.UrlComponentEncodingTester.Encoding;
+import java.util.Arrays;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -284,5 +285,56 @@ public final class HttpUrlTest {
     HttpUrl base = HttpUrl.parse("http://host/a/b/c");
     assertEquals(HttpUrl.parse("http://host/a/b/d/e/f"), base.resolve("http:d/e/f"));
     assertEquals(HttpUrl.parse("http://host/d/e/f"), base.resolve("http:../../d/e/f"));
+  }
+
+  @Test public void decodeUsername() {
+    assertEquals("user", HttpUrl.parse("http://user@host/").decodeUsername());
+    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://%F0%9F%8D%A9@host/").decodeUsername());
+  }
+
+  @Test public void decodePassword() {
+    assertEquals("password", HttpUrl.parse("http://user:password@host/").decodePassword());
+    assertEquals(null, HttpUrl.parse("http://user:@host/").decodePassword());
+    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://user:%F0%9F%8D%A9@host/").decodePassword());
+  }
+
+  @Test public void decodeSlashCharacterInDecodedPathSegment() {
+    assertEquals(Arrays.asList("a/b/c"),
+        HttpUrl.parse("http://host/a%2Fb%2Fc").decodePathSegments());
+  }
+
+  @Test public void decodeEmptyPathSegments() {
+    assertEquals(Arrays.asList(""),
+        HttpUrl.parse("http://host/").decodePathSegments());
+  }
+
+  @Test public void percentDecode() throws Exception {
+    assertEquals(Arrays.asList("\u0000"),
+        HttpUrl.parse("http://host/%00").decodePathSegments());
+    assertEquals(Arrays.asList("a", "\u2603", "c"),
+        HttpUrl.parse("http://host/a/%E2%98%83/c").decodePathSegments());
+    assertEquals(Arrays.asList("a", "\uD83C\uDF69", "c"),
+        HttpUrl.parse("http://host/a/%F0%9F%8D%A9/c").decodePathSegments());
+    assertEquals(Arrays.asList("a", "b", "c"),
+        HttpUrl.parse("http://host/a/%62/c").decodePathSegments());
+    assertEquals(Arrays.asList("a", "z", "c"),
+        HttpUrl.parse("http://host/a/%7A/c").decodePathSegments());
+    assertEquals(Arrays.asList("a", "z", "c"),
+        HttpUrl.parse("http://host/a/%7a/c").decodePathSegments());
+  }
+
+  @Test public void malformedPercentEncoding() {
+    assertEquals(Arrays.asList("a%f", "b"),
+        HttpUrl.parse("http://host/a%f/b").decodePathSegments());
+    assertEquals(Arrays.asList("%", "b"),
+        HttpUrl.parse("http://host/%/b").decodePathSegments());
+    assertEquals(Arrays.asList("%"),
+        HttpUrl.parse("http://host/%").decodePathSegments());
+  }
+
+  @Test public void malformedUtf8Encoding() {
+    // Replace a partial UTF-8 sequence with the Unicode replacement character.
+    assertEquals(Arrays.asList("a", "\ufffdx", "c"),
+        HttpUrl.parse("http://host/a/%E2%98x/c").decodePathSegments());
   }
 }

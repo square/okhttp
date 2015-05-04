@@ -251,7 +251,7 @@ class UrlComponentEncodingTester {
         return "http://" + value + "@example.com/";
       }
       @Override public String decodedValue(HttpUrl url) {
-        return url.user();
+        return url.username();
       }
     },
     PASSWORD {

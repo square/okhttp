@@ -15,10 +15,12 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import okio.Buffer;
@@ -94,20 +96,22 @@ public final class HttpUrl {
     return scheme.equals("https");
   }
 
-  public String user() {
+  public String username() {
     return username;
   }
 
-  public String decodeUser() {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
+  public String decodeUsername() {
+    return decode(username, 0, username.length());
   }
 
+  /** Returns the encoded password if one is present; null otherwise. */
   public String password() {
     return password;
   }
 
+  /** Returns the decoded password if one is present; null otherwise. */
   public String decodePassword() {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
+    return password != null ? decode(password, 0, password.length()) : null;
   }
 
   /**
@@ -166,7 +170,16 @@ public final class HttpUrl {
   }
 
   public List<String> decodePathSegments() {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
+    List<String> result = new ArrayList<>();
+    int segmentStart = 1; // Path always starts with '/'.
+    for (int i = segmentStart; i < path.length(); i++) {
+      if (path.charAt(i) == '/') {
+        result.add(decode(path, segmentStart, i));
+        segmentStart = i + 1;
+      }
+    }
+    result.add(decode(path, segmentStart, path.length()));
+    return Util.immutableList(result);
   }
 
   /**
@@ -699,64 +712,103 @@ public final class HttpUrl {
     private String fragment(String input, int pos, int limit) {
       return encode(input, pos, limit, ""); // To skip '\n' etc.
     }
+  }
 
-    /**
-     * Returns a substring of {@code input} on the range {@code [pos..limit)} with the following
-     * transformations:
-     * <ul>
-     *   <li>Tabs, newlines, form feeds and carriage returns are skipped.
-     *   <li>Characters in {@code encodeSet} are percent-encoded.
-     *   <li>Control characters and non-ASCII characters are percent-encoded.
-     *   <li>All other characters are copied without transformation.
-     * </ul>
-     */
-    private String encode(String input, int pos, int limit, String encodeSet) {
-      int codePoint;
-      for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
-        codePoint = input.codePointAt(i);
-        if (codePoint < 0x20
-            || codePoint >= 0x7f
-            || encodeSet.indexOf(codePoint) != -1) {
-          // Slow path: the character at i requires encoding!
-          StringBuilder out = new StringBuilder();
-          out.append(input, pos, i);
-          encode(out, input, i, limit, encodeSet);
-          return out.toString();
-        }
+  private static String decode(String encoded, int pos, int limit) {
+    for (int i = pos; i < limit; i++) {
+      if (encoded.charAt(i) == '%') {
+        // Slow path: the character at i requires decoding!
+        Buffer out = new Buffer();
+        out.writeUtf8(encoded, pos, i);
+        return decode(out, encoded, i, limit);
       }
-
-      // Fast path: no characters in [pos..limit) required encoding.
-      return input.substring(pos, limit);
     }
 
-    private void encode(StringBuilder out, String input, int pos, int limit, String encodeSet) {
-      Buffer utf8Buffer = null; // Lazily allocated.
-      int codePoint;
-      for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
-        codePoint = input.codePointAt(i);
-        if (codePoint == '\t'
-            || codePoint == '\n'
-            || codePoint == '\f'
-            || codePoint == '\r') {
-          // Skip this character.
-        } else if (codePoint < 0x20
-            || codePoint >= 0x7f
-            || encodeSet.indexOf(codePoint) != -1) {
-          // Percent encode this character.
-          if (utf8Buffer == null) {
-            utf8Buffer = new Buffer();
-          }
-          utf8Buffer.writeUtf8CodePoint(codePoint);
-          while (!utf8Buffer.exhausted()) {
-            int b = utf8Buffer.readByte() & 0xff;
-            out.append('%');
-            out.append(HEX_DIGITS[(b >> 4) & 0xf]);
-            out.append(HEX_DIGITS[b & 0xf]);
-          }
-        } else {
-          // This character doesn't need encoding. Just copy it over.
-          out.append((char) codePoint);
+    // Fast path: no characters in [pos..limit) required decoding.
+    return encoded.substring(pos, limit);
+  }
+
+  private static String decode(Buffer out, String encoded, int pos, int limit) {
+    int codePoint;
+    for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+      codePoint = encoded.codePointAt(i);
+      if (codePoint == '%' && i + 2 < limit) {
+        int d1 = decodeHexDigit(encoded.charAt(i + 1));
+        int d2 = decodeHexDigit(encoded.charAt(i + 2));
+        if (d1 != -1 && d2 != -1) {
+          out.writeByte((d1 << 4) + d2);
+          i += 2;
+          continue;
         }
+      }
+      out.writeUtf8CodePoint(codePoint);
+    }
+    return out.readUtf8();
+  }
+
+  private static int decodeHexDigit(char c) {
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+  }
+
+  /**
+   * Returns a substring of {@code input} on the range {@code [pos..limit)} with the following
+   * transformations:
+   * <ul>
+   *   <li>Tabs, newlines, form feeds and carriage returns are skipped.
+   *   <li>Characters in {@code encodeSet} are percent-encoded.
+   *   <li>Control characters and non-ASCII characters are percent-encoded.
+   *   <li>All other characters are copied without transformation.
+   * </ul>
+   */
+  static String encode(String input, int pos, int limit, String encodeSet) {
+    int codePoint;
+    for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+      codePoint = input.codePointAt(i);
+      if (codePoint < 0x20
+          || codePoint >= 0x7f
+          || encodeSet.indexOf(codePoint) != -1) {
+        // Slow path: the character at i requires encoding!
+        StringBuilder out = new StringBuilder();
+        out.append(input, pos, i);
+        encode(out, input, i, limit, encodeSet);
+        return out.toString();
+      }
+    }
+
+    // Fast path: no characters in [pos..limit) required encoding.
+    return input.substring(pos, limit);
+  }
+
+  static void encode(StringBuilder out, String input, int pos, int limit, String encodeSet) {
+    Buffer utf8Buffer = null; // Lazily allocated.
+    int codePoint;
+    for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
+      codePoint = input.codePointAt(i);
+      if (codePoint == '\t'
+          || codePoint == '\n'
+          || codePoint == '\f'
+          || codePoint == '\r') {
+        // Skip this character.
+      } else if (codePoint < 0x20
+          || codePoint >= 0x7f
+          || encodeSet.indexOf(codePoint) != -1) {
+        // Percent encode this character.
+        if (utf8Buffer == null) {
+          utf8Buffer = new Buffer();
+        }
+        utf8Buffer.writeUtf8CodePoint(codePoint);
+        while (!utf8Buffer.exhausted()) {
+          int b = utf8Buffer.readByte() & 0xff;
+          out.append('%');
+          out.append(HEX_DIGITS[(b >> 4) & 0xf]);
+          out.append(HEX_DIGITS[b & 0xf]);
+        }
+      } else {
+        // This character doesn't need encoding. Just copy it over.
+        out.append((char) codePoint);
       }
     }
   }
