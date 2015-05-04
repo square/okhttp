@@ -80,8 +80,10 @@ public final class WebPlatformUrlTest {
 
   private static final List<String> JAVA_NET_URL_SCHEMES
       = Util.immutableList("file", "ftp", "http", "https", "mailto");
+  private static final List<String> HTTP_URL_SCHEMES
+      = Util.immutableList("http", "https");
 
-  /** Test how java.net.URL does against the web platform test suite. */
+  /** Test how {@link URL} does against the web platform test suite. */
   @Ignore // java.net.URL is broken. Not much we can do about that.
   @Test public void javaNetUrl() throws Exception {
     if (!testData.scheme.isEmpty() && !JAVA_NET_URL_SCHEMES.contains(testData.scheme)) {
@@ -125,6 +127,56 @@ public final class WebPlatformUrlTest {
       assertEquals("host", testData.host, url.getHost());
       assertEquals("port", testData.port, effectivePort);
       assertEquals("path", testData.path, url.getPath());
+      assertEquals("query", testData.query, effectiveQuery);
+      assertEquals("fragment", testData.fragment, effectiveFragment);
+    }
+  }
+
+  /** Test how {@link HttpUrl} does against the web platform test suite. */
+  @Ignore // TODO(jwilson): implement character encoding.
+  @Test public void httpUrl() throws Exception {
+    if (!testData.scheme.isEmpty() && !HTTP_URL_SCHEMES.contains(testData.scheme)) {
+      System.out.println("Ignoring unsupported scheme " + testData.scheme);
+      return;
+    }
+    if (!testData.base.startsWith("https:") && !testData.base.startsWith("http:")) {
+      System.out.println("Ignoring unsupported base " + testData.base);
+      return;
+    }
+
+    try {
+      testHttpUrl();
+    } catch (AssertionError e) {
+      if (tolerateFailure()) {
+        System.out.println("Tolerable failure: " + e.getMessage());
+        return;
+      }
+      throw e;
+    }
+  }
+
+  private void testHttpUrl() {
+    HttpUrl url;
+    if (testData.base.equals("about:blank")) {
+      url = HttpUrl.parse(testData.input);
+    } else {
+      HttpUrl baseUrl = HttpUrl.parse(testData.base);
+      url = baseUrl.resolve(testData.input);
+    }
+
+    if (testData.expectParseFailure()) {
+      assertNull("Expected URL to fail parsing", url);
+    } else {
+      assertNotNull("Expected URL to parse successfully, but was null", url);
+      String effectivePort = url.port() != HttpUrl.defaultPort(url.scheme())
+          ? Integer.toString(url.port())
+          : "";
+      String effectiveQuery = url.query() != null ? "?" + url.query() : "";
+      String effectiveFragment = url.fragment() != null ? "#" + url.fragment() : "";
+      assertEquals("scheme", testData.scheme, url.scheme());
+      assertEquals("host", testData.host, url.host());
+      assertEquals("port", testData.port, effectivePort);
+      assertEquals("path", testData.path, url.path());
       assertEquals("query", testData.query, effectiveQuery);
       assertEquals("fragment", testData.fragment, effectiveFragment);
     }

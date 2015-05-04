@@ -280,10 +280,10 @@ class UrlComponentEncodingTester {
     },
     PATH {
       @Override public String urlString(String value) {
-        return "http://example.com/" + value + "/";
+        return "http://example.com/" + value;
       }
       @Override public String decodedValue(HttpUrl url) {
-        return url.pathSegments().get(0);
+        return url.path().substring(1);
       }
     },
     QUERY {
