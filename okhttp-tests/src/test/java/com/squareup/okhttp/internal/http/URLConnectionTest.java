@@ -629,8 +629,9 @@ public final class URLConnectionTest {
 
     try {
       connection.getResponseCode();
-    } catch (IOException e) {
-      assertEquals(1, e.getSuppressed().length);
+      fail();
+    } catch (IOException expected) {
+      assertEquals(1, expected.getSuppressed().length);
     }
   }
 
