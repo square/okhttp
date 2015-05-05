@@ -384,7 +384,14 @@ public final class HttpUrl {
         url.append('@');
       }
 
-      url.append(host);
+      if (host.indexOf(':') != -1) {
+        // Host is an IPv6 address.
+        url.append('[');
+        url.append(host);
+        url.append(']');
+      } else {
+        url.append(host);
+      }
 
       int defaultPort = defaultPort(scheme);
       int effectivePort = port != -1 ? port : defaultPort;
@@ -481,7 +488,7 @@ public final class HttpUrl {
             case '?':
             case '#':
               // Host info precedes.
-              int portColonOffset = delimiterOffset(input, pos, componentDelimiterOffset, ":");
+              int portColonOffset = portColonOffset(input, pos, componentDelimiterOffset);
               if (portColonOffset + 1 < componentDelimiterOffset) {
                 this.host = host(input, pos, portColonOffset);
                 this.port = port(input, portColonOffset + 1, componentDelimiterOffset);
@@ -678,6 +685,22 @@ public final class HttpUrl {
       return limit;
     }
 
+    /** Finds the first ':' in {@code input}, skipping characters between square braces "[...]". */
+    private static int portColonOffset(String input, int pos, int limit) {
+      for (int i = pos; i < limit; i++) {
+        switch (input.charAt(i)) {
+          case '[':
+            while (++i < limit) {
+              if (input.charAt(i) == ']') break;
+            }
+            break;
+          case ':':
+            return i;
+        }
+      }
+      return limit; // No colon.
+    }
+
     private String username(String input, int pos, int limit) {
       return encode(input, pos, limit, " \"';<=>@[]^`{}|");
     }
@@ -687,7 +710,33 @@ public final class HttpUrl {
     }
 
     private static String host(String input, int pos, int limit) {
-      return input.substring(pos, limit); // TODO: encode
+      // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
+      // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
+      String percentDecoded = decode(input, pos, limit);
+
+      // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
+      if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
+        return decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1);
+      }
+
+      // Do IDN decoding. This converts {@code ☃.net} to {@code xn--n3h.net}.
+      String idnDecoded = domainToAscii(percentDecoded);
+
+      // Confirm that the decoded result doesn't contain any illegal characters.
+      int length = idnDecoded.length();
+      if (delimiterOffset(idnDecoded, 0, length, "\u0000\t\n\r #%/:?@[\\]") != length) {
+        return null;
+      }
+
+      return idnDecoded;
+    }
+
+    private static String decodeIpv6(String input, int pos, int limit) {
+      return input.substring(pos, limit); // TODO(jwilson) implement IPv6 decoding.
+    }
+
+    private static String domainToAscii(String input) {
+      return input; // TODO(jwilson): implement IDN decoding.
     }
 
     private int port(String input, int pos, int limit) {

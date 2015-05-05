@@ -205,17 +205,6 @@ public final class HttpUrlTest {
     assertEquals("/%EF%BF%BD", HttpUrl.parse("http://host/\ufffd").path());
   }
 
-  @Test public void port() throws Exception {
-    assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("http://host:80/"));
-    assertEquals(HttpUrl.parse("http://host:99/"), HttpUrl.parse("http://host:99/"));
-    assertEquals(65535, HttpUrl.parse("http://host:65535/").port());
-    assertEquals(null, HttpUrl.parse("http://host:0/"));
-    assertEquals(null, HttpUrl.parse("http://host:65536/"));
-    assertEquals(null, HttpUrl.parse("http://host:-1/"));
-    assertEquals(null, HttpUrl.parse("http://host:a/"));
-    assertEquals(null, HttpUrl.parse("http://host:%39%39/"));
-  }
-
   @Test public void usernameCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ';', '=', '@')
@@ -228,6 +217,42 @@ public final class HttpUrlTest {
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ':', ';', '=', '@')
         .override(Encoding.SKIP, '/', '\\', '?', '#')
         .test(Component.PASSWORD);
+  }
+
+  @Test public void hostContainsIllegalCharacter() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://\n/"));
+    assertEquals(null, HttpUrl.parse("http:// /"));
+    assertEquals(null, HttpUrl.parse("http://%20/"));
+  }
+
+  @Test public void hostIpv6() throws Exception {
+    // Square braces are absent from host()...
+    assertEquals("::1", HttpUrl.parse("http://[::1]/").host());
+
+    // ... but they're included in toString().
+    assertEquals("http://[::1]/", HttpUrl.parse("http://[::1]/").toString());
+
+    // IPv6 colons don't interfere with port numbers or passwords.
+    assertEquals(8080, HttpUrl.parse("http://[::1]:8080/").port());
+    assertEquals("password", HttpUrl.parse("http://user:password@[::1]/").password());
+    assertEquals("::1", HttpUrl.parse("http://user:password@[::1]:8080/").host());
+
+    // Permit the contents of IPv6 addresses to be percent-encoded...
+    assertEquals("::1", HttpUrl.parse("http://[%3A%3A%31]/").host());
+
+    // Including the Square braces themselves! (This is what Chrome does.)
+    assertEquals("::1", HttpUrl.parse("http://%5B%3A%3A1%5D/").host());
+  }
+
+  @Test public void port() throws Exception {
+    assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("http://host:80/"));
+    assertEquals(HttpUrl.parse("http://host:99/"), HttpUrl.parse("http://host:99/"));
+    assertEquals(65535, HttpUrl.parse("http://host:65535/").port());
+    assertEquals(null, HttpUrl.parse("http://host:0/"));
+    assertEquals(null, HttpUrl.parse("http://host:65536/"));
+    assertEquals(null, HttpUrl.parse("http://host:-1/"));
+    assertEquals(null, HttpUrl.parse("http://host:a/"));
+    assertEquals(null, HttpUrl.parse("http://host:%39%39/"));
   }
 
   @Test public void pathCharacters() throws Exception {
