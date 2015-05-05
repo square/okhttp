@@ -21,9 +21,6 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertSame;
 
-/**
- * Tests for {@link RouteException}.
- */
 public class RouteExceptionTest {
 
   @Test public void getConnectionIOException_single() {
