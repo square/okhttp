@@ -600,7 +600,7 @@ public final class URLConnectionTest {
     }
   }
 
-  @Test public void connectViaHttpsWithSSLFallback() throws IOException, InterruptedException {
+  @Test public void connectViaHttpsWithSSLFallback() throws Exception {
     server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("this response comes via SSL"));
@@ -614,6 +614,24 @@ public final class URLConnectionTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertEquals(TlsVersion.TLS_1_0, request.getTlsVersion());
+  }
+
+  @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() throws Exception {
+    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+
+    suppressTlsFallbackScsv(client.client());
+    Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
+
+    client.client().setHostnameVerifier(new RecordingHostnameVerifier());
+    connection = client.open(server.getUrl("/foo"));
+
+    try {
+      connection.getResponseCode();
+    } catch (IOException e) {
+      assertEquals(1, e.getSuppressed().length);
+    }
   }
 
   /**
