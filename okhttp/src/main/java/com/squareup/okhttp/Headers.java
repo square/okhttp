@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.http.HttpDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,6 +129,20 @@ public final class Headers {
       result.append(name(i)).append(": ").append(value(i)).append("\n");
     }
     return result.toString();
+  }
+
+  public Map<String, List<String>> toMultimap() {
+    Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+    for (int i = 0, size = size(); i < size; i++) {
+      String name = name(i);
+      List<String> values = result.get(name);
+      if (values == null) {
+        values = new ArrayList<>(2);
+        result.put(name, values);
+      }
+      values.add(value(i));
+    }
+    return result;
   }
 
   private static String get(String[] namesAndValues, String name) {
