@@ -302,4 +302,14 @@ public final class HeadersTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
+  @Test public void toMultimapGroupsHeaders() {
+    Headers headers = Headers.of(
+        "cache-control", "no-cache",
+        "cache-control", "no-store",
+        "user-agent", "OkHttp");
+    Map<String, List<String>> headerMap = headers.toMultimap();
+    assertEquals(2, headerMap.get("cache-control").size());
+    assertEquals(1, headerMap.get("user-agent").size());
+  }
 }
