@@ -226,6 +226,39 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("http://%20/"));
   }
 
+  @Test public void hostnameLowercaseCharactersMappedDirectly() throws Exception {
+    assertEquals("abcd", HttpUrl.parse("http://abcd").host());
+    assertEquals("xn--4xa", HttpUrl.parse("http://σ").host());
+  }
+
+  @Test public void hostnameUppercaseCharactersConvertedToLowercase() throws Exception {
+    assertEquals("abcd", HttpUrl.parse("http://ABCD").host());
+    assertEquals("xn--4xa", HttpUrl.parse("http://Σ").host());
+  }
+
+  @Test public void hostnameIgnoredCharacters() throws Exception {
+    // The soft hyphen (­) should be ignored.
+    assertEquals("abcd", HttpUrl.parse("http://AB\u00adCD").host());
+  }
+
+  @Test public void hostnameMultipleCharacterMapping() throws Exception {
+    // Map the single character telephone symbol (℡) to the string "tel".
+    assertEquals("tel", HttpUrl.parse("http://\u2121").host());
+  }
+
+  @Test public void hostnameMappingLastMappedCodePoint() throws Exception {
+    assertEquals("xn--pu5l", HttpUrl.parse("http://\uD87E\uDE1D").host());
+  }
+
+  @Ignore // The java.net.IDN implementation doesn't ignore characters that it should.
+  @Test public void hostnameMappingLastIgnoredCodePoint() throws Exception {
+    assertEquals("abcd", HttpUrl.parse("http://ab\uDB40\uDDEFcd").host());
+  }
+
+  @Test public void hostnameMappingLastDisallowedCodePoint() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://\uDBFF\uDFFF"));
+  }
+
   @Test public void hostIpv6() throws Exception {
     // Square braces are absent from host()...
     String address = "0:0:0:0:0:0:0:1";
@@ -275,7 +308,7 @@ public final class HttpUrlTest {
     assertEquals(a2, HttpUrl.parse("http://[1::]").host());
   }
 
-  @Ignore
+  @Ignore // java.net.InetAddress isn't as strict as it should be.
   @Test public void hostIpv6AddressTooManyDigitsInGroup() throws Exception {
     assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0001]"));
     assertEquals(null, HttpUrl.parse("http://[::00001]"));
