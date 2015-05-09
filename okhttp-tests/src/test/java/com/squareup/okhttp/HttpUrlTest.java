@@ -18,6 +18,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.UrlComponentEncodingTester.Component;
 import com.squareup.okhttp.UrlComponentEncodingTester.Encoding;
 import java.util.Arrays;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -227,21 +228,81 @@ public final class HttpUrlTest {
 
   @Test public void hostIpv6() throws Exception {
     // Square braces are absent from host()...
-    assertEquals("::1", HttpUrl.parse("http://[::1]/").host());
+    String address = "0:0:0:0:0:0:0:1";
+    assertEquals(address, HttpUrl.parse("http://[::1]/").host());
 
     // ... but they're included in toString().
-    assertEquals("http://[::1]/", HttpUrl.parse("http://[::1]/").toString());
+    assertEquals("http://[0:0:0:0:0:0:0:1]/", HttpUrl.parse("http://[::1]/").toString());
 
     // IPv6 colons don't interfere with port numbers or passwords.
     assertEquals(8080, HttpUrl.parse("http://[::1]:8080/").port());
     assertEquals("password", HttpUrl.parse("http://user:password@[::1]/").password());
-    assertEquals("::1", HttpUrl.parse("http://user:password@[::1]:8080/").host());
+    assertEquals(address, HttpUrl.parse("http://user:password@[::1]:8080/").host());
 
     // Permit the contents of IPv6 addresses to be percent-encoded...
-    assertEquals("::1", HttpUrl.parse("http://[%3A%3A%31]/").host());
+    assertEquals(address, HttpUrl.parse("http://[%3A%3A%31]/").host());
 
     // Including the Square braces themselves! (This is what Chrome does.)
-    assertEquals("::1", HttpUrl.parse("http://%5B%3A%3A1%5D/").host());
+    assertEquals(address, HttpUrl.parse("http://%5B%3A%3A1%5D/").host());
+  }
+
+  @Test public void hostIpv6AddressDifferentFormats() throws Exception {
+    // Multiple representations of the same address; see http://tools.ietf.org/html/rfc5952.
+    String a3 = "2001:db8:0:0:1:0:0:1";
+    assertEquals(a3, HttpUrl.parse("http://[2001:db8:0:0:1:0:0:1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:0db8:0:0:1:0:0:1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:db8::1:0:0:1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:db8::0:1:0:0:1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:0db8::1:0:0:1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:db8:0:0:1::1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:db8:0000:0:1::1]").host());
+    assertEquals(a3, HttpUrl.parse("http://[2001:DB8:0:0:1::1]").host());
+  }
+
+  @Test public void hostIpv6AddressLeadingCompression() throws Exception {
+    String a1 = "0:0:0:0:0:0:0:1";
+    assertEquals(a1, HttpUrl.parse("http://[::0001]").host());
+    assertEquals(a1, HttpUrl.parse("http://[0000::0001]").host());
+    assertEquals(a1, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001]").host());
+    assertEquals(a1, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000::0001]").host());
+  }
+
+  @Test public void hostIpv6AddressTrailingCompression() throws Exception {
+    String a2 = "1:0:0:0:0:0:0:0";
+    assertEquals(a2, HttpUrl.parse("http://[0001:0000::]").host());
+    assertEquals(a2, HttpUrl.parse("http://[0001::0000]").host());
+    assertEquals(a2, HttpUrl.parse("http://[0001::]").host());
+    assertEquals(a2, HttpUrl.parse("http://[1::]").host());
+  }
+
+  @Ignore
+  @Test public void hostIpv6AddressTooManyDigitsInGroup() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[::00001]"));
+  }
+
+  @Test public void hostIpv6AddressMisplacedColons() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://[:0000:0000:0000:0000:0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[:::0000:0000:0000:0000:0000:0000:0000:0001]"));
+    assertEquals(null, HttpUrl.parse("http://[:1]"));
+    assertEquals(null, HttpUrl.parse("http://[:::1]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0001:]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001:]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001::]"));
+    assertEquals(null, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001:::]"));
+    assertEquals(null, HttpUrl.parse("http://[1:]"));
+    assertEquals(null, HttpUrl.parse("http://[1:::]"));
+    assertEquals(null, HttpUrl.parse("http://[1:::1]"));
+    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000::0000:0000:0000:0001]"));
+  }
+
+  @Test public void hostIpv6AddressTooManyGroups() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0000:0001]"));
+  }
+
+  @Test public void hostIpv6AddressTooMuchCompression() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://[0000::0000:0000:0000:0000::0001]"));
+    assertEquals(null, HttpUrl.parse("http://[::0000:0000:0000:0000::0001]"));
   }
 
   @Test public void port() throws Exception {

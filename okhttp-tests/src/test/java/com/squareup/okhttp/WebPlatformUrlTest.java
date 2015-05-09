@@ -173,8 +173,11 @@ public final class WebPlatformUrlTest {
           : "";
       String effectiveQuery = url.query() != null ? "?" + url.query() : "";
       String effectiveFragment = url.fragment() != null ? "#" + url.fragment() : "";
+      String effectiveHost = url.host().contains(":")
+          ? ("[" + url.host() + "]")
+          : url.host();
       assertEquals("scheme", testData.scheme, url.scheme());
-      assertEquals("host", testData.host, url.host());
+      assertEquals("host", testData.host, effectiveHost);
       assertEquals("port", testData.port, effectivePort);
       assertEquals("path", testData.path, url.path());
       assertEquals("query", testData.query, effectiveQuery);

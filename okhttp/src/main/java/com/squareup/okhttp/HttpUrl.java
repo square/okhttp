@@ -17,11 +17,14 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
+import java.net.IDN;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import okio.Buffer;
 
@@ -716,11 +719,13 @@ public final class HttpUrl {
 
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
-        return decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1);
+        InetAddress inetAddress = decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1);
+        return inetAddress != null ? inetAddress.getHostAddress() : null;
       }
 
       // Do IDN decoding. This converts {@code ☃.net} to {@code xn--n3h.net}.
       String idnDecoded = domainToAscii(percentDecoded);
+      if (idnDecoded == null) return null;
 
       // Confirm that the decoded result doesn't contain any illegal characters.
       int length = idnDecoded.length();
@@ -731,12 +736,20 @@ public final class HttpUrl {
       return idnDecoded;
     }
 
-    private static String decodeIpv6(String input, int pos, int limit) {
-      return input.substring(pos, limit); // TODO(jwilson) implement IPv6 decoding.
+    private static InetAddress decodeIpv6(String input, int pos, int limit) {
+      try {
+        return InetAddress.getByName(input.substring(pos, limit));
+      } catch (UnknownHostException e) {
+        return null;
+      }
     }
 
     private static String domainToAscii(String input) {
-      return input; // TODO(jwilson): implement IDN decoding.
+      try {
+        return IDN.toASCII(input).toLowerCase(Locale.US);
+      } catch (IllegalArgumentException e) {
+        return null;
+      }
     }
 
     private int port(String input, int pos, int limit) {
