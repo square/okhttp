@@ -250,7 +250,7 @@ public final class HttpUrlTest {
     assertEquals("xn--pu5l", HttpUrl.parse("http://\uD87E\uDE1D").host());
   }
 
-  @Ignore // The java.net.IDN implementation doesn't ignore characters that it should.
+  @Ignore("The java.net.IDN implementation doesn't ignore characters that it should.")
   @Test public void hostnameMappingLastIgnoredCodePoint() throws Exception {
     assertEquals("abcd", HttpUrl.parse("http://ab\uDB40\uDDEFcd").host());
   }
@@ -308,7 +308,6 @@ public final class HttpUrlTest {
     assertEquals(a2, HttpUrl.parse("http://[1::]").host());
   }
 
-  @Ignore // java.net.InetAddress isn't as strict as it should be.
   @Test public void hostIpv6AddressTooManyDigitsInGroup() throws Exception {
     assertEquals(null, HttpUrl.parse("http://[00000:0000:0000:0000:0000:0000:0000:0001]"));
     assertEquals(null, HttpUrl.parse("http://[::00001]"));
@@ -336,6 +335,55 @@ public final class HttpUrlTest {
   @Test public void hostIpv6AddressTooMuchCompression() throws Exception {
     assertEquals(null, HttpUrl.parse("http://[0000::0000:0000:0000:0000::0001]"));
     assertEquals(null, HttpUrl.parse("http://[::0000:0000:0000:0000::0001]"));
+  }
+
+  @Test public void hostIpv6ScopedAddress() throws Exception {
+    // java.net.InetAddress parses scoped addresses. These aren't valid in URLs.
+    assertEquals(null, HttpUrl.parse("http://[::1%2544]"));
+  }
+
+  @Test public void hostIpv6WithIpv4Suffix() throws Exception {
+    assertEquals("0:0:0:0:0:1:ffff:ffff", HttpUrl.parse("http://[::1:255.255.255.255]/").host());
+    assertEquals("0:0:0:0:0:1:0:0", HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.0]/").host());
+  }
+
+  @Test public void hostIpv6WithIpv4SuffixWithOctalPrefix() throws Exception {
+    // Chrome interprets a leading '0' as octal; Firefox rejects them. (We reject them.)
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.000000]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.010.0.010]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.000001]/"));
+  }
+
+  @Test public void hostIpv6WithIpv4SuffixWithHexadecimalPrefix() throws Exception {
+    // Chrome interprets a leading '0x' as hexadecimal; Firefox rejects them. (We reject them.)
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.0x10.0.0x10]/"));
+  }
+
+  @Test public void hostIpv6WithMalformedIpv4Suffix() throws Exception {
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.0:0.0]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:0.0-0.0]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:.255.255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255..255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255.255..255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:0:1:255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:256.255.255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:ff.255.255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:0:1:255.255.255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:1:255.255.255.255]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:1:0.0.0.0:1]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0.0.0.0:1:0:0:0:0:1]/"));
+    assertEquals(null, HttpUrl.parse("http://[0.0.0.0:0:0:0:0:0:1]/"));
+  }
+
+  @Test public void hostIpv6WithIncompleteIpv4Suffix() throws Exception {
+    // To Chrome & Safari these are well-formed; Firefox disagrees. (We're consistent with Firefox).
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255.255.255.]/"));
+    assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255.255.255]/"));
+  }
+
+  @Ignore("java.net.IDN strips trailing trailing dots on Java 7, but not on Java 8.")
+  @Test public void hostWithTrailingDot() throws Exception {
+    assertEquals("host.", HttpUrl.parse("http://host./").host());
   }
 
   @Test public void port() throws Exception {
