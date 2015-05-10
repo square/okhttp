@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
 import java.net.URL;
 import org.junit.After;
 import org.junit.Test;
@@ -45,6 +46,22 @@ public class MockWebServerRuleTest {
 
   @Test public void differentRulesGetDifferentPorts() throws IOException {
     assertNotEquals(server.getPort(), new MockWebServerRule().getPort());
+  }
+
+  @Test public void startUpOnPortAssigned() throws IOException {
+    server.before();
+
+    final ServerSocket socket = new ServerSocket(0);
+    final int expectedPort = socket.getLocalPort();
+
+    final MockWebServerRule server = new MockWebServerRule(expectedPort);
+    server.before();
+
+    try {
+      assertEquals(expectedPort, server.get().getPort());
+    } finally {
+      server.after();
+    }
   }
 
   @Test public void beforePlaysServer() throws Exception {
