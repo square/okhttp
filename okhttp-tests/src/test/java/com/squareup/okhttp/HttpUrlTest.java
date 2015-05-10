@@ -394,6 +394,21 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve("%2e"));
   }
 
+  @Test public void relativePathWithTrailingSlash() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c/");
+    assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve(".."));
+    assertEquals(HttpUrl.parse("http://host/a/b/"), base.resolve("../"));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("../.."));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("../../"));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../.."));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../../"));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../../.."));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../../../"));
+    assertEquals(HttpUrl.parse("http://host/a"), base.resolve("../../../../a"));
+    assertEquals(HttpUrl.parse("http://host/"), base.resolve("../../../../a/.."));
+    assertEquals(HttpUrl.parse("http://host/a/"), base.resolve("../../../../a/b/.."));
+  }
+
   @Test public void pathWithBackslash() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/a/b/c");
     assertEquals(HttpUrl.parse("http://host/a/b/d/e/f"), base.resolve("d\\e\\f"));
@@ -414,7 +429,7 @@ public final class HttpUrlTest {
 
   @Test public void decodePassword() {
     assertEquals("password", HttpUrl.parse("http://user:password@host/").decodePassword());
-    assertEquals(null, HttpUrl.parse("http://user:@host/").decodePassword());
+    assertEquals("", HttpUrl.parse("http://user:@host/").decodePassword());
     assertEquals("\uD83C\uDF69", HttpUrl.parse("http://user:%F0%9F%8D%A9@host/").decodePassword());
   }
 
@@ -478,7 +493,7 @@ public final class HttpUrlTest {
     assertEquals("http://host/", url.toString());
     assertEquals("http", url.scheme());
     assertEquals("", url.username());
-    assertEquals(null, url.password());
+    assertEquals("", url.password());
     assertEquals("host", url.host());
     assertEquals(80, url.port());
     assertEquals("/", url.path());
@@ -569,5 +584,32 @@ public final class HttpUrlTest {
     assertEquals("http://host/a%2Fb/c", url.toString());
     assertEquals("/a%2Fb/c", url.path());
     assertEquals(Arrays.asList("a/b", "c"), url.decodePathSegments());
+  }
+
+  @Test public void composeMixingPathSegments() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .encodedPath("/a%2fb/c")
+        .addPathSegment("d%25e")
+        .addEncodedPathSegment("f%25g")
+        .build();
+    assertEquals("http://host/a%2fb/c/d%2525e/f%25g", url.toString());
+    assertEquals("/a%2fb/c/d%2525e/f%25g", url.path());
+    assertEquals(Arrays.asList("a%2fb", "c", "d%2525e", "f%25g"), url.pathSegments());
+    assertEquals(Arrays.asList("a/b", "c", "d%25e", "f%g"), url.decodePathSegments());
+  }
+
+  @Test public void composeWithAddSegment() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").build().path());
+    assertEquals("/a/b/c/d",
+        base.newBuilder().addPathSegment("").addPathSegment("d").build().path());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("..").build().path());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("%2e.").build().path());
+    assertEquals("/a/",
+        base.newBuilder().addPathSegment("%2e.").addPathSegment("..").build().path());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("").addPathSegment("..").build().path());
+    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").addPathSegment("").build().path());
   }
 }
