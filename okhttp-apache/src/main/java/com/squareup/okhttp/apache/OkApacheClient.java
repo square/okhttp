@@ -67,6 +67,8 @@ public final class OkApacheClient implements HttpClient {
         if (encoding != null) {
           builder.header(encoding.getName(), encoding.getValue());
         }
+      } else {
+        body = RequestBody.create(null, new byte[0]);
       }
     }
     builder.method(method, body);

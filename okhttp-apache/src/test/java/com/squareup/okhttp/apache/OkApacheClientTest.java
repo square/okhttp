@@ -16,6 +16,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
@@ -112,6 +113,24 @@ public class OkApacheClientTest {
     RecordedRequest request = server.takeRequest();
     assertEquals("Hello, world!", request.getBody().readUtf8());
     assertEquals(request.getHeader("Content-Length"), "13");
+  }
+  @Test public void postEmptyEntity() throws Exception {
+    server.enqueue(new MockResponse());
+    final HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    client.execute(post);
+    
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
+  }
+  @Test public void putEmptyEntity() throws Exception {
+    server.enqueue(new MockResponse());
+    final HttpPut put = new HttpPut(server.getUrl("/").toURI());
+    client.execute(put);
+    
+    RecordedRequest request = server.takeRequest();
+    assertEquals(0, request.getBodySize());
+    assertNotNull(request.getBody());
   }
 
   @Test public void postOverrideContentType() throws Exception {
