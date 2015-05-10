@@ -39,7 +39,7 @@ public void test() throws Exception {
   server.enqueue(new MockResponse().setBody("yo dog"));
 
   // Start the server.
-  server.start();
+  server.play();
 
   // Ask the server for its URL. You'll need this to make HTTP requests.
   URL baseUrl = server.getUrl("/v1/chat/");
@@ -125,7 +125,7 @@ final Dispatcher dispatcher = new Dispatcher() {
     public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
 
         if (request.getPath().equals("/v1/login/auth/")){
-            return new MockResponse().setResponseCode(200));
+            return new MockResponse().setResponseCode(200);
         } else if (request.getPath().equals("v1/check/version/")){
             return new MockResponse().setResponseCode(200).setBody("version=9");
         } else if (request.getPath().equals("/v1/profile/info")) {
@@ -140,8 +140,7 @@ server.setDispatcher(dispatcher);
 
 ### Download
 
-The best way to get MockWebServer is via Maven:
-
+Get MockWebServer via Maven:
 ```xml
 <dependency>
   <groupId>com.squareup.okhttp</groupId>
@@ -149,6 +148,11 @@ The best way to get MockWebServer is via Maven:
   <version>(insert latest version)</version>
   <scope>test</scope>
 </dependency>
+```
+
+or via Gradle 
+```groovy
+testCompile 'com.squareup.okhttp:mockwebserver:(insert latest version)'
 ```
 
 ### License
