@@ -22,6 +22,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public final class HttpUrlTest {
   @Test public void parseTrimsAsciiWhitespace() throws Exception {
@@ -455,5 +456,118 @@ public final class HttpUrlTest {
     // Replace a partial UTF-8 sequence with the Unicode replacement character.
     assertEquals(Arrays.asList("a", "\ufffdx", "c"),
         HttpUrl.parse("http://host/a/%E2%98x/c").decodePathSegments());
+  }
+
+  @Test public void incompleteUrlComposition() throws Exception {
+    try {
+      new HttpUrl.Builder().scheme("http").build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("host == null", expected.getMessage());
+    }
+    try {
+      new HttpUrl.Builder().host("host").build();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("scheme == null", expected.getMessage());
+    }
+  }
+
+  @Test public void minimalUrlComposition() throws Exception {
+    HttpUrl url = new HttpUrl.Builder().scheme("http").host("host").build();
+    assertEquals("http://host/", url.toString());
+    assertEquals("http", url.scheme());
+    assertEquals("", url.username());
+    assertEquals(null, url.password());
+    assertEquals("host", url.host());
+    assertEquals(80, url.port());
+    assertEquals("/", url.path());
+    assertEquals(null, url.query());
+    assertEquals(null, url.fragment());
+  }
+
+  @Test public void fullUrlComposition() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .username("username")
+        .password("password")
+        .host("host")
+        .port(8080)
+        .addPathSegment("path")
+        .query("query")
+        .fragment("fragment")
+        .build();
+    assertEquals("http://username:password@host:8080/path?query#fragment", url.toString());
+    assertEquals("http", url.scheme());
+    assertEquals("username", url.username());
+    assertEquals("password", url.password());
+    assertEquals("host", url.host());
+    assertEquals(8080, url.port());
+    assertEquals("/path", url.path());
+    assertEquals("query", url.query());
+    assertEquals("fragment", url.fragment());
+  }
+
+  @Test public void composeFromUnencodedComponents() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .username("a:\u0001@/\\?#%b")
+        .password("c:\u0001@/\\?#%d")
+        .host("ef")
+        .port(8080)
+        .addPathSegment("g:\u0001@/\\?#%h")
+        .query("i:\u0001@/\\?#%j")
+        .fragment("k:\u0001@/\\?#%l")
+        .build();
+    assertEquals("http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
+        + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l", url.toString());
+    assertEquals("http", url.scheme());
+    assertEquals("a:\u0001@/\\?#%b", url.decodeUsername());
+    assertEquals("c:\u0001@/\\?#%d", url.decodePassword());
+    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.decodePathSegments());
+    assertEquals("i:\u0001@/\\?#%j", url.decodeQuery());
+    assertEquals("k:\u0001@/\\?#%l", url.decodeFragment());
+    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.username());
+    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.password());
+    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.path());
+    assertEquals("i:%01@/\\?%23%25j", url.query());
+    assertEquals("k:%01@/\\?#%25l", url.fragment());
+  }
+
+  @Test public void composeFromEncodedComponents() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .encodedUsername("a:\u0001@/\\?#%25b")
+        .encodedPassword("c:\u0001@/\\?#%25d")
+        .host("ef")
+        .port(8080)
+        .addEncodedPathSegment("g:\u0001@/\\?#%25h")
+        .encodedQuery("i:\u0001@/\\?#%25j")
+        .encodedFragment("k:\u0001@/\\?#%25l")
+        .build();
+    assertEquals("http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
+        + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l", url.toString());
+    assertEquals("http", url.scheme());
+    assertEquals("a:\u0001@/\\?#%b", url.decodeUsername());
+    assertEquals("c:\u0001@/\\?#%d", url.decodePassword());
+    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.decodePathSegments());
+    assertEquals("i:\u0001@/\\?#%j", url.decodeQuery());
+    assertEquals("k:\u0001@/\\?#%l", url.decodeFragment());
+    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.username());
+    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.password());
+    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.path());
+    assertEquals("i:%01@/\\?%23%25j", url.query());
+    assertEquals("k:%01@/\\?#%25l", url.fragment());
+  }
+
+  @Test public void composeWithEncodedPath() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .encodedPath("/a%2Fb/c")
+        .build();
+    assertEquals("http://host/a%2Fb/c", url.toString());
+    assertEquals("/a%2Fb/c", url.path());
+    assertEquals(Arrays.asList("a/b", "c"), url.decodePathSegments());
   }
 }

@@ -40,6 +40,11 @@ import okio.Buffer;
 public final class HttpUrl {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+  private static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
+  private static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]\\^`{}|/\\?#";
+  private static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
+  private static final String QUERY_ENCODE_SET = " \"'<>#";
+  private static final String FRAGMENT_ENCODE_SET = "";
 
   /** Either "http" or "https". */
   private final String scheme;
@@ -104,7 +109,7 @@ public final class HttpUrl {
   }
 
   public String decodeUsername() {
-    return decode(username, 0, username.length());
+    return percentDecode(username, 0, username.length());
   }
 
   /** Returns the encoded password if one is present; null otherwise. */
@@ -114,7 +119,7 @@ public final class HttpUrl {
 
   /** Returns the decoded password if one is present; null otherwise. */
   public String decodePassword() {
-    return password != null ? decode(password, 0, password.length()) : null;
+    return password != null ? percentDecode(password, 0, password.length()) : null;
   }
 
   /**
@@ -177,11 +182,11 @@ public final class HttpUrl {
     int segmentStart = 1; // Path always starts with '/'.
     for (int i = segmentStart; i < path.length(); i++) {
       if (path.charAt(i) == '/') {
-        result.add(decode(path, segmentStart, i));
+        result.add(percentDecode(path, segmentStart, i));
         segmentStart = i + 1;
       }
     }
-    result.add(decode(path, segmentStart, path.length()));
+    result.add(percentDecode(path, segmentStart, path.length()));
     return Util.immutableList(result);
   }
 
@@ -192,6 +197,10 @@ public final class HttpUrl {
    */
   public String query() {
     return query;
+  }
+
+  public String decodeQuery() {
+    return query != null ? percentDecode(query, 0, query.length()) : null;
   }
 
   /**
@@ -220,6 +229,10 @@ public final class HttpUrl {
 
   public String fragment() {
     return fragment;
+  }
+
+  public String decodeFragment() {
+    return fragment != null ? percentDecode(fragment, 0, fragment.length()) : null;
   }
 
   /**
@@ -281,23 +294,40 @@ public final class HttpUrl {
     }
 
     public Builder scheme(String scheme) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (scheme == null) {
+        throw new IllegalArgumentException("scheme == null");
+      } else if (scheme.equalsIgnoreCase("http")) {
+        this.scheme = "http";
+      } else if (scheme.equalsIgnoreCase("https")) {
+        this.scheme = "https";
+      } else {
+        throw new IllegalArgumentException("unexpected scheme: " + scheme);
+      }
+      return this;
     }
 
-    public Builder user(String user) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+    public Builder username(String username) {
+      if (username == null) throw new IllegalArgumentException("username == null");
+      this.username = canonicalize(username, USERNAME_ENCODE_SET, false);
+      return this;
     }
 
-    public Builder encodedUser(String encodedUser) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+    public Builder encodedUsername(String encodedUsername) {
+      if (encodedUsername == null) throw new IllegalArgumentException("encodedUsername == null");
+      this.username = canonicalize(encodedUsername, USERNAME_ENCODE_SET, true);
+      return this;
     }
 
     public Builder password(String password) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (password == null) throw new IllegalArgumentException("password == null");
+      this.password = canonicalize(password, PASSWORD_ENCODE_SET, false);
+      return this;
     }
 
     public Builder encodedPassword(String encodedPassword) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (encodedPassword == null) throw new IllegalArgumentException("encodedPassword == null");
+      this.password = canonicalize(encodedPassword, PASSWORD_ENCODE_SET, true);
+      return this;
     }
 
     /**
@@ -305,31 +335,56 @@ public final class HttpUrl {
      *     address.
      */
     public Builder host(String host) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (host == null) throw new IllegalArgumentException("host == null");
+      String encoded = canonicalizeHost(host, 0, host.length());
+      if (encoded == null) throw new IllegalArgumentException("unexpected host: " + host);
+      this.host = encoded;
+      return this;
     }
 
     public Builder port(int port) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (port <= 0 || port > 65535) throw new IllegalArgumentException("unexpected port: " + port);
+      this.port = port;
+      return this;
     }
 
     public Builder addPathSegment(String pathSegment) {
       if (pathSegment == null) throw new IllegalArgumentException("pathSegment == null");
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      pathBuilder.append('/');
+      canonicalize(pathBuilder, pathSegment, PATH_SEGMENT_ENCODE_SET, false);
+      return this;
     }
 
     public Builder addEncodedPathSegment(String encodedPathSegment) {
       if (encodedPathSegment == null) {
         throw new IllegalArgumentException("encodedPathSegment == null");
       }
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      pathBuilder.append('/');
+      canonicalize(pathBuilder, encodedPathSegment, PATH_SEGMENT_ENCODE_SET, true);
+      return this;
     }
 
     public Builder encodedPath(String encodedPath) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (encodedPath == null) throw new IllegalArgumentException("encodedPath == null");
+      if (!encodedPath.startsWith("/")) {
+        throw new IllegalArgumentException("unexpected encodedPath: " + encodedPath);
+      }
+      pathBuilder.delete(0, pathBuilder.length());
+      pathBuilder.append('/'); // Because pop wants the input to end with '/'.
+      addCanonicalPath(encodedPath, 1, encodedPath.length());
+      return this;
+    }
+
+    public Builder query(String query) {
+      if (query == null) throw new IllegalArgumentException("query == null");
+      this.query = canonicalize(query, QUERY_ENCODE_SET, false);
+      return this;
     }
 
     public Builder encodedQuery(String encodedQuery) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (encodedQuery == null) throw new IllegalArgumentException("encodedQuery == null");
+      this.query = canonicalize(encodedQuery, QUERY_ENCODE_SET, true);
+      return this;
     }
 
     /** Encodes the query parameter using UTF-8 and adds it to this URL's query string. */
@@ -369,10 +424,21 @@ public final class HttpUrl {
     }
 
     public Builder fragment(String fragment) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
+      if (fragment == null) throw new IllegalArgumentException("fragment == null");
+      this.fragment = canonicalize(fragment, FRAGMENT_ENCODE_SET, false);
+      return this;
+    }
+
+    public Builder encodedFragment(String encodedFragment) {
+      if (encodedFragment == null) throw new IllegalArgumentException("encodedFragment == null");
+      this.fragment = canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true);
+      return this;
     }
 
     public HttpUrl build() {
+      if (scheme == null) throw new IllegalStateException("scheme == null");
+      if (host == null) throw new IllegalStateException("host == null");
+
       StringBuilder url = new StringBuilder();
       url.append(scheme);
       url.append("://");
@@ -470,17 +536,19 @@ public final class HttpUrl {
               if (this.password == null) {
                 int passwordColonOffset = delimiterOffset(
                     input, pos, componentDelimiterOffset, ":");
+                String canonicalUsername = canonicalize(
+                    input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true);
                 this.username = hasUsername
-                    ? (this.username + "%40" + username(input, pos, passwordColonOffset))
-                    : username(input, pos, passwordColonOffset);
+                    ? this.username + "%40" + canonicalUsername
+                    : canonicalUsername;
                 if (passwordColonOffset != componentDelimiterOffset) {
-                  this.password = password(
-                      input, passwordColonOffset + 1, componentDelimiterOffset);
+                  this.password = canonicalize(input, passwordColonOffset + 1,
+                      componentDelimiterOffset, PASSWORD_ENCODE_SET, true);
                 }
                 hasUsername = true;
               } else {
-                this.password = this.password + "%40"
-                    + password(input, pos, componentDelimiterOffset);
+                this.password = this.password + "%40" + canonicalize(
+                    input, pos, componentDelimiterOffset, PASSWORD_ENCODE_SET, true);
               }
               pos = componentDelimiterOffset + 1;
               break;
@@ -493,11 +561,11 @@ public final class HttpUrl {
               // Host info precedes.
               int portColonOffset = portColonOffset(input, pos, componentDelimiterOffset);
               if (portColonOffset + 1 < componentDelimiterOffset) {
-                this.host = host(input, pos, portColonOffset);
-                this.port = port(input, portColonOffset + 1, componentDelimiterOffset);
+                this.host = canonicalizeHost(input, pos, portColonOffset);
+                this.port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
                 if (this.port == -1) return null; // Invalid port.
               } else {
-                this.host = host(input, pos, portColonOffset);
+                this.host = canonicalizeHost(input, pos, portColonOffset);
                 this.port = defaultPort(this.scheme);
               }
               if (this.host == null) return null; // Invalid host.
@@ -539,44 +607,50 @@ public final class HttpUrl {
 
       // Resolve the relative path.
       int pathDelimiterOffset = delimiterOffset(input, pos, limit, "?#");
-      while (pos < pathDelimiterOffset) {
-        int pathSegmentDelimiterOffset = delimiterOffset(input, pos, pathDelimiterOffset, "/\\");
-        int segmentLength = pathSegmentDelimiterOffset - pos;
-
-        if ((segmentLength == 2 && input.regionMatches(false, pos, "..", 0, 2))
-            || (segmentLength == 4 && input.regionMatches(true, pos, "%2e.", 0, 4))
-            || (segmentLength == 4 && input.regionMatches(true, pos, ".%2e", 0, 4))
-            || (segmentLength == 6 && input.regionMatches(true, pos, "%2e%2e", 0, 6))) {
-          pop();
-        } else if ((segmentLength == 1 && input.regionMatches(false, pos, ".", 0, 1))
-            || (segmentLength == 3 && input.regionMatches(true, pos, "%2e", 0, 3))) {
-          // Skip '.' path segments.
-        } else if (pathSegmentDelimiterOffset < pathDelimiterOffset) {
-          pathSegment(input, pos, pathSegmentDelimiterOffset);
-          pathBuilder.append('/');
-        } else {
-          pathSegment(input, pos, pathSegmentDelimiterOffset);
-        }
-
-        pos = pathSegmentDelimiterOffset;
-        if (pathSegmentDelimiterOffset < pathDelimiterOffset) {
-          pos++; // Eat '/'.
-        }
-      }
+      addCanonicalPath(input, pos, pathDelimiterOffset);
+      pos = pathDelimiterOffset;
 
       // Query.
       if (pos < limit && input.charAt(pos) == '?') {
         int queryDelimiterOffset = delimiterOffset(input, pos, limit, "#");
-        this.query = query(input, pos + 1, queryDelimiterOffset);
+        this.query = canonicalize(input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true);
         pos = queryDelimiterOffset;
       }
 
       // Fragment.
       if (pos < limit && input.charAt(pos) == '#') {
-        this.fragment = fragment(input, pos + 1, limit);
+        this.fragment = canonicalize(input, pos + 1, limit, FRAGMENT_ENCODE_SET, true);
       }
 
       return build();
+    }
+
+    private void addCanonicalPath(String input, int pos, int limit) {
+      for (int i = pos; i < limit; ) {
+        int pathSegmentDelimiterOffset = delimiterOffset(input, i, limit, "/\\");
+        int segmentLength = pathSegmentDelimiterOffset - i;
+
+        if ((segmentLength == 2 && input.regionMatches(false, i, "..", 0, 2))
+            || (segmentLength == 4 && input.regionMatches(true, i, "%2e.", 0, 4))
+            || (segmentLength == 4 && input.regionMatches(true, i, ".%2e", 0, 4))
+            || (segmentLength == 6 && input.regionMatches(true, i, "%2e%2e", 0, 6))) {
+          pop();
+        } else if ((segmentLength == 1 && input.regionMatches(false, i, ".", 0, 1))
+            || (segmentLength == 3 && input.regionMatches(true, i, "%2e", 0, 3))) {
+          // Skip '.' path segments.
+        } else {
+          canonicalize(pathBuilder, input, i, pathSegmentDelimiterOffset, PATH_SEGMENT_ENCODE_SET,
+              true);
+          if (pathSegmentDelimiterOffset < limit) {
+            pathBuilder.append('/');
+          }
+        }
+
+        i = pathSegmentDelimiterOffset;
+        if (pathSegmentDelimiterOffset < limit) {
+          i++; // Eat '/'.
+        }
+      }
     }
 
     /** Remove the last character '/' of path, plus all characters after the preceding '/'. */
@@ -704,18 +778,10 @@ public final class HttpUrl {
       return limit; // No colon.
     }
 
-    private String username(String input, int pos, int limit) {
-      return encode(input, pos, limit, " \"';<=>@[]^`{}|");
-    }
-
-    private String password(String input, int pos, int limit) {
-      return encode(input, pos, limit, " \"':;<=>@[]\\^`{}|");
-    }
-
-    private static String host(String input, int pos, int limit) {
+    private static String canonicalizeHost(String input, int pos, int limit) {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
-      String percentDecoded = decode(input, pos, limit);
+      String percentDecoded = percentDecode(input, pos, limit);
 
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
@@ -752,9 +818,10 @@ public final class HttpUrl {
       }
     }
 
-    private int port(String input, int pos, int limit) {
+    private static int parsePort(String input, int pos, int limit) {
       try {
-        String portString = encode(input, pos, limit, ""); // To skip '\n' etc.
+        // Canonicalize the port string to skip '\n' etc.
+        String portString = canonicalize(input, pos, limit, "", false);
         int i = Integer.parseInt(portString);
         if (i > 0 && i <= 65535) return i;
         return -1;
@@ -762,27 +829,15 @@ public final class HttpUrl {
         return -1; // Invalid port.
       }
     }
-
-    private void pathSegment(String input, int pos, int limit) {
-      encode(pathBuilder, input, pos, limit, " \"<>^`{}|");
-    }
-
-    private String query(String input, int pos, int limit) {
-      return encode(input, pos, limit, " \"'<>");
-    }
-
-    private String fragment(String input, int pos, int limit) {
-      return encode(input, pos, limit, ""); // To skip '\n' etc.
-    }
   }
 
-  private static String decode(String encoded, int pos, int limit) {
+  private static String percentDecode(String encoded, int pos, int limit) {
     for (int i = pos; i < limit; i++) {
       if (encoded.charAt(i) == '%') {
         // Slow path: the character at i requires decoding!
         Buffer out = new Buffer();
         out.writeUtf8(encoded, pos, i);
-        return decode(out, encoded, i, limit);
+        return percentDecode(out, encoded, i, limit);
       }
     }
 
@@ -790,7 +845,7 @@ public final class HttpUrl {
     return encoded.substring(pos, limit);
   }
 
-  private static String decode(Buffer out, String encoded, int pos, int limit) {
+  private static String percentDecode(Buffer out, String encoded, int pos, int limit) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = encoded.codePointAt(i);
@@ -824,8 +879,11 @@ public final class HttpUrl {
    *   <li>Control characters and non-ASCII characters are percent-encoded.
    *   <li>All other characters are copied without transformation.
    * </ul>
+   *
+   * @param alreadyEncoded true to leave '%' as-is; false to convert it to '%25'.
    */
-  static String encode(String input, int pos, int limit, String encodeSet) {
+  static String canonicalize(
+      String input, int pos, int limit, String encodeSet, boolean alreadyEncoded) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -835,7 +893,7 @@ public final class HttpUrl {
         // Slow path: the character at i requires encoding!
         StringBuilder out = new StringBuilder();
         out.append(input, pos, i);
-        encode(out, input, i, limit, encodeSet);
+        canonicalize(out, input, i, limit, encodeSet, alreadyEncoded);
         return out.toString();
       }
     }
@@ -844,7 +902,8 @@ public final class HttpUrl {
     return input.substring(pos, limit);
   }
 
-  static void encode(StringBuilder out, String input, int pos, int limit, String encodeSet) {
+  static void canonicalize(StringBuilder out, String input, int pos, int limit,
+      String encodeSet, boolean alreadyEncoded) {
     Buffer utf8Buffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
@@ -856,7 +915,8 @@ public final class HttpUrl {
         // Skip this character.
       } else if (codePoint < 0x20
           || codePoint >= 0x7f
-          || encodeSet.indexOf(codePoint) != -1) {
+          || encodeSet.indexOf(codePoint) != -1
+          || (codePoint == '%' && !alreadyEncoded)) {
         // Percent encode this character.
         if (utf8Buffer == null) {
           utf8Buffer = new Buffer();
@@ -873,5 +933,14 @@ public final class HttpUrl {
         out.append((char) codePoint);
       }
     }
+  }
+
+  static String canonicalize(String input, String encodeSet, boolean alreadyEncoded) {
+    return canonicalize(input, 0, input.length(), encodeSet, alreadyEncoded);
+  }
+
+  static void canonicalize(
+      StringBuilder out, String input, String encodeSet, boolean alreadyEncoded) {
+    canonicalize(out, input, 0, input.length(), encodeSet, alreadyEncoded);
   }
 }
