@@ -16,10 +16,11 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Util;
-import java.io.IOException;
 import java.net.IDN;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ import okio.Buffer;
  *   System.out.println(link);
  * }</pre>
  *
- * which prints <pre>   {@code
+ * which prints: <pre>   {@code
  *
  *   https://www.youtube.com/watch?v=cbP2N1BQdYc
  * }</pre>
@@ -130,8 +131,78 @@ import okio.Buffer;
  * TODO.
  *
  * <h3>Why another URL model?</h3>
- * TODO.
+ * Java includes both {@link URL java.net.URL} and {@link URI java.net.URI}. We offer a new URL
+ * model to address problems that the others don't.
  *
+ * <h3>Different URLs should be different</h3>
+ * Although they have different content, {@code java.net.URL} considers the following two URLs
+ * equal, and the {@link Object#equals equals()} method between them returns true:
+ * <ul>
+ *   <li>http://square.github.io/
+ *   <li>http://google.github.io/
+ * </ul>
+ * This is because those two hosts share the same IP address. This is an old, bad design decision
+ * that makes {@code java.net.URL} unusable for many things. It shouldn't be used as a {@link
+ * java.util.Map Map} key or in a {@link Set}. Doing so is both inefficient because equality may
+ * require a DNS lookup, and incorrect because unequal URLs may be equal because of how they are
+ * hosted.
+ *
+ * <h3>Equal URLs should be equal</h3>
+ * These two URLs are semantically identical, but {@code java.net.URI} disagrees:
+ * <ul>
+ *   <li>http://host:80/
+ *   <li>http://host
+ * </ul>
+ * Both the unnecessary port specification ({@code :80}) and the absent trailing slash ({@code /})
+ * cause URI to bucket the two URLs separately. This harms URI's usefulness in collections. Any
+ * application that stores information-per-URL will need to either canonicalize manually, or suffer
+ * unnecessary redundancy for such URLs.
+ *
+ * <p>Because they don't attempt canonical form, these classes are surprisingly difficult to use
+ * securely. Suppose you're building a webservice that checks that incoming paths are prefixed
+ * "/static/images/" before serving the corresponding assets from the filesystem. <pre>   {@code
+ *
+ *   String attack = "http://example.com/static/images/../../../../../etc/passwd";
+ *   System.out.println(new URL(attack).getPath());
+ *   System.out.println(new URI(attack).getPath());
+ *   System.out.println(HttpUrl.parse(attack).path());
+ * }</pre>
+ *
+ * By canonicalizing the input paths, they are complicit in directory traversal attacks. Code that
+ * checks only the path prefix may suffer!
+ * <pre>   {@code
+ *
+ *    /static/images/../../../../../etc/passwd
+ *    /static/images/../../../../../etc/passwd
+ *    /etc/passwd
+ * }</pre>
+ *
+ * <h3>If it works on the web, it should work in your application</h3>
+ * The {@code java.net.URI} class is strict around what URLs it accepts. It rejects URLs like
+ * "http://example.com/abc|def" because the '|' character is unsupported. This class is more
+ * forgiving: it will automatically percent-encode the '|', yielding "http://example.com/abc%7Cdef".
+ * This kind behavior is consistent with web browsers. {@code HttpUrl} prefers consistency with
+ * major web browsers over consistency with obsolete specifications.
+ *
+ * <h3>Paths and Queries should decompose</h3>
+ * Neither of the built-in URL models offer direct access to path segments or query parameters.
+ * Manually using {@code StringBuilder} to assemble these components is cumbersome: do '+'
+ * characters get silently replaced with spaces? If a query parameter contains a '&amp;', does that
+ * get escaped? By offering methods to read and write individual query parameters directly,
+ * application developers are saved from the hassles of encoding and decoding.
+ *
+ * <h3>Plus a modern API</h3>
+ * The URL (JDK1.0) and URI (Java 1.4) classes predate builders and instead use telescoping
+ * constructors. For example, there's no API to compose a URI with a custom port without also
+ * providing a query and fragment.
+ *
+ * <p>Instances of {@link HttpUrl} are well-formed and always have a scheme, host, and path. With
+ * {@code java.net.URL} it's possible to create an awkward URL like {@code http:/} with scheme and
+ * path but no hostname. Building APIs that consume such malformed values is difficult!
+ *
+ * <p>This class has a modern API. It avoids punitive checked exceptions: {@link #parse parse()}
+ * returns null if the input is an invalid URL. You can even be explicit about whether each
+ * component has been encoded already.
  */
 public final class HttpUrl {
   private static final char[] HEX_DIGITS =
@@ -192,12 +263,27 @@ public final class HttpUrl {
     this.url = url;
   }
 
+  /** Returns this URL as a {@link URL java.net.URL}. */
   public URL url() {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
+    try {
+      return new URL(url);
+    } catch (MalformedURLException e) {
+      throw new RuntimeException(e); // Unexpected!
+    }
   }
 
-  public URI uri() throws IOException {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
+  /**
+   * Attempt to convert this URL to a {@link URI java.net.URI}. This method throws an unchecked
+   * {@link IllegalStateException} if the URL it holds isn't valid by URI's overly-stringent
+   * standard. For example, URI rejects paths containing the '[' character. Consult that class for
+   * the exact rules of what URLs are permitted.
+   */
+  public URI uri() {
+    try {
+      return new URI(url);
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("not valid as a java.net.URI: " + url);
+    }
   }
 
   /** Returns either "http" or "https". */
@@ -404,11 +490,7 @@ public final class HttpUrl {
     return fragment != null ? percentDecode(fragment) : null;
   }
 
-  /**
-   * Returns the URL that would be retrieved by following {@code link} from this URL.
-   *
-   * TODO: explain better.
-   */
+  /** Returns the URL that would be retrieved by following {@code link} from this URL. */
   public HttpUrl resolve(String link) {
     return new Builder().parse(this, link);
   }
@@ -437,6 +519,10 @@ public final class HttpUrl {
     return new Builder().parse(null, url);
   }
 
+  /**
+   * Returns an {@link HttpUrl} for {@code url} if its protocol is {@code http} or {@code https}, or
+   * null if it has any other protocol.
+   */
   public static HttpUrl get(URL url) {
     return parse(url.toString());
   }
@@ -469,10 +555,6 @@ public final class HttpUrl {
 
     public Builder() {
       pathSegments.add(""); // The default path is '/' which needs a trailing space.
-    }
-
-    private Builder(HttpUrl url) {
-      throw new UnsupportedOperationException(); // TODO(jwilson)
     }
 
     public Builder scheme(String scheme) {
