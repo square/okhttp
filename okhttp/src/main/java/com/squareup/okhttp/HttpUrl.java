@@ -29,13 +29,108 @@ import java.util.Set;
 import okio.Buffer;
 
 /**
- * A <a href="https://url.spec.whatwg.org/">URL</a> with an {@code http} or {@code https} scheme.
+ * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
+ * class to compose and decompose Internet addresses. For example, this code will compose and print
+ * a URL for Google search: <pre>   {@code
  *
- * TODO: discussion on canonicalization
+ *   HttpUrl url = new HttpUrl.Builder()
+ *       .scheme("https")
+ *       .host("www.google.com")
+ *       .addPathSegment("search")
+ *       .addQueryParameter("q", "polar bears")
+ *       .build();
+ *   System.out.println(url);
+ * }</pre>
  *
- * TODO: discussion on encoding-by-parts
+ * which prints: <pre>   {@code
  *
- * TODO: discussion on this vs. java.net.URL vs. java.net.URI
+ *     https://www.google.com/search?q=polar+bears
+ * }</pre>
+ *
+ * As another example, this code prints the human-readable query parameters of a Twitter search:
+ * <pre>   {@code
+ *
+ *   HttpUrl url = HttpUrl.parse("https://twitter.com/search?q=cute%20%23puppies&f=images");
+ *   for (int i = 0, size = url.querySize(); i < size; i++) {
+ *     System.out.println(url.queryParameterName(i) + ": " + url.queryParameterValue(i));
+ *   }
+ * }</pre>
+ *
+ * which prints: <pre>   {@code
+ *
+ *   q: cute #puppies
+ *   f: images
+ * }</pre>
+ *
+ * In addition to composing URLs from their component parts, and decomposing URLs into their
+ * component parts, this class implements relative URL resolution: what address you'd reach by
+ * clicking a relative link on a specified page. For example: <pre>   {@code
+ *
+ *   HttpUrl base = HttpUrl.parse("https://www.youtube.com/user/WatchTheDaily/videos");
+ *   HttpUrl link = base.resolve("../../watch?v=cbP2N1BQdYc");
+ *   System.out.println(link);
+ * }</pre>
+ *
+ * which prints <pre>   {@code
+ *
+ *   https://www.youtube.com/watch?v=cbP2N1BQdYc
+ * }</pre>
+ *
+ * <h3>What's in a URL?</h3>
+ *
+ * A URL has several components.
+ *
+ * <h4>Scheme</h4>
+ * Sometimes referred to as <i>protocol</i>, A URL's scheme describes what mechanism should be used
+ * to retrieve the resource. Although URLs have many schemes (mailto, file, ftp), this class only
+ * supports {@code http} and {@code https}. Use {@link URI java.net.URI} for URLs with arbitrary
+ * schemes.
+ *
+ * <h4>Username and Password</h4>
+ * Username and password are either present, or the empty string {@code ""} if absent. This class
+ * offers no mechanism to differentiate empty from absent. Neither of these components are popular
+ * in practice. Typically HTTP applications use other mechanisms for user identification and
+ * authentication.
+ *
+ * <h4>Host</h4>
+ * The host identifies the webserver that serves the URL's resource. It is either a hostname like
+ * {@code square.com} or {@code localhost}, an IPv4 address like {@code 192.168.0.1}, or an IPv6
+ * address like {@code ::1}.
+ *
+ * <p>Usually a webserver is reachable with multiple identifiers: its IP addresses, registered
+ * domain names, and even {@code localhost} when connecting from the server itself. Each of a
+ * webserver's names is a distinct URL and they are not interchangeable. For example, even if
+ * {@code http://square.github.io/dagger} and {@code http://google.github.io/dagger} are served by
+ * the same IP address, the two URLs identify different resources.
+ *
+ * <h4>Port</h4>
+ * The port used to connect to the webserver. By default this is 80 for HTTP and 443 for HTTPS. This
+ * class never returns -1 for the port: if no port is explicitly specified in the URL then the
+ * scheme's default is used.
+ *
+ * <h4>Path</h4>
+ * The path identifies a specific resource on the host. Paths have a hierarchical structure like
+ * "/square/okhttp/issues/1486". Each path segment is prefixed with "/". This class offers methods
+ * to compose and decompose paths by segment. If a path's last segment is the empty string, then the
+ * path ends with "/". This class always builds non-empty paths: if the path is omitted it defaults
+ * to "/", which is a path whose only segment is the empty string.
+ *
+ * <h4>Query</h4>
+ * The query is optional: it can be null, empty, or non-empty. For many HTTP URLs the query string
+ * is subdivided into a collection of name-value parameters. This class offers methods to set the
+ * query as the single string, or as individual name-value parameters. With name-value parameters
+ * the values are optional and names may be repeated.
+ *
+ * <h4>Fragment</h4>
+ * The fragment is optional: it can be null, empty, or non-empty. Unlike host, port, path, and query
+ * the fragment is not sent to the webserver: it's private to the client.
+ *
+ * <h3>Encoding and Canonicalization</h3>
+ * TODO.
+ *
+ * <h3>Why another URL model?</h3>
+ * TODO.
+ *
  */
 public final class HttpUrl {
   private static final char[] HEX_DIGITS =
