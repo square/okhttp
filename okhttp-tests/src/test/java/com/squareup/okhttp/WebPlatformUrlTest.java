@@ -59,46 +59,37 @@ public final class WebPlatformUrlTest {
       "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
       "Parsing: <#β> against <http://example.org/foo/bar>",
       "Parsing: <http://www.google.com/foo?bar=baz# »> against <about:blank>",
-      "Parsing: <http://[www.google.com]/> against <about:blank>",
       "Parsing: <http://192.0x00A80001> against <about:blank>",
-      "Parsing: <http://user:pass@/> against <about:blank>",
-      "Parsing: <http:/:@/www.example.com> against <about:blank>",
+      // This test fails on Java 7 but passes on Java 8. See HttpUrlTest.hostWithTrailingDot().
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01%2e> against <http://other.com/>",
-      "Parsing: <http://user@/www.example.com> against <about:blank>",
-      "Parsing: <http:@/www.example.com> against <about:blank>",
-      "Parsing: <http:/@/www.example.com> against <about:blank>",
-      "Parsing: <http://@/www.example.com> against <about:blank>",
-      "Parsing: <https:@/www.example.com> against <about:blank>",
-      "Parsing: <http:a:b@/www.example.com> against <about:blank>",
-      "Parsing: <http:/a:b@/www.example.com> against <about:blank>",
-      "Parsing: <http://a:b@/www.example.com> against <about:blank>",
-      "Parsing: <http::@/www.example.com> against <about:blank>",
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
       "Parsing: <http://192.168.0.257> against <http://other.com/>",
       "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>",
       "Parsing: <http://[2001::1]> against <http://example.org/foo/bar>",
-      "Parsing: <http://[2001::1]:80> against <http://example.org/foo/bar>",
-      "Parsing: <http://[google.com]> against <http://other.com/>"
+      "Parsing: <http://[2001::1]:80> against <http://example.org/foo/bar>"
   );
 
   /** Test how {@link HttpUrl} does against the web platform test suite. */
   @Test public void httpUrl() throws Exception {
     if (!testData.scheme.isEmpty() && !HTTP_URL_SCHEMES.contains(testData.scheme)) {
-      System.out.println("Ignoring unsupported scheme " + testData.scheme);
+      System.err.println("Ignoring unsupported scheme " + testData.scheme);
       return;
     }
     if (!testData.base.startsWith("https:")
         && !testData.base.startsWith("http:")
         && !testData.base.equals("about:blank")) {
-      System.out.println("Ignoring unsupported base " + testData.base);
+      System.err.println("Ignoring unsupported base " + testData.base);
       return;
     }
 
     try {
       testHttpUrl();
+      if (KNOWN_FAILURES.contains(testData.toString())) {
+        System.err.println("Expected failure but was success: " + testData);
+      }
     } catch (Throwable e) {
       if (KNOWN_FAILURES.contains(testData.toString())) {
-        System.out.println("Ignoring known failure: " + testData);
+        System.err.println("Ignoring known failure: " + testData);
         e.printStackTrace();
       } else {
         throw e;
