@@ -351,7 +351,10 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Sets the socket factory used to create connections.
+   * Sets the socket factory used to create connections. OkHttp only uses
+   * the parameterless {@link SocketFactory#createSocket() createSocket()}
+   * method to create unconnected sockets. Overriding this method,
+   * e. g., allows the socket to be bound to a specific local address.
    *
    * <p>If unset, the {@link SocketFactory#getDefault() system-wide default}
    * socket factory will be used.
