@@ -42,36 +42,36 @@ public final class HttpUrlTest {
 
   @Test public void parseDoesNotTrimOtherWhitespaceCharacters() throws Exception {
     // Whitespace characters list from Google's Guava team: http://goo.gl/IcR9RD
-    assertEquals("/%0B", HttpUrl.parse("http://h/\u000b").path()); // line tabulation
-    assertEquals("/%1C", HttpUrl.parse("http://h/\u001c").path()); // information separator 4
-    assertEquals("/%1D", HttpUrl.parse("http://h/\u001d").path()); // information separator 3
-    assertEquals("/%1E", HttpUrl.parse("http://h/\u001e").path()); // information separator 2
-    assertEquals("/%1F", HttpUrl.parse("http://h/\u001f").path()); // information separator 1
-    assertEquals("/%C2%85", HttpUrl.parse("http://h/\u0085").path()); // next line
-    assertEquals("/%C2%A0", HttpUrl.parse("http://h/\u00a0").path()); // non-breaking space
-    assertEquals("/%E1%9A%80", HttpUrl.parse("http://h/\u1680").path()); // ogham space mark
-    assertEquals("/%E1%A0%8E", HttpUrl.parse("http://h/\u180e").path()); // mongolian vowel separator
-    assertEquals("/%E2%80%80", HttpUrl.parse("http://h/\u2000").path()); // en quad
-    assertEquals("/%E2%80%81", HttpUrl.parse("http://h/\u2001").path()); // em quad
-    assertEquals("/%E2%80%82", HttpUrl.parse("http://h/\u2002").path()); // en space
-    assertEquals("/%E2%80%83", HttpUrl.parse("http://h/\u2003").path()); // em space
-    assertEquals("/%E2%80%84", HttpUrl.parse("http://h/\u2004").path()); // three-per-em space
-    assertEquals("/%E2%80%85", HttpUrl.parse("http://h/\u2005").path()); // four-per-em space
-    assertEquals("/%E2%80%86", HttpUrl.parse("http://h/\u2006").path()); // six-per-em space
-    assertEquals("/%E2%80%87", HttpUrl.parse("http://h/\u2007").path()); // figure space
-    assertEquals("/%E2%80%88", HttpUrl.parse("http://h/\u2008").path()); // punctuation space
-    assertEquals("/%E2%80%89", HttpUrl.parse("http://h/\u2009").path()); // thin space
-    assertEquals("/%E2%80%8A", HttpUrl.parse("http://h/\u200a").path()); // hair space
-    assertEquals("/%E2%80%8B", HttpUrl.parse("http://h/\u200b").path()); // zero-width space
-    assertEquals("/%E2%80%8C", HttpUrl.parse("http://h/\u200c").path()); // zero-width non-joiner
-    assertEquals("/%E2%80%8D", HttpUrl.parse("http://h/\u200d").path()); // zero-width joiner
-    assertEquals("/%E2%80%8E", HttpUrl.parse("http://h/\u200e").path()); // left-to-right mark
-    assertEquals("/%E2%80%8F", HttpUrl.parse("http://h/\u200f").path()); // right-to-left mark
-    assertEquals("/%E2%80%A8", HttpUrl.parse("http://h/\u2028").path()); // line separator
-    assertEquals("/%E2%80%A9", HttpUrl.parse("http://h/\u2029").path()); // paragraph separator
-    assertEquals("/%E2%80%AF", HttpUrl.parse("http://h/\u202f").path()); // narrow non-breaking space
-    assertEquals("/%E2%81%9F", HttpUrl.parse("http://h/\u205f").path()); // medium mathematical space
-    assertEquals("/%E3%80%80", HttpUrl.parse("http://h/\u3000").path()); // ideographic space
+    assertEquals("/%0B", HttpUrl.parse("http://h/\u000b").encodedPath()); // line tabulation
+    assertEquals("/%1C", HttpUrl.parse("http://h/\u001c").encodedPath()); // information separator 4
+    assertEquals("/%1D", HttpUrl.parse("http://h/\u001d").encodedPath()); // information separator 3
+    assertEquals("/%1E", HttpUrl.parse("http://h/\u001e").encodedPath()); // information separator 2
+    assertEquals("/%1F", HttpUrl.parse("http://h/\u001f").encodedPath()); // information separator 1
+    assertEquals("/%C2%85", HttpUrl.parse("http://h/\u0085").encodedPath()); // next line
+    assertEquals("/%C2%A0", HttpUrl.parse("http://h/\u00a0").encodedPath()); // non-breaking space
+    assertEquals("/%E1%9A%80", HttpUrl.parse("http://h/\u1680").encodedPath()); // ogham space mark
+    assertEquals("/%E1%A0%8E", HttpUrl.parse("http://h/\u180e").encodedPath()); // mongolian vowel separator
+    assertEquals("/%E2%80%80", HttpUrl.parse("http://h/\u2000").encodedPath()); // en quad
+    assertEquals("/%E2%80%81", HttpUrl.parse("http://h/\u2001").encodedPath()); // em quad
+    assertEquals("/%E2%80%82", HttpUrl.parse("http://h/\u2002").encodedPath()); // en space
+    assertEquals("/%E2%80%83", HttpUrl.parse("http://h/\u2003").encodedPath()); // em space
+    assertEquals("/%E2%80%84", HttpUrl.parse("http://h/\u2004").encodedPath()); // three-per-em space
+    assertEquals("/%E2%80%85", HttpUrl.parse("http://h/\u2005").encodedPath()); // four-per-em space
+    assertEquals("/%E2%80%86", HttpUrl.parse("http://h/\u2006").encodedPath()); // six-per-em space
+    assertEquals("/%E2%80%87", HttpUrl.parse("http://h/\u2007").encodedPath()); // figure space
+    assertEquals("/%E2%80%88", HttpUrl.parse("http://h/\u2008").encodedPath()); // punctuation space
+    assertEquals("/%E2%80%89", HttpUrl.parse("http://h/\u2009").encodedPath()); // thin space
+    assertEquals("/%E2%80%8A", HttpUrl.parse("http://h/\u200a").encodedPath()); // hair space
+    assertEquals("/%E2%80%8B", HttpUrl.parse("http://h/\u200b").encodedPath()); // zero-width space
+    assertEquals("/%E2%80%8C", HttpUrl.parse("http://h/\u200c").encodedPath()); // zero-width non-joiner
+    assertEquals("/%E2%80%8D", HttpUrl.parse("http://h/\u200d").encodedPath()); // zero-width joiner
+    assertEquals("/%E2%80%8E", HttpUrl.parse("http://h/\u200e").encodedPath()); // left-to-right mark
+    assertEquals("/%E2%80%8F", HttpUrl.parse("http://h/\u200f").encodedPath()); // right-to-left mark
+    assertEquals("/%E2%80%A8", HttpUrl.parse("http://h/\u2028").encodedPath()); // line separator
+    assertEquals("/%E2%80%A9", HttpUrl.parse("http://h/\u2029").encodedPath()); // paragraph separator
+    assertEquals("/%E2%80%AF", HttpUrl.parse("http://h/\u202f").encodedPath()); // narrow non-breaking space
+    assertEquals("/%E2%81%9F", HttpUrl.parse("http://h/\u205f").encodedPath()); // medium mathematical space
+    assertEquals("/%E3%80%80", HttpUrl.parse("http://h/\u3000").encodedPath()); // ideographic space
   }
 
   @Test public void scheme() throws Exception {
@@ -203,13 +203,13 @@ public final class HttpUrlTest {
   @Test public void passwordWithEmptyUsername() throws Exception {
     // Chrome doesn't mind, but Firefox rejects URLs with empty usernames and non-empty passwords.
     assertEquals(HttpUrl.parse("http://host/path"), HttpUrl.parse("http://:@host/path"));
-    assertEquals("password%40", HttpUrl.parse("http://:password@@host/path").password());
+    assertEquals("password%40", HttpUrl.parse("http://:password@@host/path").encodedPassword());
   }
 
   @Test public void unprintableCharactersArePercentEncoded() throws Exception {
-    assertEquals("/%00", HttpUrl.parse("http://host/\u0000").path());
-    assertEquals("/%08", HttpUrl.parse("http://host/\u0008").path());
-    assertEquals("/%EF%BF%BD", HttpUrl.parse("http://host/\ufffd").path());
+    assertEquals("/%00", HttpUrl.parse("http://host/\u0000").encodedPath());
+    assertEquals("/%08", HttpUrl.parse("http://host/\u0008").encodedPath());
+    assertEquals("/%EF%BF%BD", HttpUrl.parse("http://host/\ufffd").encodedPath());
   }
 
   @Test public void usernameCharacters() throws Exception {
@@ -481,54 +481,54 @@ public final class HttpUrlTest {
   }
 
   @Test public void decodeUsername() {
-    assertEquals("user", HttpUrl.parse("http://user@host/").decodeUsername());
-    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://%F0%9F%8D%A9@host/").decodeUsername());
+    assertEquals("user", HttpUrl.parse("http://user@host/").username());
+    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://%F0%9F%8D%A9@host/").username());
   }
 
   @Test public void decodePassword() {
-    assertEquals("password", HttpUrl.parse("http://user:password@host/").decodePassword());
-    assertEquals("", HttpUrl.parse("http://user:@host/").decodePassword());
-    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://user:%F0%9F%8D%A9@host/").decodePassword());
+    assertEquals("password", HttpUrl.parse("http://user:password@host/").password());
+    assertEquals("", HttpUrl.parse("http://user:@host/").password());
+    assertEquals("\uD83C\uDF69", HttpUrl.parse("http://user:%F0%9F%8D%A9@host/").password());
   }
 
   @Test public void decodeSlashCharacterInDecodedPathSegment() {
     assertEquals(Arrays.asList("a/b/c"),
-        HttpUrl.parse("http://host/a%2Fb%2Fc").decodePathSegments());
+        HttpUrl.parse("http://host/a%2Fb%2Fc").pathSegments());
   }
 
   @Test public void decodeEmptyPathSegments() {
     assertEquals(Arrays.asList(""),
-        HttpUrl.parse("http://host/").decodePathSegments());
+        HttpUrl.parse("http://host/").pathSegments());
   }
 
   @Test public void percentDecode() throws Exception {
     assertEquals(Arrays.asList("\u0000"),
-        HttpUrl.parse("http://host/%00").decodePathSegments());
+        HttpUrl.parse("http://host/%00").pathSegments());
     assertEquals(Arrays.asList("a", "\u2603", "c"),
-        HttpUrl.parse("http://host/a/%E2%98%83/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%E2%98%83/c").pathSegments());
     assertEquals(Arrays.asList("a", "\uD83C\uDF69", "c"),
-        HttpUrl.parse("http://host/a/%F0%9F%8D%A9/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%F0%9F%8D%A9/c").pathSegments());
     assertEquals(Arrays.asList("a", "b", "c"),
-        HttpUrl.parse("http://host/a/%62/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%62/c").pathSegments());
     assertEquals(Arrays.asList("a", "z", "c"),
-        HttpUrl.parse("http://host/a/%7A/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%7A/c").pathSegments());
     assertEquals(Arrays.asList("a", "z", "c"),
-        HttpUrl.parse("http://host/a/%7a/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%7a/c").pathSegments());
   }
 
   @Test public void malformedPercentEncoding() {
     assertEquals(Arrays.asList("a%f", "b"),
-        HttpUrl.parse("http://host/a%f/b").decodePathSegments());
+        HttpUrl.parse("http://host/a%f/b").pathSegments());
     assertEquals(Arrays.asList("%", "b"),
-        HttpUrl.parse("http://host/%/b").decodePathSegments());
+        HttpUrl.parse("http://host/%/b").pathSegments());
     assertEquals(Arrays.asList("%"),
-        HttpUrl.parse("http://host/%").decodePathSegments());
+        HttpUrl.parse("http://host/%").pathSegments());
   }
 
   @Test public void malformedUtf8Encoding() {
     // Replace a partial UTF-8 sequence with the Unicode replacement character.
     assertEquals(Arrays.asList("a", "\ufffdx", "c"),
-        HttpUrl.parse("http://host/a/%E2%98x/c").decodePathSegments());
+        HttpUrl.parse("http://host/a/%E2%98x/c").pathSegments());
   }
 
   @Test public void incompleteUrlComposition() throws Exception {
@@ -554,7 +554,7 @@ public final class HttpUrlTest {
     assertEquals("", url.password());
     assertEquals("host", url.host());
     assertEquals(80, url.port());
-    assertEquals("/", url.path());
+    assertEquals("/", url.encodedPath());
     assertEquals(null, url.query());
     assertEquals(null, url.fragment());
   }
@@ -576,7 +576,7 @@ public final class HttpUrlTest {
     assertEquals("password", url.password());
     assertEquals("host", url.host());
     assertEquals(8080, url.port());
-    assertEquals("/path", url.path());
+    assertEquals("/path", url.encodedPath());
     assertEquals("query", url.query());
     assertEquals("fragment", url.fragment());
   }
@@ -595,16 +595,16 @@ public final class HttpUrlTest {
     assertEquals("http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
         + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l", url.toString());
     assertEquals("http", url.scheme());
-    assertEquals("a:\u0001@/\\?#%b", url.decodeUsername());
-    assertEquals("c:\u0001@/\\?#%d", url.decodePassword());
-    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.decodePathSegments());
-    assertEquals("i:\u0001@/\\?#%j", url.decodeQuery());
-    assertEquals("k:\u0001@/\\?#%l", url.decodeFragment());
-    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.username());
-    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.password());
-    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.path());
-    assertEquals("i:%01@/\\?%23%25j", url.query());
-    assertEquals("k:%01@/\\?#%25l", url.fragment());
+    assertEquals("a:\u0001@/\\?#%b", url.username());
+    assertEquals("c:\u0001@/\\?#%d", url.password());
+    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.pathSegments());
+    assertEquals("i:\u0001@/\\?#%j", url.query());
+    assertEquals("k:\u0001@/\\?#%l", url.fragment());
+    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.encodedUsername());
+    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.encodedPassword());
+    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.encodedPath());
+    assertEquals("i:%01@/\\?%23%25j", url.encodedQuery());
+    assertEquals("k:%01@/\\?#%25l", url.encodedFragment());
   }
 
   @Test public void composeFromEncodedComponents() throws Exception {
@@ -621,16 +621,16 @@ public final class HttpUrlTest {
     assertEquals("http://a%3A%01%40%2F%5C%3F%23%25b:c%3A%01%40%2F%5C%3F%23%25d@ef:8080/"
         + "g:%01@%2F%5C%3F%23%25h?i:%01@/\\?%23%25j#k:%01@/\\?#%25l", url.toString());
     assertEquals("http", url.scheme());
-    assertEquals("a:\u0001@/\\?#%b", url.decodeUsername());
-    assertEquals("c:\u0001@/\\?#%d", url.decodePassword());
-    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.decodePathSegments());
-    assertEquals("i:\u0001@/\\?#%j", url.decodeQuery());
-    assertEquals("k:\u0001@/\\?#%l", url.decodeFragment());
-    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.username());
-    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.password());
-    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.path());
-    assertEquals("i:%01@/\\?%23%25j", url.query());
-    assertEquals("k:%01@/\\?#%25l", url.fragment());
+    assertEquals("a:\u0001@/\\?#%b", url.username());
+    assertEquals("c:\u0001@/\\?#%d", url.password());
+    assertEquals(Arrays.asList("g:\u0001@/\\?#%h"), url.pathSegments());
+    assertEquals("i:\u0001@/\\?#%j", url.query());
+    assertEquals("k:\u0001@/\\?#%l", url.fragment());
+    assertEquals("a%3A%01%40%2F%5C%3F%23%25b", url.encodedUsername());
+    assertEquals("c%3A%01%40%2F%5C%3F%23%25d", url.encodedPassword());
+    assertEquals("/g:%01@%2F%5C%3F%23%25h", url.encodedPath());
+    assertEquals("i:%01@/\\?%23%25j", url.encodedQuery());
+    assertEquals("k:%01@/\\?#%25l", url.encodedFragment());
   }
 
   @Test public void composeWithEncodedPath() throws Exception {
@@ -640,8 +640,8 @@ public final class HttpUrlTest {
         .encodedPath("/a%2Fb/c")
         .build();
     assertEquals("http://host/a%2Fb/c", url.toString());
-    assertEquals("/a%2Fb/c", url.path());
-    assertEquals(Arrays.asList("a/b", "c"), url.decodePathSegments());
+    assertEquals("/a%2Fb/c", url.encodedPath());
+    assertEquals(Arrays.asList("a/b", "c"), url.pathSegments());
   }
 
   @Test public void composeMixingPathSegments() throws Exception {
@@ -653,22 +653,24 @@ public final class HttpUrlTest {
         .addEncodedPathSegment("f%25g")
         .build();
     assertEquals("http://host/a%2fb/c/d%2525e/f%25g", url.toString());
-    assertEquals("/a%2fb/c/d%2525e/f%25g", url.path());
-    assertEquals(Arrays.asList("a%2fb", "c", "d%2525e", "f%25g"), url.pathSegments());
-    assertEquals(Arrays.asList("a/b", "c", "d%25e", "f%g"), url.decodePathSegments());
+    assertEquals("/a%2fb/c/d%2525e/f%25g", url.encodedPath());
+    assertEquals(Arrays.asList("a%2fb", "c", "d%2525e", "f%25g"), url.encodedPathSegments());
+    assertEquals(Arrays.asList("a/b", "c", "d%25e", "f%g"), url.pathSegments());
   }
 
   @Test public void composeWithAddSegment() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/a/b/c");
-    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").build().path());
+    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").build().encodedPath());
     assertEquals("/a/b/c/d",
-        base.newBuilder().addPathSegment("").addPathSegment("d").build().path());
-    assertEquals("/a/b/", base.newBuilder().addPathSegment("..").build().path());
-    assertEquals("/a/b/", base.newBuilder().addPathSegment("%2e.").build().path());
-    assertEquals("/a/",
-        base.newBuilder().addPathSegment("%2e.").addPathSegment("..").build().path());
-    assertEquals("/a/b/", base.newBuilder().addPathSegment("").addPathSegment("..").build().path());
-    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").addPathSegment("").build().path());
+        base.newBuilder().addPathSegment("").addPathSegment("d").build().encodedPath());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("..").build().encodedPath());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("%2e.").build().encodedPath());
+    assertEquals("/a/", base.newBuilder().addPathSegment("%2e.").addPathSegment("..").build()
+        .encodedPath());
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("").addPathSegment("..").build()
+        .encodedPath());
+    assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").addPathSegment("").build()
+        .encodedPath());
   }
 
   @Test public void toJavaNetUrl() throws Exception {
@@ -730,8 +732,8 @@ public final class HttpUrlTest {
     assertEquals(Collections.singleton("a+=& b"), url.queryParameterNames());
     assertEquals(singletonList("c+=& d"), url.queryParameterValues("a+=& b"));
     assertEquals(1, url.querySize());
-    assertEquals("a+=& b=c+=& d", url.decodeQuery()); // Ambiguous! (Though working as designed.)
-    assertEquals("a%2B%3D%26+b=c%2B%3D%26+d", url.query());
+    assertEquals("a+=& b=c+=& d", url.query()); // Ambiguous! (Though working as designed.)
+    assertEquals("a%2B%3D%26+b=c%2B%3D%26+d", url.encodedQuery());
   }
 
   @Test public void composeQueryWithEncodedComponents() throws Exception {

@@ -213,7 +213,7 @@ class UrlComponentEncodingTester {
     String encoded = encoding.encode(codePoint);
     String urlString = component.urlString(encoded);
     HttpUrl url = HttpUrl.parse(urlString);
-    if (!component.decodedValue(url).equals(encoded)) {
+    if (!component.encodedValue(url).equals(encoded)) {
       fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
@@ -225,7 +225,7 @@ class UrlComponentEncodingTester {
     String urlString = component.urlString(identity);
     HttpUrl url = HttpUrl.parse(urlString);
 
-    String s = component.decodedValue(url);
+    String s = component.encodedValue(url);
     if (!s.equals(encoded)) {
       fail(String.format("Encoding %s %#02x using %s", component, codePoint, encoding));
     }
@@ -297,24 +297,24 @@ class UrlComponentEncodingTester {
       @Override public String urlString(String value) {
         return "http://" + value + "@example.com/";
       }
-      @Override public String decodedValue(HttpUrl url) {
-        return url.username();
+      @Override public String encodedValue(HttpUrl url) {
+        return url.encodedUsername();
       }
     },
     PASSWORD {
       @Override public String urlString(String value) {
         return "http://:" + value + "@example.com/";
       }
-      @Override public String decodedValue(HttpUrl url) {
-        return url.password();
+      @Override public String encodedValue(HttpUrl url) {
+        return url.encodedPassword();
       }
     },
     PATH {
       @Override public String urlString(String value) {
         return "http://example.com/a" + value + "z/";
       }
-      @Override public String decodedValue(HttpUrl url) {
-        String path = url.path();
+      @Override public String encodedValue(HttpUrl url) {
+        String path = url.encodedPath();
         return path.substring(2, path.length() - 2);
       }
     },
@@ -323,8 +323,8 @@ class UrlComponentEncodingTester {
         return "http://example.com/?a" + value + "z";
       }
 
-      @Override public String decodedValue(HttpUrl url) {
-        String query = url.query();
+      @Override public String encodedValue(HttpUrl url) {
+        String query = url.encodedQuery();
         return query.substring(1, query.length() - 1);
       }
     },
@@ -333,14 +333,14 @@ class UrlComponentEncodingTester {
         return "http://example.com/#a" + value + "z";
       }
 
-      @Override public String decodedValue(HttpUrl url) {
-        String fragment = url.fragment();
+      @Override public String encodedValue(HttpUrl url) {
+        String fragment = url.encodedFragment();
         return fragment.substring(1, fragment.length() - 1);
       }
     };
 
     public abstract String urlString(String value);
 
-    public abstract String decodedValue(HttpUrl url);
+    public abstract String encodedValue(HttpUrl url);
   }
 }

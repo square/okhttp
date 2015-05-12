@@ -115,15 +115,15 @@ public final class WebPlatformUrlTest {
       String effectivePort = url.port() != HttpUrl.defaultPort(url.scheme())
           ? Integer.toString(url.port())
           : "";
-      String effectiveQuery = url.query() != null ? "?" + url.query() : "";
-      String effectiveFragment = url.fragment() != null ? "#" + url.fragment() : "";
+      String effectiveQuery = url.encodedQuery() != null ? "?" + url.encodedQuery() : "";
+      String effectiveFragment = url.encodedFragment() != null ? "#" + url.encodedFragment() : "";
       String effectiveHost = url.host().contains(":")
           ? ("[" + url.host() + "]")
           : url.host();
       assertEquals("scheme", testData.scheme, url.scheme());
       assertEquals("host", testData.host, effectiveHost);
       assertEquals("port", testData.port, effectivePort);
-      assertEquals("path", testData.path, url.path());
+      assertEquals("path", testData.path, url.encodedPath());
       assertEquals("query", testData.query, effectiveQuery);
       assertEquals("fragment", testData.fragment, effectiveFragment);
     }
