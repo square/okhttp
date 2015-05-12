@@ -24,9 +24,9 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -48,7 +48,7 @@ import okio.Buffer;
  *
  * which prints: <pre>   {@code
  *
- *     https://www.google.com/search?q=polar+bears
+ *     https://www.google.com/search?q=polar%20bears
  * }</pre>
  *
  * As another example, this code prints the human-readable query parameters of a Twitter search:
@@ -304,7 +304,7 @@ public final class HttpUrl {
   }
 
   public String username() {
-    return percentDecode(username, false);
+    return percentDecode(username);
   }
 
   /** Returns the password, or an empty string if none is set. */
@@ -314,7 +314,7 @@ public final class HttpUrl {
 
   /** Returns the decoded password, or an empty string if none is present. */
   public String password() {
-    return password != null ? percentDecode(password, false) : null;
+    return password != null ? percentDecode(password) : null;
   }
 
   /**
@@ -388,7 +388,7 @@ public final class HttpUrl {
   public List<String> pathSegments() {
     List<String> result = new ArrayList<>();
     for (int i = 0, size = pathSegments.size(); i < size; i++) {
-      result.add(percentDecode(pathSegments.get(i), false));
+      result.add(percentDecode(pathSegments.get(i)));
     }
     return Util.immutableList(result);
   }
@@ -451,10 +451,10 @@ public final class HttpUrl {
       String name = queryNamesAndValues.get(i);
       String value = queryNamesAndValues.get(i + 1);
       if (i > 0) result.writeByte('&');
-      percentDecode(result, name, 0, name.length(), true);
+      percentDecode(result, name, 0, name.length());
       if (value != null) {
         result.writeByte('=');
-        percentDecode(result, value, 0, value.length(), true);
+        percentDecode(result, value, 0, value.length());
       }
     }
     return result.readUtf8();
@@ -474,7 +474,7 @@ public final class HttpUrl {
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
       if (encodedName.equals(queryNamesAndValues.get(i))) {
         String value = queryNamesAndValues.get(i + 1);
-        return value != null ? percentDecode(value, true) : null;
+        return value != null ? percentDecode(value) : null;
       }
     }
     return null;
@@ -484,7 +484,7 @@ public final class HttpUrl {
     if (queryNamesAndValues == null) return Collections.emptySet();
     Set<String> result = new LinkedHashSet<>();
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
-      result.add(percentDecode(queryNamesAndValues.get(i), true));
+      result.add(percentDecode(queryNamesAndValues.get(i)));
     }
     return Collections.unmodifiableSet(result);
   }
@@ -496,19 +496,19 @@ public final class HttpUrl {
     for (int i = 0, size = queryNamesAndValues.size(); i < size; i += 2) {
       if (encodedName.equals(queryNamesAndValues.get(i))) {
         String value = queryNamesAndValues.get(i + 1);
-        result.add(value != null ? percentDecode(value, true) : null);
+        result.add(value != null ? percentDecode(value) : null);
       }
     }
     return Collections.unmodifiableList(result);
   }
 
   public String queryParameterName(int index) {
-    return percentDecode(queryNamesAndValues.get(index * 2), true);
+    return percentDecode(queryNamesAndValues.get(index * 2));
   }
 
   public String queryParameterValue(int index) {
     String value = queryNamesAndValues.get(index * 2 + 1);
-    return value != null ? percentDecode(value, true) : null;
+    return value != null ? percentDecode(value) : null;
   }
 
   public String encodedFragment() {
@@ -516,7 +516,7 @@ public final class HttpUrl {
   }
 
   public String fragment() {
-    return fragment != null ? percentDecode(fragment, false) : null;
+    return fragment != null ? percentDecode(fragment) : null;
   }
 
   /** Returns the URL that would be retrieved by following {@code link} from this URL. */
@@ -1115,7 +1115,7 @@ public final class HttpUrl {
     private static String canonicalizeHost(String input, int pos, int limit) {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
-      String percentDecoded = percentDecode(input, pos, limit, false);
+      String percentDecoded = percentDecode(input, pos, limit);
 
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
@@ -1266,18 +1266,18 @@ public final class HttpUrl {
     }
   }
 
-  static String percentDecode(String encoded, boolean query) {
-    return percentDecode(encoded, 0, encoded.length(), query);
+  static String percentDecode(String encoded) {
+    return percentDecode(encoded, 0, encoded.length());
   }
 
-  static String percentDecode(String encoded, int pos, int limit, boolean query) {
+  static String percentDecode(String encoded, int pos, int limit) {
     for (int i = pos; i < limit; i++) {
       char c = encoded.charAt(i);
-      if (c == '%' || (c == '+' && query)) {
+      if (c == '%') {
         // Slow path: the character at i requires decoding!
         Buffer out = new Buffer();
         out.writeUtf8(encoded, pos, i);
-        percentDecode(out, encoded, i, limit, query);
+        percentDecode(out, encoded, i, limit);
         return out.readUtf8();
       }
     }
@@ -1286,7 +1286,7 @@ public final class HttpUrl {
     return encoded.substring(pos, limit);
   }
 
-  static void percentDecode(Buffer out, String encoded, int pos, int limit, boolean query) {
+  static void percentDecode(Buffer out, String encoded, int pos, int limit) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = encoded.codePointAt(i);
@@ -1298,9 +1298,6 @@ public final class HttpUrl {
           i += 2;
           continue;
         }
-      } else if (codePoint == '+' && query) {
-        out.writeByte(' ');
-        continue;
       }
       out.writeUtf8CodePoint(codePoint);
     }
@@ -1336,8 +1333,7 @@ public final class HttpUrl {
           || codePoint >= 0x7f
           || encodeSet.indexOf(codePoint) != -1
           || (codePoint == '%' && !alreadyEncoded)
-          || (query && codePoint == '+')
-          || (query && codePoint == ' ')) {
+          || (query && codePoint == '+')) {
         // Slow path: the character at i requires encoding!
         StringBuilder out = new StringBuilder();
         out.append(input, pos, i);
@@ -1362,11 +1358,8 @@ public final class HttpUrl {
           || codePoint == '\r') {
         // Skip this character.
       } else if (query && codePoint == '+') {
-        // In queries, encode '+' to '%2B'.
-        out.append(alreadyEncoded ? "+" : "%2B");
-      } else if (query && codePoint == ' ') {
-        // In queries, encode ' ' to ' '.
-        out.append('+');
+        // HTML permits space to be encoded as '+'. We use '%20' to avoid special cases.
+        out.append(alreadyEncoded ? "%20" : "%2B");
       } else if (codePoint < 0x20
           || codePoint >= 0x7f
           || encodeSet.indexOf(codePoint) != -1
