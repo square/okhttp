@@ -15,12 +15,9 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
@@ -29,45 +26,44 @@ import java.util.List;
  * is null or itself immutable.
  */
 public final class Request {
-  private final String urlString;
+  private final HttpUrl url;
   private final String method;
   private final Headers headers;
   private final RequestBody body;
   private final Object tag;
 
-  private volatile URL url; // Lazily initialized.
-  private volatile URI uri; // Lazily initialized.
+  private volatile URL javaNetUrl; // Lazily initialized.
+  private volatile URI javaNetUri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Request(Builder builder) {
-    this.urlString = builder.urlString;
+    this.url = builder.url;
     this.method = builder.method;
     this.headers = builder.headers.build();
     this.body = builder.body;
     this.tag = builder.tag != null ? builder.tag : this;
-    this.url = builder.url;
+  }
+
+  public HttpUrl httpUrl() {
+    return url;
   }
 
   public URL url() {
-    try {
-      URL result = url;
-      return result != null ? result : (url = new URL(urlString));
-    } catch (MalformedURLException e) {
-      throw new RuntimeException("Malformed URL: " + urlString, e);
-    }
+    URL result = javaNetUrl;
+    return result != null ? result : (javaNetUrl = url.url());
   }
 
   public URI uri() throws IOException {
     try {
-      URI result = uri;
-      return result != null ? result : (uri = Platform.get().toUriLenient(url()));
-    } catch (URISyntaxException e) {
+      URI result = javaNetUri;
+      return result != null ? result : (javaNetUri = url.uri());
+    } catch (IllegalStateException e) {
       throw new IOException(e.getMessage());
     }
   }
 
   public String urlString() {
-    return urlString;
+    return url.toString();
   }
 
   public String method() {
@@ -108,22 +104,21 @@ public final class Request {
   }
 
   public boolean isHttps() {
-    return url().getProtocol().equals("https");
+    return url.isHttps();
   }
 
   @Override public String toString() {
     return "Request{method="
         + method
         + ", url="
-        + urlString
+        + url
         + ", tag="
         + (tag != this ? tag : null)
         + '}';
   }
 
   public static class Builder {
-    private String urlString;
-    private URL url;
+    private HttpUrl url;
     private String method;
     private Headers.Builder headers;
     private RequestBody body;
@@ -135,7 +130,6 @@ public final class Request {
     }
 
     private Builder(Request request) {
-      this.urlString = request.urlString;
       this.url = request.url;
       this.method = request.method;
       this.body = request.body;
@@ -143,18 +137,24 @@ public final class Request {
       this.headers = request.headers.newBuilder();
     }
 
+    public Builder url(HttpUrl url) {
+      if (url == null) throw new IllegalArgumentException("url == null");
+      this.url = url;
+      return this;
+    }
+
     public Builder url(String url) {
       if (url == null) throw new IllegalArgumentException("url == null");
-      this.urlString = url;
-      this.url = null;
-      return this;
+      HttpUrl parsed = HttpUrl.parse(url);
+      if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
+      return url(parsed);
     }
 
     public Builder url(URL url) {
       if (url == null) throw new IllegalArgumentException("url == null");
-      this.url = url;
-      this.urlString = url.toString();
-      return this;
+      HttpUrl parsed = HttpUrl.get(url);
+      if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
+      return url(parsed);
     }
 
     /**
@@ -251,7 +251,7 @@ public final class Request {
     }
 
     public Request build() {
-      if (urlString == null) throw new IllegalStateException("url == null");
+      if (url == null) throw new IllegalStateException("url == null");
       return new Request(this);
     }
   }

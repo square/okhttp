@@ -62,7 +62,6 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -73,7 +72,6 @@ import static com.squareup.okhttp.internal.Internal.logger;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -127,40 +125,36 @@ public final class CallTest {
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
-  @Test public void lazilyEvaluateRequestUrl() throws Exception {
-    server.enqueue(new MockResponse().setBody("abc"));
+  @Test public void buildRequestUsingHttpUrl() throws Exception {
+    server.enqueue(new MockResponse());
 
-    Request request1 = new Request.Builder()
-        .url("foo://bar?baz")
+    HttpUrl httpUrl = HttpUrl.get(server.getUrl("/"));
+    Request request = new Request.Builder()
+        .url(httpUrl)
         .build();
-    Request request2 = request1.newBuilder()
-        .url(server.getUrl("/"))
-        .build();
-    executeSynchronously(request2)
-        .assertCode(200)
-        .assertSuccessful()
-        .assertBody("abc");
+    assertEquals(httpUrl, request.httpUrl());
+
+    executeSynchronously(request).assertSuccessful();
   }
 
-  @Ignore // TODO(jwilson): fix.
   @Test public void invalidScheme() throws Exception {
+    Request.Builder requestBuilder = new Request.Builder();
     try {
-      Request request = new Request.Builder()
-          .url("ftp://hostname/path")
-          .build();
-      executeSynchronously(request);
+      requestBuilder.url("ftp://hostname/path");
       fail();
     } catch (IllegalArgumentException expected) {
+      assertEquals(expected.getMessage(), "unexpected url: ftp://hostname/path");
     }
   }
 
   @Test public void invalidPort() throws Exception {
-    Request request = new Request.Builder()
-        .url("http://localhost:65536/")
-        .build();
-    client.newCall(request).enqueue(callback);
-    callback.await(request.url())
-        .assertFailure("No route to localhost:65536; port is out of range");
+    Request.Builder requestBuilder = new Request.Builder();
+    try {
+      requestBuilder.url("http://localhost:65536/");
+      fail();
+    } catch (IllegalArgumentException expected) {
+      assertEquals(expected.getMessage(), "unexpected url: http://localhost:65536/");
+    }
   }
 
   @Test public void getReturns500() throws Exception {
