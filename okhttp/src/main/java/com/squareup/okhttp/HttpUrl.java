@@ -299,21 +299,21 @@ public final class HttpUrl {
   }
 
   /** Returns the username, or an empty string if none is set. */
-  public String username() {
+  public String encodedUsername() {
     return username;
   }
 
-  public String decodeUsername() {
+  public String username() {
     return percentDecode(username, false);
   }
 
   /** Returns the password, or an empty string if none is set. */
-  public String password() {
+  public String encodedPassword() {
     return password;
   }
 
   /** Returns the decoded password, or an empty string if none is present. */
-  public String decodePassword() {
+  public String password() {
     return password != null ? percentDecode(password, false) : null;
   }
 
@@ -368,7 +368,7 @@ public final class HttpUrl {
    * Returns the entire path of this URL, encoded for use in HTTP resource resolution. The
    * returned path is always nonempty and is prefixed with {@code /}.
    */
-  public String path() {
+  public String encodedPath() {
     StringBuilder result = new StringBuilder();
     pathSegmentsToString(result, pathSegments);
     return result.toString();
@@ -381,11 +381,11 @@ public final class HttpUrl {
     }
   }
 
-  public List<String> pathSegments() {
+  public List<String> encodedPathSegments() {
     return pathSegments;
   }
 
-  public List<String> decodePathSegments() {
+  public List<String> pathSegments() {
     List<String> result = new ArrayList<>();
     for (int i = 0, size = pathSegments.size(); i < size; i++) {
       result.add(percentDecode(pathSegments.get(i), false));
@@ -398,7 +398,7 @@ public final class HttpUrl {
    * may be null (for URLs with no query), empty (for URLs with an empty query) or non-empty (all
    * other URLs).
    */
-  public String query() {
+  public String encodedQuery() {
     if (queryNamesAndValues == null) return null; // No query.
     StringBuilder result = new StringBuilder();
     namesAndValuesToQueryString(result, queryNamesAndValues);
@@ -443,7 +443,7 @@ public final class HttpUrl {
     return result;
   }
 
-  public String decodeQuery() {
+  public String query() {
     if (queryNamesAndValues == null) return null; // No query.
 
     Buffer result = new Buffer();
@@ -511,11 +511,11 @@ public final class HttpUrl {
     return value != null ? percentDecode(value, true) : null;
   }
 
-  public String fragment() {
+  public String encodedFragment() {
     return fragment;
   }
 
-  public String decodeFragment() {
+  public String fragment() {
     return fragment != null ? percentDecode(fragment, false) : null;
   }
 
