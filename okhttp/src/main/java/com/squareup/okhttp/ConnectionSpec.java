@@ -78,6 +78,12 @@ public final class ConnectionSpec {
   /** Used if tls == true. The TLS protocol versions to use. */
   private final String[] tlsVersions;
 
+  /**
+   * Used if tls == true. Whether the first tlsVersion must be enabled for
+   * {@link #isCompatible(javax.net.ssl.SSLSocket)} to return true.
+   */
+  private final boolean requireFirstTlsVersion;
+
   final boolean supportsTlsExtensions;
 
   private ConnectionSpec(Builder builder) {
@@ -85,6 +91,7 @@ public final class ConnectionSpec {
     this.cipherSuites = builder.cipherSuites;
     this.tlsVersions = builder.tlsVersions;
     this.supportsTlsExtensions = builder.supportsTlsExtensions;
+    this.requireFirstTlsVersion = builder.requireFirstTlsVersion;
   }
 
   public boolean isTls() {
@@ -188,6 +195,9 @@ public final class ConnectionSpec {
     }
 
     String[] enabledProtocols = socket.getEnabledProtocols();
+    if (requireFirstTlsVersion && !contains(enabledProtocols, tlsVersions[0])) {
+      return false;
+    }
     boolean requiredProtocolsEnabled = nonEmptyIntersection(tlsVersions, enabledProtocols);
     if (!requiredProtocolsEnabled) {
       return false;
@@ -273,6 +283,7 @@ public final class ConnectionSpec {
     private String[] cipherSuites;
     private String[] tlsVersions;
     private boolean supportsTlsExtensions;
+    private boolean requireFirstTlsVersion;
 
     Builder(boolean tls) {
       this.tls = tls;
@@ -283,6 +294,7 @@ public final class ConnectionSpec {
       this.cipherSuites = connectionSpec.cipherSuites;
       this.tlsVersions = connectionSpec.tlsVersions;
       this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions;
+      this.requireFirstTlsVersion = connectionSpec.requireFirstTlsVersion;
     }
 
     public Builder cipherSuites(CipherSuite... cipherSuites) {
@@ -335,6 +347,11 @@ public final class ConnectionSpec {
         this.tlsVersions = tlsVersions.clone();
       }
 
+      return this;
+    }
+
+    public Builder requireFirstTlsVersion(boolean requireFirstTlsVersion) {
+      this.requireFirstTlsVersion = requireFirstTlsVersion;
       return this;
     }
 

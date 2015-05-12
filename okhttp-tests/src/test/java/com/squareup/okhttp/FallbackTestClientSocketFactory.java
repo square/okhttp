@@ -36,8 +36,19 @@ public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory 
    */
   public static final String TLS_FALLBACK_SCSV = "TLS_FALLBACK_SCSV";
 
-  public FallbackTestClientSocketFactory(SSLSocketFactory delegate) {
+  private final String[] enabledProtocols;
+
+  public FallbackTestClientSocketFactory(SSLSocketFactory delegate, TlsVersion[] enabledProtocols) {
     super(delegate);
+    this.enabledProtocols = javaNames(enabledProtocols);
+  }
+
+  private static String[] javaNames(TlsVersion... tlsVersions) {
+    String[] protocols = new String[tlsVersions.length];
+    for (int i = 0; i < tlsVersions.length; i++) {
+      protocols[i] = tlsVersions[i].javaName();
+    }
+    return protocols;
   }
 
   @Override public SSLSocket createSocket(Socket s, String host, int port, boolean autoClose)
@@ -71,6 +82,11 @@ public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory 
       InetAddress localAddress, int localPort) throws IOException {
     SSLSocket socket = super.createSocket(address, port, localAddress, localPort);
     return new TlsFallbackScsvDisabledSSLSocket(socket);
+  }
+
+  @Override protected void configureSocket(SSLSocket sslSocket) throws IOException {
+    // In order to test fallback we need at least two TLS versions available.
+    sslSocket.setEnabledProtocols(enabledProtocols);
   }
 
   private static class TlsFallbackScsvDisabledSSLSocket extends DelegatingSSLSocket {
