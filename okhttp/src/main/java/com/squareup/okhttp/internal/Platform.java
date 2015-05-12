@@ -25,9 +25,6 @@ import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -74,10 +71,6 @@ public class Platform {
   }
 
   public void untagSocket(Socket socket) throws SocketException {
-  }
-
-  public URI toUriLenient(URL url) throws URISyntaxException {
-    return url.toURI(); // this isn't as good as the built-in toUriLenient
   }
 
   /**

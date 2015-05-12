@@ -654,8 +654,10 @@ public final class MockWebServer {
         };
 
     // Adapt the request and response into our Request and Response domain model.
+    String scheme = request.getTlsVersion() != null ? "https" : "http";
+    String authority = request.getHeader("Host"); // Has host and port.
     final Request fancyRequest = new Request.Builder()
-        .get().url(request.getPath())
+        .url(scheme + "://" + authority + "/")
         .headers(request.getHeaders())
         .build();
     final Response fancyResponse = new Response.Builder()

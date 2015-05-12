@@ -178,7 +178,7 @@ public class SocketConnector {
       HttpConnection tunnelConnection = new HttpConnection(connectionPool, connection, socket);
       tunnelConnection.setTimeouts(readTimeout, writeTimeout);
       URL url = tunnelRequest.url();
-      String requestLine = "CONNECT " + url.getHost() + ":" + url.getPort() + " HTTP/1.1";
+      String requestLine = "CONNECT " + url.getHost() + ":" + getEffectivePort(url) + " HTTP/1.1";
       while (true) {
         tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
         tunnelConnection.flush();
