@@ -15,13 +15,15 @@
  */
 package com.squareup.okhttp;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import okio.Buffer;
 import okio.ByteString;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /** Tests how each code point is encoded and decoded in the context of each URL component. */
 class UrlComponentEncodingTester {
@@ -166,6 +168,7 @@ class UrlComponentEncodingTester {
   }
 
   private final Map<Integer, Encoding> encodings;
+  private final StringBuilder skipForUri = new StringBuilder();
 
   public UrlComponentEncodingTester() {
     this.encodings = new LinkedHashMap<>(defaultEncodings);
@@ -178,13 +181,30 @@ class UrlComponentEncodingTester {
     return this;
   }
 
+  /**
+   * Configure a character to be skipped but only for conversion to and from {@code java.net.URI}.
+   * That class is more strict than the others.
+   */
+  public UrlComponentEncodingTester skipForUri(int... codePoints) {
+    skipForUri.append(new String(codePoints, 0, codePoints.length));
+    return this;
+  }
+
   public UrlComponentEncodingTester test(Component component) {
     for (Map.Entry<Integer, Encoding> entry : encodings.entrySet()) {
-      if (entry.getValue() == Encoding.SKIP) continue;
+      Encoding encoding = entry.getValue();
+      if (encoding == Encoding.SKIP) continue;
+      int codePoint = entry.getKey();
 
-      testParseOriginal(entry.getKey(), entry.getValue(), component);
-      testParseAlreadyEncoded(entry.getKey(), entry.getValue(), component);
-      testSerialize(entry.getKey(), entry.getValue(), component);
+      testParseOriginal(codePoint, encoding, component);
+      testParseAlreadyEncoded(codePoint, encoding, component);
+      testToUrl(codePoint, encoding, component);
+      testFromUrl(codePoint, encoding, component);
+
+      if (skipForUri.indexOf(Encoding.IDENTITY.encode(codePoint)) == -1) {
+        testToUri(codePoint, encoding, component);
+        testFromUri(codePoint, encoding, component);
+      }
     }
     return this;
   }
@@ -194,8 +214,7 @@ class UrlComponentEncodingTester {
     String urlString = component.urlString(encoded);
     HttpUrl url = HttpUrl.parse(urlString);
     if (!component.decodedValue(url).equals(encoded)) {
-      assertEquals(String.format("Encoding %s %#x using %s", component, codePoint, encoding),
-          encoded, component.decodedValue(url));
+      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
 
@@ -208,13 +227,44 @@ class UrlComponentEncodingTester {
 
     String s = component.decodedValue(url);
     if (!s.equals(encoded)) {
-      assertEquals(String.format("Encoding %s %#02x using %s", component, codePoint, encoding),
-          encoded, component.decodedValue(url));
+      fail(String.format("Encoding %s %#02x using %s", component, codePoint, encoding));
     }
   }
 
-  private void testSerialize(int codePoint, Encoding encoding, Component component) {
-    // TODO.
+  private void testToUrl(int codePoint, Encoding encoding, Component component) {
+    String encoded = encoding.encode(codePoint);
+    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    URL javaNetUrl = httpUrl.url();
+    if (!javaNetUrl.toString().equals(javaNetUrl.toString())) {
+      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
+  }
+
+  private void testFromUrl(int codePoint, Encoding encoding, Component component) {
+    String encoded = encoding.encode(codePoint);
+    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    HttpUrl toAndFromJavaNetUrl = HttpUrl.get(httpUrl.url());
+    if (!toAndFromJavaNetUrl.equals(httpUrl)) {
+      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
+  }
+
+  private void testToUri(int codePoint, Encoding encoding, Component component) {
+    String encoded = encoding.encode(codePoint);
+    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    URI uri = httpUrl.uri();
+    if (!uri.toString().equals(uri.toString())) {
+      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
+  }
+
+  private void testFromUri(int codePoint, Encoding encoding, Component component) {
+    String encoded = encoding.encode(codePoint);
+    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
+    HttpUrl toAndFromUri = HttpUrl.get(httpUrl.uri());
+    if (!toAndFromUri.equals(httpUrl)) {
+      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    }
   }
 
   public enum Encoding {
@@ -235,14 +285,11 @@ class UrlComponentEncodingTester {
       }
     },
 
-    SKIP {
-      public String encode(int codePoint) {
-        throw new UnsupportedOperationException();
-      }
-    };
+    SKIP;
 
-    public abstract String encode(int codePoint);
-
+    public String encode(int codePoint) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   public enum Component {
@@ -260,24 +307,6 @@ class UrlComponentEncodingTester {
       }
       @Override public String decodedValue(HttpUrl url) {
         return url.password();
-      }
-    },
-    HOST {
-      @Override public String urlString(String value) {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override public String decodedValue(HttpUrl url) {
-        throw new UnsupportedOperationException("TODO");
-      }
-    },
-    PORT {
-      @Override public String urlString(String value) {
-        throw new UnsupportedOperationException("TODO");
-      }
-
-      @Override public String decodedValue(HttpUrl url) {
-        throw new UnsupportedOperationException("TODO");
       }
     },
     PATH {

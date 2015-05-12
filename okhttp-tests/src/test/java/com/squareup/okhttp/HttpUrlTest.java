@@ -17,6 +17,8 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.UrlComponentEncodingTester.Component;
 import com.squareup.okhttp.UrlComponentEncodingTester.Encoding;
+import java.net.URI;
+import java.net.URL;
 import java.util.Arrays;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -211,6 +213,7 @@ public final class HttpUrlTest {
     new UrlComponentEncodingTester()
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ';', '=', '@')
         .override(Encoding.SKIP, ':', '/', '\\', '?', '#')
+        .skipForUri('%')
         .test(Component.USER);
   }
 
@@ -218,6 +221,7 @@ public final class HttpUrlTest {
     new UrlComponentEncodingTester()
         .override(Encoding.PERCENT, '[', ']', '{', '}', '|', '^', '\'', ':', ';', '=', '@')
         .override(Encoding.SKIP, '/', '\\', '?', '#')
+        .skipForUri('%')
         .test(Component.PASSWORD);
   }
 
@@ -402,6 +406,7 @@ public final class HttpUrlTest {
     new UrlComponentEncodingTester()
         .override(Encoding.PERCENT, '^', '{', '}', '|')
         .override(Encoding.SKIP, '\\', '?', '#')
+        .skipForUri('%', '[', ']')
         .test(Component.PATH);
   }
 
@@ -410,12 +415,14 @@ public final class HttpUrlTest {
         .override(Encoding.IDENTITY, '?', '`')
         .override(Encoding.PERCENT, '\'')
         .override(Encoding.SKIP, '#')
+        .skipForUri('%', '\\', '^', '`', '{', '|', '}')
         .test(Component.QUERY);
   }
 
   @Test public void fragmentCharacters() throws Exception {
     new UrlComponentEncodingTester()
         .override(Encoding.IDENTITY, ' ', '"', '#', '<', '>', '?', '`')
+        .skipForUri('%', ' ', '"', '#', '<', '>', '\\', '^', '`', '{', '|', '}')
         .test(Component.FRAGMENT);
     // TODO(jwilson): don't percent-encode non-ASCII characters. (But do encode control characters!)
   }
@@ -659,5 +666,54 @@ public final class HttpUrlTest {
         base.newBuilder().addPathSegment("%2e.").addPathSegment("..").build().path());
     assertEquals("/a/b/", base.newBuilder().addPathSegment("").addPathSegment("..").build().path());
     assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").addPathSegment("").build().path());
+  }
+
+  @Test public void toJavaNetUrl() throws Exception {
+    HttpUrl httpUrl = HttpUrl.parse("http://username:password@host/path?query#fragment");
+    URL javaNetUrl = httpUrl.url();
+    assertEquals("http://username:password@host/path?query#fragment", javaNetUrl.toString());
+  }
+
+  @Test public void toUri() throws Exception {
+    HttpUrl httpUrl = HttpUrl.parse("http://username:password@host/path?query#fragment");
+    URI uri = httpUrl.uri();
+    assertEquals("http://username:password@host/path?query#fragment", uri.toString());
+  }
+
+  @Test public void toUriForbiddenCharacter() throws Exception {
+    HttpUrl httpUrl = HttpUrl.parse("http://host/a[b");
+    try {
+      httpUrl.uri();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("not valid as a java.net.URI: http://host/a[b", expected.getMessage());
+    }
+  }
+
+  @Test public void fromJavaNetUrl() throws Exception {
+    URL javaNetUrl = new URL("http://username:password@host/path?query#fragment");
+    HttpUrl httpUrl = HttpUrl.get(javaNetUrl);
+    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+  }
+
+  @Test public void fromJavaNetUrlUnsupportedScheme() throws Exception {
+    URL javaNetUrl = new URL("mailto:user@example.com");
+    assertEquals(null, HttpUrl.get(javaNetUrl));
+  }
+
+  @Test public void fromUri() throws Exception {
+    URI uri = new URI("http://username:password@host/path?query#fragment");
+    HttpUrl httpUrl = HttpUrl.get(uri);
+    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+  }
+
+  @Test public void fromUriUnsupportedScheme() throws Exception {
+    URI uri = new URI("mailto:user@example.com");
+    assertEquals(null, HttpUrl.get(uri));
+  }
+
+  @Test public void fromUriPartial() throws Exception {
+    URI uri = new URI("/path");
+    assertEquals(null, HttpUrl.get(uri));
   }
 }
