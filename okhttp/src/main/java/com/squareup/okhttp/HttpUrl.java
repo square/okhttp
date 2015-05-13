@@ -1352,10 +1352,8 @@ public final class HttpUrl {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
-      if (codePoint == '\t'
-          || codePoint == '\n'
-          || codePoint == '\f'
-          || codePoint == '\r') {
+      if (alreadyEncoded
+          && (codePoint == '\t' || codePoint == '\n' || codePoint == '\f' || codePoint == '\r')) {
         // Skip this character.
       } else if (query && codePoint == '+') {
         // HTML permits space to be encoded as '+'. We use '%20' to avoid special cases.
