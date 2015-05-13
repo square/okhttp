@@ -129,8 +129,55 @@ import okio.Buffer;
  * The fragment is optional: it can be null, empty, or non-empty. Unlike host, port, path, and query
  * the fragment is not sent to the webserver: it's private to the client.
  *
- * <h3>Encoding and Canonicalization</h3>
- * TODO.
+ * <h3>Encoding</h3>
+ * Each component must be encoded before it is embedded in the complete URL. As we saw above, the
+ * string {@code cute #puppies} is encoded as {@code cute%20%23puppies} when used as a query
+ * parameter value.
+ *
+ * <h4>Percent encoding</h4>
+ * Percent encoding replaces a character (like {@code \ud83c\udf69}) with its UTF-8 hex bytes (like
+ * {@code %F0%9F%8D%A9}). This approach works for whitespace characters, control characters,
+ * non-ASCII characters, and characters that already have another meaning in a particular context.
+ *
+ * <p>Percent encoding is used in every URL component except for the hostname. But the set of
+ * characters that need to be encoded is different for each component. For example, the path
+ * component must escape all of its {@code ?} characters, otherwise it could be interpreted as the
+ * start of the URL's query. But within the query and fragment components, the {@code ?} character
+ * doesn't delimit anything and doesn't need to be escaped. <pre>   {@code
+ *
+ *   HttpUrl url = HttpUrl.parse("http://who-let-the-dogs.out").newBuilder()
+ *       .addPathSegment("_Who?_")
+ *       .query("_Who?_")
+ *       .fragment("_Who?_")
+ *       .build();
+ *   System.out.println(url);
+ * }</pre>
+ *
+ * This prints: <pre>   {@code
+ *
+ *   http://who-let-the-dogs.out/_Who%3F_?_Who?_#_Who?_
+ * }</pre>
+ *
+ * When parsing URLs that lack percent encoding where it is required, this class will percent encode
+ * the offending characters.
+ *
+ * <h4>IDNA Mapping and Punycode encoding</h4>
+ * Hostnames have different requirements and use a different encoding scheme. It consists of IDNA
+ * mapping and Punycode encoding.
+ *
+ * <p>In order to avoid confusion and discourage phishing attacks,
+ * <a href="http://www.unicode.org/reports/tr46/#ToASCII">IDNA Mapping</a> transforms names to avoid
+ * confusing characters. This includes basic case folding: transforming shouting {@code SQUARE.COM}
+ * into cool and casual {@code square.com}. It also handles more exotic characters. For example, the
+ * Unicode trademark sign (™) could be confused for the letters "TM" in {@code http://ho™mail.com}.
+ * To mitigate this, the single character (™) maps to the string (tm). There is similar policy for
+ * all of the 1.1 million Unicode code points. Note that some code points such as "\ud83c\udf69" are
+ * not mapped and cannot be used in a hostname.
+ *
+ * <p><a href="http://ietf.org/rfc/rfc3492.txt">Punycode</a> converts a Unicode string to an ASCII
+ * string to make international domain names work everywhere. For example, "σ" encodes as
+ * "xn--4xa". The encoded string is not human readable, but can be used with classes like {@link
+ * InetAddress} to establish connections.
  *
  * <h3>Why another URL model?</h3>
  * Java includes both {@link URL java.net.URL} and {@link URI java.net.URI}. We offer a new URL
@@ -329,16 +376,6 @@ public final class HttpUrl {
    */
   public String host() {
     return host;
-  }
-
-  /**
-   * Returns the decoded (potentially non-ASCII) hostname. The returned string may contain non-ASCII
-   * characters and is <strong>not suitable</strong> for DNS lookups; for that use {@link
-   * #host}. For example, this may return {@code ☃.net} which is a user-displayable IDN that cannot
-   * be used for DNS lookups without encoding.
-   */
-  public String decodeHost() {
-    throw new UnsupportedOperationException(); // TODO(jwilson).
   }
 
   /**
