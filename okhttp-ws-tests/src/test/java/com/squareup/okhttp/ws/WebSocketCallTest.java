@@ -34,6 +34,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason;
 
 public final class WebSocketCallTest {
   @Rule public final MockWebServerRule server = new MockWebServerRule();
@@ -109,22 +110,24 @@ public final class WebSocketCallTest {
   @Test public void okButNotOk() {
     server.enqueue(new MockResponse());
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_RESPONSE_CODE, 200);
     listener.assertFailure(ProtocolException.class, "Expected HTTP 101 response but was '200 OK'");
   }
 
   @Test public void notFound() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 404 Not Found"));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_RESPONSE_CODE, 404);
     listener.assertFailure(ProtocolException.class,
         "Expected HTTP 101 response but was '404 Not Found'");
   }
 
   @Test public void missingConnectionHeader() {
-    server.enqueue(new MockResponse()
-        .setResponseCode(101)
+    server.enqueue(new MockResponse().setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_UPGRADE_HEADERS, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'null'");
   }
@@ -135,48 +138,49 @@ public final class WebSocketCallTest {
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_UPGRADE_HEADERS, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
   }
 
   @Test public void missingUpgradeHeader() {
-    server.enqueue(new MockResponse()
-        .setResponseCode(101)
+    server.enqueue(new MockResponse().setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_UPGRADE_HEADERS, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'null'");
   }
 
   @Test public void wrongUpgradeHeader() {
-    server.enqueue(new MockResponse()
-        .setResponseCode(101)
+    server.enqueue(new MockResponse().setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_UPGRADE_HEADERS, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
   }
 
   @Test public void missingMagicHeader() {
-    server.enqueue(new MockResponse()
-        .setResponseCode(101)
+    server.enqueue(new MockResponse().setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket"));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_SEC_ACCEPT_HASH, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
   }
 
   @Test public void wrongMagicHeader() {
-    server.enqueue(new MockResponse()
-        .setResponseCode(101)
+    server.enqueue(new MockResponse().setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "magic"));
     awaitWebSocket();
+    listener.assertUpgradeFailure(UpgradeFailureReason.INVALID_SEC_ACCEPT_HASH, 101);
     listener.assertFailure(ProtocolException.class,
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
@@ -215,6 +219,12 @@ public final class WebSocketCallTest {
         failureRef.set(e);
         latch.countDown();
       }
+
+      @Override
+      public void onUpgradeFailed(UpgradeFailureReason reason, Request request, Response response)
+          throws IOException {
+        listener.onUpgradeFailed(reason, request, response);
+      }
     });
 
     try {
@@ -244,6 +254,11 @@ public final class WebSocketCallTest {
     }
 
     @Override public void onFailure(IOException e) {
+    }
+
+    @Override
+    public void onUpgradeFailed(UpgradeFailureReason reason, Request request, Response response)
+        throws IOException {
     }
   }
 }

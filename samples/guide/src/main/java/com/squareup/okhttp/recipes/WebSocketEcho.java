@@ -13,14 +13,13 @@ import okio.BufferedSource;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason;
 
 public final class WebSocketEcho implements WebSocketListener {
   private void run() throws IOException {
     OkHttpClient client = new OkHttpClient();
 
-    Request request = new Request.Builder()
-        .url("ws://echo.websocket.org")
-        .build();
+    Request request = new Request.Builder().url("ws://echo.websocket.org").build();
     WebSocketCall.create(client, request).enqueue(this);
 
     // Trigger shutdown of the dispatcher's executor so this process can exit cleanly.
@@ -59,6 +58,11 @@ public final class WebSocketEcho implements WebSocketListener {
 
   @Override public void onFailure(IOException e) {
     e.printStackTrace();
+  }
+
+  @Override
+  public void onUpgradeFailed(UpgradeFailureReason reason, Request request, Response response) {
+    System.out.println("UPGRADE FAILED: [" + reason + "] with response code: " + response.code());
   }
 
   public static void main(String... args) throws IOException {
