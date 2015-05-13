@@ -581,6 +581,25 @@ public final class HttpUrlTest {
     assertEquals("fragment", url.fragment());
   }
 
+  @Test public void composeEncodesWhitespace() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .username("a\r\n\f\t b")
+        .password("c\r\n\f\t d")
+        .host("host")
+        .addPathSegment("e\r\n\f\t f")
+        .query("g\r\n\f\t h")
+        .fragment("i\r\n\f\t j")
+        .build();
+    assertEquals("http://a%0D%0A%0C%09%20b:c%0D%0A%0C%09%20d@host"
+        + "/e%0D%0A%0C%09%20f?g%0D%0A%0C%09%20h#i%0D%0A%0C%09 j", url.toString());
+    assertEquals("a\r\n\f\t b", url.username());
+    assertEquals("c\r\n\f\t d", url.password());
+    assertEquals("e\r\n\f\t f", url.pathSegments().get(0));
+    assertEquals("g\r\n\f\t h", url.query());
+    assertEquals("i\r\n\f\t j", url.fragment());
+  }
+
   @Test public void composeFromUnencodedComponents() throws Exception {
     HttpUrl url = new HttpUrl.Builder()
         .scheme("http")
