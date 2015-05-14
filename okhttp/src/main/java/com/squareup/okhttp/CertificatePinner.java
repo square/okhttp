@@ -42,6 +42,14 @@ import static java.util.Collections.unmodifiableSet;
  * href="http://goo.gl/4CCnGs">pinsets</a> for hostnames that are pinned in that
  * browser.
  *
+ * <p>Two options are offered for pinning public keys:
+ * <ol>
+ *     <li>Validating that at least one pinned certificate is in the certificate chain
+ *     (default).</li>
+ *     <li>Validating that all pinned certificates are in the certificate chain.
+ *     {@link Builder#setValidatesChain}</li>
+ * </ol>
+ *
  * <h3>Setting up Certificate Pinning</h3>
  * The easiest way to pin a host is turn on pinning with a broken configuration
  * and read the expected configuration when the connection fails. Be sure to
@@ -133,16 +141,19 @@ public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
   private final Map<String, Set<ByteString>> hostnameToPins;
+  private boolean validatesChain;
 
   private CertificatePinner(Builder builder) {
     hostnameToPins = Util.immutableMap(builder.hostnameToPins);
+    validatesChain = builder.validatesChain;
   }
 
   /**
-   * Confirms that at least one of the certificates pinned for {@code hostname}
-   * is in {@code peerCertificates}. Does nothing if there are no certificates
-   * pinned for {@code hostname}. OkHttp calls this after a successful TLS
-   * handshake, but before the connection is used.
+   * If {@link #validatesChain} is {@code true}, confirms that all certificates pinned for
+   * {@code hostname} are in {@code peerCertificates}. Otherwise, confirms that at least one
+   * of the certificates pinned for {@code hostname} is in {@code peerCertificates}. Does nothing
+   * if there are no certificates pinned for {@code hostname}. OkHttp calls this after a
+   * successful TLS handshake, but before the connection is used.
    *
    * @throws SSLPeerUnverifiedException if {@code peerCertificates} don't match
    *     the certificates pinned for {@code hostname}.
@@ -154,12 +165,24 @@ public final class CertificatePinner {
 
     if (pins == null) return;
 
-    for (int i = 0, size = peerCertificates.size(); i < size; i++) {
-      X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
-      if (pins.contains(sha1(x509Certificate))) return; // Success!
+    if (validatesChain) {
+      int trustedKeyCount = 0;
+      for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+        X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
+        if (pins.contains(sha1(x509Certificate))) {
+          trustedKeyCount += 1;
+        }
+      }
+
+      if (trustedKeyCount == pins.size()) return; // Success!
+    } else {
+      for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+        X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
+        if (pins.contains(sha1(x509Certificate))) return; // Success!
+      }
     }
 
-    // If we couldn't find a matching pin, format a nice exception.
+    // If we couldn't find a matching pin or complete matching pins, format a nice exception.
     StringBuilder message = new StringBuilder()
         .append("Certificate pinning failure!")
         .append("\n  Peer certificate chain:");
@@ -233,6 +256,7 @@ public final class CertificatePinner {
   /** Builds a configured certificate pinner. */
   public static final class Builder {
     private final Map<String, Set<ByteString>> hostnameToPins = new LinkedHashMap<>();
+    private boolean validatesChain;
 
     /**
      * Pins certificates for {@code hostname}.
@@ -261,6 +285,17 @@ public final class CertificatePinner {
         }
         hostPins.add(decodedPin);
       }
+
+      return this;
+    }
+
+    /**
+     * Set a boolean indicating whether all pinned certificates need to be present in the peer
+     * certificates chain or if just one peer certificate needs to match one of the pinned
+     * certificates. Defaults to {@code false}.
+     */
+    public Builder setValidatesChain(boolean validatesChain) {
+      this.validatesChain = validatesChain;
 
       return this;
     }
