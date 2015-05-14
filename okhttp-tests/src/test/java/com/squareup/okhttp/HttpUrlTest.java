@@ -880,4 +880,45 @@ public final class HttpUrlTest {
     assertEquals("3", url.queryParameterValue(2));
     assertEquals(Arrays.asList("1", "2", "3"), url.queryParameterValues("foo[]"));
   }
+
+  @Test public void queryParameterLookupWithNonCanonicalEncoding() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/?%6d=m&+=%20");
+    assertEquals("m", url.queryParameterName(0));
+    assertEquals(" ", url.queryParameterName(1));
+    assertEquals("m", url.queryParameter("m"));
+    assertEquals(" ", url.queryParameter(" "));
+  }
+
+  @Test public void roundTripBuilder() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .username("%")
+        .password("%")
+        .host("host")
+        .addPathSegment("%")
+        .query("%")
+        .fragment("%")
+        .build();
+    assertEquals("http://%25:%25@host/%25?%25#%25", url.toString());
+    assertEquals("http://%25:%25@host/%25?%25#%25", url.newBuilder().build().toString());
+    assertEquals("http://%25:%25@host/%25?%25", url.resolve("").toString());
+  }
+
+  /**
+   * Although HttpUrl prefers percent-encodings in uppercase, it should preserve the exact
+   * structure of the original encoding.
+   */
+  @Test public void rawEncodingRetained() throws Exception {
+    String urlString = "http://%6d%6D:%6d%6D@host/%6d%6D?%6d%6D#%6d%6D";
+    HttpUrl url = HttpUrl.parse(urlString);
+    assertEquals("%6d%6D", url.encodedUsername());
+    assertEquals("%6d%6D", url.encodedPassword());
+    assertEquals("/%6d%6D", url.encodedPath());
+    assertEquals(Arrays.asList("%6d%6D"), url.encodedPathSegments());
+    assertEquals("%6d%6D", url.encodedQuery());
+    assertEquals("%6d%6D", url.encodedFragment());
+    assertEquals(urlString, url.toString());
+    assertEquals(urlString, url.newBuilder().build().toString());
+    assertEquals("http://%6d%6D:%6d%6D@host/%6d%6D?%6d%6D", url.resolve("").toString());
+  }
 }
