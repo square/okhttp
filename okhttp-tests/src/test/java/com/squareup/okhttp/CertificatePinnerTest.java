@@ -250,4 +250,53 @@ public final class CertificatePinnerTest {
     assertNull(certificatePinner.findMatchingPins("example.com"));
     assertNull(certificatePinner.findMatchingPins("a.b.example.com"));
   }
+
+  @Test public void successfulValidatesChainOnePeerCheck() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+            .setValidatesChain(true)
+            .add("example.com", keypairACertificate1Pin)
+            .build();
+
+    certificatePinner.check("example.com", keypairACertificate1);
+  }
+
+  @Test public void successfulValidatesChainMultiplePeerCheck() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+            .setValidatesChain(true)
+            .add("example.com", keypairACertificate1Pin)
+            .add("example.com", keypairBCertificate1Pin)
+            .add("example.com", keypairCCertificate1Pin)
+            .build();
+
+    certificatePinner.check("example.com",
+            keypairACertificate1, keypairBCertificate1, keypairCCertificate1);
+  }
+
+  @Test public void unsuccessfulValidatesChainOnePeerCheck() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+            .setValidatesChain(true)
+            .add("example.com", keypairACertificate1Pin)
+            .build();
+
+    try {
+      certificatePinner.check("example.com", keypairBCertificate1);
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+  }
+
+  @Test public void unsuccessfulValidatesChainMultiplePeerCheck() throws Exception {
+    CertificatePinner certificatePinner = new CertificatePinner.Builder()
+            .setValidatesChain(true)
+            .add("example.com", keypairACertificate1Pin)
+            .add("example.com", keypairBCertificate1Pin)
+            .add("example.com", keypairCCertificate1Pin)
+            .build();
+
+    try {
+      certificatePinner.check("example.com", keypairACertificate1, keypairBCertificate1);
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+  }
 }
