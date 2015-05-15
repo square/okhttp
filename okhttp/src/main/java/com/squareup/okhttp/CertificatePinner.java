@@ -18,14 +18,16 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Util;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okio.ByteString;
 
-import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * Constrains which certificates are trusted. Pinning certificates defends
@@ -90,8 +92,28 @@ import static java.util.Collections.unmodifiableList;
  *       .build();
  * }</pre>
  *
- * Pinning is per-hostname. To pin both {@code publicobject.com} and {@code
- * www.publicobject.com}, you must configure both hostnames.
+ * Pinning is per-hostname and/or per-wildcard pattern. To pin both
+ * {@code publicobject.com} and {@code www.publicobject.com}, you must
+ * configure both hostnames.
+ *
+ * <p>Wildcard pattern rules:
+ * <ol>
+ *   <li>Asterisk {@code *} is only permitted in the left-most
+ *       domain name label and must be the only character in that label
+ *       (i.e., must match the whole left-most label). For example,
+ *       {@code *.example.com} is permitted, while {@code *a.example.com},
+ *       {@code a*.example.com}, {@code a*b.example.com}, {@code a.*.example.com}
+ *       are not permitted.
+ *   <li>Asterisk {@code *} cannot match across domain name labels.
+ *       For example, {@code *.example.com} matches {@code test.example.com}
+ *       but does not match {@code sub.test.example.com}.
+ *   <li>Wildcard patterns for single-label domain names are not permitted.
+ * </ol>
+ *
+ * If hostname pinned directly and via wildcard pattern, both
+ * direct and wildcard pins will be used. For example: {@code *.example.com} pinned
+ * with {@code pin1} and {@code a.example.com} pinned with {@code pin2},
+ * to check {@code a.example.com} both {@code pin1} and {@code pin2} will be used.
  *
  * <h3>Warning: Certificate Pinning is Dangerous!</h3>
  * Pinning certificates limits your server team's abilities to update their TLS
@@ -99,11 +121,18 @@ import static java.util.Collections.unmodifiableList;
  * complexity and limit your ability to migrate between certificate authorities.
  * Do not use certificate pinning without the blessing of your server's TLS
  * administrator!
+ *
+ * <h4>Note about self-signed certificates</h4>
+ * {@link CertificatePinner} can not be used to pin self-signed certificate
+ * if such certificate is not accepted by {@link javax.net.ssl.TrustManager}.
+ *
+ * @see <a href="https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning">
+ *     OWASP: Certificate and Public Key Pinning</a>
  */
 public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
-  private final Map<String, List<ByteString>> hostnameToPins;
+  private final Map<String, Set<ByteString>> hostnameToPins;
 
   private CertificatePinner(Builder builder) {
     hostnameToPins = Util.immutableMap(builder.hostnameToPins);
@@ -118,13 +147,15 @@ public final class CertificatePinner {
    * @throws SSLPeerUnverifiedException if {@code peerCertificates} don't match
    *     the certificates pinned for {@code hostname}.
    */
-  public void check(String hostname, Certificate... peerCertificates)
+  public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
-    List<ByteString> pins = hostnameToPins.get(hostname);
+
+    Set<ByteString> pins = findMatchingPins(hostname);
+
     if (pins == null) return;
 
-    for (Certificate c : peerCertificates) {
-      X509Certificate x509Certificate = (X509Certificate) c;
+    for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+      X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
       if (pins.contains(sha1(x509Certificate))) return; // Success!
     }
 
@@ -132,8 +163,8 @@ public final class CertificatePinner {
     StringBuilder message = new StringBuilder()
         .append("Certificate pinning failure!")
         .append("\n  Peer certificate chain:");
-    for (Certificate c : peerCertificates) {
-      X509Certificate x509Certificate = (X509Certificate) c;
+    for (int i = 0, size = peerCertificates.size(); i < size; i++) {
+      X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
       message.append("\n    ").append(pin(x509Certificate))
           .append(": ").append(x509Certificate.getSubjectDN().getName());
     }
@@ -142,6 +173,45 @@ public final class CertificatePinner {
       message.append("\n    sha1/").append(pin.base64());
     }
     throw new SSLPeerUnverifiedException(message.toString());
+  }
+
+  /** @deprecated replaced with {@link #check(String, List)}. */
+  public void check(String hostname, Certificate... peerCertificates)
+      throws SSLPeerUnverifiedException {
+    check(hostname, Arrays.asList(peerCertificates));
+  }
+
+  /**
+   * Returns list of matching certificates' pins for the hostname
+   * or {@code null} if hostname does not have pinned certificates.
+   */
+  Set<ByteString> findMatchingPins(String hostname) {
+    Set<ByteString> directPins   = hostnameToPins.get(hostname);
+    Set<ByteString> wildcardPins = null;
+
+    int indexOfFirstDot = hostname.indexOf('.');
+    int indexOfLastDot  = hostname.lastIndexOf('.');
+
+    // Skip hostnames with one dot symbol for wildcard pattern search
+    //   example.com   will  be skipped
+    //   a.example.com won't be skipped
+    if (indexOfFirstDot != indexOfLastDot) {
+      // a.example.com -> search for wildcard pattern *.example.com
+      wildcardPins = hostnameToPins.get("*." + hostname.substring(indexOfFirstDot + 1));
+    }
+
+    if (directPins == null && wildcardPins == null) return null;
+
+    if (directPins != null && wildcardPins != null) {
+      Set<ByteString> pins = new LinkedHashSet<>();
+      pins.addAll(directPins);
+      pins.addAll(wildcardPins);
+      return pins;
+    }
+
+    if (directPins != null) return directPins;
+
+    return wildcardPins;
   }
 
   /**
@@ -162,18 +232,21 @@ public final class CertificatePinner {
 
   /** Builds a configured certificate pinner. */
   public static final class Builder {
-    private final Map<String, List<ByteString>> hostnameToPins = new LinkedHashMap<>();
+    private final Map<String, Set<ByteString>> hostnameToPins = new LinkedHashMap<>();
 
     /**
-     * Pins certificates for {@code hostname}. Each pin is a SHA-1 hash of a
-     * certificate's Subject Public Key Info, base64-encoded and prefixed with
-     * "sha1/".
+     * Pins certificates for {@code hostname}.
+     *
+     * @param hostname lower-case host name or wildcard pattern such as {@code *.example.com}.
+     * @param pins SHA-1 hashes. Each pin is a SHA-1 hash of a
+     *     certificate's Subject Public Key Info, base64-encoded and prefixed with
+     *     {@code sha1/}.
      */
     public Builder add(String hostname, String... pins) {
       if (hostname == null) throw new IllegalArgumentException("hostname == null");
 
-      List<ByteString> hostPins = new ArrayList<>();
-      List<ByteString> previousPins = hostnameToPins.put(hostname, unmodifiableList(hostPins));
+      Set<ByteString> hostPins = new LinkedHashSet<>();
+      Set<ByteString> previousPins = hostnameToPins.put(hostname, unmodifiableSet(hostPins));
       if (previousPins != null) {
         hostPins.addAll(previousPins);
       }

@@ -16,17 +16,22 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Call;
+import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.http.HttpEngine;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
 import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
 /**
  * Escalate internal APIs in {@code com.squareup.okhttp} so they can be used
@@ -35,6 +40,12 @@ import java.util.logging.Logger;
  */
 public abstract class Internal {
   public static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
+
+  public static void initializeInstanceForTests() {
+    // Needed in tests to ensure that the instance is actually pointing to something.
+    new OkHttpClient();
+  }
+
   public static Internal instance;
 
   public abstract Transport newTransport(Connection connection, HttpEngine httpEngine)
@@ -52,7 +63,9 @@ public abstract class Internal {
 
   public abstract boolean isReadable(Connection pooled);
 
-  public abstract void addLine(Headers.Builder builder, String line);
+  public abstract void addLenient(Headers.Builder builder, String line);
+
+  public abstract void addLenient(Headers.Builder builder, String name, String value);
 
   public abstract void setCache(OkHttpClient client, InternalCache internalCache);
 
@@ -67,15 +80,16 @@ public abstract class Internal {
   public abstract void setNetwork(OkHttpClient client, Network network);
 
   public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
-      HttpEngine owner, Request request) throws IOException;
+      HttpEngine owner, Request request) throws RouteException;
+
+  public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
+      boolean isFallback);
 
   // TODO delete the following when web sockets move into the main package.
-  public abstract Call newCall(OkHttpClient client, Request request);
-  public abstract Response callGetResponse(Call call, boolean forWebSocket) throws IOException;
+  public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
   public abstract void callEngineReleaseConnection(Call call) throws IOException;
   public abstract Connection callEngineGetConnection(Call call);
-  public abstract boolean connectionClearOwner(Connection connection);
+  public abstract BufferedSource connectionRawSource(Connection connection);
+  public abstract BufferedSink connectionRawSink(Connection connection);
   public abstract void connectionSetOwner(Connection connection, Object owner);
-  public abstract void connectionCloseIfOwnedBy(Connection connection, Object owner)
-      throws IOException;
 }

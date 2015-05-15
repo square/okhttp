@@ -18,8 +18,10 @@ package com.squareup.okhttp;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -31,6 +33,7 @@ public final class CacheControlTest {
     assertFalse(cacheControl.noStore());
     assertEquals(-1, cacheControl.maxAgeSeconds());
     assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertFalse(cacheControl.isPrivate());
     assertFalse(cacheControl.isPublic());
     assertFalse(cacheControl.mustRevalidate());
     assertEquals(-1, cacheControl.maxStaleSeconds());
@@ -60,6 +63,7 @@ public final class CacheControlTest {
 
     // These members are accessible to response headers only.
     assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertFalse(cacheControl.isPrivate());
     assertFalse(cacheControl.isPublic());
     assertFalse(cacheControl.mustRevalidate());
   }
@@ -81,7 +85,7 @@ public final class CacheControlTest {
   }
 
   @Test public void parse() throws Exception {
-    String header = "no-cache, no-store, max-age=1, s-maxage=2, public, must-revalidate, "
+    String header = "no-cache, no-store, max-age=1, s-maxage=2, private, public, must-revalidate, "
         + "max-stale=3, min-fresh=4, only-if-cached, no-transform";
     CacheControl cacheControl = CacheControl.parse(new Headers.Builder()
         .set("Cache-Control", header)
@@ -90,6 +94,7 @@ public final class CacheControlTest {
     assertTrue(cacheControl.noStore());
     assertEquals(1, cacheControl.maxAgeSeconds());
     assertEquals(2, cacheControl.sMaxAgeSeconds());
+    assertTrue(cacheControl.isPrivate());
     assertTrue(cacheControl.isPublic());
     assertTrue(cacheControl.mustRevalidate());
     assertEquals(3, cacheControl.maxStaleSeconds());
@@ -97,6 +102,70 @@ public final class CacheControlTest {
     assertTrue(cacheControl.onlyIfCached());
     assertTrue(cacheControl.noTransform());
     assertEquals(header, cacheControl.toString());
+  }
+
+  @Test public void parseIgnoreCacheControlExtensions() throws Exception {
+    // Example from http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9.6
+    String header = "private, community=\"UCI\"";
+    CacheControl cacheControl = CacheControl.parse(new Headers.Builder()
+        .set("Cache-Control", header)
+        .build());
+    assertFalse(cacheControl.noCache());
+    assertFalse(cacheControl.noStore());
+    assertEquals(-1, cacheControl.maxAgeSeconds());
+    assertEquals(-1, cacheControl.sMaxAgeSeconds());
+    assertTrue(cacheControl.isPrivate());
+    assertFalse(cacheControl.isPublic());
+    assertFalse(cacheControl.mustRevalidate());
+    assertEquals(-1, cacheControl.maxStaleSeconds());
+    assertEquals(-1, cacheControl.minFreshSeconds());
+    assertFalse(cacheControl.onlyIfCached());
+    assertFalse(cacheControl.noTransform());
+    assertEquals(header, cacheControl.toString());
+  }
+
+  @Test public void parseCacheControlAndPragmaAreCombined() {
+    Headers headers =
+        Headers.of("Cache-Control", "max-age=12", "Pragma", "must-revalidate", "Pragma", "public");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertEquals("max-age=12, public, must-revalidate", cacheControl.toString());
+  }
+
+  @SuppressWarnings("RedundantStringConstructorCall") // Testing instance equality.
+  @Test public void parseCacheControlHeaderValueIsRetained() {
+    String value = new String("max-age=12");
+    Headers headers = Headers.of("Cache-Control", value);
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertSame(value, cacheControl.toString());
+  }
+
+  @Test public void parseCacheControlHeaderValueInvalidatedByPragma() {
+    Headers headers = Headers.of("Cache-Control", "max-age=12", "Pragma", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void parseCacheControlHeaderValueInvalidatedByTwoValues() {
+    Headers headers = Headers.of("Cache-Control", "max-age=12", "Cache-Control", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void parsePragmaHeaderValueIsNotRetained() {
+    Headers headers = Headers.of("Pragma", "must-revalidate");
+    CacheControl cacheControl = CacheControl.parse(headers);
+    assertNull(cacheControl.headerValue);
+  }
+
+  @Test public void computedHeaderValueIsCached() {
+    CacheControl cacheControl = new CacheControl.Builder()
+        .maxAge(2, TimeUnit.DAYS)
+        .build();
+    assertNull(cacheControl.headerValue);
+    assertEquals("max-age=172800", cacheControl.toString());
+    assertEquals("max-age=172800", cacheControl.headerValue);
+    cacheControl.headerValue = "Hi";
+    assertEquals("Hi", cacheControl.toString());
   }
 
   @Test public void timeDurationTruncatedToMaxValue() throws Exception {

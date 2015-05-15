@@ -23,15 +23,18 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.RequestException;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.FileNotFoundException;
@@ -47,10 +50,13 @@ import java.net.SocketPermission;
 import java.net.URL;
 import java.security.Permission;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.BufferedSink;
 import okio.Sink;
@@ -68,6 +74,9 @@ import okio.Sink;
  * header fields, request method, etc.) are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
+  private static final Set<String> METHODS = new LinkedHashSet<>(
+      Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
+  private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
 
   final OkHttpClient client;
 
@@ -75,7 +84,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /** Like the superclass field of the same name, but a long and available on all platforms. */
   private long fixedContentLength = -1;
-  private int redirectionCount;
+  private int followUpCount;
   protected IOException httpEngineFailure;
   protected HttpEngine httpEngine;
   /** Lazily created (with synthetic headers) on first call to getHeaders(). */
@@ -126,8 +135,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final InputStream getErrorStream() {
     try {
       HttpEngine response = getResponse();
-      if (response.hasResponseBody() && response.getResponse().code() >= HTTP_BAD_REQUEST) {
-        return response.getResponseBodyBytes();
+      if (HttpEngine.hasBody(response.getResponse())
+          && response.getResponse().code() >= HTTP_BAD_REQUEST) {
+        return response.getResponse().body().byteStream();
       }
       return null;
     } catch (IOException e) {
@@ -228,11 +238,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw new FileNotFoundException(url.toString());
     }
 
-    InputStream result = response.getResponseBodyBytes();
-    if (result == null) {
-      throw new ProtocolException("No response body exists; responseCode=" + getResponseCode());
-    }
-    return result;
+    return response.getResponse().body().byteStream();
   }
 
   @Override public final OutputStream getOutputStream() throws IOException {
@@ -312,11 +318,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   private HttpEngine newHttpEngine(String method, Connection connection,
       RetryableSink requestBody, Response priorResponse) {
+    // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
+    RequestBody placeholderBody = HttpMethod.requiresRequestBody(method)
+        ? EMPTY_REQUEST_BODY
+        : null;
     Request.Builder builder = new Request.Builder()
         .url(getURL())
-        .method(method, null /* No body; that's passed separately. */);
+        .method(method, placeholderBody);
     Headers headers = requestHeaders.build();
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       builder.addHeader(headers.name(i), headers.value(i));
     }
 
@@ -349,8 +359,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, connection, null, requestBody,
-        priorResponse);
+    return new HttpEngine(engineClient, request, bufferRequestBody, true, false, connection, null,
+        requestBody, priorResponse);
   }
 
   private String defaultUserAgent() {
@@ -383,8 +393,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         return httpEngine;
       }
 
-      if (response.isRedirect() && ++redirectionCount > HttpEngine.MAX_REDIRECTS) {
-        throw new ProtocolException("Too many redirects: " + redirectionCount);
+      if (++followUpCount > HttpEngine.MAX_FOLLOW_UPS) {
+        throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
       // The first request was insufficient. Prepare for another...
@@ -426,11 +436,29 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           ? httpEngine.getConnection().getHandshake()
           : null;
       if (readResponse) {
-        httpEngine.readResponse(false);
+        httpEngine.readResponse();
       }
 
       return true;
+    } catch (RequestException e) {
+      // An attempt to interpret a request failed.
+      IOException toThrow = e.getCause();
+      httpEngineFailure = toThrow;
+      throw toThrow;
+    } catch (RouteException e) {
+      // The attempt to connect via a route failed. The request will not have been sent.
+      HttpEngine retryEngine = httpEngine.recover(e);
+      if (retryEngine != null) {
+        httpEngine = retryEngine;
+        return false;
+      }
+
+      // Give up; recovery is not possible.
+      IOException toThrow = e.getLastConnectException();
+      httpEngineFailure = toThrow;
+      throw toThrow;
     } catch (IOException e) {
+      // An attempt to communicate with a server failed. The request may have been sent.
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
         httpEngine = retryEngine;
@@ -550,9 +578,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public void setRequestMethod(String method) throws ProtocolException {
-    if (!HttpMethod.METHODS.contains(method)) {
-      throw new ProtocolException(
-          "Expected one of " + HttpMethod.METHODS + " but was " + method);
+    if (!METHODS.contains(method)) {
+      throw new ProtocolException("Expected one of " + METHODS + " but was " + method);
     }
     this.method = method;
   }

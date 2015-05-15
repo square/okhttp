@@ -27,12 +27,11 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
+import okio.Buffer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -76,7 +75,7 @@ public final class ThreadInterruptTest {
 
     server.enqueue(new MockResponse()
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     interruptLater(500);
 
@@ -101,9 +100,9 @@ public final class ThreadInterruptTest {
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
 
     server.enqueue(new MockResponse()
-        .setBody(new byte[responseBodySize])
+        .setBody(new Buffer().write(new byte[responseBodySize]))
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     interruptLater(500);
 

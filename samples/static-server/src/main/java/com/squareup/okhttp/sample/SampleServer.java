@@ -34,7 +34,7 @@ public class SampleServer extends Dispatcher {
     MockWebServer server = new MockWebServer();
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setDispatcher(this);
-    server.play(port);
+    server.start(port);
   }
 
   @Override public MockResponse dispatch(RecordedRequest request) {

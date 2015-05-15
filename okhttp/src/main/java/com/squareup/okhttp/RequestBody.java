@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import okio.BufferedSink;
+import okio.ByteString;
 import okio.Okio;
 import okio.Source;
 
@@ -31,7 +32,7 @@ public abstract class RequestBody {
    * Returns the number of bytes that will be written to {@code out} in a call
    * to {@link #writeTo}, or -1 if that count is unknown.
    */
-  public long contentLength() {
+  public long contentLength() throws IOException {
     return -1;
   }
 
@@ -56,20 +57,43 @@ public abstract class RequestBody {
   }
 
   /** Returns a new request body that transmits {@code content}. */
-  public static RequestBody create(final MediaType contentType, final byte[] content) {
-    if (content == null) throw new NullPointerException("content == null");
+  public static RequestBody create(final MediaType contentType, final ByteString content) {
+    return new RequestBody() {
+      @Override public MediaType contentType() {
+        return contentType;
+      }
 
+      @Override public long contentLength() throws IOException {
+        return content.size();
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.write(content);
+      }
+    };
+  }
+
+  /** Returns a new request body that transmits {@code content}. */
+  public static RequestBody create(final MediaType contentType, final byte[] content) {
+    return create(contentType, content, 0, content.length);
+  }
+
+  /** Returns a new request body that transmits {@code content}. */
+  public static RequestBody create(final MediaType contentType, final byte[] content,
+      final int offset, final int byteCount) {
+    if (content == null) throw new NullPointerException("content == null");
+    Util.checkOffsetAndCount(content.length, offset, byteCount);
     return new RequestBody() {
       @Override public MediaType contentType() {
         return contentType;
       }
 
       @Override public long contentLength() {
-        return content.length;
+        return byteCount;
       }
 
       @Override public void writeTo(BufferedSink sink) throws IOException {
-        sink.write(content);
+        sink.write(content, offset, byteCount);
       }
     };
   }

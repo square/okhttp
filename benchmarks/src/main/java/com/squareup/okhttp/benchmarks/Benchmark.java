@@ -24,9 +24,7 @@ import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,9 +33,9 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPOutputStream;
 import javax.net.ssl.SSLContext;
 import okio.Buffer;
+import okio.GzipSink;
 
 /**
  * This benchmark is fake, but may be useful for certain relative comparisons.
@@ -83,7 +81,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
   @Param({ "0", "20" })
   int headerCount;
 
-  /** Which ALPN/NPN protocols are in use. Only useful with TLS. */
+  /** Which ALPN protocols are in use. Only useful with TLS. */
   List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
 
   public static void main(String[] args) {
@@ -175,23 +173,28 @@ public class Benchmark extends com.google.caliper.Benchmark {
       }
     });
 
-    server.play();
+    server.start();
     return server;
   }
 
   private MockResponse newResponse() throws IOException {
-    byte[] body = new byte[bodyByteCount];
-    random.nextBytes(body);
+    byte[] bytes = new byte[bodyByteCount];
+    random.nextBytes(bytes);
+    Buffer body = new Buffer().write(bytes);
 
     MockResponse result = new MockResponse();
 
     if (gzip) {
-      body = gzip(body);
+      Buffer gzipBody = new Buffer();
+      GzipSink gzipSink = new GzipSink(gzipBody);
+      gzipSink.write(body, body.size());
+      gzipSink.close();
+      body = gzipBody;
       result.addHeader("Content-Encoding: gzip");
     }
 
     if (chunked) {
-      result.setChunkedBody(new Buffer().write(body), 1024);
+      result.setChunkedBody(body, 1024);
     } else {
       result.setBody(body);
     }
@@ -210,14 +213,5 @@ public class Benchmark extends com.google.caliper.Benchmark {
       result[i] = alphabet.charAt(random.nextInt(alphabet.length()));
     }
     return new String(result);
-  }
-
-  /** Returns a gzipped copy of {@code bytes}. */
-  private byte[] gzip(byte[] bytes) throws IOException {
-    ByteArrayOutputStream bytesOut = new ByteArrayOutputStream();
-    OutputStream gzippedOut = new GZIPOutputStream(bytesOut);
-    gzippedOut.write(bytes);
-    gzippedOut.close();
-    return bytesOut.toByteArray();
   }
 }

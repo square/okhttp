@@ -15,16 +15,16 @@
  */
 package com.squareup.okhttp.mockwebserver;
 
-import java.util.List;
+import com.squareup.okhttp.Headers;
 
 /** An HTTP request initiated by the server. */
 public final class PushPromise {
   private final String method;
   private final String path;
-  private final List<String> headers;
+  private final Headers headers;
   private final MockResponse response;
 
-  public PushPromise(String method, String path, List<String> headers, MockResponse response) {
+  public PushPromise(String method, String path, Headers headers, MockResponse response) {
     this.method = method;
     this.path = path;
     this.headers = headers;
@@ -39,7 +39,7 @@ public final class PushPromise {
     return path;
   }
 
-  public List<String> getHeaders() {
+  public Headers getHeaders() {
     return headers;
   }
 

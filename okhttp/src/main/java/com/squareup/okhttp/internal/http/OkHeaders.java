@@ -87,7 +87,7 @@ public final class OkHeaders {
    */
   public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
     Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
-    for (int i = 0; i < headers.size(); i++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       String fieldName = headers.name(i);
       String value = headers.value(i);
 
@@ -122,7 +122,7 @@ public final class OkHeaders {
   private static String buildCookieHeader(List<String> cookies) {
     if (cookies.size() == 1) return cookies.get(0);
     StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < cookies.size(); i++) {
+    for (int i = 0, size = cookies.size(); i < size; i++) {
       if (i > 0) sb.append("; ");
       sb.append(cookies.get(i));
     }
@@ -146,16 +146,31 @@ public final class OkHeaders {
    * be cached.
    */
   public static boolean hasVaryAll(Response response) {
-    return varyFields(response).contains("*");
+    return hasVaryAll(response.headers());
+  }
+
+  /**
+   * Returns true if a Vary header contains an asterisk. Such responses cannot
+   * be cached.
+   */
+  public static boolean hasVaryAll(Headers responseHeaders) {
+    return varyFields(responseHeaders).contains("*");
   }
 
   private static Set<String> varyFields(Response response) {
-    Set<String> result = Collections.emptySet();
-    Headers headers = response.headers();
-    for (int i = 0; i < headers.size(); i++) {
-      if (!"Vary".equalsIgnoreCase(headers.name(i))) continue;
+    return varyFields(response.headers());
+  }
 
-      String value = headers.value(i);
+  /**
+   * Returns the names of the request headers that need to be checked for
+   * equality when caching.
+   */
+  public static Set<String> varyFields(Headers responseHeaders) {
+    Set<String> result = Collections.emptySet();
+    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+      if (!"Vary".equalsIgnoreCase(responseHeaders.name(i))) continue;
+
+      String value = responseHeaders.value(i);
       if (result.isEmpty()) {
         result = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
       }
@@ -171,16 +186,24 @@ public final class OkHeaders {
    * impact the content of response's body.
    */
   public static Headers varyHeaders(Response response) {
-    Set<String> varyFields = varyFields(response);
-    if (varyFields.isEmpty()) return new Headers.Builder().build();
-
     // Use the request headers sent over the network, since that's what the
     // response varies on. Otherwise OkHttp-supplied headers like
     // "Accept-Encoding: gzip" may be lost.
     Headers requestHeaders = response.networkResponse().request().headers();
+    Headers responseHeaders = response.headers();
+    return varyHeaders(requestHeaders, responseHeaders);
+  }
+
+  /**
+   * Returns the subset of the headers in {@code requestHeaders} that
+   * impact the content of response's body.
+   */
+  public static Headers varyHeaders(Headers requestHeaders, Headers responseHeaders) {
+    Set<String> varyFields = varyFields(responseHeaders);
+    if (varyFields.isEmpty()) return new Headers.Builder().build();
 
     Headers.Builder result = new Headers.Builder();
-    for (int i = 0; i < requestHeaders.size(); i++) {
+    for (int i = 0, size = requestHeaders.size(); i < size; i++) {
       String fieldName = requestHeaders.name(i);
       if (varyFields.contains(fieldName)) {
         result.add(fieldName, requestHeaders.value(i));
@@ -215,11 +238,11 @@ public final class OkHeaders {
     // realm       = "realm" "=" realm-value
     // realm-value = quoted-string
     List<Challenge> result = new ArrayList<>();
-    for (int h = 0; h < responseHeaders.size(); h++) {
-      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(h))) {
+    for (int i = 0, size = responseHeaders.size(); i < size; i++) {
+      if (!challengeHeader.equalsIgnoreCase(responseHeaders.name(i))) {
         continue;
       }
-      String value = responseHeaders.value(h);
+      String value = responseHeaders.value(i);
       int pos = 0;
       while (pos < value.length()) {
         int tokenStart = pos;

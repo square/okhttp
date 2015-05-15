@@ -15,6 +15,8 @@
  */
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.DelegatingServerSocketFactory;
+import com.squareup.okhttp.DelegatingSocketFactory;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -23,21 +25,55 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.TimeUnit;
+
+import okio.Buffer;
+import org.junit.Before;
 import org.junit.Test;
+
+import javax.net.ServerSocketFactory;
+import javax.net.SocketFactory;
 
 import static org.junit.Assert.fail;
 
 public final class DisconnectTest {
-  private final MockWebServer server = new MockWebServer();
-  private final OkHttpClient client = new OkHttpClient();
+
+  // The size of the socket buffers in bytes.
+  private static final int SOCKET_BUFFER_SIZE = 256 * 1024;
+
+  private MockWebServer server;
+  private OkHttpClient client;
+
+  @Before public void setUp() throws Exception {
+    server = new MockWebServer();
+    client = new OkHttpClient();
+
+    // Sockets on some platforms can have large buffers that mean writes do not block when
+    // required. These socket factories explicitly set the buffer sizes on sockets created.
+    server.setServerSocketFactory(
+        new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
+          @Override
+          protected void configureServerSocket(ServerSocket serverSocket) throws IOException {
+            serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+          }
+        });
+    client.setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+      @Override
+      protected void configureSocket(Socket socket) throws IOException {
+        socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+        socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+      }
+    });
+  }
 
   @Test public void interruptWritingRequestBody() throws Exception {
     int requestBodySize = 2 * 1024 * 1024; // 2 MiB
 
     server.enqueue(new MockResponse()
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     disconnectLater(connection, 500);
@@ -62,9 +98,9 @@ public final class DisconnectTest {
     int responseBodySize = 2 * 1024 * 1024; // 2 MiB
 
     server.enqueue(new MockResponse()
-        .setBody(new byte[responseBodySize])
+        .setBody(new Buffer().write(new byte[responseBodySize]))
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
-    server.play();
+    server.start();
 
     HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     disconnectLater(connection, 500);

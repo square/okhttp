@@ -31,7 +31,8 @@ import java.util.List;
  * Utilities for reading HPACK tests.
  */
 public final class HpackJsonUtil {
-  private static final int CURRENT_DRAFT = 9;
+  /** Earliest draft that is code-compatible with latest. */
+  private static final int BASE_DRAFT = 9;
 
   private static final String STORY_RESOURCE_FORMAT = "/hpack-test-case/%s/story_%02d.json";
 
@@ -49,7 +50,7 @@ public final class HpackJsonUtil {
       if (path.isDirectory() && Arrays.asList(path.list()).contains("story_00.json")) {
         try {
           Story firstStory = readStory(new FileInputStream(new File(path, "story_00.json")));
-          if (firstStory.getDraft() == CURRENT_DRAFT) {
+          if (firstStory.getDraft() >= BASE_DRAFT) {
             storyNames.add(path.getName());
           }
         } catch (IOException ignored) {

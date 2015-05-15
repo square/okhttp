@@ -20,6 +20,7 @@ import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.Credentials;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.Authenticator.RequestorType;
 import java.net.InetAddress;
@@ -43,8 +44,9 @@ public final class AuthenticatorAdapter implements Authenticator {
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
 
       PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
-          url.getHost(), getConnectToInetAddress(proxy, url), url.getPort(), url.getProtocol(),
-          challenge.getRealm(), challenge.getScheme(), url, RequestorType.SERVER);
+          url.getHost(), getConnectToInetAddress(proxy, url), Util.getEffectivePort(url),
+          url.getProtocol(), challenge.getRealm(), challenge.getScheme(), url,
+          RequestorType.SERVER);
       if (auth == null) continue;
 
       String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));

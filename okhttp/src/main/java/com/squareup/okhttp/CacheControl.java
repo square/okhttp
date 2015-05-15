@@ -34,6 +34,7 @@ public final class CacheControl {
   private final boolean noStore;
   private final int maxAgeSeconds;
   private final int sMaxAgeSeconds;
+  private final boolean isPrivate;
   private final boolean isPublic;
   private final boolean mustRevalidate;
   private final int maxStaleSeconds;
@@ -41,19 +42,23 @@ public final class CacheControl {
   private final boolean onlyIfCached;
   private final boolean noTransform;
 
+  String headerValue; // Lazily computed, if absent.
+
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
-      boolean isPublic, boolean mustRevalidate, int maxStaleSeconds, int minFreshSeconds,
-      boolean onlyIfCached, boolean noTransform) {
+      boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
+      int minFreshSeconds, boolean onlyIfCached, boolean noTransform, String headerValue) {
     this.noCache = noCache;
     this.noStore = noStore;
     this.maxAgeSeconds = maxAgeSeconds;
     this.sMaxAgeSeconds = sMaxAgeSeconds;
+    this.isPrivate = isPrivate;
     this.isPublic = isPublic;
     this.mustRevalidate = mustRevalidate;
     this.maxStaleSeconds = maxStaleSeconds;
     this.minFreshSeconds = minFreshSeconds;
     this.onlyIfCached = onlyIfCached;
     this.noTransform = noTransform;
+    this.headerValue = headerValue;
   }
 
   private CacheControl(Builder builder) {
@@ -61,6 +66,7 @@ public final class CacheControl {
     this.noStore = builder.noStore;
     this.maxAgeSeconds = builder.maxAgeSeconds;
     this.sMaxAgeSeconds = -1;
+    this.isPrivate = false;
     this.isPublic = false;
     this.mustRevalidate = false;
     this.maxStaleSeconds = builder.maxStaleSeconds;
@@ -103,6 +109,10 @@ public final class CacheControl {
     return sMaxAgeSeconds;
   }
 
+  public boolean isPrivate() {
+    return isPrivate;
+  }
+
   public boolean isPublic() {
     return isPublic;
   }
@@ -143,6 +153,7 @@ public final class CacheControl {
     boolean noStore = false;
     int maxAgeSeconds = -1;
     int sMaxAgeSeconds = -1;
+    boolean isPrivate = false;
     boolean isPublic = false;
     boolean mustRevalidate = false;
     int maxStaleSeconds = -1;
@@ -150,40 +161,54 @@ public final class CacheControl {
     boolean onlyIfCached = false;
     boolean noTransform = false;
 
-    for (int i = 0; i < headers.size(); i++) {
-      if (!headers.name(i).equalsIgnoreCase("Cache-Control")
-          && !headers.name(i).equalsIgnoreCase("Pragma")) {
+    boolean canUseHeaderValue = true;
+    String headerValue = null;
+
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      String name = headers.name(i);
+      String value = headers.value(i);
+
+      if (name.equalsIgnoreCase("Cache-Control")) {
+        if (headerValue != null) {
+          // Multiple cache-control headers means we can't use the raw value.
+          canUseHeaderValue = false;
+        } else {
+          headerValue = value;
+        }
+      } else if (name.equalsIgnoreCase("Pragma")) {
+        // Might specify additional cache-control params. We invalidate just in case.
+        canUseHeaderValue = false;
+      } else {
         continue;
       }
 
-      String string = headers.value(i);
       int pos = 0;
-      while (pos < string.length()) {
+      while (pos < value.length()) {
         int tokenStart = pos;
-        pos = HeaderParser.skipUntil(string, pos, "=,;");
-        String directive = string.substring(tokenStart, pos).trim();
+        pos = HeaderParser.skipUntil(value, pos, "=,;");
+        String directive = value.substring(tokenStart, pos).trim();
         String parameter;
 
-        if (pos == string.length() || string.charAt(pos) == ',' || string.charAt(pos) == ';') {
+        if (pos == value.length() || value.charAt(pos) == ',' || value.charAt(pos) == ';') {
           pos++; // consume ',' or ';' (if necessary)
           parameter = null;
         } else {
           pos++; // consume '='
-          pos = HeaderParser.skipWhitespace(string, pos);
+          pos = HeaderParser.skipWhitespace(value, pos);
 
           // quoted string
-          if (pos < string.length() && string.charAt(pos) == '\"') {
+          if (pos < value.length() && value.charAt(pos) == '\"') {
             pos++; // consume '"' open quote
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(string, pos, "\"");
-            parameter = string.substring(parameterStart, pos);
+            pos = HeaderParser.skipUntil(value, pos, "\"");
+            parameter = value.substring(parameterStart, pos);
             pos++; // consume '"' close quote (if necessary)
 
             // unquoted string
           } else {
             int parameterStart = pos;
-            pos = HeaderParser.skipUntil(string, pos, ",;");
-            parameter = string.substring(parameterStart, pos).trim();
+            pos = HeaderParser.skipUntil(value, pos, ",;");
+            parameter = value.substring(parameterStart, pos).trim();
           }
         }
 
@@ -195,6 +220,8 @@ public final class CacheControl {
           maxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
         } else if ("s-maxage".equalsIgnoreCase(directive)) {
           sMaxAgeSeconds = HeaderParser.parseSeconds(parameter, -1);
+        } else if ("private".equalsIgnoreCase(directive)) {
+          isPrivate = true;
         } else if ("public".equalsIgnoreCase(directive)) {
           isPublic = true;
         } else if ("must-revalidate".equalsIgnoreCase(directive)) {
@@ -211,16 +238,25 @@ public final class CacheControl {
       }
     }
 
-    return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPublic,
-        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform);
+    if (!canUseHeaderValue) {
+      headerValue = null;
+    }
+    return new CacheControl(noCache, noStore, maxAgeSeconds, sMaxAgeSeconds, isPrivate, isPublic,
+        mustRevalidate, maxStaleSeconds, minFreshSeconds, onlyIfCached, noTransform, headerValue);
   }
 
   @Override public String toString() {
+    String result = headerValue;
+    return result != null ? result : (headerValue = headerValue());
+  }
+
+  private String headerValue() {
     StringBuilder result = new StringBuilder();
     if (noCache) result.append("no-cache, ");
     if (noStore) result.append("no-store, ");
     if (maxAgeSeconds != -1) result.append("max-age=").append(maxAgeSeconds).append(", ");
     if (sMaxAgeSeconds != -1) result.append("s-maxage=").append(sMaxAgeSeconds).append(", ");
+    if (isPrivate) result.append("private, ");
     if (isPublic) result.append("public, ");
     if (mustRevalidate) result.append("must-revalidate, ");
     if (maxStaleSeconds != -1) result.append("max-stale=").append(maxStaleSeconds).append(", ");

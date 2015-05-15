@@ -32,7 +32,7 @@ public class RecordingCallback implements Callback {
   private final List<RecordedResponse> responses = new ArrayList<>();
 
   @Override public synchronized void onFailure(Request request, IOException e) {
-    responses.add(new RecordedResponse(request, null, null, e));
+    responses.add(new RecordedResponse(request, null, null, null, e));
     notifyAll();
   }
 
@@ -41,7 +41,7 @@ public class RecordingCallback implements Callback {
     ResponseBody body = response.body();
     body.source().readAll(buffer);
 
-    responses.add(new RecordedResponse(response.request(), response, buffer.readUtf8(), null));
+    responses.add(new RecordedResponse(response.request(), response, null, buffer.readUtf8(), null));
     notifyAll();
   }
 

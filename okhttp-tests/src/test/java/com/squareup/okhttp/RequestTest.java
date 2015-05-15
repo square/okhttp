@@ -64,6 +64,15 @@ public final class RequestTest {
     assertEquals("Retransmit body", "616263", bodyToHex(body));
   }
 
+  @Test public void byteArrayRange() throws Exception {
+    MediaType contentType = MediaType.parse("text/plain");
+    RequestBody body = RequestBody.create(contentType, ".abcd".getBytes(Util.UTF_8), 1, 3);
+    assertEquals(contentType, body.contentType());
+    assertEquals(3, body.contentLength());
+    assertEquals("616263", bodyToHex(body));
+    assertEquals("Retransmit body", "616263", bodyToHex(body));
+  }
+
   @Test public void file() throws Exception {
     File file = File.createTempFile("RequestTest", "tmp");
     FileWriter writer = new FileWriter(file);
@@ -79,7 +88,7 @@ public final class RequestTest {
   }
 
   /** Common verbs used for apis such as GitHub, AWS, and Google Cloud. */
-  @Test public void crudVerbs() {
+  @Test public void crudVerbs() throws IOException {
     MediaType contentType = MediaType.parse("application/json");
     RequestBody body = RequestBody.create(contentType, "{}");
 
@@ -112,6 +121,18 @@ public final class RequestTest {
     Request request = new Request.Builder().url("http://localhost/api").build();
     assertEquals(new URI("http://localhost/api"), request.uri());
     assertEquals(new URL("http://localhost/api"), request.url());
+  }
+
+  @Test public void newBuilderUrlResetsUrl() throws Exception {
+    Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
+    Request builtRequestWithoutCache = requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
+    assertEquals(new URL("http://localhost/api/foo"), builtRequestWithoutCache.url());
+
+    Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
+    // cache url object
+    requestWithCache.url();
+    Request builtRequestWithCache = requestWithCache.newBuilder().url("http://localhost/api/foo").build();
+    assertEquals(new URL("http://localhost/api/foo"), builtRequestWithCache.url());
   }
 
   @Test public void cacheControl() throws Exception {

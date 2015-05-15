@@ -24,7 +24,7 @@ import com.squareup.okhttp.internal.http.CacheStrategy;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.StatusLine;
-import java.io.ByteArrayInputStream;
+import com.squareup.okhttp.internal.io.FileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.security.cert.Certificate;
@@ -33,7 +33,10 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -44,64 +47,88 @@ import okio.Sink;
 import okio.Source;
 
 /**
- * Caches HTTP and HTTPS responses to the filesystem so they may be reused,
- * saving time and bandwidth.
+ * Caches HTTP and HTTPS responses to the filesystem so they may be reused, saving time and
+ * bandwidth.
  *
  * <h3>Cache Optimization</h3>
  * To measure cache effectiveness, this class tracks three statistics:
  * <ul>
- *     <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the
- *         number of HTTP requests issued since this cache was created.
- *     <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the
- *         number of those requests that required network use.
- *     <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of
- *         those requests whose responses were served by the cache.
+ *   <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the number of HTTP
+ *     requests issued since this cache was created.
+ *   <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the number of those
+ *     requests that required network use.
+ *   <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of those requests whose
+ *     responses were served by the cache.
  * </ul>
- * Sometimes a request will result in a conditional cache hit. If the cache
- * contains a stale copy of the response, the client will issue a conditional
- * {@code GET}. The server will then send either the updated response if it has
- * changed, or a short 'not modified' response if the client's copy is still
- * valid. Such responses increment both the network count and hit count.
  *
- * <p>The best way to improve the cache hit rate is by configuring the web
- * server to return cacheable responses. Although this client honors all <a
- * href="http://www.ietf.org/rfc/rfc2616.txt">HTTP/1.1 (RFC 2068)</a> cache
- * headers, it doesn't cache partial responses.
+ * Sometimes a request will result in a conditional cache hit. If the cache contains a stale copy of
+ * the response, the client will issue a conditional {@code GET}. The server will then send either
+ * the updated response if it has changed, or a short 'not modified' response if the client's copy
+ * is still valid. Such responses increment both the network count and hit count.
+ *
+ * <p>The best way to improve the cache hit rate is by configuring the web server to return
+ * cacheable responses. Although this client honors all <a
+ * href="http://tools.ietf.org/html/rfc7234">HTTP/1.1 (RFC 7234)</a> cache headers, it doesn't cache
+ * partial responses.
  *
  * <h3>Force a Network Response</h3>
- * In some situations, such as after a user clicks a 'refresh' button, it may be
- * necessary to skip the cache, and fetch data directly from the server. To force
- * a full refresh, add the {@code no-cache} directive: <pre>   {@code
- *         connection.addRequestProperty("Cache-Control", "no-cache");
+ * In some situations, such as after a user clicks a 'refresh' button, it may be necessary to skip
+ * the cache, and fetch data directly from the server. To force a full refresh, add the {@code
+ * no-cache} directive: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder().noCache().build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
- * If it is only necessary to force a cached response to be validated by the
- * server, use the more efficient {@code max-age=0} instead: <pre>   {@code
- *         connection.addRequestProperty("Cache-Control", "max-age=0");
+ *
+ * If it is only necessary to force a cached response to be validated by the server, use the more
+ * efficient {@code max-age=0} directive instead: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder()
+ *           .maxAge(0, TimeUnit.SECONDS)
+ *           .build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
  *
  * <h3>Force a Cache Response</h3>
- * Sometimes you'll want to show resources if they are available immediately,
- * but not otherwise. This can be used so your application can show
- * <i>something</i> while waiting for the latest data to be downloaded. To
- * restrict a request to locally-cached resources, add the {@code
+ * Sometimes you'll want to show resources if they are available immediately, but not otherwise.
+ * This can be used so your application can show <i>something</i> while waiting for the latest data
+ * to be downloaded. To restrict a request to locally-cached resources, add the {@code
  * only-if-cached} directive: <pre>   {@code
- *     try {
- *         connection.addRequestProperty("Cache-Control", "only-if-cached");
- *         InputStream cached = connection.getInputStream();
- *         // the resource was cached! show it
- *     } catch (FileNotFoundException e) {
- *         // the resource was not cached
+ *
+ *     Request request = new Request.Builder()
+ *         .cacheControl(new CacheControl.Builder()
+ *             .onlyIfCached()
+ *             .build())
+ *         .url("http://publicobject.com/helloworld.txt")
+ *         .build();
+ *     Response forceCacheResponse = client.newCall(request).execute();
+ *     if (forceCacheResponse.code() != 504) {
+ *       // The resource was cached! Show it.
+ *     } else {
+ *       // The resource was not cached.
  *     }
  * }</pre>
- * This technique works even better in situations where a stale response is
- * better than no response. To permit stale cached responses, use the {@code
- * max-stale} directive with the maximum staleness in seconds: <pre>   {@code
- *         int maxStale = 60 * 60 * 24 * 28; // tolerate 4-weeks stale
- *         connection.addRequestProperty("Cache-Control", "max-stale=" + maxStale);
+ * This technique works even better in situations where a stale response is better than no response.
+ * To permit stale cached responses, use the {@code max-stale} directive with the maximum staleness
+ * in seconds: <pre>   {@code
+ *
+ *   Request request = new Request.Builder()
+ *       .cacheControl(new CacheControl.Builder()
+ *           .maxStale(365, TimeUnit.DAYS)
+ *           .build())
+ *       .url("http://publicobject.com/helloworld.txt")
+ *       .build();
  * }</pre>
+ *
+ * <p>The {@link CacheControl} class can configure request caching directives and parse response
+ * caching directives. It even offers convenient constants {@link CacheControl#FORCE_NETWORK} and
+ * {@link CacheControl#FORCE_CACHE} that address the use cases above.
  */
 public final class Cache {
-  // TODO: add APIs to iterate the cache?
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
   private static final int ENTRY_BODY = 1;
@@ -137,8 +164,8 @@ public final class Cache {
   private int hitCount;
   private int requestCount;
 
-  public Cache(File directory, long maxSize) throws IOException {
-    cache = DiskLruCache.open(directory, VERSION, ENTRY_COUNT, maxSize);
+  public Cache(File directory, long maxSize) {
+    cache = DiskLruCache.create(FileSystem.SYSTEM, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
   private static String urlToKey(Request request) {
@@ -259,6 +286,58 @@ public final class Cache {
     cache.evictAll();
   }
 
+  /**
+   * Returns an iterator over the URLs in this cache. This iterator doesn't throw {@code
+   * ConcurrentModificationException}, but if new responses are added while iterating, their URLs
+   * will not be returned. If existing responses are evicted during iteration, they will be absent
+   * (unless they were already returned).
+   *
+   * <p>The iterator supports {@linkplain Iterator#remove}. Removing a URL from the iterator evicts
+   * the corresponding response from the cache. Use this to evict selected responses.
+   */
+  public Iterator<String> urls() throws IOException {
+    return new Iterator<String>() {
+      final Iterator<DiskLruCache.Snapshot> delegate = cache.snapshots();
+
+      String nextUrl;
+      boolean canRemove;
+
+      @Override public boolean hasNext() {
+        if (nextUrl != null) return true;
+
+        canRemove = false; // Prevent delegate.remove() on the wrong item!
+        while (delegate.hasNext()) {
+          DiskLruCache.Snapshot snapshot = delegate.next();
+          try {
+            BufferedSource metadata = Okio.buffer(snapshot.getSource(ENTRY_METADATA));
+            nextUrl = metadata.readUtf8LineStrict();
+            return true;
+          } catch (IOException ignored) {
+            // We couldn't read the metadata for this snapshot; possibly because the host filesystem
+            // has disappeared! Skip it.
+          } finally {
+            snapshot.close();
+          }
+        }
+
+        return false;
+      }
+
+      @Override public String next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        String result = nextUrl;
+        nextUrl = null;
+        canRemove = true;
+        return result;
+      }
+
+      @Override public void remove() {
+        if (!canRemove) throw new IllegalStateException("remove() before next()");
+        delegate.remove();
+      }
+    };
+  }
+
   public synchronized int getWriteAbortCount() {
     return writeAbortCount;
   }
@@ -267,7 +346,7 @@ public final class Cache {
     return writeSuccessCount;
   }
 
-  public long getSize() {
+  public long getSize() throws IOException {
     return cache.size();
   }
 
@@ -431,7 +510,7 @@ public final class Cache {
         Headers.Builder varyHeadersBuilder = new Headers.Builder();
         int varyRequestHeaderLineCount = readInt(source);
         for (int i = 0; i < varyRequestHeaderLineCount; i++) {
-          varyHeadersBuilder.addLine(source.readUtf8LineStrict());
+          varyHeadersBuilder.addLenient(source.readUtf8LineStrict());
         }
         varyHeaders = varyHeadersBuilder.build();
 
@@ -442,7 +521,7 @@ public final class Cache {
         Headers.Builder responseHeadersBuilder = new Headers.Builder();
         int responseHeaderLineCount = readInt(source);
         for (int i = 0; i < responseHeaderLineCount; i++) {
-          responseHeadersBuilder.addLine(source.readUtf8LineStrict());
+          responseHeadersBuilder.addLenient(source.readUtf8LineStrict());
         }
         responseHeaders = responseHeadersBuilder.build();
 
@@ -481,9 +560,9 @@ public final class Cache {
       sink.writeByte('\n');
       sink.writeUtf8(requestMethod);
       sink.writeByte('\n');
-      sink.writeUtf8(Integer.toString(varyHeaders.size()));
+      sink.writeDecimalLong(varyHeaders.size());
       sink.writeByte('\n');
-      for (int i = 0; i < varyHeaders.size(); i++) {
+      for (int i = 0, size = varyHeaders.size(); i < size; i++) {
         sink.writeUtf8(varyHeaders.name(i));
         sink.writeUtf8(": ");
         sink.writeUtf8(varyHeaders.value(i));
@@ -492,9 +571,9 @@ public final class Cache {
 
       sink.writeUtf8(new StatusLine(protocol, code, message).toString());
       sink.writeByte('\n');
-      sink.writeUtf8(Integer.toString(responseHeaders.size()));
+      sink.writeDecimalLong(responseHeaders.size());
       sink.writeByte('\n');
-      for (int i = 0; i < responseHeaders.size(); i++) {
+      for (int i = 0, size = responseHeaders.size(); i < size; i++) {
         sink.writeUtf8(responseHeaders.name(i));
         sink.writeUtf8(": ");
         sink.writeUtf8(responseHeaders.value(i));
@@ -505,8 +584,8 @@ public final class Cache {
         sink.writeByte('\n');
         sink.writeUtf8(handshake.cipherSuite());
         sink.writeByte('\n');
-        writeCertArray(sink, handshake.peerCertificates());
-        writeCertArray(sink, handshake.localCertificates());
+        writeCertList(sink, handshake.peerCertificates());
+        writeCertList(sink, handshake.localCertificates());
       }
       sink.close();
     }
@@ -524,8 +603,9 @@ public final class Cache {
         List<Certificate> result = new ArrayList<>(length);
         for (int i = 0; i < length; i++) {
           String line = source.readUtf8LineStrict();
-          byte[] bytes = ByteString.decodeBase64(line).toByteArray();
-          result.add(certificateFactory.generateCertificate(new ByteArrayInputStream(bytes)));
+          Buffer bytes = new Buffer();
+          bytes.write(ByteString.decodeBase64(line));
+          result.add(certificateFactory.generateCertificate(bytes.inputStream()));
         }
         return result;
       } catch (CertificateException e) {
@@ -533,10 +613,10 @@ public final class Cache {
       }
     }
 
-    private void writeCertArray(BufferedSink sink, List<Certificate> certificates)
+    private void writeCertList(BufferedSink sink, List<Certificate> certificates)
         throws IOException {
       try {
-        sink.writeUtf8(Integer.toString(certificates.size()));
+        sink.writeDecimalLong(certificates.size());
         sink.writeByte('\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
@@ -576,11 +656,15 @@ public final class Cache {
   }
 
   private static int readInt(BufferedSource source) throws IOException {
-    String line = source.readUtf8LineStrict();
     try {
-      return Integer.parseInt(line);
+      long result = source.readDecimalLong();
+      String line = source.readUtf8LineStrict();
+      if (result < 0 || result > Integer.MAX_VALUE || !line.isEmpty()) {
+        throw new IOException("expected an int but was \"" + result + line + "\"");
+      }
+      return (int) result;
     } catch (NumberFormatException e) {
-      throw new IOException("Expected an integer but was \"" + line + "\"");
+      throw new IOException(e.getMessage());
     }
   }
 

@@ -18,9 +18,9 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import okio.Sink;
-import okio.Source;
 
 public interface Transport {
   /**
@@ -42,17 +42,14 @@ public interface Transport {
    */
   void writeRequestBody(RetryableSink requestBody) throws IOException;
 
-  /** Flush the request body to the underlying socket. */
-  void flushRequest() throws IOException;
+  /** Flush the request to the underlying socket. */
+  void finishRequest() throws IOException;
 
-  /** Read response headers and update the cookie manager. */
+  /** Read and return response headers. */
   Response.Builder readResponseHeaders() throws IOException;
 
-  /** Notify the transport that no response body will be read. */
-  void emptyTransferStream() throws IOException;
-
-  // TODO: make this the content stream?
-  Source getTransferStream(CacheRequest cacheRequest) throws IOException;
+  /** Returns a stream that reads the response body. */
+  ResponseBody openResponseBody(Response response) throws IOException;
 
   /**
    * Configures the response body to pool or close the socket connection when

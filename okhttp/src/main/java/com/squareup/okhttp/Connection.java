@@ -16,29 +16,20 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpConnection;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
-import com.squareup.okhttp.internal.http.OkHeaders;
+import com.squareup.okhttp.internal.http.RouteException;
+import com.squareup.okhttp.internal.http.SocketConnector;
 import com.squareup.okhttp.internal.http.SpdyTransport;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.spdy.SpdyConnection;
-import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.Socket;
-import java.net.URL;
-import java.security.cert.X509Certificate;
-import javax.net.ssl.SSLSocket;
-
-import okio.Source;
-
-import static com.squareup.okhttp.internal.Util.getDefaultPort;
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
-import static java.net.HttpURLConnection.HTTP_OK;
-import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import java.net.UnknownServiceException;
+import java.util.List;
+import okio.BufferedSink;
+import okio.BufferedSource;
 
 /**
  * The sockets and streams of an HTTP, HTTPS, or HTTPS+SPDY connection. May be
@@ -141,23 +132,42 @@ public final class Connection {
     socket.close();
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request tunnelRequest)
-      throws IOException {
+  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request request,
+      List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
     if (connected) throw new IllegalStateException("already connected");
 
-    if (route.proxy.type() == Proxy.Type.DIRECT || route.proxy.type() == Proxy.Type.HTTP) {
-      socket = route.address.socketFactory.createSocket();
+    SocketConnector socketConnector = new SocketConnector(this, pool);
+    SocketConnector.ConnectedSocket connectedSocket;
+    if (route.address.getSslSocketFactory() != null) {
+      // https:// communication
+      connectedSocket = socketConnector.connectTls(connectTimeout, readTimeout, writeTimeout,
+          request, route, connectionSpecs, connectionRetryEnabled);
     } else {
-      socket = new Socket(route.proxy);
+      // http:// communication.
+      if (!connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
+        throw new RouteException(
+            new UnknownServiceException(
+                "CLEARTEXT communication not supported: " + connectionSpecs));
+      }
+      connectedSocket = socketConnector.connectCleartext(connectTimeout, readTimeout, route);
     }
 
-    socket.setSoTimeout(readTimeout);
-    Platform.get().connectSocket(socket, route.inetSocketAddress, connectTimeout);
+    socket = connectedSocket.socket;
+    handshake = connectedSocket.handshake;
+    protocol = connectedSocket.alpnProtocol == null
+        ? Protocol.HTTP_1_1 : connectedSocket.alpnProtocol;
 
-    if (route.address.sslSocketFactory != null) {
-      upgradeToTls(tunnelRequest, readTimeout, writeTimeout);
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket);
+    try {
+      if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
+        socket.setSoTimeout(0); // SPDY timeouts are set per-stream.
+        spdyConnection = new SpdyConnection.Builder(route.address.uriHost, true, socket)
+            .protocol(protocol).build();
+        spdyConnection.sendConnectionPreface();
+      } else {
+        httpConnection = new HttpConnection(pool, this, socket);
+      }
+    } catch (IOException e) {
+      throw new RouteException(e);
     }
     connected = true;
   }
@@ -166,13 +176,14 @@ public final class Connection {
    * Connects this connection if it isn't already. This creates tunnels, shares
    * the connection with the connection pool, and configures timeouts.
    */
-  void connectAndSetOwner(OkHttpClient client, Object owner, Request request) throws IOException {
+  void connectAndSetOwner(OkHttpClient client, Object owner, Request request)
+      throws RouteException {
     setOwner(owner);
 
     if (!isConnected()) {
-      Request tunnelRequest = tunnelRequest(request);
-      connect(client.getConnectTimeout(), client.getReadTimeout(),
-          client.getWriteTimeout(), tunnelRequest);
+      List<ConnectionSpec> connectionSpecs = route.address.getConnectionSpecs();
+      connect(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
+          request, connectionSpecs, client.getRetryOnConnectionFailure());
       if (isSpdy()) {
         client.getConnectionPool().share(this);
       }
@@ -180,94 +191,6 @@ public final class Connection {
     }
 
     setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
-  }
-
-  /**
-   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
-   * no tunnel is necessary. Everything in the tunnel request is sent
-   * unencrypted to the proxy server, so tunnels include only the minimum set of
-   * headers. This avoids sending potentially sensitive data like HTTP cookies
-   * to the proxy unencrypted.
-   */
-  private Request tunnelRequest(Request request) throws IOException {
-    if (!route.requiresTunnel()) return null;
-
-    String host = request.url().getHost();
-    int port = getEffectivePort(request.url());
-    String authority = (port == getDefaultPort("https")) ? host : (host + ":" + port);
-    Request.Builder result = new Request.Builder()
-        .url(new URL("https", host, port, "/"))
-        .header("Host", authority)
-        .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
-
-    // Copy over the User-Agent header if it exists.
-    String userAgent = request.header("User-Agent");
-    if (userAgent != null) {
-      result.header("User-Agent", userAgent);
-    }
-
-    // Copy over the Proxy-Authorization header if it exists.
-    String proxyAuthorization = request.header("Proxy-Authorization");
-    if (proxyAuthorization != null) {
-      result.header("Proxy-Authorization", proxyAuthorization);
-    }
-
-    return result.build();
-  }
-
-  /**
-   * Create an {@code SSLSocket} and perform the TLS handshake and certificate
-   * validation.
-   */
-  private void upgradeToTls(Request tunnelRequest, int readTimeout, int writeTimeout)
-      throws IOException {
-    Platform platform = Platform.get();
-
-    // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    if (tunnelRequest != null) {
-      makeTunnel(tunnelRequest, readTimeout, writeTimeout);
-    }
-
-    // Create the wrapper over connected socket.
-    socket = route.address.sslSocketFactory
-        .createSocket(socket, route.address.uriHost, route.address.uriPort, true /* autoClose */);
-    SSLSocket sslSocket = (SSLSocket) socket;
-
-    // Configure the socket's ciphers, TLS versions, and extensions.
-    route.connectionSpec.apply(sslSocket, route);
-
-    // Force handshake. This can throw!
-    sslSocket.startHandshake();
-
-    // Verify that the socket's certificates are acceptable for the target host.
-    if (!route.address.hostnameVerifier.verify(route.address.uriHost, sslSocket.getSession())) {
-      X509Certificate cert = (X509Certificate) sslSocket.getSession().getPeerCertificates()[0];
-      throw new IOException("Hostname " + route.address.uriHost + " not verified:"
-          + "\n    certificate: " + CertificatePinner.pin(cert)
-          + "\n    DN: " + cert.getSubjectDN().getName()
-          + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
-    }
-
-    // Check that the certificate pinner is satisfied by the certificates presented.
-    route.address.certificatePinner.check(route.address.uriHost,
-        sslSocket.getSession().getPeerCertificates());
-
-    handshake = Handshake.get(sslSocket.getSession());
-
-    String maybeProtocol;
-    if (route.connectionSpec.supportsTlsExtensions()
-        && (maybeProtocol = platform.getSelectedProtocol(sslSocket)) != null) {
-      protocol = Protocol.get(maybeProtocol); // Throws IOE on unknown.
-    }
-
-    if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
-      sslSocket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-      spdyConnection = new SpdyConnection.Builder(route.address.getUriHost(), true, socket)
-          .protocol(protocol).build();
-      spdyConnection.sendConnectionPreface();
-    } else {
-      httpConnection = new HttpConnection(pool, this, socket);
-    }
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
@@ -286,6 +209,16 @@ public final class Connection {
    */
   public Socket getSocket() {
     return socket;
+  }
+
+  BufferedSource rawSource() {
+    if (httpConnection == null) throw new UnsupportedOperationException();
+    return httpConnection.rawSource();
+  }
+
+  BufferedSink rawSink() {
+    if (httpConnection == null) throw new UnsupportedOperationException();
+    return httpConnection.rawSink();
   }
 
   /** Returns true if this connection is alive. */
@@ -311,14 +244,6 @@ public final class Connection {
   /** Returns true if this connection is idle. */
   boolean isIdle() {
     return spdyConnection == null || spdyConnection.isIdle();
-  }
-
-  /**
-   * Returns true if this connection has been idle for longer than
-   * {@code keepAliveDurationNs}.
-   */
-  boolean isExpired(long keepAliveDurationNs) {
-    return getIdleStartTimeNs() < System.nanoTime() - keepAliveDurationNs;
   }
 
   /**
@@ -365,12 +290,17 @@ public final class Connection {
     this.protocol = protocol;
   }
 
-  void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) throws IOException {
+  void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis)
+      throws RouteException {
     if (!connected) throw new IllegalStateException("setTimeouts - not connected");
 
     // Don't set timeouts on shared SPDY connections.
     if (httpConnection != null) {
-      socket.setSoTimeout(readTimeoutMillis);
+      try {
+        socket.setSoTimeout(readTimeoutMillis);
+      } catch (IOException e) {
+        throw new RouteException(e);
+      }
       httpConnection.setTimeouts(readTimeoutMillis, writeTimeoutMillis);
     }
   }
@@ -387,52 +317,17 @@ public final class Connection {
     return recycleCount;
   }
 
-  /**
-   * To make an HTTPS connection over an HTTP proxy, send an unencrypted
-   * CONNECT request to create the proxy connection. This may need to be
-   * retried if the proxy requires authorization.
-   */
-  private void makeTunnel(Request request, int readTimeout, int writeTimeout)
-      throws IOException {
-    HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
-    tunnelConnection.setTimeouts(readTimeout, writeTimeout);
-    URL url = request.url();
-    String requestLine = "CONNECT " + url.getHost() + ":" + url.getPort() + " HTTP/1.1";
-    while (true) {
-      tunnelConnection.writeRequest(request.headers(), requestLine);
-      tunnelConnection.flush();
-      Response response = tunnelConnection.readResponse().request(request).build();
-      // The response body from a CONNECT should be empty, but if it is not then we should consume
-      // it before proceeding.
-      long contentLength = OkHeaders.contentLength(response);
-      if (contentLength != -1) {
-        Source body = tunnelConnection.newFixedLengthSource(null, contentLength);
-        Util.skipAll(body, Integer.MAX_VALUE);
-      } else {
-        tunnelConnection.emptyResponseBody();
-      }
-
-      switch (response.code()) {
-        case HTTP_OK:
-          // Assume the server won't send a TLS ServerHello until we send a TLS ClientHello. If that
-          // happens, then we will have buffered bytes that are needed by the SSLSocket!
-          // This check is imperfect: it doesn't tell us whether a handshake will succeed, just that
-          // it will almost certainly fail because the proxy has sent unexpected data.
-          if (tunnelConnection.bufferSize() > 0) {
-            throw new IOException("TLS tunnel buffered too many bytes!");
-          }
-          return;
-
-        case HTTP_PROXY_AUTH:
-          request = OkHeaders.processAuthHeader(
-              route.address.authenticator, response, route.proxy);
-          if (request != null) continue;
-          throw new IOException("Failed to authenticate with proxy");
-
-        default:
-          throw new IOException(
-              "Unexpected response code for CONNECT: " + response.code());
-      }
-    }
+  @Override public String toString() {
+    return "Connection{"
+        + route.address.uriHost + ":" + route.address.uriPort
+        + ", proxy="
+        + route.proxy
+        + " hostAddress="
+        + route.inetSocketAddress.getAddress().getHostAddress()
+        + " cipherSuite="
+        + (handshake != null ? handshake.cipherSuite() : "none")
+        + " protocol="
+        + protocol
+        + '}';
   }
 }

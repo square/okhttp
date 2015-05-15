@@ -11,13 +11,15 @@ Download [the latest JAR][3] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>okhttp</artifactId>
-  <version>2.1.0</version>
+  <version>2.3.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'com.squareup.okhttp:okhttp:2.1.0'
+compile 'com.squareup.okhttp:okhttp:2.3.0'
 ```
+
+Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
 
 
 MockWebServer
@@ -34,13 +36,13 @@ Download [the latest JAR][4] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>mockwebserver</artifactId>
-  <version>2.1.0</version>
+  <version>2.3.0</version>
   <scope>test</scope>
 </dependency>
 ```
 or Gradle:
 ```groovy
-testCompile 'com.squareup.okhttp:mockwebserver:2.1.0'
+testCompile 'com.squareup.okhttp:mockwebserver:2.3.0'
 ```
 
 
@@ -65,3 +67,4 @@ License
  [2]: https://github.com/square/okhttp/wiki
  [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=okhttp&v=LATEST
  [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [snap]: https://oss.sonatype.org/content/repositories/snapshots/

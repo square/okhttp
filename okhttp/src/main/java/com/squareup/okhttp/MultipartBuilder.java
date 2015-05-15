@@ -73,10 +73,9 @@ public final class MultipartBuilder {
 
   private final ByteString boundary;
   private MediaType type = MIXED;
-  private long length = 0;
 
-  // Parallel lists of nullable headings (boundary + headers) and non-null bodies.
-  private final List<Buffer> partHeadings = new ArrayList<>();
+  // Parallel lists of nullable headers and non-null bodies.
+  private final List<Headers> partHeaders = new ArrayList<>();
   private final List<RequestBody> partBodies = new ArrayList<>();
 
   /** Creates a new multipart builder that uses a random boundary token. */
@@ -126,17 +125,8 @@ public final class MultipartBuilder {
       throw new IllegalArgumentException("Unexpected header: Content-Length");
     }
 
-    Buffer heading = createPartHeading(headers, body, partHeadings.isEmpty());
-    partHeadings.add(heading);
+    partHeaders.add(headers);
     partBodies.add(body);
-
-    long bodyContentLength = body.contentLength();
-    if (bodyContentLength == -1) {
-      length = -1;
-    } else if (length != -1) {
-      length += heading.size() + bodyContentLength;
-    }
-
     return this;
   }
 
@@ -195,94 +185,116 @@ public final class MultipartBuilder {
     return addPart(Headers.of("Content-Disposition", disposition.toString()), value);
   }
 
-  /** Creates a part "heading" from the boundary and any real or generated headers. */
-  private Buffer createPartHeading(Headers headers, RequestBody body, boolean isFirst) {
-    Buffer sink = new Buffer();
-
-    if (!isFirst) {
-      sink.write(CRLF);
-    }
-    sink.write(DASHDASH);
-    sink.write(boundary);
-    sink.write(CRLF);
-
-    if (headers != null) {
-      for (int i = 0; i < headers.size(); i++) {
-        sink.writeUtf8(headers.name(i))
-            .write(COLONSPACE)
-            .writeUtf8(headers.value(i))
-            .write(CRLF);
-      }
-    }
-
-    MediaType contentType = body.contentType();
-    if (contentType != null) {
-      sink.writeUtf8("Content-Type: ")
-          .writeUtf8(contentType.toString())
-          .write(CRLF);
-    }
-
-    long contentLength = body.contentLength();
-    if (contentLength != -1) {
-      sink.writeUtf8("Content-Length: ")
-          .writeUtf8(Long.toString(contentLength))
-          .write(CRLF);
-    }
-
-    sink.write(CRLF);
-
-    return sink;
-  }
-
   /** Assemble the specified parts into a request body. */
   public RequestBody build() {
-    if (partHeadings.isEmpty()) {
+    if (partHeaders.isEmpty()) {
       throw new IllegalStateException("Multipart body must have at least one part.");
     }
-    return new MultipartRequestBody(type, boundary, partHeadings, partBodies, length);
+    return new MultipartRequestBody(type, boundary, partHeaders, partBodies);
   }
 
   private static final class MultipartRequestBody extends RequestBody {
     private final ByteString boundary;
     private final MediaType contentType;
-    private final List<Buffer> partHeadings;
+    private final List<Headers> partHeaders;
     private final List<RequestBody> partBodies;
-    private final long length;
+    private long contentLength = -1L;
 
-    public MultipartRequestBody(MediaType type, ByteString boundary, List<Buffer> partHeadings,
-        List<RequestBody> partBodies, long length) {
+    public MultipartRequestBody(MediaType type, ByteString boundary, List<Headers> partHeaders,
+        List<RequestBody> partBodies) {
       if (type == null) throw new NullPointerException("type == null");
 
       this.boundary = boundary;
       this.contentType = MediaType.parse(type + "; boundary=" + boundary.utf8());
-      this.partHeadings = Util.immutableList(partHeadings);
+      this.partHeaders = Util.immutableList(partHeaders);
       this.partBodies = Util.immutableList(partBodies);
-      if (length != -1) {
-        // Add the length of the final boundary.
-        length += CRLF.length + DASHDASH.length + boundary.size() + DASHDASH.length + CRLF.length;
-      }
-      this.length = length;
-    }
-
-    @Override public long contentLength() {
-      return length;
     }
 
     @Override public MediaType contentType() {
       return contentType;
     }
 
-    @Override public void writeTo(BufferedSink sink) throws IOException {
-      for (int i = 0, size = partHeadings.size(); i < size; i++) {
-        sink.writeAll(partHeadings.get(i).clone());
-        partBodies.get(i).writeTo(sink);
+    @Override public long contentLength() throws IOException {
+      long result = contentLength;
+      if (result != -1L) return result;
+      return contentLength = writeOrCountBytes(null, true);
+    }
+
+    /**
+     * Either writes this request to {@code sink} or measures its content length. We have one method
+     * do double-duty to make sure the counting and content are consistent, particularly when it
+     * comes to awkward operations like measuring the encoded length of header strings, or the
+     * length-in-digits of an encoded integer.
+     */
+    private long writeOrCountBytes(BufferedSink sink, boolean countBytes) throws IOException {
+      long byteCount = 0L;
+
+      Buffer byteCountBuffer = null;
+      if (countBytes) {
+        sink = byteCountBuffer = new Buffer();
       }
 
-      sink.write(CRLF);
+      for (int p = 0, partCount = partHeaders.size(); p < partCount; p++) {
+        Headers headers = partHeaders.get(p);
+        RequestBody body = partBodies.get(p);
+
+        sink.write(DASHDASH);
+        sink.write(boundary);
+        sink.write(CRLF);
+
+        if (headers != null) {
+          for (int h = 0, headerCount = headers.size(); h < headerCount; h++) {
+            sink.writeUtf8(headers.name(h))
+                .write(COLONSPACE)
+                .writeUtf8(headers.value(h))
+                .write(CRLF);
+          }
+        }
+
+        MediaType contentType = body.contentType();
+        if (contentType != null) {
+          sink.writeUtf8("Content-Type: ")
+              .writeUtf8(contentType.toString())
+              .write(CRLF);
+        }
+
+        long contentLength = body.contentLength();
+        if (contentLength != -1) {
+          sink.writeUtf8("Content-Length: ")
+              .writeDecimalLong(contentLength)
+              .write(CRLF);
+        } else if (countBytes) {
+          // We can't measure the body's size without the sizes of its components.
+          byteCountBuffer.clear();
+          return -1L;
+        }
+
+        sink.write(CRLF);
+
+        if (countBytes) {
+          byteCount += contentLength;
+        } else {
+          partBodies.get(p).writeTo(sink);
+        }
+
+        sink.write(CRLF);
+      }
+
       sink.write(DASHDASH);
       sink.write(boundary);
       sink.write(DASHDASH);
       sink.write(CRLF);
+
+      if (countBytes) {
+        byteCount += byteCountBuffer.size();
+        byteCountBuffer.clear();
+      }
+
+      return byteCount;
+    }
+
+    @Override public void writeTo(BufferedSink sink) throws IOException {
+      writeOrCountBytes(sink, false);
     }
   }
 }

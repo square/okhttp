@@ -40,7 +40,7 @@ public class MockWebServerRule extends ExternalResource {
     if (started) return;
     started = true;
     try {
-      server.play();
+      server.start();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -52,6 +52,11 @@ public class MockWebServerRule extends ExternalResource {
     } catch (IOException e) {
       logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
     }
+  }
+
+  public String getHostName() {
+    if (!started) before();
+    return server.getHostName();
   }
 
   public int getPort() {

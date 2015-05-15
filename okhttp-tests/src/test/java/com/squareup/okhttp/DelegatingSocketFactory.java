@@ -71,6 +71,6 @@ public class DelegatingSocketFactory extends SocketFactory {
   }
 
   protected void configureSocket(Socket socket) throws IOException {
-    // no-op by default
+    // No-op by default.
   }
 }

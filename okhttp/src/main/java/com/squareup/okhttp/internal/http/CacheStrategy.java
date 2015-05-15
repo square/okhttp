@@ -1,16 +1,25 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.CacheControl;
+import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+
 import java.util.Date;
 
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static java.net.HttpURLConnection.HTTP_BAD_METHOD;
 import static java.net.HttpURLConnection.HTTP_GONE;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
 import static java.net.HttpURLConnection.HTTP_NOT_AUTHORITATIVE;
+import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
+import static java.net.HttpURLConnection.HTTP_NOT_IMPLEMENTED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
+import static java.net.HttpURLConnection.HTTP_REQ_TOO_LONG;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -38,26 +47,43 @@ public final class CacheStrategy {
    * request.
    */
   public static boolean isCacheable(Response response, Request request) {
-    // Always go to network for uncacheable response codes (RFC 2616, 13.4),
+    // Always go to network for uncacheable response codes (RFC 7231 section 6.1),
     // This implementation doesn't support caching partial content.
-    int responseCode = response.code();
-    if (responseCode != HTTP_OK
-        && responseCode != HTTP_NOT_AUTHORITATIVE
-        && responseCode != HTTP_MULT_CHOICE
-        && responseCode != HTTP_MOVED_PERM
-        && responseCode != HTTP_GONE
-        && responseCode != HTTP_PERM_REDIRECT) {
-      return false;
+    switch (response.code()) {
+      case HTTP_OK:
+      case HTTP_NOT_AUTHORITATIVE:
+      case HTTP_NO_CONTENT:
+      case HTTP_MULT_CHOICE:
+      case HTTP_MOVED_PERM:
+      case HTTP_NOT_FOUND:
+      case HTTP_BAD_METHOD:
+      case HTTP_GONE:
+      case HTTP_REQ_TOO_LONG:
+      case HTTP_NOT_IMPLEMENTED:
+      case HTTP_PERM_REDIRECT:
+      // These codes can be cached unless headers forbid it.
+      break;
+
+      case HTTP_MOVED_TEMP:
+      case HTTP_TEMP_REDIRECT:
+        // These codes can only be cached with the right response headers.
+        // http://tools.ietf.org/html/rfc7234#section-3
+        // s-maxage is not checked because OkHttp is a private cache that should ignore s-maxage.
+        if (response.header("Expires") != null
+            || response.cacheControl().maxAgeSeconds() != -1
+            || response.cacheControl().isPublic()
+            || response.cacheControl().isPrivate()) {
+          break;
+        }
+        // Fall-through.
+
+      default:
+        // All other codes cannot be cached.
+        return false;
     }
 
     // A 'no-store' directive on request or response prevents the response from being cached.
-    CacheControl responseCaching = response.cacheControl();
-    CacheControl requestCaching = request.cacheControl();
-    if (responseCaching.noStore() || requestCaching.noStore()) {
-      return false;
-    }
-
-    return true;
+    return !response.cacheControl().noStore() && !request.cacheControl().noStore();
   }
 
   public static class Factory {
@@ -103,9 +129,10 @@ public final class CacheStrategy {
       this.cacheResponse = cacheResponse;
 
       if (cacheResponse != null) {
-        for (int i = 0; i < cacheResponse.headers().size(); i++) {
-          String fieldName = cacheResponse.headers().name(i);
-          String value = cacheResponse.headers().value(i);
+        Headers headers = cacheResponse.headers();
+        for (int i = 0, size = headers.size(); i < size; i++) {
+          String fieldName = headers.name(i);
+          String value = headers.value(i);
           if ("Date".equalsIgnoreCase(fieldName)) {
             servedDate = HttpDate.parse(value);
             servedDateString = value;
@@ -198,14 +225,12 @@ public final class CacheStrategy {
 
       Request.Builder conditionalRequestBuilder = request.newBuilder();
 
-      if (lastModified != null) {
+      if (etag != null) {
+        conditionalRequestBuilder.header("If-None-Match", etag);
+      } else if (lastModified != null) {
         conditionalRequestBuilder.header("If-Modified-Since", lastModifiedString);
       } else if (servedDate != null) {
         conditionalRequestBuilder.header("If-Modified-Since", servedDateString);
-      }
-
-      if (etag != null) {
-        conditionalRequestBuilder.header("If-None-Match", etag);
       }
 
       Request conditionalRequest = conditionalRequestBuilder.build();

@@ -31,7 +31,7 @@ import java.io.OutputStream;
 class Huffman {
 
   // Appendix C: Huffman Codes
-  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#appendix-C
+  // http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#appendix-B
   private static final int[] CODES = {
       0x1ff8, 0x7fffd8, 0xfffffe2, 0xfffffe3, 0xfffffe4, 0xfffffe5, 0xfffffe6, 0xfffffe7, 0xfffffe8,
       0xffffea, 0x3ffffffc, 0xfffffe9, 0xfffffea, 0x3ffffffd, 0xfffffeb, 0xfffffec, 0xfffffed,

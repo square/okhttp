@@ -25,7 +25,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.http.StatusLine;
-import com.squareup.okhttp.internal.spdy.Http20Draft15;
+import com.squareup.okhttp.internal.spdy.Http2;
 
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
@@ -49,7 +49,9 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okio.BufferedSource;
 import okio.Okio;
+import okio.Sink;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -145,15 +147,21 @@ public class Main extends HelpOption implements Runnable {
       if (showHeaders) {
         System.out.println(StatusLine.get(response));
         Headers headers = response.headers();
-        for (int i = 0, count = headers.size(); i < count; i++) {
+        for (int i = 0, size = headers.size(); i < size; i++) {
           System.out.println(headers.name(i) + ": " + headers.value(i));
         }
         System.out.println();
       }
 
-      response.body().source().readAll(Okio.sink(System.out));
+      // Stream the response to the System.out as it is returned from the server.
+      Sink out = Okio.sink(System.out);
+      BufferedSource source = response.body().source();
+      while (!source.exhausted()) {
+        out.write(source.buffer(), source.buffer().size());
+        out.flush();
+      }
+
       response.body().close();
-      System.out.flush();
     } catch (IOException e) {
       e.printStackTrace();
     } finally {
@@ -266,7 +274,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static void enableHttp2FrameLogging() {
-    Logger logger = Logger.getLogger(Http20Draft15.class.getName() + "$FrameLogger");
+    Logger logger = Logger.getLogger(Http2.class.getName() + "$FrameLogger");
     logger.setLevel(Level.FINE);
     ConsoleHandler handler = new ConsoleHandler();
     handler.setLevel(Level.FINE);

@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp</groupId>
   <artifactId>parent</artifactId>
-  <version>2.2.0-SNAPSHOT</version>
+  <version>2.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -20,9 +20,17 @@
 
   <modules>
     <module>okhttp</module>
-    <module>okhttp-apache</module>
     <module>okhttp-tests</module>
+
+    <module>okhttp-android-support</module>
+
+    <module>okhttp-apache</module>
+    <module>okhttp-testing-support</module>
     <module>okhttp-urlconnection</module>
+
+    <module>okhttp-ws</module>
+    <module>okhttp-ws-tests</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
@@ -34,11 +42,11 @@
 
     <!-- Compilation -->
     <java.version>1.7</java.version>
-    <okio.version>1.0.1</okio.version>
-    <!-- Targetted to jdk7u60-b13; Oracle jdk7u55-b13. -->
-    <npn.version>1.1.7.v20140316</npn.version>
-    <!-- Targetted to OpenJDK 8 b132 -->
-    <alpn.version>8.0.0.v20140317</alpn.version>
+    <okio.version>1.4.0-SNAPSHOT</okio.version>
+    <!-- ALPN library targeted to Java 7 -->
+    <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
+    <!-- ALPN library targeted to Java 8 update 25. -->
+    <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
     <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
@@ -79,16 +87,6 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mortbay.jetty.npn</groupId>
-        <artifactId>npn-boot</artifactId>
-        <version>${npn.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.mortbay.jetty.alpn</groupId>
-        <artifactId>alpn-boot</artifactId>
-        <version>${alpn.version}</version>
       </dependency>
       <dependency>
         <groupId>org.bouncycastle</groupId>
@@ -135,6 +133,19 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.17</version>
+          <configuration>
+            <properties>
+              <!--
+                Configure a listener for enforcing that no uncaught exceptions issue from OkHttp
+                tests. Every test must have a <scope>test</scope> dependency on
+                okhttp-testing-support.
+                -->
+              <property>
+                <name>listener</name>
+                <value>com.squareup.okhttp.testing.InstallUncaughtExceptionHandlerListener</value>
+              </property>
+            </properties>
+          </configuration>
           <dependencies>
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
@@ -213,41 +224,12 @@
 
   <profiles>
     <profile>
-      <id>npn-when-jdk7</id>
+      <id>alpn-when-jdk7</id>
       <activation>
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/npn/npn-boot/${npn.version}/npn-boot-${npn.version}.jar</bootclasspathPrefix>
-      </properties>
-      <build>
-        <pluginManagement>
-          <plugins>
-            <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-surefire-plugin</artifactId>
-              <configuration>
-                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
-              </configuration>
-              <dependencies>
-                <dependency>
-                  <groupId>org.mortbay.jetty.npn</groupId>
-                  <artifactId>npn-boot</artifactId>
-                  <version>${npn.version}</version>
-                </dependency>
-              </dependencies>
-            </plugin>
-          </plugins>
-        </pluginManagement>
-      </build>
-    </profile>
-    <profile>
-      <id>alpn-when-jdk8</id>
-      <activation>
-        <jdk>1.8</jdk>
-      </activation>
-      <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.version}/alpn-boot-${alpn.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar</bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
@@ -262,7 +244,36 @@
                 <dependency>
                   <groupId>org.mortbay.jetty.alpn</groupId>
                   <artifactId>alpn-boot</artifactId>
-                  <version>${alpn.version}</version>
+                  <version>${alpn.jdk7.version}</version>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8</id>
+      <activation>
+        <jdk>1.8</jdk>
+      </activation>
+      <properties>
+        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar</bootclasspathPrefix>
+      </properties>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+                <argLine>-Xbootclasspath/p:${bootclasspathPrefix}</argLine>
+              </configuration>
+              <dependencies>
+                <dependency>
+                  <groupId>org.mortbay.jetty.alpn</groupId>
+                  <artifactId>alpn-boot</artifactId>
+                  <version>${alpn.jdk8.version}</version>
                 </dependency>
               </dependencies>
             </plugin>

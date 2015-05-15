@@ -33,9 +33,4 @@ public abstract class Dispatcher {
   public MockResponse peek() {
     return new MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN);
   }
-
-  /** @deprecated replaced with {@link #peek}. */
-  protected final SocketPolicy peekSocketPolicy() {
-    throw new UnsupportedOperationException("This API is obsolete. Override peek() instead!");
-  }
 }

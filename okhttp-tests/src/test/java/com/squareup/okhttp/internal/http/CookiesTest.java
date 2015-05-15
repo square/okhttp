@@ -40,6 +40,7 @@ import org.junit.Test;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -63,7 +64,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
         + "expires=Fri, 31-Dec-9999 23:59:59 GMT; "
@@ -91,7 +92,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie: a=android; "
         + "Comment=this cookie is delicious; "
@@ -121,7 +122,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie2: a=android; "
         + "Comment=this cookie is delicious; "
@@ -155,7 +156,7 @@ public class CookiesTest {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     CookieHandler.setDefault(cookieManager);
     MockWebServer server = new MockWebServer();
-    server.play();
+    server.start();
 
     server.enqueue(new MockResponse().addHeader("Set-Cookie2: a=\"android\"; "
         + "Comment=\"this cookie is delicious\"; "
@@ -188,7 +189,7 @@ public class CookiesTest {
   @Test public void testSendingCookiesFromStore() throws Exception {
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookieA = new HttpCookie("a", "android");
@@ -204,22 +205,25 @@ public class CookiesTest {
     get(server, "/");
     RecordedRequest request = server.takeRequest();
 
-    List<String> receivedHeaders = request.getHeaders();
-    assertContains(receivedHeaders, "Cookie: $Version=\"1\"; "
-        + "a=\"android\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"; "
-        + "b=\"banana\";$Path=\"/\";$Domain=\"" + server.getCookieDomain() + "\"");
+    assertEquals("$Version=\"1\"; "
+            + "a=\"android\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\"; "
+            + "b=\"banana\";$Path=\"/\";$Domain=\""
+            + server.getCookieDomain()
+            + "\"", request.getHeader("Cookie"));
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
     MockWebServer redirectTarget = new MockWebServer();
     redirectTarget.enqueue(new MockResponse().setBody("A"));
-    redirectTarget.play();
+    redirectTarget.start();
 
     MockWebServer redirectSource = new MockWebServer();
     redirectSource.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: " + redirectTarget.getUrl("/")));
-    redirectSource.play();
+    redirectSource.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
@@ -233,11 +237,14 @@ public class CookiesTest {
     get(redirectSource, "/");
     RecordedRequest request = redirectSource.takeRequest();
 
-    assertContains(request.getHeaders(), "Cookie: $Version=\"1\"; "
-        + "c=\"cookie\";$Path=\"/\";$Domain=\"" + redirectSource.getCookieDomain()
-        + "\";$Port=\"" + portList + "\"");
+    assertEquals("$Version=\"1\"; "
+            + "c=\"cookie\";$Path=\"/\";$Domain=\""
+            + redirectSource.getCookieDomain()
+            + "\";$Port=\""
+            + portList
+            + "\"", request.getHeader("Cookie"));
 
-    for (String header : redirectTarget.takeRequest().getHeaders()) {
+    for (String header : redirectTarget.takeRequest().getHeaders().names()) {
       if (header.startsWith("Cookie")) {
         fail(header);
       }
@@ -267,7 +274,7 @@ public class CookiesTest {
     });
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
     assertEquals(Collections.<String, List<String>>emptyMap(),
@@ -300,8 +307,10 @@ public class CookiesTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertContainsAll(request.getHeaders(), "Foo: foo", "Cookie: Bar=bar", "Cookie2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
+    assertEquals("foo", request.getHeader("Foo"));
+    assertEquals("Bar=bar", request.getHeader("Cookie"));
+    assertEquals("Baz=baz", request.getHeader("Cookie2"));
+    assertNull(request.getHeader("Quux"));
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
@@ -316,13 +325,14 @@ public class CookiesTest {
     });
     MockWebServer server = new MockWebServer();
     server. enqueue(new MockResponse());
-    server.play();
+    server.start();
 
     get(server, "/");
 
     RecordedRequest request = server.takeRequest();
-    assertContainsAll(request.getHeaders(), "COOKIE: Bar=bar", "cooKIE2: Baz=baz");
-    assertFalse(request.getHeaders().contains("Quux: quux"));
+    assertEquals("Bar=bar", request.getHeader("Cookie"));
+    assertEquals("Baz=baz", request.getHeader("Cookie2"));
+    assertNull(request.getHeader("Quux"));
   }
 
   private void assertContains(Collection<String> collection, String element) {

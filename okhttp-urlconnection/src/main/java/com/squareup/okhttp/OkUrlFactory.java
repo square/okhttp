@@ -15,13 +15,11 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.InternalCache;
-import com.squareup.okhttp.internal.huc.CacheAdapter;
 import com.squareup.okhttp.internal.huc.HttpURLConnectionImpl;
 import com.squareup.okhttp.internal.huc.HttpsURLConnectionImpl;
+
 import java.net.HttpURLConnection;
 import java.net.Proxy;
-import java.net.ResponseCache;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -36,17 +34,6 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
 
   public OkHttpClient client() {
     return client;
-  }
-
-  /** Sets the response cache to be used to read and write cached responses. */
-  OkUrlFactory setResponseCache(ResponseCache responseCache) {
-    client.setInternalCache(responseCache != null ? new CacheAdapter(responseCache) : null);
-    return this;
-  }
-
-  ResponseCache getResponseCache() {
-    InternalCache cache = client.internalCache();
-    return cache instanceof CacheAdapter ? ((CacheAdapter) cache).getDelegate() : null;
   }
 
   /**
