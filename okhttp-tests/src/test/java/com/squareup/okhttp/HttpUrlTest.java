@@ -683,13 +683,183 @@ public final class HttpUrlTest {
     assertEquals("/a/b/c/d",
         base.newBuilder().addPathSegment("").addPathSegment("d").build().encodedPath());
     assertEquals("/a/b/", base.newBuilder().addPathSegment("..").build().encodedPath());
-    assertEquals("/a/b/", base.newBuilder().addPathSegment("%2e.").build().encodedPath());
-    assertEquals("/a/", base.newBuilder().addPathSegment("%2e.").addPathSegment("..").build()
-        .encodedPath());
     assertEquals("/a/b/", base.newBuilder().addPathSegment("").addPathSegment("..").build()
         .encodedPath());
     assertEquals("/a/b/c/", base.newBuilder().addPathSegment("").addPathSegment("").build()
         .encodedPath());
+  }
+
+  @Test public void pathSize() throws Exception {
+    assertEquals(1, HttpUrl.parse("http://host/").pathSize());
+    assertEquals(3, HttpUrl.parse("http://host/a/b/c").pathSize());
+  }
+
+  @Test public void addPathSegmentDotDoesNothing() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/c", base.newBuilder().addPathSegment(".").build().encodedPath());
+  }
+
+  @Test public void addPathSegmentEncodes() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/c/%252e",
+        base.newBuilder().addPathSegment("%2e").build().encodedPath());
+    assertEquals("/a/b/c/%252e%252e",
+        base.newBuilder().addPathSegment("%2e%2e").build().encodedPath());
+  }
+
+  @Test public void addPathSegmentDotDotPopsDirectory() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/", base.newBuilder().addPathSegment("..").build().encodedPath());
+  }
+
+  @Test public void addPathSegmentDotAndIgnoredCharacter() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/c/.%0A", base.newBuilder().addPathSegment(".\n").build().encodedPath());
+  }
+
+  @Test public void addEncodedPathSegmentDotAndIgnoredCharacter() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/c", base.newBuilder().addEncodedPathSegment(".\n").build().encodedPath());
+  }
+
+  @Test public void addEncodedPathSegmentDotDotAndIgnoredCharacter() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/a/b/", base.newBuilder().addEncodedPathSegment("..\n").build().encodedPath());
+  }
+
+  @Test public void setPathSegment() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/d/b/c", base.newBuilder().setPathSegment(0, "d").build().encodedPath());
+    assertEquals("/a/d/c", base.newBuilder().setPathSegment(1, "d").build().encodedPath());
+    assertEquals("/a/b/d", base.newBuilder().setPathSegment(2, "d").build().encodedPath());
+  }
+
+  @Test public void setPathSegmentEncodes() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/%2525/b/c", base.newBuilder().setPathSegment(0, "%25").build().encodedPath());
+    assertEquals("/.%0A/b/c", base.newBuilder().setPathSegment(0, ".\n").build().encodedPath());
+    assertEquals("/%252e/b/c", base.newBuilder().setPathSegment(0, "%2e").build().encodedPath());
+  }
+
+  @Test public void setPathSegmentAcceptsEmpty() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("//b/c", base.newBuilder().setPathSegment(0, "").build().encodedPath());
+    assertEquals("/a/b/", base.newBuilder().setPathSegment(2, "").build().encodedPath());
+  }
+
+  @Test public void setPathSegmentRejectsDot() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setPathSegment(0, ".");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setPathSegmentRejectsDotDot() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setPathSegment(0, "..");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setPathSegmentWithSlash() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    HttpUrl url = base.newBuilder().setPathSegment(1, "/").build();
+    assertEquals("/a/%2F/c", url.encodedPath());
+  }
+
+  @Test public void setPathSegmentOutOfBounds() throws Exception {
+    try {
+      new HttpUrl.Builder().setPathSegment(1, "a");
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  @Test public void setEncodedPathSegmentEncodes() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    assertEquals("/%25/b/c",
+        base.newBuilder().setEncodedPathSegment(0, "%25").build().encodedPath());
+  }
+
+  @Test public void setEncodedPathSegmentRejectsDot() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setEncodedPathSegment(0, ".");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setEncodedPathSegmentRejectsDotAndIgnoredCharacter() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setEncodedPathSegment(0, ".\n");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setEncodedPathSegmentRejectsDotDot() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setEncodedPathSegment(0, "..");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setEncodedPathSegmentRejectsDotDotAndIgnoredCharacter() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    try {
+      base.newBuilder().setEncodedPathSegment(0, "..\n");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void setEncodedPathSegmentWithSlash() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    HttpUrl url = base.newBuilder().setEncodedPathSegment(1, "/").build();
+    assertEquals("/a/%2F/c", url.encodedPath());
+  }
+
+  @Test public void setEncodedPathSegmentOutOfBounds() throws Exception {
+    try {
+      new HttpUrl.Builder().setEncodedPathSegment(1, "a");
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  @Test public void removePathSegment() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    HttpUrl url = base.newBuilder()
+        .removePathSegment(0)
+        .build();
+    assertEquals("/b/c", url.encodedPath());
+  }
+
+  @Test public void removePathSegmentDoesntRemovePath() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    HttpUrl url = base.newBuilder()
+        .removePathSegment(0)
+        .removePathSegment(0)
+        .removePathSegment(0)
+        .build();
+    assertEquals(Arrays.asList(""), url.pathSegments());
+    assertEquals("/", url.encodedPath());
+  }
+
+  @Test public void removePathSegmentOutOfBounds() throws Exception {
+    try {
+      new HttpUrl.Builder().removePathSegment(1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
   }
 
   @Test public void toJavaNetUrl() throws Exception {
