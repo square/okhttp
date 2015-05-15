@@ -255,12 +255,12 @@ import okio.Buffer;
 public final class HttpUrl {
   private static final char[] HEX_DIGITS =
       { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
-  private static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
-  private static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]\\^`{}|/\\?#";
-  private static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
-  private static final String QUERY_ENCODE_SET = " \"'<>#";
-  private static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
-  private static final String FRAGMENT_ENCODE_SET = "";
+  static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
+  static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]\\^`{}|/\\?#";
+  static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
+  static final String QUERY_ENCODE_SET = " \"'<>#";
+  static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String FRAGMENT_ENCODE_SET = "";
 
   /** Either "http" or "https". */
   private final String scheme;
@@ -1422,10 +1422,10 @@ public final class HttpUrl {
           || (codePoint == '%' && !alreadyEncoded)
           || (query && codePoint == '+')) {
         // Slow path: the character at i requires encoding!
-        StringBuilder out = new StringBuilder();
-        out.append(input, pos, i);
+        Buffer out = new Buffer();
+        out.writeUtf8(input, pos, i);
         canonicalize(out, input, i, limit, encodeSet, alreadyEncoded, query);
-        return out.toString();
+        return out.readUtf8();
       }
     }
 
@@ -1433,7 +1433,7 @@ public final class HttpUrl {
     return input.substring(pos, limit);
   }
 
-  static void canonicalize(StringBuilder out, String input, int pos, int limit,
+  static void canonicalize(Buffer out, String input, int pos, int limit,
       String encodeSet, boolean alreadyEncoded, boolean query) {
     Buffer utf8Buffer = null; // Lazily allocated.
     int codePoint;
@@ -1444,7 +1444,7 @@ public final class HttpUrl {
         // Skip this character.
       } else if (query && codePoint == '+') {
         // HTML permits space to be encoded as '+'. We use '%20' to avoid special cases.
-        out.append(alreadyEncoded ? "%20" : "%2B");
+        out.writeUtf8(alreadyEncoded ? "%20" : "%2B");
       } else if (codePoint < 0x20
           || codePoint >= 0x7f
           || encodeSet.indexOf(codePoint) != -1
@@ -1456,13 +1456,13 @@ public final class HttpUrl {
         utf8Buffer.writeUtf8CodePoint(codePoint);
         while (!utf8Buffer.exhausted()) {
           int b = utf8Buffer.readByte() & 0xff;
-          out.append('%');
-          out.append(HEX_DIGITS[(b >> 4) & 0xf]);
-          out.append(HEX_DIGITS[b & 0xf]);
+          out.writeByte('%');
+          out.writeByte(HEX_DIGITS[(b >> 4) & 0xf]);
+          out.writeByte(HEX_DIGITS[b & 0xf]);
         }
       } else {
         // This character doesn't need encoding. Just copy it over.
-        out.append((char) codePoint);
+        out.writeUtf8CodePoint(codePoint);
       }
     }
   }
