@@ -407,6 +407,10 @@ public final class HttpUrl {
     }
   }
 
+  public int pathSize() {
+    return pathSegments.size();
+  }
+
   /**
    * Returns the entire path of this URL, encoded for use in HTTP resource resolution. The
    * returned path is always nonempty and is prefixed with {@code /}.
@@ -689,6 +693,38 @@ public final class HttpUrl {
         throw new IllegalArgumentException("encodedPathSegment == null");
       }
       push(encodedPathSegment, 0, encodedPathSegment.length(), false, true);
+      return this;
+    }
+
+    public Builder setPathSegment(int index, String pathSegment) {
+      if (pathSegment == null) throw new IllegalArgumentException("pathSegment == null");
+      String canonicalPathSegment = canonicalize(
+          pathSegment, 0, pathSegment.length(), PATH_SEGMENT_ENCODE_SET, false, false);
+      if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
+        throw new IllegalArgumentException("unexpected path segment: " + pathSegment);
+      }
+      encodedPathSegments.set(index, canonicalPathSegment);
+      return this;
+    }
+
+    public Builder setEncodedPathSegment(int index, String encodedPathSegment) {
+      if (encodedPathSegment == null) {
+        throw new IllegalArgumentException("encodedPathSegment == null");
+      }
+      String canonicalPathSegment = canonicalize(encodedPathSegment,
+          0, encodedPathSegment.length(), PATH_SEGMENT_ENCODE_SET, true, false);
+      encodedPathSegments.set(index, canonicalPathSegment);
+      if (isDot(canonicalPathSegment) || isDotDot(canonicalPathSegment)) {
+        throw new IllegalArgumentException("unexpected path segment: " + encodedPathSegment);
+      }
+      return this;
+    }
+
+    public Builder removePathSegment(int index) {
+      encodedPathSegments.remove(index);
+      if (encodedPathSegments.isEmpty()) {
+        encodedPathSegments.add(""); // Always leave at least one '/'.
+      }
       return this;
     }
 
@@ -993,31 +1029,34 @@ public final class HttpUrl {
     /** Adds a path segment. If the input is ".." or equivalent, this pops a path segment. */
     private void push(String input, int pos, int limit, boolean addTrailingSlash,
         boolean alreadyEncoded) {
-      int segmentLength = limit - pos;
-      if ((segmentLength == 2 && input.regionMatches(false, pos, "..", 0, 2))
-          || (segmentLength == 4 && input.regionMatches(true, pos, "%2e.", 0, 4))
-          || (segmentLength == 4 && input.regionMatches(true, pos, ".%2e", 0, 4))
-          || (segmentLength == 6 && input.regionMatches(true, pos, "%2e%2e", 0, 6))) {
+      String segment = canonicalize(
+          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false);
+      if (isDot(segment)) {
+        return; // Skip '.' path segments.
+      }
+      if (isDotDot(segment)) {
         pop();
         return;
       }
-
-      if ((segmentLength == 1 && input.regionMatches(false, pos, ".", 0, 1))
-          || (segmentLength == 3 && input.regionMatches(true, pos, "%2e", 0, 3))) {
-        return; // Skip '.' path segments.
-      }
-
-      String segment = canonicalize(
-          input, pos, limit, PATH_SEGMENT_ENCODE_SET, alreadyEncoded, false);
       if (encodedPathSegments.get(encodedPathSegments.size() - 1).isEmpty()) {
         encodedPathSegments.set(encodedPathSegments.size() - 1, segment);
       } else {
         encodedPathSegments.add(segment);
       }
-
       if (addTrailingSlash) {
         encodedPathSegments.add("");
       }
+    }
+
+    private boolean isDot(String input) {
+      return input.equals(".") || input.equalsIgnoreCase("%2e");
+    }
+
+    private boolean isDotDot(String input) {
+      return input.equals("..")
+          || input.equalsIgnoreCase("%2e.")
+          || input.equalsIgnoreCase(".%2e")
+          || input.equalsIgnoreCase("%2e%2e");
     }
 
     /**
