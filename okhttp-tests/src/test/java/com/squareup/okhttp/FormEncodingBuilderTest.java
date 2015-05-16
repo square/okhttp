@@ -25,13 +25,27 @@ public final class FormEncodingBuilderTest {
     RequestBody formEncoding = new FormEncodingBuilder()
         .add("a&b", "c=d")
         .add("space, the", "final frontier")
+        .add("%25", "%25")
         .build();
 
     assertEquals("application/x-www-form-urlencoded", formEncoding.contentType().toString());
 
-    String expected = "a%26b=c%3Dd&space%2C+the=final+frontier";
+    String expected = "a%26b=c%3Dd&space,%20the=final%20frontier&%2525=%2525";
     assertEquals(expected.length(), formEncoding.contentLength());
 
+    Buffer out = new Buffer();
+    formEncoding.writeTo(out);
+    assertEquals(expected, out.readUtf8());
+  }
+
+  @Test public void addEncoded() throws Exception {
+    RequestBody formEncoding = new FormEncodingBuilder()
+        .addEncoded("a+=& b", "c+=& d")
+        .addEncoded("e+=& f", "g+=& h")
+        .addEncoded("%25", "%25")
+        .build();
+
+    String expected = "a%20%3D%26%20b=c%20%3D%26%20d&e%20%3D%26%20f=g%20%3D%26%20h&%25=%25";
     Buffer out = new Buffer();
     formEncoding.writeTo(out);
     assertEquals(expected, out.readUtf8());

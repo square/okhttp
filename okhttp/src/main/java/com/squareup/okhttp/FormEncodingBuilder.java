@@ -15,8 +15,6 @@
  */
 package com.squareup.okhttp;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import okio.Buffer;
 
 /**
@@ -34,13 +32,24 @@ public final class FormEncodingBuilder {
     if (content.size() > 0) {
       content.writeByte('&');
     }
-    try {
-      content.writeUtf8(URLEncoder.encode(name, "UTF-8"));
-      content.writeByte('=');
-      content.writeUtf8(URLEncoder.encode(value, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new AssertionError(e);
+    HttpUrl.canonicalize(content, name, 0, name.length(),
+        HttpUrl.QUERY_COMPONENT_ENCODE_SET, false, true);
+    content.writeByte('=');
+    HttpUrl.canonicalize(content, value, 0, value.length(),
+        HttpUrl.QUERY_COMPONENT_ENCODE_SET, false, true);
+    return this;
+  }
+
+  /** Add new key-value pair. */
+  public FormEncodingBuilder addEncoded(String name, String value) {
+    if (content.size() > 0) {
+      content.writeByte('&');
     }
+    HttpUrl.canonicalize(content, name, 0, name.length(),
+        HttpUrl.QUERY_COMPONENT_ENCODE_SET, true, true);
+    content.writeByte('=');
+    HttpUrl.canonicalize(content, value, 0, value.length(),
+        HttpUrl.QUERY_COMPONENT_ENCODE_SET, true, true);
     return this;
   }
 
