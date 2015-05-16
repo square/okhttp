@@ -30,6 +30,7 @@ import java.net.SocketTimeoutException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.ForwardingTimeout;
 import okio.Okio;
 import okio.Sink;
 import okio.Source;
@@ -265,8 +266,21 @@ public final class HttpConnection {
     return source;
   }
 
+  /**
+   * Sets the delegate of {@code timeout} to {@link Timeout#NONE} and resets its underlying timeout
+   * to the default configuration. Use this to avoid unexpected sharing of timeouts between pooled
+   * connections.
+   */
+  private void detachTimeout(ForwardingTimeout timeout) {
+    Timeout oldDelegate = timeout.delegate();
+    timeout.setDelegate(Timeout.NONE);
+    oldDelegate.clearDeadline();
+    oldDelegate.clearTimeout();
+  }
+
   /** An HTTP body with a fixed length known in advance. */
   private final class FixedLengthSink implements Sink {
+    private final ForwardingTimeout timeout = new ForwardingTimeout(sink.timeout());
     private boolean closed;
     private long bytesRemaining;
 
@@ -275,7 +289,7 @@ public final class HttpConnection {
     }
 
     @Override public Timeout timeout() {
-      return sink.timeout();
+      return timeout;
     }
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
@@ -298,6 +312,7 @@ public final class HttpConnection {
       if (closed) return;
       closed = true;
       if (bytesRemaining > 0) throw new ProtocolException("unexpected end of stream");
+      detachTimeout(timeout);
       state = STATE_READ_RESPONSE_HEADERS;
     }
   }
@@ -308,10 +323,11 @@ public final class HttpConnection {
    * sink with this sink.
    */
   private final class ChunkedSink implements Sink {
+    private final ForwardingTimeout timeout = new ForwardingTimeout(sink.timeout());
     private boolean closed;
 
     @Override public Timeout timeout() {
-      return sink.timeout();
+      return timeout;
     }
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
@@ -333,15 +349,17 @@ public final class HttpConnection {
       if (closed) return;
       closed = true;
       sink.writeUtf8("0\r\n\r\n");
+      detachTimeout(timeout);
       state = STATE_READ_RESPONSE_HEADERS;
     }
   }
 
   private abstract class AbstractSource implements Source {
+    protected final ForwardingTimeout timeout = new ForwardingTimeout(source.timeout());
     protected boolean closed;
 
     @Override public Timeout timeout() {
-      return source.timeout();
+      return timeout;
     }
 
     /**
@@ -350,6 +368,8 @@ public final class HttpConnection {
      */
     protected final void endOfInput(boolean recyclable) throws IOException {
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
+
+      detachTimeout(timeout);
 
       state = STATE_IDLE;
       if (recyclable && onIdle == ON_IDLE_POOL) {

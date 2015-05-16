@@ -694,6 +694,72 @@ public final class CallTest {
     }
   }
 
+  @Test public void reusedSinksGetIndependentTimeoutInstances() throws Exception {
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
+
+    // Call 1: set a deadline on the request body.
+    RequestBody requestBody1 = new RequestBody() {
+      @Override public MediaType contentType() {
+        return MediaType.parse("text/plain");
+      }
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("abc");
+        sink.timeout().deadline(5, TimeUnit.SECONDS);
+      }
+    };
+    Request request1 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("POST", requestBody1)
+        .build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals(200, response1.code());
+
+    // Call 2: check for the absence of a deadline on the request body.
+    RequestBody requestBody2 = new RequestBody() {
+      @Override public MediaType contentType() {
+        return MediaType.parse("text/plain");
+      }
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        assertFalse(sink.timeout().hasDeadline());
+        sink.writeUtf8("def");
+      }
+    };
+    Request request2 = new Request.Builder()
+        .url(server.getUrl("/"))
+        .method("POST", requestBody2)
+        .build();
+    Response response2 = client.newCall(request2).execute();
+    assertEquals(200, response2.code());
+
+    // Use sequence numbers to confirm the connection was pooled.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void reusedSourcesGetIndependentTimeoutInstances() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+    server.enqueue(new MockResponse().setBody("def"));
+
+    // Call 1: set a deadline on the response body.
+    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    BufferedSource body1 = response1.body().source();
+    assertEquals("abc", body1.readUtf8());
+    body1.timeout().deadline(5, TimeUnit.SECONDS);
+
+    // Call 2: check for the absence of a deadline on the request body.
+    Request request2 = new Request.Builder().url(server.getUrl("/")).build();
+    Response response2 = client.newCall(request2).execute();
+    BufferedSource body2 = response2.body().source();
+    assertEquals("def", body2.readUtf8());
+    assertFalse(body2.timeout().hasDeadline());
+
+    // Use sequence numbers to confirm the connection was pooled.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
   @Test public void tls() throws Exception {
     server.get().useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
