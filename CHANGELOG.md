@@ -1,6 +1,81 @@
 Change Log
 ==========
 
+## Version 2.4.0-RC1
+
+_2015-05-16_
+
+ *  **New HttpUrl API.** It's like `java.net.URL` but good.
+
+ *  **We've improved connect failure recovery.** We now differentiate between
+    setup, connecting, and connected and implement appropriate recovery rules
+    for each. This changes `Address` to no longer use `ConnectionSpec`. (This is
+    an incompatible API change).
+
+ *  **`FormEncodingBuilder` now uses `%20` instead of `+` for encoded spaces.**
+    Both are permitted-by-spec, but `%20` requires fewer special cases.
+
+ *  **Okio has been updated to 1.4.0.**
+     ```
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.4.0</version>
+     </dependency>
+     ```
+
+ *  **`Request.Builder` no longer accepts null if a request body is required.**
+    Passing null will now fail for request methods that require a body. Instead
+    use an empty body such as this one:
+
+    ```
+        RequestBody.create(null, new byte[0]);
+    ```
+
+ * **`CertificatePinner` now supports wildcard hostnames.** As always with
+   certificate pinning, you must be very careful to avoid [bricking][brick]
+   your app. You'll need to pin both the top-level domain and the `*.` domain
+   for full coverage.
+
+    ```
+     client.setCertificatePinner(new CertificatePinner.Builder()
+         .add("publicobject.com",   "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+         .add("*.publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+         .add("publicobject.com",   "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")
+         .add("*.publicobject.com", "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")
+         .add("publicobject.com",   "sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=")
+         .add("*.publicobject.com", "sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=")
+         .add("publicobject.com",   "sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=")
+         .add("*.publicobject.com", "sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=")
+         .build());
+    ```
+
+ *  **Interceptors lists are now deep-copied by `OkHttpClient.clone()`.**
+    Previously clones shared interceptors, which made it difficult to customize
+    the interceptors on a request-by-request basis.
+
+ *  New: `Headers.toMultimap()`.
+ *  New: `RequestBody.create(MediaType, ByteString)`.
+ *  New: `ConnectionSpec.isCompatible(SSLSocket)`.
+ *  New: `Dispatcher.getQueuedCallCount()` and
+    `Dispatcher.getRunningCallCount()`. These can be useful in diagnostics.
+ *  Fix: OkHttp no longer shares timeouts between pooled connections. This was
+    causing some applications to crash when connections were reused.
+ *  Fix: `OkApacheClient` now allows an empty `PUT` and `POST`.
+ *  Fix: Websockets no longer rebuffer socket streams.
+ *  Fix: Websockets are now better at handling close frames.
+ *  Fix: Content type matching is now case insensitive.
+ *  Fix: `Vary` headers are not lost with `android.net.http.HttpResponseCache`.
+ *  Fix: HTTP/2 wasn't enforcing stream timeouts when writing the underlying
+    connection. Now it is.
+ *  Fix: Never return null on `call.proceed()`. This was a bug in call
+    cancelation.
+ *  Fix: When a network interceptor mutates a request, that change is now
+    reflected in `Response.networkResponse()`.
+ *  Fix: Badly-behaving caches now throw a checked exception instead of a
+    `NullPointerException`.
+ *  Fix: Better handling of uncaught exceptions in MockWebServer with HTTP/2.
+
 ## Version 2.3.0
 
 _2015-03-16_
@@ -543,3 +618,4 @@ _2013-05-06_
 
 Initial release.
 
+ [brick]: (https://noncombatant.org/2015/05/01/about-http-public-key-pinning/)
