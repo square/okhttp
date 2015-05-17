@@ -30,6 +30,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -37,6 +38,8 @@ import okio.Okio;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
 public final class MockSpdyPeer implements Closeable {
+  private static final Logger logger = Logger.getLogger(MockSpdyPeer.class.getName());
+
   private int frameCount = 0;
   private boolean client = false;
   private Variant variant = new Spdy3();
@@ -122,7 +125,7 @@ public final class MockSpdyPeer implements Closeable {
           readAndWriteFrames();
         } catch (IOException e) {
           Util.closeQuietly(MockSpdyPeer.this);
-          e.printStackTrace();
+          logger.info(MockSpdyPeer.this + " done: " + e.getMessage());
         }
       }
     });
@@ -131,6 +134,15 @@ public final class MockSpdyPeer implements Closeable {
   private void readAndWriteFrames() throws IOException {
     if (socket != null) throw new IllegalStateException();
     socket = serverSocket.accept();
+
+    // Bail out now if this instance was closed while waiting for the socket to accept.
+    synchronized (this) {
+      if (executor.isShutdown()) {
+        socket.close();
+        return;
+      }
+    }
+
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();
     FrameReader reader = variant.newReader(Okio.buffer(Okio.source(in)), client);
@@ -180,16 +192,12 @@ public final class MockSpdyPeer implements Closeable {
 
   @Override public synchronized void close() throws IOException {
     executor.shutdown();
-    Socket socket = this.socket;
-    if (socket != null) {
-      Util.closeQuietly(socket);
-      this.socket = null;
-    }
-    ServerSocket serverSocket = this.serverSocket;
-    if (serverSocket != null) {
-      Util.closeQuietly(serverSocket);
-      this.serverSocket = null;
-    }
+    Util.closeQuietly(socket);
+    Util.closeQuietly(serverSocket);
+  }
+
+  @Override public String toString() {
+    return "MockSpdyPeer[" + port + "]";
   }
 
   private static class OutFrame {
