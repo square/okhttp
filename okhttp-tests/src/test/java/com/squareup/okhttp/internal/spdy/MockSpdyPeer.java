@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal.spdy;
 
+import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
@@ -34,9 +35,12 @@ import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.Okio;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 /** Replays prerecorded outgoing frames and records incoming frames. */
-public final class MockSpdyPeer implements Closeable {
+public final class MockSpdyPeer implements Closeable, TestRule {
   private int frameCount = 0;
   private boolean client = false;
   private Variant variant = new Spdy3();
@@ -49,6 +53,16 @@ public final class MockSpdyPeer implements Closeable {
       Util.threadFactory("MockSpdyPeer", false));
   private ServerSocket serverSocket;
   private Socket socket;
+  private Description currentDescription;
+
+  @Override public Statement apply(final Statement base, final Description description) {
+    return new Statement() {
+      @Override public void evaluate() throws Throwable {
+        currentDescription = description;
+        base.evaluate();
+      }
+    };
+  }
 
   public void setVariantAndClient(Variant variant, boolean client) {
     if (this.variant.getProtocol() == variant.getProtocol() && this.client == client) {
@@ -116,8 +130,8 @@ public final class MockSpdyPeer implements Closeable {
     serverSocket = new ServerSocket(0);
     serverSocket.setReuseAddress(true);
     port = serverSocket.getLocalPort();
-    executor.execute(new Runnable() {
-      @Override public void run() {
+    executor.execute(new NamedRunnable("MockSpdyPeer: %s", currentDescription != null ?  currentDescription.getMethodName() : "?") {
+      @Override protected void execute() {
         try {
           readAndWriteFrames();
         } catch (IOException e) {
@@ -130,6 +144,10 @@ public final class MockSpdyPeer implements Closeable {
 
   private void readAndWriteFrames() throws IOException {
     if (socket != null) throw new IllegalStateException();
+    if (serverSocket == null) {
+      throw new IllegalStateException("" + currentDescription);
+    }
+
     socket = serverSocket.accept();
     OutputStream out = socket.getOutputStream();
     InputStream in = socket.getInputStream();

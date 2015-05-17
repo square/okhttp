@@ -72,25 +72,24 @@ public final class WebPlatformUrlTest {
   /** Test how {@link HttpUrl} does against the web platform test suite. */
   @Test public void httpUrl() throws Exception {
     if (!testData.scheme.isEmpty() && !HTTP_URL_SCHEMES.contains(testData.scheme)) {
-      System.err.println("Ignoring unsupported scheme " + testData.scheme);
+      System.err.println("Skipped: " + testData + ": scheme is unsupported");
       return;
     }
     if (!testData.base.startsWith("https:")
         && !testData.base.startsWith("http:")
         && !testData.base.equals("about:blank")) {
-      System.err.println("Ignoring unsupported base " + testData.base);
+      System.err.println("Skipped: " + testData + ": base is unsupported");
       return;
     }
 
     try {
       testHttpUrl();
       if (KNOWN_FAILURES.contains(testData.toString())) {
-        System.err.println("Expected failure but was success: " + testData);
+        System.err.println("Known failure passed: " + testData);
       }
     } catch (Throwable e) {
       if (KNOWN_FAILURES.contains(testData.toString())) {
-        System.err.println("Ignoring known failure: " + testData);
-        e.printStackTrace();
+        System.err.println("Known failure failed: " + testData + ": " + e);
       } else {
         throw e;
       }

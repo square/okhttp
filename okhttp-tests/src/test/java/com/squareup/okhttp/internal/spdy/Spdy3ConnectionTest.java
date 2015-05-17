@@ -32,6 +32,7 @@ import okio.Okio;
 import okio.Sink;
 import okio.Source;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
 import static com.squareup.okhttp.TestUtil.headerEntries;
@@ -56,7 +57,7 @@ import static org.junit.Assert.fail;
 
 public final class Spdy3ConnectionTest {
   private static final Variant SPDY3 = new Spdy3();
-  private final MockSpdyPeer peer = new MockSpdyPeer();
+  @Rule public MockSpdyPeer peer = new MockSpdyPeer();
 
   @After public void tearDown() throws Exception {
     peer.close();
@@ -923,6 +924,15 @@ public final class Spdy3ConnectionTest {
     assertEquals(TYPE_RST_STREAM, peer.takeFrame().type);
   }
 
+  //@Test public void writeTimesOutAwaitingStreamWindow1000() throws Exception {
+  //  for (int i = 0; i < 1000; i++) {
+  //    System.out.println(i);
+  //    Spdy3ConnectionTest test = new Spdy3ConnectionTest();
+  //    test.readTimesOut();
+  //    test.tearDown();
+  //  }
+  //}
+  //
   @Test public void writeTimesOutAwaitingStreamWindow() throws Exception {
     // Set the peer's receive window to 5 bytes!
     Settings peerSettings = new Settings().set(Settings.INITIAL_WINDOW_SIZE, PERSIST_VALUE, 5);
