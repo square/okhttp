@@ -182,7 +182,7 @@ import okio.Buffer;
  * Java includes both {@link URL java.net.URL} and {@link URI java.net.URI}. We offer a new URL
  * model to address problems that the others don't.
  *
- * <h3>Different URLs should be different</h3>
+ * <h4>Different URLs should be different</h4>
  * Although they have different content, {@code java.net.URL} considers the following two URLs
  * equal, and the {@link Object#equals equals()} method between them returns true:
  * <ul>
@@ -195,7 +195,7 @@ import okio.Buffer;
  * require a DNS lookup, and incorrect because unequal URLs may be equal because of how they are
  * hosted.
  *
- * <h3>Equal URLs should be equal</h3>
+ * <h4>Equal URLs should be equal</h4>
  * These two URLs are semantically identical, but {@code java.net.URI} disagrees:
  * <ul>
  *   <li>http://host:80/
@@ -225,21 +225,21 @@ import okio.Buffer;
  *    /etc/passwd
  * }</pre>
  *
- * <h3>If it works on the web, it should work in your application</h3>
+ * <h4>If it works on the web, it should work in your application</h4>
  * The {@code java.net.URI} class is strict around what URLs it accepts. It rejects URLs like
  * "http://example.com/abc|def" because the '|' character is unsupported. This class is more
  * forgiving: it will automatically percent-encode the '|', yielding "http://example.com/abc%7Cdef".
  * This kind behavior is consistent with web browsers. {@code HttpUrl} prefers consistency with
  * major web browsers over consistency with obsolete specifications.
  *
- * <h3>Paths and Queries should decompose</h3>
+ * <h4>Paths and Queries should decompose</h4>
  * Neither of the built-in URL models offer direct access to path segments or query parameters.
  * Manually using {@code StringBuilder} to assemble these components is cumbersome: do '+'
  * characters get silently replaced with spaces? If a query parameter contains a '&amp;', does that
  * get escaped? By offering methods to read and write individual query parameters directly,
  * application developers are saved from the hassles of encoding and decoding.
  *
- * <h3>Plus a modern API</h3>
+ * <h4>Plus a modern API</h4>
  * The URL (JDK1.0) and URI (Java 1.4) classes predate builders and instead use telescoping
  * constructors. For example, there's no API to compose a URI with a custom port without also
  * providing a query and fragment.

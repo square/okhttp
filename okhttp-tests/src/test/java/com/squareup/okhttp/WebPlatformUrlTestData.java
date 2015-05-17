@@ -29,8 +29,9 @@ import okio.BufferedSource;
  * attempts to be compatible.
  *
  * <p>Each line of the urltestdata.text file specifies a test. Lines look like this: <pre>   {@code
+ *
  *   http://example\t.\norg http://example.org/foo/bar s:http h:example.org p:/
- * }
+ * }</pre>
  */
 public final class WebPlatformUrlTestData {
   String input;
