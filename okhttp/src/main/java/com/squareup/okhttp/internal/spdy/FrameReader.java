@@ -27,7 +27,7 @@ public interface FrameReader extends Closeable {
   void readConnectionPreface() throws IOException;
   boolean nextFrame(Handler handler) throws IOException;
 
-  public interface Handler {
+  interface Handler {
     void data(boolean inFinished, int streamId, BufferedSource source, int length)
         throws IOException;
 
