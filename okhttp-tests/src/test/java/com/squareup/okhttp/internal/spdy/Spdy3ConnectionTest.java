@@ -709,15 +709,14 @@ public final class Spdy3ConnectionTest {
     assertEquals(2, ping.payload1);
   }
 
-
   @Test public void receiveGoAway() throws Exception {
     peer.setVariantAndClient(SPDY3, false);
 
     // write the mocking script
     peer.acceptFrame(); // SYN_STREAM 1
     peer.acceptFrame(); // SYN_STREAM 3
+    peer.acceptFrame(); // PING.
     peer.sendFrame().goAway(1, PROTOCOL_ERROR, Util.EMPTY_BYTE_ARRAY);
-    peer.acceptFrame(); // PING
     peer.sendFrame().ping(true, 1, 0);
     peer.acceptFrame(); // DATA STREAM 1
     peer.play();
