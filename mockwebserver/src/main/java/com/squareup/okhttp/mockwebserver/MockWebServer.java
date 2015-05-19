@@ -499,11 +499,13 @@ public final class MockWebServer {
           throw new ProtocolException("unexpected data");
         }
 
+        boolean reuseSocket = true;
         boolean requestWantsWebSockets = "Upgrade".equalsIgnoreCase(request.getHeader("Connection"))
             && "websocket".equalsIgnoreCase(request.getHeader("Upgrade"));
         boolean responseWantsWebSockets = response.getWebSocketListener() != null;
         if (requestWantsWebSockets && responseWantsWebSockets) {
           handleWebSocketUpgrade(socket, source, sink, request, response);
+          reuseSocket = false;
         } else {
           writeHttpResponse(socket, sink, response);
         }
@@ -523,7 +525,7 @@ public final class MockWebServer {
         }
 
         sequenceNumber++;
-        return true;
+        return reuseSocket;
       }
     });
   }

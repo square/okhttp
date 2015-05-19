@@ -145,6 +145,14 @@ public final class Request {
 
     public Builder url(String url) {
       if (url == null) throw new IllegalArgumentException("url == null");
+
+      // Silently replace websocket URLs with HTTP URLs.
+      if (url.regionMatches(true, 0, "ws:", 0, 3)) {
+        url = "http:" + url.substring(3);
+      } else if (url.regionMatches(true, 0, "wss:", 0, 4)) {
+        url = "https:" + url.substring(4);
+      }
+
       HttpUrl parsed = HttpUrl.parse(url);
       if (parsed == null) throw new IllegalArgumentException("unexpected url: " + url);
       return url(parsed);

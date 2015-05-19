@@ -61,19 +61,6 @@ public final class WebSocketCall {
     if (!"GET".equals(request.method())) {
       throw new IllegalArgumentException("Request must be GET: " + request.method());
     }
-    String url = request.urlString();
-    String httpUrl;
-    if (url.startsWith("ws://")) {
-      httpUrl = "http://" + url.substring(5);
-    } else if (url.startsWith("wss://")) {
-      httpUrl = "https://" + url.substring(6);
-    } else if (url.startsWith("http://") || url.startsWith("https://")) {
-      httpUrl = url;
-    } else {
-      throw new IllegalArgumentException(
-          "Request url must use 'ws', 'wss', 'http', or 'https' scheme: " + url);
-    }
-
     this.random = random;
 
     byte[] nonce = new byte[16];
@@ -87,7 +74,6 @@ public final class WebSocketCall {
     client.setProtocols(Collections.singletonList(com.squareup.okhttp.Protocol.HTTP_1_1));
 
     request = request.newBuilder()
-        .url(httpUrl)
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)

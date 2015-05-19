@@ -18,14 +18,17 @@ package com.squareup.okhttp.ws;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.SSLContext;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -36,6 +39,7 @@ import org.junit.Test;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 
 public final class WebSocketCallTest {
+  private static final SSLContext sslContext = SslContextBuilder.localhost();
   @Rule public final MockWebServerRule server = new MockWebServerRule();
 
   private final WebSocketRecorder listener = new WebSocketRecorder();
@@ -181,8 +185,48 @@ public final class WebSocketCallTest {
         "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
   }
 
+  @Test public void wsScheme() throws IOException {
+    websocketScheme("ws");
+  }
+
+  @Test public void wsUppercaseScheme() throws IOException {
+    websocketScheme("WS");
+  }
+
+  @Test public void wssScheme() throws IOException {
+    server.get().useHttps(sslContext.getSocketFactory(), false);
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    websocketScheme("wss");
+  }
+
+  @Test public void httpsScheme() throws IOException {
+    server.get().useHttps(sslContext.getSocketFactory(), false);
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    websocketScheme("https");
+  }
+
+  private void websocketScheme(String scheme) throws IOException {
+    WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+
+    Request request1 = new Request.Builder()
+        .url(scheme + "://" + server.getHostName() + ":" + server.getPort() + "/")
+        .build();
+
+    WebSocket webSocket = awaitWebSocket(request1);
+    webSocket.sendMessage(TEXT, new Buffer().writeUtf8("abc"));
+    serverListener.assertTextMessage("abc");
+  }
+
   private WebSocket awaitWebSocket() {
-    Request request = new Request.Builder().get().url(server.getUrl("/")).build();
+    return awaitWebSocket(new Request.Builder().get().url(server.getUrl("/")).build());
+  }
+
+  private WebSocket awaitWebSocket(Request request) {
     WebSocketCall call = new WebSocketCall(client, request, random);
 
     final AtomicReference<Response> responseRef = new AtomicReference<>();

@@ -17,7 +17,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.DoubleInetAddressNetwork;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.RecordingHostnameVerifier;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
