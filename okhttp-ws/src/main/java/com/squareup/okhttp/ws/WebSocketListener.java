@@ -22,6 +22,7 @@ import okio.Buffer;
 import okio.BufferedSource;
 
 import static com.squareup.okhttp.ws.WebSocket.PayloadType;
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
@@ -56,4 +57,21 @@ public interface WebSocketListener {
 
   /** Called when the transport or protocol layer of this web socket errors during communication. */
   void onFailure(IOException e);
+
+  /**
+   * Called when the WebSocket upgrade failed. This could be for one the following reasons:
+   * <ul>
+   * <li>The pre-upgrade http request returned a non-101 status code
+   * <li>The upgrade headers were missing from the http response
+   * </ul>
+   *
+   * <p>{@link WebSocketListener#onFailure(IOException)} will be called after with a
+   * {@link java.net.ProtocolException}.
+   *
+   * @param failureReason The reason the upgrade from http to web socket failed.
+   * @param request The request object used to create the web socket connection.
+   * @param response The response object returned from the server.
+   */
+  void onUpgradeFailed(UpgradeFailureReason failureReason, Request request, Response response)
+      throws IOException;
 }

@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import okio.Buffer;
 import okio.BufferedSource;
 
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason;
+
 /**
  * Exercises the web socket implementation against the
  * <a href="http://autobahn.ws/testsuite/">Autobahn Testsuite</a>.
@@ -103,6 +105,10 @@ public final class AutobahnTester {
           @Override public void onFailure(IOException e) {
             latch.countDown();
           }
+
+          @Override public void onUpgradeFailed(UpgradeFailureReason reason, Request request,
+              Response response) {
+          }
         });
     try {
       if (!latch.await(10, TimeUnit.SECONDS)) {
@@ -139,6 +145,10 @@ public final class AutobahnTester {
         failureRef.set(e);
         latch.countDown();
       }
+
+      @Override
+      public void onUpgradeFailed(UpgradeFailureReason reason, Request request, Response response) {
+      }
     });
     try {
       if (!latch.await(10, TimeUnit.SECONDS)) {
@@ -174,6 +184,10 @@ public final class AutobahnTester {
 
       @Override public void onFailure(IOException e) {
         latch.countDown();
+      }
+
+      @Override
+      public void onUpgradeFailed(UpgradeFailureReason reason, Request request, Response response) {
       }
     });
     try {

@@ -40,6 +40,10 @@ import okio.ByteString;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason.INVALID_RESPONSE_CODE;
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason.INVALID_UPGRADE_HEADERS;
+import static com.squareup.okhttp.ws.WebSocket.UpgradeFailureReason.INVALID_SEC_ACCEPT_HASH;
+
 public final class WebSocketCall {
   /**
    * Prepares the {@code request} to create a web socket at some point in the future.
@@ -124,6 +128,7 @@ public final class WebSocketCall {
     if (response.code() != 101) {
       // TODO call.engine.releaseConnection();
       Internal.instance.callEngineReleaseConnection(call);
+      listener.onUpgradeFailed(INVALID_RESPONSE_CODE, request, response);
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code()
           + " "
@@ -133,17 +138,20 @@ public final class WebSocketCall {
 
     String headerConnection = response.header("Connection");
     if (!"Upgrade".equalsIgnoreCase(headerConnection)) {
+      listener.onUpgradeFailed(INVALID_UPGRADE_HEADERS, request, response);
       throw new ProtocolException(
           "Expected 'Connection' header value 'Upgrade' but was '" + headerConnection + "'");
     }
     String headerUpgrade = response.header("Upgrade");
     if (!"websocket".equalsIgnoreCase(headerUpgrade)) {
+      listener.onUpgradeFailed(INVALID_UPGRADE_HEADERS, request, response);
       throw new ProtocolException(
           "Expected 'Upgrade' header value 'websocket' but was '" + headerUpgrade + "'");
     }
     String headerAccept = response.header("Sec-WebSocket-Accept");
     String acceptExpected = Util.shaBase64(key + WebSocketProtocol.ACCEPT_MAGIC);
     if (!acceptExpected.equals(headerAccept)) {
+      listener.onUpgradeFailed(INVALID_SEC_ACCEPT_HASH, request, response);
       throw new ProtocolException("Expected 'Sec-WebSocket-Accept' header value '"
           + acceptExpected
           + "' but was '"
