@@ -27,7 +27,7 @@ public final class WebSocketEcho implements WebSocketListener {
     client.getDispatcher().getExecutorService().shutdown();
   }
 
-  @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+  @Override public void onOpen(WebSocket webSocket, Response response)
       throws IOException {
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello..."));
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("...World!"));
@@ -57,7 +57,7 @@ public final class WebSocketEcho implements WebSocketListener {
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(IOException e) {
+  @Override public void onFailure(IOException e, Response response) {
     e.printStackTrace();
   }
 

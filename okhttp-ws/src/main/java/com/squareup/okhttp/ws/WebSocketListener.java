@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.ws;
 
-import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import java.io.IOException;
 import okio.Buffer;
@@ -25,7 +24,18 @@ import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
-  void onOpen(WebSocket webSocket, Request request, Response response) throws IOException;
+  /**
+   * Called when the request has successfully been upgraded to a web socket.
+   */
+  void onOpen(WebSocket webSocket, Response response) throws IOException;
+
+  /**
+   * Called when the transport or protocol layer of this web socket errors during communication.
+   *
+   * @param response Present when the failure is a direct result of the response (e.g., failed
+   * upgrade, non-101 response code, etc.). {@code null} otherwise.
+   */
+  void onFailure(IOException e, Response response);
 
   /**
    * Called when a server message is received. The {@code type} indicates whether the
@@ -53,7 +63,4 @@ public interface WebSocketListener {
    * @param reason Reason for close or an empty string.
    */
   void onClose(int code, String reason);
-
-  /** Called when the transport or protocol layer of this web socket errors during communication. */
-  void onFailure(IOException e);
 }
