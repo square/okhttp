@@ -70,7 +70,7 @@ public final class WebSocketCallTest {
 
   @Test public void serverMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+      @Override public void onOpen(WebSocket webSocket, Response response)
           throws IOException {
         webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
       }
@@ -96,7 +96,7 @@ public final class WebSocketCallTest {
 
   @Test public void serverStreamingMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+      @Override public void onOpen(WebSocket webSocket, Response response)
           throws IOException {
         BufferedSink sink = webSocket.newMessageSink(TEXT);
         sink.writeUtf8("Hello, ").flush();
@@ -134,7 +134,8 @@ public final class WebSocketCallTest {
   }
 
   @Test public void wrongConnectionHeader() {
-    server.enqueue(new MockResponse().setResponseCode(101)
+    server.enqueue(new MockResponse()
+        .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
@@ -234,7 +235,7 @@ public final class WebSocketCallTest {
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+      @Override public void onOpen(WebSocket webSocket, Response response)
           throws IOException {
         webSocketRef.set(webSocket);
         responseRef.set(response);
@@ -254,8 +255,8 @@ public final class WebSocketCallTest {
         listener.onClose(code, reason);
       }
 
-      @Override public void onFailure(IOException e) {
-        listener.onFailure(e);
+      @Override public void onFailure(IOException e, Response response) {
+        listener.onFailure(e, null);
         failureRef.set(e);
         latch.countDown();
       }
@@ -273,7 +274,7 @@ public final class WebSocketCallTest {
   }
 
   private static class EmptyWebSocketListener implements WebSocketListener {
-    @Override public void onOpen(WebSocket webSocket, Request request, Response response)
+    @Override public void onOpen(WebSocket webSocket, Response response)
         throws IOException {
     }
 
@@ -287,7 +288,7 @@ public final class WebSocketCallTest {
     @Override public void onClose(int code, String reason) {
     }
 
-    @Override public void onFailure(IOException e) {
+    @Override public void onFailure(IOException e, Response response) {
     }
   }
 }

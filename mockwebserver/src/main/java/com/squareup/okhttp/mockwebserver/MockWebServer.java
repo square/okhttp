@@ -674,7 +674,7 @@ public final class MockWebServer {
     new Thread(new Runnable() {
       @Override public void run() {
         try {
-          listener.onOpen(webSocket, fancyRequest, fancyResponse);
+          listener.onOpen(webSocket, fancyResponse);
         } catch (IOException e) {
           // TODO try to write close frame?
           connectionClose.countDown();

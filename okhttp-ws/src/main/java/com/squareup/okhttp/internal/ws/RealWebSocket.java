@@ -181,7 +181,7 @@ public abstract class RealWebSocket implements WebSocket {
     } catch (IOException ignored) {
     }
 
-    listener.onFailure(e);
+    listener.onFailure(e, null);
   }
 
   /** Perform any tear-down work on the connection (close the socket, recycle, etc.). */

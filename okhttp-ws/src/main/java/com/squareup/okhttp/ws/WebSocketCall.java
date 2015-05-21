@@ -102,12 +102,12 @@ public final class WebSocketCall {
         try {
           createWebSocket(response, listener);
         } catch (IOException e) {
-          listener.onFailure(e);
+          listener.onFailure(e, response);
         }
       }
 
       @Override public void onFailure(Request request, IOException e) {
-        listener.onFailure(e);
+        listener.onFailure(e, null);
       }
     };
     // TODO call.enqueue(responseCallback, true);
@@ -167,7 +167,7 @@ public final class WebSocketCall {
     // TODO connection.setOwner(webSocket);
     Internal.instance.connectionSetOwner(connection, webSocket);
 
-    listener.onOpen(webSocket, request, response);
+    listener.onOpen(webSocket, response);
 
     // Start a dedicated thread for reading the web socket.
     new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
