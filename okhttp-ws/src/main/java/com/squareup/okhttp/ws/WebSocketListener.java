@@ -25,9 +25,15 @@ import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
   /**
-   * Called when the request has successfully been upgraded to a web socket.
+   * Called when the request has successfully been upgraded to a web socket. This method is called
+   * on the message reading thread to allow setting up any state before the
+   * {@linkplain #onMessage message}, {@linkplain #onPong pong}, and {@link #onClose close}
+   * callbacks start.
+   * <p>
+   * <b>Do not</b> use this callback to write to the web socket. Start a new thread or use
+   * another thread in your application.
    */
-  void onOpen(WebSocket webSocket, Response response) throws IOException;
+  void onOpen(WebSocket webSocket, Response response);
 
   /**
    * Called when the transport or protocol layer of this web socket errors during communication.

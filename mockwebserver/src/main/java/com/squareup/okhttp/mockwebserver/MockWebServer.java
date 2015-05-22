@@ -670,19 +670,8 @@ public final class MockWebServer {
         .protocol(Protocol.HTTP_1_1)
         .build();
 
-    // The callback might act synchronously. Give it its own thread.
-    new Thread(new Runnable() {
-      @Override public void run() {
-        try {
-          listener.onOpen(webSocket, fancyResponse);
-        } catch (IOException e) {
-          // TODO try to write close frame?
-          connectionClose.countDown();
-        }
-      }
-    }, "MockWebServer WebSocket Writer " + request.getPath()).start();
+    listener.onOpen(webSocket, fancyResponse);
 
-    // Use this thread to continuously read messages.
     while (webSocket.readMessage()) {
     }
 
