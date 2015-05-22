@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+## Version 2.4.0
+
+_2015-05-22_
+
+ *  **Forbid response bodies on HTTP 204 and 205 responses.** Webservers that
+    return such malformed responses will now trigger a `ProtocolException` in
+    the client.
+
+ *  **WebSocketListener has incompatible changes.** The `onOpen()` method is now
+    called on the reader thread, so implementations must return before further
+    websocket messages will be delivered. The `onFailure()` method now includes
+    an HTTP response if one was returned.
+
 ## Version 2.4.0-RC1
 
 _2015-05-16_
