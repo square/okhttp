@@ -33,6 +33,7 @@ import java.io.InterruptedIOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.URL;
 import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
@@ -1428,6 +1429,32 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.getUrl("/0")).build();
     client.newCall(request).enqueue(callback);
     callback.await(server.getUrl("/20")).assertFailure("Too many follow-up requests: 21");
+  }
+
+  @Test public void http204WithBodyDisallowed() throws IOException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(204)
+        .setBody("I'm not even supposed to be here today."));
+
+    try {
+      executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
+      fail();
+    } catch (ProtocolException e) {
+      assertEquals("HTTP 204 had non-zero Content-Length: 39", e.getMessage());
+    }
+  }
+
+  @Test public void http205WithBodyDisallowed() throws IOException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(205)
+        .setBody("I'm not even supposed to be here today."));
+
+    try {
+      executeSynchronously(new Request.Builder().url(server.getUrl("/")).build());
+      fail();
+    } catch (ProtocolException e) {
+      assertEquals("HTTP 205 had non-zero Content-Length: 39", e.getMessage());
+    }
   }
 
   @Test public void canceledBeforeExecute() throws Exception {

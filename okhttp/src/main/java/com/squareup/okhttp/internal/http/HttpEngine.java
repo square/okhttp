@@ -899,7 +899,15 @@ public final class HttpEngine {
         bufferedRequestBody.close();
       }
 
-      return readNetworkResponse();
+      Response response = readNetworkResponse();
+
+      int code = response.code();
+      if ((code == 204 || code == 205) && response.body().contentLength() > 0) {
+        throw new ProtocolException(
+            "HTTP " + code + " had non-zero Content-Length: " + response.body().contentLength());
+      }
+
+      return response;
     }
   }
 
