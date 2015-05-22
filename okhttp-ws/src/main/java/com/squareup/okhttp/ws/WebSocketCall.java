@@ -22,7 +22,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
@@ -169,13 +168,8 @@ public final class WebSocketCall {
 
     listener.onOpen(webSocket, response);
 
-    // Start a dedicated thread for reading the web socket.
-    new Thread(new NamedRunnable("OkHttp WebSocket reader %s", request.urlString()) {
-      @Override protected void execute() {
-        while (webSocket.readMessage()) {
-        }
-      }
-    }).start();
+    while (webSocket.readMessage()) {
+    }
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.

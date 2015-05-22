@@ -70,9 +70,16 @@ public final class WebSocketCallTest {
 
   @Test public void serverMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response)
-          throws IOException {
-        webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+      @Override public void onOpen(final WebSocket webSocket, Response response) {
+        new Thread() {
+          @Override public void run() {
+            try {
+              webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+            } catch (IOException e) {
+              throw new AssertionError(e);
+            }
+          }
+        }.start();
       }
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -96,12 +103,19 @@ public final class WebSocketCallTest {
 
   @Test public void serverStreamingMessage() throws IOException {
     WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response)
-          throws IOException {
-        BufferedSink sink = webSocket.newMessageSink(TEXT);
-        sink.writeUtf8("Hello, ").flush();
-        sink.writeUtf8("WebSockets!").flush();
-        sink.close();
+      @Override public void onOpen(final WebSocket webSocket, Response response) {
+        new Thread() {
+          @Override public void run() {
+            try {
+              BufferedSink sink = webSocket.newMessageSink(TEXT);
+              sink.writeUtf8("Hello, ").flush();
+              sink.writeUtf8("WebSockets!").flush();
+              sink.close();
+            } catch (IOException e) {
+              throw new AssertionError(e);
+            }
+          }
+        }.start();
       }
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
@@ -235,8 +249,7 @@ public final class WebSocketCallTest {
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
     call.enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response)
-          throws IOException {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
         webSocketRef.set(webSocket);
         responseRef.set(response);
         latch.countDown();
@@ -274,8 +287,7 @@ public final class WebSocketCallTest {
   }
 
   private static class EmptyWebSocketListener implements WebSocketListener {
-    @Override public void onOpen(WebSocket webSocket, Response response)
-        throws IOException {
+    @Override public void onOpen(WebSocket webSocket, Response response) {
     }
 
     @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)

@@ -69,8 +69,7 @@ public final class AutobahnTester {
           private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor();
           private WebSocket webSocket;
 
-          @Override public void onOpen(WebSocket webSocket, Response response)
-              throws IOException {
+          @Override public void onOpen(WebSocket webSocket, Response response) {
             System.out.println("Executing test case " + number + "/" + count);
             this.webSocket = webSocket;
           }
@@ -118,8 +117,7 @@ public final class AutobahnTester {
     final AtomicLong countRef = new AtomicLong();
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
     newWebSocket("/getCaseCount").enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response)
-          throws IOException {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
       @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
@@ -157,8 +155,7 @@ public final class AutobahnTester {
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
     newWebSocket("/updateReports?agent=" + Version.userAgent()).enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response)
-          throws IOException {
+      @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
       @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
