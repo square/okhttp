@@ -18,7 +18,10 @@ _2015-05-22_
 
 _2015-05-16_
 
- *  **New HttpUrl API.** It's like `java.net.URL` but good.
+ *  **New HttpUrl API.** It's like `java.net.URL` but good. Note that
+    `Request.Builder.url()` now throws `IllegalArgumentException` on malformed
+    URLs. (Previous releases would throw a `MalformedURLException` when calling
+    a malformed URL.)
 
  *  **We've improved connect failure recovery.** We now differentiate between
     setup, connecting, and connected and implement appropriate recovery rules
