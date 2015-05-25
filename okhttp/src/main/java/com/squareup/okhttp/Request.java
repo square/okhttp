@@ -143,6 +143,12 @@ public final class Request {
       return this;
     }
 
+    /**
+     * Sets the URL target of this request.
+     *
+     * @throws IllegalArgumentException if {@code url} is not a valid HTTP or HTTPS URL. Avoid this
+     *     exception by calling {@link HttpUrl#parse}; it returns null for invalid URLs.
+     */
     public Builder url(String url) {
       if (url == null) throw new IllegalArgumentException("url == null");
 
@@ -158,6 +164,12 @@ public final class Request {
       return url(parsed);
     }
 
+    /**
+     * Sets the URL target of this request.
+     *
+     * @throws IllegalArgumentException if the scheme of {@code url} is not {@code http} or {@code
+     *     https}.
+     */
     public Builder url(URL url) {
       if (url == null) throw new IllegalArgumentException("url == null");
       HttpUrl parsed = HttpUrl.get(url);
