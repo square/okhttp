@@ -57,6 +57,7 @@ import java.net.ProxySelector;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
@@ -2202,7 +2203,7 @@ public final class URLConnectionTest {
     try {
       in.read(); // if Content-Length was accurate, this would return -1 immediately
       fail();
-    } catch (IOException expected) {
+    } catch (SocketTimeoutException expected) {
     }
   }
 
@@ -2238,7 +2239,7 @@ public final class URLConnectionTest {
       byte[] data = new byte[16 * 1024 * 1024]; // 16 MiB.
       out.write(data);
       fail();
-    } catch (IOException expected) {
+    } catch (SocketTimeoutException expected) {
     }
   }
 
