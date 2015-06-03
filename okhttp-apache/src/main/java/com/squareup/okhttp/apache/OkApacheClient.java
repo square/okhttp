@@ -10,6 +10,8 @@ import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -39,12 +41,24 @@ import static org.apache.http.HttpVersion.HTTP_1_1;
  * and others.
  */
 public final class OkApacheClient implements HttpClient {
-  private static Request transformRequest(HttpRequest request) {
+  private static Request transformRequest(HttpHost httpHost, HttpRequest request) {
     Request.Builder builder = new Request.Builder();
 
     RequestLine requestLine = request.getRequestLine();
     String method = requestLine.getMethod();
-    builder.url(requestLine.getUri());
+    String url = requestLine.getUri();
+    if (httpHost != null) {
+      try {
+        URI uri = URI.create(url);
+        URI uriWithHost = new URI(httpHost.getSchemeName(), uri.getUserInfo(),
+            httpHost.getHostName(), httpHost.getPort(), uri.getPath(),
+            uri.getQuery(), uri.getFragment());
+        url = uriWithHost.toString();
+      } catch (URISyntaxException e) {
+        throw new IllegalArgumentException(e.getMessage(), e);
+      }
+    }
+    builder.url(url);
 
     String contentType = null;
     for (Header header : request.getAllHeaders()) {
@@ -168,7 +182,7 @@ public final class OkApacheClient implements HttpClient {
 
   @Override public HttpResponse execute(HttpHost host, HttpRequest request, HttpContext context)
       throws IOException {
-    Request okRequest = transformRequest(request);
+    Request okRequest = transformRequest(host, request);
     Response okResponse = client.newCall(okRequest).execute();
     return transformResponse(okResponse);
   }
