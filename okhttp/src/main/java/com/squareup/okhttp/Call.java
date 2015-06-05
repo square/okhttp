@@ -44,7 +44,7 @@ public class Call {
   Request originalRequest;
   HttpEngine engine;
 
-  Call(OkHttpClient client, Request originalRequest) {
+  protected Call(OkHttpClient client, Request originalRequest) {
     // Copy the client. Otherwise changes (socket factory, redirect policy,
     // etc.) may incorrectly be reflected in the request when it is executed.
     this.client = client.copyWithDefaults();
