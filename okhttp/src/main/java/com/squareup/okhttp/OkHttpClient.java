@@ -342,7 +342,7 @@ public class OkHttpClient implements Cloneable {
 
   public OkHttpClient setCache(Cache cache) {
     this.cache = cache;
-    this.internalCache = null;
+    this.internalCache = cache.internalCache;
     return this;
   }
 
