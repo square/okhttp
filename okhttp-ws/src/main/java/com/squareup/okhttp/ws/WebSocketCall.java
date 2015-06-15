@@ -118,8 +118,7 @@ public final class WebSocketCall {
     call.cancel();
   }
 
-  private void createWebSocket(Response response, WebSocketListener listener)
-      throws IOException {
+  private void createWebSocket(Response response, WebSocketListener listener) throws IOException {
     if (response.code() != 101) {
       // TODO call.engine.releaseConnection();
       Internal.instance.callEngineReleaseConnection(call);
@@ -194,7 +193,7 @@ public final class WebSocketCall {
       this.connection = connection;
     }
 
-    @Override protected void closeConnection() throws IOException {
+    @Override public void closeConnection() throws IOException {
       // TODO connection.closeIfOwnedBy(this);
       Internal.instance.closeIfOwnedBy(connection, this);
     }
