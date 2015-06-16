@@ -78,4 +78,15 @@ public final class FormEncodingBuilderTest {
     formEncoding.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
   }
+
+  @Test public void buildEmptyForm() throws Exception {
+    RequestBody formEncoding = new FormEncodingBuilder().build();
+
+    String expected = "";
+    assertEquals(expected.length(), formEncoding.contentLength());
+
+    Buffer buffer = new Buffer();
+    formEncoding.writeTo(buffer);
+    assertEquals(expected, buffer.readUtf8());
+  }
 }
