@@ -54,9 +54,6 @@ public final class FormEncodingBuilder {
   }
 
   public RequestBody build() {
-    if (content.size() == 0) {
-      throw new IllegalStateException("Form encoded body must have at least one part.");
-    }
     return RequestBody.create(CONTENT_TYPE, content.snapshot());
   }
 }
