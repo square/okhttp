@@ -1,6 +1,6 @@
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.spdy.Header;
+import com.squareup.okhttp.internal.framed.Header;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

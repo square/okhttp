@@ -19,7 +19,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.spdy.Header;
+import com.squareup.okhttp.internal.framed.Header;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +43,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
-        SpdyTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
+        FramedTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
     Headers headers = response.headers();
     assertEquals(4, headers.size());
     assertEquals(Protocol.SPDY_3, response.protocol());
@@ -71,7 +71,7 @@ public final class HeadersTest {
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response =
-        SpdyTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
+        FramedTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
@@ -84,7 +84,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = SpdyTransport.readNameValueBlock(headerBlock, Protocol.HTTP_2)
+    Response response = FramedTransport.readNameValueBlock(headerBlock, Protocol.HTTP_2)
         .request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
@@ -101,7 +101,7 @@ public final class HeadersTest {
         .header(":status", "200 OK")
         .build();
     List<Header> headerBlock =
-        SpdyTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1");
+        FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1");
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
@@ -126,7 +126,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         ":host", "square.com",
         ":scheme", "http");
-    assertEquals(expected, SpdyTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1"));
+    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1"));
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeadersHttp2() {
@@ -141,7 +141,7 @@ public final class HeadersTest {
         ":authority", "square.com",
         ":scheme", "http");
     assertEquals(expected,
-        SpdyTransport.writeNameValueBlock(request, Protocol.HTTP_2, "HTTP/1.1"));
+        FramedTransport.writeNameValueBlock(request, Protocol.HTTP_2, "HTTP/1.1"));
   }
 
   @Test public void ofTrims() {

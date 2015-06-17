@@ -122,7 +122,7 @@ public final class ConnectionPool {
   public synchronized int getMultiplexedConnectionCount() {
     int total = 0;
     for (Connection connection : connections) {
-      if (connection.isSpdy()) total++;
+      if (connection.isFramed()) total++;
     }
     return total;
   }
@@ -144,7 +144,7 @@ public final class ConnectionPool {
         continue;
       }
       i.remove();
-      if (!connection.isSpdy()) {
+      if (!connection.isFramed()) {
         try {
           Platform.get().tagSocket(connection.getSocket());
         } catch (SocketException e) {
@@ -158,7 +158,7 @@ public final class ConnectionPool {
       break;
     }
 
-    if (foundConnection != null && foundConnection.isSpdy()) {
+    if (foundConnection != null && foundConnection.isFramed()) {
       connections.addFirst(foundConnection); // Add it back after iteration.
     }
 
@@ -172,7 +172,7 @@ public final class ConnectionPool {
    * <p>It is an error to use {@code connection} after calling this method.
    */
   void recycle(Connection connection) {
-    if (connection.isSpdy()) {
+    if (connection.isFramed()) {
       return;
     }
 
@@ -216,7 +216,7 @@ public final class ConnectionPool {
    * continue to use {@code connection}.
    */
   void share(Connection connection) {
-    if (!connection.isSpdy()) throw new IllegalArgumentException();
+    if (!connection.isFramed()) throw new IllegalArgumentException();
     if (!connection.isAlive()) return;
     synchronized (this) {
       addConnection(connection);

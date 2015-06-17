@@ -25,7 +25,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.http.StatusLine;
-import com.squareup.okhttp.internal.spdy.Http2;
+import com.squareup.okhttp.internal.framed.Http2;
 
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
