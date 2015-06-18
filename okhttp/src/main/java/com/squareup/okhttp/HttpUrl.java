@@ -259,7 +259,7 @@ public final class HttpUrl {
   static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]\\^`{}|/\\?#";
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
   static final String QUERY_ENCODE_SET = " \"'<>#";
-  static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=;";
   static final String FRAGMENT_ENCODE_SET = "";
 
   /** Either "http" or "https". */
