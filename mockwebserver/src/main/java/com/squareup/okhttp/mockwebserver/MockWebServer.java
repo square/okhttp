@@ -24,11 +24,11 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.spdy.ErrorCode;
-import com.squareup.okhttp.internal.spdy.Header;
-import com.squareup.okhttp.internal.spdy.IncomingStreamHandler;
-import com.squareup.okhttp.internal.spdy.SpdyConnection;
-import com.squareup.okhttp.internal.spdy.SpdyStream;
+import com.squareup.okhttp.internal.framed.ErrorCode;
+import com.squareup.okhttp.internal.framed.FramedConnection;
+import com.squareup.okhttp.internal.framed.FramedStream;
+import com.squareup.okhttp.internal.framed.Header;
+import com.squareup.okhttp.internal.framed.IncomingStreamHandler;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import com.squareup.okhttp.ws.WebSocketListener;
@@ -107,8 +107,8 @@ public final class MockWebServer {
 
   private final Set<Socket> openClientSockets =
       Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
-  private final Set<SpdyConnection> openSpdyConnections =
-      Collections.newSetFromMap(new ConcurrentHashMap<SpdyConnection, Boolean>());
+  private final Set<FramedConnection> openFramedConnections =
+      Collections.newSetFromMap(new ConcurrentHashMap<FramedConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -335,7 +335,7 @@ public final class MockWebServer {
           Util.closeQuietly(s.next());
           s.remove();
         }
-        for (Iterator<SpdyConnection> s = openSpdyConnections.iterator(); s.hasNext(); ) {
+        for (Iterator<FramedConnection> s = openFramedConnections.iterator(); s.hasNext(); ) {
           Util.closeQuietly(s.next());
           s.remove();
         }
@@ -431,12 +431,12 @@ public final class MockWebServer {
         }
 
         if (protocol != Protocol.HTTP_1_1) {
-          SpdySocketHandler spdySocketHandler = new SpdySocketHandler(socket, protocol);
-          SpdyConnection spdyConnection =
-              new SpdyConnection.Builder(false, socket).protocol(protocol)
-                  .handler(spdySocketHandler)
+          FramedSocketHandler framedSocketHandler = new FramedSocketHandler(socket, protocol);
+          FramedConnection framedConnection =
+              new FramedConnection.Builder(false, socket).protocol(protocol)
+                  .handler(framedSocketHandler)
                   .build();
-          openSpdyConnections.add(spdyConnection);
+          openFramedConnections.add(framedConnection);
           openClientSockets.remove(socket);
           return;
         }
@@ -809,18 +809,18 @@ public final class MockWebServer {
     }
   }
 
-  /** Processes HTTP requests layered over SPDY/3. */
-  private class SpdySocketHandler implements IncomingStreamHandler {
+  /** Processes HTTP requests layered over framed protocols. */
+  private class FramedSocketHandler implements IncomingStreamHandler {
     private final Socket socket;
     private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
 
-    private SpdySocketHandler(Socket socket, Protocol protocol) {
+    private FramedSocketHandler(Socket socket, Protocol protocol) {
       this.socket = socket;
       this.protocol = protocol;
     }
 
-    @Override public void receive(SpdyStream stream) throws IOException {
+    @Override public void receive(FramedStream stream) throws IOException {
       RecordedRequest request = readRequest(stream);
       requestQueue.add(request);
       MockResponse response;
@@ -836,15 +836,15 @@ public final class MockWebServer {
       }
     }
 
-    private RecordedRequest readRequest(SpdyStream stream) throws IOException {
-      List<Header> spdyHeaders = stream.getRequestHeaders();
+    private RecordedRequest readRequest(FramedStream stream) throws IOException {
+      List<Header> streamHeaders = stream.getRequestHeaders();
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
       String path = "<:path omitted>";
       String version = protocol == Protocol.SPDY_3 ? "<:version omitted>" : "HTTP/1.1";
-      for (int i = 0, size = spdyHeaders.size(); i < size; i++) {
-        ByteString name = spdyHeaders.get(i).name;
-        String value = spdyHeaders.get(i).value.utf8();
+      for (int i = 0, size = streamHeaders.size(); i < size; i++) {
+        ByteString name = streamHeaders.get(i).name;
+        String value = streamHeaders.get(i).value.utf8();
         if (name.equals(Header.TARGET_METHOD)) {
           method = value;
         } else if (name.equals(Header.TARGET_PATH)) {
@@ -866,7 +866,7 @@ public final class MockWebServer {
           sequenceNumber.getAndIncrement(), socket);
     }
 
-    private void writeResponse(SpdyStream stream, MockResponse response) throws IOException {
+    private void writeResponse(FramedStream stream, MockResponse response) throws IOException {
       if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
         return;
       }
@@ -899,7 +899,7 @@ public final class MockWebServer {
       }
     }
 
-    private void pushPromises(SpdyStream stream, List<PushPromise> promises) throws IOException {
+    private void pushPromises(FramedStream stream, List<PushPromise> promises) throws IOException {
       for (PushPromise pushPromise : promises) {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
@@ -916,7 +916,7 @@ public final class MockWebServer {
         requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
         boolean hasBody = pushPromise.getResponse().getBody() != null;
-        SpdyStream pushedStream =
+        FramedStream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
         writeResponse(pushedStream, pushPromise.getResponse());
       }

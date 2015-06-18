@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.spdy;
+package com.squareup.okhttp.internal.framed;
 
-import com.squareup.okhttp.internal.spdy.hpackjson.Case;
-import com.squareup.okhttp.internal.spdy.hpackjson.HpackJsonUtil;
-import com.squareup.okhttp.internal.spdy.hpackjson.Story;
+import com.squareup.okhttp.internal.framed.hpackjson.Case;
+import com.squareup.okhttp.internal.framed.hpackjson.HpackJsonUtil;
+import com.squareup.okhttp.internal.framed.hpackjson.Story;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;

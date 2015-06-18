@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.spdy.hpackjson;
+package com.squareup.okhttp.internal.framed.hpackjson;
 
 import java.util.ArrayList;
 import java.util.List;

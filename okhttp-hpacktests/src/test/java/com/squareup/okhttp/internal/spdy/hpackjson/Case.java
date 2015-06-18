@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.squareup.okhttp.internal.spdy.hpackjson;
+package com.squareup.okhttp.internal.framed.hpackjson;
 
-import com.squareup.okhttp.internal.spdy.Header;
+import com.squareup.okhttp.internal.framed.Header;
 import okio.ByteString;
 
 import java.util.ArrayList;

@@ -21,9 +21,9 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpTransport;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.SocketConnector;
-import com.squareup.okhttp.internal.http.SpdyTransport;
+import com.squareup.okhttp.internal.http.FramedTransport;
 import com.squareup.okhttp.internal.http.Transport;
-import com.squareup.okhttp.internal.spdy.SpdyConnection;
+import com.squareup.okhttp.internal.framed.FramedConnection;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownServiceException;
@@ -64,7 +64,7 @@ public final class Connection {
   private Socket socket;
   private boolean connected = false;
   private HttpConnection httpConnection;
-  private SpdyConnection spdyConnection;
+  private FramedConnection framedConnection;
   private Protocol protocol = Protocol.HTTP_1_1;
   private long idleStartTimeNs;
   private Handshake handshake;
@@ -89,7 +89,7 @@ public final class Connection {
   }
 
   void setOwner(Object owner) {
-    if (isSpdy()) return; // SPDY connections are shared.
+    if (isFramed()) return; // Framed connections are shared.
     synchronized (pool) {
       if (this.owner != null) throw new IllegalStateException("Connection already has an owner!");
       this.owner = owner;
@@ -119,7 +119,7 @@ public final class Connection {
    * strips the ownership of the connection so it cannot be pooled or reused.
    */
   void closeIfOwnedBy(Object owner) throws IOException {
-    if (isSpdy()) throw new IllegalStateException();
+    if (isFramed()) throw new IllegalStateException();
     synchronized (pool) {
       if (this.owner != owner) {
         return; // Wrong owner. Perhaps a late disconnect?
@@ -159,10 +159,10 @@ public final class Connection {
 
     try {
       if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
-        socket.setSoTimeout(0); // SPDY timeouts are set per-stream.
-        spdyConnection = new SpdyConnection.Builder(route.address.uriHost, true, socket)
+        socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
+        framedConnection = new FramedConnection.Builder(route.address.uriHost, true, socket)
             .protocol(protocol).build();
-        spdyConnection.sendConnectionPreface();
+        framedConnection.sendConnectionPreface();
       } else {
         httpConnection = new HttpConnection(pool, this, socket);
       }
@@ -184,7 +184,7 @@ public final class Connection {
       List<ConnectionSpec> connectionSpecs = route.address.getConnectionSpecs();
       connect(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
           request, connectionSpecs, client.getRetryOnConnectionFailure());
-      if (isSpdy()) {
+      if (isFramed()) {
         client.getConnectionPool().share(this);
       }
       client.routeDatabase().connected(getRoute());
@@ -233,17 +233,17 @@ public final class Connection {
    */
   boolean isReadable() {
     if (httpConnection != null) return httpConnection.isReadable();
-    return true; // SPDY connections, and connections before connect() are both optimistic.
+    return true; // Framed connections, and connections before connect() are both optimistic.
   }
 
   void resetIdleStartTime() {
-    if (spdyConnection != null) throw new IllegalStateException("spdyConnection != null");
+    if (framedConnection != null) throw new IllegalStateException("framedConnection != null");
     this.idleStartTimeNs = System.nanoTime();
   }
 
   /** Returns true if this connection is idle. */
   boolean isIdle() {
-    return spdyConnection == null || spdyConnection.isIdle();
+    return framedConnection == null || framedConnection.isIdle();
   }
 
   /**
@@ -251,7 +251,7 @@ public final class Connection {
    * this connection is not idle.
    */
   long getIdleStartTimeNs() {
-    return spdyConnection == null ? idleStartTimeNs : spdyConnection.getIdleStartTimeNs();
+    return framedConnection == null ? idleStartTimeNs : framedConnection.getIdleStartTimeNs();
   }
 
   public Handshake getHandshake() {
@@ -260,8 +260,8 @@ public final class Connection {
 
   /** Returns the transport appropriate for this connection. */
   Transport newTransport(HttpEngine httpEngine) throws IOException {
-    return (spdyConnection != null)
-        ? new SpdyTransport(httpEngine, spdyConnection)
+    return (framedConnection != null)
+        ? new FramedTransport(httpEngine, framedConnection)
         : new HttpTransport(httpEngine, httpConnection);
   }
 
@@ -269,8 +269,8 @@ public final class Connection {
    * Returns true if this is a SPDY connection. Such connections can be used
    * in multiple HTTP requests simultaneously.
    */
-  boolean isSpdy() {
-    return spdyConnection != null;
+  boolean isFramed() {
+    return framedConnection != null;
   }
 
   /**
