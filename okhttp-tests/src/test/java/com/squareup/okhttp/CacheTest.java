@@ -1644,7 +1644,7 @@ public final class CacheTest {
   }
 
   @Test public void varyAsterisk() throws Exception {
-    server.enqueue( new MockResponse()
+    server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: *")
         .setBody("A"));
@@ -1784,10 +1784,10 @@ public final class CacheTest {
 
   @Test public void doNotCachePartialResponse() throws Exception  {
     assertNotCached(new MockResponse()
-            .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
-            .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
-            .addHeader("Content-Range: bytes 100-100/200")
-            .addHeader("Cache-Control: max-age=60"));
+        .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
+        .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
+        .addHeader("Content-Range: bytes 100-100/200")
+        .addHeader("Cache-Control: max-age=60"));
   }
 
   @Test public void conditionalHitUpdatesCache() throws Exception {
@@ -2125,6 +2125,31 @@ public final class CacheTest {
       fail();
     } catch (NoSuchElementException expected) {
     }
+  }
+
+  /** Test https://github.com/square/okhttp/issues/1712. */
+  @Test public void conditionalMissUpdatesCache() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("A"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v2")
+        .setBody("B"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    URL url = server.getUrl("/");
+    assertEquals("A", get(url).body().string());
+    assertEquals("A", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+    assertEquals("B", get(url).body().string());
+
+    assertEquals(null, server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
+    assertEquals("v2", server.takeRequest().getHeader("If-None-Match"));
   }
 
   private Response get(URL url) throws IOException {
