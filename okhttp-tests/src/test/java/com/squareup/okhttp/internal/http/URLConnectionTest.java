@@ -33,7 +33,6 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.TlsVersion;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
-import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
@@ -43,6 +42,7 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -710,11 +710,22 @@ public final class URLConnectionTest {
     assertEquals("android.com", request.getHeader("Host"));
   }
 
-  @Test public void contentDisagreesWithContentLengthHeader() throws IOException {
+  @Test public void contentDisagreesWithContentLengthHeaderBodyTooLong() throws IOException {
     server.enqueue(new MockResponse().setBody("abc\r\nYOU SHOULD NOT SEE THIS")
         .clearHeaders()
         .addHeader("Content-Length: 3"));
     assertContent("abc", client.open(server.getUrl("/")));
+  }
+
+  @Test public void contentDisagreesWithContentLengthHeaderBodyTooShort() throws IOException {
+    server.enqueue(new MockResponse().setBody("abc")
+        .setHeader("Content-Length", "5")
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+    try {
+      readAscii(client.open(server.getUrl("/")).getInputStream(), 5);
+      fail();
+    } catch (ProtocolException expected) {
+    }
   }
 
   public void testConnectViaSocketFactory(boolean useHttps) throws IOException {
@@ -758,7 +769,7 @@ public final class URLConnectionTest {
     testConnectViaSocketFactory(true);
   }
 
-  @Test public void contentDisagreesWithChunkedHeader() throws IOException {
+  @Test public void contentDisagreesWithChunkedHeaderBodyTooLong() throws IOException {
     MockResponse mockResponse = new MockResponse();
     mockResponse.setChunkedBody("abc", 3);
     Buffer buffer = mockResponse.getBody();
@@ -770,6 +781,28 @@ public final class URLConnectionTest {
     server.enqueue(mockResponse);
 
     assertContent("abc", client.open(server.getUrl("/")));
+  }
+
+  @Test public void contentDisagreesWithChunkedHeaderBodyTooShort() throws IOException {
+    MockResponse mockResponse = new MockResponse();
+    mockResponse.setChunkedBody("abcde", 5);
+
+    Buffer truncatedBody = new Buffer();
+    Buffer fullBody = mockResponse.getBody();
+    truncatedBody.write(fullBody, fullBody.indexOf((byte) 'e'));
+    mockResponse.setBody(truncatedBody);
+
+    mockResponse.clearHeaders();
+    mockResponse.addHeader("Transfer-encoding: chunked");
+    mockResponse.setSocketPolicy(SocketPolicy.DISCONNECT_AT_END);
+
+    server.enqueue(mockResponse);
+
+    try {
+      readAscii(client.open(server.getUrl("/")).getInputStream(), 5);
+      fail();
+    } catch (ProtocolException expected) {
+    }
   }
 
   @Test public void connectViaHttpProxyToHttpsUsingProxyArgWithNoProxy() throws Exception {

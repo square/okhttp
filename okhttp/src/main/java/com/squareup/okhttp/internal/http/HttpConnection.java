@@ -464,7 +464,7 @@ public final class HttpConnection {
       long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk));
       if (read == -1) {
         unexpectedEndOfInput(); // The server didn't supply the promised chunk length.
-        throw new IOException("unexpected end of stream");
+        throw new ProtocolException("unexpected end of stream");
       }
       bytesRemainingInChunk -= read;
       return read;
