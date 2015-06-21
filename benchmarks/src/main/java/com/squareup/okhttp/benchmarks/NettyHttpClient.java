@@ -15,8 +15,8 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.internal.SslContextBuilder;
-import com.squareup.okhttp.internal.Util;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -41,7 +41,6 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.ssl.SslHandler;
-import java.net.URL;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
@@ -54,7 +53,7 @@ class NettyHttpClient implements HttpClient {
 
   // Guarded by this. Real apps need more capable connection management.
   private final Deque<HttpChannel> freeChannels = new ArrayDeque<>();
-  private final Deque<URL> backlog = new ArrayDeque<>();
+  private final Deque<HttpUrl> backlog = new ArrayDeque<>();
 
   private int totalChannels = 0;
   private int concurrencyLevel;
@@ -89,7 +88,7 @@ class NettyHttpClient implements HttpClient {
         .handler(channelInitializer);
   }
 
-  @Override public void enqueue(URL url) throws Exception {
+  @Override public void enqueue(HttpUrl url) throws Exception {
     HttpChannel httpChannel = null;
     synchronized (this) {
       if (!freeChannels.isEmpty()) {
@@ -102,7 +101,7 @@ class NettyHttpClient implements HttpClient {
       }
     }
     if (httpChannel == null) {
-      Channel channel = bootstrap.connect(url.getHost(), Util.getEffectivePort(url))
+      Channel channel = bootstrap.connect(url.host(), url.port())
           .sync().channel();
       httpChannel = (HttpChannel) channel.pipeline().last();
     }
@@ -119,7 +118,7 @@ class NettyHttpClient implements HttpClient {
   }
 
   private void release(HttpChannel httpChannel) {
-    URL url;
+    HttpUrl url;
     synchronized (this) {
       url = backlog.pop();
       if (url == null) {
@@ -143,12 +142,12 @@ class NettyHttpClient implements HttpClient {
       this.channel = channel;
     }
 
-    private void sendRequest(URL url) {
+    private void sendRequest(HttpUrl url) {
       start = System.nanoTime();
       total = 0;
       HttpRequest request = new DefaultFullHttpRequest(
-          HttpVersion.HTTP_1_1, HttpMethod.GET, url.getPath());
-      request.headers().set(HttpHeaders.Names.HOST, url.getHost());
+          HttpVersion.HTTP_1_1, HttpMethod.GET, url.encodedPath());
+      request.headers().set(HttpHeaders.Names.HOST, url.host());
       request.headers().set(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP);
       channel.writeAndFlush(request);
     }

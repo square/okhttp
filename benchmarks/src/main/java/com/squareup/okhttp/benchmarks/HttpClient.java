@@ -15,11 +15,11 @@
  */
 package com.squareup.okhttp.benchmarks;
 
-import java.net.URL;
+import com.squareup.okhttp.HttpUrl;
 
 /** An HTTP client to benchmark. */
 interface HttpClient {
   void prepare(Benchmark benchmark);
-  void enqueue(URL url) throws Exception;
+  void enqueue(HttpUrl url) throws Exception;
   boolean acceptingJobs();
 }

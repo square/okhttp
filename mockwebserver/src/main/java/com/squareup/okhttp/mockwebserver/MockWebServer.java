@@ -18,6 +18,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
@@ -153,6 +154,7 @@ public final class MockWebServer {
    * Returns a URL for connecting to this server.
    * @param path the request path, such as "/".
    */
+  @Deprecated
   public URL getUrl(String path) {
     try {
       return sslSocketFactory != null
@@ -161,6 +163,20 @@ public final class MockWebServer {
     } catch (MalformedURLException e) {
       throw new AssertionError(e);
     }
+  }
+
+  /**
+   * Returns a URL for connecting to this server.
+   *
+   * @param path the request path, such as "/".
+   */
+  public HttpUrl url(String path) {
+    return new HttpUrl.Builder()
+        .scheme(sslSocketFactory != null ? "https" : "http")
+        .host(getHostName())
+        .port(getPort())
+        .encodedPath(path)
+        .build();
   }
 
   /**

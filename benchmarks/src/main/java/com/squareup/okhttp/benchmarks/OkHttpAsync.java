@@ -17,13 +17,13 @@ package com.squareup.okhttp.benchmarks;
 
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.Dispatcher;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -83,7 +83,7 @@ class OkHttpAsync implements HttpClient {
     };
   }
 
-  @Override public void enqueue(URL url) throws Exception {
+  @Override public void enqueue(HttpUrl url) throws Exception {
     requestsInFlight.incrementAndGet();
     client.newCall(new Request.Builder().tag(System.nanoTime()).url(url).build()).enqueue(callback);
   }

@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -49,12 +48,12 @@ public class RecordingCallback implements Callback {
    * Returns the recorded response triggered by {@code request}. Throws if the
    * response isn't enqueued before the timeout.
    */
-  public synchronized RecordedResponse await(URL url) throws Exception {
+  public synchronized RecordedResponse await(HttpUrl url) throws Exception {
     long timeoutMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime()) + TIMEOUT_MILLIS;
     while (true) {
       for (Iterator<RecordedResponse> i = responses.iterator(); i.hasNext(); ) {
         RecordedResponse recordedResponse = i.next();
-        if (recordedResponse.request.url().equals(url)) {
+        if (recordedResponse.request.httpUrl().equals(url)) {
           i.remove();
           return recordedResponse;
         }
@@ -68,9 +67,9 @@ public class RecordingCallback implements Callback {
     throw new AssertionError("Timed out waiting for response to " + url);
   }
 
-  public synchronized void assertNoResponse(URL url) throws Exception {
+  public synchronized void assertNoResponse(HttpUrl url) throws Exception {
     for (RecordedResponse recordedResponse : responses) {
-      if (recordedResponse.request.url().equals(url)) {
+      if (recordedResponse.request.httpUrl().equals(url)) {
         throw new AssertionError("Expected no response for " + url);
       }
     }

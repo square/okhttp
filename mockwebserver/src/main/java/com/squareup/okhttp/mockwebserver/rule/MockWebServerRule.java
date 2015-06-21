@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.mockwebserver.rule;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -76,8 +77,13 @@ public class MockWebServerRule extends ExternalResource {
     return server.takeRequest();
   }
 
+  @Deprecated
   public URL getUrl(String path) {
     return server.getUrl(path);
+  }
+
+  public HttpUrl url(String path) {
+    return server.url(path);
   }
 
   /** For any other functionality, use the {@linkplain MockWebServer} directly. */

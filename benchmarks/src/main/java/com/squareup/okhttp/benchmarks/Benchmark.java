@@ -18,6 +18,7 @@ package com.squareup.okhttp.benchmarks;
 import com.google.caliper.Param;
 import com.google.caliper.model.ArbitraryMeasurement;
 import com.google.caliper.runner.CaliperMain;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
@@ -25,7 +26,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -101,7 +101,7 @@ public class Benchmark extends com.google.caliper.Benchmark {
     // Prepare the client & server
     httpClient.prepare(this);
     MockWebServer server = startServer();
-    URL url = server.getUrl("/");
+    HttpUrl url = server.url("/");
 
     int requestCount = 0;
     long reportStart = System.nanoTime();
