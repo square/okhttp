@@ -15,11 +15,11 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.HostnameVerifier;
@@ -46,21 +46,21 @@ class UrlConnection extends SynchronousHttpClient {
     }
   }
 
-  @Override public Runnable request(URL url) {
+  @Override public Runnable request(HttpUrl url) {
     return new UrlConnectionRequest(url);
   }
 
   static class UrlConnectionRequest implements Runnable {
-    private final URL url;
+    private final HttpUrl url;
 
-    public UrlConnectionRequest(URL url) {
+    public UrlConnectionRequest(HttpUrl url) {
       this.url = url;
     }
 
     public void run() {
       long start = System.nanoTime();
       try {
-        HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+        HttpURLConnection urlConnection = (HttpURLConnection) url.url().openConnection();
         InputStream in = urlConnection.getInputStream();
         if ("gzip".equals(urlConnection.getHeaderField("Content-Encoding"))) {
           in = new GZIPInputStream(in);

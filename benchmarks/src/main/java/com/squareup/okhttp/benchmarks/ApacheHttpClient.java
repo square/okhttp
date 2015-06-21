@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,8 +50,8 @@ class ApacheHttpClient extends SynchronousHttpClient {
     client = new DefaultHttpClient(connectionManager);
   }
 
-  @Override public Runnable request(URL url) {
-    return new ApacheHttpClientRequest(url);
+  @Override public Runnable request(HttpUrl url) {
+    return new ApacheHttpClientRequest(url.url());
   }
 
   class ApacheHttpClientRequest implements Runnable {

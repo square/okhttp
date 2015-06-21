@@ -195,11 +195,11 @@ public class CookiesTest {
     HttpCookie cookieA = new HttpCookie("a", "android");
     cookieA.setDomain(server.getCookieDomain());
     cookieA.setPath("/");
-    cookieManager.getCookieStore().add(server.getUrl("/").toURI(), cookieA);
+    cookieManager.getCookieStore().add(server.url("/").uri(), cookieA);
     HttpCookie cookieB = new HttpCookie("b", "banana");
     cookieB.setDomain(server.getCookieDomain());
     cookieB.setPath("/");
-    cookieManager.getCookieStore().add(server.getUrl("/").toURI(), cookieB);
+    cookieManager.getCookieStore().add(server.url("/").uri(), cookieB);
     CookieHandler.setDefault(cookieManager);
 
     get(server, "/");
@@ -222,7 +222,7 @@ public class CookiesTest {
     MockWebServer redirectSource = new MockWebServer();
     redirectSource.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + redirectTarget.getUrl("/")));
+        .addHeader("Location: " + redirectTarget.url("/")));
     redirectSource.start();
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
@@ -231,7 +231,7 @@ public class CookiesTest {
     cookie.setPath("/");
     String portList = Integer.toString(redirectSource.getPort());
     cookie.setPortlist(portList);
-    cookieManager.getCookieStore().add(redirectSource.getUrl("/").toURI(), cookie);
+    cookieManager.getCookieStore().add(redirectSource.url("/").uri(), cookie);
     CookieHandler.setDefault(cookieManager);
 
     get(redirectSource, "/");

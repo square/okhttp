@@ -15,9 +15,9 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.HttpUrl;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -33,7 +33,7 @@ abstract class SynchronousHttpClient implements HttpClient {
         1, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
   }
 
-  @Override public void enqueue(URL url) {
+  @Override public void enqueue(HttpUrl url) {
     executor.execute(request(url));
   }
 
@@ -51,5 +51,5 @@ abstract class SynchronousHttpClient implements HttpClient {
     return total;
   }
 
-  abstract Runnable request(URL url);
+  abstract Runnable request(HttpUrl url);
 }

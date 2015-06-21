@@ -238,7 +238,7 @@ public final class WebSocketCallTest {
   }
 
   private WebSocket awaitWebSocket() {
-    return awaitWebSocket(new Request.Builder().get().url(server.getUrl("/")).build());
+    return awaitWebSocket(new Request.Builder().get().url(server.url("/")).build());
   }
 
   private WebSocket awaitWebSocket(Request request) {

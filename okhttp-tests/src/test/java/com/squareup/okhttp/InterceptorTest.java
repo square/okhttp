@@ -93,7 +93,7 @@ public final class InterceptorTest {
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
@@ -118,7 +118,7 @@ public final class InterceptorTest {
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
@@ -146,7 +146,7 @@ public final class InterceptorTest {
     client.networkInterceptors().add(interceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
@@ -170,7 +170,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
     client.newCall(request).execute();
   }
@@ -197,7 +197,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     // No extra headers in the application's request.
@@ -233,7 +233,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .addHeader("Original-Header", "foo")
         .method("PUT", RequestBody.create(MediaType.parse("text/plain"), "abc"))
         .build();
@@ -271,7 +271,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -315,7 +315,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -348,11 +348,11 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.url())
+    callback.await(request.httpUrl())
         .assertCode(200)
         .assertHeader("OkHttp-Intercepted", "yep");
   }
@@ -369,7 +369,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     Response response = client.newCall(request).execute();
@@ -385,7 +385,7 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         if (chain.request().url().getPath().equals("/b")) {
           Request requestA = new Request.Builder()
-              .url(server.getUrl("/a"))
+              .url(server.url("/a"))
               .build();
           Response responseA = client.newCall(requestA).execute();
           assertEquals("a", responseA.body().string());
@@ -396,7 +396,7 @@ public final class InterceptorTest {
     });
 
     Request requestB = new Request.Builder()
-        .url(server.getUrl("/b"))
+        .url(server.url("/b"))
         .build();
     Response responseB = client.newCall(requestB).execute();
     assertEquals("b", responseB.body().string());
@@ -411,13 +411,13 @@ public final class InterceptorTest {
       @Override public Response intercept(Chain chain) throws IOException {
         if (chain.request().url().getPath().equals("/b")) {
           Request requestA = new Request.Builder()
-              .url(server.getUrl("/a"))
+              .url(server.url("/a"))
               .build();
 
           try {
             RecordingCallback callbackA = new RecordingCallback();
             client.newCall(requestA).enqueue(callbackA);
-            callbackA.await(requestA.url()).assertBody("a");
+            callbackA.await(requestA.httpUrl()).assertBody("a");
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -428,11 +428,11 @@ public final class InterceptorTest {
     });
 
     Request requestB = new Request.Builder()
-        .url(server.getUrl("/b"))
+        .url(server.url("/b"))
         .build();
     RecordingCallback callbackB = new RecordingCallback();
     client.newCall(requestB).enqueue(callbackB);
-    callbackB.await(requestB.url()).assertBody("b");
+    callbackB.await(requestB.httpUrl()).assertBody("b");
   }
 
   @Test public void applicationkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
@@ -458,7 +458,7 @@ public final class InterceptorTest {
     });
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
 
     try {
@@ -491,7 +491,7 @@ public final class InterceptorTest {
     client.networkInterceptors().add(modifyHeaderInterceptor);
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .header("User-Agent", "user request")
         .build();
 
@@ -519,7 +519,7 @@ public final class InterceptorTest {
     client.setDispatcher(new Dispatcher(executor));
 
     Request request = new Request.Builder()
-        .url(server.getUrl("/"))
+        .url(server.url("/"))
         .build();
     client.newCall(request).enqueue(callback);
 

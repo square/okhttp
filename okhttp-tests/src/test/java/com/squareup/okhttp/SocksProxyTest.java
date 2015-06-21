@@ -51,11 +51,11 @@ public final class SocksProxyTest {
     OkHttpClient client = new OkHttpClient()
         .setProxy(socksProxy.proxy());
 
-    Request request1 = new Request.Builder().url(server.getUrl("/")).build();
+    Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
     assertEquals("abc", response1.body().string());
 
-    Request request2 = new Request.Builder().url(server.getUrl("/")).build();
+    Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
     assertEquals("def", response2.body().string());
 
@@ -79,7 +79,7 @@ public final class SocksProxyTest {
     OkHttpClient client = new OkHttpClient()
         .setProxySelector(proxySelector);
 
-    Request request = new Request.Builder().url(server.getUrl("/")).build();
+    Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
     assertEquals("abc", response.body().string());
 
