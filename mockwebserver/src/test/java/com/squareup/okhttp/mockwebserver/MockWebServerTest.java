@@ -255,6 +255,18 @@ public final class MockWebServerTest {
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
   }
 
+  @Test public void disconnectHalfway() throws IOException {
+    server.enqueue(new MockResponse()
+        .setBody("ab")
+        .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
+
+    URLConnection connection = server.getUrl("/").openConnection();
+    assertEquals(2, connection.getHeaderFieldLong("Content-Length", -1));
+    InputStream in = connection.getInputStream();
+    assertEquals('a', in.read());
+    assertEquals(-1, in.read());
+  }
+
   private List<String> headersToList(MockResponse response) {
     Headers headers = response.getHeaders();
     int size = headers.size();

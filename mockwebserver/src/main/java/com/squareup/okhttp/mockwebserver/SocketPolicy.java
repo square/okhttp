@@ -50,6 +50,9 @@ public enum SocketPolicy {
    */
   DISCONNECT_AFTER_REQUEST,
 
+  /** Close connection after writing half of the response body (if present). */
+  DISCONNECT_DURING_RESPONSE_BODY,
+
   /** Don't trust the client during the SSL handshake. */
   FAIL_HANDSHAKE,
 

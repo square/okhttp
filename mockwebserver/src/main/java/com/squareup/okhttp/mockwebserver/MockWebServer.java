@@ -78,6 +78,7 @@ import okio.Sink;
 import okio.Timeout;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -704,7 +705,7 @@ public final class MockWebServer {
     Buffer body = response.getBody();
     if (body == null) return;
     sleepIfDelayed(response);
-    throttledTransfer(response, socket, body, sink, Long.MAX_VALUE);
+    throttledTransfer(response, socket, body, sink, body.size());
   }
 
   private void sleepIfDelayed(MockResponse response) {
@@ -731,9 +732,18 @@ public final class MockWebServer {
     long bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
     long periodDelayMs = throttlePolicy.getThrottlePeriod(TimeUnit.MILLISECONDS);
 
+    long halfByteCount = byteCount / 2;
+    boolean disconnectHalfway = throttlePolicy.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
+
     while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
-        long toRead = Math.min(Math.min(2048, byteCount), bytesPerPeriod - b);
+        // Ensure we do not read past the allotted bytes in this period.
+        long toRead = Math.min(byteCount, bytesPerPeriod - b);
+        // Ensure we do not read past halfway if the policy will kill the connection.
+        if (disconnectHalfway) {
+          toRead = Math.min(toRead, byteCount - halfByteCount);
+        }
+
         long read = source.read(buffer, toRead);
         if (read == -1) return;
 
@@ -741,6 +751,11 @@ public final class MockWebServer {
         sink.flush();
         b += read;
         byteCount -= read;
+
+        if (disconnectHalfway && byteCount == halfByteCount) {
+          socket.close();
+          return;
+        }
 
         if (byteCount == 0) return;
       }
