@@ -47,6 +47,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -124,6 +125,25 @@ public final class MockWebServer {
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
+    private final Set<String> methodsWithoutBody;
+    private final Set<String> methodsWithBody;
+
+    public MockWebServer() {
+
+        methodsWithoutBody = new HashSet<>();
+        methodsWithoutBody.add("OPTIONS");
+        methodsWithoutBody.add("GET");
+        methodsWithoutBody.add("HEAD");
+        methodsWithoutBody.add("TRACE");
+        methodsWithoutBody.add("CONNECT");
+
+        methodsWithBody = new HashSet<>();
+        methodsWithBody.add("POST");
+        methodsWithBody.add("PUT");
+        methodsWithBody.add("PATCH");
+        methodsWithBody.add("DELETE");
+    }
+
   public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
     if (serverSocketFactory == null) throw new IllegalArgumentException("null serverSocketFactory");
     this.serverSocketFactory = serverSocketFactory;
@@ -171,6 +191,22 @@ public final class MockWebServer {
   public String getCookieDomain() {
     String hostName = getHostName();
     return hostName.contains(".") ? hostName : ".local";
+  }
+
+  /**
+   * Add custom HTTP method to the list of accepted methods with body.
+   * @param method custom method
+   */
+  public void addHTTPMethodWithBody(final String method) {
+    methodsWithBody.add(method);
+  }
+
+  /**
+   * Add custom HTTP method to the list of accepted methods without body.
+   * @param method custom method
+   */
+  public void addHTTPMethodWithoutBody(final String method) {
+    methodsWithoutBody.add(method);
   }
 
   /**
@@ -612,18 +648,12 @@ public final class MockWebServer {
       }
     }
 
-    if (request.startsWith("OPTIONS ")
-        || request.startsWith("GET ")
-        || request.startsWith("HEAD ")
-        || request.startsWith("TRACE ")
-        || request.startsWith("CONNECT ")) {
+    final String method = request.split("\\s", 2)[0];
+    if (methodsWithoutBody.contains(method)) {
       if (hasBody) {
         throw new IllegalArgumentException("Request must not have a body: " + request);
       }
-    } else if (!request.startsWith("POST ")
-        && !request.startsWith("PUT ")
-        && !request.startsWith("PATCH ")
-        && !request.startsWith("DELETE ")) { // Permitted as spec is ambiguous.
+    } else if (!methodsWithBody.contains(method)) { // Permitted as spec is ambiguous.
       throw new UnsupportedOperationException("Unexpected method: " + request);
     }
 
