@@ -187,9 +187,9 @@ public class OkHttpClient implements Cloneable {
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
   private boolean retryOnConnectionFailure = true;
-  private int connectTimeout;
-  private int readTimeout;
-  private int writeTimeout;
+  private int connectTimeout = 10_000;
+  private int readTimeout = 10_000;
+  private int writeTimeout = 10_000;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
