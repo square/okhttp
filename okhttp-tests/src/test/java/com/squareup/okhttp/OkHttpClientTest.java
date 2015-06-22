@@ -57,6 +57,13 @@ public final class OkHttpClientTest {
     Authenticator.setDefault(DEFAULT_AUTHENTICATOR);
   }
 
+  @Test public void timeoutDefaults() {
+    OkHttpClient client = new OkHttpClient();
+    assertEquals(10_000, client.getConnectTimeout());
+    assertEquals(10_000, client.getReadTimeout());
+    assertEquals(10_000, client.getWriteTimeout());
+  }
+
   @Test public void timeoutValidRange() {
     OkHttpClient client = new OkHttpClient();
     try {
@@ -89,9 +96,9 @@ public final class OkHttpClientTest {
   @Test public void copyWithDefaultsWhenDefaultIsAConstant() throws Exception {
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
     assertNull(client.internalCache());
-    assertEquals(0, client.getConnectTimeout());
-    assertEquals(0, client.getReadTimeout());
-    assertEquals(0, client.getWriteTimeout());
+    assertEquals(10_000, client.getConnectTimeout());
+    assertEquals(10_000, client.getReadTimeout());
+    assertEquals(10_000, client.getWriteTimeout());
     assertTrue(client.getFollowSslRedirects());
     assertNull(client.getProxy());
     assertEquals(Arrays.asList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1),
