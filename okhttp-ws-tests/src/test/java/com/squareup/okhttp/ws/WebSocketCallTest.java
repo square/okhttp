@@ -23,6 +23,7 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
@@ -31,12 +32,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import okio.Buffer;
 import okio.BufferedSink;
-import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public final class WebSocketCallTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
@@ -50,27 +53,87 @@ public final class WebSocketCallTest {
     listener.assertExhausted();
   }
 
-  @Test public void clientPingPong() throws IOException {
-    WebSocketListener serverListener = new EmptyWebSocketListener();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+  @Test public void startMustBeCalledInTimeoutTime() throws InterruptedException {
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback()));
+
+    client.setConnectTimeout(1, TimeUnit.SECONDS);
+    Request request = new Request.Builder().get().url(server.url("/")).build();
+    WebSocketCall call = new WebSocketCall(client, request, random);
+
+    final AtomicReference<IOException> failureRef = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(1);
+    call.enqueue(new WebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+      }
+
+      @Override public void onFailure(IOException e, Response response) {
+        failureRef.set(e);
+        latch.countDown();
+      }
+    });
+
+    assertTrue(latch.await(2, TimeUnit.SECONDS));
+
+    IOException failure = failureRef.get();
+    assertNotNull(failure);
+    assertTrue(failure instanceof InterruptedIOException);
+    assertEquals("Timeout waiting for call to WebSocket.start()", failure.getMessage());
+  }
+
+  @Test public void writingBeforeStartThrows() throws IOException {
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback()));
 
     WebSocket webSocket = awaitWebSocket();
+    try {
+      webSocket.sendPing(new Buffer().writeUtf8("Hello, WebSockets!"));
+    } catch (IllegalStateException e) {
+      assertEquals("start() not called", e.getMessage());
+    }
+    try {
+      webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+    } catch (IllegalStateException e) {
+      assertEquals("start() not called", e.getMessage());
+    }
+    try {
+      webSocket.newMessageSink(TEXT);
+    } catch (IllegalStateException e) {
+      assertEquals("start() not called", e.getMessage());
+    }
+    try {
+      webSocket.close(1000, "Bye!");
+    } catch (IllegalStateException e) {
+      assertEquals("start() not called", e.getMessage());
+    }
+  }
+
+  @Test public void clientPingPong() throws IOException {
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback()));
+
+    WebSocket webSocket = awaitWebSocket();
+    webSocket.start(listener);
     webSocket.sendPing(new Buffer().writeUtf8("Hello, WebSockets!"));
     listener.assertPong(new Buffer().writeUtf8("Hello, WebSockets!"));
   }
 
   @Test public void clientMessage() throws IOException {
-    WebSocketRecorder serverListener = new WebSocketRecorder();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    final WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+        webSocket.start(serverListener);
+      }
+    }));
 
     WebSocket webSocket = awaitWebSocket();
+    webSocket.start(listener);
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void serverMessage() throws IOException {
-    WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(final WebSocket webSocket, Response response) {
+    WebSocketCallback serverListener = new EmptyWebSocketCallback() {
+      @Override public void onConnect(final WebSocket webSocket, Response response) {
+        webSocket.start(new EmptyWebSocketListener());
+
         new Thread() {
           @Override public void run() {
             try {
@@ -84,15 +147,21 @@ public final class WebSocketCallTest {
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    awaitWebSocket();
+    WebSocket webSocket = awaitWebSocket();
+    webSocket.start(listener);
     listener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void clientStreamingMessage() throws IOException {
-    WebSocketRecorder serverListener = new WebSocketRecorder();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    final WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+        webSocket.start(serverListener);
+      }
+    }));
 
     WebSocket webSocket = awaitWebSocket();
+    webSocket.start(listener);
     BufferedSink sink = webSocket.newMessageSink(TEXT);
     sink.writeUtf8("Hello, ").flush();
     sink.writeUtf8("WebSockets!").flush();
@@ -102,8 +171,10 @@ public final class WebSocketCallTest {
   }
 
   @Test public void serverStreamingMessage() throws IOException {
-    WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(final WebSocket webSocket, Response response) {
+    WebSocketCallback serverListener = new EmptyWebSocketCallback() {
+      @Override public void onConnect(final WebSocket webSocket, Response response) {
+        webSocket.start(new EmptyWebSocketListener());
+
         new Thread() {
           @Override public void run() {
             try {
@@ -120,21 +191,29 @@ public final class WebSocketCallTest {
     };
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
-    awaitWebSocket();
+    WebSocket webSocket = awaitWebSocket();
+    webSocket.start(listener);
     listener.assertTextMessage("Hello, WebSockets!");
   }
 
   @Test public void okButNotOk() {
     server.enqueue(new MockResponse());
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class, "Expected HTTP 101 response but was '200 OK'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected HTTP 101 response but was '200 OK'", e.getMessage());
+    }
   }
 
   @Test public void notFound() {
     server.enqueue(new MockResponse().setStatus("HTTP/1.1 404 Not Found"));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected HTTP 101 response but was '404 Not Found'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected HTTP 101 response but was '404 Not Found'", e.getMessage());
+    }
   }
 
   @Test public void missingConnectionHeader() {
@@ -142,9 +221,12 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Connection' header value 'Upgrade' but was 'null'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected 'Connection' header value 'Upgrade' but was 'null'", e.getMessage());
+    }
   }
 
   @Test public void wrongConnectionHeader() {
@@ -153,9 +235,13 @@ public final class WebSocketCallTest {
         .setHeader("Upgrade", "websocket")
         .setHeader("Connection", "Downgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Connection' header value 'Upgrade' but was 'Downgrade'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected 'Connection' header value 'Upgrade' but was 'Downgrade'",
+          e.getMessage());
+    }
   }
 
   @Test public void missingUpgradeHeader() {
@@ -163,9 +249,12 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Upgrade' header value 'websocket' but was 'null'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected 'Upgrade' header value 'websocket' but was 'null'", e.getMessage());
+    }
   }
 
   @Test public void wrongUpgradeHeader() {
@@ -174,9 +263,12 @@ public final class WebSocketCallTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "Pepsi")
         .setHeader("Sec-WebSocket-Accept", "ujmZX4KXZqjwy6vi1aQFH5p4Ygk="));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Upgrade' header value 'websocket' but was 'Pepsi'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals("Expected 'Upgrade' header value 'websocket' but was 'Pepsi'", e.getMessage());
+    }
   }
 
   @Test public void missingMagicHeader() {
@@ -184,9 +276,14 @@ public final class WebSocketCallTest {
         .setResponseCode(101)
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket"));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals(
+          "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'null'",
+          e.getMessage());
+    }
   }
 
   @Test public void wrongMagicHeader() {
@@ -195,9 +292,14 @@ public final class WebSocketCallTest {
         .setHeader("Connection", "Upgrade")
         .setHeader("Upgrade", "websocket")
         .setHeader("Sec-WebSocket-Accept", "magic"));
-    awaitWebSocket();
-    listener.assertFailure(ProtocolException.class,
-        "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'");
+    try {
+      awaitWebSocket();
+    } catch (IOException e) {
+      assertTrue(e instanceof ProtocolException);
+      assertEquals(
+          "Expected 'Sec-WebSocket-Accept' header value 'ujmZX4KXZqjwy6vi1aQFH5p4Ygk=' but was 'magic'",
+          e.getMessage());
+    }
   }
 
   @Test public void wsScheme() throws IOException {
@@ -225,51 +327,40 @@ public final class WebSocketCallTest {
   }
 
   private void websocketScheme(String scheme) throws IOException {
-    WebSocketRecorder serverListener = new WebSocketRecorder();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
+    final WebSocketRecorder serverListener = new WebSocketRecorder();
+    server.enqueue(new MockResponse().withWebSocketUpgrade(new EmptyWebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+        webSocket.start(serverListener);
+      }
+    }));
 
     Request request1 = new Request.Builder()
         .url(scheme + "://" + server.getHostName() + ":" + server.getPort() + "/")
         .build();
 
     WebSocket webSocket = awaitWebSocket(request1);
+    webSocket.start(listener);
     webSocket.sendMessage(TEXT, new Buffer().writeUtf8("abc"));
     serverListener.assertTextMessage("abc");
   }
 
-  private WebSocket awaitWebSocket() {
+  private WebSocket awaitWebSocket() throws IOException {
     return awaitWebSocket(new Request.Builder().get().url(server.url("/")).build());
   }
 
-  private WebSocket awaitWebSocket(Request request) {
+  private WebSocket awaitWebSocket(Request request) throws IOException {
     WebSocketCall call = new WebSocketCall(client, request, random);
 
-    final AtomicReference<Response> responseRef = new AtomicReference<>();
     final AtomicReference<WebSocket> webSocketRef = new AtomicReference<>();
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
     final CountDownLatch latch = new CountDownLatch(1);
-    call.enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
+    call.enqueue(new WebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
         webSocketRef.set(webSocket);
-        responseRef.set(response);
         latch.countDown();
       }
 
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
-        listener.onMessage(payload, type);
-      }
-
-      @Override public void onPong(Buffer payload) {
-        listener.onPong(payload);
-      }
-
-      @Override public void onClose(int code, String reason) {
-        listener.onClose(code, reason);
-      }
-
       @Override public void onFailure(IOException e, Response response) {
-        listener.onFailure(e, null);
         failureRef.set(e);
         latch.countDown();
       }
@@ -283,24 +374,11 @@ public final class WebSocketCallTest {
       throw new AssertionError(e);
     }
 
+    IOException failure = failureRef.get();
+    if (failure != null) {
+      throw failure;
+    }
+
     return webSocketRef.get();
-  }
-
-  private static class EmptyWebSocketListener implements WebSocketListener {
-    @Override public void onOpen(WebSocket webSocket, Response response) {
-    }
-
-    @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-        throws IOException {
-    }
-
-    @Override public void onPong(Buffer payload) {
-    }
-
-    @Override public void onClose(int code, String reason) {
-    }
-
-    @Override public void onFailure(IOException e, Response response) {
-    }
   }
 }

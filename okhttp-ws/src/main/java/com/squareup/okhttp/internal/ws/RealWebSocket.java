@@ -17,10 +17,10 @@ package com.squareup.okhttp.internal.ws;
 
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.ws.WebSocket;
-import com.squareup.okhttp.ws.WebSocketListener;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -34,8 +34,9 @@ public abstract class RealWebSocket implements WebSocket {
 
   private final WebSocketWriter writer;
   private final WebSocketReader reader;
-  private final WebSocketListener listener;
+  private final CountDownLatch starter;
 
+  private volatile Listener listener;
   /** True after calling {@link #close(int, String)}. No writes are allowed afterward. */
   private volatile boolean writerSentClose;
   /** True after a close frame was read by the reader. No frames will follow it. */
@@ -44,8 +45,8 @@ public abstract class RealWebSocket implements WebSocket {
   private final Object closeLock = new Object();
 
   public RealWebSocket(boolean isClient, BufferedSource source, BufferedSink sink, Random random,
-      final Executor replyExecutor, final WebSocketListener listener, final String url) {
-    this.listener = listener;
+      final Executor replyExecutor, final String url, CountDownLatch starter) {
+    this.starter = starter;
 
     writer = new WebSocketWriter(isClient, sink, random);
     reader = new WebSocketReader(isClient, source, new FrameCallback() {
@@ -91,6 +92,9 @@ public abstract class RealWebSocket implements WebSocket {
    * be called in a loop with the return value indicating whether looping should continue.
    */
   public boolean readMessage() {
+    if (this.listener == null) {
+      throw new IllegalStateException("start() not called");
+    }
     try {
       reader.processNextFrame();
       return !readerSentClose;
@@ -100,17 +104,37 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
+  @Override public void start(Listener listener) {
+    if (listener == null) {
+      throw new NullPointerException("listener == null");
+    }
+    if (this.listener != null) {
+      throw new IllegalStateException("Listener already set: " + this.listener);
+    }
+    this.listener = listener;
+    starter.countDown();
+  }
+
   @Override public BufferedSink newMessageSink(PayloadType type) {
+    if (this.listener == null) {
+      throw new IllegalStateException("start() not called");
+    }
     if (writerSentClose) throw new IllegalStateException("closed");
     return writer.newMessageSink(type);
   }
 
   @Override public void sendMessage(PayloadType type, Buffer payload) throws IOException {
+    if (this.listener == null) {
+      throw new IllegalStateException("start() not called");
+    }
     if (writerSentClose) throw new IllegalStateException("closed");
     writer.sendMessage(type, payload);
   }
 
   @Override public void sendPing(Buffer payload) throws IOException {
+    if (this.listener == null) {
+      throw new IllegalStateException("start() not called");
+    }
     if (writerSentClose) throw new IllegalStateException("closed");
     writer.writePing(payload);
   }
@@ -122,6 +146,9 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   @Override public void close(int code, String reason) throws IOException {
+    if (this.listener == null) {
+      throw new IllegalStateException("start() not called");
+    }
     if (writerSentClose) throw new IllegalStateException("closed");
 
     boolean closeConnection;
@@ -181,7 +208,7 @@ public abstract class RealWebSocket implements WebSocket {
     } catch (IOException ignored) {
     }
 
-    listener.onFailure(e, null);
+    listener.onFailure(e);
   }
 
   /** Perform any tear-down work on the connection (close the socket, recycle, etc.). */

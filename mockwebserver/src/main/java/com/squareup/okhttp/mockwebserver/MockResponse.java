@@ -16,7 +16,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.ws.WebSocketListener;
+import com.squareup.okhttp.ws.WebSocketCallback;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +41,7 @@ public final class MockResponse implements Cloneable {
   private TimeUnit bodyDelayUnit = TimeUnit.MILLISECONDS;
 
   private List<PushPromise> promises = new ArrayList<>();
-  private WebSocketListener webSocketListener;
+  private WebSocketCallback webSocketCallback;
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
@@ -234,17 +234,17 @@ public final class MockResponse implements Cloneable {
    * Attempts to perform a web socket upgrade on the connection. This will overwrite any previously
    * set status or body.
    */
-  public MockResponse withWebSocketUpgrade(WebSocketListener listener) {
+  public MockResponse withWebSocketUpgrade(WebSocketCallback listener) {
     setStatus("HTTP/1.1 101 Switching Protocols");
     setHeader("Connection", "Upgrade");
     setHeader("Upgrade", "websocket");
     body = null;
-    webSocketListener = listener;
+    webSocketCallback = listener;
     return this;
   }
 
-  public WebSocketListener getWebSocketListener() {
-    return webSocketListener;
+  public WebSocketCallback getWebSocketCallback() {
+    return webSocketCallback;
   }
 
   @Override public String toString() {

@@ -26,10 +26,12 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ProtocolException;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -37,6 +39,7 @@ import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class WebSocketCall {
@@ -47,7 +50,7 @@ public final class WebSocketCall {
     return new WebSocketCall(client, request);
   }
 
-  private final Request request;
+  private final OkHttpClient client;
   private final Call call;
   private final Random random;
   private final String key;
@@ -72,15 +75,14 @@ public final class WebSocketCall {
     // Force HTTP/1.1 until the WebSocket over HTTP/2 version is finalized.
     client.setProtocols(Collections.singletonList(com.squareup.okhttp.Protocol.HTTP_1_1));
 
-    request = request.newBuilder()
+    this.client = client;
+
+    call = client.newCall(request.newBuilder()
         .header("Upgrade", "websocket")
         .header("Connection", "Upgrade")
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
-        .build();
-    this.request = request;
-
-    call = client.newCall(request);
+        .build());
   }
 
   /**
@@ -95,18 +97,18 @@ public final class WebSocketCall {
    *
    * @throws IllegalStateException when the call has already been executed.
    */
-  public void enqueue(final WebSocketListener listener) {
+  public void enqueue(final WebSocketCallback callback) {
     Callback responseCallback = new Callback() {
       @Override public void onResponse(Response response) throws IOException {
         try {
-          createWebSocket(response, listener);
+          createWebSocket(response, callback);
         } catch (IOException e) {
-          listener.onFailure(e, response);
+          callback.onFailure(e, response);
         }
       }
 
       @Override public void onFailure(Request request, IOException e) {
-        listener.onFailure(e, null);
+        callback.onFailure(e, null);
       }
     };
     // TODO call.enqueue(responseCallback, true);
@@ -118,7 +120,7 @@ public final class WebSocketCall {
     call.cancel();
   }
 
-  private void createWebSocket(Response response, WebSocketListener listener)
+  private void createWebSocket(Response response, WebSocketCallback callback)
       throws IOException {
     if (response.code() != 101) {
       // TODO call.engine.releaseConnection();
@@ -160,37 +162,41 @@ public final class WebSocketCall {
     BufferedSource source = Internal.instance.connectionRawSource(connection);
     BufferedSink sink = Internal.instance.connectionRawSink(connection);
 
-    final RealWebSocket webSocket =
-        ConnectionWebSocket.create(response, connection, source, sink, random, listener);
+    String url = response.request().urlString();
+    ThreadPoolExecutor replyExecutor =
+        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
+            Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
+    replyExecutor.allowCoreThreadTimeOut(true);
+
+    CountDownLatch starter = new CountDownLatch(1);
+    RealWebSocket webSocket =
+        new ConnectionWebSocket(connection, source, sink, random, replyExecutor, url, starter);
 
     // TODO connection.setOwner(webSocket);
     Internal.instance.connectionSetOwner(connection, webSocket);
 
-    listener.onOpen(webSocket, response);
+    callback.onConnect(webSocket, response);
+
+    try {
+      if (!starter.await(client.getConnectTimeout(), MILLISECONDS)) {
+        Internal.instance.closeIfOwnedBy(connection, webSocket);
+        throw new InterruptedIOException("Timeout waiting for call to WebSocket.start()");
+      }
+    } catch (InterruptedException e) {
+      return;
+    }
 
     while (webSocket.readMessage()) {
     }
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.
-  private static class ConnectionWebSocket extends RealWebSocket {
-    static RealWebSocket create(Response response, Connection connection, BufferedSource source,
-        BufferedSink sink, Random random, WebSocketListener listener) {
-      String url = response.request().urlString();
-      ThreadPoolExecutor replyExecutor =
-          new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
-              Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
-      replyExecutor.allowCoreThreadTimeOut(true);
-
-      return new ConnectionWebSocket(connection, source, sink, random, replyExecutor, listener,
-          url);
-    }
-
+  private static final class ConnectionWebSocket extends RealWebSocket {
     private final Connection connection;
 
     private ConnectionWebSocket(Connection connection, BufferedSource source, BufferedSink sink,
-        Random random, Executor replyExecutor, WebSocketListener listener, String url) {
-      super(true /* is client */, source, sink, random, replyExecutor, listener, url);
+        Random random, Executor replyExecutor, String url, CountDownLatch starter) {
+      super(true /* is client */, source, sink, random, replyExecutor, url, starter);
       this.connection = connection;
     }
 

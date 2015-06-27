@@ -5,7 +5,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ws.WebSocket;
 import com.squareup.okhttp.ws.WebSocketCall;
-import com.squareup.okhttp.ws.WebSocketListener;
+import com.squareup.okhttp.ws.WebSocketCallback;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -16,7 +16,7 @@ import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 
-public final class WebSocketEcho implements WebSocketListener {
+public final class WebSocketEcho implements WebSocketCallback, WebSocket.Listener {
   private final Executor writeExecutor = Executors.newSingleThreadExecutor();
 
   private void run() throws IOException {
@@ -31,7 +31,9 @@ public final class WebSocketEcho implements WebSocketListener {
     client.getDispatcher().getExecutorService().shutdown();
   }
 
-  @Override public void onOpen(final WebSocket webSocket, Response response) {
+  @Override public void onConnect(final WebSocket webSocket, Response response) {
+    webSocket.start(this);
+
     writeExecutor.execute(new Runnable() {
       @Override public void run() {
         try {
@@ -68,8 +70,12 @@ public final class WebSocketEcho implements WebSocketListener {
     System.out.println("CLOSE: " + code + " " + reason);
   }
 
-  @Override public void onFailure(IOException e, Response response) {
+  @Override public void onFailure(IOException e) {
     e.printStackTrace();
+  }
+
+  @Override public void onFailure(IOException e, Response response) {
+    onFailure(e);
   }
 
   public static void main(String... args) throws IOException {
