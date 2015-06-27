@@ -157,7 +157,7 @@ _2014-12-30_
     This is a source-incompatible change. If you have code that calls
     `RequestBody.contentLength()`, your compile will break with this
     update. The change is binary-compatible, however: code compiled
-    for OkHttp 2.0 and 2.1 will continue work with this update.
+    for OkHttp 2.0 and 2.1 will continue to work with this update.
 
  *  **`COMPATIBLE_TLS` no longer supports SSLv3.** In response to the
     [POODLE](http://googleonlinesecurity.blogspot.ca/2014/10/this-poodle-bites-exploiting-ssl-30.html)
@@ -417,7 +417,7 @@ in addition to synchronous blocking calls.
  *  **TunnelRequest is gone.** It specified how to connect to an HTTP proxy.
     OkHttp 2 uses the new `Request` class for this.
 
- *  **Dispatcher** is a new class to manages the queue of asynchronous calls. It
+ *  **Dispatcher** is a new class that manages the queue of asynchronous calls. It
     implements limits on total in-flight calls and in-flight calls per host.
 
 #### Implementation changes
