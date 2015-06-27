@@ -32,8 +32,9 @@ import com.squareup.okhttp.internal.framed.Header;
 import com.squareup.okhttp.internal.framed.IncomingStreamHandler;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
-import com.squareup.okhttp.ws.WebSocketListener;
+import com.squareup.okhttp.ws.WebSocketCallback;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -519,7 +520,7 @@ public final class MockWebServer {
         boolean reuseSocket = true;
         boolean requestWantsWebSockets = "Upgrade".equalsIgnoreCase(request.getHeader("Connection"))
             && "websocket".equalsIgnoreCase(request.getHeader("Upgrade"));
-        boolean responseWantsWebSockets = response.getWebSocketListener() != null;
+        boolean responseWantsWebSockets = response.getWebSocketCallback() != null;
         if (requestWantsWebSockets && responseWantsWebSockets) {
           handleWebSocketUpgrade(socket, source, sink, request, response);
           reuseSocket = false;
@@ -656,7 +657,7 @@ public final class MockWebServer {
 
     writeHttpResponse(socket, sink, response);
 
-    final WebSocketListener listener = response.getWebSocketListener();
+    final WebSocketCallback callback = response.getWebSocketCallback();
     final CountDownLatch connectionClose = new CountDownLatch(1);
 
     ThreadPoolExecutor replyExecutor =
@@ -664,9 +665,11 @@ public final class MockWebServer {
             Util.threadFactory(String.format("MockWebServer %s WebSocket", request.getPath()),
                 true));
     replyExecutor.allowCoreThreadTimeOut(true);
+
+    CountDownLatch starter = new CountDownLatch(1);
     final RealWebSocket webSocket =
         new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
-            listener, request.getPath()) {
+            request.getPath(), starter) {
           @Override protected void closeConnection() throws IOException {
             connectionClose.countDown();
           }
@@ -687,7 +690,15 @@ public final class MockWebServer {
         .protocol(Protocol.HTTP_1_1)
         .build();
 
-    listener.onOpen(webSocket, fancyResponse);
+    callback.onConnect(webSocket, fancyResponse);
+
+    try {
+      if (!starter.await(10, SECONDS)) {
+        throw new InterruptedIOException("Timeout waiting for call to WebSocket.start()");
+      }
+    } catch (InterruptedException e) {
+      return;
+    }
 
     while (webSocket.readMessage()) {
     }
@@ -695,12 +706,11 @@ public final class MockWebServer {
     // Even if messages are no longer being read we need to wait for the connection close signal.
     try {
       connectionClose.await();
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+    } catch (InterruptedException ignored) {
+    } finally {
+      Util.closeQuietly(sink);
+      Util.closeQuietly(source);
     }
-
-    Util.closeQuietly(sink);
-    Util.closeQuietly(source);
   }
 
   private void writeHttpResponse(Socket socket, BufferedSink sink, MockResponse response)

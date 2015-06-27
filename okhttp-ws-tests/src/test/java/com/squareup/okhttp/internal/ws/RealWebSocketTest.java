@@ -59,7 +59,7 @@ public final class RealWebSocketTest {
     String url = "http://example.com/websocket";
 
     client = new RealWebSocket(true, server2client, client2Server, random, clientExecutor,
-        clientListener, url) {
+        url, new CountDownLatch(0)) {
       @Override protected void closeConnection() throws IOException {
         clientConnectionClosed = true;
         if (clientConnectionCloseThrows) {
@@ -67,11 +67,14 @@ public final class RealWebSocketTest {
         }
       }
     };
+    client.start(clientListener);
+
     server = new RealWebSocket(false, client2Server, server2client, random, serverExecutor,
-        serverListener, url) {
+        url, new CountDownLatch(0)) {
       @Override protected void closeConnection() throws IOException {
       }
     };
+    server.start(serverListener);
   }
 
   @After public void tearDown() {

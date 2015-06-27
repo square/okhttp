@@ -15,7 +15,6 @@
  */
 package com.squareup.okhttp.ws;
 
-import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.ws.WebSocketReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
@@ -30,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocketListener {
+public final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocket.Listener {
   public interface MessageDelegate {
     void onMessage(BufferedSource payload, WebSocket.PayloadType type) throws IOException;
   }
@@ -41,9 +40,6 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
   /** Sets a delegate for the next call to {@link #onMessage}. Cleared after invoked. */
   public void setNextMessageDelegate(MessageDelegate delegate) {
     this.delegate = delegate;
-  }
-
-  @Override public void onOpen(WebSocket webSocket, Response response) {
   }
 
   @Override public void onMessage(BufferedSource source, WebSocket.PayloadType type)
@@ -71,7 +67,7 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     events.add(new Close(code, reason));
   }
 
-  @Override public void onFailure(IOException e, Response response) {
+  @Override public void onFailure(IOException e) {
     events.add(e);
   }
 

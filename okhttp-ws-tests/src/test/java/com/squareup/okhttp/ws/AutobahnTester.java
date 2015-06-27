@@ -65,38 +65,35 @@ public final class AutobahnTester {
   private void runTest(final long number, final long count) throws IOException {
     final CountDownLatch latch = new CountDownLatch(1);
     newWebSocket("/runCase?case=" + number + "&agent=" + Version.userAgent()) //
-        .enqueue(new WebSocketListener() {
+        .enqueue(new WebSocketCallback() {
           private final ExecutorService sendExecutor = Executors.newSingleThreadExecutor();
-          private WebSocket webSocket;
 
-          @Override public void onOpen(WebSocket webSocket, Response response) {
+          @Override public void onConnect(final WebSocket webSocket, Response response) {
             System.out.println("Executing test case " + number + "/" + count);
-            this.webSocket = webSocket;
-          }
+            webSocket.start(new EmptyWebSocketListener() {
+              @Override
+              public void onMessage(BufferedSource payload, final WebSocket.PayloadType type)
+                  throws IOException {
+                final Buffer buffer = new Buffer();
+                payload.readAll(buffer);
+                payload.close();
 
-          @Override public void onMessage(BufferedSource payload, final WebSocket.PayloadType type)
-              throws IOException {
-            final Buffer buffer = new Buffer();
-            payload.readAll(buffer);
-            payload.close();
+                sendExecutor.execute(new Runnable() {
+                  @Override public void run() {
+                    try {
+                      webSocket.sendMessage(type, buffer);
+                    } catch (IOException e) {
+                      e.printStackTrace();
+                    }
+                  }
+                });
+              }
 
-            sendExecutor.execute(new Runnable() {
-              @Override public void run() {
-                try {
-                  webSocket.sendMessage(type, buffer);
-                } catch (IOException e) {
-                  e.printStackTrace();
-                }
+              @Override public void onClose(int code, String reason) {
+                sendExecutor.shutdown();
+                latch.countDown();
               }
             });
-          }
-
-          @Override public void onPong(Buffer payload) {
-          }
-
-          @Override public void onClose(int code, String reason) {
-            sendExecutor.shutdown();
-            latch.countDown();
           }
 
           @Override public void onFailure(IOException e, Response response) {
@@ -116,21 +113,19 @@ public final class AutobahnTester {
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicLong countRef = new AtomicLong();
     final AtomicReference<IOException> failureRef = new AtomicReference<>();
-    newWebSocket("/getCaseCount").enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
-      }
+    newWebSocket("/getCaseCount").enqueue(new WebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+        webSocket.start(new EmptyWebSocketListener() {
+          @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
+              throws IOException {
+            countRef.set(payload.readDecimalLong());
+            payload.close();
+          }
 
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
-        countRef.set(payload.readDecimalLong());
-        payload.close();
-      }
-
-      @Override public void onPong(Buffer payload) {
-      }
-
-      @Override public void onClose(int code, String reason) {
-        latch.countDown();
+          @Override public void onClose(int code, String reason) {
+            latch.countDown();
+          }
+        });
       }
 
       @Override public void onFailure(IOException e, Response response) {
@@ -154,19 +149,13 @@ public final class AutobahnTester {
 
   private void updateReports() {
     final CountDownLatch latch = new CountDownLatch(1);
-    newWebSocket("/updateReports?agent=" + Version.userAgent()).enqueue(new WebSocketListener() {
-      @Override public void onOpen(WebSocket webSocket, Response response) {
-      }
-
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
-      }
-
-      @Override public void onPong(Buffer payload) {
-      }
-
-      @Override public void onClose(int code, String reason) {
-        latch.countDown();
+    newWebSocket("/updateReports?agent=" + Version.userAgent()).enqueue(new EmptyWebSocketCallback() {
+      @Override public void onConnect(WebSocket webSocket, Response response) {
+        webSocket.start(new EmptyWebSocketListener() {
+          @Override public void onClose(int code, String reason) {
+            latch.countDown();
+          }
+        });
       }
 
       @Override public void onFailure(IOException e, Response response) {
