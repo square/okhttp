@@ -156,8 +156,8 @@ public class SocketConnector {
       } else {
         socket = new Socket(proxy);
       }
-      socket.setSoTimeout(soTimeout);
       platform.connectSocket(socket, route.getSocketAddress(), connectTimeout);
+      socket.setSoTimeout(soTimeout);
 
       return socket;
     } catch (IOException e) {
