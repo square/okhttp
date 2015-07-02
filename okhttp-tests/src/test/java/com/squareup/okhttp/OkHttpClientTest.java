@@ -32,6 +32,8 @@ import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import org.junit.After;
@@ -55,6 +57,12 @@ public final class OkHttpClientTest {
     CookieManager.setDefault(DEFAULT_COOKIE_HANDLER);
     ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
     Authenticator.setDefault(DEFAULT_AUTHENTICATOR);
+  }
+
+  @Test public void constructorWithExecutorService() {
+    ExecutorService executorService = Executors.newFixedThreadPool(4);
+    OkHttpClient client = new OkHttpClient(executorService);
+    assertEquals(executorService, client.getDispatcher().getExecutorService());
   }
 
   @Test public void timeoutDefaults() {
