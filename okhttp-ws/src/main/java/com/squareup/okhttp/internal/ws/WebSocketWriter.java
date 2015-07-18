@@ -20,19 +20,15 @@ import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
-import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B1_FLAG_MASK;
-import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_BINARY;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTINUATION;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_CLOSE;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PING;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PONG;
-import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_MAX;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
@@ -42,10 +38,9 @@ import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame writer.
  * <p>
  * This class is partially thread safe. Only a single "main" thread should be sending messages via
- * calls to {@link #newMessageSink} or {@link #sendMessage} as well as any calls to
- * {@link #writePing} or {@link #writeClose}. Other threads may call {@link #writePing},
- * {@link #writePong}, or {@link #writeClose} which will interleave on the wire with frames from
- * the main thread.
+ * calls to {@link #newMessageSink}, {@link #writePing}, or {@link #writeClose}. Other threads may
+ * call {@link #writePing}, {@link #writePong}, or {@link #writeClose} which will interleave on the
+ * wire with frames from the "main" sending thread.
  */
 public final class WebSocketWriter {
   private final boolean isClient;
@@ -155,48 +150,22 @@ public final class WebSocketWriter {
    * Stream a message payload as a series of frames. This allows control frames to be interleaved
    * between parts of the message.
    */
-  public BufferedSink newMessageSink(PayloadType type) {
-    if (type == null) throw new NullPointerException("type == null");
+  public Sink newMessageSink(int formatOpcode) {
     if (activeWriter) {
       throw new IllegalStateException("Another message writer is active. Did you call close()?");
     }
     activeWriter = true;
 
-    frameSink.payloadType = type;
+    frameSink.formatOpcode = formatOpcode;
     frameSink.isFirstFrame = true;
-    return Okio.buffer(frameSink);
+    return frameSink;
   }
 
-  /**
-   * Send a message payload as a single frame. This will block any control frames that need sent
-   * until it is completed.
-   */
-  public void sendMessage(PayloadType type, Buffer payload) throws IOException {
-    if (type == null) throw new NullPointerException("type == null");
-    if (payload == null) throw new NullPointerException("payload == null");
-    if (activeWriter) {
-      throw new IllegalStateException("A message writer is active. Did you call close()?");
-    }
-    writeFrame(type, payload, payload.size(), true /* first frame */, true /* final */);
-  }
-
-  private void writeFrame(PayloadType payloadType, Buffer source, long byteCount,
+  private void writeFrame(int formatOpcode, Buffer source, long byteCount,
       boolean isFirstFrame, boolean isFinal) throws IOException {
     if (closed) throw new IOException("closed");
 
-    int opcode = OPCODE_CONTINUATION;
-    if (isFirstFrame) {
-      switch (payloadType) {
-        case TEXT:
-          opcode = OPCODE_TEXT;
-          break;
-        case BINARY:
-          opcode = OPCODE_BINARY;
-          break;
-        default:
-          throw new IllegalStateException("Unknown payload type: " + payloadType);
-      }
-    }
+    int opcode = isFirstFrame ? formatOpcode : OPCODE_CONTINUATION;
 
     synchronized (sink) {
       int b0 = opcode;
@@ -247,11 +216,11 @@ public final class WebSocketWriter {
   }
 
   private final class FrameSink implements Sink {
-    private PayloadType payloadType;
+    private int formatOpcode;
     private boolean isFirstFrame;
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
-      writeFrame(payloadType, source, byteCount, isFirstFrame, false /* final */);
+      writeFrame(formatOpcode, source, byteCount, isFirstFrame, false /* final */);
       isFirstFrame = false;
     }
 

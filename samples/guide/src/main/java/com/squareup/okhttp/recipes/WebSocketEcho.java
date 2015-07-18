@@ -2,7 +2,9 @@ package com.squareup.okhttp.recipes;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.ws.WebSocket;
 import com.squareup.okhttp.ws.WebSocketCall;
 import com.squareup.okhttp.ws.WebSocketListener;
@@ -10,12 +12,15 @@ import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import okio.Buffer;
-import okio.BufferedSource;
+import okio.ByteString;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType;
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.TEXT;
 
+/**
+ * NOTE: This is currently broken because the Echo server does not correctly echo empty frames
+ * which OkHttp uses for final frames on streamed messages.
+ */
 public final class WebSocketEcho implements WebSocketListener {
   private final Executor writeExecutor = Executors.newSingleThreadExecutor();
 
@@ -35,9 +40,9 @@ public final class WebSocketEcho implements WebSocketListener {
     writeExecutor.execute(new Runnable() {
       @Override public void run() {
         try {
-          webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello..."));
-          webSocket.sendMessage(TEXT, new Buffer().writeUtf8("...World!"));
-          webSocket.sendMessage(BINARY, new Buffer().writeInt(0xdeadbeef));
+          webSocket.sendMessage(RequestBody.create(TEXT, "Hello..."));
+          webSocket.sendMessage(RequestBody.create(TEXT, "...World!"));
+          webSocket.sendMessage(RequestBody.create(BINARY, ByteString.decodeHex("deadbeef")));
           webSocket.close(1000, "Goodbye, World!");
         } catch (IOException e) {
           System.err.println("Unable to send messages: " + e.getMessage());
@@ -46,18 +51,13 @@ public final class WebSocketEcho implements WebSocketListener {
     });
   }
 
-  @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-    switch (type) {
-      case TEXT:
-        System.out.println("MESSAGE: " + payload.readUtf8());
-        break;
-      case BINARY:
-        System.out.println("MESSAGE: " + payload.readByteString().hex());
-        break;
-      default:
-        throw new IllegalStateException("Unknown payload type: " + type);
+  @Override public void onMessage(ResponseBody message) throws IOException {
+    if (message.contentType() == TEXT) {
+      System.out.println("MESSAGE: " + message.string());
+    } else {
+      System.out.println("MESSAGE: " + message.source().readByteString().hex());
     }
-    payload.close();
+    message.close();
   }
 
   @Override public void onPong(Buffer payload) {

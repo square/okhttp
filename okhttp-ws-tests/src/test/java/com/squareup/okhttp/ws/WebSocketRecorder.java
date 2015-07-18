@@ -15,24 +15,25 @@
  */
 package com.squareup.okhttp.ws;
 
+import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.ws.WebSocketReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
-import okio.BufferedSource;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public final class WebSocketRecorder implements WebSocketReader.FrameCallback, WebSocketListener {
   public interface MessageDelegate {
-    void onMessage(BufferedSource payload, WebSocket.PayloadType type) throws IOException;
+    void onMessage(ResponseBody message) throws IOException;
   }
 
   private final BlockingQueue<Object> events = new LinkedBlockingQueue<>();
@@ -46,16 +47,15 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
   @Override public void onOpen(WebSocket webSocket, Response response) {
   }
 
-  @Override public void onMessage(BufferedSource source, WebSocket.PayloadType type)
-      throws IOException {
+  @Override public void onMessage(ResponseBody message) throws IOException {
     if (delegate != null) {
-      delegate.onMessage(source, type);
+      delegate.onMessage(message);
       delegate = null;
     } else {
-      Message message = new Message(type);
-      source.readAll(message.buffer);
-      source.close();
-      events.add(message);
+      Message event = new Message(message.contentType());
+      message.source().readAll(event.buffer);
+      message.close();
+      events.add(event);
     }
   }
 
@@ -125,25 +125,25 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
   }
 
   private static class Message {
-    public final WebSocket.PayloadType type;
+    public final MediaType mediaType;
     public final Buffer buffer = new Buffer();
 
-    private Message(WebSocket.PayloadType type) {
-      this.type = type;
+    private Message(MediaType mediaType) {
+      this.mediaType = mediaType;
     }
 
     @Override public String toString() {
-      return "Message[" + type + " " + buffer + "]";
+      return "Message[" + mediaType + " " + buffer + "]";
     }
 
     @Override public int hashCode() {
-      return type.hashCode() * 37 + buffer.hashCode();
+      return mediaType.hashCode() * 37 + buffer.hashCode();
     }
 
     @Override public boolean equals(Object obj) {
       if (obj instanceof Message) {
         Message other = (Message) obj;
-        return type == other.type && buffer.equals(other.buffer);
+        return mediaType.equals(other.mediaType) && buffer.equals(other.buffer);
       }
       return false;
     }

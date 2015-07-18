@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.ws.WebSocketRecorder;
 import java.io.EOFException;
 import java.io.IOException;
@@ -27,7 +28,6 @@ import okio.ByteString;
 import org.junit.After;
 import org.junit.Test;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.ws.WebSocketRecorder.MessageDelegate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -151,11 +151,12 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextMessageDelegate(new MessageDelegate() {
-      @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-        payload.readFully(sink, 3); // Read "Hel"
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        BufferedSource source = message.source();
+        source.readFully(sink, 3); // Read "Hel"
         data.write(ByteString.decodeHex("5158")); // lo
-        payload.readFully(sink, 2); // Read "lo"
-        payload.close();
+        source.readFully(sink, 2); // Read "lo"
+        source.close();
       }
     });
     serverReader.processNextFrame();
@@ -251,8 +252,8 @@ public final class WebSocketReaderTest {
   @Test public void noCloseErrors() throws IOException {
     data.write(ByteString.decodeHex("810548656c6c6f")); // Hello
     callback.setNextMessageDelegate(new MessageDelegate() {
-      @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-        payload.readAll(new Buffer());
+      @Override public void onMessage(ResponseBody body) throws IOException {
+        body.source().readAll(new Buffer());
       }
     });
     try {
@@ -269,9 +270,9 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextMessageDelegate(new MessageDelegate() {
-      @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-        payload.read(sink, 3);
-        payload.close();
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        message.source().read(sink, 3);
+        message.close();
       }
     });
 
@@ -291,9 +292,9 @@ public final class WebSocketReaderTest {
 
     final Buffer sink = new Buffer();
     callback.setNextMessageDelegate(new MessageDelegate() {
-      @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-        payload.read(sink, 2);
-        payload.close();
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        message.source().read(sink, 2);
+        message.close();
       }
     });
 
@@ -311,10 +312,10 @@ public final class WebSocketReaderTest {
 
     final AtomicReference<Exception> exception = new AtomicReference<>();
     callback.setNextMessageDelegate(new MessageDelegate() {
-      @Override public void onMessage(BufferedSource payload, PayloadType type) throws IOException {
-        payload.close();
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        message.close();
         try {
-          payload.readAll(new Buffer());
+          message.source().readAll(new Buffer());
           fail();
         } catch (IllegalStateException e) {
           exception.set(e);

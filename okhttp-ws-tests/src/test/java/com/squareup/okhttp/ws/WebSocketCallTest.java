@@ -17,7 +17,9 @@ package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -30,13 +32,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.SSLContext;
 import okio.Buffer;
-import okio.BufferedSink;
-import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.TEXT;
 
 public final class WebSocketCallTest {
   @Rule public final MockWebServer server = new MockWebServer();
@@ -64,7 +64,7 @@ public final class WebSocketCallTest {
     server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
 
     WebSocket webSocket = awaitWebSocket();
-    webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
+    webSocket.sendMessage(RequestBody.create(TEXT, "Hello, WebSockets!"));
     serverListener.assertTextMessage("Hello, WebSockets!");
   }
 
@@ -74,43 +74,7 @@ public final class WebSocketCallTest {
         new Thread() {
           @Override public void run() {
             try {
-              webSocket.sendMessage(TEXT, new Buffer().writeUtf8("Hello, WebSockets!"));
-            } catch (IOException e) {
-              throw new AssertionError(e);
-            }
-          }
-        }.start();
-      }
-    };
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-
-    awaitWebSocket();
-    listener.assertTextMessage("Hello, WebSockets!");
-  }
-
-  @Test public void clientStreamingMessage() throws IOException {
-    WebSocketRecorder serverListener = new WebSocketRecorder();
-    server.enqueue(new MockResponse().withWebSocketUpgrade(serverListener));
-
-    WebSocket webSocket = awaitWebSocket();
-    BufferedSink sink = webSocket.newMessageSink(TEXT);
-    sink.writeUtf8("Hello, ").flush();
-    sink.writeUtf8("WebSockets!").flush();
-    sink.close();
-
-    serverListener.assertTextMessage("Hello, WebSockets!");
-  }
-
-  @Test public void serverStreamingMessage() throws IOException {
-    WebSocketListener serverListener = new EmptyWebSocketListener() {
-      @Override public void onOpen(final WebSocket webSocket, Response response) {
-        new Thread() {
-          @Override public void run() {
-            try {
-              BufferedSink sink = webSocket.newMessageSink(TEXT);
-              sink.writeUtf8("Hello, ").flush();
-              sink.writeUtf8("WebSockets!").flush();
-              sink.close();
+              webSocket.sendMessage(RequestBody.create(TEXT, "Hello, WebSockets!"));
             } catch (IOException e) {
               throw new AssertionError(e);
             }
@@ -233,7 +197,7 @@ public final class WebSocketCallTest {
         .build();
 
     WebSocket webSocket = awaitWebSocket(request1);
-    webSocket.sendMessage(TEXT, new Buffer().writeUtf8("abc"));
+    webSocket.sendMessage(RequestBody.create(TEXT, "abc"));
     serverListener.assertTextMessage("abc");
   }
 
@@ -255,9 +219,8 @@ public final class WebSocketCallTest {
         latch.countDown();
       }
 
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
-        listener.onMessage(payload, type);
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        listener.onMessage(message);
       }
 
       @Override public void onPong(Buffer payload) {
@@ -290,8 +253,7 @@ public final class WebSocketCallTest {
     @Override public void onOpen(WebSocket webSocket, Response response) {
     }
 
-    @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-        throws IOException {
+    @Override public void onMessage(ResponseBody message) throws IOException {
     }
 
     @Override public void onPong(Buffer payload) {

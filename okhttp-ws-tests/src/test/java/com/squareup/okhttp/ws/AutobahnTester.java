@@ -17,7 +17,9 @@ package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Version;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
@@ -27,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import okio.Buffer;
-import okio.BufferedSource;
+import okio.ByteString;
 
 /**
  * Exercises the web socket implementation against the
@@ -74,16 +76,15 @@ public final class AutobahnTester {
             this.webSocket = webSocket;
           }
 
-          @Override public void onMessage(BufferedSource payload, final WebSocket.PayloadType type)
-              throws IOException {
-            final Buffer buffer = new Buffer();
-            payload.readAll(buffer);
-            payload.close();
+          @Override public void onMessage(final ResponseBody message) throws IOException {
+            ByteString body = message.source().readByteString();
+            message.close();
 
+            final RequestBody response = RequestBody.create(message.contentType(), body);
             sendExecutor.execute(new Runnable() {
               @Override public void run() {
                 try {
-                  webSocket.sendMessage(type, buffer);
+                  webSocket.sendMessage(response);
                 } catch (IOException e) {
                   e.printStackTrace();
                 }
@@ -120,10 +121,9 @@ public final class AutobahnTester {
       @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
-        countRef.set(payload.readDecimalLong());
-        payload.close();
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        countRef.set(message.source().readDecimalLong());
+        message.close();
       }
 
       @Override public void onPong(Buffer payload) {
@@ -158,8 +158,7 @@ public final class AutobahnTester {
       @Override public void onOpen(WebSocket webSocket, Response response) {
       }
 
-      @Override public void onMessage(BufferedSource payload, WebSocket.PayloadType type)
-          throws IOException {
+      @Override public void onMessage(ResponseBody message) throws IOException {
       }
 
       @Override public void onPong(Buffer payload) {
