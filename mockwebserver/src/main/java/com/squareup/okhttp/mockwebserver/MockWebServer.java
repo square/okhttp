@@ -79,6 +79,7 @@ import okio.Sink;
 import okio.Timeout;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -611,10 +612,10 @@ public final class MockWebServer {
     boolean hasBody = false;
     TruncatingBuffer requestBody = new TruncatingBuffer(bodyLimit);
     List<Integer> chunkSizes = new ArrayList<>();
-    MockResponse throttlePolicy = dispatcher.peek();
+    MockResponse response = dispatcher.peek();
     if (contentLength != -1) {
       hasBody = contentLength > 0;
-      throttledTransfer(throttlePolicy, socket, source, Okio.buffer(requestBody), contentLength);
+      throttledTransfer(response, socket, source, Okio.buffer(requestBody), contentLength, true);
     } else if (chunked) {
       hasBody = true;
       while (true) {
@@ -624,7 +625,7 @@ public final class MockWebServer {
           break;
         }
         chunkSizes.add(chunkSize);
-        throttledTransfer(throttlePolicy, socket, source, Okio.buffer(requestBody), chunkSize);
+        throttledTransfer(response, socket, source, Okio.buffer(requestBody), chunkSize, true);
         readEmptyLine(source);
       }
     }
@@ -721,7 +722,7 @@ public final class MockWebServer {
     Buffer body = response.getBody();
     if (body == null) return;
     sleepIfDelayed(response);
-    throttledTransfer(response, socket, body, sink, body.size());
+    throttledTransfer(response, socket, body, sink, body.size(), false);
   }
 
   private void sleepIfDelayed(MockResponse response) {
@@ -738,18 +739,20 @@ public final class MockWebServer {
   /**
    * Transfer bytes from {@code source} to {@code sink} until either {@code byteCount}
    * bytes have been transferred or {@code source} is exhausted. The transfer is
-   * throttled according to {@code throttlePolicy}.
+   * throttled according to {@code response}.
    */
-  private void throttledTransfer(MockResponse throttlePolicy, Socket socket, BufferedSource source,
-      BufferedSink sink, long byteCount) throws IOException {
+  private void throttledTransfer(MockResponse response, Socket socket, BufferedSource source,
+      BufferedSink sink, long byteCount, boolean isRequest) throws IOException {
     if (byteCount == 0) return;
 
     Buffer buffer = new Buffer();
-    long bytesPerPeriod = throttlePolicy.getThrottleBytesPerPeriod();
-    long periodDelayMs = throttlePolicy.getThrottlePeriod(TimeUnit.MILLISECONDS);
+    long bytesPerPeriod = response.getThrottleBytesPerPeriod();
+    long periodDelayMs = response.getThrottlePeriod(TimeUnit.MILLISECONDS);
 
     long halfByteCount = byteCount / 2;
-    boolean disconnectHalfway = throttlePolicy.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
+    boolean disconnectHalfway = isRequest
+        ? response.getSocketPolicy() == DISCONNECT_DURING_REQUEST_BODY
+        : response.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
 
     while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
@@ -923,7 +926,7 @@ public final class MockWebServer {
       if (body != null) {
         BufferedSink sink = Okio.buffer(stream.getSink());
         sleepIfDelayed(response);
-        throttledTransfer(response, socket, body, sink, bodyLimit);
+        throttledTransfer(response, socket, body, sink, bodyLimit, false);
         sink.close();
       } else if (closeStreamAfterHeaders) {
         stream.close(ErrorCode.NO_ERROR);

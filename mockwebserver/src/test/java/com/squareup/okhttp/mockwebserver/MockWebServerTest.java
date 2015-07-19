@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -255,7 +256,28 @@ public final class MockWebServerTest {
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
   }
 
-  @Test public void disconnectHalfway() throws IOException {
+  @Test public void disconnectRequestHalfway() throws IOException {
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
+
+    HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
+    connection.setRequestMethod("POST");
+    connection.setDoOutput(true);
+    connection.setFixedLengthStreamingMode(20000);
+    connection.connect();
+    OutputStream out = connection.getOutputStream();
+
+    int i;
+    for (i = 0; i < 20000; i++) {
+      try {
+        out.write('a');
+      } catch (IOException e) {
+        break;
+      }
+    }
+    assertEquals(50f, i / 200f, 2f); // Disconnected at 50% +/- 2%
+  }
+
+  @Test public void disconnectResponseHalfway() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ab")
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
