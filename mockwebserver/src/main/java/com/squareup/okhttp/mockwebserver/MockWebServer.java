@@ -82,6 +82,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -753,8 +754,9 @@ public final class MockWebServer implements TestRule {
     long periodDelayMs = policy.getThrottlePeriod(TimeUnit.MILLISECONDS);
 
     long halfByteCount = byteCount / 2;
-    boolean disconnectHalfway =
-        !isRequest && policy.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
+    boolean disconnectHalfway = isRequest
+        ? policy.getSocketPolicy() == DISCONNECT_DURING_REQUEST_BODY
+        : policy.getSocketPolicy() == DISCONNECT_DURING_RESPONSE_BODY;
 
     while (!socket.isClosed()) {
       for (int b = 0; b < bytesPerPeriod; ) {
