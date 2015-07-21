@@ -30,6 +30,7 @@ import com.squareup.okhttp.internal.framed.FramedConnection;
 import com.squareup.okhttp.internal.framed.FramedStream;
 import com.squareup.okhttp.internal.framed.Header;
 import com.squareup.okhttp.internal.framed.IncomingStreamHandler;
+import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import com.squareup.okhttp.ws.WebSocketListener;
@@ -629,19 +630,9 @@ public final class MockWebServer {
       }
     }
 
-    if (request.startsWith("OPTIONS ")
-        || request.startsWith("GET ")
-        || request.startsWith("HEAD ")
-        || request.startsWith("TRACE ")
-        || request.startsWith("CONNECT ")) {
-      if (hasBody) {
-        throw new IllegalArgumentException("Request must not have a body: " + request);
-      }
-    } else if (!request.startsWith("POST ")
-        && !request.startsWith("PUT ")
-        && !request.startsWith("PATCH ")
-        && !request.startsWith("DELETE ")) { // Permitted as spec is ambiguous.
-      throw new UnsupportedOperationException("Unexpected method: " + request);
+    String method = request.substring(0, request.indexOf(' '));
+    if (hasBody && !HttpMethod.permitsRequestBody(method)) {
+      throw new IllegalArgumentException("Request must not have a body: " + request);
     }
 
     return new RecordedRequest(request, headers.build(), chunkSizes, requestBody.receivedByteCount,
