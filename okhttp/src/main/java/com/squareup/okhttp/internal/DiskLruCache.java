@@ -197,8 +197,7 @@ public final class DiskLruCache implements Closeable {
     this.executor = executor;
   }
 
-  // Visible for testing.
-  void initialize() throws IOException {
+  public synchronized void initialize() throws IOException {
     assert Thread.holdsLock(this);
 
     if (initialized) {
