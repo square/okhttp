@@ -23,9 +23,9 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,8 +83,8 @@ public final class CallTest {
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final TestRule timeout = new Timeout(30_000);
 
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
-  @Rule public final MockWebServerRule server2 = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
+  @Rule public final MockWebServer server2 = new MockWebServer();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
@@ -761,7 +761,7 @@ public final class CallTest {
   }
 
   @Test public void tls() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
@@ -774,7 +774,7 @@ public final class CallTest {
   }
 
   @Test public void tls_Async() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
@@ -819,7 +819,7 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -840,7 +840,7 @@ public final class CallTest {
       return;
     }
 
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
     RecordingSSLSocketFactory clientSocketFactory =
@@ -864,7 +864,7 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure_Async() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
@@ -882,7 +882,7 @@ public final class CallTest {
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
     client.setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
 
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
     suppressTlsFallbackScsv(client);
@@ -917,7 +917,7 @@ public final class CallTest {
   }
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location: http://square.com"));
 
     client.setFollowSslRedirects(false);
@@ -930,7 +930,7 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
 
@@ -942,7 +942,7 @@ public final class CallTest {
     Response response1 = client.newCall(request1).execute();
     CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
     for (Certificate certificate : response1.handshake().peerCertificates()) {
-      certificatePinnerBuilder.add(server.get().getHostName(), CertificatePinner.pin(certificate));
+      certificatePinnerBuilder.add(server.getHostName(), CertificatePinner.pin(certificate));
     }
 
     // Make another request with certificate pinning. It should complete normally.
@@ -953,7 +953,7 @@ public final class CallTest {
   }
 
   @Test public void unmatchingPinnedCertificate() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse());
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
@@ -961,7 +961,7 @@ public final class CallTest {
 
     // Pin publicobject.com's cert.
     client.setCertificatePinner(new CertificatePinner.Builder()
-        .add(server.get().getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+        .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
         .build());
 
     // When we pin the wrong certificate, connectivity fails.
@@ -1298,7 +1298,7 @@ public final class CallTest {
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
-    cookie.setDomain(server.get().getCookieDomain());
+    cookie.setDomain(server.getCookieDomain());
     cookie.setPath("/");
     String portList = Integer.toString(server.getPort());
     cookie.setPortlist(portList);
@@ -1312,7 +1312,7 @@ public final class CallTest {
 
     RecordedRequest request1 = server.takeRequest();
     assertEquals("$Version=\"1\"; c=\"cookie\";$Path=\"/\";$Domain=\""
-        + server.get().getCookieDomain()
+        + server.getCookieDomain()
         + "\";$Port=\""
         + portList
         + "\"", request1.getHeader("Cookie"));
@@ -1502,7 +1502,7 @@ public final class CallTest {
   }
 
   @Test public void cancelInFlightBeforeResponseReadThrowsIOE() throws Exception {
-    server.get().setDispatcher(new Dispatcher() {
+    server.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
         client.cancel("request");
         return new MockResponse().setBody("A");
@@ -1533,7 +1533,7 @@ public final class CallTest {
    */
   @Test public void canceledBeforeIOSignalsOnFailure() throws Exception {
     client.getDispatcher().setMaxRequests(1); // Force requests to be executed serially.
-    server.get().setDispatcher(new Dispatcher() {
+    server.setDispatcher(new Dispatcher() {
       char nextResponse = 'A';
 
       @Override public MockResponse dispatch(RecordedRequest request) {
@@ -1567,7 +1567,7 @@ public final class CallTest {
   @Test public void canceledBeforeResponseReadSignalsOnFailure() throws Exception {
     Request requestA = new Request.Builder().url(server.url("/a")).tag("request A").build();
     final Call call = client.newCall(requestA);
-    server.get().setDispatcher(new Dispatcher() {
+    server.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
         call.cancel();
         return new MockResponse().setBody("A");
@@ -1793,8 +1793,8 @@ public final class CallTest {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
     client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
-    server.get().useHttps(sslContext.getSocketFactory(), false);
-    server.get().setProtocols(client.getProtocols());
+    server.useHttps(sslContext.getSocketFactory(), false);
+    server.setProtocols(client.getProtocols());
   }
 
   private Buffer gzip(String data) throws IOException {

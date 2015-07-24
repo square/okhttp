@@ -37,7 +37,6 @@ import com.squareup.okhttp.ws.WebSocketListener;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ServerSocket;
@@ -78,6 +77,9 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
@@ -88,7 +90,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * A scriptable web server. Callers supply canned responses and the server
  * replays them upon request in sequence.
  */
-public final class MockWebServer {
+public final class MockWebServer implements TestRule {
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
     @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
         throws CertificateException {
@@ -127,29 +129,52 @@ public final class MockWebServer {
   private List<Protocol> protocols
       = Util.immutableList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
-  public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
-    if (serverSocketFactory == null) throw new IllegalArgumentException("null serverSocketFactory");
-    this.serverSocketFactory = serverSocketFactory;
+  private boolean started;
+
+  private synchronized void maybeStart() {
+    if (started) return;
+    try {
+      start();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override public Statement apply(final Statement base, Description description) {
+    return new Statement() {
+      @Override public void evaluate() throws Throwable {
+        maybeStart();
+        try {
+          base.evaluate();
+        } finally {
+          try {
+            shutdown();
+          } catch (IOException e) {
+            logger.log(Level.WARNING, "MockWebServer shutdown failed", e);
+          }
+        }
+      }
+    };
   }
 
   public int getPort() {
-    if (port == -1) throw new IllegalStateException("Call start() before getPort()");
+    maybeStart();
     return port;
   }
 
   public String getHostName() {
-    if (inetSocketAddress == null) {
-      throw new IllegalStateException("Call start() before getHostName()");
-    }
+    maybeStart();
     return inetSocketAddress.getHostName();
   }
 
   public Proxy toProxyAddress() {
-    if (inetSocketAddress == null) {
-      throw new IllegalStateException("Call start() before toProxyAddress()");
-    }
+    maybeStart();
     InetSocketAddress address = new InetSocketAddress(inetSocketAddress.getAddress(), getPort());
     return new Proxy(Proxy.Type.HTTP, address);
+  }
+
+  public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
+    this.serverSocketFactory = serverSocketFactory;
   }
 
   /**
@@ -158,13 +183,7 @@ public final class MockWebServer {
    */
   @Deprecated
   public URL getUrl(String path) {
-    try {
-      return sslSocketFactory != null
-          ? new URL("https://" + getHostName() + ":" + getPort() + path)
-          : new URL("http://" + getHostName() + ":" + getPort() + path);
-    } catch (MalformedURLException e) {
-      throw new AssertionError(e);
-    }
+    return url(path).url();
   }
 
   /**
@@ -177,8 +196,8 @@ public final class MockWebServer {
         .scheme(sslSocketFactory != null ? "https" : "http")
         .host(getHostName())
         .port(getPort())
-        .encodedPath(path)
-        .build();
+        .build()
+        .resolve(path);
   }
 
   /**
@@ -284,16 +303,6 @@ public final class MockWebServer {
     ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
   }
 
-  /** @deprecated Use {@link #start()}. */
-  public void play() throws IOException {
-    start();
-  }
-
-  /** @deprecated Use {@link #start(int)}. */
-  public void play(int port) throws IOException {
-    start(port);
-  }
-
   /** Equivalent to {@code start(0)}. */
   public void start() throws IOException {
     start(0);
@@ -328,8 +337,10 @@ public final class MockWebServer {
    *
    * @param inetSocketAddress the socket address to bind the server on
    */
-  private void start(InetSocketAddress inetSocketAddress) throws IOException {
-    if (executor != null) throw new IllegalStateException("start() already called");
+  private synchronized void start(InetSocketAddress inetSocketAddress) throws IOException {
+    if (started) throw new IllegalStateException("start() already called");
+    started = true;
+
     executor = Executors.newCachedThreadPool(Util.threadFactory("MockWebServer", false));
     this.inetSocketAddress = inetSocketAddress;
     serverSocket = serverSocketFactory.createServerSocket();
@@ -382,7 +393,8 @@ public final class MockWebServer {
     });
   }
 
-  public void shutdown() throws IOException {
+  public synchronized void shutdown() throws IOException {
+    if (!started) return;
     if (serverSocket == null) throw new IllegalStateException("shutdown() before start()");
 
     // Cause acceptConnections() to break out.
@@ -927,7 +939,7 @@ public final class MockWebServer {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
             ? Header.TARGET_HOST
-            : Header.TARGET_AUTHORITY, getUrl(pushPromise.getPath()).getHost()));
+            : Header.TARGET_AUTHORITY, url(pushPromise.getPath()).host()));
         pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
         pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
         Headers pushPromiseHeaders = pushPromise.getHeaders();

@@ -24,9 +24,9 @@ import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
@@ -73,7 +73,7 @@ public abstract class HttpOverSpdyTest {
   };
 
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
 
   /** Protocol to test, for example {@link com.squareup.okhttp.Protocol#SPDY_3} */
   private final Protocol protocol;
@@ -88,7 +88,7 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Before public void setUp() throws Exception {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     client.client().setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
     client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
@@ -381,7 +381,7 @@ public abstract class HttpOverSpdyTest {
     client.client().setCookieHandler(cookieManager);
 
     server.enqueue(new MockResponse()
-        .addHeader("set-cookie: c=oreo; domain=" + server.get().getCookieDomain())
+        .addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
         .setBody("A"));
     server.enqueue(new MockResponse()
         .setBody("B"));

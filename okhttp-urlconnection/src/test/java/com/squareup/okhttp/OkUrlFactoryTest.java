@@ -3,7 +3,6 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.text.DateFormat;
@@ -24,15 +23,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class OkUrlFactoryTest {
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
   @Rule public TemporaryFolder cacheFolder = new TemporaryFolder();
 
-  private MockWebServer server;
   private OkUrlFactory factory;
 
   @Before public void setUp() throws IOException {
-    server = serverRule.get();
-
     OkHttpClient client = new OkHttpClient();
     client.setCache(new Cache(cacheFolder.getRoot(), 10 * 1024 * 1024));
     factory = new OkUrlFactory(client);

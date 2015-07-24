@@ -20,7 +20,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -40,7 +40,7 @@ import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 
 public final class WebSocketCallTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
 
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final OkHttpClient client = new OkHttpClient();
@@ -209,7 +209,7 @@ public final class WebSocketCallTest {
   }
 
   @Test public void wssScheme() throws IOException {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
@@ -217,7 +217,7 @@ public final class WebSocketCallTest {
   }
 
   @Test public void httpsScheme() throws IOException {
-    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContext.getSocketFactory(), false);
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 

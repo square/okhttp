@@ -22,7 +22,6 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -77,19 +76,15 @@ public final class CacheTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
-  @Rule public MockWebServerRule server2Rule = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
+  @Rule public MockWebServer server2 = new MockWebServer();
 
   private final OkHttpClient client = new OkHttpClient();
-  private MockWebServer server;
-  private MockWebServer server2;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
-    server = serverRule.get();
     server.setProtocolNegotiationEnabled(false);
-    server2 = server2Rule.get();
     cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
     client.setCache(cache);
     CookieHandler.setDefault(cookieManager);

@@ -21,7 +21,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,14 +52,12 @@ import static org.junit.Assert.fail;
 public final class HttpResponseCacheTest {
 
   @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
 
   private File cacheDir;
-  private MockWebServer server;
   private OkUrlFactory client;
 
   @Before public void setUp() throws Exception {
-    server = serverRule.get();
     cacheDir = cacheRule.getRoot();
     client = new OkUrlFactory(new OkHttpClient());
   }
