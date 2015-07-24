@@ -16,8 +16,8 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
@@ -46,13 +46,13 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 public final class InterceptorTest {
-  @Rule public MockWebServerRule server = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
 
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
 
   @Test public void applicationInterceptorsCanShortCircuitResponses() throws Exception {
-    server.get().shutdown(); // Accept no connections.
+    server.shutdown(); // Accept no connections.
 
     Request request = new Request.Builder()
         .url("https://localhost:1/")
@@ -185,7 +185,7 @@ public final class InterceptorTest {
         // The network request has everything: User-Agent, Host, Accept-Encoding.
         Request networkRequest = chain.request();
         assertNotNull(networkRequest.header("User-Agent"));
-        assertEquals(server.get().getHostName() + ":" + server.get().getPort(),
+        assertEquals(server.getHostName() + ":" + server.getPort(),
             networkRequest.header("Host"));
         assertNotNull(networkRequest.header("Accept-Encoding"));
 

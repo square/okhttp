@@ -27,7 +27,6 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -100,19 +99,15 @@ public final class ResponseCacheTest {
   private static final SSLContext sslContext = SslContextBuilder.localhost();
 
   @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
-  @Rule public MockWebServerRule serverRule = new MockWebServerRule();
-  @Rule public MockWebServerRule server2Rule = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
+  @Rule public MockWebServer server2 = new MockWebServer();
 
   private OkHttpClient client;
-  private MockWebServer server;
-  private MockWebServer server2;
   private ResponseCache cache;
   private CookieManager cookieManager;
 
   @Before public void setUp() throws Exception {
-    server = serverRule.get();
     server.setProtocolNegotiationEnabled(false);
-    server2 = server2Rule.get();
 
     client = new OkHttpClient();
 

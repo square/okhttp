@@ -16,11 +16,11 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -29,17 +29,23 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class MockWebServerTest {
-  @Rule public final MockWebServerRule server = new MockWebServerRule();
+  @Rule public final MockWebServer server = new MockWebServer();
 
   @Test public void defaultMockResponse() {
     MockResponse response = new MockResponse();
@@ -230,9 +236,7 @@ public final class MockWebServerTest {
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis < 1000);
   }
 
-  /**
-   * Delay the response body by sleeping 1s.
-   */
+  /** Delay the response body by sleeping 1s. */
   @Test public void delayResponse() throws IOException {
     server.enqueue(new MockResponse()
         .setBody("ABCDEF")
@@ -242,17 +246,11 @@ public final class MockWebServerTest {
     URLConnection connection = server.getUrl("/").openConnection();
     InputStream in = connection.getInputStream();
     assertEquals('A', in.read());
-    assertEquals('B', in.read());
-    assertEquals('C', in.read());
-    assertEquals('D', in.read());
-    assertEquals('E', in.read());
-    assertEquals('F', in.read());
-    assertEquals(-1, in.read());
     long elapsedNanos = System.nanoTime() - startNanos;
     long elapsedMillis = NANOSECONDS.toMillis(elapsedNanos);
-
     assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis >= 1000);
-    assertTrue(String.format("Request + Response: %sms", elapsedMillis), elapsedMillis <= 1100);
+
+    in.close();
   }
 
   @Test public void disconnectHalfway() throws IOException {
@@ -279,16 +277,53 @@ public final class MockWebServerTest {
 
   @Test public void shutdownWithoutStart() throws IOException {
     MockWebServer server = new MockWebServer();
-    try {
-      server.shutdown();
-      fail();
-    } catch (IllegalStateException expected) {
-    }
+    server.shutdown();
   }
 
   @Test public void shutdownWithoutEnqueue() throws IOException {
     MockWebServer server = new MockWebServer();
     server.start();
     server.shutdown();
+  }
+
+  @After public void tearDown() throws IOException {
+    server.shutdown();
+  }
+
+  @Test public void portImplicitlyStarts() throws IOException {
+    assertTrue(server.getPort() > 0);
+  }
+
+  @Test public void hostNameImplicitlyStarts() throws IOException {
+    assertNotNull(server.getHostName());
+  }
+
+  @Test public void toProxyAddressImplicitlyStarts() throws IOException {
+    assertNotNull(server.toProxyAddress());
+  }
+
+  @Test public void differentInstancesGetDifferentPorts() throws IOException {
+    MockWebServer other = new MockWebServer();
+    assertNotEquals(server.getPort(), other.getPort());
+    other.shutdown();
+  }
+
+  @Test public void statementStartsAndStops() throws Throwable {
+    final AtomicBoolean called = new AtomicBoolean();
+    Statement statement = server.apply(new Statement() {
+      @Override public void evaluate() throws Throwable {
+        called.set(true);
+        server.getUrl("/").openConnection().connect();
+      }
+    }, Description.EMPTY);
+
+    statement.evaluate();
+
+    assertTrue(called.get());
+    try {
+      server.getUrl("/").openConnection().connect();
+      fail();
+    } catch (ConnectException expected) {
+    }
   }
 }

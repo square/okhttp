@@ -25,7 +25,7 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -93,7 +93,7 @@ public class JavaApiConverterTest {
       + "fl2WRY8hb4x+zRrwsFaLEpdEvqcjOQ==\n"
       + "-----END CERTIFICATE-----");
 
-  @Rule public MockWebServerRule server = new MockWebServerRule();
+  @Rule public MockWebServer server = new MockWebServer();
 
   @Before public void setUp() throws Exception {
     Internal.initializeInstanceForTests();
