@@ -39,11 +39,11 @@ public abstract class ResponseBody implements Closeable {
    */
   public abstract long contentLength() throws IOException;
 
-  public final InputStream byteStream() throws IOException {
+  public final InputStream byteStream() {
     return source().inputStream();
   }
 
-  public abstract BufferedSource source() throws IOException;
+  public abstract BufferedSource source();
 
   public final byte[] bytes() throws IOException {
     long contentLength = contentLength();
@@ -69,7 +69,7 @@ public abstract class ResponseBody implements Closeable {
    * of the Content-Type header. If that header is either absent or lacks a
    * charset, this will attempt to decode the response body as UTF-8.
    */
-  public final Reader charStream() throws IOException {
+  public final Reader charStream() {
     Reader r = reader;
     return r != null ? r : (reader = new InputStreamReader(byteStream(), charset()));
   }
@@ -88,8 +88,10 @@ public abstract class ResponseBody implements Closeable {
     return contentType != null ? contentType.charset(UTF_8) : UTF_8;
   }
 
-  @Override public void close() throws IOException {
-    source().close();
+  @Override public void close() {
+    // Propagating IOException when calling close() puts the caller in an awkward position. There
+    // is no good action to be taken on their part. As such, we suppress it for them.
+    Util.closeQuietly(source());
   }
 
   /**
