@@ -469,26 +469,19 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static ResponseBody createOkBody(final Headers okHeaders,
-      final CacheResponse cacheResponse) {
+  private static ResponseBody createOkBody(final Headers okHeaders, CacheResponse cacheResponse)
+      throws IOException {
+    InputStream is = cacheResponse.getBody();
+    final BufferedSource body = Okio.buffer(Okio.source(is));
     return new ResponseBody() {
-      private BufferedSource body;
-
-      @Override
-      public MediaType contentType() {
+      @Override public MediaType contentType() {
         String contentTypeHeader = okHeaders.get("Content-Type");
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
       }
-
-      @Override
-      public long contentLength() {
+      @Override public long contentLength() {
         return OkHeaders.contentLength(okHeaders);
       }
-      @Override public BufferedSource source() throws IOException {
-        if (body == null) {
-          InputStream is = cacheResponse.getBody();
-          body = Okio.buffer(Okio.source(is));
-        }
+      @Override public BufferedSource source() {
         return body;
       }
     };
@@ -497,13 +490,13 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp Response.Body containing the supplied information.
    */
-  private static ResponseBody createOkBody(final URLConnection urlConnection) {
+  private static ResponseBody createOkBody(final URLConnection urlConnection) throws IOException {
     if (!urlConnection.getDoInput()) {
       return null;
     }
+    InputStream is = urlConnection.getInputStream();
+    final BufferedSource body = Okio.buffer(Okio.source(is));
     return new ResponseBody() {
-      private BufferedSource body;
-
       @Override public MediaType contentType() {
         String contentTypeHeader = urlConnection.getContentType();
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
@@ -512,11 +505,7 @@ public final class JavaApiConverter {
         String s = urlConnection.getHeaderField("Content-Length");
         return stringToLong(s);
       }
-      @Override public BufferedSource source() throws IOException {
-        if (body == null) {
-          InputStream is = urlConnection.getInputStream();
-          body = Okio.buffer(Okio.source(is));
-        }
+      @Override public BufferedSource source() {
         return body;
       }
     };
