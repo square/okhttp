@@ -1829,8 +1829,9 @@ public final class CallTest {
    * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
    */
   private static void suppressTlsFallbackScsv(OkHttpClient client) {
+    TlsVersion[] enabledProtocols = { TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0 };
     FallbackTestClientSocketFactory clientSocketFactory =
-        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
+        new FallbackTestClientSocketFactory(sslContext.getSocketFactory(), enabledProtocols);
     client.setSslSocketFactory(clientSocketFactory);
   }
 }

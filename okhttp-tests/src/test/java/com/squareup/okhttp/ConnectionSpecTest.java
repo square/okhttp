@@ -121,6 +121,57 @@ public final class ConnectionSpecTest {
   }
 
   @Test
+  public void tls_requireFirstTlsVersion() throws Exception {
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1)
+        .requireFirstTlsVersion(true)
+        .build();
+
+    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
+    socket.setEnabledProtocols(new String[] {
+        TlsVersion.TLS_1_2.javaName,
+        TlsVersion.TLS_1_1.javaName,
+    });
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, false /* isFallback */);
+
+    assertEquals(createSet(TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName),
+        createSet(socket.getEnabledProtocols()));
+
+    socket.setEnabledProtocols(new String[] {
+        TlsVersion.TLS_1_1.javaName,
+    });
+    assertFalse(tlsSpec.isCompatible(socket));
+  }
+
+  @Test
+  public void tls_doNotRequireFirstTlsVersion() throws Exception {
+    ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
+        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1)
+        .requireFirstTlsVersion(false)
+        .build();
+
+    SSLSocket socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket();
+    socket.setEnabledProtocols(new String[] {
+        TlsVersion.TLS_1_2.javaName,
+        TlsVersion.TLS_1_1.javaName,
+    });
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, false /* isFallback */);
+
+    assertEquals(createSet(TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName),
+        createSet(socket.getEnabledProtocols()));
+
+    socket.setEnabledProtocols(new String[] {
+        TlsVersion.TLS_1_1.javaName,
+    });
+    assertTrue(tlsSpec.isCompatible(socket));
+    tlsSpec.apply(socket, false /* isFallback */);
+
+    assertEquals(createSet(TlsVersion.TLS_1_1.javaName), createSet(socket.getEnabledProtocols()));
+  }
+
+  @Test
   public void tls_explicitCiphers() throws Exception {
     ConnectionSpec tlsSpec = new ConnectionSpec.Builder(true)
         .cipherSuites(CipherSuite.TLS_RSA_WITH_RC4_128_MD5)

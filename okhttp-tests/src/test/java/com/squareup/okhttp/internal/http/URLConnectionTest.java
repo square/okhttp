@@ -605,7 +605,8 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("this response comes via SSL"));
 
-    suppressTlsFallbackScsv(client.client());
+    installTestClientSocketFactory(client.client(),
+        TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.getUrl("/foo"));
 
@@ -621,7 +622,8 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
-    suppressTlsFallbackScsv(client.client());
+    installTestClientSocketFactory(client.client(),
+        TlsVersion.TLS_1_2, TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
     Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
 
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
@@ -632,6 +634,34 @@ public final class URLConnectionTest {
       fail();
     } catch (IOException expected) {
       assertEquals(1, expected.getSuppressed().length);
+    }
+  }
+
+  @Test public void firstConnectionSpecAvoidedWhenPrimaryTlsVersionNotSupported() throws Exception {
+    server.get().useHttps(sslContext.getSocketFactory(), false);
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
+    server.enqueue(new MockResponse().setBody("this request should not happen"));
+
+    ConnectionSpec requireTlsV11 = new ConnectionSpec.Builder(ConnectionSpec.MODERN_TLS)
+        .tlsVersions(TlsVersion.TLS_1_2, TlsVersion.TLS_1_1)
+        .requireFirstTlsVersion(true)
+        .build();
+    ConnectionSpec requireTlsV10 = new ConnectionSpec.Builder(requireTlsV11)
+        .tlsVersions(TlsVersion.TLS_1_1)
+        .build();
+    client.client().setConnectionSpecs(Arrays.asList(requireTlsV11, requireTlsV10));
+
+    // Ensure the client socket enables one protocol. Only one connection attempt should be made
+    // because the first connection spec should be skipped.
+    installTestClientSocketFactory(client.client(), TlsVersion.TLS_1_1, TlsVersion.TLS_1_0);
+    client.client().setHostnameVerifier(new RecordingHostnameVerifier());
+    Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
+
+    connection = client.open(server.getUrl("/foo"));
+    try {
+      connection.getResponseCode();
+      fail();
+    } catch (IOException expected) {
     }
   }
 
@@ -648,7 +678,7 @@ public final class URLConnectionTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
     server.enqueue(new MockResponse().setBody("def"));
 
-    suppressTlsFallbackScsv(client.client());
+    installTestClientSocketFactory(client.client(),  TlsVersion.TLS_1_2, TlsVersion.TLS_1_1);
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
 
     assertContent("abc", client.open(server.getUrl("/")));
@@ -3312,9 +3342,10 @@ public final class URLConnectionTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See
    * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
    */
-  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+  private static void installTestClientSocketFactory(OkHttpClient client,
+      TlsVersion... enabledProtocols) {
     FallbackTestClientSocketFactory clientSocketFactory =
-        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
+        new FallbackTestClientSocketFactory(sslContext.getSocketFactory(), enabledProtocols);
     client.setSslSocketFactory(clientSocketFactory);
   }
 }
