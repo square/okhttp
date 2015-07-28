@@ -151,7 +151,7 @@ public class Call {
     }
 
     void cancel() {
-      Call.this.cancel();
+      client.getDispatcher().cancel(tag());
     }
 
     Call get() {
