@@ -21,12 +21,15 @@ import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Version;
+import com.squareup.okhttp.internal.io.FileSystem;
+import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -64,7 +67,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
@@ -78,13 +80,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CallTest {
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
-  @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final TestRule timeout = new Timeout(30_000);
-
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
+
+  private SSLContext sslContext = SslContextBuilder.localhost();
+  private FileSystem fileSystem = new InMemoryFileSystem();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
@@ -95,7 +96,7 @@ public final class CallTest {
     callback = new RecordingCallback();
     logHandler = new TestLogHandler();
 
-    cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     logger.addHandler(logHandler);
   }
 
@@ -1828,7 +1829,7 @@ public final class CallTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See
    * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
    */
-  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+  private void suppressTlsFallbackScsv(OkHttpClient client) {
     FallbackTestClientSocketFactory clientSocketFactory =
         new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
     client.setSslSocketFactory(clientSocketFactory);

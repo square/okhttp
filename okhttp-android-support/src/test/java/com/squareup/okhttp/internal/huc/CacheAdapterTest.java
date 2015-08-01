@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
@@ -37,12 +38,10 @@ import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
+import okio.Buffer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import okio.Buffer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -59,17 +58,10 @@ import static org.junit.Assert.assertTrue;
  * </ul>
  */
 public class CacheAdapterTest {
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    public boolean verify(String hostname, SSLSession session) {
-      return true;
-    }
-  };
-
+  private SSLContext sslContext = SslContextBuilder.localhost();
+  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private MockWebServer server;
-
   private OkHttpClient client;
-
   private HttpURLConnection connection;
 
   @Before public void setUp() throws Exception {
@@ -123,7 +115,7 @@ public class CacheAdapterTest {
     };
     Internal.instance.setCache(client, new CacheAdapter(responseCache));
     client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setHostnameVerifier(hostnameVerifier);
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key1", "value1");
@@ -238,7 +230,7 @@ public class CacheAdapterTest {
     };
     Internal.instance.setCache(client, new CacheAdapter(responseCache));
     client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setHostnameVerifier(hostnameVerifier);
 
     connection = new OkUrlFactory(client).open(serverUrl);
     executeGet(connection);

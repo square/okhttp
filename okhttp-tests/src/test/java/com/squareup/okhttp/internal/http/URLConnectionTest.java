@@ -113,12 +113,11 @@ import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest. */
 public final class URLConnectionTest {
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
 
+  private SSLContext sslContext = SslContextBuilder.localhost();
   private OkUrlFactory client;
   private HttpURLConnection connection;
   private Cache cache;
@@ -3312,7 +3311,7 @@ public final class URLConnectionTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See
    * {@link com.squareup.okhttp.FallbackTestClientSocketFactory} for details.
    */
-  private static void suppressTlsFallbackScsv(OkHttpClient client) {
+  private void suppressTlsFallbackScsv(OkHttpClient client) {
     FallbackTestClientSocketFactory clientSocketFactory =
         new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
     client.setSslSocketFactory(clientSocketFactory);

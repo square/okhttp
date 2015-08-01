@@ -18,5 +18,10 @@
       <artifactId>junit</artifactId>
       <optional>true</optional>
     </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

@@ -39,9 +39,9 @@ import org.junit.Test;
 import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
 
 public final class WebSocketCallTest {
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
   @Rule public final MockWebServer server = new MockWebServer();
 
+  private final SSLContext sslContext = SslContextBuilder.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final OkHttpClient client = new OkHttpClient();
   private final Random random = new Random(0);
