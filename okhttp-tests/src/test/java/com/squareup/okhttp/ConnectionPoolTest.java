@@ -16,12 +16,12 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.RecordingProxySelector;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -52,8 +52,8 @@ public final class ConnectionPoolTest {
       ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
 
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
 
+  private SSLContext sslContext = SslContextBuilder.localhost();
   private MockWebServer spdyServer;
   private InetSocketAddress spdySocketAddress;
   private Address spdyAddress;

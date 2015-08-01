@@ -17,9 +17,6 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.TlsVersion;
-
-import org.junit.Test;
-
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
@@ -28,21 +25,21 @@ import java.util.Set;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ConnectionSpecSelectorTest {
-
   static {
     Internal.initializeInstanceForTests();
   }
 
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
+
+  private SSLContext sslContext = SslContextBuilder.localhost();
 
   @Test
   public void nonRetryableIOException() throws Exception {

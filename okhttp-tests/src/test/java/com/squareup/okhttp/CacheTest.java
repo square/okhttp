@@ -19,6 +19,8 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.io.FileSystem;
+import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -55,7 +57,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
 import static org.junit.Assert.assertEquals;
@@ -73,19 +74,18 @@ public final class CacheTest {
     }
   };
 
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
-  @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
 
+  private final SSLContext sslContext = SslContextBuilder.localhost();
+  private final FileSystem fileSystem = new InMemoryFileSystem();
   private final OkHttpClient client = new OkHttpClient();
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
-    cache = new Cache(cacheRule.getRoot(), Integer.MAX_VALUE);
+    cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client.setCache(cache);
     CookieHandler.setDefault(cookieManager);
   }
@@ -1926,7 +1926,7 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE);
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client.setCache(cache);
 
     Response response = get(url);
@@ -2152,7 +2152,7 @@ public final class CacheTest {
 
 
   private void writeFile(File directory, String file, String content) throws IOException {
-    BufferedSink sink = Okio.buffer(Okio.sink(new File(directory, file)));
+    BufferedSink sink = Okio.buffer(fileSystem.sink(new File(directory, file)));
     sink.writeUtf8(content);
     sink.close();
   }

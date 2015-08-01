@@ -165,7 +165,11 @@ public final class Cache {
   private int requestCount;
 
   public Cache(File directory, long maxSize) {
-    cache = DiskLruCache.create(FileSystem.SYSTEM, directory, VERSION, ENTRY_COUNT, maxSize);
+    this(directory, maxSize, FileSystem.SYSTEM);
+  }
+
+  Cache(File directory, long maxSize, FileSystem fileSystem) {
+    this.cache = DiskLruCache.create(fileSystem, directory, VERSION, ENTRY_COUNT, maxSize);
   }
 
   private static String urlToKey(Request request) {

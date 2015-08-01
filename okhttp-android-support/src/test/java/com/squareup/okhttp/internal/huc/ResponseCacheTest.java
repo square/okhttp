@@ -27,6 +27,7 @@ import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -66,7 +67,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -90,18 +90,12 @@ import static org.junit.Assert.fail;
  * Based on com.squareup.okhttp.CacheTest with changes for ResponseCache and HttpURLConnection.
  */
 public final class ResponseCacheTest {
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    @Override public boolean verify(String s, SSLSession sslSession) {
-      return true;
-    }
-  };
-
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
   @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
   @Rule public MockWebServer server = new MockWebServer();
   @Rule public MockWebServer server2 = new MockWebServer();
 
+  private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+  private SSLContext sslContext = SslContextBuilder.localhost();
   private OkHttpClient client;
   private ResponseCache cache;
   private CookieManager cookieManager;
@@ -270,7 +264,7 @@ public final class ResponseCacheTest {
 
     HttpsURLConnection c1 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     c1.setSSLSocketFactory(sslContext.getSocketFactory());
-    c1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    c1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c1));
 
     // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
@@ -282,7 +276,7 @@ public final class ResponseCacheTest {
 
     HttpsURLConnection c2 = (HttpsURLConnection) openConnection(server.getUrl("/")); // cached!
     c2.setSSLSocketFactory(sslContext.getSocketFactory());
-    c2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    c2.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c2));
 
     assertEquals(suite, c2.getCipherSuite());
@@ -354,7 +348,7 @@ public final class ResponseCacheTest {
         .setBody("DEF"));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setHostnameVerifier(hostnameVerifier);
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
@@ -392,7 +386,7 @@ public final class ResponseCacheTest {
         .addHeader("Location: " + server2.getUrl("/")));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setHostnameVerifier(hostnameVerifier);
 
     HttpURLConnection connection1 = openConnection(server.getUrl("/"));
     assertEquals("ABC", readAscii(connection1));
@@ -1461,7 +1455,7 @@ public final class ResponseCacheTest {
         .setBody("B"));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setHostnameVerifier(hostnameVerifier);
 
     URL url = server.getUrl("/");
     HttpURLConnection connection1 = openConnection(url);
@@ -1996,13 +1990,13 @@ public final class ResponseCacheTest {
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     connection1.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    connection1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(connection1));
 
     // Not cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) openConnection(server.getUrl("/"));
     connection2.setSSLSocketFactory(sslContext.getSocketFactory());
-    connection2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    connection2.setHostnameVerifier(hostnameVerifier);
     assertEquals("DEF", readAscii(connection2));
   }
 

@@ -27,6 +27,7 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
@@ -44,7 +45,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -64,14 +64,6 @@ import static org.junit.Assert.fail;
 
 /** Test how SPDY interacts with HTTP features. */
 public abstract class HttpOverSpdyTest {
-  private static final SSLContext sslContext = SslContextBuilder.localhost();
-
-  private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
-    public boolean verify(String hostname, SSLSession session) {
-      return true;
-    }
-  };
-
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -79,6 +71,8 @@ public abstract class HttpOverSpdyTest {
   private final Protocol protocol;
   protected String hostHeader = ":host";
 
+  protected SSLContext sslContext = SslContextBuilder.localhost();
+  protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   protected final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
   protected HttpURLConnection connection;
   protected Cache cache;
@@ -91,7 +85,7 @@ public abstract class HttpOverSpdyTest {
     server.useHttps(sslContext.getSocketFactory(), false);
     client.client().setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
-    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.client().setHostnameVerifier(hostnameVerifier);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
   }
 
