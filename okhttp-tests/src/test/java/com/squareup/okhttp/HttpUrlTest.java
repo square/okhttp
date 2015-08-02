@@ -269,27 +269,26 @@ public final class HttpUrlTest {
 
   @Test public void hostIpv6() throws Exception {
     // Square braces are absent from host()...
-    String address = "0:0:0:0:0:0:0:1";
-    assertEquals(address, HttpUrl.parse("http://[::1]/").host());
+    assertEquals("::1", HttpUrl.parse("http://[::1]/").host());
 
     // ... but they're included in toString().
-    assertEquals("http://[0:0:0:0:0:0:0:1]/", HttpUrl.parse("http://[::1]/").toString());
+    assertEquals("http://[::1]/", HttpUrl.parse("http://[::1]/").toString());
 
     // IPv6 colons don't interfere with port numbers or passwords.
     assertEquals(8080, HttpUrl.parse("http://[::1]:8080/").port());
     assertEquals("password", HttpUrl.parse("http://user:password@[::1]/").password());
-    assertEquals(address, HttpUrl.parse("http://user:password@[::1]:8080/").host());
+    assertEquals("::1", HttpUrl.parse("http://user:password@[::1]:8080/").host());
 
     // Permit the contents of IPv6 addresses to be percent-encoded...
-    assertEquals(address, HttpUrl.parse("http://[%3A%3A%31]/").host());
+    assertEquals("::1", HttpUrl.parse("http://[%3A%3A%31]/").host());
 
     // Including the Square braces themselves! (This is what Chrome does.)
-    assertEquals(address, HttpUrl.parse("http://%5B%3A%3A1%5D/").host());
+    assertEquals("::1", HttpUrl.parse("http://%5B%3A%3A1%5D/").host());
   }
 
   @Test public void hostIpv6AddressDifferentFormats() throws Exception {
     // Multiple representations of the same address; see http://tools.ietf.org/html/rfc5952.
-    String a3 = "2001:db8:0:0:1:0:0:1";
+    String a3 = "2001:db8::1:0:0:1";
     assertEquals(a3, HttpUrl.parse("http://[2001:db8:0:0:1:0:0:1]").host());
     assertEquals(a3, HttpUrl.parse("http://[2001:0db8:0:0:1:0:0:1]").host());
     assertEquals(a3, HttpUrl.parse("http://[2001:db8::1:0:0:1]").host());
@@ -301,19 +300,17 @@ public final class HttpUrlTest {
   }
 
   @Test public void hostIpv6AddressLeadingCompression() throws Exception {
-    String a1 = "0:0:0:0:0:0:0:1";
-    assertEquals(a1, HttpUrl.parse("http://[::0001]").host());
-    assertEquals(a1, HttpUrl.parse("http://[0000::0001]").host());
-    assertEquals(a1, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001]").host());
-    assertEquals(a1, HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000::0001]").host());
+    assertEquals("::1", HttpUrl.parse("http://[::0001]").host());
+    assertEquals("::1", HttpUrl.parse("http://[0000::0001]").host());
+    assertEquals("::1", HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000:0000:0001]").host());
+    assertEquals("::1", HttpUrl.parse("http://[0000:0000:0000:0000:0000:0000::0001]").host());
   }
 
   @Test public void hostIpv6AddressTrailingCompression() throws Exception {
-    String a2 = "1:0:0:0:0:0:0:0";
-    assertEquals(a2, HttpUrl.parse("http://[0001:0000::]").host());
-    assertEquals(a2, HttpUrl.parse("http://[0001::0000]").host());
-    assertEquals(a2, HttpUrl.parse("http://[0001::]").host());
-    assertEquals(a2, HttpUrl.parse("http://[1::]").host());
+    assertEquals("1::", HttpUrl.parse("http://[0001:0000::]").host());
+    assertEquals("1::", HttpUrl.parse("http://[0001::0000]").host());
+    assertEquals("1::", HttpUrl.parse("http://[0001::]").host());
+    assertEquals("1::", HttpUrl.parse("http://[1::]").host());
   }
 
   @Test public void hostIpv6AddressTooManyDigitsInGroup() throws Exception {
@@ -351,8 +348,8 @@ public final class HttpUrlTest {
   }
 
   @Test public void hostIpv6WithIpv4Suffix() throws Exception {
-    assertEquals("0:0:0:0:0:1:ffff:ffff", HttpUrl.parse("http://[::1:255.255.255.255]/").host());
-    assertEquals("0:0:0:0:0:1:0:0", HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.0]/").host());
+    assertEquals("::1:ffff:ffff", HttpUrl.parse("http://[::1:255.255.255.255]/").host());
+    assertEquals("::1:0:0", HttpUrl.parse("http://[0:0:0:0:0:1:0.0.0.0]/").host());
   }
 
   @Test public void hostIpv6WithIpv4SuffixWithOctalPrefix() throws Exception {
@@ -387,6 +384,29 @@ public final class HttpUrlTest {
     // To Chrome & Safari these are well-formed; Firefox disagrees. (We're consistent with Firefox).
     assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255.255.255.]/"));
     assertEquals(null, HttpUrl.parse("http://[0:0:0:0:0:1:255.255.255]/"));
+  }
+
+  @Test public void hostIpv6CanonicalForm() throws Exception {
+    assertEquals("abcd:ef01:2345:6789:abcd:ef01:2345:6789",
+        HttpUrl.parse("http://[abcd:ef01:2345:6789:abcd:ef01:2345:6789]/").host());
+    assertEquals("a::b:0:0:0", HttpUrl.parse("http://[a:0:0:0:b:0:0:0]/").host());
+    assertEquals("a:b:0:0:c::", HttpUrl.parse("http://[a:b:0:0:c:0:0:0]/").host());
+    assertEquals("a:b::c:0:0", HttpUrl.parse("http://[a:b:0:0:0:c:0:0]/").host());
+    assertEquals("a::b:0:0:0", HttpUrl.parse("http://[a:0:0:0:b:0:0:0]/").host());
+    assertEquals("::a:b:0:0:0", HttpUrl.parse("http://[0:0:0:a:b:0:0:0]/").host());
+    assertEquals("::a:0:0:0:b", HttpUrl.parse("http://[0:0:0:a:0:0:0:b]/").host());
+    assertEquals("::a:b:c:d:e:f:1", HttpUrl.parse("http://[0:a:b:c:d:e:f:1]/").host());
+    assertEquals("a:b:c:d:e:f:1::", HttpUrl.parse("http://[a:b:c:d:e:f:1:0]/").host());
+    assertEquals("ff01::101", HttpUrl.parse("http://[FF01:0:0:0:0:0:0:101]/").host());
+    assertEquals("1::", HttpUrl.parse("http://[1:0:0:0:0:0:0:0]/").host());
+    assertEquals("::1", HttpUrl.parse("http://[0:0:0:0:0:0:0:1]/").host());
+    assertEquals("::", HttpUrl.parse("http://[0:0:0:0:0:0:0:0]/").host());
+  }
+
+  @Test public void hostIpv4CanonicalForm() throws Exception {
+    assertEquals("255.255.255.255", HttpUrl.parse("http://255.255.255.255/").host());
+    assertEquals("1.2.3.4", HttpUrl.parse("http://1.2.3.4/").host());
+    assertEquals("0.0.0.0", HttpUrl.parse("http://0.0.0.0/").host());
   }
 
   @Ignore("java.net.IDN strips trailing trailing dots on Java 7, but not on Java 8.")
