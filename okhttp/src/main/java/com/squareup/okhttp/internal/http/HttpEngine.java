@@ -327,19 +327,9 @@ public final class HttpEngine {
       }
     }
 
-    connection = nextConnection();
-    route = connection.getRoute();
-  }
-
-  /**
-   * Returns the next connection to attempt.
-   *
-   * @throws java.util.NoSuchElementException if there are no more routes to attempt.
-   */
-  private Connection nextConnection() throws RouteException {
-    Connection connection = createNextConnection();
+    connection = createNextConnection();
     Internal.instance.connectAndSetOwner(client, connection, this, networkRequest);
-    return connection;
+    route = connection.getRoute();
   }
 
   private Connection createNextConnection() throws RouteException {
@@ -572,17 +562,25 @@ public final class HttpEngine {
   }
 
   /**
-   * Immediately closes the socket connection if it's currently held by this
-   * engine. Use this to interrupt an in-flight request from any thread. It's
-   * the caller's responsibility to close the request body and response body
-   * streams; otherwise resources may be leaked.
+   * Immediately closes the socket connection if it's currently held by this engine. Use this to
+   * interrupt an in-flight request from any thread. It's the caller's responsibility to close the
+   * request body and response body streams; otherwise resources may be leaked.
+   *
+   * <p>This method is safe to be called concurrently, but provides limited guarantees. If a
+   * transport layer connection has been established (such as a HTTP/2 stream) that is terminated.
+   * Otherwise if a socket connection is being established, that is terminated.
    */
   public void disconnect() {
-    if (transport != null) {
-      try {
+    try {
+      if (transport != null) {
         transport.disconnect(this);
-      } catch (IOException ignored) {
+      } else {
+        Connection connection = this.connection;
+        if (connection != null) {
+          Internal.instance.closeIfOwnedBy(connection, this);
+        }
       }
+    } catch (IOException ignored) {
     }
   }
 

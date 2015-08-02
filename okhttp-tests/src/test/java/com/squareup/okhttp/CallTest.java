@@ -20,6 +20,7 @@ import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.internal.io.FileSystem;
 import com.squareup.okhttp.internal.io.InMemoryFileSystem;
@@ -36,7 +37,10 @@ import java.io.InterruptedIOException;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ProtocolException;
+import java.net.ServerSocket;
 import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -52,6 +56,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -89,19 +94,16 @@ public final class CallTest {
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
-  private Cache cache;
+  private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
+  private ServerSocket nullServer;
 
   @Before public void setUp() throws Exception {
-    client = new OkHttpClient();
-    callback = new RecordingCallback();
-    logHandler = new TestLogHandler();
-
-    cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     logger.addHandler(logHandler);
   }
 
   @After public void tearDown() throws Exception {
     cache.delete();
+    Util.closeQuietly(nullServer);
     logger.removeHandler(logHandler);
   }
 
@@ -1469,6 +1471,45 @@ public final class CallTest {
     assertEquals(0, server.getRequestCount());
   }
 
+  @Test public void cancelDuringHttpConnect() throws Exception {
+    cancelDuringConnect("http");
+  }
+
+  @Test public void cancelDuringHttpsConnect() throws Exception {
+    cancelDuringConnect("https");
+  }
+
+  /** Cancel a call that's waiting for connect to complete. */
+  private void cancelDuringConnect(String scheme) throws Exception {
+    InetSocketAddress socketAddress = startNullServer();
+
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme(scheme)
+        .host(socketAddress.getHostName())
+        .port(socketAddress.getPort())
+        .build();
+
+    long cancelDelayMillis = 300L;
+    Call call = client.newCall(new Request.Builder().url(url).build());
+    cancelLater(call, cancelDelayMillis);
+
+    long startNanos = System.nanoTime();
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+    }
+    long elapsedNanos = System.nanoTime() - startNanos;
+    assertEquals(cancelDelayMillis, TimeUnit.NANOSECONDS.toMillis(elapsedNanos), 100f);
+  }
+
+  private InetSocketAddress startNullServer() throws IOException {
+    InetSocketAddress address = new InetSocketAddress(InetAddress.getByName("localhost"), 0);
+    nullServer = ServerSocketFactory.getDefault().createServerSocket();
+    nullServer.bind(address);
+    return new InetSocketAddress(address.getAddress(), nullServer.getLocalPort());
+  }
+
   @Test public void cancelTagImmediatelyAfterEnqueue() throws Exception {
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/a"))
@@ -1804,6 +1845,19 @@ public final class CallTest {
     sink.writeUtf8(data);
     sink.close();
     return result;
+  }
+
+  private void cancelLater(final Call call, final long delay) {
+    new Thread("canceler") {
+      @Override public void run() {
+        try {
+          Thread.sleep(delay);
+        } catch (InterruptedException e) {
+          throw new AssertionError();
+        }
+        call.cancel();
+      }
+    }.start();
   }
 
   private static class RecordingSSLSocketFactory extends DelegatingSSLSocketFactory {
