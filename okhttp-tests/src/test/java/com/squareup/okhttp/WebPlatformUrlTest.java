@@ -64,9 +64,7 @@ public final class WebPlatformUrlTest {
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01%2e> against <http://other.com/>",
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01> against <http://other.com/>",
       "Parsing: <http://192.168.0.257> against <http://other.com/>",
-      "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>",
-      "Parsing: <http://[2001::1]> against <http://example.org/foo/bar>",
-      "Parsing: <http://[2001::1]:80> against <http://example.org/foo/bar>"
+      "Parsing: <http://０Ｘｃ０．０２５０．０１> against <http://other.com/>"
   );
 
   /** Test how {@link HttpUrl} does against the web platform test suite. */
