@@ -4,7 +4,6 @@ import com.squareup.okhttp.CacheControl;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-
 import java.util.Date;
 
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
@@ -254,7 +253,7 @@ public final class CacheStrategy {
         long delta = expires.getTime() - servedMillis;
         return delta > 0 ? delta : 0;
       } else if (lastModified != null
-          && cacheResponse.request().url().getQuery() == null) {
+          && cacheResponse.request().httpUrl().query() == null) {
         // As recommended by the HTTP RFC and implemented in Firefox, the
         // max age of a document should be defaulted to 10% of the
         // document's age at the time it was served. Default expiration

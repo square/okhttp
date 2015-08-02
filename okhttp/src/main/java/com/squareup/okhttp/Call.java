@@ -16,13 +16,11 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
-import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.RequestException;
+import com.squareup.okhttp.internal.http.RouteException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.ProtocolException;
-import java.net.URL;
 import java.util.logging.Level;
 
 import static com.squareup.okhttp.internal.Internal.logger;
@@ -139,7 +137,7 @@ public class Call {
     }
 
     String host() {
-      return originalRequest.url().getHost();
+      return originalRequest.httpUrl().host();
     }
 
     Request request() {
@@ -188,12 +186,8 @@ public class Call {
    */
   private String toLoggableString() {
     String string = canceled ? "canceled call" : "call";
-    try {
-      String redactedUrl = new URL(originalRequest.url(), "/...").toString();
-      return string + " to " + redactedUrl;
-    } catch (MalformedURLException e) {
-      return string;
-    }
+    HttpUrl redactedUrl = originalRequest.httpUrl().resolve("/...");
+    return string + " to " + redactedUrl;
   }
 
   private Response getResponseWithInterceptorChain(boolean forWebSocket) throws IOException {
@@ -310,7 +304,7 @@ public class Call {
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
-      if (!engine.sameConnection(followUp.url())) {
+      if (!engine.sameConnection(followUp.httpUrl())) {
         engine.releaseConnection();
       }
 

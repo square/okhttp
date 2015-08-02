@@ -114,8 +114,8 @@ public final class FramedTransport implements Transport {
     Headers headers = request.headers();
     List<Header> result = new ArrayList<>(headers.size() + 10);
     result.add(new Header(TARGET_METHOD, request.method()));
-    result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.url())));
-    String host = HttpEngine.hostHeader(request.url());
+    result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.httpUrl())));
+    String host = Util.hostHeader(request.httpUrl());
     if (Protocol.SPDY_3 == protocol) {
       result.add(new Header(VERSION, version));
       result.add(new Header(TARGET_HOST, host));
@@ -124,7 +124,7 @@ public final class FramedTransport implements Transport {
     } else {
       throw new AssertionError();
     }
-    result.add(new Header(TARGET_SCHEME, request.url().getProtocol()));
+    result.add(new Header(TARGET_SCHEME, request.httpUrl().scheme()));
 
     Set<ByteString> names = new LinkedHashSet<ByteString>();
     for (int i = 0, size = headers.size(); i < size; i++) {

@@ -210,7 +210,7 @@ public final class JavaApiConverter {
     }
 
     Request cacheRequest = new Request.Builder()
-        .url(request.url())
+        .url(request.httpUrl())
         .method(request.method(), null)
         .headers(varyHeaders)
         .build();

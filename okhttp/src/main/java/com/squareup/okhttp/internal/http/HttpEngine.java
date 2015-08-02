@@ -22,6 +22,7 @@ import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -39,8 +40,6 @@ import java.io.InterruptedIOException;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
@@ -59,8 +58,6 @@ import okio.Source;
 import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
-import static com.squareup.okhttp.internal.Util.getDefaultPort;
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
@@ -694,7 +691,7 @@ public final class HttpEngine {
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {
-      result.header("Host", hostHeader(request.url()));
+      result.header("Host", Util.hostHeader(request.httpUrl()));
     }
 
     if ((connection == null || connection.getProtocol() != Protocol.HTTP_1_0)
@@ -725,12 +722,6 @@ public final class HttpEngine {
     }
 
     return result.build();
-  }
-
-  public static String hostHeader(URL url) {
-    return getEffectivePort(url) != getDefaultPort(url.getProtocol())
-        ? url.getHost() + ":" + url.getPort()
-        : url.getHost();
   }
 
   /**
@@ -857,8 +848,8 @@ public final class HttpEngine {
         Address address = connection().getRoute().getAddress();
 
         // Confirm that the interceptor uses the connection we've already prepared.
-        if (!request.url().getHost().equals(address.getUriHost())
-            || getEffectivePort(request.url()) != address.getUriPort()) {
+        if (!request.httpUrl().host().equals(address.getUriHost())
+            || request.httpUrl().port() != address.getUriPort()) {
           throw new IllegalStateException("network interceptor " + caller
               + " must retain the same host and port");
         }
@@ -1091,14 +1082,14 @@ public final class HttpEngine {
 
         String location = userResponse.header("Location");
         if (location == null) return null;
-        URL url = new URL(userRequest.url(), location);
+        HttpUrl url = userRequest.httpUrl().resolve(location);
 
         // Don't follow redirects to unsupported protocols.
-        if (!url.getProtocol().equals("https") && !url.getProtocol().equals("http")) return null;
+        if (url == null) return null;
 
         // If configured, don't follow redirects between SSL and non-SSL.
-        boolean sameProtocol = url.getProtocol().equals(userRequest.url().getProtocol());
-        if (!sameProtocol && !client.getFollowSslRedirects()) return null;
+        boolean sameScheme = url.scheme().equals(userRequest.httpUrl().scheme());
+        if (!sameScheme && !client.getFollowSslRedirects()) return null;
 
         // Redirects don't include a request body.
         Request.Builder requestBuilder = userRequest.newBuilder();
@@ -1127,20 +1118,14 @@ public final class HttpEngine {
    * Returns true if an HTTP request for {@code followUp} can reuse the
    * connection used by this engine.
    */
-  public boolean sameConnection(URL followUp) {
-    URL url = userRequest.url();
-    return url.getHost().equals(followUp.getHost())
-        && getEffectivePort(url) == getEffectivePort(followUp)
-        && url.getProtocol().equals(followUp.getProtocol());
+  public boolean sameConnection(HttpUrl followUp) {
+    HttpUrl url = userRequest.httpUrl();
+    return url.host().equals(followUp.host())
+        && url.port() == followUp.port()
+        && url.scheme().equals(followUp.scheme());
   }
 
-  private static Address createAddress(OkHttpClient client, Request request)
-      throws RequestException {
-    String uriHost = request.url().getHost();
-    if (uriHost == null || uriHost.length() == 0) {
-      throw new RequestException(new UnknownHostException(request.url().toString()));
-    }
-
+  private static Address createAddress(OkHttpClient client, Request request) {
     SSLSocketFactory sslSocketFactory = null;
     HostnameVerifier hostnameVerifier = null;
     CertificatePinner certificatePinner = null;
@@ -1150,7 +1135,7 @@ public final class HttpEngine {
       certificatePinner = client.getCertificatePinner();
     }
 
-    return new Address(uriHost, getEffectivePort(request.url()),
+    return new Address(request.httpUrl().host(), request.httpUrl().port(),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getAuthenticator(), client.getProxy(), client.getProtocols(),
         client.getConnectionSpecs(), client.getProxySelector());

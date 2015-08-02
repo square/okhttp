@@ -19,7 +19,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -139,7 +138,7 @@ public final class InterceptorTest {
         String sameHost = address.getUriHost();
         int differentPort = address.getUriPort() + 1;
         return chain.proceed(chain.request().newBuilder()
-            .url(new URL("http://" + sameHost + ":" + differentPort + "/"))
+            .url(HttpUrl.parse("http://" + sameHost + ":" + differentPort + "/"))
             .build());
       }
     };

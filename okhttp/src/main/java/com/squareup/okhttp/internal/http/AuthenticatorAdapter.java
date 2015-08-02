@@ -18,16 +18,15 @@ package com.squareup.okhttp.internal.http;
 import com.squareup.okhttp.Authenticator;
 import com.squareup.okhttp.Challenge;
 import com.squareup.okhttp.Credentials;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
-import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.Authenticator.RequestorType;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
-import java.net.URL;
 import java.util.List;
 
 /** Adapts {@link java.net.Authenticator} to {@link com.squareup.okhttp.Authenticator}. */
@@ -38,15 +37,14 @@ public final class AuthenticatorAdapter implements Authenticator {
   @Override public Request authenticate(Proxy proxy, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();
-    URL url = request.url();
+    HttpUrl url = request.httpUrl();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
 
       PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
-          url.getHost(), getConnectToInetAddress(proxy, url), Util.getEffectivePort(url),
-          url.getProtocol(), challenge.getRealm(), challenge.getScheme(), url,
-          RequestorType.SERVER);
+          url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
+          challenge.getRealm(), challenge.getScheme(), url.url(), RequestorType.SERVER);
       if (auth == null) continue;
 
       String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
@@ -61,7 +59,7 @@ public final class AuthenticatorAdapter implements Authenticator {
   @Override public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();
-    URL url = request.url();
+    HttpUrl url = request.httpUrl();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
@@ -69,7 +67,7 @@ public final class AuthenticatorAdapter implements Authenticator {
       InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
       PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
           proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
-          url.getProtocol(), challenge.getRealm(), challenge.getScheme(), url,
+          url.scheme(), challenge.getRealm(), challenge.getScheme(), url.url(),
           RequestorType.PROXY);
       if (auth == null) continue;
 
@@ -81,9 +79,9 @@ public final class AuthenticatorAdapter implements Authenticator {
     return null;
   }
 
-  private InetAddress getConnectToInetAddress(Proxy proxy, URL url) throws IOException {
+  private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {
     return (proxy != null && proxy.type() != Proxy.Type.DIRECT)
         ? ((InetSocketAddress) proxy.address()).getAddress()
-        : InetAddress.getByName(url.getHost());
+        : InetAddress.getByName(url.host());
   }
 }

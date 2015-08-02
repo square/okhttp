@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Cache;
 import com.squareup.okhttp.ConnectionPool;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.Protocol;
@@ -34,7 +35,6 @@ import java.net.Authenticator;
 import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -380,13 +380,13 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    URL url = server.getUrl("/");
-    assertContent("A", client.open(url), Integer.MAX_VALUE);
+    HttpUrl url = server.url("/");
+    assertContent("A", client.open(url.url()), Integer.MAX_VALUE);
     Map<String, List<String>> requestHeaders = Collections.emptyMap();
     assertEquals(Collections.singletonMap("Cookie", Arrays.asList("c=oreo")),
-        cookieManager.get(url.toURI(), requestHeaders));
+        cookieManager.get(url.uri(), requestHeaders));
 
-    assertContent("B", client.open(url), Integer.MAX_VALUE);
+    assertContent("B", client.open(url.url()), Integer.MAX_VALUE);
     RecordedRequest requestA = server.takeRequest();
     assertNull(requestA.getHeader("Cookie"));
     RecordedRequest requestB = server.takeRequest();

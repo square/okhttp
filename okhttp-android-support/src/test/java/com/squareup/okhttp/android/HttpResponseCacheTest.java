@@ -17,27 +17,25 @@
 package com.squareup.okhttp.android;
 
 import com.squareup.okhttp.AndroidInternal;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.OkUrlFactory;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
 import java.io.File;
 import java.io.InputStream;
 import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.ResponseCache;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -145,7 +143,7 @@ public final class HttpResponseCacheTest {
         .addHeader("Cache-Control: max-age=60")
         .setBody("A"));
 
-    URLConnection c1 = openUrl(server.getUrl("/"));
+    URLConnection c1 = openUrl(server.url("/"));
 
     InputStream inputStream = c1.getInputStream();
     assertEquals('A', inputStream.read());
@@ -154,10 +152,10 @@ public final class HttpResponseCacheTest {
     assertEquals(1, cache.getNetworkCount());
     assertEquals(0, cache.getHitCount());
 
-    URLConnection c2 = openUrl(server.getUrl("/"));
+    URLConnection c2 = openUrl(server.url("/"));
     assertEquals('A', c2.getInputStream().read());
 
-    URLConnection c3 = openUrl(server.getUrl("/"));
+    URLConnection c3 = openUrl(server.url("/"));
     assertEquals('A', c3.getInputStream().read());
     assertEquals(3, cache.getRequestCount());
     assertEquals(1, cache.getNetworkCount());
@@ -165,10 +163,10 @@ public final class HttpResponseCacheTest {
   }
 
   // This mimics the Android HttpHandler, which is found in the com.squareup.okhttp package.
-  private URLConnection openUrl(URL url) {
+  private URLConnection openUrl(HttpUrl url) {
     ResponseCache responseCache = ResponseCache.getDefault();
     AndroidInternal.setResponseCache(client, responseCache);
-    return client.open(url);
+    return client.open(url.url());
   }
 
   private void initializeCache(HttpResponseCache cache) {

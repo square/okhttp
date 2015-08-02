@@ -31,7 +31,6 @@ import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
-import java.net.URL;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -44,8 +43,6 @@ import okio.BufferedSource;
 import okio.Source;
 
 import static com.squareup.okhttp.internal.Util.closeQuietly;
-import static com.squareup.okhttp.internal.Util.getDefaultPort;
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 
@@ -279,8 +276,8 @@ public final class Connection {
     Request tunnelRequest = createTunnelRequest(request);
     HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
     tunnelConnection.setTimeouts(readTimeout, writeTimeout);
-    URL url = tunnelRequest.url();
-    String requestLine = "CONNECT " + url.getHost() + ":" + getEffectivePort(url) + " HTTP/1.1";
+    HttpUrl url = tunnelRequest.httpUrl();
+    String requestLine = "CONNECT " + url.host() + ":" + url.port() + " HTTP/1.1";
     while (true) {
       tunnelConnection.writeRequest(tunnelRequest.headers(), requestLine);
       tunnelConnection.flush();
@@ -327,12 +324,14 @@ public final class Connection {
    * to the proxy unencrypted.
    */
   private Request createTunnelRequest(Request request) throws IOException {
-    String host = request.url().getHost();
-    int port = getEffectivePort(request.url());
-    String authority = (port == getDefaultPort("https")) ? host : (host + ":" + port);
+    HttpUrl tunnelUrl = new HttpUrl.Builder()
+        .scheme("https")
+        .host(request.httpUrl().host())
+        .port(request.httpUrl().port())
+        .build();
     Request.Builder result = new Request.Builder()
-        .url(new URL("https", host, port, "/"))
-        .header("Host", authority)
+        .url(tunnelUrl)
+        .header("Host", Util.hostHeader(tunnelUrl))
         .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
 
     // Copy over the User-Agent header if it exists.
