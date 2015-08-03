@@ -29,6 +29,8 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
@@ -368,7 +370,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   private String defaultUserAgent() {
     String agent = System.getProperty("http.agent");
-    return agent != null ? agent : ("Java" + System.getProperty("java.version"));
+    return agent != null ? Util.toHumanReadableAscii(agent) : Version.userAgent();
   }
 
   /**

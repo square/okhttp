@@ -22,6 +22,7 @@ import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -3144,13 +3145,24 @@ public final class URLConnectionTest {
     assertEquals("foo", request.getHeader("User-Agent"));
   }
 
-  @Test public void userAgentDefaultsToJavaVersion() throws Exception {
+  /** https://github.com/square/okhttp/issues/891 */
+  @Test public void userAgentSystemPropertyIsNotAscii() throws Exception {
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    System.setProperty("http.agent", "a\nb\ud83c\udf69c\ud83c\udf68d\u007fe");
+    assertContent("abc", client.open(server.getUrl("/")));
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("a?b?c?d?e", request.getHeader("User-Agent"));
+  }
+
+  @Test public void userAgentDefaultsToOkHttpVersion() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
 
     assertContent("abc", client.open(server.getUrl("/")));
 
     RecordedRequest request = server.takeRequest();
-    assertTrue(request.getHeader("User-Agent").startsWith("Java"));
+    assertEquals(Version.userAgent(), request.getHeader("User-Agent"));
   }
 
   @Test public void interceptorsNotInvoked() throws Exception {
