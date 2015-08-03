@@ -14,23 +14,8 @@
  * limitations under the License.
  */
 
-package com.squareup.okhttp.internal.http;
+package com.squareup.okhttp;
 
-import com.squareup.okhttp.Cache;
-import com.squareup.okhttp.Challenge;
-import com.squareup.okhttp.ConnectionPool;
-import com.squareup.okhttp.ConnectionSpec;
-import com.squareup.okhttp.Credentials;
-import com.squareup.okhttp.DelegatingServerSocketFactory;
-import com.squareup.okhttp.DelegatingSocketFactory;
-import com.squareup.okhttp.FallbackTestClientSocketFactory;
-import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.Interceptor;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.OkUrlFactory;
-import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Response;
-import com.squareup.okhttp.TlsVersion;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -67,7 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -150,8 +135,8 @@ public final class URLConnectionTest {
     assertEquals("f", connection.getRequestProperty("D"));
     assertEquals("f", connection.getRequestProperty("d"));
     Map<String, List<String>> requestHeaders = connection.getRequestProperties();
-    assertEquals(newSet("e", "f"), new HashSet<String>(requestHeaders.get("D")));
-    assertEquals(newSet("e", "f"), new HashSet<String>(requestHeaders.get("d")));
+    assertEquals(newSet("e", "f"), new LinkedHashSet<>(requestHeaders.get("D")));
+    assertEquals(newSet("e", "f"), new LinkedHashSet<>(requestHeaders.get("d")));
     try {
       requestHeaders.put("G", Arrays.asList("h"));
       fail("Modified an unmodifiable view.");
@@ -222,8 +207,8 @@ public final class URLConnectionTest {
     assertEquals("HTTP/1.0 200 Fantastic", connection.getHeaderField(null));
     Map<String, List<String>> responseHeaders = connection.getHeaderFields();
     assertEquals(Arrays.asList("HTTP/1.0 200 Fantastic"), responseHeaders.get(null));
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("A")));
-    assertEquals(newSet("c", "e"), new HashSet<String>(responseHeaders.get("a")));
+    assertEquals(newSet("c", "e"), new LinkedHashSet<>(responseHeaders.get("A")));
+    assertEquals(newSet("c", "e"), new LinkedHashSet<>(responseHeaders.get("a")));
     try {
       responseHeaders.put("N", Arrays.asList("o"));
       fail("Modified an unmodifiable view.");
@@ -2498,7 +2483,7 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    assertNull(connection.getContent(new Class[]{getClass()}));
+    assertNull(connection.getContent(new Class[] { getClass() }));
   }
 
   @Test public void getOutputStreamOnGetFails() throws Exception {
@@ -2796,6 +2781,51 @@ public final class URLConnectionTest {
     connection = client.open(server.getUrl("/"));
     connection.getResponseCode();
     assertEquals("A", connection.getHeaderField(""));
+  }
+
+  @Test public void requestHeaderValidationIsStrict() throws Exception {
+    connection = client.open(server.getUrl("/"));
+    try {
+      connection.addRequestProperty("a\tb", "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      connection.addRequestProperty("Name", "c\u007fd");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      connection.addRequestProperty("", "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      connection.addRequestProperty("\ud83c\udf69", "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      connection.addRequestProperty("Name", "\u2615\ufe0f");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void responseHeaderParsingIsLenient() throws Exception {
+    Headers headers = new Headers.Builder()
+        .add("Content-Length", "0")
+        .addLenient("a\tb: c\u007fd")
+        .addLenient(": ef")
+        .addLenient("\ud83c\udf69: \u2615\ufe0f")
+        .build();
+    server.enqueue(new MockResponse().setHeaders(headers));
+
+    connection = client.open(server.getUrl("/"));
+    connection.getResponseCode();
+    assertEquals("c\u007fd", connection.getHeaderField("a\tb"));
+    assertEquals("\u2615\ufe0f", connection.getHeaderField("\ud83c\udf69"));
+    assertEquals("ef", connection.getHeaderField(""));
   }
 
   @Test @Ignore public void deflateCompression() {
@@ -3160,7 +3190,7 @@ public final class URLConnectionTest {
   }
 
   private Set<String> newSet(String... elements) {
-    return new HashSet<String>(Arrays.asList(elements));
+    return new LinkedHashSet<>(Arrays.asList(elements));
   }
 
   enum TransferKind {

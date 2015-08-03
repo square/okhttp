@@ -28,6 +28,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 public final class RequestTest {
   @Test public void string() throws Exception {
@@ -131,7 +132,8 @@ public final class RequestTest {
     Request requestWithCache = new Request.Builder().url("http://localhost/api").build();
     // cache url object
     requestWithCache.url();
-    Request builtRequestWithCache = requestWithCache.newBuilder().url("http://localhost/api/foo").build();
+    Request builtRequestWithCache = requestWithCache.newBuilder().url(
+        "http://localhost/api/foo").build();
     assertEquals(new URL("http://localhost/api/foo"), builtRequestWithCache.url());
   }
 
@@ -150,6 +152,62 @@ public final class RequestTest {
         .url("https://square.com")
         .build();
     assertEquals(Collections.<String>emptyList(), request.headers("Cache-Control"));
+  }
+
+  @Test public void headerAcceptsPermittedCharacters() throws Exception {
+    Request.Builder builder = new Request.Builder();
+    builder.header("AZab09 ~", "AZab09 ~");
+    builder.addHeader("AZab09 ~", "AZab09 ~");
+  }
+
+  @Test public void emptyNameForbidden() throws Exception {
+    Request.Builder builder = new Request.Builder();
+    try {
+      builder.header("", "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      builder.addHeader("", "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test public void headerForbidsControlCharacters() throws Exception {
+    assertForbiddenHeader(null);
+    assertForbiddenHeader("\u0000");
+    assertForbiddenHeader("\r");
+    assertForbiddenHeader("\n");
+    assertForbiddenHeader("\t");
+    assertForbiddenHeader("\u001f");
+    assertForbiddenHeader("\u007f");
+    assertForbiddenHeader("\u0080");
+    assertForbiddenHeader("\ud83c\udf69");
+  }
+
+  private void assertForbiddenHeader(String s) {
+    Request.Builder builder = new Request.Builder();
+    try {
+      builder.header(s, "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      builder.addHeader(s, "Value");
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      builder.header("Name", s);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
+    try {
+      builder.addHeader("Name", s);
+      fail();
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   private String bodyToHex(RequestBody body) throws IOException {

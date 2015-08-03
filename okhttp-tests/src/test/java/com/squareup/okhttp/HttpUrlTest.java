@@ -417,6 +417,7 @@ public final class HttpUrlTest {
   @Test public void port() throws Exception {
     assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("http://host:80/"));
     assertEquals(HttpUrl.parse("http://host:99/"), HttpUrl.parse("http://host:99/"));
+    assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("http://host:/"));
     assertEquals(65535, HttpUrl.parse("http://host:65535/").port());
     assertEquals(null, HttpUrl.parse("http://host:0/"));
     assertEquals(null, HttpUrl.parse("http://host:65536/"));
