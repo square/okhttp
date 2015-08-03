@@ -1822,6 +1822,26 @@ public final class CallTest {
         .assertSuccessful();
   }
 
+  /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8. */
+  @Test public void responseHeaderParsingIsLenient() throws Exception {
+    Headers headers = new Headers.Builder()
+        .add("Content-Length", "0")
+        .addLenient("a\tb: c\u007fd")
+        .addLenient(": ef")
+        .addLenient("\ud83c\udf69: \u2615\ufe0f")
+        .build();
+    server.enqueue(new MockResponse().setHeaders(headers));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    executeSynchronously(request)
+        .assertHeader("a\tb", "c\u007fd")
+        .assertHeader("\ud83c\udf69", "\u2615\ufe0f")
+        .assertHeader("", "ef");
+  }
+
   private RecordedResponse executeSynchronously(Request request) throws IOException {
     Response response = client.newCall(request).execute();
     return new RecordedResponse(request, response, null, response.body().string(), null);

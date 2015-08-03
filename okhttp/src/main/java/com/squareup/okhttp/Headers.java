@@ -242,11 +242,7 @@ public final class Headers {
 
     /** Add a field with the specified value. */
     public Builder add(String name, String value) {
-      if (name == null) throw new IllegalArgumentException("name == null");
-      if (value == null) throw new IllegalArgumentException("value == null");
-      if (name.length() == 0 || name.indexOf('\0') != -1 || value.indexOf('\0') != -1) {
-        throw new IllegalArgumentException("Unexpected header: " + name + ": " + value);
-      }
+      checkNameAndValue(name, value);
       return addLenient(name, value);
     }
 
@@ -276,9 +272,30 @@ public final class Headers {
      * added. If the field is found, the existing values are replaced.
      */
     public Builder set(String name, String value) {
+      checkNameAndValue(name, value);
       removeAll(name);
-      add(name, value);
+      addLenient(name, value);
       return this;
+    }
+
+    private void checkNameAndValue(String name, String value) {
+      if (name == null) throw new IllegalArgumentException("name == null");
+      if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
+      for (int i = 0, length = name.length(); i < length; i++) {
+        char c = name.charAt(i);
+        if (c <= '\u001f' || c >= '\u007f') {
+          throw new IllegalArgumentException(String.format(
+              "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
+        }
+      }
+      if (value == null) throw new IllegalArgumentException("value == null");
+      for (int i = 0, length = value.length(); i < length; i++) {
+        char c = value.charAt(i);
+        if (c <= '\u001f' || c >= '\u007f') {
+          throw new IllegalArgumentException(String.format(
+              "Unexpected char %#04x at %d in header value: %s", (int) c, i, value));
+        }
+      }
     }
 
     /** Equivalent to {@code build().get(name)}, but potentially faster. */
