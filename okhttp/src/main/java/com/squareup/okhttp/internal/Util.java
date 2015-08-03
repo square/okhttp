@@ -16,6 +16,7 @@
 
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.HttpUrl;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -23,8 +24,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -49,24 +48,6 @@ public final class Util {
   public static final Charset UTF_8 = Charset.forName("UTF-8");
 
   private Util() {
-  }
-
-  public static int getEffectivePort(URI uri) {
-    return getEffectivePort(uri.getScheme(), uri.getPort());
-  }
-
-  public static int getEffectivePort(URL url) {
-    return getEffectivePort(url.getProtocol(), url.getPort());
-  }
-
-  private static int getEffectivePort(String scheme, int specifiedPort) {
-    return specifiedPort != -1 ? specifiedPort : getDefaultPort(scheme);
-  }
-
-  public static int getDefaultPort(String protocol) {
-    if ("http".equals(protocol)) return 80;
-    if ("https".equals(protocol)) return 443;
-    return -1;
   }
 
   public static void checkOffsetAndCount(long arrayLength, long offset, long count) {
@@ -271,5 +252,12 @@ public final class Util {
       }
     }
     return result;
+  }
+
+  public static String hostHeader(HttpUrl url) {
+    // TODO: square braces for IPv6 ?
+    return url.port() != HttpUrl.defaultPort(url.scheme())
+        ? url.host() + ":" + url.port()
+        : url.host();
   }
 }

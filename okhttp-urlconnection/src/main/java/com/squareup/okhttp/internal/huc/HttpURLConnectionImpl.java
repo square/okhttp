@@ -20,6 +20,7 @@ package com.squareup.okhttp.internal.huc;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -28,14 +29,13 @@ import com.squareup.okhttp.Response;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.http.RouteException;
-import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.HttpDate;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RequestException;
 import com.squareup.okhttp.internal.http.RetryableSink;
+import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.StatusLine;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -255,8 +255,11 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public final Permission getPermission() throws IOException {
-    String hostName = getURL().getHost();
-    int hostPort = Util.getEffectivePort(getURL());
+    URL url = getURL();
+    String hostName = url.getHost();
+    int hostPort = url.getPort() != -1
+        ? url.getPort()
+        : HttpUrl.defaultPort(url.getProtocol());
     if (usingProxy()) {
       InetSocketAddress proxyAddress = (InetSocketAddress) client.getProxy().address();
       hostName = proxyAddress.getHostName();
@@ -413,7 +416,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
-      if (!httpEngine.sameConnection(followUp.url())) {
+      if (!httpEngine.sameConnection(followUp.httpUrl())) {
         httpEngine.releaseConnection();
       }
 

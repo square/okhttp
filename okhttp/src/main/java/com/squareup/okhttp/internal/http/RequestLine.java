@@ -1,10 +1,10 @@
 package com.squareup.okhttp.internal.http;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
-import java.net.URL;
 
 public final class RequestLine {
   private RequestLine() {
@@ -21,9 +21,9 @@ public final class RequestLine {
     result.append(' ');
 
     if (includeAuthorityInRequestLine(request, proxyType)) {
-      result.append(request.url());
+      result.append(request.httpUrl());
     } else {
-      result.append(requestPath(request.url()));
+      result.append(requestPath(request.httpUrl()));
     }
 
     result.append(' ');
@@ -44,11 +44,10 @@ public final class RequestLine {
    * Returns the path to request, like the '/' in 'GET / HTTP/1.1'. Never empty,
    * even if the request URL is. Includes the query component if it exists.
    */
-  public static String requestPath(URL url) {
-    String pathAndQuery = url.getFile();
-    if (pathAndQuery == null) return "/";
-    if (!pathAndQuery.startsWith("/")) return "/" + pathAndQuery;
-    return pathAndQuery;
+  public static String requestPath(HttpUrl url) {
+    String path = url.encodedPath();
+    String query = url.encodedQuery();
+    return query != null ? (path + '?' + query) : path;
   }
 
   public static String version(Protocol protocol) {

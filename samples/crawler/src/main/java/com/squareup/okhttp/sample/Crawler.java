@@ -16,14 +16,13 @@
 package com.squareup.okhttp.sample;
 
 import com.squareup.okhttp.Cache;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.NamedRunnable;
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -41,8 +40,9 @@ import org.jsoup.nodes.Element;
  */
 public final class Crawler {
   private final OkHttpClient client;
-  private final Set<URL> fetchedUrls = Collections.synchronizedSet(new LinkedHashSet<URL>());
-  private final LinkedBlockingQueue<URL> queue = new LinkedBlockingQueue<>();
+  private final Set<HttpUrl> fetchedUrls = Collections.synchronizedSet(
+      new LinkedHashSet<HttpUrl>());
+  private final LinkedBlockingQueue<HttpUrl> queue = new LinkedBlockingQueue<>();
   private final ConcurrentHashMap<String, AtomicInteger> hostnames = new ConcurrentHashMap<>();
 
   public Crawler(OkHttpClient client) {
@@ -66,7 +66,7 @@ public final class Crawler {
   }
 
   private void drainQueue() throws Exception {
-    for (URL url; (url = queue.take()) != null; ) {
+    for (HttpUrl url; (url = queue.take()) != null; ) {
       if (!fetchedUrls.add(url)) {
         continue;
       }
@@ -79,10 +79,10 @@ public final class Crawler {
     }
   }
 
-  public void fetch(URL url) throws IOException {
+  public void fetch(HttpUrl url) throws IOException {
     // Skip hosts that we've visited many times.
     AtomicInteger hostnameCount = new AtomicInteger();
-    AtomicInteger previous = hostnames.putIfAbsent(url.getHost(), hostnameCount);
+    AtomicInteger previous = hostnames.putIfAbsent(url.host(), hostnameCount);
     if (previous != null) hostnameCount = previous;
     if (hostnameCount.incrementAndGet() > 100) return;
 
@@ -106,19 +106,8 @@ public final class Crawler {
     Document document = Jsoup.parse(response.body().string(), url.toString());
     for (Element element : document.select("a[href]")) {
       String href = element.attr("href");
-      URL link = parseUrl(response.request().url(), href);
+      HttpUrl link = response.request().httpUrl().resolve(href);
       if (link != null) queue.add(link);
-    }
-  }
-
-  private URL parseUrl(URL url, String href) {
-    try {
-      URL result = new URL(url, href);
-      return result.getProtocol().equals("http") || result.getProtocol().equals("https")
-          ? result
-          : null;
-    } catch (MalformedURLException e) {
-      return null;
     }
   }
 
@@ -136,7 +125,7 @@ public final class Crawler {
     client.setCache(cache);
 
     Crawler crawler = new Crawler(client);
-    crawler.queue.add(new URL(args[1]));
+    crawler.queue.add(HttpUrl.parse(args[1]));
     crawler.parallelDrainQueue(threadCount);
   }
 }

@@ -17,7 +17,6 @@
 package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.ConnectionSpec;
-
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ProtocolException;

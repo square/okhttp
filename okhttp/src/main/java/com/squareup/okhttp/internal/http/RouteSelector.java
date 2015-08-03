@@ -16,6 +16,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
@@ -28,13 +29,10 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
-
-import static com.squareup.okhttp.internal.Util.getEffectivePort;
 
 /**
  * Selects routes to connect to an origin server. Each connection requires a
@@ -43,7 +41,7 @@ import static com.squareup.okhttp.internal.Util.getEffectivePort;
  */
 public final class RouteSelector {
   private final Address address;
-  private final URI uri;
+  private final HttpUrl url;
   private final Network network;
   private final OkHttpClient client;
   private final RouteDatabase routeDatabase;
@@ -63,19 +61,19 @@ public final class RouteSelector {
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
 
-  private RouteSelector(Address address, URI uri, OkHttpClient client) {
+  private RouteSelector(Address address, HttpUrl url, OkHttpClient client) {
     this.address = address;
-    this.uri = uri;
+    this.url = url;
     this.client = client;
     this.routeDatabase = Internal.instance.routeDatabase(client);
     this.network = Internal.instance.network(client);
 
-    resetNextProxy(uri, address.getProxy());
+    resetNextProxy(url, address.getProxy());
   }
 
   public static RouteSelector get(Address address, Request request, OkHttpClient client)
       throws IOException {
-    return new RouteSelector(address, request.uri(), client);
+    return new RouteSelector(address, request.httpUrl(), client);
   }
 
   /**
@@ -118,14 +116,15 @@ public final class RouteSelector {
   public void connectFailed(Route failedRoute, IOException failure) {
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
-      address.getProxySelector().connectFailed(uri, failedRoute.getProxy().address(), failure);
+      address.getProxySelector().connectFailed(
+          url.uri(), failedRoute.getProxy().address(), failure);
     }
 
     routeDatabase.failed(failedRoute);
   }
 
   /** Prepares the proxy servers to try. */
-  private void resetNextProxy(URI uri, Proxy proxy) {
+  private void resetNextProxy(HttpUrl url, Proxy proxy) {
     if (proxy != null) {
       // If the user specifies a proxy, try that and only that.
       proxies = Collections.singletonList(proxy);
@@ -133,7 +132,7 @@ public final class RouteSelector {
       // Try each of the ProxySelector choices until one connection succeeds. If none succeed
       // then we'll try a direct connection below.
       proxies = new ArrayList<>();
-      List<Proxy> selectedProxies = client.getProxySelector().select(uri);
+      List<Proxy> selectedProxies = client.getProxySelector().select(url.uri());
       if (selectedProxies != null) proxies.addAll(selectedProxies);
       // Finally try a direct connection. We only try it once!
       proxies.removeAll(Collections.singleton(Proxy.NO_PROXY));
@@ -167,7 +166,7 @@ public final class RouteSelector {
     int socketPort;
     if (proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.SOCKS) {
       socketHost = address.getUriHost();
-      socketPort = getEffectivePort(uri);
+      socketPort = address.getUriPort();
     } else {
       SocketAddress proxyAddress = proxy.address();
       if (!(proxyAddress instanceof InetSocketAddress)) {
