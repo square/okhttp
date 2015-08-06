@@ -144,7 +144,9 @@ public final class Connection {
     }
 
     // Don't close() inside the synchronized block.
-    socket.close();
+    if (socket != null) {
+      socket.close();
+    }
   }
 
   void connect(int connectTimeout, int readTimeout, int writeTimeout, Request request,
