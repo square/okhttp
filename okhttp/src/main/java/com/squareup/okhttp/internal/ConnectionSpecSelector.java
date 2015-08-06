@@ -91,13 +91,18 @@ public final class ConnectionSpecSelector {
     // Any future attempt to connect using this strategy will be a fallback attempt.
     isFallback = true;
 
-    // TODO(nfuller): This is the same logic as in HttpEngine.
+    if (!isFallbackPossible) {
+      return false;
+    }
+
     // If there was a protocol problem, don't recover.
     if (e instanceof ProtocolException) {
       return false;
     }
 
-    // If there was an interruption or timeout, don't recover.
+    // If there was an interruption or timeout (SocketTimeoutException), don't recover.
+    // For the socket connect timeout case we do not try the same host with a different
+    // ConnectionSpec: we assume it is unreachable.
     if (e instanceof InterruptedIOException) {
       return false;
     }
@@ -115,13 +120,11 @@ public final class ConnectionSpecSelector {
       // e.g. a certificate pinning error.
       return false;
     }
-    // TODO(nfuller): End of common code.
 
 
     // On Android, SSLProtocolExceptions can be caused by TLS_FALLBACK_SCSV failures, which means we
     // retry those when we probably should not.
-    return ((e instanceof SSLHandshakeException || e instanceof SSLProtocolException))
-        && isFallbackPossible;
+    return (e instanceof SSLHandshakeException || e instanceof SSLProtocolException);
   }
 
   /**
