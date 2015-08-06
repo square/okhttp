@@ -35,33 +35,30 @@ public class DelegatingServerSocketFactory extends ServerSocketFactory {
   @Override
   public ServerSocket createServerSocket() throws IOException {
     ServerSocket serverSocket = delegate.createServerSocket();
-    configureServerSocket(serverSocket);
-    return serverSocket;
+    return configureServerSocket(serverSocket);
   }
 
   @Override
   public ServerSocket createServerSocket(int port) throws IOException {
     ServerSocket serverSocket = delegate.createServerSocket(port);
-    configureServerSocket(serverSocket);
-    return serverSocket;
+    return configureServerSocket(serverSocket);
   }
 
   @Override
   public ServerSocket createServerSocket(int port, int backlog) throws IOException {
     ServerSocket serverSocket = delegate.createServerSocket(port, backlog);
-    configureServerSocket(serverSocket);
-    return serverSocket;
+    return configureServerSocket(serverSocket);
   }
 
   @Override
   public ServerSocket createServerSocket(int port, int backlog, InetAddress ifAddress)
       throws IOException {
     ServerSocket serverSocket = delegate.createServerSocket(port, backlog, ifAddress);
-    configureServerSocket(serverSocket);
-    return serverSocket;
+    return configureServerSocket(serverSocket);
   }
 
-  protected void configureServerSocket(ServerSocket serverSocket) throws IOException {
+  protected ServerSocket configureServerSocket(ServerSocket serverSocket) throws IOException {
     // No-op by default.
+    return serverSocket;
   }
 }

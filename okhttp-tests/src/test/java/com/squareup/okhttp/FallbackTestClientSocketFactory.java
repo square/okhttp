@@ -40,37 +40,8 @@ public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory 
     super(delegate);
   }
 
-  @Override public SSLSocket createSocket(Socket s, String host, int port, boolean autoClose)
-      throws IOException {
-    SSLSocket socket = super.createSocket(s, host, port, autoClose);
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
-  }
-
-  @Override public SSLSocket createSocket() throws IOException {
-    SSLSocket socket = super.createSocket();
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
-  }
-
-  @Override public SSLSocket createSocket(String host,int port) throws IOException {
-    SSLSocket socket = super.createSocket(host, port);
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
-  }
-
-  @Override public SSLSocket createSocket(String host,int port, InetAddress localHost,
-      int localPort) throws IOException {
-    SSLSocket socket = super.createSocket(host, port, localHost, localPort);
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
-  }
-
-  @Override public SSLSocket createSocket(InetAddress host,int port) throws IOException {
-    SSLSocket socket = super.createSocket(host, port);
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
-  }
-
-  @Override public SSLSocket createSocket(InetAddress address,int port,
-      InetAddress localAddress, int localPort) throws IOException {
-    SSLSocket socket = super.createSocket(address, port, localAddress, localPort);
-    return new TlsFallbackScsvDisabledSSLSocket(socket);
+  @Override protected SSLSocket configureSocket(SSLSocket sslSocket) throws IOException {
+    return new TlsFallbackScsvDisabledSSLSocket(sslSocket);
   }
 
   private static class TlsFallbackScsvDisabledSSLSocket extends DelegatingSSLSocket {
