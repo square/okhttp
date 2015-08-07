@@ -570,7 +570,12 @@ public final class HttpUrl {
     result.encodedUsername = encodedUsername();
     result.encodedPassword = encodedPassword();
     result.host = host;
-    result.port = port;
+    // If we're set to a default port, unset it, in case of a scheme change.
+    if (port == defaultPort(scheme)) {
+      result.port = -1;
+    } else {
+      result.port = port;
+    }
     result.encodedPathSegments.clear();
     result.encodedPathSegments.addAll(encodedPathSegments());
     result.encodedQuery(encodedQuery());

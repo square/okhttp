@@ -602,6 +602,23 @@ public final class HttpUrlTest {
     assertEquals("fragment", url.fragment());
   }
 
+  @Test public void changingSchemeChangesDefaultPort() throws Exception {
+    assertEquals(443, HttpUrl.parse("http://example.com")
+        .newBuilder()
+        .scheme("https")
+        .build().port());
+
+    assertEquals(80, HttpUrl.parse("https://example.com")
+        .newBuilder()
+        .scheme("http")
+        .build().port());
+
+    assertEquals(1234, HttpUrl.parse("https://example.com:1234")
+        .newBuilder()
+        .scheme("http")
+        .build().port());
+  }
+
   @Test public void composeEncodesWhitespace() throws Exception {
     HttpUrl url = new HttpUrl.Builder()
         .scheme("http")
