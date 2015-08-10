@@ -17,6 +17,7 @@ package com.squareup.okhttp.internal.framed;
 
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import static com.squareup.okhttp.TestUtil.headerEntries;
+import static com.squareup.okhttp.TestUtil.repeat;
 import static com.squareup.okhttp.internal.framed.ErrorCode.CANCEL;
 import static com.squareup.okhttp.internal.framed.ErrorCode.PROTOCOL_ERROR;
 import static com.squareup.okhttp.internal.framed.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
@@ -425,6 +427,37 @@ public final class Http2ConnectionTest {
     assertEquals(TYPE_RST_STREAM, rstStream.type);
     assertEquals(2, rstStream.streamId);
     assertEquals(CANCEL, rstStream.errorCode);
+  }
+
+  /**
+   * When writing a set of headers fails due to an {@code IOException}, make sure the writer is left
+   * in a consistent state so the next writer also gets an {@code IOException} also instead of
+   * something worse (like an {@link IllegalStateException}.
+   *
+   * <p>See https://github.com/square/okhttp/issues/1651
+   */
+  @Test public void socketExceptionWhileWritingHeaders() throws Exception {
+    peer.setVariantAndClient(HTTP_2, false);
+    peer.acceptFrame(); // SYN_STREAM.
+    peer.play();
+
+    String longString = repeat('a', Http2.INITIAL_MAX_FRAME_SIZE + 1);
+    Socket socket = peer.openSocket();
+    FramedConnection connection = new FramedConnection.Builder(true, socket)
+        .pushObserver(IGNORE)
+        .protocol(HTTP_2.getProtocol())
+        .build();
+    socket.shutdownOutput();
+    try {
+      connection.newStream(headerEntries("a", longString), false, true);
+      fail();
+    } catch (IOException expected) {
+    }
+    try {
+      connection.newStream(headerEntries("b", longString), false, true);
+      fail();
+    } catch (IOException expected) {
+    }
   }
 
   private FramedConnection sendHttp2SettingsAndCheckForAck(boolean client, Settings settings)

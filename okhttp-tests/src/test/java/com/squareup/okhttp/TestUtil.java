@@ -27,4 +27,10 @@ public final class TestUtil {
   public static <T> Set<T> setOf(Collection<T> elements) {
     return new LinkedHashSet<>(elements);
   }
+
+  public static String repeat(char c, int count) {
+    char[] array = new char[count];
+    Arrays.fill(array, c);
+    return new String(array);
+  }
 }

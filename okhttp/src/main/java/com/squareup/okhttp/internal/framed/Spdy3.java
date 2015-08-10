@@ -406,7 +406,6 @@ public final class Spdy3 implements Variant {
     }
 
     private void writeNameValueBlockToBuffer(List<Header> headerBlock) throws IOException {
-      if (headerBlockBuffer.size() != 0) throw new IllegalStateException();
       headerBlockOut.writeInt(headerBlock.size());
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
         ByteString name = headerBlock.get(i).name;

@@ -18,9 +18,11 @@ package com.squareup.okhttp.internal.framed;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1307,6 +1309,34 @@ public final class Spdy3ConnectionTest {
     assertStreamData("robot", stream.getSource());
   }
 
+  @Test public void socketExceptionWhileWritingHeaders() throws Exception {
+    peer.acceptFrame(); // SYN_STREAM.
+    peer.play();
+
+    String longString = ByteString.of(randomBytes(2048)).base64();
+    Socket socket = peer.openSocket();
+    FramedConnection connection = new FramedConnection.Builder(true, socket)
+        .protocol(SPDY3.getProtocol())
+        .build();
+    socket.shutdownOutput();
+    try {
+      connection.newStream(headerEntries("a", longString), false, true);
+      fail();
+    } catch (IOException expected) {
+    }
+    try {
+      connection.newStream(headerEntries("b", longString), false, true);
+      fail();
+    } catch (IOException expected) {
+    }
+  }
+
+  private byte[] randomBytes(int length) {
+    byte[] bytes = new byte[length];
+    new Random(0).nextBytes(bytes);
+    return bytes;
+  }
+
   private FramedConnection connection(MockSpdyPeer peer, Variant variant) throws IOException {
     return connectionBuilder(peer, variant).build();
   }
@@ -1320,15 +1350,6 @@ public final class Spdy3ConnectionTest {
   private void assertStreamData(String expected, Source source) throws IOException {
     String actual = Okio.buffer(source).readUtf8();
     assertEquals(expected, actual);
-  }
-
-  private void assertFlushBlocks(BufferedSink out) throws IOException {
-    interruptAfterDelay(500);
-    try {
-      out.flush();
-      fail();
-    } catch (InterruptedIOException expected) {
-    }
   }
 
   /** Interrupts the current thread after {@code delayMillis}. */
