@@ -425,7 +425,6 @@ public final class Http2 implements Variant {
     @Override public synchronized void pushPromise(int streamId, int promisedStreamId,
         List<Header> requestHeaders) throws IOException {
       if (closed) throw new IOException("closed");
-      if (hpackBuffer.size() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(requestHeaders);
 
       long byteCount = hpackBuffer.size();
@@ -441,7 +440,6 @@ public final class Http2 implements Variant {
 
     void headers(boolean outFinished, int streamId, List<Header> headerBlock) throws IOException {
       if (closed) throw new IOException("closed");
-      if (hpackBuffer.size() != 0) throw new IllegalStateException();
       hpackWriter.writeHeaders(headerBlock);
 
       long byteCount = hpackBuffer.size();
