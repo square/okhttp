@@ -34,4 +34,9 @@ public final class Credentials {
       throw new AssertionError();
     }
   }
+
+  /** Returns an auth credential for the OAuth 2 scheme. */
+  public static String oauth2(String accessToken) {
+    return "Bearer " + accessToken;
+  }
 }
