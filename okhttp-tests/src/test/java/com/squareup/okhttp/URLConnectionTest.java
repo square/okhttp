@@ -600,6 +600,27 @@ public final class URLConnectionTest {
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
     assertEquals(TlsVersion.TLS_1_0, request.getTlsVersion());
   }
+  
+   /**
+   * If the socket is closed when the client is reading the response, a ProtocolException is thrown saying
+   * "unexpected end of stream".
+   *
+   * @throws Exception
+   */
+   @Test public void connectViaHttps_UnexpectedEndOfStream() {
+    this.server.useHttps(this.sslContext.getSocketFactory(), false);
+    this.server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY)
+            .addHeader("abc: def").setBody("this response comes via HTTPS"));
+    this.client.client().setSslSocketFactory(this.sslContext.getSocketFactory());
+    this.client.client().setHostnameVerifier(new RecordingHostnameVerifier());
+    this.connection = this.client.open(this.server.getUrl("/foo"));
+    try {
+        assertContent("this response comes via HTTPS", this.connection);
+        fail();
+    } catch (Exception e) {
+        Assert.assertEquals("unexpected end of stream", e.getMessage());
+   }
+   
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
