@@ -22,7 +22,6 @@ import com.squareup.okhttp.internal.RecordingOkAuthenticator;
 import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
-import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
@@ -74,6 +73,7 @@ import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -619,6 +619,7 @@ public final class URLConnectionTest {
         fail();
     } catch (Exception e) {
         Assert.assertEquals("unexpected end of stream", e.getMessage());
+    }
    }
    
 
