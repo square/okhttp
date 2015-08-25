@@ -258,6 +258,9 @@ public final class Connection {
       handshake = unverifiedHandshake;
       socket = sslSocket;
       success = true;
+    } catch (AssertionError e) {
+      if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
+      throw e;
     } finally {
       if (sslSocket != null) {
         Platform.get().afterHandshake(sslSocket);
