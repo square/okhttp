@@ -1,6 +1,44 @@
 Change Log
 ==========
 
+## Version 2.5.0
+
+_2015-08-25_
+
+ *  **OkHttp now rejects request headers that contain invalid characters.** This
+    includes potential security problems (newline characters) as well as simple
+    non-ASCII characters (including international characters and emoji).
+
+ *  **Call canceling is more reliable.**  We had a bug where a socket being
+     connected wasn't being closed when the application used `Call.cancel()`.
+
+ *  **Changing a HttpUrl’s scheme now tracks the default port.** We had a bug
+    where changing a URL from `http` to `https` would leave it on port 80.
+
+ *  **Okio has been updated to 1.6.0.**
+     ```
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.6.0</version>
+     </dependency>
+     ```
+
+ *  New: `Cache.initialize()`. Call this on a background thread to eagerly
+    initialize the response cache.
+ *  New: Fold `MockWebServerRule` into `MockWebServer`. This makes it easier to
+    write JUnit tests with `MockWebServer`. The `MockWebServer` library now
+    depends on JUnit, though it continues to work with all testing frameworks.
+ *  Fix: Change `MockWebServer` to use the same logic as OkHttp when determining
+    whether an HTTP request permits a body.
+ *  Fix: `HttpUrl` now uses the canonical form for IPv6 addresses.
+ *  Fix: Use `HttpUrl` internally.
+ *  Fix: Recover from Android 4.2.2 EBADF crashes.
+ *  Fix: Don't crash with an `IllegalStateException` if an HTTP/2 or SPDY
+    write fails, leaving the connection in an inconsistent state.
+ *  Fix: Make sure the default user agent is ASCII.
+
+
 ## Version 2.4.0
 
 _2015-05-22_
