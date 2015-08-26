@@ -279,7 +279,7 @@ public final class Cache {
    * <p>
    * The initialization time may vary depending on the journal file size and
    * the current actual cache size. The application needs to be aware of calling
-   * this function during the initialization phase and preferrably in a background
+   * this function during the initialization phase and preferably in a background
    * worker thread.
    * <p>
    * Note that if the application chooses to not call this method to initialize
