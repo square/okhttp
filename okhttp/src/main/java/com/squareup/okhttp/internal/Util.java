@@ -84,6 +84,8 @@ public final class Util {
     if (socket != null) {
       try {
         socket.close();
+      } catch (AssertionError e) {
+        if (!isAndroidGetsocknameError(e)) throw e;
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
@@ -276,5 +278,14 @@ public final class Util {
       return buffer.readUtf8();
     }
     return s;
+  }
+
+  /**
+   * Returns true if {@code e} is due to a firmware bug fixed after Android 4.2.2.
+   * https://code.google.com/p/android/issues/detail?id=54072
+   */
+  public static boolean isAndroidGetsocknameError(AssertionError e) {
+    return e.getCause() != null && e.getMessage() != null
+        && e.getMessage().contains("getsockname failed");
   }
 }
