@@ -194,6 +194,11 @@ public class Platform {
         IOException ioException = new IOException("Exception in connect");
         ioException.initCause(se);
         throw ioException;
+      } catch (IllegalArgumentException iae) {
+        //Catch this exception due to a Firmware issue up to android 4.2.2
+        IOException ioException = new IOException("Exception in connect");
+        ioException.initCause(iae);
+        throw ioException;
       }
     }
 

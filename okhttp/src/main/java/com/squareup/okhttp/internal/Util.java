@@ -104,6 +104,9 @@ public final class Util {
       } catch (RuntimeException rethrown) {
         throw rethrown;
       } catch (Exception ignored) {
+      } catch (AssertionError are) {
+        // catch this exception
+        // Due to a Firmware issue up to android 4.2.2
       }
     }
   }

@@ -174,6 +174,9 @@ public class Call {
         } else {
           responseCallback.onFailure(engine.getRequest(), e);
         }
+      } catch (AssertionError are) {
+        // catch this exception
+        // Due to a Firmware issue up to android 4.2.2
       } finally {
         client.getDispatcher().finished(this);
       }
