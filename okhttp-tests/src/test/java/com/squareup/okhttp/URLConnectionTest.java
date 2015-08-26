@@ -16,6 +16,23 @@
 
 package com.squareup.okhttp;
 
+import static com.squareup.okhttp.internal.Util.UTF_8;
+import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
+import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -28,6 +45,14 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -58,8 +83,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
+
 import javax.net.ServerSocketFactory;
 import javax.net.SocketFactory;
 import javax.net.ssl.HttpsURLConnection;
@@ -69,33 +96,11 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-
-import static com.squareup.okhttp.internal.Util.UTF_8;
-import static com.squareup.okhttp.internal.http.OkHeaders.SELECTED_PROTOCOL;
-import static com.squareup.okhttp.internal.http.StatusLine.HTTP_PERM_REDIRECT;
-import static com.squareup.okhttp.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
-import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_END;
-import static com.squareup.okhttp.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
-import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /** Android's URLConnectionTest. */
 public final class URLConnectionTest {
@@ -696,15 +701,15 @@ public final class URLConnectionTest {
 
   @Test public void contentDisagreesWithContentLengthHeaderBodyTooLong() throws IOException {
     server.enqueue(new MockResponse().setBody("abc\r\nYOU SHOULD NOT SEE THIS")
-        .clearHeaders()
-        .addHeader("Content-Length: 3"));
+            .clearHeaders()
+            .addHeader("Content-Length: 3"));
     assertContent("abc", client.open(server.getUrl("/")));
   }
 
   @Test public void contentDisagreesWithContentLengthHeaderBodyTooShort() throws IOException {
     server.enqueue(new MockResponse().setBody("abc")
-        .setHeader("Content-Length", "5")
-        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
+            .setHeader("Content-Length", "5")
+            .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END));
     try {
       readAscii(client.open(server.getUrl("/")).getInputStream(), 5);
       fail();
@@ -930,9 +935,9 @@ public final class URLConnectionTest {
     Authenticator.setDefault(new RecordingAuthenticator());
     server.useHttps(sslContext.getSocketFactory(), true);
     server.enqueue(new MockResponse().setResponseCode(407)
-        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
+            .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
     server.enqueue(
-        new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
+            new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("A"));
 
     client.client().setProxy(server.toProxyAddress());
@@ -962,7 +967,7 @@ public final class URLConnectionTest {
   @Test public void proxyWithConnectionClose() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), true);
     server.enqueue(
-        new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
+            new MockResponse().setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("this response comes via a proxy"));
 
     client.client().setProxy(server.toProxyAddress());
@@ -997,8 +1002,8 @@ public final class URLConnectionTest {
 
   @Test public void disconnectedConnection() throws IOException {
     server.enqueue(new MockResponse()
-        .throttleBody(2, 100, TimeUnit.MILLISECONDS)
-        .setBody("ABCD"));
+            .throttleBody(2, 100, TimeUnit.MILLISECONDS)
+            .setBody("ABCD"));
 
     connection = client.open(server.getUrl("/"));
     InputStream in = connection.getInputStream();
@@ -1102,8 +1107,8 @@ public final class URLConnectionTest {
 
   @Test public void nonHexChunkSize() throws IOException {
     server.enqueue(new MockResponse().setBody("5\r\nABCDE\r\nG\r\nFGHIJKLMNOPQRSTU\r\n0\r\n\r\n")
-        .clearHeaders()
-        .addHeader("Transfer-encoding: chunked"));
+            .clearHeaders()
+            .addHeader("Transfer-encoding: chunked"));
 
     URLConnection connection = client.open(server.getUrl("/"));
     try {
@@ -1251,8 +1256,8 @@ public final class URLConnectionTest {
         .setBody("a")
         .setSocketPolicy(SHUTDOWN_INPUT_AT_END));
     server.enqueue(new MockResponse()
-        .addHeader("Content-Encoding: gzip")
-        .setBody(gzip("b")));
+            .addHeader("Content-Encoding: gzip")
+            .setBody(gzip("b")));
 
     // Seed the pool with a bad connection.
     assertContent("a", client.open(server.getUrl("/")));
@@ -1315,8 +1320,8 @@ public final class URLConnectionTest {
   @Test public void streamDiscardingIsTimely() throws Exception {
     // This response takes at least a full second to serve: 10,000 bytes served 100 bytes at a time.
     server.enqueue(new MockResponse()
-        .setBody(new Buffer().write(new byte[10000]))
-        .throttleBody(100, 10, MILLISECONDS));
+            .setBody(new Buffer().write(new byte[10000]))
+            .throttleBody(100, 10, MILLISECONDS));
     server.enqueue(new MockResponse().setBody("A"));
 
     long startNanos = System.nanoTime();
@@ -1393,39 +1398,70 @@ public final class URLConnectionTest {
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
     enableProtocol(Protocol.SPDY_3);
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131 */
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail() throws Exception {
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
     enableProtocol(Protocol.SPDY_3);
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
-  private void postBodyRetransmittedAfterAuthorizationFail(String body) throws Exception {
+  private void postBodyRetransmittedAfterBasicAuthorizationFail(String body) throws Exception {
     server.enqueue(new MockResponse().setResponseCode(401));
     server.enqueue(new MockResponse());
 
     String credential = Credentials.basic("jesse", "secret");
+    client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    connection = client.open(server.getUrl("/"));
+    connection.setDoOutput(true);
+    OutputStream outputStream = connection.getOutputStream();
+    outputStream.write(body.getBytes("UTF-8"));
+    outputStream.close();
+    assertEquals(200, connection.getResponseCode());
+
+    RecordedRequest recordedRequest1 = server.takeRequest();
+    assertEquals("POST", recordedRequest1.getMethod());
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
+    assertNull(recordedRequest1.getHeader("Authorization"));
+
+    RecordedRequest recordedRequest2 = server.takeRequest();
+    assertEquals("POST", recordedRequest2.getMethod());
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
+    assertEquals(credential, recordedRequest2.getHeader("Authorization"));
+  }
+
+  private void postBodyRetransmittedAfterOAuth2AuthorizationFail(String body) throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse());
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
     client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
 
     connection = client.open(server.getUrl("/"));
@@ -1837,8 +1873,8 @@ public final class URLConnectionTest {
   @Test public void notRedirectedFromHttpsToHttp() throws IOException, InterruptedException {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: http://anyhost/foo")
-        .setBody("This page has moved!"));
+            .addHeader("Location: http://anyhost/foo")
+            .setBody("This page has moved!"));
 
     client.client().setFollowSslRedirects(false);
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
@@ -1849,8 +1885,8 @@ public final class URLConnectionTest {
 
   @Test public void notRedirectedFromHttpToHttps() throws IOException, InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: https://anyhost/foo")
-        .setBody("This page has moved!"));
+            .addHeader("Location: https://anyhost/foo")
+            .setBody("This page has moved!"));
 
     client.client().setFollowSslRedirects(false);
     connection = client.open(server.getUrl("/"));
@@ -1882,8 +1918,8 @@ public final class URLConnectionTest {
     server2.enqueue(new MockResponse().setBody("This is secure HTTPS!"));
 
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.getUrl("/"))
-        .setBody("This page has moved!"));
+            .addHeader("Location: " + server2.getUrl("/"))
+            .setBody("This page has moved!"));
 
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
@@ -1962,15 +1998,31 @@ public final class URLConnectionTest {
         proxySelectionRequests);
   }
 
-  @Test public void redirectWithAuthentication() throws Exception {
+  @Test public void redirectWithBasicAuthentication() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
 
     server.enqueue(new MockResponse().setResponseCode(401));
     server.enqueue(new MockResponse().setResponseCode(302)
-        .addHeader("Location: " + server2.getUrl("/b")));
+            .addHeader("Location: " + server2.getUrl("/b")));
 
     client.client().setAuthenticator(
-        new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+            new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+    assertContent("Page 2", client.open(server.getUrl("/a")));
+
+    RecordedRequest redirectRequest = server2.takeRequest();
+    assertNull(redirectRequest.getHeader("Authorization"));
+    assertEquals("/b", redirectRequest.getPath());
+  }
+
+  @Test public void redirectWithOAuth2Authentication() throws Exception {
+    server2.enqueue(new MockResponse().setBody("Page 2"));
+
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse().setResponseCode(302)
+            .addHeader("Location: " + server2.getUrl("/b")));
+
+    client.client().setAuthenticator(
+            new RecordingOkAuthenticator(Credentials.oauth2(UUID.randomUUID().toString())));
     assertContent("Page 2", client.open(server.getUrl("/a")));
 
     RecordedRequest redirectRequest = server2.takeRequest();
@@ -2054,8 +2106,8 @@ public final class URLConnectionTest {
 
   @Test public void response305UseProxy() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_USE_PROXY)
-        .addHeader("Location: " + server.getUrl("/"))
-        .setBody("This page has moved!"));
+            .addHeader("Location: " + server.getUrl("/"))
+            .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("Proxy Response"));
 
     connection = client.open(server.getUrl("/foo"));
@@ -2338,7 +2390,7 @@ public final class URLConnectionTest {
 
   @Test public void responseCodeDisagreesWithHeaders() throws IOException, InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NO_CONTENT)
-        .setBody("This body is not allowed!"));
+            .setBody("This body is not allowed!"));
 
     URLConnection connection = client.open(server.getUrl("/"));
     assertEquals("This body is not allowed!",
@@ -2484,7 +2536,7 @@ public final class URLConnectionTest {
       fail();
     } catch (NullPointerException expected) {
     }
-    assertNull(connection.getContent(new Class[] { getClass() }));
+    assertNull(connection.getContent(new Class[]{getClass()}));
   }
 
   @Test public void getOutputStreamOnGetFails() throws Exception {
@@ -2862,6 +2914,26 @@ public final class URLConnectionTest {
     assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
 
+  @Test public void customOAuth2Authenticator() throws Exception {
+    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
+            .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
+            .setBody("Please authenticate.");
+    server.enqueue(pleaseAuthenticate);
+    server.enqueue(new MockResponse().setBody("A"));
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(credential);
+    client.client().setAuthenticator(authenticator);
+    assertContent("A", client.open(server.getUrl("/private")));
+
+    assertNull(server.takeRequest().getHeader("Authorization"));
+    assertEquals(credential, server.takeRequest().getHeader("Authorization"));
+
+    Response response = authenticator.onlyResponse();
+    assertEquals("/private", response.request().url().getPath());
+    assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
+  }
+
   @Test public void customTokenAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
             .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
@@ -2886,8 +2958,8 @@ public final class URLConnectionTest {
         .setResponseCode(302)
         .addHeader("Location: /b"));
     server.enqueue(new MockResponse()
-        .setResponseCode(401)
-        .addHeader("WWW-Authenticate: Basic realm=\"protected area\""));
+            .setResponseCode(401)
+            .addHeader("WWW-Authenticate: Basic realm=\"protected area\""));
     server.enqueue(new MockResponse().setBody("c"));
 
     RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
@@ -2902,7 +2974,28 @@ public final class URLConnectionTest {
     assertEquals("/a", redirectedBy.request().url().getPath());
   }
 
-  @Test public void attemptAuthorization20Times() throws Exception {
+  @Test public void authenticateOAuth2CallsTrackedAsRedirects() throws Exception {
+    server.enqueue(new MockResponse()
+            .setResponseCode(302)
+            .addHeader("Location: /b"));
+    server.enqueue(new MockResponse()
+            .setResponseCode(401)
+            .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\""));
+    server.enqueue(new MockResponse().setBody("c"));
+
+    RecordingOkAuthenticator authenticator = new RecordingOkAuthenticator(
+            Credentials.oauth2(UUID.randomUUID().toString()));
+    client.client().setAuthenticator(authenticator);
+    assertContent("c", client.open(server.getUrl("/a")));
+
+    Response challengeResponse = authenticator.responses.get(0);
+    assertEquals("/b", challengeResponse.request().url().getPath());
+
+    Response redirectedBy = challengeResponse.priorResponse();
+    assertEquals("/a", redirectedBy.request().url().getPath());
+  }
+
+  @Test public void attemptBasicAuthorization20Times() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse().setResponseCode(401));
     }
@@ -2915,12 +3008,43 @@ public final class URLConnectionTest {
     assertContent("Success!", connection);
   }
 
-  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
+  @Test public void attemptOAuth2cAuthorization20Times() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
+    client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    connection = client.open(server.getUrl("/0"));
+    assertContent("Success!", connection);
+  }
+
+  @Test public void doesNotAttemptBasicAuthorization21Times() throws Exception {
     for (int i = 0; i < 21; i++) {
       server.enqueue(new MockResponse().setResponseCode(401));
     }
 
     String credential = Credentials.basic("jesse", "peanutbutter");
+    client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    connection = client.open(server.getUrl("/"));
+    try {
+      connection.getInputStream();
+      fail();
+    } catch (ProtocolException expected) {
+      assertEquals(401, connection.getResponseCode());
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
+    }
+  }
+
+  @Test public void doesNotAttemptOAuth2Authorization21Times() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
     client.client().setAuthenticator(new RecordingOkAuthenticator(credential));
 
     connection = client.open(server.getUrl("/"));

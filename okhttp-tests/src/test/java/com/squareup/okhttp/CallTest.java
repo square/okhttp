@@ -15,6 +15,15 @@
  */
 package com.squareup.okhttp;
 
+import static com.squareup.okhttp.internal.Internal.logger;
+import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.squareup.okhttp.internal.DoubleInetAddressNetwork;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
@@ -30,6 +39,14 @@ import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.RecordedRequest;
 import com.squareup.okhttp.mockwebserver.SocketPolicy;
 import com.squareup.okhttp.testing.RecordingHostnameVerifier;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.rules.Timeout;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,6 +63,7 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -56,6 +74,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
@@ -63,26 +82,12 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestRule;
-import org.junit.rules.Timeout;
-
-import static com.squareup.okhttp.internal.Internal.logger;
-import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public final class CallTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
@@ -281,35 +286,41 @@ public final class CallTest {
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
     enableProtocol(Protocol.SPDY_3);
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    postBodyRetransmittedAfterAuthorizationFail("abc");
+    postBodyRetransmittedAfterBasicAuthorizationFail("abc");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("abc");
   }
 
   /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131 */
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail() throws Exception {
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
     enableProtocol(Protocol.SPDY_3);
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
-    postBodyRetransmittedAfterAuthorizationFail("");
+    postBodyRetransmittedAfterBasicAuthorizationFail("");
+    postBodyRetransmittedAfterOAuth2AuthorizationFail("");
   }
 
-  private void postBodyRetransmittedAfterAuthorizationFail(String body) throws Exception {
+  private void postBodyRetransmittedAfterBasicAuthorizationFail(String body) throws Exception {
     server.enqueue(new MockResponse().setResponseCode(401));
     server.enqueue(new MockResponse());
 
@@ -335,7 +346,33 @@ public final class CallTest {
     assertEquals(credential, recordedRequest2.getHeader("Authorization"));
   }
 
-  @Test public void attemptAuthorization20Times() throws Exception {
+  private void postBodyRetransmittedAfterOAuth2AuthorizationFail(String body) throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401));
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .method("POST", RequestBody.create(null, body))
+            .build();
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    Response response = client.newCall(request).execute();
+    assertEquals(200, response.code());
+
+    RecordedRequest recordedRequest1 = server.takeRequest();
+    assertEquals("POST", recordedRequest1.getMethod());
+    assertEquals(body, recordedRequest1.getBody().readUtf8());
+    assertNull(recordedRequest1.getHeader("Authorization"));
+
+    RecordedRequest recordedRequest2 = server.takeRequest();
+    assertEquals("POST", recordedRequest2.getMethod());
+    assertEquals(body, recordedRequest2.getBody().readUtf8());
+    assertEquals(credential, recordedRequest2.getHeader("Authorization"));
+  }
+
+  @Test public void attemptBasicAuthorization20Times() throws Exception {
     for (int i = 0; i < 20; i++) {
       server.enqueue(new MockResponse().setResponseCode(401));
     }
@@ -350,12 +387,43 @@ public final class CallTest {
         .assertBody("Success!");
   }
 
-  @Test public void doesNotAttemptAuthorization21Times() throws Exception {
+  @Test public void attemptOAuth2Authorization20Times() throws Exception {
+    for (int i = 0; i < 20; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+    server.enqueue(new MockResponse().setBody("Success!"));
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    Request request = new Request.Builder().url(server.url("/")).build();
+    executeSynchronously(request)
+            .assertCode(200)
+            .assertBody("Success!");
+  }
+
+  @Test public void doesNotAttemptBasicAuthorization21Times() throws Exception {
     for (int i = 0; i < 21; i++) {
       server.enqueue(new MockResponse().setResponseCode(401));
     }
 
     String credential = Credentials.basic("jesse", "secret");
+    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+
+    try {
+      client.newCall(new Request.Builder().url(server.url("/0")).build()).execute();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("Too many follow-up requests: 21", expected.getMessage());
+    }
+  }
+
+  @Test public void doesNotAttemptOAuth2Authorization21Times() throws Exception {
+    for (int i = 0; i < 21; i++) {
+      server.enqueue(new MockResponse().setResponseCode(401));
+    }
+
+    String credential = Credentials.oauth2(UUID.randomUUID().toString());
     client.setAuthenticator(new RecordingOkAuthenticator(credential));
 
     try {
@@ -573,11 +641,13 @@ public final class CallTest {
         .build();
 
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override
+      public void onFailure(Request request, IOException e) {
         fail();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override
+      public void onResponse(Response response) throws IOException {
         throw new IOException("a");
       }
     });
@@ -630,11 +700,13 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.url("/a")).build();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override
+      public void onFailure(Request request, IOException e) {
         throw new AssertionError();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override
+      public void onResponse(Response response) throws IOException {
         InputStream bytes = response.body().byteStream();
         assertEquals('a', bytes.read());
         assertEquals('b', bytes.read());
@@ -779,8 +851,8 @@ public final class CallTest {
   @Test public void tls_Async() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse()
-        .setBody("abc")
-        .addHeader("Content-Type: text/plain"));
+            .setBody("abc")
+            .addHeader("Content-Type: text/plain"));
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
@@ -906,7 +978,7 @@ public final class CallTest {
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
     client.setConnectionSpecs(
-        Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
+            Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
 
     server.enqueue(new MockResponse());
 
@@ -1324,15 +1396,34 @@ public final class CallTest {
     assertNull(request2.getHeader("Cookie"));
   }
 
-  @Test public void redirectsDoNotIncludeTooManyAuthHeaders() throws Exception {
+  @Test public void redirectsDoNotIncludeTooManyBasicAuthHeaders() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server.enqueue(new MockResponse()
-        .setResponseCode(401));
+            .setResponseCode(401));
     server.enqueue(new MockResponse()
-        .setResponseCode(302)
-        .addHeader("Location: " + server2.url("/b")));
+            .setResponseCode(302)
+            .addHeader("Location: " + server2.url("/b")));
 
     client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+
+    Request request = new Request.Builder().url(server.url("/a")).build();
+    Response response = client.newCall(request).execute();
+    assertEquals("Page 2", response.body().string());
+
+    RecordedRequest redirectRequest = server2.takeRequest();
+    assertNull(redirectRequest.getHeader("Authorization"));
+    assertEquals("/b", redirectRequest.getPath());
+  }
+
+  @Test public void redirectsDoNotIncludeTooManyOAuth2AuthHeaders() throws Exception {
+    server2.enqueue(new MockResponse().setBody("Page 2"));
+    server.enqueue(new MockResponse()
+            .setResponseCode(401));
+    server.enqueue(new MockResponse()
+            .setResponseCode(302)
+            .addHeader("Location: " + server2.url("/b")));
+
+    client.setAuthenticator(new RecordingOkAuthenticator(Credentials.oauth2(UUID.randomUUID().toString())));
 
     Request request = new Request.Builder().url(server.url("/a")).build();
     Response response = client.newCall(request).execute();
