@@ -5,6 +5,11 @@ Change Log
 
 _2015-08-25_
 
+ *  **Timeouts now default to 10 seconds.** Previously we defaulted to never
+    timing out, and that was a lousy policy. If some of your requests require
+    more than 10 seconds to complete, you’ll need to adjust the timeouts
+    manually.
+
  *  **OkHttp now rejects request headers that contain invalid characters.** This
     includes potential security problems (newline characters) as well as simple
     non-ASCII characters (including international characters and emoji).
@@ -29,6 +34,11 @@ _2015-08-25_
  *  New: Fold `MockWebServerRule` into `MockWebServer`. This makes it easier to
     write JUnit tests with `MockWebServer`. The `MockWebServer` library now
     depends on JUnit, though it continues to work with all testing frameworks.
+ *  Fix: `FormEncodingBuilder` is now consistent with browsers in which
+    characters it escapes. Previously we weren’t percent-encoding commas,
+    parens, and other characters.
+ *  Fix: Relax `FormEncodingBuilder` to support building empty forms.
+ *  Fix: Timeouts throw `SocketTimeoutException`, not `InterruptedIOException`.
  *  Fix: Change `MockWebServer` to use the same logic as OkHttp when determining
     whether an HTTP request permits a body.
  *  Fix: `HttpUrl` now uses the canonical form for IPv6 addresses.
