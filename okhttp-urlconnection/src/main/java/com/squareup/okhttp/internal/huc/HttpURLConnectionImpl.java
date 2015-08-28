@@ -46,10 +46,12 @@ import java.io.OutputStream;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -321,14 +323,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
-  private HttpEngine newHttpEngine(String method, Connection connection,
-      RetryableSink requestBody, Response priorResponse) {
+  private HttpEngine newHttpEngine(String method, Connection connection, RetryableSink requestBody,
+      Response priorResponse) throws MalformedURLException, UnknownHostException {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     RequestBody placeholderBody = HttpMethod.requiresRequestBody(method)
         ? EMPTY_REQUEST_BODY
         : null;
+    URL url = getURL();
+    HttpUrl httpUrl = Internal.instance.getHttpUrlChecked(url.toString());
     Request.Builder builder = new Request.Builder()
-        .url(getURL())
+        .url(httpUrl)
         .method(method, placeholderBody);
     Headers headers = requestHeaders.build();
     for (int i = 0, size = headers.size(); i < size; i++) {
