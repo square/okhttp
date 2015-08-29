@@ -27,9 +27,11 @@ import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.CookieHandler;
+import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,6 +158,11 @@ public class OkHttpClient implements Cloneable {
       @Override
       public void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket, boolean isFallback) {
         tlsConfiguration.apply(sslSocket, isFallback);
+      }
+
+      @Override public HttpUrl getHttpUrlChecked(String url)
+          throws MalformedURLException, UnknownHostException {
+        return HttpUrl.getChecked(url);
       }
     };
   }

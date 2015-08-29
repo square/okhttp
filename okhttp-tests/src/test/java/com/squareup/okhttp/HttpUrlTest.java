@@ -17,8 +17,10 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.UrlComponentEncodingTester.Component;
 import com.squareup.okhttp.UrlComponentEncodingTester.Encoding;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -947,6 +949,27 @@ public final class HttpUrlTest {
   @Test public void fromUriPartial() throws Exception {
     URI uri = new URI("/path");
     assertEquals(null, HttpUrl.get(uri));
+  }
+
+  @Test public void fromJavaNetUrl_checked() throws Exception {
+    HttpUrl httpUrl = HttpUrl.getChecked("http://username:password@host/path?query#fragment");
+    assertEquals("http://username:password@host/path?query#fragment", httpUrl.toString());
+  }
+
+  @Test public void fromJavaNetUrlUnsupportedScheme_checked() throws Exception {
+    try {
+      HttpUrl.getChecked("mailto:user@example.com");
+      fail();
+    } catch (MalformedURLException e) {
+    }
+  }
+
+  @Test public void fromJavaNetUrlBadHost_checked() throws Exception {
+    try {
+      HttpUrl.getChecked("http://hostw ithspace/");
+      fail();
+    } catch (UnknownHostException expected) {
+    }
   }
 
   @Test public void composeQueryWithComponents() throws Exception {

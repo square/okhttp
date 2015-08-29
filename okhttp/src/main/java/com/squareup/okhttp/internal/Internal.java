@@ -21,6 +21,7 @@ import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -28,6 +29,8 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import okio.BufferedSink;
@@ -84,6 +87,9 @@ public abstract class Internal {
 
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
+
+  public abstract HttpUrl getHttpUrlChecked(String url)
+      throws MalformedURLException, UnknownHostException;
 
   // TODO delete the following when web sockets move into the main package.
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);

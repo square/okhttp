@@ -3178,6 +3178,37 @@ public final class URLConnectionTest {
     assertContent("abc", client.open(server.getUrl("/")));
   }
 
+  @Test public void urlWithSpaceInHost() throws Exception {
+    URLConnection urlConnection = client.open(new URL("http://and roid.com/"));
+    try {
+      urlConnection.getInputStream();
+      fail();
+    } catch (UnknownHostException expected) {
+    }
+  }
+
+  @Test public void urlWithSpaceInHostViaHttpProxy() throws Exception {
+    server.enqueue(new MockResponse());
+    URLConnection urlConnection =
+        client.open(new URL("http://and roid.com/"), server.toProxyAddress());
+
+    try {
+      // This test is to check that a NullPointerException is not thrown.
+      urlConnection.getInputStream();
+      fail(); // the RI makes a bogus proxy request for "GET http://and roid.com/ HTTP/1.1"
+    } catch (UnknownHostException expected) {
+    }
+  }
+
+  @Test public void urlHostWithNul() throws Exception {
+    URLConnection urlConnection = client.open(new URL("http://host\u0000/"));
+    try {
+      urlConnection.getInputStream();
+      fail();
+    } catch (UnknownHostException expected) {
+    }
+  }
+
   /** Returns a gzipped copy of {@code bytes}. */
   public Buffer gzip(String data) throws IOException {
     Buffer result = new Buffer();

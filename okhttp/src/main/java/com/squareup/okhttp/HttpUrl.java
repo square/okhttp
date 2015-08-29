@@ -561,7 +561,9 @@ public final class HttpUrl {
 
   /** Returns the URL that would be retrieved by following {@code link} from this URL. */
   public HttpUrl resolve(String link) {
-    return new Builder().parse(this, link);
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(this, link);
+    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
   public Builder newBuilder() {
@@ -584,11 +586,13 @@ public final class HttpUrl {
   }
 
   /**
-   * Returns a new {@code OkUrl} representing {@code url} if it is a well-formed HTTP or HTTPS URL,
-   * or null if it isn't.
+   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
+   * URL, or null if it isn't.
    */
   public static HttpUrl parse(String url) {
-    return new Builder().parse(null, url);
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(null, url);
+    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
   }
 
   /**
@@ -597,6 +601,29 @@ public final class HttpUrl {
    */
   public static HttpUrl get(URL url) {
     return parse(url.toString());
+  }
+
+  /**
+   * Returns a new {@code HttpUrl} representing {@code url} if it is a well-formed HTTP or HTTPS
+   * URL, or throws an exception if it isn't.
+   *
+   * @throws MalformedURLException if there was a non-host related URL issue
+   * @throws UnknownHostException if the host was invalid
+   */
+  static HttpUrl getChecked(String url) throws MalformedURLException, UnknownHostException {
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(null, url);
+    switch (result) {
+      case SUCCESS:
+        return builder.build();
+      case INVALID_HOST:
+        throw new UnknownHostException("Invalid host: " + url);
+      case UNSUPPORTED_SCHEME:
+      case MISSING_SCHEME:
+      case INVALID_PORT:
+      default:
+        throw new MalformedURLException("Invalid URL: " + result + " for " + url);
+    }
   }
 
   public static HttpUrl get(URI uri) {
@@ -883,7 +910,15 @@ public final class HttpUrl {
       return result.toString();
     }
 
-    HttpUrl parse(HttpUrl base, String input) {
+    enum ParseResult {
+      SUCCESS,
+      MISSING_SCHEME,
+      UNSUPPORTED_SCHEME,
+      INVALID_PORT,
+      INVALID_HOST,
+    }
+
+    ParseResult parse(HttpUrl base, String input) {
       int pos = skipLeadingAsciiWhitespace(input, 0, input.length());
       int limit = skipTrailingAsciiWhitespace(input, pos, input.length());
 
@@ -897,12 +932,12 @@ public final class HttpUrl {
           this.scheme = "http";
           pos += "http:".length();
         } else {
-          return null; // Not an HTTP scheme.
+          return ParseResult.UNSUPPORTED_SCHEME; // Not an HTTP scheme.
         }
       } else if (base != null) {
         this.scheme = base.scheme;
       } else {
-        return null; // No scheme.
+        return ParseResult.MISSING_SCHEME; // No scheme.
       }
 
       // Authority.
@@ -960,12 +995,12 @@ public final class HttpUrl {
               if (portColonOffset + 1 < componentDelimiterOffset) {
                 this.host = canonicalizeHost(input, pos, portColonOffset);
                 this.port = parsePort(input, portColonOffset + 1, componentDelimiterOffset);
-                if (this.port == -1) return null; // Invalid port.
+                if (this.port == -1) return ParseResult.INVALID_PORT; // Invalid port.
               } else {
                 this.host = canonicalizeHost(input, pos, portColonOffset);
                 this.port = defaultPort(this.scheme);
               }
-              if (this.host == null) return null; // Invalid host.
+              if (this.host == null) return ParseResult.INVALID_HOST; // Invalid host.
               pos = componentDelimiterOffset;
               break authority;
           }
@@ -1002,7 +1037,7 @@ public final class HttpUrl {
             input, pos + 1, limit, FRAGMENT_ENCODE_SET, true, false);
       }
 
-      return build();
+      return ParseResult.SUCCESS;
     }
 
     private void resolvePath(String input, int pos, int limit) {
