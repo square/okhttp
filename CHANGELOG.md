@@ -6,9 +6,10 @@ Change Log
 _2015-08-25_
 
  *  **Timeouts now default to 10 seconds.** Previously we defaulted to never
-    timing out, and that was a lousy policy. If some of your requests require
-    more than 10 seconds to complete, you’ll need to adjust the timeouts
-    manually.
+    timing out, and that was a lousy policy. If establishing a connection,
+    reading the next byte from a connection, or writing the next byte to a
+    connection takes more than 10 seconds to complete, you’ll need to adjust
+    the timeouts manually.
 
  *  **OkHttp now rejects request headers that contain invalid characters.** This
     includes potential security problems (newline characters) as well as simple
