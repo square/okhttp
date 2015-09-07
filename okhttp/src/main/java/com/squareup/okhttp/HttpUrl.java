@@ -1238,17 +1238,7 @@ public final class HttpUrl {
         throw new AssertionError();
       }
 
-      // Do IDN decoding. This converts {@code ☃.net} to {@code xn--n3h.net}.
-      String idnDecoded = domainToAscii(percentDecoded);
-      if (idnDecoded == null) return null;
-
-      // Confirm that the decoded result doesn't contain any illegal characters.
-      int length = idnDecoded.length();
-      if (delimiterOffset(idnDecoded, 0, length, "\u0000\t\n\r #%/:?@[\\]") != length) {
-        return null;
-      }
-
-      return idnDecoded;
+      return domainToAscii(percentDecoded);
     }
 
     /** Decodes an IPv6 address like 1111:2222:3333:4444:5555:6666:7777:8888 or ::1. */
@@ -1357,15 +1347,47 @@ public final class HttpUrl {
       return true; // Success.
     }
 
+    /**
+     * Performs IDN ToASCII encoding and canonicalize the result to lowercase. e.g. This converts
+     * {@code ☃.net} to {@code xn--n3h.net}, and {@code WwW.GoOgLe.cOm} to {@code www.google.com}.
+     * {@code null} will be returned if the input cannot be ToASCII encoded or if the result
+     * contains unsupported ASCII characters.
+     */
     private static String domainToAscii(String input) {
       try {
         String result = IDN.toASCII(input).toLowerCase(Locale.US);
         if (result.isEmpty()) return null;
+
+        if (result == null) return null;
+
+        // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
+        if (containsInvalidHostnameAsciiCodes(result)) {
+          return null;
+        }
         // TODO: implement all label limits.
         return result;
       } catch (IllegalArgumentException e) {
         return null;
       }
+    }
+
+    private static boolean containsInvalidHostnameAsciiCodes(String hostnameAscii) {
+      for (int i = 0; i < hostnameAscii.length(); i++) {
+        char c = hostnameAscii.charAt(i);
+        // The WHATWG Host parsing rules accepts some character codes which are invalid by
+        // definition for OkHttp's host header checks (and the WHATWG Host syntax definition). Here
+        // we rule out characters that would cause problems in host headers.
+        if (c <= '\u001f' || c >= '\u007f') {
+          return true;
+        }
+        // Check for the characters mentioned in the WHATWG Host parsing spec:
+        // U+0000, U+0009, U+000A, U+000D, U+0020, "#", "%", "/", ":", "?", "@", "[", "\", and "]"
+        // (excluding the characters covered above).
+        if (" #%/:?@[\\]".indexOf(c) != -1) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static String inet6AddressToAscii(byte[] address) {

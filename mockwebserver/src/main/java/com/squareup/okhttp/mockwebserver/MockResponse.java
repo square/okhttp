@@ -16,6 +16,7 @@
 package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.ws.WebSocketListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -102,6 +103,16 @@ public final class MockResponse implements Cloneable {
    */
   public MockResponse addHeader(String name, Object value) {
     headers.add(name, String.valueOf(value));
+    return this;
+  }
+
+  /**
+   * Adds a new header with the name and value. This may be used to add multiple
+   * headers with the same name. Unlike {@link #addHeader(String, Object)} this
+   * does not validate the name and value.
+   */
+  public MockResponse addHeaderLenient(String name, Object value) {
+    Internal.instance.addLenient(headers, name, String.valueOf(value));
     return this;
   }
 

@@ -29,6 +29,7 @@ import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public final class HttpUrlTest {
@@ -40,6 +41,11 @@ public final class HttpUrlTest {
     assertEquals(expected, HttpUrl.parse("    http://host/    ")); // Both.
     assertEquals(expected, HttpUrl.parse("http://host/").resolve("   "));
     assertEquals(expected, HttpUrl.parse("http://host/").resolve("  .  "));
+  }
+
+  @Test public void parseHostAsciiNonPrintable() throws Exception {
+    String host = "host\u0001";
+    assertNull(HttpUrl.parse("http://" + host + "/"));
   }
 
   @Test public void parseDoesNotTrimOtherWhitespaceCharacters() throws Exception {
