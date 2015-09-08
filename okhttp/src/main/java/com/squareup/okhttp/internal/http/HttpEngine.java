@@ -40,6 +40,7 @@ import java.io.InterruptedIOException;
 import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
@@ -430,15 +431,15 @@ public final class HttpEngine {
 
     IOException ioe = e.getLastConnectException();
 
-    // TODO(nfuller): This is the same logic as in ConnectionSpecSelector
     // If there was a protocol problem, don't recover.
     if (ioe instanceof ProtocolException) {
       return false;
     }
 
-    // If there was an interruption or timeout, don't recover.
+    // If there was an interruption don't recover, but if there was a timeout
+    // we should try the next route (if there is one).
     if (ioe instanceof InterruptedIOException) {
-      return false;
+      return ioe instanceof SocketTimeoutException;
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
@@ -454,7 +455,6 @@ public final class HttpEngine {
       // e.g. a certificate pinning error.
       return false;
     }
-    // TODO(nfuller): End of common code.
 
     // An example of one we might want to retry with a different route is a problem connecting to a
     // proxy and would manifest as a standard IOException. Unless it is one we know we should not
