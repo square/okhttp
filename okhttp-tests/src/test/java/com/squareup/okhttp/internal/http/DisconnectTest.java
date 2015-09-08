@@ -55,15 +55,18 @@ public final class DisconnectTest {
     server.setServerSocketFactory(
         new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
           @Override
-          protected void configureServerSocket(ServerSocket serverSocket) throws IOException {
+          protected ServerSocket configureServerSocket(ServerSocket serverSocket)
+              throws IOException {
             serverSocket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+            return serverSocket;
           }
         });
     client.setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
       @Override
-      protected void configureSocket(Socket socket) throws IOException {
+      protected Socket configureSocket(Socket socket) throws IOException {
         socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
         socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+        return socket;
       }
     });
   }

@@ -1889,8 +1889,9 @@ public final class CallTest {
     }
 
     @Override
-    protected void configureSocket(SSLSocket sslSocket) throws IOException {
+    protected SSLSocket configureSocket(SSLSocket sslSocket) throws IOException {
       socketsCreated.add(sslSocket);
+      return sslSocket;
     }
 
     public List<SSLSocket> getSocketsCreated() {
