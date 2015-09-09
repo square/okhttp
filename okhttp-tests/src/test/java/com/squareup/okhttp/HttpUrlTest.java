@@ -914,6 +914,12 @@ public final class HttpUrlTest {
     assertEquals("http://username:password@host/path?query#fragment", uri.toString());
   }
 
+  @Test public void toUriSpecialQueryCharacters() throws Exception {
+    HttpUrl httpUrl = HttpUrl.parse("http://host/?d=abc!@[]^`{}|\\");
+    URI uri = httpUrl.uri();
+    assertEquals("http://host/?d=abc!@[]%5E%60%7B%7D%7C%5C", uri.toString());
+  }
+
   @Test public void toUriForbiddenCharacter() throws Exception {
     HttpUrl httpUrl = HttpUrl.parse("http://host/a[b");
     try {
