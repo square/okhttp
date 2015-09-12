@@ -45,7 +45,7 @@ public class MainTest {
     RequestBody body = request.body();
     assertEquals("POST", request.method());
     assertEquals("http://example.com/", request.urlString());
-    assertEquals("application/x-form-urlencoded; charset=utf-8", body.contentType().toString());
+    assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
     assertEquals("foo", bodyAsString(body));
   }
 
@@ -54,7 +54,7 @@ public class MainTest {
     RequestBody body = request.body();
     assertEquals("PUT", request.method());
     assertEquals("http://example.com/", request.urlString());
-    assertEquals("application/x-form-urlencoded; charset=utf-8", body.contentType().toString());
+    assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
     assertEquals("foo", bodyAsString(body));
   }
 
