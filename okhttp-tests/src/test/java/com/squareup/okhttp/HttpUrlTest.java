@@ -83,6 +83,8 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://host/"), HttpUrl.parse("HTTP://host/"));
     assertEquals(HttpUrl.parse("https://host/"), HttpUrl.parse("https://host/"));
     assertEquals(HttpUrl.parse("https://host/"), HttpUrl.parse("HTTPS://host/"));
+    assertEquals(HttpUrl.Builder.ParseResult.UNSUPPORTED_SCHEME,
+        new HttpUrl.Builder().parse(null, "image640://480.png"));
     assertEquals(null, HttpUrl.parse("httpp://host/"));
     assertEquals(null, HttpUrl.parse("0ttp://host/"));
     assertEquals(null, HttpUrl.parse("ht+tp://host/"));
