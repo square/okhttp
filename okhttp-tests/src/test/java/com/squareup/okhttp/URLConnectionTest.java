@@ -3212,6 +3212,25 @@ public final class URLConnectionTest {
     }
   }
 
+  @Test public void urlRedirectToHostWithNul() throws Exception {
+    String redirectUrl = "http://host\u0000/";
+    server.enqueue(new MockResponse().setResponseCode(302)
+        .addHeaderLenient("Location", redirectUrl));
+
+    HttpURLConnection urlConnection = client.open(server.getUrl("/"));
+    assertEquals(302, urlConnection.getResponseCode());
+    assertEquals(redirectUrl, urlConnection.getHeaderField("Location"));
+  }
+
+  @Test public void urlWithBadAsciiHost() throws Exception {
+    URLConnection urlConnection = client.open(new URL("http://host\u0001/"));
+    try {
+      urlConnection.getInputStream();
+      fail();
+    } catch (UnknownHostException expected) {
+    }
+  }
+
   /** Returns a gzipped copy of {@code bytes}. */
   public Buffer gzip(String data) throws IOException {
     Buffer result = new Buffer();
