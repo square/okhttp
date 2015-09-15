@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.HttpURLConnection;
+import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -259,10 +260,17 @@ public final class MockWebServerTest {
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
 
     URLConnection connection = server.getUrl("/").openConnection();
-    assertEquals(2, connection.getHeaderFieldLong("Content-Length", -1));
+    assertEquals(2, connection.getContentLength());
     InputStream in = connection.getInputStream();
     assertEquals('a', in.read());
-    assertEquals(-1, in.read());
+    try {
+      int byteRead = in.read();
+      // OpenJDK behavior: end of stream.
+      assertEquals(-1, byteRead);
+    } catch (ProtocolException e) {
+      // On Android, HttpURLConnection is implemented by OkHttp v2. OkHttp
+      // treats an incomplete response body as a ProtocolException.
+    }
   }
 
   private List<String> headersToList(MockResponse response) {
