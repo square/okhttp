@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,8 +35,10 @@ public class OkHttpContributors {
     Response response = client.newCall(request).execute();
 
     // Deserialize HTTP response to concrete type.
-    Reader body = response.body().charStream();
-    List<Contributor> contributors = GSON.fromJson(body, CONTRIBUTORS.getType());
+    ResponseBody body = response.body();
+    Reader charStream = body.charStream();
+    List<Contributor> contributors = GSON.fromJson(charStream, CONTRIBUTORS.getType());
+    body.close();
 
     // Sort list by the most contributions.
     Collections.sort(contributors, new Comparator<Contributor>() {
