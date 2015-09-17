@@ -38,38 +38,33 @@ public class DelegatingSSLSocketFactory extends SSLSocketFactory {
   @Override
   public SSLSocket createSocket() throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket();
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   @Override
   public SSLSocket createSocket(String host, int port) throws IOException, UnknownHostException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port);
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   @Override
   public SSLSocket createSocket(String host, int port, InetAddress localAddress, int localPort)
       throws IOException, UnknownHostException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port, localAddress, localPort);
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   @Override
   public SSLSocket createSocket(InetAddress host, int port) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port);
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   @Override
   public SSLSocket createSocket(InetAddress host, int port, InetAddress localAddress, int localPort)
       throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port, localAddress, localPort);
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   @Override
@@ -86,8 +81,7 @@ public class DelegatingSSLSocketFactory extends SSLSocketFactory {
   public SSLSocket createSocket(Socket socket, String host, int port, boolean autoClose)
       throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(socket, host, port, autoClose);
-    configureSocket(sslSocket);
-    return sslSocket;
+    return configureSocket(sslSocket);
   }
 
   protected SSLSocket configureSocket(SSLSocket sslSocket) throws IOException {
