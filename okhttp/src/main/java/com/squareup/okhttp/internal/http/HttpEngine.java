@@ -252,7 +252,7 @@ public final class HttpEngine {
       // immediately. And that means we need to immediately write the request headers, so we can
       // start streaming the request body. (We may already have a request body if we're retrying a
       // failed POST.)
-      if (callerWritesRequestBody && permitsRequestBody() && requestBodyOut == null) {
+      if (callerWritesRequestBody && permitsRequestBody(networkRequest) && requestBodyOut == null) {
         long contentLength = OkHeaders.contentLength(request);
         if (bufferRequestBody) {
           if (contentLength > Integer.MAX_VALUE) {
@@ -358,8 +358,8 @@ public final class HttpEngine {
     sentRequestMillis = System.currentTimeMillis();
   }
 
-  boolean permitsRequestBody() {
-    return HttpMethod.permitsRequestBody(userRequest.method());
+  boolean permitsRequestBody(Request request) {
+    return HttpMethod.permitsRequestBody(request.method());
   }
 
   /** Returns the request body or null if this request doesn't have a body. */
@@ -881,7 +881,7 @@ public final class HttpEngine {
       //Update the networkRequest with the possibly updated interceptor request.
       networkRequest = request;
 
-      if (permitsRequestBody() && request.body() != null) {
+      if (permitsRequestBody(request) && request.body() != null) {
         Sink requestBodyOut = transport.createRequestBody(request, request.body().contentLength());
         BufferedSink bufferedRequestBody = Okio.buffer(requestBodyOut);
         request.body().writeTo(bufferedRequestBody);

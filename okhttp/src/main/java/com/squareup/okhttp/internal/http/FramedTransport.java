@@ -83,7 +83,7 @@ public final class FramedTransport implements Transport {
     if (stream != null) return;
 
     httpEngine.writingRequestHeaders();
-    boolean permitsRequestBody = httpEngine.permitsRequestBody();
+    boolean permitsRequestBody = httpEngine.permitsRequestBody(request);
     boolean hasResponseBody = true;
     String version = RequestLine.version(httpEngine.getConnection().getProtocol());
     stream = framedConnection.newStream(
