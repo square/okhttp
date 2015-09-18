@@ -210,6 +210,35 @@ public final class InterceptorTest {
     assertEquals("abcabcabc", response.body().string());
   }
 
+  @Test public void networkInterceptorsCanChangeRequestMethodFromGetToPost() throws Exception {
+    server.enqueue(new MockResponse());
+
+    client.networkInterceptors().add(new Interceptor() {
+      @Override
+      public Response intercept(Chain chain) throws IOException {
+        Request originalRequest = chain.request();
+        MediaType mediaType = MediaType.parse("text/plain");
+        RequestBody body = RequestBody.create(mediaType, "abc");
+        return chain.proceed(originalRequest.newBuilder()
+            .method("POST", body)
+            .header("Content-Type", mediaType.toString())
+            .header("Content-Length", Long.toString(body.contentLength()))
+            .build());
+      }
+    });
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .get()
+        .build();
+
+    client.newCall(request).execute();
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("POST", recordedRequest.getMethod());
+    assertEquals("abc", recordedRequest.getBody().readUtf8());
+  }
+
   @Test public void applicationInterceptorsRewriteRequestToServer() throws Exception {
     rewriteRequestToServer(client.interceptors());
   }
