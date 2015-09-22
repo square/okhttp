@@ -554,6 +554,8 @@ public final class HttpUrlTest {
         HttpUrl.parse("http://host/%/b").pathSegments());
     assertEquals(Arrays.asList("%"),
         HttpUrl.parse("http://host/%").pathSegments());
+    assertEquals(Arrays.asList("%00"),
+        HttpUrl.parse("http://github.com/%%30%30").pathSegments());
   }
 
   @Test public void malformedUtf8Encoding() {
