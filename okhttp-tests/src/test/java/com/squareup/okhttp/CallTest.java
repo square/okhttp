@@ -696,6 +696,20 @@ public final class CallTest {
     }
   }
 
+  // https://github.com/square/okhttp/issues/1801
+  @Test public void asyncCallEngineInitialized() throws Exception {
+    OkHttpClient c = new OkHttpClient();
+    c.interceptors().add(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new IOException();
+      }
+    });
+    Request request = new Request.Builder().url(server.url("/")).build();
+    c.newCall(request).enqueue(callback);
+    RecordedResponse response = callback.await(request.httpUrl());
+    assertEquals(request, response.request);
+  }
+
   @Test public void reusedSinksGetIndependentTimeoutInstances() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
