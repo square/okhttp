@@ -31,6 +31,8 @@
     <module>okhttp-ws</module>
     <module>okhttp-ws-tests</module>
 
+    <module>okhttp-logging-interceptor</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
@@ -52,6 +54,7 @@
     <apache.http.version>4.2.2</apache.http.version>
     <airlift.version>0.6</airlift.version>
     <guava.version>16.0</guava.version>
+    <android.version>4.1.1.4</android.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.11</junit.version>
@@ -112,6 +115,11 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.android</groupId>
+        <artifactId>android</artifactId>
+        <version>${android.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
