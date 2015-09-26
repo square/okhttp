@@ -670,7 +670,7 @@ public final class MockWebServer implements TestRule {
     final RealWebSocket webSocket =
         new RealWebSocket(false /* is server */, source, sink, new SecureRandom(), replyExecutor,
             listener, request.getPath()) {
-          @Override protected void closeConnection() throws IOException {
+          @Override public void closeConnection() throws IOException {
             connectionClose.countDown();
           }
         };

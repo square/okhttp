@@ -60,7 +60,7 @@ public final class RealWebSocketTest {
 
     client = new RealWebSocket(true, server2client, client2Server, random, clientExecutor,
         clientListener, url) {
-      @Override protected void closeConnection() throws IOException {
+      @Override public void closeConnection() throws IOException {
         clientConnectionClosed = true;
         if (clientConnectionCloseThrows) {
           throw new IOException("Oops!");
@@ -69,7 +69,7 @@ public final class RealWebSocketTest {
     };
     server = new RealWebSocket(false, client2Server, server2client, random, serverExecutor,
         serverListener, url) {
-      @Override protected void closeConnection() throws IOException {
+      @Override public void closeConnection() throws IOException {
       }
     };
   }

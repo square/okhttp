@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.ws;
 
+import com.squareup.okhttp.Connection;
 import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -65,4 +66,16 @@ public interface WebSocket {
    * @throws IllegalStateException if already closed.
    */
   void close(int code, String reason) throws IOException;
+
+  /**
+   * Closes the underlying {@link Connection connection} backing the WebSocket.
+   * <p>
+   * The correct way to close a WebSocket is to call {@link WebSocket#close close()}. Calling this
+   * method will force the WebSocket to close its backing {@link Connection connection}, skipping
+   * the WebSocket close frame.
+   * See <a href="http://tools.ietf.org/html/rfc6455#section-5.5.1">Close Frame</a> for details
+   *
+   * @throws IOException
+   */
+  void closeConnection() throws IOException;
 }
