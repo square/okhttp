@@ -16,6 +16,7 @@
  */
 package com.squareup.okhttp.internal;
 
+import android.util.Log;
 import com.squareup.okhttp.Protocol;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
@@ -100,6 +101,10 @@ public class Platform {
     socket.connect(address, connectTimeout);
   }
 
+  public void log(String message) {
+    System.out.println(message);
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     // Attempt to find Android 2.3+ APIs.
@@ -162,6 +167,8 @@ public class Platform {
 
   /** Android 2.3 or better. */
   private static class Android extends Platform {
+    private static final int MAX_LOG_LENGTH = 4000;
+
     private final OptionalMethod<Socket> setUseSessionTickets;
     private final OptionalMethod<Socket> setHostname;
 
@@ -241,6 +248,19 @@ public class Platform {
         throw new RuntimeException(e);
       } catch (InvocationTargetException e) {
         throw new RuntimeException(e.getCause());
+      }
+    }
+
+    @Override public void log(String message) {
+      // Split by line, then ensure each line can fit into Log's maximum length.
+      for (int i = 0, length = message.length(); i < length; i++) {
+        int newline = message.indexOf('\n', i);
+        newline = newline != -1 ? newline : length;
+        do {
+          int end = Math.min(newline, i + MAX_LOG_LENGTH);
+          Log.d("OkHttp", message.substring(i, end));
+          i = end;
+        } while (i < newline);
       }
     }
   }
