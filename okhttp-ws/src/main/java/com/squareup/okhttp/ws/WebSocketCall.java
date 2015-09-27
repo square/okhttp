@@ -47,7 +47,6 @@ public final class WebSocketCall {
     return new WebSocketCall(client, request);
   }
 
-  private final Request request;
   private final Call call;
   private final Random random;
   private final String key;
@@ -78,7 +77,6 @@ public final class WebSocketCall {
         .header("Sec-WebSocket-Key", key)
         .header("Sec-WebSocket-Version", "13")
         .build();
-    this.request = request;
 
     call = client.newCall(request);
   }
