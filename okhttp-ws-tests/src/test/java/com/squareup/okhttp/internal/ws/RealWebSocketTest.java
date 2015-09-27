@@ -247,13 +247,6 @@ public final class RealWebSocketTest {
         clientListener.assertClose(1000, "Hello!");
 
         try {
-          sink.writeUtf8("lo!").emit(); // No writing to the underlying sink.
-          fail();
-        } catch (IOException e) {
-          assertEquals("closed", e.getMessage());
-          sink.buffer().clear();
-        }
-        try {
           sink.flush(); // No flushing.
           fail();
         } catch (IOException e) {
@@ -320,7 +313,7 @@ public final class RealWebSocketTest {
     clientListener.assertClose(1000, "Bye!");
   }
 
-  @Test public void protocolErrorBeforeCloseSendsClose() {
+  @Test public void protocolErrorBeforeCloseSendsClose() throws IOException {
     server2client.write(ByteString.decodeHex("0a00")); // Invalid non-final ping frame.
 
     client.readMessage(); // Detects error, send close.

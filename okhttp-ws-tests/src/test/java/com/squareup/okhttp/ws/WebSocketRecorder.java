@@ -87,28 +87,48 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
     }
   }
 
-  public void assertTextMessage(String payload) {
+  public void assertTextMessage(String payload) throws IOException {
     Message message = new Message(TEXT);
     message.buffer.writeUtf8(payload);
-    assertEquals(message, nextEvent());
+    Object actual = nextEvent();
+    if (actual instanceof IOException) {
+      throw (IOException) actual;
+    }
+    assertEquals(message, actual);
   }
 
-  public void assertBinaryMessage(byte[] payload) {
+  public void assertBinaryMessage(byte[] payload) throws IOException {
     Message message = new Message(BINARY);
     message.buffer.write(payload);
-    assertEquals(message, nextEvent());
+    Object actual = nextEvent();
+    if (actual instanceof IOException) {
+      throw (IOException) actual;
+    }
+    assertEquals(message, actual);
   }
 
-  public void assertPing(Buffer payload) {
-    assertEquals(new Ping(payload), nextEvent());
+  public void assertPing(Buffer payload) throws IOException {
+    Object actual = nextEvent();
+    if (actual instanceof IOException) {
+      throw (IOException) actual;
+    }
+    assertEquals(new Ping(payload), actual);
   }
 
-  public void assertPong(Buffer payload) {
-    assertEquals(new Pong(payload), nextEvent());
+  public void assertPong(Buffer payload) throws IOException {
+    Object actual = nextEvent();
+    if (actual instanceof IOException) {
+      throw (IOException) actual;
+    }
+    assertEquals(new Pong(payload), actual);
   }
 
-  public void assertClose(int code, String reason) {
-    assertEquals(new Close(code, reason), nextEvent());
+  public void assertClose(int code, String reason) throws IOException {
+    Object actual = nextEvent();
+    if (actual instanceof IOException) {
+      throw (IOException) actual;
+    }
+    assertEquals(new Close(code, reason), actual);
   }
 
   public void assertFailure(Class<? extends IOException> cls, String message) {
