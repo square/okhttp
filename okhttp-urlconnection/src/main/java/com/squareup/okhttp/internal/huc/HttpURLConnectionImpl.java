@@ -72,7 +72,7 @@ import okio.Sink;
  *
  * <h3>What does 'connected' mean?</h3>
  * This class inherits a {@code connected} field from the superclass. That field
- * is <strong>not</strong> used to indicate not whether this URLConnection is
+ * is <strong>not</strong> used to indicate whether this URLConnection is
  * currently connected. Instead, it indicates whether a connection has ever been
  * attempted. Once a connection has been attempted, certain properties (request
  * header fields, request method, etc.) are immutable.
