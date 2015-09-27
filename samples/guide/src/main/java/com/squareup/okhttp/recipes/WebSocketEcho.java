@@ -17,10 +17,6 @@ import okio.ByteString;
 import static com.squareup.okhttp.ws.WebSocket.BINARY;
 import static com.squareup.okhttp.ws.WebSocket.TEXT;
 
-/**
- * NOTE: This is currently broken because the Echo server does not correctly echo empty frames
- * which OkHttp uses for final frames on streamed messages.
- */
 public final class WebSocketEcho implements WebSocketListener {
   private final Executor writeExecutor = Executors.newSingleThreadExecutor();
 

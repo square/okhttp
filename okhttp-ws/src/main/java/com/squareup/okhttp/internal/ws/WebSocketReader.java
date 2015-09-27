@@ -42,7 +42,7 @@ import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_P
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_FLAG_CONTROL;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
-import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_MAX;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
 import static java.lang.Integer.toHexString;
@@ -147,8 +147,8 @@ public final class WebSocketReader {
     }
     frameBytesRead = 0;
 
-    if (isControlFrame && frameLength > PAYLOAD_MAX) {
-      throw new ProtocolException("Control frame must be less than " + PAYLOAD_MAX + "B.");
+    if (isControlFrame && frameLength > PAYLOAD_BYTE_MAX) {
+      throw new ProtocolException("Control frame must be less than " + PAYLOAD_BYTE_MAX + "B.");
     }
 
     if (isMasked) {

@@ -30,8 +30,9 @@ import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_C
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PING;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_CONTROL_PONG;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
-import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_MAX;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.PAYLOAD_SHORT_MAX;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
 
 /**
@@ -44,13 +45,16 @@ import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
  */
 public final class WebSocketWriter {
   private final boolean isClient;
-  /** Writes must be guarded by synchronizing on this instance! */
-  private final BufferedSink sink;
   private final Random random;
 
+  /** Writes must be guarded by synchronizing on 'this'. */
+  private final BufferedSink sink;
+  /** Access must be guarded by synchronizing on 'this'. */
+  private boolean writerClosed;
+
+  private final Buffer buffer = new Buffer();
   private final FrameSink frameSink = new FrameSink();
 
-  private boolean closed;
   private boolean activeWriter;
 
   private final byte[] maskKey;
@@ -70,15 +74,15 @@ public final class WebSocketWriter {
 
   /** Send a ping with the supplied {@code payload}. Payload may be {@code null} */
   public void writePing(Buffer payload) throws IOException {
-    synchronized (sink) {
-      writeControlFrame(OPCODE_CONTROL_PING, payload);
+    synchronized (this) {
+      writeControlFrameSynchronized(OPCODE_CONTROL_PING, payload);
     }
   }
 
   /** Send a pong with the supplied {@code payload}. Payload may be {@code null} */
   public void writePong(Buffer payload) throws IOException {
-    synchronized (sink) {
-      writeControlFrame(OPCODE_CONTROL_PONG, payload);
+    synchronized (this) {
+      writeControlFrameSynchronized(OPCODE_CONTROL_PONG, payload);
     }
   }
 
@@ -103,21 +107,23 @@ public final class WebSocketWriter {
       }
     }
 
-    synchronized (sink) {
-      writeControlFrame(OPCODE_CONTROL_CLOSE, payload);
-      closed = true;
+    synchronized (this) {
+      writeControlFrameSynchronized(OPCODE_CONTROL_CLOSE, payload);
+      writerClosed = true;
     }
   }
 
-  private void writeControlFrame(int opcode, Buffer payload) throws IOException {
-    if (closed) throw new IOException("closed");
+  private void writeControlFrameSynchronized(int opcode, Buffer payload) throws IOException {
+    assert Thread.holdsLock(this);
+
+    if (writerClosed) throw new IOException("closed");
 
     int length = 0;
     if (payload != null) {
       length = (int) payload.size();
-      if (length > PAYLOAD_MAX) {
+      if (length > PAYLOAD_BYTE_MAX) {
         throw new IllegalArgumentException(
-            "Payload size must be less than or equal to " + PAYLOAD_MAX);
+            "Payload size must be less than or equal to " + PAYLOAD_BYTE_MAX);
       }
     }
 
@@ -133,7 +139,7 @@ public final class WebSocketWriter {
       sink.write(maskKey);
 
       if (payload != null) {
-        writeAllMasked(payload, length);
+        writeMaskedSynchronized(payload, length);
       }
     } else {
       sink.writeByte(b1);
@@ -143,7 +149,7 @@ public final class WebSocketWriter {
       }
     }
 
-    sink.flush();
+    sink.emit();
   }
 
   /**
@@ -156,54 +162,57 @@ public final class WebSocketWriter {
     }
     activeWriter = true;
 
+    // Reset FrameSink state for a new writer.
     frameSink.formatOpcode = formatOpcode;
     frameSink.isFirstFrame = true;
+    frameSink.closed = false;
+
     return frameSink;
   }
 
-  private void writeFrame(int formatOpcode, Buffer source, long byteCount,
-      boolean isFirstFrame, boolean isFinal) throws IOException {
-    if (closed) throw new IOException("closed");
+  private void writeMessageFrameSynchronized(int formatOpcode, long byteCount, boolean isFirstFrame,
+      boolean isFinal) throws IOException {
+    assert Thread.holdsLock(this);
 
-    int opcode = isFirstFrame ? formatOpcode : OPCODE_CONTINUATION;
+    if (writerClosed) throw new IOException("closed");
 
-    synchronized (sink) {
-      int b0 = opcode;
-      if (isFinal) {
-        b0 |= B0_FLAG_FIN;
-      }
-      sink.writeByte(b0);
-
-      int b1 = 0;
-      if (isClient) {
-        b1 |= B1_FLAG_MASK;
-        random.nextBytes(maskKey);
-      }
-      if (byteCount <= PAYLOAD_MAX) {
-        b1 |= (int) byteCount;
-        sink.writeByte(b1);
-      } else if (byteCount <= 0xffffL) { // Unsigned short.
-        b1 |= PAYLOAD_SHORT;
-        sink.writeByte(b1);
-        sink.writeShort((int) byteCount);
-      } else {
-        b1 |= PAYLOAD_LONG;
-        sink.writeByte(b1);
-        sink.writeLong(byteCount);
-      }
-
-      if (isClient) {
-        sink.write(maskKey);
-        writeAllMasked(source, byteCount);
-      } else {
-        sink.write(source, byteCount);
-      }
-
-      sink.flush();
+    int b0 = isFirstFrame ? formatOpcode : OPCODE_CONTINUATION;
+    if (isFinal) {
+      b0 |= B0_FLAG_FIN;
     }
+    sink.writeByte(b0);
+
+    int b1 = 0;
+    if (isClient) {
+      b1 |= B1_FLAG_MASK;
+      random.nextBytes(maskKey);
+    }
+    if (byteCount <= PAYLOAD_BYTE_MAX) {
+      b1 |= (int) byteCount;
+      sink.writeByte(b1);
+    } else if (byteCount <= PAYLOAD_SHORT_MAX) {
+      b1 |= PAYLOAD_SHORT;
+      sink.writeByte(b1);
+      sink.writeShort((int) byteCount);
+    } else {
+      b1 |= PAYLOAD_LONG;
+      sink.writeByte(b1);
+      sink.writeLong(byteCount);
+    }
+
+    if (isClient) {
+      sink.write(maskKey);
+      writeMaskedSynchronized(buffer, byteCount);
+    } else {
+      sink.write(buffer, byteCount);
+    }
+
+    sink.emit();
   }
 
-  private void writeAllMasked(BufferedSource source, long byteCount) throws IOException {
+  private void writeMaskedSynchronized(BufferedSource source, long byteCount) throws IOException {
+    assert Thread.holdsLock(this);
+
     long written = 0;
     while (written < byteCount) {
       int toRead = (int) Math.min(byteCount, maskBuffer.length);
@@ -218,18 +227,29 @@ public final class WebSocketWriter {
   private final class FrameSink implements Sink {
     private int formatOpcode;
     private boolean isFirstFrame;
+    private boolean closed;
 
     @Override public void write(Buffer source, long byteCount) throws IOException {
-      writeFrame(formatOpcode, source, byteCount, isFirstFrame, false /* final */);
-      isFirstFrame = false;
+      if (closed) throw new IOException("closed");
+
+      buffer.write(source, byteCount);
+
+      long emitCount = buffer.completeSegmentByteCount();
+      if (emitCount > 0) {
+        synchronized (WebSocketWriter.this) {
+          writeMessageFrameSynchronized(formatOpcode, emitCount, isFirstFrame, false /* final */);
+        }
+        isFirstFrame = false;
+      }
     }
 
     @Override public void flush() throws IOException {
       if (closed) throw new IOException("closed");
 
-      synchronized (sink) {
-        sink.flush();
+      synchronized (WebSocketWriter.this) {
+        writeMessageFrameSynchronized(formatOpcode, buffer.size(), isFirstFrame, false /* final */);
       }
+      isFirstFrame = false;
     }
 
     @Override public Timeout timeout() {
@@ -240,21 +260,10 @@ public final class WebSocketWriter {
     @Override public void close() throws IOException {
       if (closed) throw new IOException("closed");
 
-      int length = 0;
-
-      synchronized (sink) {
-        sink.writeByte(B0_FLAG_FIN | OPCODE_CONTINUATION);
-
-        if (isClient) {
-          sink.writeByte(B1_FLAG_MASK | length);
-          random.nextBytes(maskKey);
-          sink.write(maskKey);
-        } else {
-          sink.writeByte(length);
-        }
-        sink.flush();
+      synchronized (WebSocketWriter.this) {
+        writeMessageFrameSynchronized(formatOpcode, buffer.size(), isFirstFrame, true /* final */);
       }
-
+      closed = true;
       activeWriter = false;
     }
   }
