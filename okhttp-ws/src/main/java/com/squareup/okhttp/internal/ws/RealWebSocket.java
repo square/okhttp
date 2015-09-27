@@ -147,18 +147,18 @@ public abstract class RealWebSocket implements WebSocket {
   @Override public void close(int code, String reason) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
 
-    boolean closeConnection;
+    boolean performClose;
     synchronized (closeLock) {
       writerSentClose = true;
 
       // If the reader has also indicated a desire to close we will close the connection.
-      closeConnection = readerSentClose;
+      performClose = readerSentClose;
     }
 
     writer.writeClose(code, reason);
 
-    if (closeConnection) {
-      closeConnection();
+    if (performClose) {
+      close();
     }
   }
 
@@ -172,7 +172,7 @@ public abstract class RealWebSocket implements WebSocket {
     }
 
     try {
-      closeConnection();
+      close();
     } catch (IOException ignored) {
     }
 
@@ -181,32 +181,30 @@ public abstract class RealWebSocket implements WebSocket {
 
   /** Called on the reader thread when an error occurs. */
   private void readerErrorClose(IOException e) {
-    boolean writeCloseResponse;
+    boolean canSendClose;
     synchronized (closeLock) {
       readerSentClose = true;
 
-      // If the writer has not closed we will close the connection.
-      writeCloseResponse = !writerSentClose;
+      // If the writer has not closed we may inform the server of the close.
+      canSendClose = !writerSentClose;
     }
 
-    if (writeCloseResponse) {
-      if (e instanceof ProtocolException) {
-        // For protocol exceptions, try to inform the server of such.
-        try {
-          writer.writeClose(CLOSE_PROTOCOL_EXCEPTION, null);
-        } catch (IOException ignored) {
-        }
+    // For protocol exceptions, try to inform the server of such.
+    if (canSendClose && e instanceof ProtocolException) {
+      try {
+        writer.writeClose(CLOSE_PROTOCOL_EXCEPTION, null);
+      } catch (IOException ignored) {
       }
     }
 
     try {
-      closeConnection();
+      close();
     } catch (IOException ignored) {
     }
 
     listener.onFailure(e, null);
   }
 
-  /** Perform any tear-down work on the connection (close the socket, recycle, etc.). */
-  protected abstract void closeConnection() throws IOException;
+  /** Perform any tear-down work (close the connection, shutdown executors). */
+  protected abstract void close() throws IOException;
 }

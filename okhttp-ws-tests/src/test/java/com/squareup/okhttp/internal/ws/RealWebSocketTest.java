@@ -62,7 +62,7 @@ public final class RealWebSocketTest {
 
     client = new RealWebSocket(true, server2client, client2Server, random, clientExecutor,
         clientListener, url) {
-      @Override protected void closeConnection() throws IOException {
+      @Override protected void close() throws IOException {
         clientConnectionClosed = true;
         if (clientConnectionCloseThrows) {
           throw new IOException("Oops!");
@@ -71,7 +71,7 @@ public final class RealWebSocketTest {
     };
     server = new RealWebSocket(false, client2Server, server2client, random, serverExecutor,
         serverListener, url) {
-      @Override protected void closeConnection() throws IOException {
+      @Override protected void close() throws IOException {
       }
     };
   }
@@ -316,7 +316,7 @@ public final class RealWebSocketTest {
   @Test public void protocolErrorBeforeCloseSendsClose() throws IOException {
     server2client.write(ByteString.decodeHex("0a00")); // Invalid non-final ping frame.
 
-    client.readMessage(); // Detects error, send close.
+    client.readMessage(); // Detects error, send close, close connection.
     clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
     assertTrue(clientConnectionClosed);
 
@@ -326,9 +326,10 @@ public final class RealWebSocketTest {
 
   @Test public void protocolErrorAfterCloseDoesNotSendClose() throws IOException {
     client.close(1000, "Hello!");
+    assertFalse(clientConnectionClosed); // Not closed until close reply is received.
     server2client.write(ByteString.decodeHex("0a00")); // Invalid non-final ping frame.
 
-    client.readMessage();
+    client.readMessage(); // Detects error, closes connection immediately since close already sent.
     clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
     assertTrue(clientConnectionClosed);
 

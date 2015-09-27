@@ -30,7 +30,7 @@ import java.net.ProtocolException;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.Random;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import okio.BufferedSink;
@@ -187,14 +187,17 @@ public final class WebSocketCall {
     }
 
     private final Connection connection;
+    private final ExecutorService replyExecutor;
 
     private ConnectionWebSocket(Connection connection, BufferedSource source, BufferedSink sink,
-        Random random, Executor replyExecutor, WebSocketListener listener, String url) {
+        Random random, ExecutorService replyExecutor, WebSocketListener listener, String url) {
       super(true /* is client */, source, sink, random, replyExecutor, listener, url);
       this.connection = connection;
+      this.replyExecutor = replyExecutor;
     }
 
-    @Override protected void closeConnection() throws IOException {
+    @Override protected void close() throws IOException {
+      replyExecutor.shutdown();
       // TODO connection.closeIfOwnedBy(this);
       Internal.instance.closeIfOwnedBy(connection, this);
     }
