@@ -344,7 +344,17 @@ public final class WebSocketReaderTest {
   @Test public void emptyCloseCallsCallback() throws IOException {
     data.write(ByteString.decodeHex("8800")); // Empty close
     clientReader.processNextFrame();
-    callback.assertClose(0, "");
+    callback.assertClose(1000, "");
+  }
+
+  @Test public void closeLengthOfOneThrows() throws IOException {
+    data.write(ByteString.decodeHex("880100")); // Close with invalid 1-byte payload
+    try {
+      clientReader.processNextFrame();
+      fail();
+    } catch (ProtocolException e) {
+      assertEquals("Malformed close payload length of 1.", e.getMessage());
+    }
   }
 
   @Test public void closeCallsCallback() throws IOException {
