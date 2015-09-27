@@ -15,6 +15,8 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.ws.WebSocketRecorder;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -30,8 +32,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.ws.WebSocket.BINARY;
+import static com.squareup.okhttp.ws.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -79,33 +81,80 @@ public final class RealWebSocketTest {
     serverListener.assertExhausted();
   }
 
+  @Test public void nullMessageThrows() throws IOException {
+    try {
+      client.sendMessage(null);
+      fail();
+    } catch (NullPointerException e) {
+      assertEquals("message == null", e.getMessage());
+    }
+  }
+
   @Test public void textMessage() throws IOException {
-    client.sendMessage(TEXT, new Buffer().writeUtf8("Hello!"));
+    client.sendMessage(RequestBody.create(TEXT, "Hello!"));
     server.readMessage();
     serverListener.assertTextMessage("Hello!");
   }
 
   @Test public void binaryMessage() throws IOException {
-    client.sendMessage(BINARY, new Buffer().writeUtf8("Hello!"));
+    client.sendMessage(RequestBody.create(BINARY, "Hello!"));
     server.readMessage();
     serverListener.assertBinaryMessage(new byte[] { 'H', 'e', 'l', 'l', 'o', '!' });
   }
 
+  @Test public void missingContentTypeThrows() throws IOException {
+    try {
+      client.sendMessage(RequestBody.create(null, "Hey!"));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Message content type was null. Must use WebSocket.TEXT or WebSocket.BINARY.",
+          e.getMessage());
+    }
+  }
+
+  @Test public void unknownContentTypeThrows() throws IOException {
+    try {
+      client.sendMessage(RequestBody.create(MediaType.parse("text/plain"), "Hey!"));
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals(
+          "Unknown message content type: text/plain. Must use WebSocket.TEXT or WebSocket.BINARY.",
+          e.getMessage());
+    }
+  }
+
   @Test public void streamingMessage() throws IOException {
-    BufferedSink sink = client.newMessageSink(TEXT);
-    sink.writeUtf8("Hel").flush();
-    sink.writeUtf8("lo!").flush();
-    sink.close();
+    RequestBody message = new RequestBody() {
+      @Override public MediaType contentType() {
+        return TEXT;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("Hel").flush();
+        sink.writeUtf8("lo!").flush();
+        sink.close();
+      }
+    };
+    client.sendMessage(message);
     server.readMessage();
     serverListener.assertTextMessage("Hello!");
   }
 
   @Test public void streamingMessageCanInterleavePing() throws IOException, InterruptedException {
-    BufferedSink sink = client.newMessageSink(TEXT);
-    sink.writeUtf8("Hel").flush();
-    client.sendPing(new Buffer().writeUtf8("Pong?"));
-    sink.writeUtf8("lo!").flush();
-    sink.close();
+    RequestBody message = new RequestBody() {
+      @Override public MediaType contentType() {
+        return TEXT;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("Hel").flush();
+        client.sendPing(new Buffer().writeUtf8("Pong?"));
+        sink.writeUtf8("lo!").flush();
+        sink.close();
+      }
+    };
+
+    client.sendMessage(message);
     server.readMessage();
     serverListener.assertTextMessage("Hello!");
     waitForExecutor(serverExecutor); // Pong write happens asynchronously.
@@ -151,13 +200,7 @@ public final class RealWebSocketTest {
       assertEquals("closed", e.getMessage());
     }
     try {
-      client.sendMessage(TEXT, new Buffer().writeUtf8("Hello!"));
-      fail();
-    } catch (IllegalStateException e) {
-      assertEquals("closed", e.getMessage());
-    }
-    try {
-      client.newMessageSink(TEXT);
+      client.sendMessage(RequestBody.create(TEXT, "Hello!"));
       fail();
     } catch (IllegalStateException e) {
       assertEquals("closed", e.getMessage());
@@ -176,7 +219,7 @@ public final class RealWebSocketTest {
       assertEquals("closed", e.getMessage());
     }
     try {
-      client.sendMessage(TEXT, new Buffer().writeUtf8("Hi!"));
+      client.sendMessage(RequestBody.create(TEXT, "Hi!"));
       fail();
     } catch (IOException e) {
       assertEquals("closed", e.getMessage());
@@ -190,33 +233,41 @@ public final class RealWebSocketTest {
   }
 
   @Test public void serverCloseWhileWritingThrows() throws IOException {
-    // Start writing data.
-    BufferedSink sink = client.newMessageSink(TEXT);
-    sink.writeUtf8("Hel").flush();
+    RequestBody message = new RequestBody() {
+      @Override public MediaType contentType() {
+        return TEXT;
+      }
 
-    server.close(1000, "Hello!");
-    client.readMessage();
-    clientListener.assertClose(1000, "Hello!");
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        // Start writing data.
+        sink.writeUtf8("Hel").flush();
 
-    try {
-      sink.writeUtf8("lo!").emit(); // No writing to the underlying sink.
-      fail();
-    } catch (IOException e) {
-      assertEquals("closed", e.getMessage());
-      sink.buffer().clear();
-    }
-    try {
-      sink.flush(); // No flushing.
-      fail();
-    } catch (IOException e) {
-      assertEquals("closed", e.getMessage());
-    }
-    try {
-      sink.close(); // No closing because this requires writing a frame.
-      fail();
-    } catch (IOException e) {
-      assertEquals("closed", e.getMessage());
-    }
+        server.close(1000, "Hello!");
+        client.readMessage();
+        clientListener.assertClose(1000, "Hello!");
+
+        try {
+          sink.writeUtf8("lo!").emit(); // No writing to the underlying sink.
+          fail();
+        } catch (IOException e) {
+          assertEquals("closed", e.getMessage());
+          sink.buffer().clear();
+        }
+        try {
+          sink.flush(); // No flushing.
+          fail();
+        } catch (IOException e) {
+          assertEquals("closed", e.getMessage());
+        }
+        try {
+          sink.close(); // No closing because this requires writing a frame.
+          fail();
+        } catch (IOException e) {
+          assertEquals("closed", e.getMessage());
+        }
+      }
+    };
+    client.sendMessage(message);
   }
 
   @Test public void clientCloseClosesConnection() throws IOException {
@@ -261,7 +312,7 @@ public final class RealWebSocketTest {
   }
 
   @Test public void serverCloseBreaksReadMessageLoop() throws IOException {
-    server.sendMessage(TEXT, new Buffer().writeUtf8("Hello!"));
+    server.sendMessage(RequestBody.create(TEXT, "Hello!"));
     server.close(1000, "Bye!");
     assertTrue(client.readMessage());
     clientListener.assertTextMessage("Hello!");

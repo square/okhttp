@@ -15,6 +15,9 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.ws.WebSocket;
 import com.squareup.okhttp.ws.WebSocketListener;
@@ -25,7 +28,10 @@ import java.util.concurrent.Executor;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
+import okio.Okio;
 
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_BINARY;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketReader.FrameCallback;
 
 public abstract class RealWebSocket implements WebSocket {
@@ -49,8 +55,8 @@ public abstract class RealWebSocket implements WebSocket {
 
     writer = new WebSocketWriter(isClient, sink, random);
     reader = new WebSocketReader(isClient, source, new FrameCallback() {
-      @Override public void onMessage(BufferedSource source, PayloadType type) throws IOException {
-        listener.onMessage(source, type);
+      @Override public void onMessage(ResponseBody message) throws IOException {
+        listener.onMessage(message);
       }
 
       @Override public void onPing(final Buffer buffer) {
@@ -100,14 +106,31 @@ public abstract class RealWebSocket implements WebSocket {
     }
   }
 
-  @Override public BufferedSink newMessageSink(PayloadType type) {
+  @Override public void sendMessage(RequestBody message) throws IOException {
+    if (message == null) throw new NullPointerException("message == null");
     if (writerSentClose) throw new IllegalStateException("closed");
-    return writer.newMessageSink(type);
-  }
 
-  @Override public void sendMessage(PayloadType type, Buffer payload) throws IOException {
-    if (writerSentClose) throw new IllegalStateException("closed");
-    writer.sendMessage(type, payload);
+    MediaType contentType = message.contentType();
+    if (contentType == null) {
+      throw new IllegalArgumentException(
+          "Message content type was null. Must use WebSocket.TEXT or WebSocket.BINARY.");
+    }
+    String contentSubtype = contentType.subtype();
+
+    int formatOpcode;
+    if (WebSocket.TEXT.subtype().equals(contentSubtype)) {
+      formatOpcode = OPCODE_TEXT;
+    } else if (WebSocket.BINARY.subtype().equals(contentSubtype)) {
+      formatOpcode = OPCODE_BINARY;
+    } else {
+      throw new IllegalArgumentException("Unknown message content type: "
+          + contentType.type() + "/" + contentType.subtype() // Omit any implicitly added charset.
+          + ". Must use WebSocket.TEXT or WebSocket.BINARY.");
+    }
+
+    BufferedSink sink = Okio.buffer(writer.newMessageSink(formatOpcode));
+    message.writeTo(sink);
+    sink.close();
   }
 
   @Override public void sendPing(Buffer payload) throws IOException {

@@ -15,6 +15,9 @@
  */
 package com.squareup.okhttp.internal.ws;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.ResponseBody;
+import com.squareup.okhttp.ws.WebSocket;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -24,7 +27,6 @@ import okio.Okio;
 import okio.Source;
 import okio.Timeout;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_FIN;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_RSV1;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.B0_FLAG_RSV2;
@@ -50,7 +52,7 @@ import static java.lang.Integer.toHexString;
  */
 public final class WebSocketReader {
   public interface FrameCallback {
-    void onMessage(BufferedSource source, PayloadType type) throws IOException;
+    void onMessage(ResponseBody body) throws IOException;
     void onPing(Buffer buffer);
     void onPong(Buffer buffer);
     void onClose(int code, String reason);
@@ -204,20 +206,35 @@ public final class WebSocketReader {
   }
 
   private void readMessageFrame() throws IOException {
-    PayloadType type;
+    final MediaType type;
     switch (opcode) {
       case OPCODE_TEXT:
-        type = PayloadType.TEXT;
+        type = WebSocket.TEXT;
         break;
       case OPCODE_BINARY:
-        type = PayloadType.BINARY;
+        type = WebSocket.BINARY;
         break;
       default:
         throw new ProtocolException("Unknown opcode: " + toHexString(opcode));
     }
 
+    final BufferedSource source = Okio.buffer(framedMessageSource);
+    ResponseBody body = new ResponseBody() {
+      @Override public MediaType contentType() {
+        return type;
+      }
+
+      @Override public long contentLength() throws IOException {
+        return -1;
+      }
+
+      @Override public BufferedSource source() throws IOException {
+        return source;
+      }
+    };
+
     messageClosed = false;
-    frameCallback.onMessage(Okio.buffer(framedMessageSource), type);
+    frameCallback.onMessage(body);
     if (!messageClosed) {
       throw new IllegalStateException("Listener failed to call close on message payload.");
     }

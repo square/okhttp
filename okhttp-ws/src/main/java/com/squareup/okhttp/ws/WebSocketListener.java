@@ -16,11 +16,9 @@
 package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import okio.Buffer;
-import okio.BufferedSource;
-
-import static com.squareup.okhttp.ws.WebSocket.PayloadType;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
@@ -50,8 +48,11 @@ public interface WebSocketListener {
    * <p>Implementations <strong>must</strong> call {@code source.close()} before returning. This
    * indicates completion of parsing the message payload and will consume any remaining bytes in
    * the message.
+   *
+   * <p>The {@linkplain ResponseBody#contentType() content type} of {@code message} will be either
+   * {@link WebSocket#TEXT} or {@link WebSocket#BINARY} which indicates the format of the message.
    */
-  void onMessage(BufferedSource payload, PayloadType type) throws IOException;
+  void onMessage(ResponseBody message) throws IOException;
 
   /**
    * Called when a server pong is received. This is usually a result of calling {@link

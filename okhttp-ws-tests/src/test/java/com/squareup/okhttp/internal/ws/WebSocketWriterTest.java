@@ -17,16 +17,20 @@ package com.squareup.okhttp.internal.ws;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Random;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
-import org.junit.After;
+import okio.Okio;
+import okio.Sink;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.BINARY;
-import static com.squareup.okhttp.ws.WebSocket.PayloadType.TEXT;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_BINARY;
+import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketProtocol.toggleMask;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -35,28 +39,27 @@ public final class WebSocketWriterTest {
   private final Buffer data = new Buffer();
   private final Random random = new Random(0);
 
+  /**
+   * Check all data as verified inside of the test. We do this in a rule instead of @After so that
+   * exceptions thrown from the test do not cause this check to fail.
+   */
+  @Rule public final TestRule noDataLeftBehind = new TestRule() {
+    @Override public Statement apply(final Statement base, Description description) {
+      return new Statement() {
+        @Override public void evaluate() throws Throwable {
+          base.evaluate();
+          assertEquals("Data not empty", "", data.readByteString().hex());
+        }
+      };
+    }
+  };
+
   // Mutually exclusive. Use the one corresponding to the peer whose behavior you wish to test.
   private final WebSocketWriter serverWriter = new WebSocketWriter(false, data, random);
   private final WebSocketWriter clientWriter = new WebSocketWriter(true, data, random);
 
-  @After public void tearDown() throws IOException {
-    assertEquals("Data not empty", "", data.readByteString().hex());
-  }
-
-  @Test public void serverSendSimpleHello() throws IOException {
-    Buffer payload = new Buffer().writeUtf8("Hello");
-    serverWriter.sendMessage(TEXT, payload);
-    assertData("810548656c6c6f");
-  }
-
-  @Test public void clientSendSimpleHello() throws IOException {
-    Buffer payload = new Buffer().writeUtf8("Hello");
-    clientWriter.sendMessage(TEXT, payload);
-    assertData("818560b420bb28d14cd70f");
-  }
-
-  @Test public void serverStreamSimpleHello() throws IOException {
-    BufferedSink sink = serverWriter.newMessageSink(TEXT);
+  @Test public void serverTextMessage() throws IOException {
+    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT));
 
     sink.writeUtf8("Hel").flush();
     assertData("010348656c");
@@ -68,8 +71,8 @@ public final class WebSocketWriterTest {
     assertData("8000");
   }
 
-  @Test public void serverStreamCloseFlushes() throws IOException {
-    BufferedSink sink = serverWriter.newMessageSink(TEXT);
+  @Test public void serverCloseFlushes() throws IOException {
+    BufferedSink sink = Okio.buffer(serverWriter.newMessageSink(OPCODE_TEXT));
 
     sink.writeUtf8("Hel").flush();
     assertData("010348656c");
@@ -79,8 +82,8 @@ public final class WebSocketWriterTest {
     assertData("8000");
   }
 
-  @Test public void clientStreamSimpleHello() throws IOException {
-    BufferedSink sink = clientWriter.newMessageSink(TEXT);
+  @Test public void clientTextMessage() throws IOException {
+    BufferedSink sink = Okio.buffer(clientWriter.newMessageSink(OPCODE_TEXT));
 
     sink.writeUtf8("Hel").flush();
     assertData("018360b420bb28d14c");
@@ -92,58 +95,46 @@ public final class WebSocketWriterTest {
     assertData("80807acb933d");
   }
 
-  @Test public void serverSendBinary() throws IOException {
-    byte[] payload = binaryData(100);
-    serverWriter.sendMessage(BINARY, new Buffer().write(payload));
-    assertData("8264");
-    assertData(payload);
-  }
+  @Test public void serverBinaryMessage() throws IOException {
+    Sink sink = serverWriter.newMessageSink(OPCODE_BINARY);
 
-  @Test public void serverSendBinaryShort() throws IOException {
-    byte[] payload = binaryData(0xffff);
-    serverWriter.sendMessage(BINARY, new Buffer().write(payload));
-    assertData("827effff");
-    assertData(payload);
-  }
-
-  @Test public void serverSendBinaryLong() throws IOException {
-    byte[] payload = binaryData(65537);
-    serverWriter.sendMessage(BINARY, new Buffer().write(payload));
-    assertData("827f0000000000010001");
-    assertData(payload);
-  }
-
-  @Test public void clientSendBinary() throws IOException {
-    byte[] payload = binaryData(100);
-    clientWriter.sendMessage(BINARY, new Buffer().write(payload));
-    assertData("82e4");
-
-    byte[] maskKey = new byte[4];
-    random.setSeed(0); // Reset the seed so we can mask the payload.
-    random.nextBytes(maskKey);
-    toggleMask(payload, payload.length, maskKey, 0);
-
-    assertData(maskKey);
-    assertData(payload);
-  }
-
-  @Test public void serverStreamBinary() throws IOException {
-    byte[] payload = binaryData(100);
-    BufferedSink sink = serverWriter.newMessageSink(BINARY);
-
-    sink.write(payload, 0, 50).flush();
+    sink.write(binaryData(50), 50);
     assertData("0232");
-    assertData(Arrays.copyOfRange(payload, 0, 50));
+    assertData(binaryData(50).readByteArray());
 
-    sink.write(payload, 50, 50).flush();
+    sink.write(binaryData(50), 50);
     assertData("0032");
-    assertData(Arrays.copyOfRange(payload, 50, 100));
+    assertData(binaryData(50).readByteArray());
 
     sink.close();
     assertData("8000");
   }
 
-  @Test public void clientStreamBinary() throws IOException {
+  @Test public void serverBinaryMessageLengthShort() throws IOException {
+    Sink sink = serverWriter.newMessageSink(OPCODE_BINARY);
+
+    int length = 0xffff;
+    sink.write(binaryData(length), length);
+    assertData("027effff");
+    assertData(binaryData(length).readByteArray());
+
+    sink.close();
+    assertData("8000");
+  }
+
+  @Test public void serverBinaryMessageLengthLong() throws IOException {
+    Sink sink = serverWriter.newMessageSink(OPCODE_BINARY);
+
+    int length = 65537;
+    sink.write(binaryData(length), length);
+    assertData("027f0000000000010001");
+    assertData(binaryData(length).readByteArray());
+
+    sink.close();
+    assertData("8000");
+  }
+
+  @Test public void clientBinary() throws IOException {
     byte[] maskKey1 = new byte[4];
     random.nextBytes(maskKey1);
     byte[] maskKey2 = new byte[4];
@@ -153,18 +144,17 @@ public final class WebSocketWriterTest {
 
     random.setSeed(0); // Reset the seed so real data matches.
 
-    byte[] payload = binaryData(100);
-    BufferedSink sink = clientWriter.newMessageSink(BINARY);
+    Sink sink = clientWriter.newMessageSink(OPCODE_BINARY);
 
-    sink.write(payload, 0, 50).flush();
-    byte[] part1 = Arrays.copyOfRange(payload, 0, 50);
+    sink.write(binaryData(50), 50);
+    byte[] part1 = binaryData(50).readByteArray();
     toggleMask(part1, 50, maskKey1, 0);
     assertData("02b2");
     assertData(maskKey1);
     assertData(part1);
 
-    sink.write(payload, 50, 50).flush();
-    byte[] part2 = Arrays.copyOfRange(payload, 50, 100);
+    sink.write(binaryData(50), 50);
+    byte[] part2 = binaryData(50).readByteArray();
     toggleMask(part2, 50, maskKey2, 0);
     assertData("00b2");
     assertData(maskKey2);
@@ -261,7 +251,7 @@ public final class WebSocketWriterTest {
 
   @Test public void pingTooLongThrows() throws IOException {
     try {
-      serverWriter.writePing(new Buffer().write(binaryData(1000)));
+      serverWriter.writePing(binaryData(1000));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Payload size must be less than or equal to 125", e.getMessage());
@@ -270,7 +260,7 @@ public final class WebSocketWriterTest {
 
   @Test public void pongTooLongThrows() throws IOException {
     try {
-      serverWriter.writePong(new Buffer().write(binaryData(1000)));
+      serverWriter.writePong(binaryData(1000));
       fail();
     } catch (IllegalArgumentException e) {
       assertEquals("Payload size must be less than or equal to 125", e.getMessage());
@@ -279,7 +269,7 @@ public final class WebSocketWriterTest {
 
   @Test public void closeTooLongThrows() throws IOException {
     try {
-      String longString = ByteString.of(binaryData(75)).hex();
+      String longString = binaryData(75).readByteString().hex();
       serverWriter.writeClose(1000, longString);
       fail();
     } catch (IllegalArgumentException e) {
@@ -287,23 +277,13 @@ public final class WebSocketWriterTest {
     }
   }
 
-  @Test public void twoWritersThrows() {
-    clientWriter.newMessageSink(TEXT);
+  @Test public void twoMessageSinksThrows() {
+    clientWriter.newMessageSink(OPCODE_TEXT);
     try {
-      clientWriter.newMessageSink(TEXT);
+      clientWriter.newMessageSink(OPCODE_TEXT);
       fail();
     } catch (IllegalStateException e) {
       assertEquals("Another message writer is active. Did you call close()?", e.getMessage());
-    }
-  }
-
-  @Test public void writeWhileWriterThrows() throws IOException {
-    clientWriter.newMessageSink(TEXT);
-    try {
-      clientWriter.sendMessage(TEXT, new Buffer());
-      fail();
-    } catch (IllegalStateException e) {
-      assertEquals("A message writer is active. Did you call close()?", e.getMessage());
     }
   }
 
@@ -323,9 +303,9 @@ public final class WebSocketWriterTest {
     }
   }
 
-  private static byte[] binaryData(int length) {
+  private static Buffer binaryData(int length) {
     byte[] junk = new byte[length];
     new Random(0).nextBytes(junk);
-    return junk;
+    return new Buffer().write(junk);
   }
 }

@@ -15,36 +15,27 @@
  */
 package com.squareup.okhttp.ws;
 
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.RequestBody;
 import java.io.IOException;
 import okio.Buffer;
-import okio.BufferedSink;
 
 /** Blocking interface to connect and write to a web socket. */
 public interface WebSocket {
-  /** The format of a message payload. */
-  enum PayloadType {
-    /** UTF8-encoded text data. */
-    TEXT,
-    /** Arbitrary binary data. */
-    BINARY
-  }
+  /** A {@link MediaType} indicating UTF-8 text frames should be used when sending the message. */
+  MediaType TEXT = MediaType.parse("application/vnd.okhttp.websocket+text; charset=utf-8");
+  /** A {@link MediaType} indicating binary frames should be used when sending the message. */
+  MediaType BINARY = MediaType.parse("application/vnd.okhttp.websocket+binary");
 
   /**
-   * Stream a message payload to the server of the specified {code type}.
-   * <p>
-   * You must call {@link BufferedSink#close() close()} to complete the message. Calls to
-   * {@link BufferedSink#flush() flush()} write a frame fragment. The message may be empty.
+   * Send a message payload to the server.
+   *
+   * <p>The {@linkplain RequestBody#contentType() content type} of {@code message} should be either
+   * {@link #TEXT} or {@link #BINARY}.
    *
    * @throws IllegalStateException if not connected, already closed, or another writer is active.
    */
-  BufferedSink newMessageSink(WebSocket.PayloadType type);
-
-  /**
-   * Send a message payload to the server of the specified {@code type}.
-   *
-   * @throws IllegalStateException if not connected, already closed, or another writer is active.
-   */
-  void sendMessage(WebSocket.PayloadType type, Buffer payload) throws IOException;
+  void sendMessage(RequestBody message) throws IOException;
 
   /**
    * Send a ping to the server with optional payload.
