@@ -194,6 +194,9 @@ public final class WebSocketReader {
           if (code < 1000 || code >= 5000) {
             throw new ProtocolException("Code must be in range [1000,5000): " + code);
           }
+          if ((code >= 1004 && code <= 1006) || (code >= 1012 && code <= 2999)) {
+            throw new ProtocolException("Code " + code + " is reserved and may not be used.");
+          }
 
           reason = buffer.readUtf8();
         }
