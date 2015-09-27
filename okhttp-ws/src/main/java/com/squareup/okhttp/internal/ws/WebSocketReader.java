@@ -184,18 +184,23 @@ public final class WebSocketReader {
         frameCallback.onPong(buffer);
         break;
       case OPCODE_CONTROL_CLOSE:
-        int code = 0;
+        int code = 1000;
         String reason = "";
         if (buffer != null) {
-          if (buffer.size() < 2) {
-            throw new ProtocolException("Close payload must be at least two bytes.");
-          }
-          code = buffer.readShort();
-          if (code < 1000 || code >= 5000) {
-            throw new ProtocolException("Code must be in range [1000,5000): " + code);
-          }
+          long bufferSize = buffer.size();
+          if (bufferSize == 1) {
+            throw new ProtocolException("Malformed close payload length of 1.");
+          } else if (bufferSize != 0) {
+            code = buffer.readShort();
+            if (code < 1000 || code >= 5000) {
+              throw new ProtocolException("Code must be in range [1000,5000): " + code);
+            }
+            if ((code >= 1004 && code <= 1006) || (code >= 1012 && code <= 2999)) {
+              throw new ProtocolException("Code " + code + " is reserved and may not be used.");
+            }
 
-          reason = buffer.readUtf8();
+            reason = buffer.readUtf8();
+          }
         }
         frameCallback.onClose(code, reason);
         closed = true;
