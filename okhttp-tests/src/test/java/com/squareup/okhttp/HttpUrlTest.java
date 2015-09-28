@@ -930,16 +930,19 @@ public final class HttpUrlTest {
     assertEquals("http://host/?d=abc!@[]%5E%60%7B%7D%7C%5C", uri.toString());
   }
 
-  @Test public void toUriForbiddenCharacter() throws Exception {
-    HttpUrl httpUrl = HttpUrl.parse("http://host/a[b");
-    try {
-      httpUrl.uri();
-      fail();
-    } catch (IllegalStateException expected) {
-      assertEquals("not valid as a java.net.URI: http://host/a[b", expected.getMessage());
-    }
+  @Test public void toUriSpecialPathCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("example.com")
+        .addPathSegment("data=[out:json];node[\"name\"~\"Karlsruhe\"]" +
+            "[\"place\"~\"city|village|town\"];out body;")
+        .build();
+    URI uri = url.uri();
+    assertEquals("http://example.com/data=%5Bout:json%5D;node%5B%22name%22~%22Karlsruhe%22%5D" +
+            "%5B%22place%22~%22city%7Cvillage%7Ctown%22%5D;out%20body;",
+        uri.toString());
   }
-
+  
   @Test public void fromJavaNetUrl() throws Exception {
     URL javaNetUrl = new URL("http://username:password@host/path?query#fragment");
     HttpUrl httpUrl = HttpUrl.get(javaNetUrl);

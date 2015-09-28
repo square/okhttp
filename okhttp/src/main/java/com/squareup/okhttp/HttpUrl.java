@@ -260,7 +260,6 @@ public final class HttpUrl {
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
   static final String QUERY_ENCODE_SET = " \"'<>#";
   static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
-  static final String CONVERT_TO_URI_ENCODE_SET = "^`{}|\\";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
 
@@ -332,8 +331,12 @@ public final class HttpUrl {
    */
   public URI uri() {
     try {
-      String uriSafeUrl = canonicalize(url, CONVERT_TO_URI_ENCODE_SET, true, false);
-      return new URI(uriSafeUrl);
+      String uriUserInfo = username + ":" + password;
+      if (uriUserInfo.equals(":")) uriUserInfo = null;
+      final int uriPort = port == defaultPort(scheme) ? -1 : port; // Don't include default port
+      StringBuilder path = new StringBuilder();
+      pathSegmentsToString(path, pathSegments);
+      return new URI(scheme, uriUserInfo, host, uriPort, path.toString(), query(), fragment);
     } catch (URISyntaxException e) {
       throw new IllegalStateException("not valid as a java.net.URI: " + url);
     }

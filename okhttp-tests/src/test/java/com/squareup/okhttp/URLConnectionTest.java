@@ -395,7 +395,7 @@ public final class URLConnectionTest {
     try {
       connection.connect();
       fail();
-    } catch (UnknownHostException expected) {
+    } catch (IllegalStateException expected) {
     }
   }
 
