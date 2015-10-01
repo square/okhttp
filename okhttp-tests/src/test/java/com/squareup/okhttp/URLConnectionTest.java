@@ -2228,7 +2228,7 @@ public final class URLConnectionTest {
   @Test public void writeTimeouts() throws IOException {
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
-    final int SOCKET_BUFFER_SIZE = 256 * 1024;
+    final int SOCKET_BUFFER_SIZE = 4 * 1024;
     server.setServerSocketFactory(
         new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
           @Override
@@ -2256,7 +2256,7 @@ public final class URLConnectionTest {
     connection.setChunkedStreamingMode(0);
     OutputStream out = connection.getOutputStream();
     try {
-      byte[] data = new byte[16 * 1024 * 1024]; // 16 MiB.
+      byte[] data = new byte[2 * 1024 * 1024]; // 2 MiB.
       out.write(data);
       fail();
     } catch (SocketTimeoutException expected) {
