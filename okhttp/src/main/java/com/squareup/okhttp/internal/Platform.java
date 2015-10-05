@@ -195,11 +195,14 @@ public class Platform {
         int connectTimeout) throws IOException {
       try {
         socket.connect(address, connectTimeout);
-      } catch (SecurityException se) {
+      } catch (AssertionError e) {
+        if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
+        throw e;
+      } catch (SecurityException e) {
         // Before android 4.3, socket.connect could throw a SecurityException
         // if opening a socket resulted in an EACCES error.
         IOException ioException = new IOException("Exception in connect");
-        ioException.initCause(se);
+        ioException.initCause(e);
         throw ioException;
       }
     }
