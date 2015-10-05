@@ -1,3 +1,4 @@
+[![Searchable with Codota](https://img.shields.io/badge/Semantic%20Code%20Search-available-brightgreen.svg)][5]
 OkHttp
 ======
 
@@ -67,4 +68,5 @@ License
  [2]: https://github.com/square/okhttp/wiki
  [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=okhttp&v=LATEST
  [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [5]: https://www.codota.com/xref/#/github_square_okhttp_560dae058b9d0b03006e7e97/findUsages
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/
