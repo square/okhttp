@@ -1,7 +1,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Platform;
-import com.squareup.okhttp.internal.io.FileSystem;
 import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -14,6 +13,8 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import okio.BufferedSource;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,14 +27,20 @@ import static org.junit.Assert.fail;
 
 public class OkUrlFactoryTest {
   @Rule public MockWebServer server = new MockWebServer();
+  @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  private FileSystem fileSystem = new InMemoryFileSystem();
   private OkUrlFactory factory;
+  private Cache cache;
 
   @Before public void setUp() throws IOException {
     OkHttpClient client = new OkHttpClient();
-    client.setCache(new Cache(new File("/cache/"), 10 * 1024 * 1024, fileSystem));
+    cache = new Cache(new File("/cache/"), 10 * 1024 * 1024, fileSystem);
+    client.setCache(cache);
     factory = new OkUrlFactory(client);
+  }
+
+  @After public void tearDown() throws IOException {
+    cache.delete();
   }
 
   /**
@@ -64,6 +71,7 @@ public class OkUrlFactoryTest {
 
     HttpURLConnection connection = factory.open(server.getUrl("/"));
     assertResponseHeader(connection, "NETWORK 404");
+    connection.getErrorStream().close();
   }
 
   @Test public void conditionalCacheHitResponseSourceHeaders() throws Exception {
@@ -140,7 +148,9 @@ public class OkUrlFactoryTest {
   }
 
   private void assertResponseBody(HttpURLConnection connection, String expected) throws Exception {
-    String actual = buffer(source(connection.getInputStream())).readString(US_ASCII);
+    BufferedSource source = buffer(source(connection.getInputStream()));
+    String actual = source.readString(US_ASCII);
+    source.close();
     assertEquals(expected, actual);
   }
 

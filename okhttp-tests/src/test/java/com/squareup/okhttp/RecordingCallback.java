@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import okio.Buffer;
 
 /**
  * Records received HTTP responses so they can be later retrieved by tests.
@@ -36,11 +35,8 @@ public class RecordingCallback implements Callback {
   }
 
   @Override public synchronized void onResponse(Response response) throws IOException {
-    Buffer buffer = new Buffer();
-    ResponseBody body = response.body();
-    body.source().readAll(buffer);
-
-    responses.add(new RecordedResponse(response.request(), response, null, buffer.readUtf8(), null));
+    String body = response.body().string();
+    responses.add(new RecordedResponse(response.request(), response, null, body, null));
     notifyAll();
   }
 

@@ -22,7 +22,6 @@ import com.squareup.okhttp.internal.SingleInetAddressNetwork;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
-import com.squareup.okhttp.internal.io.FileSystem;
 import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -88,9 +87,9 @@ public final class CallTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
   @Rule public final MockWebServer server2 = new MockWebServer();
+  @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private SSLContext sslContext = SslContextBuilder.localhost();
-  private FileSystem fileSystem = new InMemoryFileSystem();
   private OkHttpClient client = new OkHttpClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
