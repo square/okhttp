@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
+import okio.BufferedSource;
 
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
@@ -193,8 +194,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
       }
 
       if (logBody) {
-        Buffer buffer = new Buffer();
-        responseBody.source().readAll(buffer);
+        BufferedSource source = responseBody.source();
+        source.request(Long.MAX_VALUE); // Buffer the entire body.
+        Buffer buffer = source.buffer().clone();
 
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
@@ -206,11 +208,6 @@ public final class HttpLoggingInterceptor implements Interceptor {
           logger.log("");
           logger.log(buffer.clone().readString(charset));
         }
-
-        // Since we consumed the original, replace the one-shot body in the response with a new one.
-        response = response.newBuilder()
-            .body(ResponseBody.create(contentType, responseBody.contentLength(), buffer))
-            .build();
       }
 
       String endMessage = "<-- END HTTP";
