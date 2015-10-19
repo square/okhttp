@@ -195,7 +195,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
       if (logBody) {
         BufferedSource source = responseBody.source();
         source.request(Long.MAX_VALUE); // Buffer the entire body.
-        Buffer buffer = source.buffer().clone();
+        Buffer buffer = source.buffer();
 
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
