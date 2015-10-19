@@ -157,6 +157,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log(headers.name(i) + ": " + headers.value(i));
       }
 
+      String endMessage = "--> END " + request.method();
       if (logBody && hasRequestBody) {
         Buffer buffer = new Buffer();
         requestBody.writeTo(buffer);
@@ -169,10 +170,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         logger.log("");
         logger.log(buffer.readString(charset));
-      }
 
-      String endMessage = "--> END " + request.method();
-      if (logBody && hasRequestBody) {
         endMessage += " (" + requestBody.contentLength() + "-byte body)";
       }
       logger.log(endMessage);
@@ -193,10 +191,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log(headers.name(i) + ": " + headers.value(i));
       }
 
+      String endMessage = "<-- END HTTP";
       if (logBody) {
         BufferedSource source = responseBody.source();
         source.request(Long.MAX_VALUE); // Buffer the entire body.
-        Buffer buffer = source.buffer().clone();
+        Buffer buffer = source.buffer();
 
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
@@ -204,15 +203,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
           charset = contentType.charset(UTF8);
         }
 
-        if (responseBody.contentLength() > 0) {
+        if (responseBody.contentLength() != 0) {
           logger.log("");
           logger.log(buffer.clone().readString(charset));
         }
-      }
 
-      String endMessage = "<-- END HTTP";
-      if (logBody) {
-        endMessage += " (" + responseBody.contentLength() + "-byte body)";
+        endMessage += " (" + buffer.size() + "-byte body)";
       }
       logger.log(endMessage);
     }

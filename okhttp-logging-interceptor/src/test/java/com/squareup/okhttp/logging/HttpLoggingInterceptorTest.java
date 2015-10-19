@@ -234,6 +234,32 @@ public final class HttpLoggingInterceptorTest {
     assertEquals("<-- END HTTP (6-byte body)", logs.get(14));
   }
 
+  @Test public void bodyResponseBodyChunked() throws IOException {
+    interceptor.setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+        .setChunkedBody("Hello!", 2)
+        .setHeader("Content-Type", PLAIN.toString()));
+    client.newCall(request().build()).execute();
+
+    assertEquals(15, logs.size());
+    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
+    assertEquals("Connection: Keep-Alive", logs.get(2));
+    assertEquals("Accept-Encoding: gzip", logs.get(3));
+    assertTrue(Pattern.matches("User-Agent: okhttp/.+", logs.get(4)));
+    assertEquals("--> END GET", logs.get(5));
+    assertTrue(Pattern.matches("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)", logs.get(6)));
+    assertEquals("Transfer-encoding: chunked", logs.get(7));
+    assertEquals("Content-Type: text/plain; charset=utf-8", logs.get(8));
+    assertEquals("OkHttp-Selected-Protocol: http/1.1", logs.get(9));
+    assertTrue(Pattern.matches("OkHttp-Sent-Millis: \\d+", logs.get(10)));
+    assertTrue(Pattern.matches("OkHttp-Received-Millis: \\d+", logs.get(11)));
+    assertEquals("", logs.get(12));
+    assertEquals("Hello!", logs.get(13));
+    assertEquals("<-- END HTTP (6-byte body)", logs.get(14));
+  }
+
   private Request.Builder request() {
     return new Request.Builder().url(server.url("/"));
   }
