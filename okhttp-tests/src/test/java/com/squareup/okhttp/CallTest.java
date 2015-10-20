@@ -696,6 +696,17 @@ public final class CallTest {
     }
   }
 
+  @Test public void asyncCallEngineInitialized () {
+    OkHttpClient client = new OkHttpClient();
+    client.interceptors().add(new Interceptor() {
+
+      @Override public Response intercept(Chain chain) throws IOException {
+        throw new IOException();
+      }
+    });
+    client.newCall(new Request.Builder().url(server.url("http://a/1")).build()).enqueue(callback);
+  }
+
   @Test public void reusedSinksGetIndependentTimeoutInstances() throws Exception {
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
