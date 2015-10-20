@@ -3231,6 +3231,20 @@ public final class URLConnectionTest {
     }
   }
 
+  @Test public void instanceFollowsRedirects() throws Exception {
+    testInstanceFollowsRedirects("http://www.google.com/");
+    testInstanceFollowsRedirects("https://www.google.com/");
+  }
+
+  private void testInstanceFollowsRedirects(String spec) throws Exception {
+    URL url = new URL(spec);
+    HttpURLConnection urlConnection = client.open(url);
+    urlConnection.setInstanceFollowRedirects(true);
+    assertTrue(urlConnection.getInstanceFollowRedirects());
+    urlConnection.setInstanceFollowRedirects(false);
+    assertFalse(urlConnection.getInstanceFollowRedirects());
+  }
+
   /** Returns a gzipped copy of {@code bytes}. */
   public Buffer gzip(String data) throws IOException {
     Buffer result = new Buffer();
