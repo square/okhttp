@@ -172,7 +172,8 @@ public class Call {
           // Do not signal the callback twice!
           logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          responseCallback.onFailure(engine.getRequest(), e);
+          Request request = engine == null ? originalRequest : engine.getRequest();
+          responseCallback.onFailure(request, e);
         }
       } finally {
         client.getDispatcher().finished(this);
