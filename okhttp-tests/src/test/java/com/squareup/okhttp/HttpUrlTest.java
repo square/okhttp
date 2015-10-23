@@ -28,9 +28,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public final class HttpUrlTest {
   @Test public void parseTrimsAsciiWhitespace() throws Exception {
@@ -777,6 +775,15 @@ public final class HttpUrlTest {
     assertEquals("/a/b/", base.newBuilder().addEncodedPathSegment("..\n").build().encodedPath());
   }
 
+  @Test public void addEncodedAndUnencodedPlusQueryParam() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://host/a/b/c");
+    HttpUrl withPlus = base.newBuilder()
+     .addEncodedQueryParameter("preEncoded+", "+")
+     .addQueryParameter("unEncoded+", "+")
+     .build();
+    assertEquals("preEncoded+=+&unEncoded%2B=%2B", withPlus.encodedQuery());
+  }
+
   @Test public void setPathSegment() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/a/b/c");
     assertEquals("/d/b/c", base.newBuilder().setPathSegment(0, "d").build().encodedPath());
@@ -1005,8 +1012,8 @@ public final class HttpUrlTest {
   @Test public void composeQueryWithEncodedComponents() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/");
     HttpUrl url = base.newBuilder().addEncodedQueryParameter("a+=& b", "c+=& d").build();
-    assertEquals("http://host/?a%20%3D%26%20b=c%20%3D%26%20d", url.toString());
-    assertEquals("c =& d", url.queryParameter("a =& b"));
+    assertEquals("http://host/?a+%3D%26%20b=c+%3D%26%20d", url.toString());
+    assertEquals("c+=& d", url.queryParameter("a+=& b"));
   }
 
   @Test public void composeQueryRemoveQueryParameter() throws Exception {
@@ -1041,8 +1048,8 @@ public final class HttpUrlTest {
         .addEncodedQueryParameter("a+=& b", "c+=& d")
         .setEncodedQueryParameter("a+=& b", "ef")
         .build();
-    assertEquals("http://host/?a%20%3D%26%20b=ef", url.toString());
-    assertEquals("ef", url.queryParameter("a =& b"));
+    assertEquals("http://host/?a+%3D%26%20b=ef", url.toString());
+    assertEquals("ef", url.queryParameter("a+=& b"));
   }
 
   @Test public void composeQueryMultipleEncodedValuesForParameter() throws Exception {
