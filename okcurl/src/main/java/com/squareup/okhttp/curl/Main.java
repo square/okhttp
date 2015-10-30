@@ -203,7 +203,7 @@ public class Main extends HelpOption implements Runnable {
     }
     String bodyData = data;
 
-    String mimeType = "application/x-form-urlencoded";
+    String mimeType = "application/x-www-form-urlencoded";
     if (headers != null) {
       for (String header : headers) {
         String[] parts = header.split(":", -1);
