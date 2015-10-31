@@ -18,12 +18,14 @@ package com.squareup.okhttp.mockwebserver;
 import java.net.HttpURLConnection;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 /**
  * Default dispatcher that processes a script of responses. Populate the script
  * by calling {@link #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
+  private static final Logger logger = Logger.getLogger(QueueDispatcher.class.getName());
   protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
   private MockResponse failFastResponse;
 
@@ -31,7 +33,7 @@ public class QueueDispatcher extends Dispatcher {
     // To permit interactive/browser testing, ignore requests for favicons.
     final String requestLine = request.getRequestLine();
     if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
-      System.out.println("served " + requestLine);
+      logger.info("served " + requestLine);
       return new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
     }
 
