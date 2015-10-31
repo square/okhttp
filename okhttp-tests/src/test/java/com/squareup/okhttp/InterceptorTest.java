@@ -497,14 +497,6 @@ public final class InterceptorTest {
     }
   }
 
-  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
-    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
-  }
-
-  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
-    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
-  }
-
   @Test public void networkInterceptorModifiedRequestIsReturned() throws IOException {
     server.enqueue(new MockResponse());
 
@@ -527,6 +519,14 @@ public final class InterceptorTest {
     assertNotNull(response.request().header("User-Agent"));
     assertEquals("user request", response.request().header("User-Agent"));
     assertEquals("intercepted request", response.networkResponse().request().header("User-Agent"));
+  }
+
+  @Test public void applicationInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.interceptors());
+  }
+
+  @Test public void networkInterceptorThrowsRuntimeExceptionAsynchronous() throws Exception {
+    interceptorThrowsRuntimeExceptionAsynchronous(client.networkInterceptors());
   }
 
   /**
@@ -552,6 +552,57 @@ public final class InterceptorTest {
     client.newCall(request).enqueue(callback);
 
     assertEquals("boom!", executor.takeException().getMessage());
+  }
+
+  @Test public void applicationInterceptorReturnsNull() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        chain.proceed(chain.request());
+        return null;
+      }
+    };
+    client.interceptors().add(interceptor);
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("application interceptor " + interceptor
+          + " returned null", expected.getMessage());
+    }
+  }
+
+  @Test public void networkInterceptorReturnsNull() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        chain.proceed(chain.request());
+        return null;
+      }
+    };
+    client.networkInterceptors().add(interceptor);
+
+    ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
+    client.setDispatcher(new Dispatcher(executor));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("network interceptor " + interceptor + " returned null", expected.getMessage());
+    }
   }
 
   private RequestBody uppercase(final RequestBody original) {

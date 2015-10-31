@@ -872,6 +872,10 @@ public final class HttpEngine {
           throw new IllegalStateException("network interceptor " + interceptor
               + " must call proceed() exactly once");
         }
+        if (interceptedResponse == null) {
+          throw new NullPointerException("network interceptor " + interceptor
+              + " returned null");
+        }
 
         return interceptedResponse;
       }

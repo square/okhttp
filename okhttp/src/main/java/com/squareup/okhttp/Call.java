@@ -216,14 +216,22 @@ public class Call {
     }
 
     @Override public Response proceed(Request request) throws IOException {
+      // If there's another interceptor in the chain, call that.
       if (index < client.interceptors().size()) {
-        // There's another interceptor in the chain. Call that.
         Interceptor.Chain chain = new ApplicationInterceptorChain(index + 1, request, forWebSocket);
-        return client.interceptors().get(index).intercept(chain);
-      } else {
-        // No more interceptors. Do HTTP.
-        return getResponse(request, forWebSocket);
+        Interceptor interceptor = client.interceptors().get(index);
+        Response interceptedResponse = interceptor.intercept(chain);
+
+        if (interceptedResponse == null) {
+          throw new NullPointerException("application interceptor " + interceptor
+              + " returned null");
+        }
+
+        return interceptedResponse;
       }
+
+      // No more interceptors. Do HTTP.
+      return getResponse(request, forWebSocket);
     }
   }
 
