@@ -1168,4 +1168,24 @@ public final class HttpUrlTest {
     assertEquals(urlString, url.newBuilder().build().toString());
     assertEquals("http://%6d%6D:%6d%6D@host/%6d%6D?%6d%6D", url.resolve("").toString());
   }
+
+  @Test public void clearFragment() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#fragment")
+        .newBuilder()
+        .fragment(null)
+        .build();
+    assertEquals("http://host/", url.toString());
+    assertEquals(null, url.fragment());
+    assertEquals(null, url.encodedFragment());
+  }
+
+  @Test public void clearEncodedFragment() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#fragment")
+        .newBuilder()
+        .encodedFragment(null)
+        .build();
+    assertEquals("http://host/", url.toString());
+    assertEquals(null, url.fragment());
+    assertEquals(null, url.encodedFragment());
+  }
 }

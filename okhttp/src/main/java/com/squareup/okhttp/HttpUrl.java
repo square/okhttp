@@ -851,14 +851,16 @@ public final class HttpUrl {
     }
 
     public Builder fragment(String fragment) {
-      if (fragment == null) throw new IllegalArgumentException("fragment == null");
-      this.encodedFragment = canonicalize(fragment, FRAGMENT_ENCODE_SET, false, false);
+      this.encodedFragment = fragment != null
+          ? canonicalize(fragment, FRAGMENT_ENCODE_SET, false, false)
+          : null;
       return this;
     }
 
     public Builder encodedFragment(String encodedFragment) {
-      if (encodedFragment == null) throw new IllegalArgumentException("encodedFragment == null");
-      this.encodedFragment = canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false);
+      this.encodedFragment = encodedFragment != null
+          ? canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false)
+          : null;
       return this;
     }
 
