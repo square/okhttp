@@ -168,7 +168,7 @@ class UrlComponentEncodingTester {
   }
 
   private final Map<Integer, Encoding> encodings;
-  private final StringBuilder skipForUri = new StringBuilder();
+  private final StringBuilder uriEscapedCodePoints = new StringBuilder();
 
   public UrlComponentEncodingTester() {
     this.encodings = new LinkedHashMap<>(defaultEncodings);
@@ -186,7 +186,7 @@ class UrlComponentEncodingTester {
    * That class is more strict than the others.
    */
   public UrlComponentEncodingTester skipForUri(int... codePoints) {
-    skipForUri.append(new String(codePoints, 0, codePoints.length));
+    uriEscapedCodePoints.append(new String(codePoints, 0, codePoints.length));
     return this;
   }
 
@@ -202,9 +202,10 @@ class UrlComponentEncodingTester {
       testToUrl(codePoint, encoding, component);
       testFromUrl(codePoint, encoding, component);
 
-      if (skipForUri.indexOf(Encoding.IDENTITY.encode(codePoint)) == -1) {
-        testToUri(codePoint, encoding, component);
-        testFromUri(codePoint, encoding, component);
+      if (codePoint != '%') {
+        boolean uriEscaped = uriEscapedCodePoints.indexOf(
+            Encoding.IDENTITY.encode(codePoint)) != -1;
+        testUri(codePoint, encoding, component, uriEscaped);
       }
     }
     return this;
@@ -261,21 +262,29 @@ class UrlComponentEncodingTester {
     }
   }
 
-  private void testToUri(int codePoint, Encoding encoding, Component component) {
+  private void testUri(
+      int codePoint, Encoding encoding, Component component, boolean uriEscaped) {
+    String string = new String(new int[] { codePoint }, 0, 1);
     String encoded = encoding.encode(codePoint);
     HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
     URI uri = httpUrl.uri();
-    if (!uri.toString().equals(uri.toString())) {
-      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
-    }
-  }
-
-  private void testFromUri(int codePoint, Encoding encoding, Component component) {
-    String encoded = encoding.encode(codePoint);
-    HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
-    HttpUrl toAndFromUri = HttpUrl.get(httpUrl.uri());
-    if (!toAndFromUri.equals(httpUrl)) {
-      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+    HttpUrl toAndFromUri = HttpUrl.get(uri);
+    if (uriEscaped) {
+      // The URI has more escaping than the HttpURL. Check that the decoded values still match.
+      if (uri.toString().equals(httpUrl.toString())) {
+        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      }
+      if (!component.get(toAndFromUri).equals(string)) {
+        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      }
+    } else {
+      // Check that the URI and HttpURL have the exact same escaping.
+      if (!toAndFromUri.equals(httpUrl)) {
+        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      }
+      if (!uri.toString().equals(httpUrl.toString())) {
+        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      }
     }
   }
 
@@ -358,10 +367,11 @@ class UrlComponentEncodingTester {
         return query.substring(1, query.length() - 1);
       }
       @Override public void set(HttpUrl.Builder builder, String value) {
-        builder.query(value);
+        builder.query("a" + value + "z");
       }
       @Override public String get(HttpUrl url) {
-        return url.query();
+        String query = url.query();
+        return query.substring(1, query.length() - 1);
       }
     },
     FRAGMENT {
@@ -373,10 +383,11 @@ class UrlComponentEncodingTester {
         return fragment.substring(1, fragment.length() - 1);
       }
       @Override public void set(HttpUrl.Builder builder, String value) {
-        builder.fragment(value);
+        builder.fragment("a" + value + "z");
       }
       @Override public String get(HttpUrl url) {
-        return url.fragment();
+        String fragment = url.fragment();
+        return fragment.substring(1, fragment.length() - 1);
       }
     };
 

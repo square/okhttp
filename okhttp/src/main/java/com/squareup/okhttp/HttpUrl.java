@@ -258,10 +258,13 @@ public final class HttpUrl {
   static final String USERNAME_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
   static final String PASSWORD_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#";
   static final String PATH_SEGMENT_ENCODE_SET = " \"<>^`{}|/\\?#";
+  static final String PATH_SEGMENT_ENCODE_SET_URI = "[]";
   static final String QUERY_ENCODE_SET = " \"'<>#";
   static final String QUERY_COMPONENT_ENCODE_SET = " \"'<>#&=";
+  static final String QUERY_COMPONENT_ENCODE_SET_URI = "\\^`{|}";
   static final String FORM_ENCODE_SET = " \"':;<=>@[]^`{}|/\\?#&!$(),~";
   static final String FRAGMENT_ENCODE_SET = "";
+  static final String FRAGMENT_ENCODE_SET_URI = " \"#<>\\^`{|}";
 
   /** Either "http" or "https". */
   private final String scheme;
@@ -324,19 +327,17 @@ public final class HttpUrl {
   }
 
   /**
-   * Attempt to convert this URL to a {@link URI java.net.URI}. This method throws an unchecked
-   * {@link IllegalStateException} if the URL it holds isn't valid by URI's overly-stringent
-   * standard. For example, URI rejects paths containing the '[' character. Consult that class for
-   * the exact rules of what URLs are permitted.
+   * Returns this URL as a {@link URI java.net.URI}. Because {@code URI} forbids certain characters
+   * like {@code [} and {@code |}, the returned URI may escape more characters than this URL.
+   *
+   * <p>This method throws an unchecked {@link IllegalStateException} if it cannot be converted to a
+   * URI even after escaping forbidden characters. In particular, URLs that contain malformed
+   * percent escapes like {@code http://host/%xx} will trigger this exception.
    */
   public URI uri() {
     try {
-      String uriUserInfo = username + ":" + password;
-      if (uriUserInfo.equals(":")) uriUserInfo = null;
-      final int uriPort = port == defaultPort(scheme) ? -1 : port; // Don't include default port
-      StringBuilder path = new StringBuilder();
-      pathSegmentsToString(path, pathSegments);
-      return new URI(scheme, uriUserInfo, host, uriPort, path.toString(), query(), fragment);
+      String uri = newBuilder().reencodeForUri().toString();
+      return new URI(uri);
     } catch (URISyntaxException e) {
       throw new IllegalStateException("not valid as a java.net.URI: " + url);
     }
@@ -577,12 +578,8 @@ public final class HttpUrl {
     result.encodedUsername = encodedUsername();
     result.encodedPassword = encodedPassword();
     result.host = host;
-    // If we're set to a default port, unset it, in case of a scheme change.
-    if (port == defaultPort(scheme)) {
-      result.port = -1;
-    } else {
-      result.port = port;
-    }
+    // If we're set to a default port, unset it in case of a scheme change.
+    result.port = port != defaultPort(scheme) ? port : -1;
     result.encodedPathSegments.clear();
     result.encodedPathSegments.addAll(encodedPathSegments());
     result.encodedQuery(encodedQuery());
@@ -864,6 +861,31 @@ public final class HttpUrl {
       this.encodedFragment = encodedFragment != null
           ? canonicalize(encodedFragment, FRAGMENT_ENCODE_SET, true, false)
           : null;
+      return this;
+    }
+
+    /**
+     * Re-encodes the components of this URL so that it satisfies (obsolete) RFC 2396, which is
+     * particularly strict for certain components.
+     */
+    Builder reencodeForUri() {
+      for (int i = 0, size = encodedPathSegments.size(); i < size; i++) {
+        String pathSegment = encodedPathSegments.get(i);
+        encodedPathSegments.set(i,
+            canonicalize(pathSegment, PATH_SEGMENT_ENCODE_SET_URI, true, false));
+      }
+      if (encodedQueryNamesAndValues != null) {
+        for (int i = 0, size = encodedQueryNamesAndValues.size(); i < size; i++) {
+          String component = encodedQueryNamesAndValues.get(i);
+          if (component != null) {
+            encodedQueryNamesAndValues.set(i,
+                canonicalize(component, QUERY_COMPONENT_ENCODE_SET_URI, true, true));
+          }
+        }
+      }
+      if (encodedFragment != null) {
+        encodedFragment = canonicalize(encodedFragment, FRAGMENT_ENCODE_SET_URI, true, false);
+      }
       return this;
     }
 
@@ -1362,8 +1384,6 @@ public final class HttpUrl {
       try {
         String result = IDN.toASCII(input).toLowerCase(Locale.US);
         if (result.isEmpty()) return null;
-
-        if (result == null) return null;
 
         // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
         if (containsInvalidHostnameAsciiCodes(result)) {
