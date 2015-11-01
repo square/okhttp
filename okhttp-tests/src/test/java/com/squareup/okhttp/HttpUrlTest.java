@@ -196,11 +196,20 @@ public final class HttpUrlTest {
     assertEquals(HttpUrl.parse("http://user@host/path"), HttpUrl.parse("http://user@host/path"));
   }
 
+  /** Given multiple '@' characters, the last one is the delimiter. */
   @Test public void authorityWithMultipleAtSigns() throws Exception {
-    assertEquals(HttpUrl.parse("http://foo%40bar@baz/path"),
-        HttpUrl.parse("http://foo@bar@baz/path"));
-    assertEquals(HttpUrl.parse("http://foo:pass1%40bar%3Apass2@baz/path"),
-        HttpUrl.parse("http://foo:pass1@bar:pass2@baz/path"));
+    HttpUrl httpUrl = HttpUrl.parse("http://foo@bar@baz/path");
+    assertEquals("foo@bar", httpUrl.username());
+    assertEquals("", httpUrl.password());
+    assertEquals(HttpUrl.parse("http://foo%40bar@baz/path"), httpUrl);
+  }
+
+  /** Given multiple ':' characters, the first one is the delimiter. */
+  @Test public void authorityWithMultipleColons() throws Exception {
+    HttpUrl httpUrl = HttpUrl.parse("http://foo:pass1@bar:pass2@baz/path");
+    assertEquals("foo", httpUrl.username());
+    assertEquals("pass1@bar:pass2", httpUrl.password());
+    assertEquals(HttpUrl.parse("http://foo:pass1%40bar%3Apass2@baz/path"), httpUrl);
   }
 
   @Test public void usernameAndPassword() throws Exception {
@@ -930,19 +939,103 @@ public final class HttpUrlTest {
     assertEquals("http://host/?d=abc!@[]%5E%60%7B%7D%7C%5C", uri.toString());
   }
 
-  @Test public void toUriSpecialPathCharacters() throws Exception {
+  @Test public void toUriWithUsernameNoPassword() throws Exception {
+    HttpUrl httpUrl = new HttpUrl.Builder()
+        .scheme("http")
+        .username("user")
+        .host("host")
+        .build();
+    assertEquals("http://user@host/", httpUrl.toString());
+    assertEquals("http://user@host/", httpUrl.uri().toString());
+  }
+
+  @Test public void toUriUsernameSpecialCharacters() throws Exception {
     HttpUrl url = new HttpUrl.Builder()
         .scheme("http")
-        .host("example.com")
-        .addPathSegment("data=[out:json];node[\"name\"~\"Karlsruhe\"]" +
-            "[\"place\"~\"city|village|town\"];out body;")
+        .host("host")
+        .username("=[]:;\"~|?#@^/$%*")
         .build();
-    URI uri = url.uri();
-    assertEquals("http://example.com/data=%5Bout:json%5D;node%5B%22name%22~%22Karlsruhe%22%5D" +
-            "%5B%22place%22~%22city%7Cvillage%7Ctown%22%5D;out%20body;",
-        uri.toString());
+    assertEquals("http://%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/", url.toString());
+    assertEquals("http://%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/", url.uri().toString());
+  }
+
+  @Test public void toUriPasswordSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .username("user")
+        .password("=[]:;\"~|?#@^/$%*")
+        .build();
+    assertEquals("http://user:%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/", url.toString());
+    assertEquals("http://user:%3D%5B%5D%3A%3B%22~%7C%3F%23%40%5E%2F$%25*@host/",
+        url.uri().toString());
+  }
+
+  @Test public void toUriPathSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addPathSegment("=[]:;\"~|?#@^/$%*")
+        .build();
+    assertEquals("http://host/=[]:;%22~%7C%3F%23@%5E%2F$%25*", url.toString());
+    assertEquals("http://host/=%5B%5D:;%22~%7C%3F%23@%5E%2F$%25*", url.uri().toString());
   }
   
+  @Test public void toUriQueryParameterNameSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("=[]:;\"~|?#@^/$%*", "a")
+        .build();
+    assertEquals("http://host/?%3D[]:;%22~|?%23@^/$%25*=a", url.toString());
+    assertEquals("http://host/?%3D[]:;%22~%7C?%23@%5E/$%25*=a", url.uri().toString());
+  }
+
+  @Test public void toUriQueryParameterValueSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .addQueryParameter("a", "=[]:;\"~|?#@^/$%*")
+        .build();
+    assertEquals("http://host/?a=%3D[]:;%22~|?%23@^/$%25*", url.toString());
+    assertEquals("http://host/?a=%3D[]:;%22~%7C?%23@%5E/$%25*", url.uri().toString());
+  }
+
+  @Test public void toUriQueryValueSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .query("=[]:;\"~|?#@^/$%*")
+        .build();
+    assertEquals("http://host/?=[]:;%22~|?%23@^/$%25*", url.toString());
+    assertEquals("http://host/?=[]:;%22~%7C?%23@%5E/$%25*", url.uri().toString());
+  }
+
+  @Test public void toUriFragmentSpecialCharacters() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .fragment("=[]:;\"~|?#@^/$%*")
+        .build();
+    assertEquals("http://host/#=[]:;\"~|?#@^/$%25*", url.toString());
+    assertEquals("http://host/#=[]:;%22~%7C?%23@%5E/$%25*", url.uri().toString());
+  }
+
+  @Test public void toUriWithMalformedPercentEscape() throws Exception {
+    HttpUrl url = new HttpUrl.Builder()
+        .scheme("http")
+        .host("host")
+        .encodedPath("/%xx")
+        .build();
+    assertEquals("http://host/%xx", url.toString());
+    try {
+      url.uri();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertEquals("not valid as a java.net.URI: http://host/%xx", expected.getMessage());
+    }
+  }
+
   @Test public void fromJavaNetUrl() throws Exception {
     URL javaNetUrl = new URL("http://username:password@host/path?query#fragment");
     HttpUrl httpUrl = HttpUrl.get(javaNetUrl);
