@@ -28,19 +28,19 @@ public interface Network {
   Network DEFAULT = new Network() {
     @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
       if (host == null) throw new UnknownHostException("host == null");
-      InetAddress[] ips_arr = InetAddress.getAllByName(host);
+      InetAddress[] ipsArr = InetAddress.getAllByName(host);
       //Prefer IPv4 over IPv6 because IPv4 has higher chances to be available
       //That's important because we'll probably have to wait for timeout before trying the second IP
-      ArrayList<InetAddress> ips_all = new ArrayList<InetAddress>(ips_arr.length);
-      ArrayList<InetAddress> ips_6 = new ArrayList<InetAddress>(ips_arr.length);
-      for(InetAddress ip : ips_arr) {
+      ArrayList<InetAddress> ipsAll = new ArrayList<InetAddress>(ipsArr.length);
+      ArrayList<InetAddress> ips6 = new ArrayList<InetAddress>(ipsArr.length);
+      for (InetAddress ip : ipsArr) {
           if (ip instanceof Inet4Address)
-              ips_all.add(ip);
+              ipsAll.add(ip);
           else
-              ips_6.add(ip);
+              ips6.add(ip);
       }
-      ips_all.addAll(ips_6);
-      return ips_all.toArray(ips_arr);
+      ipsAll.addAll(ips6);
+      return ipsAll.toArray(ipsArr);
     }
   };
 
