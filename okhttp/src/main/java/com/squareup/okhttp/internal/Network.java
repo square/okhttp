@@ -16,6 +16,8 @@
 package com.squareup.okhttp.internal;
 
 import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.util.ArrayList;
 import java.net.UnknownHostException;
 
 /**
@@ -26,7 +28,19 @@ public interface Network {
   Network DEFAULT = new Network() {
     @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
       if (host == null) throw new UnknownHostException("host == null");
-      return InetAddress.getAllByName(host);
+      InetAddress[] ipsArr = InetAddress.getAllByName(host);
+      //Prefer IPv4 over IPv6 because IPv4 has higher chances to be available
+      //That's important because we'll probably have to wait for timeout before trying the second IP
+      ArrayList<InetAddress> ipsAll = new ArrayList<InetAddress>(ipsArr.length);
+      ArrayList<InetAddress> ips6 = new ArrayList<InetAddress>(ipsArr.length);
+      for (InetAddress ip : ipsArr) {
+          if (ip instanceof Inet4Address)
+              ipsAll.add(ip);
+          else
+              ips6.add(ip);
+      }
+      ipsAll.addAll(ips6);
+      return ipsAll.toArray(ipsArr);
     }
   };
 
