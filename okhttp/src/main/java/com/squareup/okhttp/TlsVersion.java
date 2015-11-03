@@ -30,7 +30,7 @@ public enum TlsVersion {
 
   final String javaName;
 
-  private TlsVersion(String javaName) {
+  TlsVersion(String javaName) {
     this.javaName = javaName;
   }
 

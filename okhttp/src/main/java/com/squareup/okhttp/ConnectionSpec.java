@@ -20,10 +20,20 @@ import java.util.Arrays;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
 
+import static com.squareup.okhttp.internal.Util.concat;
+import static com.squareup.okhttp.internal.Util.contains;
+
 /**
  * Specifies configuration for the socket connection that HTTP traffic travels through. For {@code
  * https:} URLs, this includes the TLS version and cipher suites to use when negotiating a secure
  * connection.
+ *
+ * <p>The TLS versions configured in a connection spec are only be used if they are also enabled in
+ * the SSL socket. For example, if an SSL socket does not have TLS 1.2 enabled, it will not be used
+ * even if it is present on the connection spec. The same policy also applies to cipher suites.
+ *
+ * <p>Use {@link Builder#allEnabledTlsVersions()} and {@link Builder#allEnabledCipherSuites} to
+ * defer all feature selection to the underlying SSL socket.
  */
 public final class ConnectionSpec {
 
@@ -67,18 +77,10 @@ public final class ConnectionSpec {
   /** Unencrypted, unauthenticated connections for {@code http:} URLs. */
   public static final ConnectionSpec CLEARTEXT = new Builder(false).build();
 
-  final boolean tls;
-
-  /**
-   * Used if tls == true. The cipher suites to set on the SSLSocket. {@code null} means "use
-   * default set".
-   */
+  private final boolean tls;
+  private final boolean supportsTlsExtensions;
   private final String[] cipherSuites;
-
-  /** Used if tls == true. The TLS protocol versions to use. */
   private final String[] tlsVersions;
-
-  final boolean supportsTlsExtensions;
 
   private ConnectionSpec(Builder builder) {
     this.tls = builder.tls;
@@ -92,13 +94,12 @@ public final class ConnectionSpec {
   }
 
   /**
-   * Returns the cipher suites to use for a connection. This method can return {@code null} if the
-   * cipher suites enabled by default should be used.
+   * Returns the cipher suites to use for a connection. Returns {@code null} if all of the SSL
+   * socket's enabled cipher suites should be used.
    */
   public List<CipherSuite> cipherSuites() {
-    if (cipherSuites == null) {
-      return null;
-    }
+    if (cipherSuites == null) return null;
+
     CipherSuite[] result = new CipherSuite[cipherSuites.length];
     for (int i = 0; i < cipherSuites.length; i++) {
       result[i] = CipherSuite.forJavaName(cipherSuites[i]);
@@ -106,7 +107,13 @@ public final class ConnectionSpec {
     return Util.immutableList(result);
   }
 
+  /**
+   * Returns the TLS versions to use when negotiating a connection. Returns {@code null} if all of
+   * the SSL socket's enabled TLS versions should be used.
+   */
   public List<TlsVersion> tlsVersions() {
+    if (tlsVersions == null) return null;
+
     TlsVersion[] result = new TlsVersion[tlsVersions.length];
     for (int i = 0; i < tlsVersions.length; i++) {
       result[i] = TlsVersion.forJavaName(tlsVersions[i]);
@@ -122,57 +129,40 @@ public final class ConnectionSpec {
   void apply(SSLSocket sslSocket, boolean isFallback) {
     ConnectionSpec specToApply = supportedSpec(sslSocket, isFallback);
 
-    sslSocket.setEnabledProtocols(specToApply.tlsVersions);
-
-    String[] cipherSuitesToEnable = specToApply.cipherSuites;
-    // null means "use default set".
-    if (cipherSuitesToEnable != null) {
-      sslSocket.setEnabledCipherSuites(cipherSuitesToEnable);
+    if (specToApply.tlsVersions != null) {
+      sslSocket.setEnabledProtocols(specToApply.tlsVersions);
+    }
+    if (specToApply.cipherSuites != null) {
+      sslSocket.setEnabledCipherSuites(specToApply.cipherSuites);
     }
   }
 
   /**
-   * Returns a copy of this that omits cipher suites and TLS versions not enabled by
-   * {@code sslSocket}.
+   * Returns a copy of this that omits cipher suites and TLS versions not enabled by {@code
+   * sslSocket}.
    */
   private ConnectionSpec supportedSpec(SSLSocket sslSocket, boolean isFallback) {
-    String[] cipherSuitesToEnable = null;
-    if (cipherSuites != null) {
-      String[] cipherSuitesToSelectFrom = sslSocket.getEnabledCipherSuites();
-      cipherSuitesToEnable =
-          Util.intersect(String.class, cipherSuites, cipherSuitesToSelectFrom);
+    String[] cipherSuitesIntersection = cipherSuites != null
+        ? Util.intersect(String.class, cipherSuites, sslSocket.getEnabledCipherSuites())
+        : sslSocket.getEnabledCipherSuites();
+    String[] tlsVersionsIntersection = tlsVersions != null
+        ? Util.intersect(String.class, tlsVersions, sslSocket.getEnabledProtocols())
+        : sslSocket.getEnabledProtocols();
+
+    // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
+    // the SCSV cipher is added to signal that a protocol fallback has taken place.
+    if (isFallback && contains(sslSocket.getSupportedCipherSuites(), "TLS_FALLBACK_SCSV")) {
+      cipherSuitesIntersection = concat(cipherSuitesIntersection, "TLS_FALLBACK_SCSV");
     }
 
-    if (isFallback) {
-      // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
-      // the SCSV cipher is added to signal that a protocol fallback has taken place.
-      final String fallbackScsv = "TLS_FALLBACK_SCSV";
-      boolean socketSupportsFallbackScsv =
-          Arrays.asList(sslSocket.getSupportedCipherSuites()).contains(fallbackScsv);
-
-      if (socketSupportsFallbackScsv) {
-        // Add the SCSV cipher to the set of enabled cipher suites iff it is supported.
-        String[] oldEnabledCipherSuites = cipherSuitesToEnable != null
-            ? cipherSuitesToEnable
-            : sslSocket.getEnabledCipherSuites();
-        String[] newEnabledCipherSuites = new String[oldEnabledCipherSuites.length + 1];
-        System.arraycopy(oldEnabledCipherSuites, 0,
-            newEnabledCipherSuites, 0, oldEnabledCipherSuites.length);
-        newEnabledCipherSuites[newEnabledCipherSuites.length - 1] = fallbackScsv;
-        cipherSuitesToEnable = newEnabledCipherSuites;
-      }
-    }
-
-    String[] protocolsToSelectFrom = sslSocket.getEnabledProtocols();
-    String[] protocolsToEnable = Util.intersect(String.class, tlsVersions, protocolsToSelectFrom);
     return new Builder(this)
-        .cipherSuites(cipherSuitesToEnable)
-        .tlsVersions(protocolsToEnable)
+        .cipherSuites(cipherSuitesIntersection)
+        .tlsVersions(tlsVersionsIntersection)
         .build();
   }
 
   /**
-   * Returns {@code true} if the socket, as currently configured, supports this ConnectionSpec.
+   * Returns {@code true} if the socket, as currently configured, supports this connection spec.
    * In order for a socket to be compatible the enabled cipher suites and protocols must intersect.
    *
    * <p>For cipher suites, at least one of the {@link #cipherSuites() required cipher suites} must
@@ -187,20 +177,17 @@ public final class ConnectionSpec {
       return false;
     }
 
-    String[] enabledProtocols = socket.getEnabledProtocols();
-    boolean requiredProtocolsEnabled = nonEmptyIntersection(tlsVersions, enabledProtocols);
-    if (!requiredProtocolsEnabled) {
+    if (tlsVersions != null
+        && !nonEmptyIntersection(tlsVersions, socket.getEnabledProtocols())) {
       return false;
     }
 
-    boolean requiredCiphersEnabled;
-    if (cipherSuites == null) {
-      requiredCiphersEnabled = socket.getEnabledCipherSuites().length > 0;
-    } else {
-      String[] enabledCipherSuites = socket.getEnabledCipherSuites();
-      requiredCiphersEnabled = nonEmptyIntersection(cipherSuites, enabledCipherSuites);
+    if (cipherSuites != null
+        && !nonEmptyIntersection(cipherSuites, socket.getEnabledCipherSuites())) {
+      return false;
     }
-    return requiredCiphersEnabled;
+
+    return true;
   }
 
   /**
@@ -214,15 +201,6 @@ public final class ConnectionSpec {
     }
     for (String toFind : a) {
       if (contains(b, toFind)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static <T> boolean contains(T[] array, T value) {
-    for (T arrayValue : array) {
-      if (Util.equal(value, arrayValue)) {
         return true;
       }
     }
@@ -256,16 +234,17 @@ public final class ConnectionSpec {
   }
 
   @Override public String toString() {
-    if (tls) {
-      List<CipherSuite> cipherSuites = cipherSuites();
-      String cipherSuitesString = cipherSuites == null ? "[use default]" : cipherSuites.toString();
-      return "ConnectionSpec(cipherSuites=" + cipherSuitesString
-          + ", tlsVersions=" + tlsVersions()
-          + ", supportsTlsExtensions=" + supportsTlsExtensions
-          + ")";
-    } else {
+    if (!tls) {
       return "ConnectionSpec()";
     }
+
+    String cipherSuitesString = cipherSuites != null ? cipherSuites().toString() : "[all enabled]";
+    String tlsVersionsString = tlsVersions != null ? tlsVersions().toString() : "[all enabled]";
+    return "ConnectionSpec("
+        + "cipherSuites=" + cipherSuitesString
+        + ", tlsVersions=" + tlsVersionsString
+        + ", supportsTlsExtensions=" + supportsTlsExtensions
+        + ")";
   }
 
   public static final class Builder {
@@ -285,56 +264,58 @@ public final class ConnectionSpec {
       this.supportsTlsExtensions = connectionSpec.supportsTlsExtensions;
     }
 
+    public Builder allEnabledCipherSuites() {
+      if (!tls) throw new IllegalStateException("no cipher suites for cleartext connections");
+      this.cipherSuites = null;
+      return this;
+    }
+
     public Builder cipherSuites(CipherSuite... cipherSuites) {
       if (!tls) throw new IllegalStateException("no cipher suites for cleartext connections");
 
-      // Convert enums to the string names Java wants. This makes a defensive copy!
       String[] strings = new String[cipherSuites.length];
       for (int i = 0; i < cipherSuites.length; i++) {
         strings[i] = cipherSuites[i].javaName;
       }
-      this.cipherSuites = strings;
-      return this;
+      return cipherSuites(strings);
     }
 
     public Builder cipherSuites(String... cipherSuites) {
       if (!tls) throw new IllegalStateException("no cipher suites for cleartext connections");
 
-      if (cipherSuites == null) {
-        this.cipherSuites = null;
-      } else {
-        // This makes a defensive copy!
-        this.cipherSuites = cipherSuites.clone();
+      if (cipherSuites.length == 0) {
+        throw new IllegalArgumentException("At least one cipher suite is required");
       }
 
+      this.cipherSuites = cipherSuites.clone(); // Defensive copy.
+      return this;
+    }
+
+    public Builder allEnabledTlsVersions() {
+      if (!tls) throw new IllegalStateException("no TLS versions for cleartext connections");
+      this.tlsVersions = null;
       return this;
     }
 
     public Builder tlsVersions(TlsVersion... tlsVersions) {
       if (!tls) throw new IllegalStateException("no TLS versions for cleartext connections");
-      if (tlsVersions.length == 0) {
-        throw new IllegalArgumentException("At least one TlsVersion is required");
-      }
 
-      // Convert enums to the string names Java wants. This makes a defensive copy!
       String[] strings = new String[tlsVersions.length];
       for (int i = 0; i < tlsVersions.length; i++) {
         strings[i] = tlsVersions[i].javaName;
       }
-      this.tlsVersions = strings;
-      return this;
+
+      return tlsVersions(strings);
     }
 
     public Builder tlsVersions(String... tlsVersions) {
       if (!tls) throw new IllegalStateException("no TLS versions for cleartext connections");
 
-      if (tlsVersions == null) {
-        this.tlsVersions = null;
-      } else {
-        // This makes a defensive copy!
-        this.tlsVersions = tlsVersions.clone();
+      if (tlsVersions.length == 0) {
+        throw new IllegalArgumentException("At least one TLS version is required");
       }
 
+      this.tlsVersions = tlsVersions.clone(); // Defensive copy.
       return this;
     }
 
