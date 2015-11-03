@@ -53,9 +53,13 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
     OkHttpClient copy = client.copyWithDefaults();
     copy.setProxy(proxy);
 
-    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);
-    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy);
-    throw new IllegalArgumentException("Unexpected protocol: " + protocol);
+    HttpURLConnection conn;
+    if (protocol.equals("http")) conn = new HttpURLConnectionImpl(url, copy);
+    else if (protocol.equals("https")) conn =  new HttpsURLConnectionImpl(url, copy);
+    else throw new IllegalArgumentException("Unexpected protocol: " + protocol);
+
+    if (copy.getCache() != null) conn.setUseCaches(true);
+    return conn;
   }
 
   /**
