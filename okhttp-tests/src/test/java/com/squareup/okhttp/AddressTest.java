@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public final class AddressTest {
+  private Dns dns = Dns.SYSTEM;
   private SocketFactory socketFactory = SocketFactory.getDefault();
   private Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
   private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
@@ -33,18 +34,18 @@ public final class AddressTest {
   private RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void equalsAndHashcode() throws Exception {
-    Address a = new Address("square.com", 80, socketFactory, null, null, null,
+    Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, proxySelector);
-    Address b = new Address("square.com", 80, socketFactory, null, null, null,
+    Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, proxySelector);
     assertEquals(a, b);
     assertEquals(a.hashCode(), b.hashCode());
   }
 
   @Test public void differentProxySelectorsAreDifferent() throws Exception {
-    Address a = new Address("square.com", 80, socketFactory, null, null, null,
+    Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
-    Address b = new Address("square.com", 80, socketFactory, null, null, null,
+    Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
         authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
     assertFalse(a.equals(b));
   }

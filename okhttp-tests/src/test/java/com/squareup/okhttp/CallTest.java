@@ -15,13 +15,13 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.DoubleInetAddressNetwork;
-import com.squareup.okhttp.internal.Internal;
+import com.squareup.okhttp.internal.DoubleInetAddressDns;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
-import com.squareup.okhttp.internal.SingleInetAddressNetwork;
+import com.squareup.okhttp.internal.SingleInetAddressDns;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
+import com.squareup.okhttp.internal.http.FakeDns;
 import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.Dispatcher;
 import com.squareup.okhttp.mockwebserver.MockResponse;
@@ -684,7 +684,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("unreachable!"));
 
-    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    client.setDns(new DoubleInetAddressDns());
     client.setReadTimeout(100, TimeUnit.MILLISECONDS);
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -810,7 +810,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse().setBody("retry success"));
 
-    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    client.setDns(new DoubleInetAddressDns());
     assertTrue(client.getRetryOnConnectionFailure());
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -822,7 +822,7 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse().setBody("unreachable!"));
 
-    Internal.instance.setNetwork(client, new DoubleInetAddressNetwork());
+    client.setDns(new DoubleInetAddressDns());
     client.setRetryOnConnectionFailure(false);
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -841,7 +841,7 @@ public final class CallTest {
 
     suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
+    client.setDns(new SingleInetAddressDns());
 
     executeSynchronously(new Request.Builder().url(server.url("/")).build())
         .assertBody("abc");
@@ -863,7 +863,7 @@ public final class CallTest {
         new RecordingSSLSocketFactory(sslContext.getSocketFactory());
     client.setSslSocketFactory(clientSocketFactory);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
+    client.setDns(new SingleInetAddressDns());
 
     Request request = new Request.Builder().url(server.url("/")).build();
     try {
@@ -903,7 +903,7 @@ public final class CallTest {
 
     suppressTlsFallbackScsv(client);
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    Internal.instance.setNetwork(client, new SingleInetAddressNetwork());
+    client.setDns(new SingleInetAddressDns());
 
     Request request = new Request.Builder().url(server.url("/")).build();
     try {
@@ -1853,6 +1853,21 @@ public final class CallTest {
         .assertHeader("a\tb", "c\u007fd")
         .assertHeader("\ud83c\udf69", "\u2615\ufe0f")
         .assertHeader("", "ef");
+  }
+
+  @Test public void customDns() throws Exception {
+    // Configure a DNS that returns our MockWebServer for every hostname.
+    FakeDns dns = new FakeDns();
+    dns.addresses(Dns.SYSTEM.lookup(server.url("/").host()));
+    client.setDns(dns);
+
+    server.enqueue(new MockResponse());
+    Request request = new Request.Builder()
+        .url(server.url("/").newBuilder().host("android.com").build())
+        .build();
+    executeSynchronously(request).assertCode(200);
+
+    dns.assertRequests("android.com");
   }
 
   private RecordedResponse executeSynchronously(Request request) throws IOException {

@@ -1139,7 +1139,7 @@ public final class HttpEngine {
       certificatePinner = client.getCertificatePinner();
     }
 
-    return new Address(request.httpUrl().host(), request.httpUrl().port(),
+    return new Address(request.httpUrl().host(), request.httpUrl().port(), client.getDns(),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getAuthenticator(), client.getProxy(), client.getProtocols(),
         client.getConnectionSpecs(), client.getProxySelector());
