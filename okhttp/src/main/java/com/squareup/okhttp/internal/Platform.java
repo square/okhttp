@@ -347,19 +347,17 @@ public class Platform {
     @Override public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       String methodName = method.getName();
       Class<?> returnType = method.getReturnType();
-      if (args == null) {
-        args = Util.EMPTY_STRING_ARRAY;
-      }
+      Object[] argsCopy = args == null ? Util.EMPTY_STRING_ARRAY : args.clone();
       if (methodName.equals("supports") && boolean.class == returnType) {
         return true; // ALPN is supported.
       } else if (methodName.equals("unsupported") && void.class == returnType) {
         this.unsupported = true; // Peer doesn't support ALPN.
         return null;
-      } else if (methodName.equals("protocols") && args.length == 0) {
+      } else if (methodName.equals("protocols") && argsCopy.length == 0) {
         return protocols; // Client advertises these protocols.
       } else if ((methodName.equals("selectProtocol") || methodName.equals("select"))
-          && String.class == returnType && args.length == 1 && args[0] instanceof List) {
-        List<String> peerProtocols = (List) args[0];
+          && String.class == returnType && argsCopy.length == 1 && argsCopy[0] instanceof List) {
+        List<String> peerProtocols = (List) argsCopy[0];
         // Pick the first known protocol the peer advertises.
         for (int i = 0, size = peerProtocols.size(); i < size; i++) {
           if (protocols.contains(peerProtocols.get(i))) {
@@ -368,11 +366,11 @@ public class Platform {
         }
         return selected = protocols.get(0); // On no intersection, try peer's first protocol.
       } else if ((methodName.equals("protocolSelected") || methodName.equals("selected"))
-          && args.length == 1) {
-        this.selected = (String) args[0]; // Server selected this protocol.
+          && argsCopy.length == 1) {
+        this.selected = (String) argsCopy[0]; // Server selected this protocol.
         return null;
       } else {
-        return method.invoke(this, args);
+        return method.invoke(this, argsCopy);
       }
     }
   }

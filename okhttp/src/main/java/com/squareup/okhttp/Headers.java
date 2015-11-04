@@ -53,7 +53,7 @@ public final class Headers {
   }
 
   private Headers(String[] namesAndValues) {
-    this.namesAndValues = namesAndValues;
+    this.namesAndValues = namesAndValues == null ? null : namesAndValues.clone();
   }
 
   /** Returns the last value corresponding to the specified field, or null. */
