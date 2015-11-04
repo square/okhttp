@@ -15,16 +15,20 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Dns;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A network that always resolves two IP addresses per host. Use this when testing route selection
- * fallbacks to guarantee that a fallback address is available.
+ * A network that resolves only one IP address per host. Use this when testing
+ * route selection fallbacks to prevent the host machine's various IP addresses
+ * from interfering.
  */
-public class DoubleInetAddressNetwork implements Network {
-  @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
-    InetAddress[] allInetAddresses = Network.DEFAULT.resolveInetAddresses(host);
-    return new InetAddress[] { allInetAddresses[0], allInetAddresses[0] };
+public class SingleInetAddressDns implements Dns {
+  @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+    List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
+    return Collections.singletonList(addresses.get(0));
   }
 }

@@ -78,6 +78,7 @@ public final class ConnectionPoolTest {
   }
 
   private void setUp(int poolSize) throws Exception {
+    Dns dns = Dns.SYSTEM;
     SocketFactory socketFactory = SocketFactory.getDefault();
     RecordingProxySelector proxySelector = new RecordingProxySelector();
 
@@ -86,14 +87,14 @@ public final class ConnectionPoolTest {
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
 
     httpServer.start();
-    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), socketFactory, null,
-        null, null, AuthenticatorAdapter.INSTANCE, null,
+    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), dns, socketFactory,
+        null, null, null, AuthenticatorAdapter.INSTANCE, null,
         Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), CONNECTION_SPECS, proxySelector);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
     spdyServer.start();
-    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), socketFactory,
+    spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), dns, socketFactory,
         sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null, Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1),
         CONNECTION_SPECS, proxySelector);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Square, Inc.
+ * Copyright (C) 2014 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,19 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Dns;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- * Services specific to the host device's network interface. Prefer this over {@link
- * InetAddress#getAllByName} to make code more testable.
+ * A network that always resolves two IP addresses per host. Use this when testing route selection
+ * fallbacks to guarantee that a fallback address is available.
  */
-public interface Network {
-  Network DEFAULT = new Network() {
-    @Override public InetAddress[] resolveInetAddresses(String host) throws UnknownHostException {
-      if (host == null) throw new UnknownHostException("host == null");
-      return InetAddress.getAllByName(host);
-    }
-  };
-
-  InetAddress[] resolveInetAddresses(String host) throws UnknownHostException;
+public class DoubleInetAddressDns implements Dns {
+  @Override public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+    List<InetAddress> addresses = Dns.SYSTEM.lookup(hostname);
+    return Arrays.asList(addresses.get(0), addresses.get(0));
+  }
 }

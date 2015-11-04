@@ -19,7 +19,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RecordingAuthenticator;
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
-import com.squareup.okhttp.internal.SingleInetAddressNetwork;
+import com.squareup.okhttp.internal.SingleInetAddressDns;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
@@ -607,7 +607,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
     suppressTlsFallbackScsv(client.client());
-    Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
+    client.client().setDns(new SingleInetAddressDns());
 
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.getUrl("/foo"));
@@ -873,7 +873,7 @@ public final class URLConnectionTest {
 
     // Configure a single IP address for the host and a single configuration, so we only need one
     // failure to fail permanently.
-    Internal.instance.setNetwork(client.client(), new SingleInetAddressNetwork());
+    client.client().setDns(new SingleInetAddressDns());
     client.client().setSslSocketFactory(sslContext.getSocketFactory());
     client.client().setConnectionSpecs(Util.immutableList(ConnectionSpec.MODERN_TLS));
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());

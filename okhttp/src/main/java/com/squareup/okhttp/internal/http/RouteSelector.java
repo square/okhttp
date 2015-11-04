@@ -21,7 +21,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
 import com.squareup.okhttp.internal.Internal;
-import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RouteDatabase;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -42,7 +41,6 @@ import java.util.NoSuchElementException;
 public final class RouteSelector {
   private final Address address;
   private final HttpUrl url;
-  private final Network network;
   private final OkHttpClient client;
   private final RouteDatabase routeDatabase;
 
@@ -66,7 +64,6 @@ public final class RouteSelector {
     this.url = url;
     this.client = client;
     this.routeDatabase = Internal.instance.routeDatabase(client);
-    this.network = Internal.instance.network(client);
 
     resetNextProxy(url, address.getProxy());
   }
@@ -184,7 +181,9 @@ public final class RouteSelector {
     }
 
     // Try each address for best behavior in mixed IPv4/IPv6 environments.
-    for (InetAddress inetAddress : network.resolveInetAddresses(socketHost)) {
+    List<InetAddress> addresses = address.getDns().lookup(socketHost);
+    for (int i = 0, size = addresses.size(); i < size; i++) {
+      InetAddress inetAddress = addresses.get(i);
       inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
     }
 

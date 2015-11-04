@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
-import com.squareup.okhttp.internal.Network;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
@@ -117,14 +116,6 @@ public class OkHttpClient implements Cloneable {
         return client.routeDatabase();
       }
 
-      @Override public Network network(OkHttpClient client) {
-        return client.network;
-      }
-
-      @Override public void setNetwork(OkHttpClient client, Network network) {
-        client.network = network;
-      }
-
       @Override public void connectAndSetOwner(OkHttpClient client, Connection connection,
           HttpEngine owner, Request request) throws RouteException {
         connection.connectAndSetOwner(client, owner, request);
@@ -190,7 +181,7 @@ public class OkHttpClient implements Cloneable {
   private CertificatePinner certificatePinner;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
-  private Network network;
+  private Dns dns;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
   private boolean retryOnConnectionFailure = true;
@@ -221,7 +212,7 @@ public class OkHttpClient implements Cloneable {
     this.certificatePinner = okHttpClient.certificatePinner;
     this.authenticator = okHttpClient.authenticator;
     this.connectionPool = okHttpClient.connectionPool;
-    this.network = okHttpClient.network;
+    this.dns = okHttpClient.dns;
     this.followSslRedirects = okHttpClient.followSslRedirects;
     this.followRedirects = okHttpClient.followRedirects;
     this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
@@ -355,6 +346,20 @@ public class OkHttpClient implements Cloneable {
 
   public Cache getCache() {
     return cache;
+  }
+
+  /**
+   * Sets the DNS service used to lookup IP addresses for hostnames.
+   *
+   * <p>If unset, the {@link Dns#SYSTEM system-wide default} DNS will be used.
+   */
+  public OkHttpClient setDns(Dns dns) {
+    this.dns = dns;
+    return this;
+  }
+
+  public Dns getDns() {
+    return dns;
   }
 
   /**
@@ -647,8 +652,8 @@ public class OkHttpClient implements Cloneable {
     if (result.connectionSpecs == null) {
       result.connectionSpecs = DEFAULT_CONNECTION_SPECS;
     }
-    if (result.network == null) {
-      result.network = Network.DEFAULT;
+    if (result.dns == null) {
+      result.dns = Dns.SYSTEM;
     }
     return result;
   }

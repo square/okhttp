@@ -78,10 +78,6 @@ public abstract class Internal {
 
   public abstract RouteDatabase routeDatabase(OkHttpClient client);
 
-  public abstract Network network(OkHttpClient client);
-
-  public abstract void setNetwork(OkHttpClient client, Network network);
-
   public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
       HttpEngine owner, Request request) throws RouteException;
 
