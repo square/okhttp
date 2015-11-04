@@ -303,16 +303,16 @@ public final class HttpUrl {
 
   private HttpUrl(Builder builder) {
     this.scheme = builder.scheme;
-    this.username = percentDecode(builder.encodedUsername);
-    this.password = percentDecode(builder.encodedPassword);
+    this.username = percentDecode(builder.encodedUsername, false);
+    this.password = percentDecode(builder.encodedPassword, false);
     this.host = builder.host;
     this.port = builder.effectivePort();
-    this.pathSegments = percentDecode(builder.encodedPathSegments);
+    this.pathSegments = percentDecode(builder.encodedPathSegments, false);
     this.queryNamesAndValues = builder.encodedQueryNamesAndValues != null
-        ? percentDecode(builder.encodedQueryNamesAndValues)
+        ? percentDecode(builder.encodedQueryNamesAndValues, true)
         : null;
     this.fragment = builder.encodedFragment != null
-        ? percentDecode(builder.encodedFragment)
+        ? percentDecode(builder.encodedFragment, false)
         : null;
     this.url = builder.toString();
   }
@@ -1254,7 +1254,7 @@ public final class HttpUrl {
     private static String canonicalizeHost(String input, int pos, int limit) {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
-      String percentDecoded = percentDecode(input, pos, limit);
+      String percentDecoded = percentDecode(input, pos, limit, false);
 
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
@@ -1472,19 +1472,19 @@ public final class HttpUrl {
     return limit;
   }
 
-  static String percentDecode(String encoded) {
-    return percentDecode(encoded, 0, encoded.length());
+  static String percentDecode(String encoded, boolean isQuery) {
+    return percentDecode(encoded, 0, encoded.length(), isQuery);
   }
 
-  private List<String> percentDecode(List<String> list) {
+  private List<String> percentDecode(List<String> list, boolean isQuery) {
     List<String> result = new ArrayList<>(list.size());
     for (String s : list) {
-      result.add(s != null ? percentDecode(s) : null);
+      result.add(s != null ? percentDecode(s, isQuery) : null);
     }
     return Collections.unmodifiableList(result);
   }
 
-  static String percentDecode(String encoded, int pos, int limit) {
+  static String percentDecode(String encoded, int pos, int limit, boolean isQuery) {
     for (int i = pos; i < limit; i++) {
       char c = encoded.charAt(i);
       if (c == '%') {
@@ -1497,7 +1497,12 @@ public final class HttpUrl {
     }
 
     // Fast path: no characters in [pos..limit) required decoding.
-    return encoded.substring(pos, limit);
+    String result = encoded.substring(pos, limit);
+    // + become ' ' for queries
+    if(isQuery) {
+      result = result.replace('+', ' ');
+    }
+    return result;
   }
 
   static void percentDecode(Buffer out, String encoded, int pos, int limit) {
@@ -1529,14 +1534,14 @@ public final class HttpUrl {
    * transformations:
    * <ul>
    *   <li>Tabs, newlines, form feeds and carriage returns are skipped.
-   *   <li>In queries, ' ' is encoded to '+' and '+' is encoded to "%2B".
+   *   <li>In queries, ' ' is encoded to '+'.
    *   <li>Characters in {@code encodeSet} are percent-encoded.
    *   <li>Control characters and non-ASCII characters are percent-encoded.
    *   <li>All other characters are copied without transformation.
    * </ul>
    *
    * @param alreadyEncoded true to leave '%' as-is; false to convert it to '%25'.
-   * @param query true if to encode ' ' as '+', and '+' as "%2B".
+   * @param query true if to encode ' ' as '+'.
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
       boolean alreadyEncoded, boolean query) {
@@ -1547,7 +1552,7 @@ public final class HttpUrl {
           || codePoint >= 0x7f
           || encodeSet.indexOf(codePoint) != -1
           || (codePoint == '%' && !alreadyEncoded)
-          || (query && codePoint == '+')) {
+          || (!alreadyEncoded && query && codePoint == '+')) {
         // Slow path: the character at i requires encoding!
         Buffer out = new Buffer();
         out.writeUtf8(input, pos, i);
