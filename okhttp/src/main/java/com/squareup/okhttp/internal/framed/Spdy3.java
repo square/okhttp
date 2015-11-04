@@ -91,7 +91,7 @@ public final class Spdy3 implements Variant {
           + ",application/xhtml+xml,text/plain,text/javascript,publicprivatemax-age=gzip,deflate,"
           + "sdchcharset=utf-8charset=iso-8859-1,utf-,*,enq=0.").getBytes(Util.UTF_8.name());
     } catch (UnsupportedEncodingException e) {
-      throw new AssertionError();
+      throw new AssertionError(e);
     }
   }
 

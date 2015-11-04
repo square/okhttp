@@ -122,7 +122,7 @@ public final class FramedTransport implements Transport {
     } else if (Protocol.HTTP_2 == protocol) {
       result.add(new Header(TARGET_AUTHORITY, host)); // Optional in HTTP/2
     } else {
-      throw new AssertionError();
+      throw new AssertionError("unknown protocol " + protocol == null ? "null" : protocol.name());
     }
     result.add(new Header(TARGET_SCHEME, request.httpUrl().scheme()));
 

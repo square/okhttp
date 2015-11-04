@@ -671,7 +671,7 @@ public class OkHttpClient implements Cloneable {
         sslContext.init(null, null, null);
         defaultSslSocketFactory = sslContext.getSocketFactory();
       } catch (GeneralSecurityException e) {
-        throw new AssertionError(); // The system has no TLS. Just give up.
+        throw new AssertionError(e); // The system has no TLS. Just give up.
       }
     }
     return defaultSslSocketFactory;
