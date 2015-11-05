@@ -37,7 +37,7 @@ import static com.squareup.okhttp.internal.Util.contains;
  */
 public final class ConnectionSpec {
 
-  // This is a subset of the cipher suites supported in Chrome 37, current as of 2014-10-5.
+  // This is a subset of the cipher suites supported in Chrome 46, current as of 2015-11-05.
   // All of these suites are available on Android 5.0; earlier releases support a subset of
   // these suites. https://github.com/square/okhttp/issues/330
   private static final CipherSuite[] APPROVED_CIPHER_SUITES = new CipherSuite[] {
@@ -53,7 +53,6 @@ public final class ConnectionSpec {
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
       CipherSuite.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_DHE_RSA_WITH_AES_128_CBC_SHA,
-      CipherSuite.TLS_DHE_DSS_WITH_AES_128_CBC_SHA,
       CipherSuite.TLS_DHE_RSA_WITH_AES_256_CBC_SHA,
       CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
       CipherSuite.TLS_RSA_WITH_AES_128_CBC_SHA,
