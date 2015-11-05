@@ -33,10 +33,10 @@ public final class FormEncodingBuilder {
       content.writeByte('&');
     }
     HttpUrl.canonicalize(content, name, 0, name.length(),
-        HttpUrl.FORM_ENCODE_SET, false, true);
+        HttpUrl.FORM_ENCODE_SET, false, true, true);
     content.writeByte('=');
     HttpUrl.canonicalize(content, value, 0, value.length(),
-        HttpUrl.FORM_ENCODE_SET, false, true);
+        HttpUrl.FORM_ENCODE_SET, false, true, true);
     return this;
   }
 
@@ -46,10 +46,10 @@ public final class FormEncodingBuilder {
       content.writeByte('&');
     }
     HttpUrl.canonicalize(content, name, 0, name.length(),
-        HttpUrl.FORM_ENCODE_SET, true, true);
+        HttpUrl.FORM_ENCODE_SET, true, true, true);
     content.writeByte('=');
     HttpUrl.canonicalize(content, value, 0, value.length(),
-        HttpUrl.FORM_ENCODE_SET, true, true);
+        HttpUrl.FORM_ENCODE_SET, true, true, true);
     return this;
   }
 
