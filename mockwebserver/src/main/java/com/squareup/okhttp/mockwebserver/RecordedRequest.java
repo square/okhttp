@@ -18,8 +18,17 @@ package com.squareup.okhttp.mockwebserver;
 
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.TlsVersion;
+
+import java.io.UnsupportedEncodingException;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import javax.net.ssl.SSLSocket;
 import okio.Buffer;
 
@@ -34,6 +43,8 @@ public final class RecordedRequest {
   private final Buffer body;
   private final int sequenceNumber;
   private final TlsVersion tlsVersion;
+  private final Map<String, List<String>> queryParams;
+  private final Map<String, List<String>> postParams;
 
   public RecordedRequest(String requestLine, Headers headers, List<Integer> chunkSizes,
       long bodySize, Buffer body, int sequenceNumber, Socket socket) {
@@ -52,9 +63,15 @@ public final class RecordedRequest {
       int pathEnd = requestLine.indexOf(' ', methodEnd + 1);
       this.method = requestLine.substring(0, methodEnd);
       this.path = requestLine.substring(methodEnd + 1, pathEnd);
+      this.queryParams = parseGetParams(path);
+      this.postParams = isUrlencodedPost()
+        ? parseParams(getBody().readUtf8())
+        : Collections.<String, List<String>>emptyMap();
     } else {
       this.method = null;
       this.path = null;
+      this.queryParams = Collections.emptyMap();
+      this.postParams = Collections.emptyMap();
     }
   }
 
@@ -121,7 +138,111 @@ public final class RecordedRequest {
     return tlsVersion;
   }
 
+  /**
+   * Returns all values for query param
+   */
+  public List<String> getQueryParams(String param) {
+    return queryParams.get(param);
+  }
+
+  /**
+   * Returns all query params
+   */
+  public Map<String, List<String>> getQueryParams() {
+    return queryParams;
+  }
+
+  /**
+   * Returns single value for query param
+   */
+  public String getQueryParam(String param) {
+    List<String> params = getQueryParams(param);
+    if (params != null) {
+      return params.get(0);
+    }
+    return null;
+  }
+
+  /**
+   * Returns all values for form post param
+   */
+  public List<String> getPostParams(String param) {
+    return postParams.get(param);
+  }
+
+  /**
+   * Returns all form post params
+   */
+  public Map<String, List<String>> getPostParams() {
+    return postParams;
+  }
+
+  /**
+   * Returns single value for form post param
+   */
+  public String getPostParam(String param) {
+    List<String> params = getPostParams(param);
+    if (params != null) {
+      return params.get(0);
+    }
+    return null;
+  }
+
   @Override public String toString() {
     return requestLine;
+  }
+
+  /**
+   * split & decodes query parameters into new map
+   */
+  private static Map<String, List<String>> splitQuery(String query) throws UnsupportedEncodingException {
+    if (query == null) {
+      return Collections.emptyMap();
+    }
+    Map<String, List<String>> query_pairs = new LinkedHashMap<>();
+    String[] pairs = query.split("&");
+    for (String pair : pairs) {
+      int idx = pair.indexOf("=");
+      String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+      if (!query_pairs.containsKey(key)) {
+        query_pairs.put(key, new LinkedList<String>());
+      }
+      String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8") : null;
+      query_pairs.get(key).add(value);
+    }
+    return query_pairs;
+  }
+
+  /**
+   * split valid query string
+   */
+  private Map<String, List<String>> parseParams(String body) {
+    Map<String, List<String>> queryParams;
+    try {
+      queryParams = Collections.unmodifiableMap(splitQuery(body));
+    } catch (UnsupportedEncodingException ignored) {
+      queryParams = Collections.emptyMap();
+    }
+    return queryParams;
+  }
+
+  /**
+   * get query from path and split it
+   */
+  private Map<String, List<String>> parseGetParams(String path) {
+    URI uri;
+    try {
+      uri = new URI(path);
+    } catch (URISyntaxException ignored) {
+      return Collections.emptyMap();
+    }
+    return parseParams(uri.getQuery());
+  }
+
+  /**
+   * checks if request is post and is form-urlencoded (for valid query parsing)
+   */
+  private boolean isUrlencodedPost() {
+    return method.toLowerCase().equals("post") && getHeader("Content-Type").equals("application/x-www-form-urlencoded");
   }
 }

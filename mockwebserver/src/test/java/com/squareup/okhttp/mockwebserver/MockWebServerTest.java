@@ -358,4 +358,55 @@ public final class MockWebServerTest {
     } catch (ConnectException expected) {
     }
   }
+
+  @Test public void withQueryParamsGet() throws Exception {
+    server.setDispatcher(new Dispatcher() {
+      @Override
+      public MockResponse dispatch(final RecordedRequest request) throws InterruptedException {
+        return new MockResponse().setBody(request.getQueryParam("hello"));
+      }
+    });
+
+    final URLConnection connection = server.url("/withQuery?hello=world").url().openConnection();
+    final InputStream in = connection.getInputStream();
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+    assertEquals(reader.readLine(), "world");
+  }
+
+  @Test public void withMultipleQueryParamsGet() throws Exception {
+    server.setDispatcher(new Dispatcher() {
+      @Override
+      public MockResponse dispatch(final RecordedRequest request) throws InterruptedException {
+        final List<String> names = request.getQueryParams("names");
+        return new MockResponse().setBody(names.get(0) + "-" + names.get(1));
+      }
+    });
+
+    final URLConnection connection = server.url("/withQuery?names=joe&names=bar").url().openConnection();
+    final InputStream in = connection.getInputStream();
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+    assertEquals(reader.readLine(), "joe-bar");
+  }
+
+  @Test public void formBody() throws Exception {
+    server.setDispatcher(new Dispatcher() {
+      @Override
+      public MockResponse dispatch(final RecordedRequest request) throws InterruptedException {
+        return new MockResponse().setBody(request.getPostParam("hello"));
+      }
+    });
+
+    final byte[] postDataBytes = "hello=world".getBytes("UTF-8");
+    final HttpURLConnection connection = (HttpURLConnection) server.url("/helloWorld").url().openConnection();
+    connection.setRequestMethod("POST");
+    connection.setRequestProperty("Content-type", "application/x-www-form-urlencoded");
+    connection.setDoOutput(true);
+    connection.getOutputStream().write(postDataBytes);
+    final InputStream in = connection.getInputStream();
+    final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+    assertEquals(reader.readLine(), "world");
+  }
 }
