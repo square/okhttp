@@ -175,6 +175,8 @@ public final class MockWebServer implements TestRule {
   }
 
   public void setServerSocketFactory(ServerSocketFactory serverSocketFactory) {
+    if (executor != null) throw new IllegalStateException(
+        "setServerSocketFactory() must be called before start()");
     this.serverSocketFactory = serverSocketFactory;
   }
 
