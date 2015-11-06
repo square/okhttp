@@ -27,6 +27,10 @@ import static org.junit.Assert.fail;
 
 /** Tests how each code point is encoded and decoded in the context of each URL component. */
 class UrlComponentEncodingTester {
+  private static final int UNICODE_2 = 0x07ff; // Arbitrary code point that's 2 bytes in UTF-8.
+  private static final int UNICODE_3 = 0xffff; // Arbitrary code point that's 3 bytes in UTF-8.
+  private static final int UNICODE_4 = 0x10ffff; // Arbitrary code point that's 4 bytes in UTF-8.
+
   /**
    * The default encode set for the ASCII range. The specific rules vary per-component: for example,
    * '?' may be identity-encoded in a fragment, but must be percent-encoded in a path.
@@ -164,6 +168,9 @@ class UrlComponentEncodingTester {
     map.put((int)  '}', Encoding.IDENTITY);
     map.put((int)  '~', Encoding.IDENTITY);
     map.put(      0x7f, Encoding.PERCENT); // Delete
+    map.put( UNICODE_2, Encoding.PERCENT);
+    map.put( UNICODE_3, Encoding.PERCENT);
+    map.put( UNICODE_4, Encoding.PERCENT);
     defaultEncodings = Collections.unmodifiableMap(map);
   }
 
@@ -178,6 +185,13 @@ class UrlComponentEncodingTester {
     for (int codePoint : codePoints) {
       encodings.put(codePoint, encoding);
     }
+    return this;
+  }
+
+  public UrlComponentEncodingTester identityForNonAscii() {
+    encodings.put(UNICODE_2, Encoding.IDENTITY);
+    encodings.put(UNICODE_3, Encoding.IDENTITY);
+    encodings.put(UNICODE_4, Encoding.IDENTITY);
     return this;
   }
 

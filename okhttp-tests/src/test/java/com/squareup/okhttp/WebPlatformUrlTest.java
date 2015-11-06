@@ -57,8 +57,6 @@ public final class WebPlatformUrlTest {
       "Parsing: <http://f:00000000000000/c> against <http://example.org/foo/bar>",
       "Parsing: <http://f:\n/c> against <http://example.org/foo/bar>",
       "Parsing: <http://f:999999/c> against <http://example.org/foo/bar>",
-      "Parsing: <#β> against <http://example.org/foo/bar>",
-      "Parsing: <http://www.google.com/foo?bar=baz# »> against <about:blank>",
       "Parsing: <http://192.0x00A80001> against <about:blank>",
       // This test fails on Java 7 but passes on Java 8. See HttpUrlTest.hostWithTrailingDot().
       "Parsing: <http://%30%78%63%30%2e%30%32%35%30.01%2e> against <http://other.com/>",

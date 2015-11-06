@@ -466,8 +466,45 @@ public final class HttpUrlTest {
     new UrlComponentEncodingTester()
         .override(Encoding.IDENTITY, ' ', '"', '#', '<', '>', '?', '`')
         .skipForUri('%', ' ', '"', '#', '<', '>', '\\', '^', '`', '{', '|', '}')
+        .identityForNonAscii()
         .test(Component.FRAGMENT);
-    // TODO(jwilson): don't percent-encode non-ASCII characters. (But do encode control characters!)
+  }
+
+  @Test public void fragmentNonAscii() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#Σ");
+    assertEquals("http://host/#Σ", url.toString());
+    assertEquals("Σ", url.fragment());
+    assertEquals("Σ", url.encodedFragment());
+    assertEquals("http://host/#Σ", url.uri().toString());
+  }
+
+  @Test public void fragmentNonAsciiThatOffendsJavaNetUri() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#\u0080");
+    assertEquals("http://host/#\u0080", url.toString());
+    assertEquals("\u0080", url.fragment());
+    assertEquals("\u0080", url.encodedFragment());
+    try {
+      url.uri();
+      fail();
+    } catch (IllegalStateException expected) {
+      // Possibly a bug in java.net.URI. Many non-ASCII code points work, this one doesn't!
+    }
+  }
+
+  @Test public void fragmentPercentEncodedNonAscii() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#%C2%80");
+    assertEquals("http://host/#%C2%80", url.toString());
+    assertEquals("\u0080", url.fragment());
+    assertEquals("%C2%80", url.encodedFragment());
+    assertEquals("http://host/#%C2%80", url.uri().toString());
+  }
+
+  @Test public void fragmentPercentEncodedPartialCodePoint() throws Exception {
+    HttpUrl url = HttpUrl.parse("http://host/#%80");
+    assertEquals("http://host/#%80", url.toString());
+    assertEquals("\ufffd", url.fragment()); // Unicode replacement character.
+    assertEquals("%80", url.encodedFragment());
+    assertEquals("http://host/#%80", url.uri().toString());
   }
 
   @Test public void relativePath() throws Exception {
