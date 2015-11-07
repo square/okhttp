@@ -69,6 +69,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -1868,6 +1869,62 @@ public final class CallTest {
     executeSynchronously(request).assertCode(200);
 
     dns.assertRequests("android.com");
+  }
+
+  /** We had a bug where failed HTTP/2 calls could break the entire connection. */
+  @Ignore // TODO(jwilson): fix HttpEngine connection cleanups.
+  @Test public void failingCallsDoNotInterfereWithConnection() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    server.enqueue(new MockResponse().setBody("Response 1"));
+    server.enqueue(new MockResponse().setBody("Response 2"));
+
+    RequestBody requestBody = new RequestBody() {
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("abc");
+        sink.flush();
+
+        makeFailingCall();
+
+        sink.writeUtf8("def");
+        sink.flush();
+      }
+    };
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(requestBody)
+        .build());
+    assertEquals("Response 1", call.execute().body().string());
+  }
+
+  private void makeFailingCall() {
+    RequestBody requestBody = new RequestBody() {
+      @Override public MediaType contentType() {
+        return null;
+      }
+
+      @Override public long contentLength() throws IOException {
+        return 1;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        throw new IOException("write body fail!");
+      }
+    };
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(requestBody)
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (IOException expected) {
+      assertEquals("write body fail!", expected.getMessage());
+    }
   }
 
   private RecordedResponse executeSynchronously(Request request) throws IOException {
