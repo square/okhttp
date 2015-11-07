@@ -92,6 +92,7 @@ public final class MediaType {
   /**
    * Returns the charset of this media type, or null if this media type doesn't
    * specify a charset.
+   * @throws UnsupportedCharsetException if the desired charset is not supported by this runtime
    */
   public Charset charset() {
     return charset != null ? Charset.forName(charset) : null;

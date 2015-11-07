@@ -29,6 +29,7 @@ import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Platform;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
@@ -199,9 +200,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         Charset charset = UTF8;
         MediaType contentType = responseBody.contentType();
-        if (contentType != null) {
-          charset = contentType.charset(UTF8);
-        }
+        if (contentType != null)
+          try {
+            charset = contentType.charset(UTF8);
+          } catch (UnsupportedCharsetException e) {
+            // unsupported charset, assume UTF8 nevertheless
+          }
 
         if (responseBody.contentLength() != 0) {
           logger.log("");
