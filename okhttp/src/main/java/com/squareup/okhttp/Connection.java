@@ -239,7 +239,7 @@ public final class Connection {
       if (!address.getHostnameVerifier().verify(address.getUriHost(), sslSocket.getSession())) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.getUriHost() + " not verified:"
-            + "\n    certificate: " + CertificatePinner.pin(cert)
+            + "\n    certificate: " + Sha1CertificatePinner.pin(cert)
             + "\n    DN: " + cert.getSubjectDN().getName()
             + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
       }

@@ -638,7 +638,7 @@ public class OkHttpClient implements Cloneable {
       result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
     }
     if (result.certificatePinner == null) {
-      result.certificatePinner = CertificatePinner.DEFAULT;
+      result.certificatePinner = Sha1CertificatePinner.DEFAULT;
     }
     if (result.authenticator == null) {
       result.authenticator = AuthenticatorAdapter.INSTANCE;
