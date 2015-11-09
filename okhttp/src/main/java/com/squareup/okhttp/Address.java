@@ -47,11 +47,11 @@ public final class Address {
   final Proxy proxy;
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
-  final CertificatePinner certificatePinner;
+  final Sha1CertificatePinner certificatePinner;
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
+      Sha1CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
       List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
     if (uriHost == null) throw new NullPointerException("uriHost == null");
     this.uriHost = uriHost;

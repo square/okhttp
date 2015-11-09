@@ -957,9 +957,9 @@ public final class CallTest {
     // Make a first request without certificate pinning. Use it to collect certificates to pin.
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
-    CertificatePinner.Builder certificatePinnerBuilder = new CertificatePinner.Builder();
+    Sha1CertificatePinner.Builder certificatePinnerBuilder = new Sha1CertificatePinner.Builder();
     for (Certificate certificate : response1.handshake().peerCertificates()) {
-      certificatePinnerBuilder.add(server.getHostName(), CertificatePinner.pin(certificate));
+      certificatePinnerBuilder.add(server.getHostName(), Sha1CertificatePinner.pin(certificate));
     }
 
     // Make another request with certificate pinning. It should complete normally.
@@ -977,7 +977,7 @@ public final class CallTest {
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     // Pin publicobject.com's cert.
-    client.setCertificatePinner(new CertificatePinner.Builder()
+    client.setCertificatePinner(new Sha1CertificatePinner.Builder()
         .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
         .build());
 

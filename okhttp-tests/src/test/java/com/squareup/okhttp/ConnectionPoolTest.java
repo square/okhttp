@@ -95,7 +95,7 @@ public final class ConnectionPoolTest {
 
     spdyServer.start();
     spdyAddress = new Address(spdyServer.getHostName(), spdyServer.getPort(), dns, socketFactory,
-        sslContext.getSocketFactory(), new RecordingHostnameVerifier(), CertificatePinner.DEFAULT,
+        sslContext.getSocketFactory(), new RecordingHostnameVerifier(), Sha1CertificatePinner.DEFAULT,
         AuthenticatorAdapter.INSTANCE, null, Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1),
         CONNECTION_SPECS, proxySelector);
     spdySocketAddress = new InetSocketAddress(InetAddress.getByName(spdyServer.getHostName()),
