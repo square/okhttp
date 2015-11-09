@@ -18,6 +18,7 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
+import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
@@ -1132,7 +1133,7 @@ public final class HttpEngine {
   private static Address createAddress(OkHttpClient client, Request request) {
     SSLSocketFactory sslSocketFactory = null;
     HostnameVerifier hostnameVerifier = null;
-    Sha1CertificatePinner certificatePinner = null;
+    CertificatePinner certificatePinner = null;
     if (request.isHttps()) {
       sslSocketFactory = client.getSslSocketFactory();
       hostnameVerifier = client.getHostnameVerifier();

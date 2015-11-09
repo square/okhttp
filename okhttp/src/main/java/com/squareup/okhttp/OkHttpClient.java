@@ -178,7 +178,7 @@ public class OkHttpClient implements Cloneable {
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
-  private Sha1CertificatePinner certificatePinner;
+  private CertificatePinner certificatePinner;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private Dns dns;
@@ -415,12 +415,12 @@ public class OkHttpClient implements Cloneable {
    * SSL socket factory} to establish trust. Pinning certificates avoids the
    * need to trust certificate authorities.
    */
-  public OkHttpClient setCertificatePinner(Sha1CertificatePinner certificatePinner) {
+  public OkHttpClient setCertificatePinner(CertificatePinner certificatePinner) {
     this.certificatePinner = certificatePinner;
     return this;
   }
 
-  public Sha1CertificatePinner getCertificatePinner() {
+  public CertificatePinner getCertificatePinner() {
     return certificatePinner;
   }
 
