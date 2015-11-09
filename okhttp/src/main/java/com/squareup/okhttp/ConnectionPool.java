@@ -19,10 +19,11 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
 import java.net.SocketException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -75,7 +76,7 @@ public final class ConnectionPool {
   private final int maxIdleConnections;
   private final long keepAliveDurationNs;
 
-  private final LinkedList<Connection> connections = new LinkedList<>();
+  private final Deque<Connection> connections = new ArrayDeque<>();
 
   /**
    * A background thread is used to cleanup expired connections. There will be, at most, a single
@@ -135,9 +136,8 @@ public final class ConnectionPool {
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
   public synchronized Connection get(Address address) {
     Connection foundConnection = null;
-    for (ListIterator<Connection> i = connections.listIterator(connections.size());
-        i.hasPrevious(); ) {
-      Connection connection = i.previous();
+    for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
+      Connection connection = i.next();
       if (!connection.getRoute().getAddress().equals(address)
           || !connection.isAlive()
           || System.nanoTime() - connection.getIdleStartTimeNs() >= keepAliveDurationNs) {
@@ -273,9 +273,8 @@ public final class ConnectionPool {
       long nanosUntilNextEviction = keepAliveDurationNs;
 
       // Collect connections eligible for immediate eviction.
-      for (ListIterator<Connection> i = connections.listIterator(connections.size());
-          i.hasPrevious(); ) {
-        Connection connection = i.previous();
+      for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
+        Connection connection = i.next();
         long nanosUntilEviction = connection.getIdleStartTimeNs() + keepAliveDurationNs - now;
         if (nanosUntilEviction <= 0 || !connection.isAlive()) {
           i.remove();
@@ -287,9 +286,9 @@ public final class ConnectionPool {
       }
 
       // If the pool has too many idle connections, gather more! Oldest to newest.
-      for (ListIterator<Connection> i = connections.listIterator(connections.size());
-          i.hasPrevious() && idleConnectionCount > maxIdleConnections; ) {
-        Connection connection = i.previous();
+      for (Iterator<Connection> i = connections.descendingIterator();
+          i.hasNext() && idleConnectionCount > maxIdleConnections; ) {
+        Connection connection = i.next();
         if (connection.isIdle()) {
           evictableConnections.add(connection);
           i.remove();
