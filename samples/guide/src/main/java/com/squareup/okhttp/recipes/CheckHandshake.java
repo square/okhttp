@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.recipes;
 
-import com.squareup.okhttp.CertificatePinner;
+import com.squareup.okhttp.Sha1CertificatePinner;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -32,7 +32,7 @@ public final class CheckHandshake {
 
     @Override public Response intercept(Chain chain) throws IOException {
       for (Certificate certificate : chain.connection().getHandshake().peerCertificates()) {
-        String pin = CertificatePinner.pin(certificate);
+        String pin = Sha1CertificatePinner.pin(certificate);
         if (blacklist.contains(pin)) {
           throw new IOException("Blacklisted peer certificate: " + pin);
         }
