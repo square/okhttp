@@ -31,7 +31,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public final class CertificatePinnerTest {
+public final class Sha1CertificatePinnerTest {
   static SslContextBuilder sslContextBuilder;
 
   static KeyPair keyPairA;
