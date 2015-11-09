@@ -15,10 +15,11 @@
  */
 package com.squareup.okhttp.recipes;
 
-import com.squareup.okhttp.CertificatePinner;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.Sha1CertificatePinner;
+
 import java.io.IOException;
 import java.security.cert.Certificate;
 
@@ -28,7 +29,7 @@ public final class CertificatePinning {
   public CertificatePinning() {
     client = new OkHttpClient();
     client.setCertificatePinner(
-        new CertificatePinner.Builder()
+        new Sha1CertificatePinner.Builder()
             .add("publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
             .add("publicobject.com", "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")
             .add("publicobject.com", "sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=")
@@ -45,7 +46,7 @@ public final class CertificatePinning {
     if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
     for (Certificate certificate : response.handshake().peerCertificates()) {
-      System.out.println(CertificatePinner.pin(certificate));
+      System.out.println(Sha1CertificatePinner.pin(certificate));
     }
   }
 
