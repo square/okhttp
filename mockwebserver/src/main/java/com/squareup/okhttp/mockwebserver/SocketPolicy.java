@@ -72,7 +72,7 @@ public enum SocketPolicy {
   SHUTDOWN_OUTPUT_AT_END,
 
   /**
-   * Don't response to the request but keep the socket open. For testing
+   * Don't respond to the request but keep the socket open. For testing
    * read response header timeout issue.
    */
   NO_RESPONSE
