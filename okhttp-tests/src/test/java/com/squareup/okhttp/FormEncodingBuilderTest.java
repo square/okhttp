@@ -24,14 +24,14 @@ import static org.junit.Assert.assertEquals;
 public final class FormEncodingBuilderTest {
   @Test public void urlEncoding() throws Exception {
     RequestBody formEncoding = new FormEncodingBuilder()
-        .add("a&b", "c=d")
+        .add("a+=& b", "c+=& d")
         .add("space, the", "final frontier")
         .add("%25", "%25")
         .build();
 
     assertEquals("application/x-www-form-urlencoded", formEncoding.contentType().toString());
 
-    String expected = "a%26b=c%3Dd&space%2C%20the=final%20frontier&%2525=%2525";
+    String expected = "a%2B%3D%26%20b=c%2B%3D%26%20d&space%2C%20the=final%20frontier&%2525=%2525";
     assertEquals(expected.length(), formEncoding.contentLength());
 
     Buffer out = new Buffer();
@@ -46,7 +46,7 @@ public final class FormEncodingBuilderTest {
         .addEncoded("%25", "%25")
         .build();
 
-    String expected = "a%20%3D%26%20b=c%20%3D%26%20d&e%20%3D%26%20f=g%20%3D%26%20h&%25=%25";
+    String expected = "a+%3D%26%20b=c+%3D%26%20d&e+%3D%26%20f=g+%3D%26%20h&%25=%25";
     Buffer out = new Buffer();
     formEncoding.writeTo(out);
     assertEquals(expected, out.readUtf8());
