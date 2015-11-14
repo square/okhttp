@@ -33,6 +33,8 @@ public interface WebSocket {
    * <p>The {@linkplain RequestBody#contentType() content type} of {@code message} should be either
    * {@link #TEXT} or {@link #BINARY}.
    *
+   * @throws IOException if unable to write the message. If thrown, an attempt to send a close
+   * frame with code 1001 will be made and this instance will no longer be valid to use.
    * @throws IllegalStateException if not connected, already closed, or another writer is active.
    */
   void sendMessage(RequestBody message) throws IOException;
@@ -40,6 +42,8 @@ public interface WebSocket {
   /**
    * Send a ping to the server with optional payload.
    *
+   * @throws IOException if unable to write the ping. If thrown, an attempt to send a close frame
+   * with code 1001 will be made and this instance will no longer be valid to use.
    * @throws IllegalStateException if already closed.
    */
   void sendPing(Buffer payload) throws IOException;
@@ -53,6 +57,8 @@ public interface WebSocket {
    * It is an error to call this method before calling close on an active writer. Calling this
    * method more than once has no effect.
    *
+   * @throws IOException if unable to write the close message. If thrown this instance will no
+   * longer be valid to use.
    * @throws IllegalStateException if already closed.
    */
   void close(int code, String reason) throws IOException;
