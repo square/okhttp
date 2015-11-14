@@ -303,16 +303,16 @@ public final class HttpUrl {
 
   private HttpUrl(Builder builder) {
     this.scheme = builder.scheme;
-    this.username = percentDecode(builder.encodedUsername);
-    this.password = percentDecode(builder.encodedPassword);
+    this.username = percentDecode(builder.encodedUsername, false);
+    this.password = percentDecode(builder.encodedPassword, false);
     this.host = builder.host;
     this.port = builder.effectivePort();
-    this.pathSegments = percentDecode(builder.encodedPathSegments);
+    this.pathSegments = percentDecode(builder.encodedPathSegments, false);
     this.queryNamesAndValues = builder.encodedQueryNamesAndValues != null
-        ? percentDecode(builder.encodedQueryNamesAndValues)
+        ? percentDecode(builder.encodedQueryNamesAndValues, true)
         : null;
     this.fragment = builder.encodedFragment != null
-        ? percentDecode(builder.encodedFragment)
+        ? percentDecode(builder.encodedFragment, false)
         : null;
     this.url = builder.toString();
   }
@@ -1257,7 +1257,7 @@ public final class HttpUrl {
     private static String canonicalizeHost(String input, int pos, int limit) {
       // Start by percent decoding the host. The WHATWG spec suggests doing this only after we've
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
-      String percentDecoded = percentDecode(input, pos, limit);
+      String percentDecoded = percentDecode(input, pos, limit, false);
 
       // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
       if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
@@ -1475,26 +1475,26 @@ public final class HttpUrl {
     return limit;
   }
 
-  static String percentDecode(String encoded) {
-    return percentDecode(encoded, 0, encoded.length());
+  static String percentDecode(String encoded, boolean plusIsSpace) {
+    return percentDecode(encoded, 0, encoded.length(), plusIsSpace);
   }
 
-  private List<String> percentDecode(List<String> list) {
+  private List<String> percentDecode(List<String> list, boolean plusIsSpace) {
     List<String> result = new ArrayList<>(list.size());
     for (String s : list) {
-      result.add(s != null ? percentDecode(s) : null);
+      result.add(s != null ? percentDecode(s, plusIsSpace) : null);
     }
     return Collections.unmodifiableList(result);
   }
 
-  static String percentDecode(String encoded, int pos, int limit) {
+  static String percentDecode(String encoded, int pos, int limit, boolean plusIsSpace) {
     for (int i = pos; i < limit; i++) {
       char c = encoded.charAt(i);
-      if (c == '%') {
+      if (c == '%' || (c == '+' && plusIsSpace)) {
         // Slow path: the character at i requires decoding!
         Buffer out = new Buffer();
         out.writeUtf8(encoded, pos, i);
-        percentDecode(out, encoded, i, limit);
+        percentDecode(out, encoded, i, limit, plusIsSpace);
         return out.readUtf8();
       }
     }
@@ -1503,7 +1503,7 @@ public final class HttpUrl {
     return encoded.substring(pos, limit);
   }
 
-  static void percentDecode(Buffer out, String encoded, int pos, int limit) {
+  static void percentDecode(Buffer out, String encoded, int pos, int limit, boolean plusIsSpace) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = encoded.codePointAt(i);
@@ -1515,6 +1515,9 @@ public final class HttpUrl {
           i += 2;
           continue;
         }
+      } else if (codePoint == '+' && plusIsSpace) {
+        out.writeByte(' ');
+        continue;
       }
       out.writeUtf8CodePoint(codePoint);
     }
@@ -1539,11 +1542,11 @@ public final class HttpUrl {
    * </ul>
    *
    * @param alreadyEncoded true to leave '%' as-is; false to convert it to '%25'.
-   * @param query true if to encode ' ' as '+', and '+' as "%2B".
+   * @param plusIsSpace true to encode '+' as "%2B" if it is not already encoded.
    * @param asciiOnly true to encode all non-ASCII codepoints.
    */
   static String canonicalize(String input, int pos, int limit, String encodeSet,
-      boolean alreadyEncoded, boolean query, boolean asciiOnly) {
+      boolean alreadyEncoded, boolean plusIsSpace, boolean asciiOnly) {
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
       codePoint = input.codePointAt(i);
@@ -1552,11 +1555,11 @@ public final class HttpUrl {
           || (codePoint >= 0x80 && asciiOnly)
           || encodeSet.indexOf(codePoint) != -1
           || (codePoint == '%' && !alreadyEncoded)
-          || (query && codePoint == '+')) {
+          || (codePoint == '+' && plusIsSpace)) {
         // Slow path: the character at i requires encoding!
         Buffer out = new Buffer();
         out.writeUtf8(input, pos, i);
-        canonicalize(out, input, i, limit, encodeSet, alreadyEncoded, query, asciiOnly);
+        canonicalize(out, input, i, limit, encodeSet, alreadyEncoded, plusIsSpace, asciiOnly);
         return out.readUtf8();
       }
     }
@@ -1566,7 +1569,7 @@ public final class HttpUrl {
   }
 
   static void canonicalize(Buffer out, String input, int pos, int limit,
-      String encodeSet, boolean alreadyEncoded, boolean query, boolean asciiOnly) {
+      String encodeSet, boolean alreadyEncoded, boolean plusIsSpace, boolean asciiOnly) {
     Buffer utf8Buffer = null; // Lazily allocated.
     int codePoint;
     for (int i = pos; i < limit; i += Character.charCount(codePoint)) {
@@ -1574,9 +1577,9 @@ public final class HttpUrl {
       if (alreadyEncoded
           && (codePoint == '\t' || codePoint == '\n' || codePoint == '\f' || codePoint == '\r')) {
         // Skip this character.
-      } else if (query && codePoint == '+') {
-        // HTML permits space to be encoded as '+'. We use '%20' to avoid special cases.
-        out.writeUtf8(alreadyEncoded ? "%20" : "%2B");
+      } else if (codePoint == '+' && plusIsSpace) {
+        // Encode '+' as '%2B' since we permit ' ' to be encoded as either '+' or '%20'.
+        out.writeUtf8(alreadyEncoded ? "+" : "%2B");
       } else if (codePoint < 0x20
           || codePoint == 0x7f
           || (codePoint >= 0x80 && asciiOnly)
@@ -1600,8 +1603,9 @@ public final class HttpUrl {
     }
   }
 
-  static String canonicalize(
-      String input, String encodeSet, boolean alreadyEncoded, boolean query, boolean asciiOnly) {
-    return canonicalize(input, 0, input.length(), encodeSet, alreadyEncoded, query, asciiOnly);
+  static String canonicalize(String input, String encodeSet, boolean alreadyEncoded,
+      boolean plusIsSpace, boolean asciiOnly) {
+    return canonicalize(
+        input, 0, input.length(), encodeSet, alreadyEncoded, plusIsSpace, asciiOnly);
   }
 }

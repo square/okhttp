@@ -1138,7 +1138,7 @@ public final class HttpUrlTest {
   @Test public void composeQueryWithEncodedComponents() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/");
     HttpUrl url = base.newBuilder().addEncodedQueryParameter("a+=& b", "c+=& d").build();
-    assertEquals("http://host/?a%20%3D%26%20b=c%20%3D%26%20d", url.toString());
+    assertEquals("http://host/?a+%3D%26%20b=c+%3D%26%20d", url.toString());
     assertEquals("c =& d", url.queryParameter("a =& b"));
   }
 
@@ -1174,7 +1174,7 @@ public final class HttpUrlTest {
         .addEncodedQueryParameter("a+=& b", "c+=& d")
         .setEncodedQueryParameter("a+=& b", "ef")
         .build();
-    assertEquals("http://host/?a%20%3D%26%20b=ef", url.toString());
+    assertEquals("http://host/?a+%3D%26%20b=ef", url.toString());
     assertEquals("ef", url.queryParameter("a =& b"));
   }
 
