@@ -36,7 +36,6 @@ import static com.squareup.okhttp.internal.ws.WebSocketProtocol.OPCODE_TEXT;
 import static com.squareup.okhttp.internal.ws.WebSocketReader.FrameCallback;
 
 public abstract class RealWebSocket implements WebSocket {
-  private static final int CLOSE_GOING_AWAY = 1001;
   private static final int CLOSE_PROTOCOL_EXCEPTION = 1002;
 
   private final WebSocketWriter writer;
@@ -45,6 +44,8 @@ public abstract class RealWebSocket implements WebSocket {
 
   /** True after calling {@link #close(int, String)}. No writes are allowed afterward. */
   private volatile boolean writerSentClose;
+  /** True after {@link IOException}. {@link #close(int, String)} becomes only valid call. */
+  private boolean writerWantsClose;
   /** True after a close frame was read by the reader. No frames will follow it. */
   private boolean readerSentClose;
 
@@ -104,6 +105,7 @@ public abstract class RealWebSocket implements WebSocket {
   @Override public void sendMessage(RequestBody message) throws IOException {
     if (message == null) throw new NullPointerException("message == null");
     if (writerSentClose) throw new IllegalStateException("closed");
+    if (writerWantsClose) throw new IllegalStateException("must call close()");
 
     MediaType contentType = message.contentType();
     if (contentType == null) {
@@ -128,23 +130,19 @@ public abstract class RealWebSocket implements WebSocket {
       message.writeTo(sink);
       sink.close();
     } catch (IOException e) {
-      try {
-        close(CLOSE_GOING_AWAY, null);
-      } catch (IOException ignored) {
-      }
+      writerWantsClose = true;
       throw e;
     }
   }
 
   @Override public void sendPing(Buffer payload) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
+    if (writerWantsClose) throw new IllegalStateException("must call close()");
+
     try {
       writer.writePing(payload);
     } catch (IOException e) {
-      try {
-        close(CLOSE_GOING_AWAY, null);
-      } catch (IOException ignored) {
-      }
+      writerWantsClose = true;
       throw e;
     }
   }
@@ -152,13 +150,12 @@ public abstract class RealWebSocket implements WebSocket {
   /** Send an unsolicited pong with the specified payload. */
   public void sendPong(Buffer payload) throws IOException {
     if (writerSentClose) throw new IllegalStateException("closed");
+    if (writerWantsClose) throw new IllegalStateException("must call close()");
+
     try {
       writer.writePong(payload);
     } catch (IOException e) {
-      try {
-        close(CLOSE_GOING_AWAY, null);
-      } catch (IOException ignored) {
-      }
+      writerWantsClose = true;
       throw e;
     }
   }
