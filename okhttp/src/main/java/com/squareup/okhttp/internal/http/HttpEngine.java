@@ -326,7 +326,7 @@ public final class HttpEngine {
     }
 
     connection = createNextConnection();
-    Internal.instance.connectAndSetOwner(client, connection, this, networkRequest);
+    Internal.instance.connectAndSetOwner(client, connection, this);
     route = connection.getRoute();
   }
 

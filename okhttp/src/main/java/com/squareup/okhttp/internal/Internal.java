@@ -24,7 +24,6 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
@@ -79,7 +78,7 @@ public abstract class Internal {
   public abstract RouteDatabase routeDatabase(OkHttpClient client);
 
   public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
-      HttpEngine owner, Request request) throws RouteException;
+      HttpEngine owner) throws RouteException;
 
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
