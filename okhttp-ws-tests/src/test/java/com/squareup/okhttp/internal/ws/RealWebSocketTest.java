@@ -40,7 +40,6 @@ import static com.squareup.okhttp.ws.WebSocket.TEXT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -219,37 +218,6 @@ public final class RealWebSocketTest {
     }
   }
 
-  @Test public void clientWritingThrowsSendsClientClose() throws IOException {
-    final IOException brokenException = new IOException("Broken!");
-    RequestBody brokenBody = new RequestBody() {
-      @Override public MediaType contentType() {
-        return TEXT;
-      }
-
-      @Override public void writeTo(BufferedSink sink) throws IOException {
-        throw brokenException;
-      }
-    };
-
-    try {
-      client.sendMessage(brokenBody);
-      fail();
-    } catch (IOException e) {
-      assertSame(brokenException, e);
-    }
-
-    // A failed write prevents further use of the WebSocket instance.
-    try {
-      client.sendPing(new Buffer().writeUtf8("Ping!"));
-      fail();
-    } catch (IllegalStateException e) {
-      assertEquals("closed", e.getMessage());
-    }
-
-    server.readMessage();
-    serverListener.assertClose(1001, "");
-  }
-
   @Test public void socketClosedDuringPingKillsWebSocket() throws IOException {
     client2Server.close();
 
@@ -261,10 +229,16 @@ public final class RealWebSocketTest {
 
     // A failed write prevents further use of the WebSocket instance.
     try {
+      client.sendMessage(RequestBody.create(TEXT, "Hello!"));
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("must call close()", e.getMessage());
+    }
+    try {
       client.sendPing(new Buffer().writeUtf8("Ping!"));
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("closed", e.getMessage());
+      assertEquals("must call close()", e.getMessage());
     }
   }
 
@@ -279,28 +253,16 @@ public final class RealWebSocketTest {
 
     // A failed write prevents further use of the WebSocket instance.
     try {
-      client.sendPing(new Buffer().writeUtf8("Ping!"));
+      client.sendMessage(RequestBody.create(TEXT, "Hello!"));
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("closed", e.getMessage());
+      assertEquals("must call close()", e.getMessage());
     }
-  }
-
-  @Test public void socketClosedDuringCloseKillsWebSocket() throws IOException {
-    client2Server.close();
-
-    try {
-      client.close(1000, "I'm done.");
-      fail();
-    } catch (IOException ignored) {
-    }
-
-    // A failed write prevents further use of the WebSocket instance.
     try {
       client.sendPing(new Buffer().writeUtf8("Ping!"));
       fail();
     } catch (IllegalStateException e) {
-      assertEquals("closed", e.getMessage());
+      assertEquals("must call close()", e.getMessage());
     }
   }
 
@@ -388,7 +350,7 @@ public final class RealWebSocketTest {
   @Test public void serverCloseClosesConnection() throws IOException {
     server.close(1000, "Hello!");
 
-    client.readMessage(); // Read server close, sense client close, close connection.
+    client.readMessage(); // Read server close, send client close, close connection.
     assertTrue(clientConnectionClosed);
     clientListener.assertClose(1000, "Hello!");
 
@@ -426,8 +388,8 @@ public final class RealWebSocketTest {
     server2client.raw().write(ByteString.decodeHex("0a00")); // Invalid non-final ping frame.
 
     client.readMessage(); // Detects error, send close, close connection.
-    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
     assertTrue(clientConnectionClosed);
+    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.readMessage();
     serverListener.assertClose(1002, "");
@@ -439,11 +401,24 @@ public final class RealWebSocketTest {
     server2client.raw().write(ByteString.decodeHex("0a00")); // Invalid non-final ping frame.
 
     client.readMessage(); // Detects error, closes connection immediately since close already sent.
-    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
     assertTrue(clientConnectionClosed);
+    clientListener.assertFailure(ProtocolException.class, "Control frames must be final.");
 
     server.readMessage();
     serverListener.assertClose(1000, "Hello!");
+
+    serverListener.assertExhausted(); // Client should not have sent second close.
+  }
+
+  @Test public void closeThrowingClosesConnection() {
+    client2Server.close();
+
+    try {
+      client.close(1000, null);
+      fail();
+    } catch (IOException ignored) {
+    }
+    assertTrue(clientConnectionClosed);
   }
 
   @Test public void closeMessageAndConnectionCloseThrowingDoesNotMaskOriginal() throws IOException {
