@@ -916,8 +916,8 @@ public final class URLConnectionTest {
 
     RecordedRequest connect = server.takeRequest();
     assertNull(connect.getHeader("Private"));
-    assertEquals("bar", connect.getHeader("Proxy-Authorization"));
-    assertEquals("baz", connect.getHeader("User-Agent"));
+    assertNull(connect.getHeader("Proxy-Authorization"));
+    assertEquals(Version.userAgent(), connect.getHeader("User-Agent"));
     assertEquals("android.com", connect.getHeader("Host"));
     assertEquals("Keep-Alive", connect.getHeader("Proxy-Connection"));
 

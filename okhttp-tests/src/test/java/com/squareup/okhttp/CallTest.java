@@ -1901,6 +1901,108 @@ public final class CallTest {
     assertEquals("Response 1", call.execute().body().string());
   }
 
+  /** Test which headers are sent unencrypted to the HTTP proxy. */
+  @Test public void proxyConnectOmitsApplicationHeaders() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.enqueue( new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("encrypted response from the origin server"));
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setProxy(server.toProxyAddress());
+    RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
+    client.setHostnameVerifier(hostnameVerifier);
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .header("Private", "Secret")
+        .header("User-Agent", "App 1.0")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("encrypted response from the origin server", response.body().string());
+
+    RecordedRequest connect = server.takeRequest();
+    assertNull(connect.getHeader("Private"));
+    assertEquals(Version.userAgent(), connect.getHeader("User-Agent"));
+    assertEquals("Keep-Alive", connect.getHeader("Proxy-Connection"));
+    assertEquals("android.com", connect.getHeader("Host"));
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals("Secret", get.getHeader("Private"));
+    assertEquals("App 1.0", get.getHeader("User-Agent"));
+
+    assertEquals(Arrays.asList("verify android.com"), hostnameVerifier.calls);
+  }
+
+  /** Respond to a proxy authorization challenge. */
+  @Test public void proxyAuthenticateOnConnect() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.enqueue(new MockResponse()
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
+    server.enqueue( new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setProxy(server.toProxyAddress());
+    client.setAuthenticator(new RecordingOkAuthenticator("password"));
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    RecordedRequest connect1 = server.takeRequest();
+    assertEquals("CONNECT android.com:443 HTTP/1.1", connect1.getRequestLine());
+    assertNull(connect1.getHeader("Proxy-Authorization"));
+
+    RecordedRequest connect2 = server.takeRequest();
+    assertEquals("CONNECT android.com:443 HTTP/1.1", connect2.getRequestLine());
+    assertEquals("password", connect2.getHeader("Proxy-Authorization"));
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
+    assertNull(get.getHeader("Proxy-Authorization"));
+  }
+
+  /**
+   * Confirm that we don't send the Proxy-Authorization header from the request to the proxy server.
+   * We used to have that behavior but it is problematic because unrelated requests end up sharing
+   * credentials. Worse, that approach leaks proxy credentials to the origin server.
+   */
+  @Test public void noProactiveProxyAuthorization() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.enqueue( new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client.setSslSocketFactory(sslContext.getSocketFactory());
+    client.setProxy(server.toProxyAddress());
+    client.setHostnameVerifier(new RecordingHostnameVerifier());
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .header("Proxy-Authorization", "password")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    RecordedRequest connect = server.takeRequest();
+    assertNull(connect.getHeader("Proxy-Authorization"));
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals("password", get.getHeader("Proxy-Authorization"));
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {

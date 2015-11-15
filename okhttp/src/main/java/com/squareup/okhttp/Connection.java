@@ -19,6 +19,7 @@ package com.squareup.okhttp;
 import com.squareup.okhttp.internal.ConnectionSpecSelector;
 import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.internal.framed.FramedConnection;
 import com.squareup.okhttp.internal.http.FramedTransport;
 import com.squareup.okhttp.internal.http.HttpConnection;
@@ -149,7 +150,7 @@ public final class Connection {
     }
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout, Request request,
+  void connect(int connectTimeout, int readTimeout, int writeTimeout,
       List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
     if (connected) throw new IllegalStateException("already connected");
 
@@ -169,7 +170,7 @@ public final class Connection {
         socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
             ? address.getSocketFactory().createSocket()
             : new Socket(proxy);
-        connectSocket(connectTimeout, readTimeout, writeTimeout, request,
+        connectSocket(connectTimeout, readTimeout, writeTimeout,
             connectionSpecSelector);
         connected = true; // Success!
       } catch (IOException e) {
@@ -191,12 +192,12 @@ public final class Connection {
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
-      Request request, ConnectionSpecSelector connectionSpecSelector) throws IOException {
+      ConnectionSpecSelector connectionSpecSelector) throws IOException {
     socket.setSoTimeout(readTimeout);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
 
     if (route.address.getSslSocketFactory() != null) {
-      connectTls(readTimeout, writeTimeout, request, connectionSpecSelector);
+      connectTls(readTimeout, writeTimeout, connectionSpecSelector);
     }
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
@@ -209,10 +210,10 @@ public final class Connection {
     }
   }
 
-  private void connectTls(int readTimeout, int writeTimeout, Request request,
+  private void connectTls(int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
     if (route.requiresTunnel()) {
-      createTunnel(readTimeout, writeTimeout, request);
+      createTunnel(readTimeout, writeTimeout);
     }
 
     Address address = route.getAddress();
@@ -276,9 +277,9 @@ public final class Connection {
    * CONNECT request to create the proxy connection. This may need to be
    * retried if the proxy requires authorization.
    */
-  private void createTunnel(int readTimeout, int writeTimeout, Request request) throws IOException {
+  private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    Request tunnelRequest = createTunnelRequest(request);
+    Request tunnelRequest = createTunnelRequest();
     HttpConnection tunnelConnection = new HttpConnection(pool, this, socket);
     tunnelConnection.setTimeouts(readTimeout, writeTimeout);
     HttpUrl url = tunnelRequest.httpUrl();
@@ -328,44 +329,31 @@ public final class Connection {
    * headers. This avoids sending potentially sensitive data like HTTP cookies
    * to the proxy unencrypted.
    */
-  private Request createTunnelRequest(Request request) throws IOException {
+  private Request createTunnelRequest() throws IOException {
     HttpUrl tunnelUrl = new HttpUrl.Builder()
         .scheme("https")
-        .host(request.httpUrl().host())
-        .port(request.httpUrl().port())
+        .host(route.address.uriHost)
+        .port(route.address.uriPort)
         .build();
-    Request.Builder result = new Request.Builder()
+    return new Request.Builder()
         .url(tunnelUrl)
         .header("Host", Util.hostHeader(tunnelUrl))
-        .header("Proxy-Connection", "Keep-Alive"); // For HTTP/1.0 proxies like Squid.
-
-    // Copy over the User-Agent header if it exists.
-    String userAgent = request.header("User-Agent");
-    if (userAgent != null) {
-      result.header("User-Agent", userAgent);
-    }
-
-    // Copy over the Proxy-Authorization header if it exists.
-    String proxyAuthorization = request.header("Proxy-Authorization");
-    if (proxyAuthorization != null) {
-      result.header("Proxy-Authorization", proxyAuthorization);
-    }
-
-    return result.build();
+        .header("Proxy-Connection", "Keep-Alive")
+        .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
+        .build();
   }
 
   /**
    * Connects this connection if it isn't already. This creates tunnels, shares
    * the connection with the connection pool, and configures timeouts.
    */
-  void connectAndSetOwner(OkHttpClient client, Object owner, Request request)
-      throws RouteException {
+  void connectAndSetOwner(OkHttpClient client, Object owner) throws RouteException {
     setOwner(owner);
 
     if (!isConnected()) {
       List<ConnectionSpec> connectionSpecs = route.address.getConnectionSpecs();
       connect(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
-          request, connectionSpecs, client.getRetryOnConnectionFailure());
+          connectionSpecs, client.getRetryOnConnectionFailure());
       if (isFramed()) {
         client.getConnectionPool().share(this);
       }
