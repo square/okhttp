@@ -772,13 +772,14 @@ public final class DiskLruCache implements Closeable {
     private Snapshot(String key, long sequenceNumber, Source[] sources, long[] lengths) {
       this.key = key;
       this.sequenceNumber = sequenceNumber;
-      this.sources = sources;
-      this.lengths = lengths;
+      this.sources = sources == null ? null : sources.clone();
+      this.lengths = lengths == null ? null : lengths.clone();
     }
 
     public String key() {
       return key;
     }
+
 
     /**
      * Returns an editor for this snapshot's entry, or null if either the
