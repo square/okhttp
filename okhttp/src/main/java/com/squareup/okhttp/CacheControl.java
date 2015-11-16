@@ -168,14 +168,14 @@ public final class CacheControl {
       String name = headers.name(i);
       String value = headers.value(i);
 
-      if (name.equalsIgnoreCase("Cache-Control")) {
+      if ("Cache-Control".equalsIgnoreCase(name)) {
         if (headerValue != null) {
           // Multiple cache-control headers means we can't use the raw value.
           canUseHeaderValue = false;
         } else {
           headerValue = value;
         }
-      } else if (name.equalsIgnoreCase("Pragma")) {
+      } else if ("Pragma".equalsIgnoreCase(name)) {
         // Might specify additional cache-control params. We invalidate just in case.
         canUseHeaderValue = false;
       } else {

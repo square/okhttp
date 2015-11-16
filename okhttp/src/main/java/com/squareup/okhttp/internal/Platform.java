@@ -350,14 +350,14 @@ public class Platform {
       if (args == null) {
         args = Util.EMPTY_STRING_ARRAY;
       }
-      if (methodName.equals("supports") && boolean.class == returnType) {
+      if ("supports".equals(methodName) && boolean.class == returnType) {
         return true; // ALPN is supported.
-      } else if (methodName.equals("unsupported") && void.class == returnType) {
+      } else if ("unsupported".equals(methodName) && void.class == returnType) {
         this.unsupported = true; // Peer doesn't support ALPN.
         return null;
-      } else if (methodName.equals("protocols") && args.length == 0) {
+      } else if ("protocols".equals(methodName) && args.length == 0) {
         return protocols; // Client advertises these protocols.
-      } else if ((methodName.equals("selectProtocol") || methodName.equals("select"))
+      } else if (("selectProtocol".equals(methodName) || "select".equals(methodName))
           && String.class == returnType && args.length == 1 && args[0] instanceof List) {
         List<String> peerProtocols = (List) args[0];
         // Pick the first known protocol the peer advertises.
@@ -367,7 +367,7 @@ public class Platform {
           }
         }
         return selected = protocols.get(0); // On no intersection, try peer's first protocol.
-      } else if ((methodName.equals("protocolSelected") || methodName.equals("selected"))
+      } else if (("protocolSelected".equals(methodName) || "selected".equals(methodName))
           && args.length == 1) {
         this.selected = (String) args[0]; // Server selected this protocol.
         return null;

@@ -101,7 +101,7 @@ public final class MultipartBuilder {
     if (type == null) {
       throw new NullPointerException("type == null");
     }
-    if (!type.type().equals("multipart")) {
+    if (!"multipart".equals(type.type())) {
       throw new IllegalArgumentException("multipart != " + type);
     }
     this.type = type;

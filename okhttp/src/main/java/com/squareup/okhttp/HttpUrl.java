@@ -345,7 +345,7 @@ public final class HttpUrl {
   }
 
   public boolean isHttps() {
-    return scheme.equals("https");
+    return "https".equals(scheme);
   }
 
   /** Returns the username, or an empty string if none is set. */
@@ -401,9 +401,9 @@ public final class HttpUrl {
    * otherwise.
    */
   public static int defaultPort(String scheme) {
-    if (scheme.equals("http")) {
+    if ("http".equals(scheme)) {
       return 80;
-    } else if (scheme.equals("https")) {
+    } else if ("https".equals(scheme)) {
       return 443;
     } else {
       return -1;
@@ -661,9 +661,9 @@ public final class HttpUrl {
     public Builder scheme(String scheme) {
       if (scheme == null) {
         throw new IllegalArgumentException("scheme == null");
-      } else if (scheme.equalsIgnoreCase("http")) {
+      } else if ("http".equalsIgnoreCase(scheme)) {
         this.scheme = "http";
-      } else if (scheme.equalsIgnoreCase("https")) {
+      } else if ("https".equalsIgnoreCase(scheme)) {
         this.scheme = "https";
       } else {
         throw new IllegalArgumentException("unexpected scheme: " + scheme);
@@ -1092,14 +1092,14 @@ public final class HttpUrl {
     }
 
     private boolean isDot(String input) {
-      return input.equals(".") || input.equalsIgnoreCase("%2e");
+      return ".".equals(input) || "%2e".equalsIgnoreCase(input);
     }
 
     private boolean isDotDot(String input) {
-      return input.equals("..")
-          || input.equalsIgnoreCase("%2e.")
-          || input.equalsIgnoreCase(".%2e")
-          || input.equalsIgnoreCase("%2e%2e");
+      return "..".equals(input)
+          || "%2e.".equalsIgnoreCase(input)
+          || ".%2e".equalsIgnoreCase(input)
+          || "%2e%2e".equalsIgnoreCase(input);
     }
 
     /**

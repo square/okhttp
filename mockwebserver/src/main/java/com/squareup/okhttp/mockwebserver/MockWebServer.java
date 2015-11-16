@@ -605,11 +605,11 @@ public final class MockWebServer implements TestRule {
         contentLength = Long.parseLong(header.substring(15).trim());
       }
       if (lowercaseHeader.startsWith("transfer-encoding:")
-          && lowercaseHeader.substring(18).trim().equals("chunked")) {
+          && "chunked".equals(lowercaseHeader.substring(18).trim())) {
         chunked = true;
       }
       if (lowercaseHeader.startsWith("expect:")
-          && lowercaseHeader.substring(7).trim().equals("100-continue")) {
+          && "100-continue".equals(lowercaseHeader.substring(7).trim())) {
         expectContinue = true;
       }
     }

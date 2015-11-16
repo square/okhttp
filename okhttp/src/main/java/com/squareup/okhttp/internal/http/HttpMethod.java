@@ -17,27 +17,27 @@ package com.squareup.okhttp.internal.http;
 
 public final class HttpMethod {
   public static boolean invalidatesCache(String method) {
-    return method.equals("POST")
-        || method.equals("PATCH")
-        || method.equals("PUT")
-        || method.equals("DELETE")
-        || method.equals("MOVE");     // WebDAV
+    return "POST".equals(method)
+        || "PATCH".equals(method)
+        || "PUT".equals(method)
+        || "DELETE".equals(method)
+        || "MOVE".equals(method);     // WebDAV
   }
 
   public static boolean requiresRequestBody(String method) {
-    return method.equals("POST")
-        || method.equals("PUT")
-        || method.equals("PATCH")
-        || method.equals("PROPPATCH") // WebDAV
-        || method.equals("REPORT");   // CalDAV/CardDAV (defined in WebDAV Versioning)
+    return "POST".equals(method)
+        || "PUT".equals(method)
+        || "PATCH".equals(method)
+        || "PROPPATCH".equals(method) // WebDAV
+        || "REPORT".equals(method);   // CalDAV/CardDAV (defined in WebDAV Versioning)
   }
 
   public static boolean permitsRequestBody(String method) {
     return requiresRequestBody(method)
-        || method.equals("DELETE")    // Permitted as spec is ambiguous.
-        || method.equals("PROPFIND")  // (WebDAV) without body: request <allprop/>
-        || method.equals("MKCOL")     // (WebDAV) may contain a body, but behaviour is unspecified
-        || method.equals("LOCK");     // (WebDAV) body: create lock, without body: refresh lock
+        || "DELETE".equals(method)    // Permitted as spec is ambiguous.
+        || "PROPFIND".equals(method)  // (WebDAV) without body: request <allprop/>
+        || "MKCOL".equals(method)     // (WebDAV) may contain a body, but behaviour is unspecified
+        || "LOCK".equals(method);     // (WebDAV) body: create lock, without body: refresh lock
   }
 
   private HttpMethod() {

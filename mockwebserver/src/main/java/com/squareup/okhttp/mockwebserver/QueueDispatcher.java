@@ -30,7 +30,7 @@ public class QueueDispatcher extends Dispatcher {
   @Override public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
     // To permit interactive/browser testing, ignore requests for favicons.
     final String requestLine = request.getRequestLine();
-    if (requestLine != null && requestLine.equals("GET /favicon.ico HTTP/1.1")) {
+    if (requestLine != null && "GET /favicon.ico HTTP/1.1".equals(requestLine)) {
       System.out.println("served " + requestLine);
       return new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_FOUND);
     }

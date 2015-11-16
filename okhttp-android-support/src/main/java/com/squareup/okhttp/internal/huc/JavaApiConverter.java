@@ -177,7 +177,7 @@ public final class JavaApiConverter {
     for (String fieldName : varyFields) {
       List<String> fieldValues = requestProperties.get(fieldName);
       if (fieldValues == null) {
-        if (fieldName.equals("Accept-Encoding")) {
+        if ("Accept-Encoding".equals(fieldName)) {
           // Accept-Encoding is special. If OkHttp sees Accept-Encoding is unset it will add
           // "gzip". We don't have access to the request that was actually made so we must do the
           // same.

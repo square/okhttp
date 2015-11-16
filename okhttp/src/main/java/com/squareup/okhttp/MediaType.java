@@ -60,7 +60,7 @@ public final class MediaType {
       if (!parameter.lookingAt()) return null; // This is not a well-formed media type.
 
       String name = parameter.group(1);
-      if (name == null || !name.equalsIgnoreCase("charset")) continue;
+      if (name == null || !"charset".equalsIgnoreCase(name)) continue;
       String charsetParameter = parameter.group(2) != null
           ? parameter.group(2)  // Value is a token.
           : parameter.group(3); // Value is a quoted string.
