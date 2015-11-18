@@ -70,9 +70,8 @@ public final class HttpTransport implements Transport {
    */
   public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
-    String requestLine = RequestLine.get(request,
-        httpEngine.getConnection().getRoute().getProxy().type(),
-        httpEngine.getConnection().getProtocol());
+    String requestLine = RequestLine.get(
+        request, httpEngine.getConnection().getRoute().getProxy().type());
     httpConnection.writeRequest(request.headers(), requestLine);
   }
 

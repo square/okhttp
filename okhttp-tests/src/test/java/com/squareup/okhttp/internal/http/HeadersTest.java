@@ -100,8 +100,7 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<Header> headerBlock =
-        FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1");
+    List<Header> headerBlock = FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3);
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
@@ -126,7 +125,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         ":host", "square.com",
         ":scheme", "http");
-    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3, "HTTP/1.1"));
+    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3));
   }
 
   @Test public void toNameValueBlockDropsForbiddenHeadersHttp2() {
@@ -140,8 +139,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected,
-        FramedTransport.writeNameValueBlock(request, Protocol.HTTP_2, "HTTP/1.1"));
+    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.HTTP_2));
   }
 
   @Test public void ofTrims() {

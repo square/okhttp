@@ -85,9 +85,8 @@ public final class FramedTransport implements Transport {
     httpEngine.writingRequestHeaders();
     boolean permitsRequestBody = httpEngine.permitsRequestBody(request);
     boolean hasResponseBody = true;
-    String version = RequestLine.version(httpEngine.getConnection().getProtocol());
     stream = framedConnection.newStream(
-        writeNameValueBlock(request, framedConnection.getProtocol(), version), permitsRequestBody,
+        writeNameValueBlock(request, framedConnection.getProtocol()), permitsRequestBody,
         hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
   }
@@ -109,15 +108,14 @@ public final class FramedTransport implements Transport {
    * Names are all lowercase. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<Header> writeNameValueBlock(Request request, Protocol protocol,
-      String version) {
+  public static List<Header> writeNameValueBlock(Request request, Protocol protocol) {
     Headers headers = request.headers();
     List<Header> result = new ArrayList<>(headers.size() + 10);
     result.add(new Header(TARGET_METHOD, request.method()));
     result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.httpUrl())));
     String host = Util.hostHeader(request.httpUrl());
     if (Protocol.SPDY_3 == protocol) {
-      result.add(new Header(VERSION, version));
+      result.add(new Header(VERSION, "HTTP/1.1"));
       result.add(new Header(TARGET_HOST, host));
     } else if (Protocol.HTTP_2 == protocol) {
       result.add(new Header(TARGET_AUTHORITY, host)); // Optional in HTTP/2

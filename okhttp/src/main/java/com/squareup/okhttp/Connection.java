@@ -78,12 +78,11 @@ public final class Connection {
   private final Route route;
 
   private Socket socket;
-  private boolean connected = false;
+  private Handshake handshake;
+  private Protocol protocol;
   private HttpConnection httpConnection;
   private FramedConnection framedConnection;
-  private Protocol protocol = Protocol.HTTP_1_1;
   private long idleStartTimeNs;
-  private Handshake handshake;
   private int recycleCount;
 
   /**
@@ -152,7 +151,7 @@ public final class Connection {
 
   void connect(int connectTimeout, int readTimeout, int writeTimeout,
       List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
-    if (connected) throw new IllegalStateException("already connected");
+    if (protocol != null) throw new IllegalStateException("already connected");
 
     RouteException routeException = null;
     ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
@@ -165,17 +164,19 @@ public final class Connection {
           "CLEARTEXT communication not supported: " + connectionSpecs));
     }
 
-    while (!connected) {
+    while (protocol == null) {
       try {
         socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
             ? address.getSocketFactory().createSocket()
             : new Socket(proxy);
-        connectSocket(connectTimeout, readTimeout, writeTimeout,
-            connectionSpecSelector);
-        connected = true; // Success!
+        connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
         Util.closeQuietly(socket);
         socket = null;
+        handshake = null;
+        protocol = null;
+        httpConnection = null;
+        framedConnection = null;
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -198,6 +199,8 @@ public final class Connection {
 
     if (route.address.getSslSocketFactory() != null) {
       connectTls(readTimeout, writeTimeout, connectionSpecSelector);
+    } else {
+      protocol = Protocol.HTTP_1_1;
     }
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
@@ -253,11 +256,11 @@ public final class Connection {
       String maybeProtocol = connectionSpec.supportsTlsExtensions()
           ? Platform.get().getSelectedProtocol(sslSocket)
           : null;
+      socket = sslSocket;
+      handshake = unverifiedHandshake;
       protocol = maybeProtocol != null
           ? Protocol.get(maybeProtocol)
           : Protocol.HTTP_1_1;
-      handshake = unverifiedHandshake;
-      socket = sslSocket;
       success = true;
     } catch (AssertionError e) {
       if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
@@ -365,7 +368,7 @@ public final class Connection {
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
   boolean isConnected() {
-    return connected;
+    return protocol != null;
   }
 
   /** Returns the route used by this connection. */
@@ -444,25 +447,17 @@ public final class Connection {
   }
 
   /**
-   * Returns the protocol negotiated by this connection, or {@link
-   * Protocol#HTTP_1_1} if no protocol has been negotiated.
+   * Returns the protocol negotiated by this connection, or {@link Protocol#HTTP_1_1} if no protocol
+   * has been negotiated. This method returns {@link Protocol#HTTP_1_1} even if the remote peer is
+   * using {@link Protocol#HTTP_1_0}.
    */
   public Protocol getProtocol() {
-    return protocol;
-  }
-
-  /**
-   * Sets the protocol negotiated by this connection. Typically this is used
-   * when an HTTP/1.1 request is sent and an HTTP/1.0 response is received.
-   */
-  void setProtocol(Protocol protocol) {
-    if (protocol == null) throw new IllegalArgumentException("protocol == null");
-    this.protocol = protocol;
+    return protocol != null ? protocol : Protocol.HTTP_1_1;
   }
 
   void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis)
       throws RouteException {
-    if (!connected) throw new IllegalStateException("setTimeouts - not connected");
+    if (protocol == null) throw new IllegalStateException("not connected");
 
     // Don't set timeouts on shared SPDY connections.
     if (httpConnection != null) {

@@ -694,8 +694,7 @@ public final class HttpEngine {
       result.header("Host", Util.hostHeader(request.httpUrl()));
     }
 
-    if ((connection == null || connection.getProtocol() != Protocol.HTTP_1_0)
-        && request.header("Connection") == null) {
+    if (request.header("Connection") == null) {
       result.header("Connection", "Keep-Alive");
     }
 
@@ -920,7 +919,6 @@ public final class HttpEngine {
           .build();
     }
 
-    Internal.instance.setProtocol(connection, networkResponse.protocol());
     return networkResponse;
   }
 
