@@ -1065,6 +1065,9 @@ public final class HttpEngine {
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
+        if (transparentGzip) {
+          userRequest.newBuilder().removeHeader("Accept-Encoding");
+        }
         return OkHeaders.processAuthHeader(client.getAuthenticator(), userResponse, selectedProxy);
 
       case HTTP_PERM_REDIRECT:

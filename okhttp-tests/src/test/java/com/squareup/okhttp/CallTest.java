@@ -819,6 +819,33 @@ public final class CallTest {
     assertEquals("retry success", response.body().string());
   }
 
+  @Test public void authenticateUnzip() throws Exception {
+    server.enqueue(new MockResponse().setResponseCode(401));
+    String body = "retry success";
+    server.enqueue(new MockResponse().setBody(body));
+
+    client.setAuthenticator(new Authenticator() {
+      @Override
+      public Request authenticate(Proxy proxy, Response response) throws IOException {
+        Request request = response
+            .request()
+            .newBuilder()
+            .header("OAuth", "MY TOKEN")
+            .build();
+        assertEquals(0, request.headers("Accept-Encoding").size());
+        return request;
+      }
+
+      @Override
+      public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
+        return null;
+      }
+    });
+    Request request = new Request.Builder().url(server.url("/")).build();
+    Response response = client.newCall(request).execute();
+    assertEquals("retry success", response.body().string());
+  }
+
   @Test public void noRecoverWhenRetryOnConnectionFailureIsFalse() throws Exception {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
     server.enqueue(new MockResponse().setBody("unreachable!"));
