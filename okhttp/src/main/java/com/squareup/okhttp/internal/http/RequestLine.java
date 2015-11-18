@@ -1,7 +1,6 @@
 package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
@@ -15,7 +14,7 @@ public final class RequestLine {
    * to the application by {@link HttpURLConnection#getHeaderFields}, so it
    * needs to be set even if the transport is SPDY.
    */
-  static String get(Request request, Proxy.Type proxyType, Protocol protocol) {
+  static String get(Request request, Proxy.Type proxyType) {
     StringBuilder result = new StringBuilder();
     result.append(request.method());
     result.append(' ');
@@ -26,8 +25,7 @@ public final class RequestLine {
       result.append(requestPath(request.httpUrl()));
     }
 
-    result.append(' ');
-    result.append(version(protocol));
+    result.append(" HTTP/1.1");
     return result.toString();
   }
 
@@ -48,9 +46,5 @@ public final class RequestLine {
     String path = url.encodedPath();
     String query = url.encodedQuery();
     return query != null ? (path + '?' + query) : path;
-  }
-
-  public static String version(Protocol protocol) {
-    return protocol == Protocol.HTTP_1_0 ? "HTTP/1.0" : "HTTP/1.1";
   }
 }

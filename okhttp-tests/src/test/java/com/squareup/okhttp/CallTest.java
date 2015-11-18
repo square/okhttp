@@ -1904,7 +1904,7 @@ public final class CallTest {
   /** Test which headers are sent unencrypted to the HTTP proxy. */
   @Test public void proxyConnectOmitsApplicationHeaders() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), true);
-    server.enqueue( new MockResponse()
+    server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
     server.enqueue(new MockResponse()
@@ -1942,7 +1942,7 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
-    server.enqueue( new MockResponse()
+    server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
     server.enqueue(new MockResponse()
@@ -1979,7 +1979,7 @@ public final class CallTest {
    */
   @Test public void noProactiveProxyAuthorization() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), true);
-    server.enqueue( new MockResponse()
+    server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
     server.enqueue(new MockResponse()

@@ -80,10 +80,6 @@ public class OkHttpClient implements Cloneable {
         return connection.recycleCount();
       }
 
-      @Override public void setProtocol(Connection connection, Protocol protocol) {
-        connection.setProtocol(protocol);
-      }
-
       @Override public void setOwner(Connection connection, HttpEngine httpEngine) {
         connection.setOwner(httpEngine);
       }
