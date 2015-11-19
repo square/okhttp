@@ -1338,7 +1338,7 @@ public final class HttpUrl {
       try {
         return InetAddress.getByAddress(address);
       } catch (UnknownHostException e) {
-        throw new AssertionError();
+        throw new AssertionError(e);
       }
     }
 

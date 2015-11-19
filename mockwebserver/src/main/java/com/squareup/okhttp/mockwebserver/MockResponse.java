@@ -56,7 +56,7 @@ public final class MockResponse implements Cloneable {
       result.promises = new ArrayList<>(promises);
       return result;
     } catch (CloneNotSupportedException e) {
-      throw new AssertionError();
+      throw new AssertionError(e);
     }
   }
 

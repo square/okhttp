@@ -630,7 +630,7 @@ public final class Cache {
         }
         return result;
       } catch (CertificateException e) {
-        throw new IOException(e.getMessage());
+        throw new IOException(e.getMessage(), e);
       }
     }
 
@@ -646,7 +646,7 @@ public final class Cache {
           sink.writeByte('\n');
         }
       } catch (CertificateEncodingException e) {
-        throw new IOException(e.getMessage());
+        throw new IOException(e.getMessage(), e);
       }
     }
 
@@ -685,7 +685,7 @@ public final class Cache {
       }
       return (int) result;
     } catch (NumberFormatException e) {
-      throw new IOException(e.getMessage());
+      throw new IOException(e.getMessage(), e);
     }
   }
 

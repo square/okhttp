@@ -76,7 +76,7 @@ public class Main extends HelpOption implements Runnable {
       in.close();
       return prop.getProperty("version");
     } catch (IOException e) {
-      throw new AssertionError("Could not load okcurl-version.properties.");
+      throw new AssertionError("Could not load okcurl-version.properties.", e);
     }
   }
 

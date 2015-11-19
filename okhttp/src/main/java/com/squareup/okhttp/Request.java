@@ -58,7 +58,7 @@ public final class Request {
       URI result = javaNetUri;
       return result != null ? result : (javaNetUri = url.uri());
     } catch (IllegalStateException e) {
-      throw new IOException(e.getMessage());
+      throw new IOException(e.getMessage(), e);
     }
   }
 

@@ -308,7 +308,7 @@ public class Platform {
       try {
         removeMethod.invoke(null, sslSocket);
       } catch (IllegalAccessException | InvocationTargetException ignored) {
-        throw new AssertionError();
+        throw new AssertionError(ignored);
       }
     }
 
@@ -323,7 +323,7 @@ public class Platform {
         }
         return provider.unsupported ? null : provider.selected;
       } catch (InvocationTargetException | IllegalAccessException e) {
-        throw new AssertionError();
+        throw new AssertionError(e);
       }
     }
   }

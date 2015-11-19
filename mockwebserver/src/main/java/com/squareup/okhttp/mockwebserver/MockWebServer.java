@@ -411,7 +411,7 @@ public final class MockWebServer implements TestRule {
         throw new IOException("Gave up waiting for executor to shut down");
       }
     } catch (InterruptedException e) {
-      throw new AssertionError();
+      throw new AssertionError(e);
     }
   }
 
@@ -791,7 +791,7 @@ public final class MockWebServer implements TestRule {
         try {
           Thread.sleep(periodDelayMs);
         } catch (InterruptedException e) {
-          throw new AssertionError();
+          throw new AssertionError(e);
         }
       }
     }
