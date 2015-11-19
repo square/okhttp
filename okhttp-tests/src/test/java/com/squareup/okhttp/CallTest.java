@@ -1525,13 +1525,13 @@ public final class CallTest {
   }
 
   @Test public void cancelTagImmediatelyAfterEnqueue() throws Exception {
+    server.enqueue(new MockResponse());
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/a"))
         .tag("request")
         .build());
     call.enqueue(callback);
     client.cancel("request");
-    assertEquals(0, server.getRequestCount());
     callback.await(server.url("/a")).assertFailure("Canceled");
   }
 
