@@ -17,7 +17,6 @@ package com.squareup.okhttp.logging;
 
 import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.Headers;
-import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Interceptor;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -52,7 +51,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      * <p>
      * Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1 (3-byte body)
+     * --> POST http://example.com:8080/greeting HTTP/1.1 (3-byte body)
      *
      * <-- HTTP/1.1 200 OK (22ms, 6-byte body)
      * }</pre>
@@ -63,7 +62,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      * <p>
      * Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1
+     * --> POST http://example.com:8080/greeting HTTP/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
@@ -81,7 +80,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      * <p>
      * Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1
+     * --> POST http://example.com:8080/greeting HTTP/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
@@ -128,6 +127,10 @@ public final class HttpLoggingInterceptor implements Interceptor {
     this.level = level;
   }
 
+  public Level getLevel() {
+    return level;
+  }
+
   @Override public Response intercept(Chain chain) throws IOException {
     Level level = this.level;
 
@@ -145,7 +148,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     Connection connection = chain.connection();
     Protocol protocol = connection != null ? connection.getProtocol() : Protocol.HTTP_1_1;
     String requestStartMessage =
-        "--> " + request.method() + ' ' + requestPath(request.httpUrl()) + ' ' + protocol(protocol);
+        "--> " + request.method() + ' ' + request.httpUrl() + ' ' + protocol(protocol);
     if (!logHeaders && hasRequestBody) {
       requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
     }
@@ -218,11 +221,5 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
   private static String protocol(Protocol protocol) {
     return protocol == Protocol.HTTP_1_0 ? "HTTP/1.0" : "HTTP/1.1";
-  }
-
-  private static String requestPath(HttpUrl url) {
-    String path = url.encodedPath();
-    String query = url.encodedQuery();
-    return query != null ? (path + '?' + query) : path;
   }
 }
