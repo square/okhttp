@@ -22,6 +22,7 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import org.junit.After;
@@ -47,6 +48,7 @@ public final class SocksProxyTest {
   @Test public void proxy() throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
+
 
     OkHttpClient client = new OkHttpClient()
         .setProxy(socksProxy.proxy());
@@ -82,6 +84,29 @@ public final class SocksProxyTest {
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
     assertEquals("abc", response.body().string());
+
+    assertEquals(1, socksProxy.connectionCount());
+  }
+
+
+  @Test
+  public void checkRemoteDNSResolve() throws Exception {
+    // this testcase will fail, if the target is resolved locally instead of through the proxy
+
+    server.enqueue(new MockResponse().setBody("abc"));
+
+    OkHttpClient client = new OkHttpClient()
+            .setProxy(socksProxy.proxy());
+
+    URL url = (new HttpUrl.Builder().scheme("http")
+            .host(socksProxy.HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
+            .port(server.getPort())
+            .build()
+            .resolve("/")).url();
+
+    Request request1 = new Request.Builder().url(url).build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("abc", response1.body().string());
 
     assertEquals(1, socksProxy.connectionCount());
   }
