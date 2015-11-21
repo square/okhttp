@@ -18,6 +18,7 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.ConnectionSpecSelector;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.SocksSocket;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.Version;
 import com.squareup.okhttp.internal.framed.FramedConnection;
@@ -29,6 +30,7 @@ import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
@@ -36,9 +38,11 @@ import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Source;
@@ -168,7 +172,7 @@ public final class Connection {
       try {
         socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
             ? address.getSocketFactory().createSocket()
-            : new Socket(proxy);
+            : new SocksSocket(proxy);
         connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
         Util.closeQuietly(socket);
@@ -191,9 +195,11 @@ public final class Connection {
     }
   }
 
-  /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
+  /**
+   * Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket.
+   */
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
-      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+                             ConnectionSpecSelector connectionSpecSelector) throws IOException {
     socket.setSoTimeout(readTimeout);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
 

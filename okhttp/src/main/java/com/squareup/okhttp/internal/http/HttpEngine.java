@@ -644,12 +644,12 @@ public final class HttpEngine {
 
     GzipSource responseBody = new GzipSource(response.body().source());
     Headers strippedHeaders = response.headers().newBuilder()
-        .removeAll("Content-Encoding")
+            .removeAll("Content-Encoding")
         .removeAll("Content-Length")
-        .build();
+            .build();
     return response.newBuilder()
-        .headers(strippedHeaders)
-        .body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)))
+            .headers(strippedHeaders)
+            .body(new RealResponseBody(strippedHeaders, Okio.buffer(responseBody)))
         .build();
   }
 
@@ -759,7 +759,7 @@ public final class HttpEngine {
             && requestBodyOut instanceof RetryableSink) {
           long contentLength = ((RetryableSink) requestBodyOut).contentLength();
           networkRequest = networkRequest.newBuilder()
-              .header("Content-Length", Long.toString(contentLength))
+                  .header("Content-Length", Long.toString(contentLength))
               .build();
         }
         transport.writeRequestHeaders(networkRequest);
@@ -787,11 +787,11 @@ public final class HttpEngine {
     if (cacheResponse != null) {
       if (validate(cacheResponse, networkResponse)) {
         userResponse = cacheResponse.newBuilder()
-            .request(userRequest)
-            .priorResponse(stripBody(priorResponse))
-            .headers(combine(cacheResponse.headers(), networkResponse.headers()))
+                .request(userRequest)
+                .priorResponse(stripBody(priorResponse))
+                .headers(combine(cacheResponse.headers(), networkResponse.headers()))
             .cacheResponse(stripBody(cacheResponse))
-            .networkResponse(stripBody(networkResponse))
+                .networkResponse(stripBody(networkResponse))
             .build();
         networkResponse.body().close();
         releaseConnection();
@@ -809,10 +809,10 @@ public final class HttpEngine {
     }
 
     userResponse = networkResponse.newBuilder()
-        .request(userRequest)
-        .priorResponse(stripBody(priorResponse))
-        .cacheResponse(stripBody(cacheResponse))
-        .networkResponse(stripBody(networkResponse))
+            .request(userRequest)
+            .priorResponse(stripBody(priorResponse))
+            .cacheResponse(stripBody(cacheResponse))
+            .networkResponse(stripBody(networkResponse))
         .build();
 
     if (hasBody(userResponse)) {
@@ -907,10 +907,10 @@ public final class HttpEngine {
     transport.finishRequest();
 
     Response networkResponse = transport.readResponseHeaders()
-        .request(networkRequest)
-        .handshake(connection.getHandshake())
-        .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
-        .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
+            .request(networkRequest)
+            .handshake(connection.getHandshake())
+            .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
+            .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .build();
 
     if (!forWebSocket) {
@@ -980,7 +980,7 @@ public final class HttpEngine {
     };
 
     return response.newBuilder()
-        .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
+            .body(new RealResponseBody(response.headers(), Okio.buffer(cacheWritingSource)))
         .build();
   }
 

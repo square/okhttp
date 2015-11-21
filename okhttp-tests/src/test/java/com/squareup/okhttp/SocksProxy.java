@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.NamedRunnable;
+import com.squareup.okhttp.internal.SocksProtocol;
 import com.squareup.okhttp.internal.Util;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -41,15 +42,9 @@ import okio.Okio;
  * See <a href="https://www.ietf.org/rfc/rfc1928.txt">RFC 1928</a>.
  */
 public final class SocksProxy {
-  private static final int VERSION_5 = 5;
-  private static final int METHOD_NONE = 0xff;
-  private static final int METHOD_NO_AUTHENTICATION_REQUIRED = 0;
-  private static final int ADDRESS_TYPE_IPV4 = 1;
-  private static final int ADDRESS_TYPE_DOMAIN_NAME = 3;
-  private static final int COMMAND_CONNECT = 1;
-  private static final int REPLY_SUCCEEDED = 0;
-
   private static final Logger logger = Logger.getLogger(SocksProxy.class.getName());
+
+  public final String HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS = "onlyProxyCanResolveMe.org";
 
   private final ExecutorService executor = Executors.newCachedThreadPool(
       Util.threadFactory("SocksProxy", false));
@@ -112,22 +107,22 @@ public final class SocksProxy {
   private void hello(BufferedSource fromSource, BufferedSink fromSink) throws IOException {
     int version = fromSource.readByte() & 0xff;
     int methodCount = fromSource.readByte() & 0xff;
-    int selectedMethod = METHOD_NONE;
+    int selectedMethod = SocksProtocol.METHOD_NONE;
 
-    if (version != VERSION_5) {
+    if (version != SocksProtocol.VERSION_5) {
       throw new ProtocolException("unsupported version: " + version);
     }
 
     for (int i = 0; i < methodCount; i++) {
       int candidateMethod = fromSource.readByte() & 0xff;
-      if (candidateMethod == METHOD_NO_AUTHENTICATION_REQUIRED) {
+      if (candidateMethod == SocksProtocol.METHOD_NO_AUTHENTICATION_REQUIRED) {
         selectedMethod = candidateMethod;
       }
     }
 
     switch (selectedMethod) {
-      case METHOD_NO_AUTHENTICATION_REQUIRED:
-        fromSink.writeByte(VERSION_5);
+      case SocksProtocol.METHOD_NO_AUTHENTICATION_REQUIRED:
+        fromSink.writeByte(SocksProtocol.VERSION_5);
         fromSink.writeByte(selectedMethod);
         fromSink.emit();
         break;
@@ -141,7 +136,7 @@ public final class SocksProxy {
       BufferedSink fromSink) throws IOException {
     // Read the command.
     int version = fromSource.readByte() & 0xff;
-    if (version != VERSION_5) throw new ProtocolException("unexpected version: " + version);
+    if (version != SocksProtocol.VERSION_5) throw new ProtocolException("unexpected version: " + version);
     int command = fromSource.readByte() & 0xff;
     int reserved = fromSource.readByte() & 0xff;
     if (reserved != 0) throw new ProtocolException("unexpected reserved: " + reserved);
@@ -149,14 +144,23 @@ public final class SocksProxy {
     int addressType = fromSource.readByte() & 0xff;
     InetAddress toAddress;
     switch (addressType) {
-      case ADDRESS_TYPE_IPV4:
+      case SocksProtocol.ADDRESS_TYPE_IPV4:
         toAddress = InetAddress.getByAddress(fromSource.readByteArray(4L));
         break;
 
-      case ADDRESS_TYPE_DOMAIN_NAME:
+      case SocksProtocol.ADDRESS_TYPE_DOMAIN_NAME:
         int domainNameLength = fromSource.readByte() & 0xff;
         String domainName = fromSource.readUtf8(domainNameLength);
-        toAddress = InetAddress.getByName(domainName);
+
+        // mockup for DNS resolving at the proxy
+        if (domainName.equalsIgnoreCase(HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS))
+          toAddress = InetAddress.getLoopbackAddress(); // resolve
+          // HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS to localhost
+        else
+          toAddress = InetAddress.getByName(domainName);  // really resolve the address
+
+        logger.log(Level.INFO, "SocksProxy resolved " + domainName + " to " + toAddress);
+
         break;
 
       default:
@@ -166,7 +170,7 @@ public final class SocksProxy {
     int port = fromSource.readShort() & 0xffff;
 
     switch (command) {
-      case COMMAND_CONNECT:
+      case SocksProtocol.COMMAND_CONNECT:
         Socket toSocket = new Socket(toAddress, port);
         byte[] localAddress = toSocket.getLocalAddress().getAddress();
         if (localAddress.length != 4) {
@@ -174,10 +178,10 @@ public final class SocksProxy {
         }
 
         // Write the reply.
-        fromSink.writeByte(VERSION_5);
-        fromSink.writeByte(REPLY_SUCCEEDED);
+        fromSink.writeByte(SocksProtocol.VERSION_5);
+        fromSink.writeByte(SocksProtocol.REPLY_SUCCEEDED);
         fromSink.writeByte(0);
-        fromSink.writeByte(ADDRESS_TYPE_IPV4);
+        fromSink.writeByte(SocksProtocol.ADDRESS_TYPE_IPV4);
         fromSink.write(localAddress);
         fromSink.writeShort(toSocket.getLocalPort());
         fromSink.emit();

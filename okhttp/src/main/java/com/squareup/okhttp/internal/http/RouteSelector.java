@@ -114,7 +114,7 @@ public final class RouteSelector {
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
       address.getProxySelector().connectFailed(
-          url.uri(), failedRoute.getProxy().address(), failure);
+              url.uri(), failedRoute.getProxy().address(), failure);
     }
 
     routeDatabase.failed(failedRoute);
@@ -180,11 +180,15 @@ public final class RouteSelector {
           + "; port is out of range");
     }
 
-    // Try each address for best behavior in mixed IPv4/IPv6 environments.
-    List<InetAddress> addresses = address.getDns().lookup(socketHost);
-    for (int i = 0, size = addresses.size(); i < size; i++) {
-      InetAddress inetAddress = addresses.get(i);
-      inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
+    if (proxy.type() == Proxy.Type.SOCKS) {
+      inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
+    } else {
+      // Try each address for best behavior in mixed IPv4/IPv6 environments.
+      List<InetAddress> addresses = address.getDns().lookup(socketHost);
+      for (int i = 0, size = addresses.size(); i < size; i++) {
+        InetAddress inetAddress = addresses.get(i);
+        inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));
+      }
     }
 
     nextInetSocketAddressIndex = 0;
