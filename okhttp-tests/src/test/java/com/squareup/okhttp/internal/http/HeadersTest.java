@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.junit.Test;
 
 import static com.squareup.okhttp.TestUtil.headerEntries;
@@ -42,8 +41,7 @@ public final class HeadersTest {
         ":status", "200 OK",
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response =
-        FramedTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
+    Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(4, headers.size());
     assertEquals(Protocol.SPDY_3, response.protocol());
@@ -70,8 +68,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response =
-        FramedTransport.readNameValueBlock(headerBlock, Protocol.SPDY_3).request(request).build();
+    Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
@@ -84,15 +81,16 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = FramedTransport.readNameValueBlock(headerBlock, Protocol.HTTP_2)
-        .request(request).build();
+    Response response = FramedTransport.readHttp2HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
-    assertEquals(1, headers.size());
+    assertEquals(2, headers.size());
     assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
     assertEquals(Protocol.HTTP_2.toString(), headers.value(0));
+    assertEquals(":version", headers.name(1));
+    assertEquals("HTTP/1.1", headers.value(1));
   }
 
-  @Test public void toNameValueBlock() {
+  @Test public void spdy3HeadersList() {
     Request request = new Request.Builder()
         .url("http://square.com/")
         .header("cache-control", "no-cache, no-store")
@@ -100,7 +98,7 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<Header> headerBlock = FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3);
+    List<Header> headerBlock = FramedTransport.spdy3HeadersList(request);
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
@@ -113,7 +111,7 @@ public final class HeadersTest {
     assertEquals(expected, headerBlock);
   }
 
-  @Test public void toNameValueBlockDropsForbiddenHeadersSpdy3() {
+  @Test public void spdy3HeadersListDropsForbiddenHeadersSpdy3() {
     Request request = new Request.Builder()
         .url("http://square.com/")
         .header("Connection", "close")
@@ -125,10 +123,10 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         ":host", "square.com",
         ":scheme", "http");
-    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.SPDY_3));
+    assertEquals(expected, FramedTransport.spdy3HeadersList(request));
   }
 
-  @Test public void toNameValueBlockDropsForbiddenHeadersHttp2() {
+  @Test public void http2HeadersListDropsForbiddenHeadersHttp2() {
     Request request = new Request.Builder()
         .url("http://square.com/")
         .header("Connection", "upgrade")
@@ -139,7 +137,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected, FramedTransport.writeNameValueBlock(request, Protocol.HTTP_2));
+    assertEquals(expected, FramedTransport.http2HeadersList(request));
   }
 
   @Test public void ofTrims() {
