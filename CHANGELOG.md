@@ -1,6 +1,75 @@
 Change Log
 ==========
 
+## Version 2.6.0
+
+_2015-11-22_
+
+ *  **New Logging Interceptor.** The `logging-interceptor` subproject offers
+    simple request and response logging. It may be configured to log headers and
+    bodies for debugging. It requires this Maven dependency:
+
+     ```
+     <dependency>
+       <groupId>com.squareup.okhttp</groupId>
+       <artifactId>logging-interceptor</artifactId>
+       <version>2.6.0</version>
+     </dependency>
+     ```
+
+    Configure basic logging like this:
+
+    ```
+    HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+    loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+    client.networkInterceptors().add(loggingInterceptor);
+    ```
+
+    **Warning:** Avoid `Level.HEADERS` and `Level.BODY` in production because
+    they could leak passwords and other authentication credentials to insecure
+    logs.
+
+ *  **WebSocket API now uses `RequestBody` and `ResponseBody` for messages.**
+    This is a backwards-incompatible API change.
+
+ *  **The DNS service is now pluggable.** In some situations this may be useful
+    to manually prioritize specific IP addresses.
+
+ *  Fix: Don't throw when converting an `HttpUrl` to a `java.net.URI`.
+    Previously URLs with special characters like `|` and `[` would break when
+    subjected to URI’s overly-strict validation.
+ *  Fix: Don't re-encode `+` as `%20` in encoded URL query strings. OkHttp
+    prefers `%20` when doing its own encoding, but will retain `+` when that is
+    provided.
+ *  Fix: Enforce that callers call `WebSocket.close()` on IO errors. Error
+    handling in WebSockets is significantly improved.
+ *  Fix: Don't use SPDY/3 style header concatenation for HTTP/2 request headers.
+    This could have corrupted requests where multiple headers had the same name,
+    as in cookies.
+ *  Fix: Reject bad characters in the URL hostname. Previously characters like
+    `\0` would cause a late crash when building the request.
+ *  Fix: Allow interceptors to change the request method.
+ *  Fix: Don’t use the request's `User-Agent` or `Proxy-Authorization` when
+    connecting to an HTTPS server via an HTTP tunnel. The `Proxy-Authorization`
+    header was being leaked to the origin server.
+ *  Fix: Digits may be used in a URL scheme.
+ *  Fix: Improve connection timeout recovery.
+ *  Fix: Recover from `getsockname` crashes impacting Android releases prior to
+    4.2.2.
+ *  Fix: Drop partial support for HTTP/1.0. Previously OkHttp would send
+    `HTTP/1.0` on connections after seeing a response with `HTTP/1.0`. The fixed
+    behavior is consistent with Firefox and Chrome.
+ *  Fix: Allow a body in `OPTIONS` requests.
+ *  Fix: Don't percent-encode non-ASCII characters in URL fragments.
+ *  Fix: Handle null fragments.
+ *  Fix: Don’t crash on interceptors that throw `IOException` before a
+    connection is attempted.
+ *  New: Support [WebDAV][webdav] HTTP methods.
+ *  New: Buffer WebSocket frames for better performance.
+ *  New: Drop support for `TLS_DHE_DSS_WITH_AES_128_CBC_SHA`, our only remaining
+    DSS cipher suite. This is consistent with Firefox and Chrome which have also
+    dropped these cipher suite.
+
 ## Version 2.5.0
 
 _2015-08-25_
@@ -683,4 +752,5 @@ _2013-05-06_
 
 Initial release.
 
- [brick]: (https://noncombatant.org/2015/05/01/about-http-public-key-pinning/)
+ [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
+ [webdav]: https://tools.ietf.org/html/rfc4918
