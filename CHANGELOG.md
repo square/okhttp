@@ -19,7 +19,7 @@ _2015-11-22_
 
     Configure basic logging like this:
 
-    ```xml
+    ```java
     HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
     loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
     client.networkInterceptors().add(loggingInterceptor);
