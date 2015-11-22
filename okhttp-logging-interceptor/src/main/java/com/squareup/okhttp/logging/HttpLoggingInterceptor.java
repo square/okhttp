@@ -124,8 +124,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
   private volatile Level level = Level.NONE;
 
   /** Change the level at which this interceptor logs. */
-  public void setLevel(Level level) {
+  public HttpLoggingInterceptor setLevel(Level level) {
     this.level = level;
+    return this;
   }
 
   @Override public Response intercept(Chain chain) throws IOException {

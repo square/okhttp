@@ -31,6 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public final class HttpLoggingInterceptorTest {
@@ -51,6 +52,12 @@ public final class HttpLoggingInterceptorTest {
     interceptor = new HttpLoggingInterceptor(logger);
     client.networkInterceptors().add(interceptor);
     client.setConnectionPool(null);
+  }
+
+  @Test public void setLevelShouldReturnSameInstanceOfInterceptor() {
+    for (Level level : Level.values()) {
+      assertSame(interceptor, interceptor.setLevel(level));
+    }
   }
 
   @Test public void none() throws IOException {
