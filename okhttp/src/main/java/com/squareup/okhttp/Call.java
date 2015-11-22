@@ -122,6 +122,14 @@ public class Call {
     if (engine != null) engine.disconnect();
   }
 
+  /**
+   * Returns true if this call has been either {@linkplain #execute() executed} or {@linkplain
+   * #enqueue(Callback) enqueued}. It is an error to execute a call more than once.
+   */
+  public synchronized boolean isExecuted() {
+    return executed;
+  }
+
   public boolean isCanceled() {
     return canceled;
   }
