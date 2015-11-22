@@ -9,7 +9,7 @@ _2015-11-22_
     simple request and response logging. It may be configured to log headers and
     bodies for debugging. It requires this Maven dependency:
 
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okhttp</groupId>
        <artifactId>logging-interceptor</artifactId>
@@ -19,7 +19,7 @@ _2015-11-22_
 
     Configure basic logging like this:
 
-    ```
+    ```xml
     HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
     loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
     client.networkInterceptors().add(loggingInterceptor);
@@ -91,7 +91,7 @@ _2015-08-25_
     where changing a URL from `http` to `https` would leave it on port 80.
 
  *  **Okio has been updated to 1.6.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -150,7 +150,7 @@ _2015-05-16_
     Both are permitted-by-spec, but `%20` requires fewer special cases.
 
  *  **Okio has been updated to 1.4.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -162,7 +162,7 @@ _2015-05-16_
     Passing null will now fail for request methods that require a body. Instead
     use an empty body such as this one:
 
-    ```
+    ```java
         RequestBody.create(null, new byte[0]);
     ```
 
@@ -171,7 +171,7 @@ _2015-05-16_
    your app. You'll need to pin both the top-level domain and the `*.` domain
    for full coverage.
 
-    ```
+    ```java
      client.setCertificatePinner(new CertificatePinner.Builder()
          .add("publicobject.com",   "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
          .add("*.publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
@@ -228,7 +228,7 @@ _2015-03-16_
 
  *  **Okio updated to 1.3.0.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -333,14 +333,14 @@ _2014-11-04_
 
     To disable TLS fallback:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
     ```
 
     To disable cleartext connections, permitting `https` URLs only:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
     ```
@@ -374,7 +374,7 @@ _2014-11-04_
 
  *  **Okio updated to 1.0.1.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -454,7 +454,7 @@ advice on upgrading from 1.x to 2.x.
     agent.
  *  New: Guava-like API to create headers:
 
-    ```
+    ```java
     Headers headers = Headers.of(name1, value1, name2, value2, ...).
     ```
 
@@ -497,7 +497,7 @@ in addition to synchronous blocking calls.
     add the `okhttp-urlconnection` module to your project and use the
     `OkUrlFactory` to create new instances of `HttpURLConnection`:
 
-    ```
+    ```java
     // OkHttp 1.x:
     HttpURLConnection connection = client.open(url);
 
