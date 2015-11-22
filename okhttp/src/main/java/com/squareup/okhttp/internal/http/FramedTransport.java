@@ -47,24 +47,60 @@ import static com.squareup.okhttp.internal.framed.Header.TARGET_SCHEME;
 import static com.squareup.okhttp.internal.framed.Header.VERSION;
 
 public final class FramedTransport implements Transport {
+  private static final ByteString CONNECTION = ByteString.encodeUtf8("connection");
+  private static final ByteString HOST = ByteString.encodeUtf8("host");
+  private static final ByteString KEEP_ALIVE = ByteString.encodeUtf8("keep-alive");
+  private static final ByteString PROXY_CONNECTION = ByteString.encodeUtf8("proxy-connection");
+  private static final ByteString TRANSFER_ENCODING = ByteString.encodeUtf8("transfer-encoding");
+  private static final ByteString TE = ByteString.encodeUtf8("te");
+  private static final ByteString ENCODING = ByteString.encodeUtf8("encoding");
+  private static final ByteString UPGRADE = ByteString.encodeUtf8("upgrade");
+
   /** See http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1#TOC-3.2.1-Request. */
-  private static final List<ByteString> SPDY_3_PROHIBITED_HEADERS = Util.immutableList(
-      ByteString.encodeUtf8("connection"),
-      ByteString.encodeUtf8("host"),
-      ByteString.encodeUtf8("keep-alive"),
-      ByteString.encodeUtf8("proxy-connection"),
-      ByteString.encodeUtf8("transfer-encoding"));
+  private static final List<ByteString> SPDY_3_SKIPPED_REQUEST_HEADERS = Util.immutableList(
+      CONNECTION,
+      HOST,
+      KEEP_ALIVE,
+      PROXY_CONNECTION,
+      TRANSFER_ENCODING,
+      TARGET_METHOD,
+      TARGET_PATH,
+      TARGET_SCHEME,
+      TARGET_AUTHORITY,
+      TARGET_HOST,
+      VERSION);
+  private static final List<ByteString> SPDY_3_SKIPPED_RESPONSE_HEADERS = Util.immutableList(
+      CONNECTION,
+      HOST,
+      KEEP_ALIVE,
+      PROXY_CONNECTION,
+      TRANSFER_ENCODING);
 
   /** See http://tools.ietf.org/html/draft-ietf-httpbis-http2-09#section-8.1.3. */
-  private static final List<ByteString> HTTP_2_PROHIBITED_HEADERS = Util.immutableList(
-      ByteString.encodeUtf8("connection"),
-      ByteString.encodeUtf8("host"),
-      ByteString.encodeUtf8("keep-alive"),
-      ByteString.encodeUtf8("proxy-connection"),
-      ByteString.encodeUtf8("te"),
-      ByteString.encodeUtf8("transfer-encoding"),
-      ByteString.encodeUtf8("encoding"),
-      ByteString.encodeUtf8("upgrade"));
+  private static final List<ByteString> HTTP_2_SKIPPED_REQUEST_HEADERS = Util.immutableList(
+      CONNECTION,
+      HOST,
+      KEEP_ALIVE,
+      PROXY_CONNECTION,
+      TE,
+      TRANSFER_ENCODING,
+      ENCODING,
+      UPGRADE,
+      TARGET_METHOD,
+      TARGET_PATH,
+      TARGET_SCHEME,
+      TARGET_AUTHORITY,
+      TARGET_HOST,
+      VERSION);
+  private static final List<ByteString> HTTP_2_SKIPPED_RESPONSE_HEADERS = Util.immutableList(
+      CONNECTION,
+      HOST,
+      KEEP_ALIVE,
+      PROXY_CONNECTION,
+      TE,
+      TRANSFER_ENCODING,
+      ENCODING,
+      UPGRADE);
 
   private final HttpEngine httpEngine;
   private final FramedConnection framedConnection;
@@ -84,10 +120,11 @@ public final class FramedTransport implements Transport {
 
     httpEngine.writingRequestHeaders();
     boolean permitsRequestBody = httpEngine.permitsRequestBody(request);
+    List<Header> requestHeaders = framedConnection.getProtocol() == Protocol.HTTP_2
+        ? http2HeadersList(request)
+        : spdy3HeadersList(request);
     boolean hasResponseBody = true;
-    stream = framedConnection.newStream(
-        writeNameValueBlock(request, framedConnection.getProtocol()), permitsRequestBody,
-        hasResponseBody);
+    stream = framedConnection.newStream(requestHeaders, permitsRequestBody, hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
   }
 
@@ -100,7 +137,9 @@ public final class FramedTransport implements Transport {
   }
 
   @Override public Response.Builder readResponseHeaders() throws IOException {
-    return readNameValueBlock(stream.getResponseHeaders(), framedConnection.getProtocol());
+    return framedConnection.getProtocol() == Protocol.HTTP_2
+        ? readHttp2HeadersList(stream.getResponseHeaders())
+        : readSpdy3HeadersList(stream.getResponseHeaders());
   }
 
   /**
@@ -108,42 +147,25 @@ public final class FramedTransport implements Transport {
    * Names are all lowercase. No names are repeated. If any name has multiple
    * values, they are concatenated using "\0" as a delimiter.
    */
-  public static List<Header> writeNameValueBlock(Request request, Protocol protocol) {
+  public static List<Header> spdy3HeadersList(Request request) {
     Headers headers = request.headers();
-    List<Header> result = new ArrayList<>(headers.size() + 10);
+    List<Header> result = new ArrayList<>(headers.size() + 5);
     result.add(new Header(TARGET_METHOD, request.method()));
     result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.httpUrl())));
-    String host = Util.hostHeader(request.httpUrl());
-    if (Protocol.SPDY_3 == protocol) {
-      result.add(new Header(VERSION, "HTTP/1.1"));
-      result.add(new Header(TARGET_HOST, host));
-    } else if (Protocol.HTTP_2 == protocol) {
-      result.add(new Header(TARGET_AUTHORITY, host)); // Optional in HTTP/2
-    } else {
-      throw new AssertionError();
-    }
+    result.add(new Header(VERSION, "HTTP/1.1"));
+    result.add(new Header(TARGET_HOST, Util.hostHeader(request.httpUrl())));
     result.add(new Header(TARGET_SCHEME, request.httpUrl().scheme()));
 
     Set<ByteString> names = new LinkedHashSet<ByteString>();
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
       ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
-      String value = headers.value(i);
 
       // Drop headers that are forbidden when layering HTTP over SPDY.
-      if (isProhibitedHeader(protocol, name)) continue;
-
-      // They shouldn't be set, but if they are, drop them. We've already written them!
-      if (name.equals(TARGET_METHOD)
-          || name.equals(TARGET_PATH)
-          || name.equals(TARGET_SCHEME)
-          || name.equals(TARGET_AUTHORITY)
-          || name.equals(TARGET_HOST)
-          || name.equals(VERSION)) {
-        continue;
-      }
+      if (SPDY_3_SKIPPED_REQUEST_HEADERS.contains(name)) continue;
 
       // If we haven't seen this name before, add the pair to the end of the list...
+      String value = headers.value(i);
       if (names.add(name)) {
         result.add(new Header(name, value));
         continue;
@@ -165,16 +187,33 @@ public final class FramedTransport implements Transport {
     return new StringBuilder(first).append('\0').append(second).toString();
   }
 
-  /** Returns headers for a name value block containing a SPDY response. */
-  public static Response.Builder readNameValueBlock(List<Header> headerBlock,
-      Protocol protocol) throws IOException {
-    String status = null;
-    String version = "HTTP/1.1"; // :version present only in spdy/3.
+  public static List<Header> http2HeadersList(Request request) {
+    Headers headers = request.headers();
+    List<Header> result = new ArrayList<>(headers.size() + 4);
+    result.add(new Header(TARGET_METHOD, request.method()));
+    result.add(new Header(TARGET_PATH, RequestLine.requestPath(request.httpUrl())));
+    result.add(new Header(TARGET_AUTHORITY, Util.hostHeader(request.httpUrl()))); // Optional.
+    result.add(new Header(TARGET_SCHEME, request.httpUrl().scheme()));
 
+    for (int i = 0, size = headers.size(); i < size; i++) {
+      // header names must be lowercase.
+      ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));
+      if (!HTTP_2_SKIPPED_REQUEST_HEADERS.contains(name)) {
+        result.add(new Header(name, headers.value(i)));
+      }
+    }
+    return result;
+  }
+
+  /** Returns headers for a name value block containing a SPDY response. */
+  public static Response.Builder readSpdy3HeadersList(List<Header> headerBlock) throws IOException {
+    String status = null;
+    String version = "HTTP/1.1";
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, protocol.toString());
+    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, Protocol.SPDY_3.toString());
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
       ByteString name = headerBlock.get(i).name;
+
       String values = headerBlock.get(i).value.utf8();
       for (int start = 0; start < values.length(); ) {
         int end = values.indexOf('\0', start);
@@ -186,7 +225,7 @@ public final class FramedTransport implements Transport {
           status = value;
         } else if (name.equals(VERSION)) {
           version = value;
-        } else if (!isProhibitedHeader(protocol, name)) { // Don't write forbidden headers!
+        } else if (!SPDY_3_SKIPPED_RESPONSE_HEADERS.contains(name)) {
           headersBuilder.add(name.utf8(), value);
         }
         start = end + 1;
@@ -196,7 +235,33 @@ public final class FramedTransport implements Transport {
 
     StatusLine statusLine = StatusLine.parse(version + " " + status);
     return new Response.Builder()
-        .protocol(protocol)
+        .protocol(Protocol.SPDY_3)
+        .code(statusLine.code)
+        .message(statusLine.message)
+        .headers(headersBuilder.build());
+  }
+
+  /** Returns headers for a name value block containing an HTTP/2 response. */
+  public static Response.Builder readHttp2HeadersList(List<Header> headerBlock) throws IOException {
+    String status = null;
+
+    Headers.Builder headersBuilder = new Headers.Builder();
+    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_2.toString());
+    for (int i = 0, size = headerBlock.size(); i < size; i++) {
+      ByteString name = headerBlock.get(i).name;
+
+      String value = headerBlock.get(i).value.utf8();
+      if (name.equals(RESPONSE_STATUS)) {
+        status = value;
+      } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
+        headersBuilder.add(name.utf8(), value);
+      }
+    }
+    if (status == null) throw new ProtocolException("Expected ':status' header not present");
+
+    StatusLine statusLine = StatusLine.parse("HTTP/1.1 " + status);
+    return new Response.Builder()
+        .protocol(Protocol.HTTP_2)
         .code(statusLine.code)
         .message(statusLine.message)
         .headers(headersBuilder.build());
@@ -215,16 +280,5 @@ public final class FramedTransport implements Transport {
 
   @Override public boolean canReuseConnection() {
     return true; // TODO: framedConnection.isClosed() ?
-  }
-
-  /** When true, this header should not be emitted or consumed. */
-  private static boolean isProhibitedHeader(Protocol protocol, ByteString name) {
-    if (protocol == Protocol.SPDY_3) {
-      return SPDY_3_PROHIBITED_HEADERS.contains(name);
-    } else if (protocol == Protocol.HTTP_2) {
-      return HTTP_2_PROHIBITED_HEADERS.contains(name);
-    } else {
-      throw new AssertionError(protocol);
-    }
   }
 }

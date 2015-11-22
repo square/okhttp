@@ -893,8 +893,14 @@ public final class MockWebServer implements TestRule {
           path = value;
         } else if (name.equals(Header.VERSION)) {
           version = value;
-        } else {
+        } else if (protocol == Protocol.SPDY_3) {
+          for (String s : value.split("\u0000", -1)) {
+            httpHeaders.add(name.utf8(), s);
+          }
+        } else if (protocol == Protocol.HTTP_2) {
           httpHeaders.add(name.utf8(), value);
+        } else {
+          throw new IllegalStateException();
         }
       }
 

@@ -182,6 +182,35 @@ public final class CallTest {
     get();
   }
 
+  @Test public void repeatedHeaderNames() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("B", "123")
+        .addHeader("B", "234"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .addHeader("A", "345")
+        .addHeader("A", "456")
+        .build();
+
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertHeader("B", "123", "234");
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals(Arrays.asList("345", "456"), recordedRequest.getHeaders().values("A"));
+  }
+
+  @Test public void repeatedHeaderNames_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    repeatedHeaderNames();
+  }
+
+  @Test public void repeatedHeaderNames_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+    repeatedHeaderNames();
+  }
+
   @Test public void getWithRequestBody() throws Exception {
     server.enqueue(new MockResponse());
 
