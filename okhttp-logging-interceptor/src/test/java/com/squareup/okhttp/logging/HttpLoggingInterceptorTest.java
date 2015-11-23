@@ -33,6 +33,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public final class HttpLoggingInterceptorTest {
   private static final MediaType PLAIN = MediaType.parse("text/plain; charset=utf-8");
@@ -52,6 +53,15 @@ public final class HttpLoggingInterceptorTest {
     interceptor = new HttpLoggingInterceptor(logger);
     client.networkInterceptors().add(interceptor);
     client.setConnectionPool(null);
+  }
+
+  @Test public void setLevelShouldPreventNullValue() {
+    try {
+      interceptor.setLevel(null);
+      fail();
+    } catch (NullPointerException expected) {
+      assertEquals("level == null. Use Level.NONE instead.", expected.getMessage());
+    }
   }
 
   @Test public void setLevelShouldReturnSameInstanceOfInterceptor() {
