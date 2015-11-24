@@ -83,7 +83,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(2, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertTrue(Pattern.matches("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)", logs.get(1)));
   }
 
@@ -94,7 +94,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     assertEquals(2, logs.size());
-    assertEquals("--> POST / HTTP/1.1 (3-byte body)", logs.get(0));
+    assertEquals("--> POST " + server.url("/") + " HTTP/1.1 (3-byte body)", logs.get(0));
     assertTrue(Pattern.matches("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)", logs.get(1)));
   }
 
@@ -107,7 +107,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(2, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertTrue(Pattern.matches("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 6-byte body\\)", logs.get(1)));
   }
 
@@ -118,7 +118,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(12, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
     assertEquals("Connection: Keep-Alive", logs.get(2));
     assertEquals("Accept-Encoding: gzip", logs.get(3));
@@ -139,7 +139,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     assertEquals(14, logs.size());
-    assertEquals("--> POST / HTTP/1.1", logs.get(0));
+    assertEquals("--> POST " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Content-Type: text/plain; charset=utf-8", logs.get(1));
     assertEquals("Content-Length: 3", logs.get(2));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(3));
@@ -164,7 +164,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(13, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
     assertEquals("Connection: Keep-Alive", logs.get(2));
     assertEquals("Accept-Encoding: gzip", logs.get(3));
@@ -186,7 +186,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(12, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
     assertEquals("Connection: Keep-Alive", logs.get(2));
     assertEquals("Accept-Encoding: gzip", logs.get(3));
@@ -207,7 +207,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     assertEquals(16, logs.size());
-    assertEquals("--> POST / HTTP/1.1", logs.get(0));
+    assertEquals("--> POST " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Content-Type: text/plain; charset=utf-8", logs.get(1));
     assertEquals("Content-Length: 3", logs.get(2));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(3));
@@ -234,7 +234,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(15, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
     assertEquals("Connection: Keep-Alive", logs.get(2));
     assertEquals("Accept-Encoding: gzip", logs.get(3));
@@ -260,7 +260,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     assertEquals(15, logs.size());
-    assertEquals("--> GET / HTTP/1.1", logs.get(0));
+    assertEquals("--> GET " + server.url("/") + " HTTP/1.1", logs.get(0));
     assertEquals("Host: " + server.getHostName() + ":" + server.getPort(), logs.get(1));
     assertEquals("Connection: Keep-Alive", logs.get(2));
     assertEquals("Accept-Encoding: gzip", logs.get(3));
