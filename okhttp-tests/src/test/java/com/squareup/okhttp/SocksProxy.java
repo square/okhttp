@@ -51,6 +51,8 @@ public final class SocksProxy {
 
   private static final Logger logger = Logger.getLogger(SocksProxy.class.getName());
 
+  public final String HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS = "onlyProxyCanResolveMe.org";
+
   private final ExecutorService executor = Executors.newCachedThreadPool(
       Util.threadFactory("SocksProxy", false));
 
@@ -156,7 +158,16 @@ public final class SocksProxy {
       case ADDRESS_TYPE_DOMAIN_NAME:
         int domainNameLength = fromSource.readByte() & 0xff;
         String domainName = fromSource.readUtf8(domainNameLength);
-        toAddress = InetAddress.getByName(domainName);
+
+        // mockup for DNS resolving at the proxy
+        if (domainName.equalsIgnoreCase(HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS))
+          toAddress = InetAddress.getLoopbackAddress(); // resolve
+          // HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS to localhost
+        else
+          toAddress = InetAddress.getByName(domainName);  // really resolve the address
+
+        logger.log(Level.INFO, "SocksProxy resolved " + domainName + " to " + toAddress);
+
         break;
 
       default:

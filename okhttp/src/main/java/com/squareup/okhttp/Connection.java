@@ -29,6 +29,7 @@ import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
@@ -36,9 +37,11 @@ import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Source;
@@ -193,7 +196,7 @@ public final class Connection {
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
-      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+                             ConnectionSpecSelector connectionSpecSelector) throws IOException {
     socket.setSoTimeout(readTimeout);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
 
@@ -488,7 +491,7 @@ public final class Connection {
         + ", proxy="
         + route.proxy
         + " hostAddress="
-        + route.inetSocketAddress.getAddress().getHostAddress()
+        + route.inetSocketAddress.toString()
         + " cipherSuite="
         + (handshake != null ? handshake.cipherSuite() : "none")
         + " protocol="
