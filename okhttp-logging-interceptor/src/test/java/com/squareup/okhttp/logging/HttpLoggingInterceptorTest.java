@@ -65,6 +65,16 @@ public final class HttpLoggingInterceptorTest {
     host = server.getHostName() + ":" + server.getPort();
   }
 
+  @Test public void levelGetter() {
+    // The default is NONE.
+    assertEquals(Level.NONE, applicationInterceptor.getLevel());
+
+    for (Level level : Level.values()) {
+      applicationInterceptor.setLevel(level);
+      assertEquals(level, applicationInterceptor.getLevel());
+    }
+  }
+
   @Test public void setLevelShouldPreventNullValue() {
     try {
       applicationInterceptor.setLevel(null);
