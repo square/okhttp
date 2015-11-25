@@ -1,6 +1,6 @@
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.io.InMemoryFileSystem;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -155,8 +155,7 @@ public class OkUrlFactoryTest {
   }
 
   private void assertResponseHeader(HttpURLConnection connection, String expected) {
-    final String headerFieldPrefix = Platform.get().getPrefix();
-    assertEquals(expected, connection.getHeaderField(headerFieldPrefix + "-Response-Source"));
+    assertEquals(expected, connection.getHeaderField(OkHeaders.RESPONSE_SOURCE));
   }
 
   private void assertResponseCode(HttpURLConnection connection, int expected) throws IOException {

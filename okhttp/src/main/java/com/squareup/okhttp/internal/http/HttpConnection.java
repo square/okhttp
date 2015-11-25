@@ -193,12 +193,8 @@ public final class HttpConnection {
         Response.Builder responseBuilder = new Response.Builder()
             .protocol(statusLine.protocol)
             .code(statusLine.code)
-            .message(statusLine.message);
-
-        Headers.Builder headersBuilder = new Headers.Builder();
-        readHeaders(headersBuilder);
-        headersBuilder.add(OkHeaders.SELECTED_PROTOCOL, statusLine.protocol.toString());
-        responseBuilder.headers(headersBuilder.build());
+            .message(statusLine.message)
+            .headers(readHeaders());
 
         if (statusLine.code != HTTP_CONTINUE) {
           state = STATE_OPEN_RESPONSE_BODY;
@@ -214,12 +210,14 @@ public final class HttpConnection {
     }
   }
 
-  /** Reads headers or trailers into {@code builder}. */
-  public void readHeaders(Headers.Builder builder) throws IOException {
+  /** Reads headers or trailers. */
+  public Headers readHeaders() throws IOException {
+    Headers.Builder headers = new Headers.Builder();
     // parse the result headers until the first blank line
     for (String line; (line = source.readUtf8LineStrict()).length() != 0; ) {
-      Internal.instance.addLenient(builder, line);
+      Internal.instance.addLenient(headers, line);
     }
+    return headers.build();
   }
 
   public Sink newChunkedSink() {
@@ -487,9 +485,7 @@ public final class HttpConnection {
       }
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
-        Headers.Builder trailersBuilder = new Headers.Builder();
-        readHeaders(trailersBuilder);
-        httpEngine.receiveHeaders(trailersBuilder.build());
+        httpEngine.receiveHeaders(readHeaders());
         endOfInput(true);
       }
     }

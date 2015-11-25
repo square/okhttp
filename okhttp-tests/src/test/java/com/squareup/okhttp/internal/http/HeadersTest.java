@@ -43,21 +43,18 @@ public final class HeadersTest {
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
-    assertEquals(4, headers.size());
+    assertEquals(3, headers.size());
     assertEquals(Protocol.SPDY_3, response.protocol());
     assertEquals(200, response.code());
     assertEquals("OK", response.message());
     assertEquals("no-cache, no-store", headers.get("cache-control"));
     assertEquals("Cookie2", headers.get("set-cookie"));
-    assertEquals(Protocol.SPDY_3.toString(), headers.get(OkHeaders.SELECTED_PROTOCOL));
-    assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.SPDY_3.toString(), headers.value(0));
-    assertEquals("cache-control", headers.name(1));
-    assertEquals("no-cache, no-store", headers.value(1));
+    assertEquals("cache-control", headers.name(0));
+    assertEquals("no-cache, no-store", headers.value(0));
+    assertEquals("set-cookie", headers.name(1));
+    assertEquals("Cookie1", headers.value(1));
     assertEquals("set-cookie", headers.name(2));
-    assertEquals("Cookie1", headers.value(2));
-    assertEquals("set-cookie", headers.name(3));
-    assertEquals("Cookie2", headers.value(3));
+    assertEquals("Cookie2", headers.value(2));
     assertNull(headers.get(":status"));
     assertNull(headers.get(":version"));
   }
@@ -70,9 +67,7 @@ public final class HeadersTest {
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
-    assertEquals(1, headers.size());
-    assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.SPDY_3.toString(), headers.value(0));
+    assertEquals(0, headers.size());
   }
 
   @Test public void readNameValueBlockDropsForbiddenHeadersHttp2() throws IOException {
@@ -83,11 +78,9 @@ public final class HeadersTest {
     Request request = new Request.Builder().url("http://square.com/").build();
     Response response = FramedTransport.readHttp2HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
-    assertEquals(2, headers.size());
-    assertEquals(OkHeaders.SELECTED_PROTOCOL, headers.name(0));
-    assertEquals(Protocol.HTTP_2.toString(), headers.value(0));
-    assertEquals(":version", headers.name(1));
-    assertEquals("HTTP/1.1", headers.value(1));
+    assertEquals(1, headers.size());
+    assertEquals(":version", headers.name(0));
+    assertEquals("HTTP/1.1", headers.value(0));
   }
 
   @Test public void spdy3HeadersList() {

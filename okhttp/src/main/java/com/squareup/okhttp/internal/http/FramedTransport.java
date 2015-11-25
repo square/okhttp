@@ -210,7 +210,6 @@ public final class FramedTransport implements Transport {
     String status = null;
     String version = "HTTP/1.1";
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, Protocol.SPDY_3.toString());
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
       ByteString name = headerBlock.get(i).name;
 
@@ -246,7 +245,6 @@ public final class FramedTransport implements Transport {
     String status = null;
 
     Headers.Builder headersBuilder = new Headers.Builder();
-    headersBuilder.set(OkHeaders.SELECTED_PROTOCOL, Protocol.HTTP_2.toString());
     for (int i = 0, size = headerBlock.size(); i < size; i++) {
       ByteString name = headerBlock.get(i).name;
 
