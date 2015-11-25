@@ -488,7 +488,7 @@ public final class Connection {
         + ", proxy="
         + route.proxy
         + " hostAddress="
-        + route.inetSocketAddress.getAddress().getHostAddress()
+        + route.inetSocketAddress
         + " cipherSuite="
         + (handshake != null ? handshake.cipherSuite() : "none")
         + " protocol="

@@ -41,6 +41,8 @@ import okio.Okio;
  * See <a href="https://www.ietf.org/rfc/rfc1928.txt">RFC 1928</a>.
  */
 public final class SocksProxy {
+  public final String HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS = "onlyProxyCanResolveMe.org";
+
   private static final int VERSION_5 = 5;
   private static final int METHOD_NONE = 0xff;
   private static final int METHOD_NO_AUTHENTICATION_REQUIRED = 0;
@@ -156,7 +158,10 @@ public final class SocksProxy {
       case ADDRESS_TYPE_DOMAIN_NAME:
         int domainNameLength = fromSource.readByte() & 0xff;
         String domainName = fromSource.readUtf8(domainNameLength);
-        toAddress = InetAddress.getByName(domainName);
+        // Resolve HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS to localhost.
+        toAddress = domainName.equalsIgnoreCase(HOSTNAME_THAT_ONLY_THE_PROXY_KNOWS)
+            ? InetAddress.getLoopbackAddress()
+            : InetAddress.getByName(domainName);
         break;
 
       default:
