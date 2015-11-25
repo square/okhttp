@@ -62,6 +62,7 @@ public final class OkHttpClientTest {
     assertEquals(10_000, client.getConnectTimeout());
     assertEquals(10_000, client.getReadTimeout());
     assertEquals(10_000, client.getWriteTimeout());
+    assertEquals(10_000, client.getSocketTimeout());
   }
 
   @Test public void timeoutValidRange() {
@@ -99,6 +100,7 @@ public final class OkHttpClientTest {
     assertEquals(10_000, client.getConnectTimeout());
     assertEquals(10_000, client.getReadTimeout());
     assertEquals(10_000, client.getWriteTimeout());
+    assertEquals(10_000, client.getSocketTimeout());
     assertTrue(client.getFollowSslRedirects());
     assertNull(client.getProxy());
     assertEquals(Arrays.asList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1),

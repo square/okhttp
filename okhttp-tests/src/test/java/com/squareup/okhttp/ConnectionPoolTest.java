@@ -108,17 +108,17 @@ public final class ConnectionPoolTest {
     cleanupExecutor = new FakeExecutor();
     pool.replaceCleanupExecutorForTests(cleanupExecutor);
     httpA = new Connection(pool, httpRoute);
-    httpA.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpA.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpB = new Connection(pool, httpRoute);
-    httpB.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpB.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpC = new Connection(pool, httpRoute);
-    httpC.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpC.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpD = new Connection(pool, httpRoute);
-    httpD.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpD.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpE = new Connection(pool, httpRoute);
-    httpE.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpE.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     spdyA = new Connection(pool, spdyRoute);
-    spdyA.connect(20000, 20000, 2000, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    spdyA.connect(20000, null, 20000, 2000, CONNECTION_SPECS, false /* connectionRetryEnabled */);
 
     owner = new Object();
     httpA.setOwner(owner);
@@ -151,7 +151,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress));
-    connection.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    connection.connect(200, null, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
 

@@ -149,7 +149,7 @@ public final class Connection {
     }
   }
 
-  void connect(int connectTimeout, int readTimeout, int writeTimeout,
+  void connect(int connectTimeout, int socketTimeout, int readTimeout, int writeTimeout,
       List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
     if (protocol != null) throw new IllegalStateException("already connected");
 
@@ -169,7 +169,7 @@ public final class Connection {
         socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
             ? address.getSocketFactory().createSocket()
             : new Socket(proxy);
-        connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+        connectSocket(connectTimeout, socketTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
         Util.closeQuietly(socket);
         socket = null;
@@ -192,9 +192,9 @@ public final class Connection {
   }
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
-  private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
+  private void connectSocket(int connectTimeout, int socketTimeout, int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
-    socket.setSoTimeout(readTimeout);
+    socket.setSoTimeout(socketTimeout);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
 
     if (route.address.getSslSocketFactory() != null) {
@@ -355,7 +355,7 @@ public final class Connection {
 
     if (!isConnected()) {
       List<ConnectionSpec> connectionSpecs = route.address.getConnectionSpecs();
-      connect(client.getConnectTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
+      connect(client.getConnectTimeout(), client.getSocketTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
           connectionSpecs, client.getRetryOnConnectionFailure());
       if (isFramed()) {
         client.getConnectionPool().share(this);
@@ -363,7 +363,7 @@ public final class Connection {
       client.routeDatabase().connected(getRoute());
     }
 
-    setTimeouts(client.getReadTimeout(), client.getWriteTimeout());
+    setTimeouts(client.getSocketTimeout(), client.getReadTimeout(), client.getWriteTimeout());
   }
 
   /** Returns true if {@link #connect} has been attempted on this connection. */
@@ -455,14 +455,14 @@ public final class Connection {
     return protocol != null ? protocol : Protocol.HTTP_1_1;
   }
 
-  void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis)
+  void setTimeouts(int socketTimeoutMillis, int readTimeoutMillis, int writeTimeoutMillis)
       throws RouteException {
     if (protocol == null) throw new IllegalStateException("not connected");
 
     // Don't set timeouts on shared SPDY connections.
     if (httpConnection != null) {
       try {
-        socket.setSoTimeout(readTimeoutMillis);
+        socket.setSoTimeout(socketTimeoutMillis);
       } catch (IOException e) {
         throw new RouteException(e);
       }
