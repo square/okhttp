@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.logging;
 
+import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
@@ -43,6 +44,7 @@ public final class HttpLoggingInterceptorTest {
 
   private final OkHttpClient client = new OkHttpClient();
   private String host;
+  private HttpUrl url;
 
   private final LogRecorder networkLogs = new LogRecorder();
   private final HttpLoggingInterceptor networkInterceptor =
@@ -63,6 +65,7 @@ public final class HttpLoggingInterceptorTest {
     client.setConnectionPool(null);
 
     host = server.getHostName() + ":" + server.getPort();
+    url = server.url("/");
   }
 
   @Test public void levelGetter() {
@@ -105,12 +108,12 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
@@ -122,12 +125,12 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST / HTTP/1.1 (3-byte body)")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1 (3-byte body)")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> POST / HTTP/1.1 (3-byte body)")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1 (3-byte body)")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 0-byte body\\)")
         .assertNoMoreLogs();
   }
@@ -141,12 +144,12 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms, 6-byte body\\)")
         .assertNoMoreLogs();
   }
@@ -158,7 +161,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -168,7 +171,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -189,7 +192,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("--> END POST")
@@ -201,7 +204,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("Host: " + host)
@@ -224,7 +227,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(null, "Hi?")).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
@@ -235,7 +238,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
@@ -266,7 +269,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(body).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
@@ -277,7 +280,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Transfer-Encoding: chunked")
         .assertLogEqual("Host: " + host)
@@ -302,7 +305,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
@@ -313,7 +316,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -335,7 +338,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -345,7 +348,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -375,7 +378,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 " + code + " No Content \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -385,7 +388,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -406,7 +409,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("")
@@ -420,7 +423,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("--> POST " + url + " HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
         .assertLogEqual("Host: " + host)
@@ -447,7 +450,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
@@ -460,7 +463,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -486,7 +489,7 @@ public final class HttpLoggingInterceptorTest {
     client.newCall(request().build()).execute();
 
     applicationLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Transfer-encoding: chunked")
@@ -499,7 +502,7 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
 
     networkLogs
-        .assertLogEqual("--> GET / HTTP/1.1")
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -517,7 +520,7 @@ public final class HttpLoggingInterceptorTest {
   }
 
   private Request.Builder request() {
-    return new Request.Builder().url(server.url("/"));
+    return new Request.Builder().url(url);
   }
 
   private static class LogRecorder implements HttpLoggingInterceptor.Logger {
