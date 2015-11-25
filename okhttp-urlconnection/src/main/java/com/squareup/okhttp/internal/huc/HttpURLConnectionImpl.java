@@ -153,9 +153,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (responseHeaders == null) {
       Response response = getResponse().getResponse();
       Headers headers = response.headers();
-
       responseHeaders = headers.newBuilder()
-          .add(Platform.get().getPrefix() + "-Response-Source", responseSourceHeader(response))
+          .add(OkHeaders.SELECTED_PROTOCOL, response.protocol().toString())
+          .add(OkHeaders.RESPONSE_SOURCE, responseSourceHeader(response))
           .build();
     }
     return responseHeaders;
