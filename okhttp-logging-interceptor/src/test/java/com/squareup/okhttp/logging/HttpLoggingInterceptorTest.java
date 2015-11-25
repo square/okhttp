@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import okio.BufferedSink;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -181,7 +182,8 @@ public final class HttpLoggingInterceptorTest {
 
     applicationLogs
         .assertLogEqual("--> POST / HTTP/1.1")
-        // TODO force content-type and content-length to show here
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("Content-Length: 3")
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
@@ -195,6 +197,86 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> POST / HTTP/1.1")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogEqual("Content-Length: 3")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("OkHttp-Selected-Protocol: http/1.1")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void headersPostNoContentType() throws IOException {
+    setLevel(Level.HEADERS);
+
+    server.enqueue(new MockResponse());
+    client.newCall(request().post(RequestBody.create(null, "Hi?")).build()).execute();
+
+    applicationLogs
+        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("Content-Length: 3")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("OkHttp-Selected-Protocol: http/1.1")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("Content-Length: 3")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("OkHttp-Selected-Protocol: http/1.1")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void headersPostNoLength() throws IOException {
+    setLevel(Level.HEADERS);
+
+    server.enqueue(new MockResponse());
+    RequestBody body = new RequestBody() {
+      @Override public MediaType contentType() {
+        return PLAIN;
+      }
+
+      @Override public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("Hi!");
+      }
+    };
+    client.newCall(request().post(body).build()).execute();
+
+    applicationLogs
+        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("--> END POST")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 0")
+        .assertLogEqual("OkHttp-Selected-Protocol: http/1.1")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> POST / HTTP/1.1")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("Transfer-Encoding: chunked")
         .assertLogEqual("Host: " + host)
         .assertLogEqual("Connection: Keep-Alive")
         .assertLogEqual("Accept-Encoding: gzip")
@@ -329,7 +411,8 @@ public final class HttpLoggingInterceptorTest {
 
     applicationLogs
         .assertLogEqual("--> POST / HTTP/1.1")
-        // TODO force content-type and content-length to show here
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogEqual("Content-Length: 3")
         .assertLogEqual("")
         .assertLogEqual("Hi?")
         .assertLogEqual("--> END POST (3-byte body)")

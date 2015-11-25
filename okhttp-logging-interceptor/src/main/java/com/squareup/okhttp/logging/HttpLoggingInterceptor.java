@@ -155,9 +155,24 @@ public final class HttpLoggingInterceptor implements Interceptor {
     logger.log(requestStartMessage);
 
     if (logHeaders) {
+      if (hasRequestBody) {
+        // Request body headers are only present when installed as a network interceptor. Force
+        // them to be included (when available) so there values are known.
+        if (requestBody.contentType() != null) {
+          logger.log("Content-Type: " + requestBody.contentType());
+        }
+        if (requestBody.contentLength() != -1) {
+          logger.log("Content-Length: " + requestBody.contentLength());
+        }
+      }
+
       Headers headers = request.headers();
       for (int i = 0, count = headers.size(); i < count; i++) {
-        logger.log(headers.name(i) + ": " + headers.value(i));
+        String name = headers.name(i);
+        // Skip headers from the request body as they are explicitly logged above.
+        if (!"Content-Type".equalsIgnoreCase(name) && !"Content-Length".equalsIgnoreCase(name)) {
+          logger.log(name + ": " + headers.value(i));
+        }
       }
 
       String endMessage = "--> END " + request.method();
