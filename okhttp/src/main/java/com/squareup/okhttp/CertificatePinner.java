@@ -54,7 +54,7 @@ import static java.util.Collections.unmodifiableSet;
  *
  *     String hostname = "publicobject.com";
  *     CertificatePinner certificatePinner = new CertificatePinner.Builder()
- *         .add(hostname, "sha1/BOGUSPIN")
+ *         .add(hostname, "sha1/AAAAAAAAAAAAAAAAAAAAAAAAAAA=")
  *         .build();
  *     OkHttpClient client = new OkHttpClient();
  *     client.setCertificatePinner(certificatePinner);
@@ -74,7 +74,7 @@ import static java.util.Collections.unmodifiableSet;
  *     sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=: CN=COMODO RSA Certification Authority
  *     sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=: CN=AddTrust External CA Root
  *   Pinned certificates for publicobject.com:
- *     sha1/BOGUSPIN
+ *     sha1/AAAAAAAAAAAAAAAAAAAAAAAAAAA=
  *   at com.squareup.okhttp.CertificatePinner.check(CertificatePinner.java)
  *   at com.squareup.okhttp.Connection.upgradeToTls(Connection.java)
  *   at com.squareup.okhttp.Connection.connect(Connection.java)
