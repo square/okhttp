@@ -55,6 +55,9 @@ public final class OkHeaders {
    */
   public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
 
+  /** Synthetic response header: the location from which the response was loaded. */
+  public static final String RESPONSE_SOURCE = PREFIX + "-Response-Source";
+
   private OkHeaders() {
   }
 
