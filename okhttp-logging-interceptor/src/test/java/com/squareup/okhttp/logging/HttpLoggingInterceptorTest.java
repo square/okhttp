@@ -68,6 +68,16 @@ public final class HttpLoggingInterceptorTest {
     url = server.url("/");
   }
 
+  @Test public void levelGetter() {
+    // The default is NONE.
+    assertEquals(Level.NONE, applicationInterceptor.getLevel());
+
+    for (Level level : Level.values()) {
+      applicationInterceptor.setLevel(level);
+      assertEquals(level, applicationInterceptor.getLevel());
+    }
+  }
+
   @Test public void setLevelShouldPreventNullValue() {
     try {
       applicationInterceptor.setLevel(null);

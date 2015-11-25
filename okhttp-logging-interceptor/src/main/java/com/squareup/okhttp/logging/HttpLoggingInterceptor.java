@@ -130,6 +130,10 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return this;
   }
 
+  public Level getLevel() {
+    return level;
+  }
+
   @Override public Response intercept(Chain chain) throws IOException {
     Level level = this.level;
 
