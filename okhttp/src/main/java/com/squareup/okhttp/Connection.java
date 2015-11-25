@@ -63,10 +63,10 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
  * There are tradeoffs when selecting which options to include when negotiating
  * a secure connection to a remote host. Newer TLS options are quite useful:
  * <ul>
- *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure
- *       connections for multiple domain names.
- *   <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port
- *       (443) to be used for different HTTP and SPDY protocols.
+ * <li>Server Name Indication (SNI) enables one IP address to negotiate secure
+ * connections for multiple domain names.
+ * <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port
+ * (443) to be used for different HTTP and SPDY protocols.
  * </ul>
  * Unfortunately, older HTTPS servers refuse to connect when such options are
  * presented. Rather than avoiding these options entirely, this class allows a
@@ -158,18 +158,18 @@ public final class Connection {
     Proxy proxy = route.getProxy();
     Address address = route.getAddress();
 
-    if (route.address.getSslSocketFactory() == null
-        && !connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
-      throw new RouteException(new UnknownServiceException(
-          "CLEARTEXT communication not supported: " + connectionSpecs));
+    if (route.address.getSslSocketFactory() == null && !connectionSpecs.contains(
+        ConnectionSpec.CLEARTEXT)) {
+      throw new RouteException(
+          new UnknownServiceException("CLEARTEXT communication not supported: " + connectionSpecs));
     }
 
     while (protocol == null) {
       try {
         socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
-            ? address.getSocketFactory().createSocket()
-            : new Socket(proxy);
-        connectSocket(connectTimeout, socketTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+            ? address.getSocketFactory().createSocket() : new Socket(proxy);
+        connectSocket(connectTimeout, socketTimeout, readTimeout, writeTimeout,
+            connectionSpecSelector);
       } catch (IOException e) {
         Util.closeQuietly(socket);
         socket = null;
@@ -192,8 +192,8 @@ public final class Connection {
   }
 
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
-  private void connectSocket(int connectTimeout, int socketTimeout, int readTimeout, int writeTimeout,
-      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+  private void connectSocket(int connectTimeout, int socketTimeout, int readTimeout,
+      int writeTimeout, ConnectionSpecSelector connectionSpecSelector) throws IOException {
     socket.setSoTimeout(socketTimeout);
     Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
 
@@ -205,8 +205,9 @@ public final class Connection {
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
-      framedConnection = new FramedConnection.Builder(route.address.uriHost, true, socket)
-          .protocol(protocol).build();
+      framedConnection =
+          new FramedConnection.Builder(route.address.uriHost, true, socket).protocol(protocol)
+              .build();
       framedConnection.sendConnectionPreface();
     } else {
       httpConnection = new HttpConnection(pool, this, socket);
@@ -225,14 +226,14 @@ public final class Connection {
     SSLSocket sslSocket = null;
     try {
       // Create the wrapper over the connected socket.
-      sslSocket = (SSLSocket) sslSocketFactory.createSocket(
-          socket, address.getUriHost(), address.getUriPort(), true /* autoClose */);
+      sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket, address.getUriHost(),
+          address.getUriPort(), true /* autoClose */);
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
       if (connectionSpec.supportsTlsExtensions()) {
-        Platform.get().configureTlsExtensions(
-            sslSocket, address.getUriHost(), address.getProtocols());
+        Platform.get()
+            .configureTlsExtensions(sslSocket, address.getUriHost(), address.getProtocols());
       }
 
       // Force handshake. This can throw!
@@ -242,25 +243,28 @@ public final class Connection {
       // Verify that the socket's certificates are acceptable for the target host.
       if (!address.getHostnameVerifier().verify(address.getUriHost(), sslSocket.getSession())) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-        throw new SSLPeerUnverifiedException("Hostname " + address.getUriHost() + " not verified:"
-            + "\n    certificate: " + CertificatePinner.pin(cert)
-            + "\n    DN: " + cert.getSubjectDN().getName()
-            + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
+        throw new SSLPeerUnverifiedException("Hostname "
+            + address.getUriHost()
+            + " not verified:"
+            + "\n    certificate: "
+            + CertificatePinner.pin(cert)
+            + "\n    DN: "
+            + cert.getSubjectDN().getName()
+            + "\n    subjectAltNames: "
+            + OkHostnameVerifier.allSubjectAltNames(cert));
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.getCertificatePinner().check(address.getUriHost(),
-          unverifiedHandshake.peerCertificates());
+      address.getCertificatePinner()
+          .check(address.getUriHost(), unverifiedHandshake.peerCertificates());
 
       // Success! Save the handshake and the ALPN protocol.
-      String maybeProtocol = connectionSpec.supportsTlsExtensions()
-          ? Platform.get().getSelectedProtocol(sslSocket)
-          : null;
+      String maybeProtocol =
+          connectionSpec.supportsTlsExtensions() ? Platform.get().getSelectedProtocol(sslSocket)
+              : null;
       socket = sslSocket;
       handshake = unverifiedHandshake;
-      protocol = maybeProtocol != null
-          ? Protocol.get(maybeProtocol)
-          : Protocol.HTTP_1_1;
+      protocol = maybeProtocol != null ? Protocol.get(maybeProtocol) : Protocol.HTTP_1_1;
       success = true;
     } catch (AssertionError e) {
       if (Util.isAndroidGetsocknameError(e)) throw new IOException(e);
@@ -313,14 +317,14 @@ public final class Connection {
           return;
 
         case HTTP_PROXY_AUTH:
-          tunnelRequest = OkHeaders.processAuthHeader(
-              route.getAddress().getAuthenticator(), response, route.getProxy());
+          tunnelRequest =
+              OkHeaders.processAuthHeader(route.getAddress().getAuthenticator(), response,
+                  route.getProxy());
           if (tunnelRequest != null) continue;
           throw new IOException("Failed to authenticate with proxy");
 
         default:
-          throw new IOException(
-              "Unexpected response code for CONNECT: " + response.code());
+          throw new IOException("Unexpected response code for CONNECT: " + response.code());
       }
     }
   }
@@ -333,13 +337,11 @@ public final class Connection {
    * to the proxy unencrypted.
    */
   private Request createTunnelRequest() throws IOException {
-    HttpUrl tunnelUrl = new HttpUrl.Builder()
-        .scheme("https")
+    HttpUrl tunnelUrl = new HttpUrl.Builder().scheme("https")
         .host(route.address.uriHost)
         .port(route.address.uriPort)
         .build();
-    return new Request.Builder()
-        .url(tunnelUrl)
+    return new Request.Builder().url(tunnelUrl)
         .header("Host", Util.hostHeader(tunnelUrl))
         .header("Proxy-Connection", "Keep-Alive")
         .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
@@ -355,8 +357,8 @@ public final class Connection {
 
     if (!isConnected()) {
       List<ConnectionSpec> connectionSpecs = route.address.getConnectionSpecs();
-      connect(client.getConnectTimeout(), client.getSocketTimeout(), client.getReadTimeout(), client.getWriteTimeout(),
-          connectionSpecs, client.getRetryOnConnectionFailure());
+      connect(client.getConnectTimeout(), client.getSocketTimeout(), client.getReadTimeout(),
+          client.getWriteTimeout(), connectionSpecs, client.getRetryOnConnectionFailure());
       if (isFramed()) {
         client.getConnectionPool().share(this);
       }
@@ -433,8 +435,7 @@ public final class Connection {
 
   /** Returns the transport appropriate for this connection. */
   Transport newTransport(HttpEngine httpEngine) throws IOException {
-    return (framedConnection != null)
-        ? new FramedTransport(httpEngine, framedConnection)
+    return (framedConnection != null) ? new FramedTransport(httpEngine, framedConnection)
         : new HttpTransport(httpEngine, httpConnection);
   }
 
@@ -447,7 +448,8 @@ public final class Connection {
   }
 
   /**
-   * Returns the protocol negotiated by this connection, or {@link Protocol#HTTP_1_1} if no protocol
+   * Returns the protocol negotiated by this connection, or {@link Protocol#HTTP_1_1} if no
+   * protocol
    * has been negotiated. This method returns {@link Protocol#HTTP_1_1} even if the remote peer is
    * using {@link Protocol#HTTP_1_0}.
    */
@@ -484,7 +486,9 @@ public final class Connection {
 
   @Override public String toString() {
     return "Connection{"
-        + route.address.uriHost + ":" + route.address.uriPort
+        + route.address.uriHost
+        + ":"
+        + route.address.uriPort
         + ", proxy="
         + route.proxy
         + " hostAddress="
