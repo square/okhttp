@@ -27,6 +27,7 @@ import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.http.HttpEngine;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
@@ -194,7 +195,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
       }
 
       String endMessage = "<-- END HTTP";
-      if (logBody) {
+      if (logBody && HttpEngine.hasBody(response)) {
         BufferedSource source = responseBody.source();
         source.request(Long.MAX_VALUE); // Buffer the entire body.
         Buffer buffer = source.buffer();
