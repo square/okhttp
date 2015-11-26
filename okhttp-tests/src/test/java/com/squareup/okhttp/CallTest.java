@@ -707,7 +707,7 @@ public final class CallTest {
     }
   }
 
-  // https://github.com/square/okhttp/issues/442
+  /** https://github.com/square/okhttp/issues/442 */
   @Test public void timeoutsNotRetried() throws Exception {
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.NO_RESPONSE));
@@ -726,7 +726,7 @@ public final class CallTest {
     }
   }
 
-  // https://github.com/square/okhttp/issues/1801
+  /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
     OkHttpClient c = new OkHttpClient();
     c.interceptors().add(new Interceptor() {
@@ -1770,6 +1770,22 @@ public final class CallTest {
         .assertHeader("Content-Encoding", "gzip")
         .assertHeader("Content-Length", bodySize)
         .assertRequestHeader("Accept-Encoding", "gzip");
+  }
+
+  /** https://github.com/square/okhttp/issues/1927 */
+  @Test public void gzipResponseAfterAuthenticationChallenge() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(401));
+    server.enqueue(new MockResponse()
+        .setBody(gzip("abcabcabc"))
+        .addHeader("Content-Encoding: gzip"));
+    client.setAuthenticator(new RecordingOkAuthenticator("password"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertBody("abcabcabc");
   }
 
   @Test public void asyncResponseCanBeConsumedLater() throws Exception {
