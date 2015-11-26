@@ -24,6 +24,7 @@ import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.Transport;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.MalformedURLException;
@@ -34,12 +35,15 @@ import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
 import okio.BufferedSink;
 import okio.BufferedSource;
 
@@ -188,6 +192,11 @@ public class OkHttpClient implements Cloneable {
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
     dispatcher = new Dispatcher();
+  }
+
+  public OkHttpClient(ExecutorService executorService) {
+    routeDatabase = new RouteDatabase();
+    dispatcher = new Dispatcher(executorService);
   }
 
   private OkHttpClient(OkHttpClient okHttpClient) {
