@@ -48,8 +48,8 @@ public final class ConnectionPoolTest {
     Internal.initializeInstanceForTests();
   }
 
-  private static final List<ConnectionSpec> CONNECTION_SPECS = Util.immutableList(
-      ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
+  private static final List<ConnectionSpec> CONNECTION_SPECS =
+      Util.immutableList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT);
 
   private static final int KEEP_ALIVE_DURATION_MS = 5000;
 
@@ -87,9 +87,11 @@ public final class ConnectionPoolTest {
     spdyServer.useHttps(sslContext.getSocketFactory(), false);
 
     httpServer.start();
-    httpAddress = new Address(httpServer.getHostName(), httpServer.getPort(), dns, socketFactory,
-        null, null, null, AuthenticatorAdapter.INSTANCE, null,
-        Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), CONNECTION_SPECS, proxySelector);
+    httpAddress =
+        new Address(httpServer.getHostName(), httpServer.getPort(), dns, socketFactory, null, null,
+            null, AuthenticatorAdapter.INSTANCE, null,
+            Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1), CONNECTION_SPECS,
+            proxySelector);
     httpSocketAddress = new InetSocketAddress(InetAddress.getByName(httpServer.getHostName()),
         httpServer.getPort());
 
@@ -108,17 +110,17 @@ public final class ConnectionPoolTest {
     cleanupExecutor = new FakeExecutor();
     pool.replaceCleanupExecutorForTests(cleanupExecutor);
     httpA = new Connection(pool, httpRoute);
-    httpA.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpA.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpB = new Connection(pool, httpRoute);
-    httpB.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpB.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpC = new Connection(pool, httpRoute);
-    httpC.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpC.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpD = new Connection(pool, httpRoute);
-    httpD.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpD.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     httpE = new Connection(pool, httpRoute);
-    httpE.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    httpE.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     spdyA = new Connection(pool, spdyRoute);
-    spdyA.connect(20000, 20000, 2000, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    spdyA.connect(20000, 20000, 20000, 2000, CONNECTION_SPECS, false /* connectionRetryEnabled */);
 
     owner = new Object();
     httpA.setOwner(owner);
@@ -151,7 +153,7 @@ public final class ConnectionPoolTest {
     assertNull(connection);
 
     connection = new Connection(pool, new Route(httpAddress, Proxy.NO_PROXY, httpSocketAddress));
-    connection.connect(200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
+    connection.connect(200, 200, 200, 200, CONNECTION_SPECS, false /* connectionRetryEnabled */);
     connection.setOwner(owner);
     assertEquals(0, pool.getConnectionCount());
 
@@ -562,8 +564,7 @@ public final class ConnectionPoolTest {
 
     private Runnable runnable;
 
-    @Override
-    public void execute(Runnable runnable) {
+    @Override public void execute(Runnable runnable) {
       // This is a bonus assertion for the invariant: At no time should two runnables be scheduled.
       assertNull(this.runnable);
       this.runnable = runnable;

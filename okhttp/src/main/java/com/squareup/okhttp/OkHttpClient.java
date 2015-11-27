@@ -184,6 +184,7 @@ public class OkHttpClient implements Cloneable {
   private int connectTimeout = 10_000;
   private int readTimeout = 10_000;
   private int writeTimeout = 10_000;
+  private int socketTimeout = 10_000;
 
   public OkHttpClient() {
     routeDatabase = new RouteDatabase();
@@ -215,6 +216,7 @@ public class OkHttpClient implements Cloneable {
     this.connectTimeout = okHttpClient.connectTimeout;
     this.readTimeout = okHttpClient.readTimeout;
     this.writeTimeout = okHttpClient.writeTimeout;
+    this.socketTimeout = okHttpClient.socketTimeout;
   }
 
   /**
@@ -273,6 +275,24 @@ public class OkHttpClient implements Cloneable {
   /** Default write timeout (in milliseconds). */
   public int getWriteTimeout() {
     return writeTimeout;
+  }
+
+  /**
+   * Sets the default socket timeout for new connections. A value of 0 means no timeout, otherwise
+   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+   */
+  public void setSocketTimeout(long timeout, TimeUnit unit) {
+    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+    if (unit == null) throw new IllegalArgumentException("unit == null");
+    long millis = unit.toMillis(timeout);
+    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
+    if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
+    socketTimeout = (int) millis;
+  }
+
+  /** Default socket timeout (in milliseconds). */
+  public int getSocketTimeout() {
+    return socketTimeout;
   }
 
   /**
