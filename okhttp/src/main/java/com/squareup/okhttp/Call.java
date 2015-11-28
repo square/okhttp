@@ -19,6 +19,7 @@ import com.squareup.okhttp.internal.NamedRunnable;
 import com.squareup.okhttp.internal.http.HttpEngine;
 import com.squareup.okhttp.internal.http.RequestException;
 import com.squareup.okhttp.internal.http.RouteException;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.logging.Level;
@@ -119,7 +120,7 @@ public class Call {
    */
   public void cancel() {
     canceled = true;
-    if (engine != null) engine.disconnect();
+    if (engine != null) engine.cancel();
   }
 
   /**
@@ -271,12 +272,12 @@ public class Call {
     }
 
     // Create the initial HTTP engine. Retries and redirects need new engine for each attempt.
-    engine = new HttpEngine(client, request, false, false, forWebSocket, null, null, null, null);
+    engine = new HttpEngine(client, request, false, false, forWebSocket, null, null, null);
 
     int followUpCount = 0;
     while (true) {
       if (canceled) {
-        engine.releaseConnection();
+        engine.releaseStreamAllocation();
         throw new IOException("Canceled");
       }
 
@@ -312,7 +313,7 @@ public class Call {
 
       if (followUp == null) {
         if (!forWebSocket) {
-          engine.releaseConnection();
+          engine.releaseStreamAllocation();
         }
         return response;
       }
@@ -321,13 +322,14 @@ public class Call {
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
+      StreamAllocation streamAllocation = engine.close();
       if (!engine.sameConnection(followUp.httpUrl())) {
-        engine.releaseConnection();
+        streamAllocation.release();
+        streamAllocation = null;
       }
 
-      Connection connection = engine.close();
       request = followUp;
-      engine = new HttpEngine(client, request, false, false, forWebSocket, connection, null, null,
+      engine = new HttpEngine(client, request, false, false, forWebSocket, streamAllocation, null,
           response);
     }
   }

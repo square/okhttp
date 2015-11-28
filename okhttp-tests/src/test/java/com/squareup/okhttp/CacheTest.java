@@ -1007,7 +1007,7 @@ public final class CacheTest {
 
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, client.getConnectionPool().getConnectionCount());
+    assertEquals(1, client.getConnectionPool().getIdleConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {

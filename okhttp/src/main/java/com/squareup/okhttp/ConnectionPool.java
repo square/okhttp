@@ -16,24 +16,20 @@
  */
 package com.squareup.okhttp;
 
-import com.squareup.okhttp.internal.Platform;
+import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
-import java.net.SocketException;
+import com.squareup.okhttp.internal.io.RealConnection;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
  * requests that share the same {@link com.squareup.okhttp.Address} may share a
- * {@link com.squareup.okhttp.Connection}. This class implements the policy of
- * which connections to keep open for future use.
+ * {@link Connection}. This class implements the policy of which connections to
+ * keep open for future use.
  *
  * <p>The {@link #getDefault() system-wide default} uses system properties for
  * tuning parameters:
@@ -76,28 +72,8 @@ public final class ConnectionPool {
   private final int maxIdleConnections;
   private final long keepAliveDurationNs;
 
-  private final Deque<Connection> connections = new ArrayDeque<>();
-
-  /**
-   * A background thread is used to cleanup expired connections. There will be, at most, a single
-   * thread running per connection pool.
-   *
-   * <p>A {@link ThreadPoolExecutor} is used and not a
-   * {@link java.util.concurrent.ScheduledThreadPoolExecutor}; ScheduledThreadPoolExecutors do not
-   * shrink. This executor shrinks the thread pool after a period of inactivity, and starts threads
-   * as needed. Delays are instead handled by the {@link #connectionsCleanupRunnable}. It is
-   * important that the {@link #connectionsCleanupRunnable} stops eventually, otherwise it will pin
-   * the thread, and thus the connection pool, in memory.
-   */
-  private Executor executor = new ThreadPoolExecutor(
-      0 /* corePoolSize */, 1 /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
-      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
-
-  private final Runnable connectionsCleanupRunnable = new Runnable() {
-    @Override public void run() {
-      runCleanupUntilPoolIsEmpty();
-    }
-  };
+  private final Deque<RealConnection> connections = new ArrayDeque<>();
+  final RouteDatabase routeDatabase = new RouteDatabase();
 
   public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs) {
     this.maxIdleConnections = maxIdleConnections;
@@ -108,7 +84,21 @@ public final class ConnectionPool {
     return systemDefault;
   }
 
-  /** Returns total number of connections in the pool. */
+  /** Returns the number of idle connections in the pool. */
+  public synchronized int getIdleConnectionCount() {
+    int total = 0;
+    for (RealConnection connection : connections) {
+      if (connection.allocationCount == 0) total++;
+    }
+    return total;
+  }
+
+  /**
+   * Returns total number of connections in the pool. Note that prior to OkHttp 2.7 this included
+   * only idle connections and SPDY connections. In OkHttp 2.7 this includes all connections, both
+   * active and inactive. Use {@link #getIdleConnectionCount()} to count connections not currently
+   * in use.
+   */
   public synchronized int getConnectionCount() {
     return connections.size();
   }
@@ -122,8 +112,8 @@ public final class ConnectionPool {
   /** Returns total number of multiplexed connections in the pool. */
   public synchronized int getMultiplexedConnectionCount() {
     int total = 0;
-    for (Connection connection : connections) {
-      if (connection.isFramed()) total++;
+    for (RealConnection connection : connections) {
+      if (connection.isMultiplexed()) total++;
     }
     return total;
   }
@@ -135,202 +125,43 @@ public final class ConnectionPool {
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
   public synchronized Connection get(Address address) {
-    Connection foundConnection = null;
-    for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
-      Connection connection = i.next();
-      if (!connection.getRoute().getAddress().equals(address)
-          || !connection.isAlive()
-          || System.nanoTime() - connection.getIdleStartTimeNs() >= keepAliveDurationNs) {
-        continue;
+    for (RealConnection connection : connections) {
+      if (connection.allocationCount < connection.allocationLimit
+          && address.equals(connection.getRoute().address)
+          && !connection.noNewStreams) {
+        connection.allocationCount++;
+        return connection;
       }
-      i.remove();
-      if (!connection.isFramed()) {
-        try {
-          Platform.get().tagSocket(connection.getSocket());
-        } catch (SocketException e) {
-          Util.closeQuietly(connection.getSocket());
-          // When unable to tag, skip recycling and close
-          Platform.get().logW("Unable to tagSocket(): " + e);
-          continue;
-        }
-      }
-      foundConnection = connection;
-      break;
     }
-
-    if (foundConnection != null && foundConnection.isFramed()) {
-      connections.addFirst(foundConnection); // Add it back after iteration.
-    }
-
-    return foundConnection;
+    return null;
   }
 
-  /**
-   * Gives {@code connection} to the pool. The pool may store the connection,
-   * or close it, as its policy describes.
-   *
-   * <p>It is an error to use {@code connection} after calling this method.
-   */
-  void recycle(Connection connection) {
-    if (connection.isFramed()) {
-      return;
-    }
-
-    if (!connection.clearOwner()) {
-      return; // This connection isn't eligible for reuse.
-    }
-
-    if (!connection.isAlive()) {
-      Util.closeQuietly(connection.getSocket());
-      return;
-    }
-
-    try {
-      Platform.get().untagSocket(connection.getSocket());
-    } catch (SocketException e) {
-      // When unable to remove tagging, skip recycling and close.
-      Platform.get().logW("Unable to untagSocket(): " + e);
-      Util.closeQuietly(connection.getSocket());
-      return;
-    }
-
-    synchronized (this) {
-      addConnection(connection);
-      connection.incrementRecycleCount();
-      connection.resetIdleStartTime();
-    }
+  // TODO(jwilson): reduce visibility.
+  public synchronized void put(RealConnection connection) {
+    connections.add(connection);
   }
 
-  private void addConnection(Connection connection) {
-    boolean empty = connections.isEmpty();
-    connections.addFirst(connection);
-    if (empty) {
-      executor.execute(connectionsCleanupRunnable);
-    } else {
-      notifyAll();
-    }
+  // TODO(jwilson): reduce visibility.
+  public synchronized void remove(RealConnection connection) {
+    connections.remove(connection);
   }
 
-  /**
-   * Shares the SPDY connection with the pool. Callers to this method may
-   * continue to use {@code connection}.
-   */
-  void share(Connection connection) {
-    if (!connection.isFramed()) throw new IllegalArgumentException();
-    if (!connection.isAlive()) return;
-    synchronized (this) {
-      addConnection(connection);
-    }
-  }
-
-  /** Close and remove all connections in the pool. */
+  /** Close and remove all idle connections in the pool. */
   public void evictAll() {
-    List<Connection> toEvict;
+    List<RealConnection> evictedConnections = new ArrayList<>();
     synchronized (this) {
-      toEvict = new ArrayList<>(connections);
-      connections.clear();
-      notifyAll();
-    }
-
-    for (int i = 0, size = toEvict.size(); i < size; i++) {
-      Util.closeQuietly(toEvict.get(i).getSocket());
-    }
-  }
-
-  private void runCleanupUntilPoolIsEmpty() {
-    while (true) {
-      if (!performCleanup()) return; // Halt cleanup.
-    }
-  }
-
-  /**
-   * Attempts to make forward progress on connection eviction. There are three possible outcomes:
-   *
-   * <h3>The pool is empty.</h3>
-   * In this case, this method returns false and the eviction job should exit because there are no
-   * further cleanup tasks coming. (If additional connections are added to the pool, another cleanup
-   * job must be enqueued.)
-   *
-   * <h3>Connections were evicted.</h3>
-   * At least one connections was eligible for immediate eviction and was evicted. The method
-   * returns true and cleanup should continue.
-   *
-   * <h3>We waited to evict.</h3>
-   * None of the pooled connections were eligible for immediate eviction. Instead, we waited until
-   * either a connection became eligible for eviction, or the connections list changed. In either
-   * case, the method returns true and cleanup should continue.
-   */
-  // VisibleForTesting
-  boolean performCleanup() {
-    List<Connection> evictableConnections;
-
-    synchronized (this) {
-      if (connections.isEmpty()) return false; // Halt cleanup.
-
-      evictableConnections = new ArrayList<>();
-      int idleConnectionCount = 0;
-      long now = System.nanoTime();
-      long nanosUntilNextEviction = keepAliveDurationNs;
-
-      // Collect connections eligible for immediate eviction.
-      for (Iterator<Connection> i = connections.descendingIterator(); i.hasNext(); ) {
-        Connection connection = i.next();
-        long nanosUntilEviction = connection.getIdleStartTimeNs() + keepAliveDurationNs - now;
-        if (nanosUntilEviction <= 0 || !connection.isAlive()) {
+      for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
+        RealConnection connection = i.next();
+        if (connection.allocationCount == 0) {
+          connection.noNewStreams = true;
+          evictedConnections.add(connection);
           i.remove();
-          evictableConnections.add(connection);
-        } else if (connection.isIdle()) {
-          idleConnectionCount++;
-          nanosUntilNextEviction = Math.min(nanosUntilNextEviction, nanosUntilEviction);
-        }
-      }
-
-      // If the pool has too many idle connections, gather more! Oldest to newest.
-      for (Iterator<Connection> i = connections.descendingIterator();
-          i.hasNext() && idleConnectionCount > maxIdleConnections; ) {
-        Connection connection = i.next();
-        if (connection.isIdle()) {
-          evictableConnections.add(connection);
-          i.remove();
-          --idleConnectionCount;
-        }
-      }
-
-      // If there's nothing to evict, wait. (This will be interrupted if connections are added.)
-      if (evictableConnections.isEmpty()) {
-        try {
-          long millisUntilNextEviction = nanosUntilNextEviction / (1000 * 1000);
-          long remainderNanos = nanosUntilNextEviction - millisUntilNextEviction * (1000 * 1000);
-          this.wait(millisUntilNextEviction, (int) remainderNanos);
-          return true; // Cleanup continues.
-        } catch (InterruptedException ignored) {
         }
       }
     }
 
-    // Actually do the eviction. Note that we avoid synchronized() when closing sockets.
-    for (int i = 0, size = evictableConnections.size(); i < size; i++) {
-      Connection expiredConnection = evictableConnections.get(i);
-      Util.closeQuietly(expiredConnection.getSocket());
+    for (RealConnection connection : evictedConnections) {
+      Util.closeQuietly(connection.getSocket());
     }
-
-    return true; // Cleanup continues.
-  }
-
-  /**
-   * Replace the default {@link Executor} with a different one. Only use in tests.
-   */
-  // VisibleForTesting
-  void replaceCleanupExecutorForTests(Executor cleanupExecutor) {
-    this.executor = cleanupExecutor;
-  }
-
-  /**
-   * Returns a snapshot of the connections in this pool, ordered from newest to
-   * oldest. Only use in tests.
-   */
-  // VisibleForTesting
-  synchronized List<Connection> getConnections() {
-    return new ArrayList<>(connections);
   }
 }

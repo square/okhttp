@@ -17,10 +17,7 @@ package com.squareup.okhttp.internal.http;
 
 import com.squareup.okhttp.Address;
 import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Route;
-import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RouteDatabase;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -40,8 +37,6 @@ import java.util.NoSuchElementException;
  */
 public final class RouteSelector {
   private final Address address;
-  private final HttpUrl url;
-  private final OkHttpClient client;
   private final RouteDatabase routeDatabase;
 
   /* The most recently attempted route. */
@@ -59,18 +54,11 @@ public final class RouteSelector {
   /* State for negotiating failed routes */
   private final List<Route> postponedRoutes = new ArrayList<>();
 
-  private RouteSelector(Address address, HttpUrl url, OkHttpClient client) {
+  public RouteSelector(Address address, RouteDatabase routeDatabase) {
     this.address = address;
-    this.url = url;
-    this.client = client;
-    this.routeDatabase = Internal.instance.routeDatabase(client);
+    this.routeDatabase = routeDatabase;
 
-    resetNextProxy(url, address.getProxy());
-  }
-
-  public static RouteSelector get(Address address, Request request, OkHttpClient client)
-      throws IOException {
-    return new RouteSelector(address, request.httpUrl(), client);
+    resetNextProxy(address.url(), address.getProxy());
   }
 
   /**
@@ -114,7 +102,7 @@ public final class RouteSelector {
     if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
       address.getProxySelector().connectFailed(
-          url.uri(), failedRoute.getProxy().address(), failure);
+          address.url().uri(), failedRoute.getProxy().address(), failure);
     }
 
     routeDatabase.failed(failedRoute);
@@ -129,7 +117,7 @@ public final class RouteSelector {
       // Try each of the ProxySelector choices until one connection succeeds. If none succeed
       // then we'll try a direct connection below.
       proxies = new ArrayList<>();
-      List<Proxy> selectedProxies = client.getProxySelector().select(url.uri());
+      List<Proxy> selectedProxies = address.getProxySelector().select(url.uri());
       if (selectedProxies != null) proxies.addAll(selectedProxies);
       // Finally try a direct connection. We only try it once!
       proxies.removeAll(Collections.singleton(Proxy.NO_PROXY));

@@ -22,7 +22,7 @@ import com.squareup.okhttp.ResponseBody;
 import java.io.IOException;
 import okio.Sink;
 
-public interface Transport {
+public interface HttpStream {
   /**
    * The timeout to use while discarding a stream of input data. Since this is
    * used for connection reuse, this timeout should be significantly less than
@@ -51,17 +51,11 @@ public interface Transport {
   /** Returns a stream that reads the response body. */
   ResponseBody openResponseBody(Response response) throws IOException;
 
-  /**
-   * Configures the response body to pool or close the socket connection when
-   * the response body is closed.
-   */
-  void releaseConnectionOnIdle() throws IOException;
-
-  void disconnect(HttpEngine engine) throws IOException;
+  void setHttpEngine(HttpEngine httpEngine);
 
   /**
-   * Returns true if the socket connection held by this transport can be reused
-   * for a follow-up exchange.
+   * Cancel this stream. Resources held by this stream will be cleaned up, though not synchronously.
+   * That may happen later by the connection pool thread.
    */
-  boolean canReuseConnection();
+  void cancel();
 }

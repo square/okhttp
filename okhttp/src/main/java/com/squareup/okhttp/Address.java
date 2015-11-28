@@ -36,8 +36,7 @@ import static com.squareup.okhttp.internal.Util.equal;
  * {@link Connection}.
  */
 public final class Address {
-  final String uriHost;
-  final int uriPort;
+  final HttpUrl url;
   final Dns dns;
   final SocketFactory socketFactory;
   final Authenticator authenticator;
@@ -53,11 +52,11 @@ public final class Address {
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
       List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
-    if (uriHost == null) throw new NullPointerException("uriHost == null");
-    this.uriHost = uriHost;
-
-    if (uriPort <= 0) throw new IllegalArgumentException("uriPort <= 0: " + uriPort);
-    this.uriPort = uriPort;
+    this.url = new HttpUrl.Builder()
+        .scheme(sslSocketFactory != null ? "https" : "http")
+        .host(uriHost)
+        .port(uriPort)
+        .build();
 
     if (dns == null) throw new IllegalArgumentException("dns == null");
     this.dns = dns;
@@ -83,17 +82,33 @@ public final class Address {
     this.certificatePinner = certificatePinner;
   }
 
-  /** Returns the hostname of the origin server. */
+  /**
+   * Returns a URL with the hostname and port of the origin server. The path, query, and fragment of
+   * this URL are always empty, since they are not significant for planning a route.
+   */
+  public HttpUrl url() {
+    return url;
+  }
+
+  /**
+   * Returns the hostname of the origin server.
+   *
+   * @deprecated prefer {@code address.url().host()}.
+   */
+  @Deprecated
   public String getUriHost() {
-    return uriHost;
+    return url.host();
   }
 
   /**
    * Returns the port of the origin server; typically 80 or 443. Unlike
    * may {@code getPort()} accessors, this method never returns -1.
+   *
+   * @deprecated prefer {@code address.url().port()}.
    */
+  @Deprecated
   public int getUriPort() {
-    return uriPort;
+    return url.port();
   }
 
   /** Returns the service that will be used to resolve IP addresses for hostnames. */
@@ -157,8 +172,7 @@ public final class Address {
   @Override public boolean equals(Object other) {
     if (other instanceof Address) {
       Address that = (Address) other;
-      return this.uriHost.equals(that.uriHost)
-          && this.uriPort == that.uriPort
+      return this.url.equals(that.url)
           && this.dns.equals(that.dns)
           && this.authenticator.equals(that.authenticator)
           && this.protocols.equals(that.protocols)
@@ -174,8 +188,7 @@ public final class Address {
 
   @Override public int hashCode() {
     int result = 17;
-    result = 31 * result + uriHost.hashCode();
-    result = 31 * result + uriPort;
+    result = 31 * result + url.hashCode();
     result = 31 * result + dns.hashCode();
     result = 31 * result + authenticator.hashCode();
     result = 31 * result + protocols.hashCode();

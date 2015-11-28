@@ -837,25 +837,28 @@ public final class CallTest {
   }
 
   @Test public void recoverWhenRetryOnConnectionFailureIsTrue() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse().setBody("seed connection pool"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("retry success"));
 
     client.setDns(new DoubleInetAddressDns());
     assertTrue(client.getRetryOnConnectionFailure());
 
     Request request = new Request.Builder().url(server.url("/")).build();
-    Response response = client.newCall(request).execute();
-    assertEquals("retry success", response.body().string());
+    executeSynchronously(request).assertBody("seed connection pool");
+    executeSynchronously(request).assertBody("retry success");
   }
 
   @Test public void noRecoverWhenRetryOnConnectionFailureIsFalse() throws Exception {
-    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+    server.enqueue(new MockResponse().setBody("seed connection pool"));
+    server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("unreachable!"));
 
     client.setDns(new DoubleInetAddressDns());
     client.setRetryOnConnectionFailure(false);
 
     Request request = new Request.Builder().url(server.url("/")).build();
+    executeSynchronously(request).assertBody("seed connection pool");
     try {
       // If this succeeds, too many requests were made.
       client.newCall(request).execute();
