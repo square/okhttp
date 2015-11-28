@@ -1276,7 +1276,7 @@ public final class URLConnectionTest {
 
     HttpURLConnection connection = client.open(server.getUrl("/"));
     assertContent("{}", connection);
-    assertEquals(0, client.client().getConnectionPool().getConnectionCount());
+    assertEquals(0, client.client().getConnectionPool().getIdleConnectionCount());
   }
 
   @Test public void earlyDisconnectDoesntHarmPoolingWithChunkedEncoding() throws Exception {
@@ -1958,7 +1958,7 @@ public final class URLConnectionTest {
 
     assertContent("This is the 2nd server!", client.open(server.getUrl("/a")));
 
-    assertEquals(Arrays.asList(server.getUrl("/a").toURI(), server2.getUrl("/b").toURI()),
+    assertEquals(Arrays.asList(server.getUrl("/").toURI(), server2.getUrl("/").toURI()),
         proxySelectionRequests);
   }
 

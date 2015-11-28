@@ -17,22 +17,16 @@ package com.squareup.okhttp.internal;
 
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.ConnectionSpec;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.internal.http.HttpEngine;
-import com.squareup.okhttp.internal.http.RouteException;
-import com.squareup.okhttp.internal.http.Transport;
-import java.io.IOException;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
-import okio.BufferedSink;
-import okio.BufferedSource;
 
 /**
  * Escalate internal APIs in {@code com.squareup.okhttp} so they can be used
@@ -49,19 +43,6 @@ public abstract class Internal {
 
   public static Internal instance;
 
-  public abstract Transport newTransport(Connection connection, HttpEngine httpEngine)
-      throws IOException;
-
-  public abstract boolean clearOwner(Connection connection);
-
-  public abstract void closeIfOwnedBy(Connection connection, Object owner) throws IOException;
-
-  public abstract int recycleCount(Connection connection);
-
-  public abstract void setOwner(Connection connection, HttpEngine httpEngine);
-
-  public abstract boolean isReadable(Connection pooled);
-
   public abstract void addLenient(Headers.Builder builder, String line);
 
   public abstract void addLenient(Headers.Builder builder, String name, String value);
@@ -70,12 +51,7 @@ public abstract class Internal {
 
   public abstract InternalCache internalCache(OkHttpClient client);
 
-  public abstract void recycle(ConnectionPool pool, Connection connection);
-
-  public abstract RouteDatabase routeDatabase(OkHttpClient client);
-
-  public abstract void connectAndSetOwner(OkHttpClient client, Connection connection,
-      HttpEngine owner) throws RouteException;
+  public abstract RouteDatabase routeDatabase(ConnectionPool connectionPool);
 
   public abstract void apply(ConnectionSpec tlsConfiguration, SSLSocket sslSocket,
       boolean isFallback);
@@ -85,9 +61,5 @@ public abstract class Internal {
 
   // TODO delete the following when web sockets move into the main package.
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
-  public abstract void callEngineReleaseConnection(Call call) throws IOException;
-  public abstract Connection callEngineGetConnection(Call call);
-  public abstract BufferedSource connectionRawSource(Connection connection);
-  public abstract BufferedSink connectionRawSink(Connection connection);
-  public abstract void connectionSetOwner(Connection connection, Object owner);
+  public abstract StreamAllocation callEngineGetStreamAllocation(Call call);
 }

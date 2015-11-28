@@ -125,7 +125,7 @@ public final class Dispatcher {
       if (Util.equal(tag, call.tag())) {
         call.get().canceled = true;
         HttpEngine engine = call.get().engine;
-        if (engine != null) engine.disconnect();
+        if (engine != null) engine.cancel();
       }
     }
 

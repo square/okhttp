@@ -39,6 +39,7 @@ import com.squareup.okhttp.internal.http.RequestException;
 import com.squareup.okhttp.internal.http.RetryableSink;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.StatusLine;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -123,7 +124,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     // Calling disconnect() before a connection exists should have no effect.
     if (httpEngine == null) return;
 
-    httpEngine.disconnect();
+    httpEngine.cancel();
 
     // This doesn't close the stream because doing so would require all stream
     // access to be synchronized. It's expected that the thread using the
@@ -327,8 +328,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     }
   }
 
-  private HttpEngine newHttpEngine(String method, Connection connection, RetryableSink requestBody,
-      Response priorResponse) throws MalformedURLException, UnknownHostException {
+  private HttpEngine newHttpEngine(String method, StreamAllocation streamAllocation,
+      RetryableSink requestBody, Response priorResponse)
+      throws MalformedURLException, UnknownHostException {
     // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
     RequestBody placeholderBody = HttpMethod.requiresRequestBody(method)
         ? EMPTY_REQUEST_BODY
@@ -372,7 +374,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       engineClient = client.clone().setCache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, true, false, connection, null,
+    return new HttpEngine(engineClient, request, bufferRequestBody, true, false, streamAllocation,
         requestBody, priorResponse);
   }
 
@@ -402,7 +404,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       Request followUp = httpEngine.followUpRequest();
 
       if (followUp == null) {
-        httpEngine.releaseConnection();
+        httpEngine.releaseStreamAllocation();
         return httpEngine;
       }
 
@@ -426,12 +428,13 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
       }
 
+      StreamAllocation streamAllocation = httpEngine.close();
       if (!httpEngine.sameConnection(followUp.httpUrl())) {
-        httpEngine.releaseConnection();
+        streamAllocation.release();
+        streamAllocation = null;
       }
 
-      Connection connection = httpEngine.close();
-      httpEngine = newHttpEngine(followUp.method(), connection, (RetryableSink) requestBody,
+      httpEngine = newHttpEngine(followUp.method(), streamAllocation, (RetryableSink) requestBody,
           response);
     }
   }
@@ -444,10 +447,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   private boolean execute(boolean readResponse) throws IOException {
     try {
       httpEngine.sendRequest();
-      route = httpEngine.getRoute();
-      handshake = httpEngine.getConnection() != null
-          ? httpEngine.getConnection().getHandshake()
-          : null;
+      Connection connection = httpEngine.getConnection();
+      if (connection != null) {
+        route = connection.getRoute();
+        handshake = connection.getHandshake();
+      } else {
+        route = null;
+        handshake = null;
+      }
       if (readResponse) {
         httpEngine.readResponse();
       }

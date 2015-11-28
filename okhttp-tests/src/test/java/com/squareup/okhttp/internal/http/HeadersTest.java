@@ -41,7 +41,7 @@ public final class HeadersTest {
         ":status", "200 OK",
         ":version", "HTTP/1.1");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
+    Response response = Http2xStream.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(3, headers.size());
     assertEquals(Protocol.SPDY_3, response.protocol());
@@ -65,7 +65,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = FramedTransport.readSpdy3HeadersList(headerBlock).request(request).build();
+    Response response = Http2xStream.readSpdy3HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(0, headers.size());
   }
@@ -76,7 +76,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         "connection", "close");
     Request request = new Request.Builder().url("http://square.com/").build();
-    Response response = FramedTransport.readHttp2HeadersList(headerBlock).request(request).build();
+    Response response = Http2xStream.readHttp2HeadersList(headerBlock).request(request).build();
     Headers headers = response.headers();
     assertEquals(1, headers.size());
     assertEquals(":version", headers.name(0));
@@ -91,7 +91,7 @@ public final class HeadersTest {
         .addHeader("set-cookie", "Cookie2")
         .header(":status", "200 OK")
         .build();
-    List<Header> headerBlock = FramedTransport.spdy3HeadersList(request);
+    List<Header> headerBlock = Http2xStream.spdy3HeadersList(request);
     List<Header> expected = headerEntries(
         ":method", "GET",
         ":path", "/",
@@ -116,7 +116,7 @@ public final class HeadersTest {
         ":version", "HTTP/1.1",
         ":host", "square.com",
         ":scheme", "http");
-    assertEquals(expected, FramedTransport.spdy3HeadersList(request));
+    assertEquals(expected, Http2xStream.spdy3HeadersList(request));
   }
 
   @Test public void http2HeadersListDropsForbiddenHeadersHttp2() {
@@ -130,7 +130,7 @@ public final class HeadersTest {
         ":path", "/",
         ":authority", "square.com",
         ":scheme", "http");
-    assertEquals(expected, FramedTransport.http2HeadersList(request));
+    assertEquals(expected, Http2xStream.http2HeadersList(request));
   }
 
   @Test public void ofTrims() {

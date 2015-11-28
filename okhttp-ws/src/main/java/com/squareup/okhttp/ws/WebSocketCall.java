@@ -17,12 +17,12 @@ package com.squareup.okhttp.ws;
 
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
-import com.squareup.okhttp.Connection;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
 import java.io.IOException;
@@ -33,8 +33,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
-import okio.BufferedSink;
-import okio.BufferedSource;
 import okio.ByteString;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -116,11 +114,9 @@ public final class WebSocketCall {
     call.cancel();
   }
 
-  private void createWebSocket(Response response, WebSocketListener listener)
-      throws IOException {
+  private void createWebSocket(Response response, WebSocketListener listener) throws IOException {
     if (response.code() != 101) {
-      // TODO call.engine.releaseConnection();
-      Internal.instance.callEngineReleaseConnection(call);
+      Util.closeQuietly(response.body());
       throw new ProtocolException("Expected HTTP 101 response but was '"
           + response.code()
           + " "
@@ -148,21 +144,9 @@ public final class WebSocketCall {
           + "'");
     }
 
-    // TODO connection = call.engine.getConnection();
-    Connection connection = Internal.instance.callEngineGetConnection(call);
-    // TODO if (!connection.clearOwner()) {
-    if (!Internal.instance.clearOwner(connection)) {
-      throw new IllegalStateException("Unable to take ownership of connection.");
-    }
-
-    BufferedSource source = Internal.instance.connectionRawSource(connection);
-    BufferedSink sink = Internal.instance.connectionRawSink(connection);
-
-    final RealWebSocket webSocket =
-        ConnectionWebSocket.create(response, connection, source, sink, random, listener);
-
-    // TODO connection.setOwner(webSocket);
-    Internal.instance.connectionSetOwner(connection, webSocket);
+    StreamAllocation streamAllocation = Internal.instance.callEngineGetStreamAllocation(call);
+    RealWebSocket webSocket = StreamWebSocket.create(
+        streamAllocation, response, random, listener);
 
     listener.onOpen(webSocket, response);
 
@@ -171,33 +155,33 @@ public final class WebSocketCall {
   }
 
   // Keep static so that the WebSocketCall instance can be garbage collected.
-  private static class ConnectionWebSocket extends RealWebSocket {
-    static RealWebSocket create(Response response, Connection connection, BufferedSource source,
-        BufferedSink sink, Random random, WebSocketListener listener) {
+  private static class StreamWebSocket extends RealWebSocket {
+    static RealWebSocket create(StreamAllocation streamAllocation, Response response,
+        Random random, WebSocketListener listener) {
       String url = response.request().urlString();
       ThreadPoolExecutor replyExecutor =
           new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
               Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
       replyExecutor.allowCoreThreadTimeOut(true);
 
-      return new ConnectionWebSocket(connection, source, sink, random, replyExecutor, listener,
-          url);
+      return new StreamWebSocket(streamAllocation, random, replyExecutor, listener, url);
     }
 
-    private final Connection connection;
+    private final StreamAllocation streamAllocation;
     private final ExecutorService replyExecutor;
 
-    private ConnectionWebSocket(Connection connection, BufferedSource source, BufferedSink sink,
+    private StreamWebSocket(StreamAllocation streamAllocation,
         Random random, ExecutorService replyExecutor, WebSocketListener listener, String url) {
-      super(true /* is client */, source, sink, random, replyExecutor, listener, url);
-      this.connection = connection;
+      super(true /* is client */, streamAllocation.connection().source,
+          streamAllocation.connection().sink, random, replyExecutor, listener, url);
+      this.streamAllocation = streamAllocation;
       this.replyExecutor = replyExecutor;
     }
 
     @Override protected void close() throws IOException {
       replyExecutor.shutdown();
-      // TODO connection.closeIfOwnedBy(this);
-      Internal.instance.closeIfOwnedBy(connection, this);
+      streamAllocation.noNewStreams();
+      streamAllocation.streamFinished(streamAllocation.stream());
     }
   }
 }

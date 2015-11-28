@@ -855,7 +855,7 @@ public final class UrlConnectionCacheTest {
 
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
     assertEquals("A", readAscii(client.open(server.getUrl("/"))));
-    assertEquals(1, client.client().getConnectionPool().getConnectionCount());
+    assertEquals(1, client.client().getConnectionPool().getIdleConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {

@@ -35,8 +35,10 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import okio.ByteString;
+import okio.ForwardingSource;
 import okio.Okio;
 import okio.Sink;
+import okio.Source;
 
 import static com.squareup.okhttp.internal.framed.Header.RESPONSE_STATUS;
 import static com.squareup.okhttp.internal.framed.Header.TARGET_AUTHORITY;
@@ -46,7 +48,8 @@ import static com.squareup.okhttp.internal.framed.Header.TARGET_PATH;
 import static com.squareup.okhttp.internal.framed.Header.TARGET_SCHEME;
 import static com.squareup.okhttp.internal.framed.Header.VERSION;
 
-public final class FramedTransport implements Transport {
+/** An HTTP stream for HTTP/2 and SPDY. */
+public final class Http2xStream implements HttpStream {
   private static final ByteString CONNECTION = ByteString.encodeUtf8("connection");
   private static final ByteString HOST = ByteString.encodeUtf8("host");
   private static final ByteString KEEP_ALIVE = ByteString.encodeUtf8("keep-alive");
@@ -102,13 +105,18 @@ public final class FramedTransport implements Transport {
       ENCODING,
       UPGRADE);
 
-  private final HttpEngine httpEngine;
+  private final StreamAllocation streamAllocation;
   private final FramedConnection framedConnection;
+  private HttpEngine httpEngine;
   private FramedStream stream;
 
-  public FramedTransport(HttpEngine httpEngine, FramedConnection framedConnection) {
-    this.httpEngine = httpEngine;
+  public Http2xStream(StreamAllocation streamAllocation, FramedConnection framedConnection) {
+    this.streamAllocation = streamAllocation;
     this.framedConnection = framedConnection;
+  }
+
+  @Override public void setHttpEngine(HttpEngine httpEngine) {
+    this.httpEngine = httpEngine;
   }
 
   @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
@@ -126,6 +134,7 @@ public final class FramedTransport implements Transport {
     boolean hasResponseBody = true;
     stream = framedConnection.newStream(requestHeaders, permitsRequestBody, hasResponseBody);
     stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
+    stream.writeTimeout().timeout(httpEngine.client.getWriteTimeout(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
@@ -266,17 +275,22 @@ public final class FramedTransport implements Transport {
   }
 
   @Override public ResponseBody openResponseBody(Response response) throws IOException {
-    return new RealResponseBody(response.headers(), Okio.buffer(stream.getSource()));
+    Source source = new StreamFinishingSource(stream.getSource());
+    return new RealResponseBody(response.headers(), Okio.buffer(source));
   }
 
-  @Override public void releaseConnectionOnIdle() {
+  @Override public void cancel() {
+    if (stream != null) stream.closeLater(ErrorCode.CANCEL);
   }
 
-  @Override public void disconnect(HttpEngine engine) throws IOException {
-    if (stream != null) stream.close(ErrorCode.CANCEL);
-  }
+  class StreamFinishingSource extends ForwardingSource {
+    public StreamFinishingSource(Source delegate) {
+      super(delegate);
+    }
 
-  @Override public boolean canReuseConnection() {
-    return true; // TODO: framedConnection.isClosed() ?
+    @Override public void close() throws IOException {
+      streamAllocation.streamFinished(Http2xStream.this);
+      super.close();
+    }
   }
 }

@@ -16,17 +16,16 @@
 
 package com.squareup.okhttp.internal.http;
 
-import com.squareup.okhttp.Connection;
-import com.squareup.okhttp.ConnectionPool;
 import com.squareup.okhttp.Headers;
+import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.io.RealConnection;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -38,7 +37,6 @@ import okio.Timeout;
 
 import static com.squareup.okhttp.internal.Util.checkOffsetAndCount;
 import static com.squareup.okhttp.internal.http.StatusLine.HTTP_CONTINUE;
-import static com.squareup.okhttp.internal.http.Transport.DISCARD_STREAM_TIMEOUT_MILLIS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -60,7 +58,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * #newFixedLengthSource(long) newFixedLengthSource(0)} and may skip reading and
  * closing that source.
  */
-public final class HttpConnection {
+public final class Http1xStream implements HttpStream {
   private static final int STATE_IDLE = 0; // Idle connections are ready to write request headers.
   private static final int STATE_OPEN_REQUEST_BODY = 1;
   private static final int STATE_WRITING_REQUEST_BODY = 2;
@@ -69,63 +67,89 @@ public final class HttpConnection {
   private static final int STATE_READING_RESPONSE_BODY = 5;
   private static final int STATE_CLOSED = 6;
 
-  private static final int ON_IDLE_HOLD = 0;
-  private static final int ON_IDLE_POOL = 1;
-  private static final int ON_IDLE_CLOSE = 2;
-
-  private final ConnectionPool pool;
-  private final Connection connection;
-  private final Socket socket;
+  /** The stream allocation that owns this stream. May be null for HTTPS proxy tunnels. */
+  private final StreamAllocation streamAllocation;
   private final BufferedSource source;
   private final BufferedSink sink;
-
+  private HttpEngine httpEngine;
   private int state = STATE_IDLE;
-  private int onIdle = ON_IDLE_HOLD;
 
-  public HttpConnection(ConnectionPool pool, Connection connection, Socket socket)
-      throws IOException {
-    this.pool = pool;
-    this.connection = connection;
-    this.socket = socket;
-    this.source = Okio.buffer(Okio.source(socket));
-    this.sink = Okio.buffer(Okio.sink(socket));
+  public Http1xStream(StreamAllocation streamAllocation, BufferedSource source, BufferedSink sink) {
+    this.streamAllocation = streamAllocation;
+    this.source = source;
+    this.sink = sink;
   }
 
-  public void setTimeouts(int readTimeoutMillis, int writeTimeoutMillis) {
-    if (readTimeoutMillis != 0) {
-      source.timeout().timeout(readTimeoutMillis, MILLISECONDS);
-    }
-    if (writeTimeoutMillis != 0) {
-      sink.timeout().timeout(writeTimeoutMillis, MILLISECONDS);
-    }
+  @Override public void setHttpEngine(HttpEngine httpEngine) {
+    this.httpEngine = httpEngine;
   }
 
-  /**
-   * Configure this connection to put itself back into the connection pool when
-   * the HTTP response body is exhausted.
-   */
-  public void poolOnIdle() {
-    onIdle = ON_IDLE_POOL;
-
-    // If we're already idle, go to the pool immediately.
-    if (state == STATE_IDLE) {
-      onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
-      Internal.instance.recycle(pool, connection);
+  @Override public Sink createRequestBody(Request request, long contentLength) throws IOException {
+    if ("chunked".equalsIgnoreCase(request.header("Transfer-Encoding"))) {
+      // Stream a request body of unknown length.
+      return newChunkedSink();
     }
+
+    if (contentLength != -1) {
+      // Stream a request body of a known length.
+      return newFixedLengthSink(contentLength);
+    }
+
+    throw new IllegalStateException(
+        "Cannot stream a request body without chunked encoding or a known content length!");
+  }
+
+  @Override public void cancel() {
+    RealConnection connection = streamAllocation.connection();
+    if (connection != null) connection.cancel();
   }
 
   /**
-   * Configure this connection to close itself when the HTTP response body is
-   * exhausted.
+   * Prepares the HTTP headers and sends them to the server.
+   *
+   * <p>For streaming requests with a body, headers must be prepared
+   * <strong>before</strong> the output stream has been written to. Otherwise
+   * the body would need to be buffered!
+   *
+   * <p>For non-streaming requests with a body, headers must be prepared
+   * <strong>after</strong> the output stream has been written to and closed.
+   * This ensures that the {@code Content-Length} header field receives the
+   * proper value.
    */
-  public void closeOnIdle() throws IOException {
-    onIdle = ON_IDLE_CLOSE;
+  @Override public void writeRequestHeaders(Request request) throws IOException {
+    httpEngine.writingRequestHeaders();
+    String requestLine = RequestLine.get(
+        request, httpEngine.getConnection().getRoute().getProxy().type());
+    writeRequest(request.headers(), requestLine);
+  }
 
-    // If we're already idle, close immediately.
-    if (state == STATE_IDLE) {
-      state = STATE_CLOSED;
-      connection.getSocket().close();
+  @Override public Response.Builder readResponseHeaders() throws IOException {
+    return readResponse();
+  }
+
+  @Override public ResponseBody openResponseBody(Response response) throws IOException {
+    Source source = getTransferStream(response);
+    return new RealResponseBody(response.headers(), Okio.buffer(source));
+  }
+
+  private Source getTransferStream(Response response) throws IOException {
+    if (!HttpEngine.hasBody(response)) {
+      return newFixedLengthSource(0);
     }
+
+    if ("chunked".equalsIgnoreCase(response.header("Transfer-Encoding"))) {
+      return newChunkedSource(httpEngine);
+    }
+
+    long contentLength = OkHeaders.contentLength(response);
+    if (contentLength != -1) {
+      return newFixedLengthSource(contentLength);
+    }
+
+    // Wrap the input stream from the connection (rather than just returning
+    // "socketIn" directly here), so that we can control its use after the
+    // reference escapes.
+    return newUnknownLengthSource();
   }
 
   /** Returns true if this connection is closed. */
@@ -133,37 +157,8 @@ public final class HttpConnection {
     return state == STATE_CLOSED;
   }
 
-  public void closeIfOwnedBy(Object owner) throws IOException {
-    Internal.instance.closeIfOwnedBy(connection, owner);
-  }
-
-  public void flush() throws IOException {
+  @Override public void finishRequest() throws IOException {
     sink.flush();
-  }
-
-  /** Returns the number of buffered bytes immediately readable. */
-  public long bufferSize() {
-    return source.buffer().size();
-  }
-
-  /** Test for a stale socket. */
-  public boolean isReadable() {
-    try {
-      int readTimeout = socket.getSoTimeout();
-      try {
-        socket.setSoTimeout(1);
-        if (source.exhausted()) {
-          return false; // Stream is exhausted; socket is closed.
-        }
-        return true;
-      } finally {
-        socket.setSoTimeout(readTimeout);
-      }
-    } catch (SocketTimeoutException ignored) {
-      return true; // Read timed out; socket is good.
-    } catch (IOException e) {
-      return false; // Couldn't read; socket is closed.
-    }
   }
 
   /** Returns bytes of a request header for sending on an HTTP transport. */
@@ -203,8 +198,7 @@ public final class HttpConnection {
       }
     } catch (EOFException e) {
       // Provide more context if the server ends the stream before sending a response.
-      IOException exception = new IOException("unexpected end of stream on " + connection
-          + " (recycle count=" + Internal.instance.recycleCount(connection) + ")");
+      IOException exception = new IOException("unexpected end of stream on " + streamAllocation);
       exception.initCause(e);
       throw exception;
     }
@@ -232,7 +226,7 @@ public final class HttpConnection {
     return new FixedLengthSink(contentLength);
   }
 
-  public void writeRequestBody(RetryableSink requestBody) throws IOException {
+  @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {
     if (state != STATE_OPEN_REQUEST_BODY) throw new IllegalStateException("state: " + state);
     state = STATE_READ_RESPONSE_HEADERS;
     requestBody.writeToSocket(sink);
@@ -252,16 +246,10 @@ public final class HttpConnection {
 
   public Source newUnknownLengthSource() throws IOException {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
+    if (streamAllocation == null) throw new IllegalStateException("streamAllocation == null");
     state = STATE_READING_RESPONSE_BODY;
+    streamAllocation.noNewStreamsOnConnection();
     return new UnknownLengthSource();
-  }
-
-  public BufferedSink rawSink() {
-    return sink;
-  }
-
-  public BufferedSource rawSource() {
-    return source;
   }
 
   /**
@@ -364,36 +352,25 @@ public final class HttpConnection {
      * Closes the cache entry and makes the socket available for reuse. This
      * should be invoked when the end of the body has been reached.
      */
-    protected final void endOfInput(boolean recyclable) throws IOException {
+    protected final void endOfInput() throws IOException {
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
 
       detachTimeout(timeout);
 
-      state = STATE_IDLE;
-      if (recyclable && onIdle == ON_IDLE_POOL) {
-        onIdle = ON_IDLE_HOLD; // Set the on idle policy back to the default.
-        Internal.instance.recycle(pool, connection);
-      } else if (onIdle == ON_IDLE_CLOSE) {
-        state = STATE_CLOSED;
-        connection.getSocket().close();
+      state = STATE_CLOSED;
+      if (streamAllocation != null) {
+        streamAllocation.streamFinished(Http1xStream.this);
       }
     }
 
-    /**
-     * Calls abort on the cache entry and disconnects the socket. This
-     * should be invoked when the connection is closed unexpectedly to
-     * invalidate the cache entry and to prevent the HTTP connection from
-     * being reused. HTTP messages are sent in serial so whenever a message
-     * cannot be read to completion, subsequent messages cannot be read
-     * either and the connection must be discarded.
-     *
-     * <p>An earlier implementation skipped the remaining bytes, but this
-     * requires that the entire transfer be completed. If the intention was
-     * to cancel the transfer, closing the connection is the only solution.
-     */
     protected final void unexpectedEndOfInput() {
-      Util.closeQuietly(connection.getSocket());
+      if (state == STATE_CLOSED) return;
+
       state = STATE_CLOSED;
+      if (streamAllocation != null) {
+        streamAllocation.noNewStreamsOnConnection();
+        streamAllocation.streamFinished(Http1xStream.this);
+      }
     }
   }
 
@@ -404,7 +381,7 @@ public final class HttpConnection {
     public FixedLengthSource(long length) throws IOException {
       bytesRemaining = length;
       if (bytesRemaining == 0) {
-        endOfInput(true);
+        endOfInput();
       }
     }
 
@@ -421,7 +398,7 @@ public final class HttpConnection {
 
       bytesRemaining -= read;
       if (bytesRemaining == 0) {
-        endOfInput(true);
+        endOfInput();
       }
       return read;
     }
@@ -486,7 +463,7 @@ public final class HttpConnection {
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
         httpEngine.receiveHeaders(readHeaders());
-        endOfInput(true);
+        endOfInput();
       }
     }
 
@@ -512,7 +489,7 @@ public final class HttpConnection {
       long read = source.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
-        endOfInput(false);
+        endOfInput();
         return -1;
       }
       return read;
