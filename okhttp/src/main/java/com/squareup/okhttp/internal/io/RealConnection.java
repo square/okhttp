@@ -59,6 +59,14 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public final class RealConnection implements Connection {
   private final Route route;
+
+  /** The low-level TCP socket. */
+  private Socket rawSocket;
+
+  /**
+   * The application layer socket. Either an {@link SSLSocket} layered over {@link #rawSocket}, or
+   * {@link #rawSocket} itself if this connection does not use SSL.
+   */
   private Socket socket;
   private Handshake handshake;
   private Protocol protocol;
@@ -92,13 +100,15 @@ public final class RealConnection implements Connection {
 
     while (protocol == null) {
       try {
-        socket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
+        rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
             ? address.getSocketFactory().createSocket()
             : new Socket(proxy);
         connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
         Util.closeQuietly(socket);
+        Util.closeQuietly(rawSocket);
         socket = null;
+        rawSocket = null;
         source = null;
         sink = null;
         handshake = null;
@@ -121,19 +131,20 @@ public final class RealConnection implements Connection {
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
-    socket.setSoTimeout(readTimeout);
+    rawSocket.setSoTimeout(readTimeout);
     try {
-      Platform.get().connectSocket(socket, route.getSocketAddress(), connectTimeout);
+      Platform.get().connectSocket(rawSocket, route.getSocketAddress(), connectTimeout);
     } catch (ConnectException e) {
       throw new ConnectException("Failed to connect to " + route.getSocketAddress());
     }
-    source = Okio.buffer(Okio.source(socket));
-    sink = Okio.buffer(Okio.sink(socket));
+    source = Okio.buffer(Okio.source(rawSocket));
+    sink = Okio.buffer(Okio.sink(rawSocket));
 
     if (route.getAddress().getSslSocketFactory() != null) {
       connectTls(readTimeout, writeTimeout, connectionSpecSelector);
     } else {
       protocol = Protocol.HTTP_1_1;
+      socket = rawSocket;
     }
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
@@ -157,7 +168,7 @@ public final class RealConnection implements Connection {
     try {
       // Create the wrapper over the connected socket.
       sslSocket = (SSLSocket) sslSocketFactory.createSocket(
-          socket, address.getUriHost(), address.getUriPort(), true /* autoClose */);
+          rawSocket, address.getUriHost(), address.getUriPort(), true /* autoClose */);
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
@@ -285,7 +296,8 @@ public final class RealConnection implements Connection {
   }
 
   public void cancel() {
-    Util.closeQuietly(socket);
+    // Close the raw socket so we don't end up doing synchronous I/O.
+    Util.closeQuietly(rawSocket);
   }
 
   @Override public Socket getSocket() {
