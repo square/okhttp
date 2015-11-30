@@ -165,7 +165,7 @@ public final class Http2xStream implements HttpStream {
     result.add(new Header(TARGET_HOST, Util.hostHeader(request.httpUrl())));
     result.add(new Header(TARGET_SCHEME, request.httpUrl().scheme()));
 
-    Set<ByteString> names = new LinkedHashSet<ByteString>();
+    Set<ByteString> names = new LinkedHashSet<>();
     for (int i = 0, size = headers.size(); i < size; i++) {
       // header names must be lowercase.
       ByteString name = ByteString.encodeUtf8(headers.name(i).toLowerCase(Locale.US));

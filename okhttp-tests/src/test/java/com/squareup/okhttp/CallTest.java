@@ -172,13 +172,18 @@ public final class CallTest {
         .assertNotSuccessful();
   }
 
-  @Test public void get_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void get_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
     get();
   }
 
-  @Test public void get_HTTP_2() throws Exception {
-    enableProtocol(Protocol.HTTP_2);
+  @Test public void get_HTTPS() throws Exception {
+    enableTls();
+    get();
+  }
+
+  @Test public void get_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     get();
   }
 
@@ -241,13 +246,18 @@ public final class CallTest {
     assertNull(recordedRequest.getHeader("Content-Length"));
   }
 
-  @Test public void head_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void head_HTTPS() throws Exception {
+    enableTls();
     head();
   }
 
   @Test public void head_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
+    head();
+  }
+
+  @Test public void head_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     head();
   }
 
@@ -270,13 +280,18 @@ public final class CallTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void post_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void post_HTTPS() throws Exception {
+    enableTls();
     post();
   }
 
   @Test public void post_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
+    post();
+  }
+
+  @Test public void post_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     post();
   }
 
@@ -299,8 +314,8 @@ public final class CallTest {
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void postZeroLength_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void postZerolength_HTTPS() throws Exception {
+    enableTls();
     postZeroLength();
   }
 
@@ -309,12 +324,17 @@ public final class CallTest {
     postZeroLength();
   }
 
+  @Test public void postZeroLength_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    postZeroLength();
+  }
+
   @Test public void postBodyRetransmittedAfterAuthorizationFail() throws Exception {
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
 
-  @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void postBodyRetransmittedAfterAuthorizationFail_HTTPS() throws Exception {
+    enableTls();
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
 
@@ -323,18 +343,28 @@ public final class CallTest {
     postBodyRetransmittedAfterAuthorizationFail("abc");
   }
 
+  @Test public void postBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
+    postBodyRetransmittedAfterAuthorizationFail("abc");
+  }
+
   /** Don't explode when resending an empty post. https://github.com/square/okhttp/issues/1131 */
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail() throws Exception {
     postBodyRetransmittedAfterAuthorizationFail("");
   }
 
-  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTPS() throws Exception {
+    enableTls();
     postBodyRetransmittedAfterAuthorizationFail("");
   }
 
   @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
+    postBodyRetransmittedAfterAuthorizationFail("");
+  }
+
+  @Test public void postEmptyBodyRetransmittedAfterAuthorizationFail_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     postBodyRetransmittedAfterAuthorizationFail("");
   }
 
@@ -414,13 +444,18 @@ public final class CallTest {
     assertEquals(null, recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void delete_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void delete_HTTPS() throws Exception {
+    enableTls();
     delete();
   }
 
   @Test public void delete_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
+    delete();
+  }
+
+  @Test public void delete_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     delete();
   }
 
@@ -460,13 +495,18 @@ public final class CallTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void put_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void put_HTTPS() throws Exception {
+    enableTls();
     put();
   }
 
   @Test public void put_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
+    put();
+  }
+
+  @Test public void put_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     put();
   }
 
@@ -489,13 +529,18 @@ public final class CallTest {
     assertEquals("text/plain; charset=utf-8", recordedRequest.getHeader("Content-Type"));
   }
 
-  @Test public void patch_SPDY_3() throws Exception {
-    enableProtocol(Protocol.SPDY_3);
+  @Test public void patch_HTTP_2() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
     patch();
   }
 
-  @Test public void patch_HTTP_2() throws Exception {
-    enableProtocol(Protocol.HTTP_2);
+  @Test public void patch_HTTPS() throws Exception {
+    enableTls();
+    patch();
+  }
+
+  @Test public void patch_SPDY_3() throws Exception {
+    enableProtocol(Protocol.SPDY_3);
     patch();
   }
 
@@ -807,26 +852,20 @@ public final class CallTest {
   }
 
   @Test public void tls() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    enableTls();
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     executeSynchronously(new Request.Builder().url(server.url("/")).build())
         .assertHandshake();
   }
 
   @Test public void tls_Async() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    enableTls();
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
-
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -966,12 +1005,10 @@ public final class CallTest {
   }
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    enableTls();
     server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location: http://square.com"));
 
     client.setFollowSslRedirects(false);
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
@@ -979,12 +1016,9 @@ public final class CallTest {
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    enableTls();
     server.enqueue(new MockResponse());
     server.enqueue(new MockResponse());
-
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     // Make a first request without certificate pinning. Use it to collect certificates to pin.
     Request request1 = new Request.Builder().url(server.url("/")).build();
@@ -1002,11 +1036,8 @@ public final class CallTest {
   }
 
   @Test public void unmatchingPinnedCertificate() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    enableTls();
     server.enqueue(new MockResponse());
-
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     // Pin publicobject.com's cert.
     client.setCertificatePinner(new CertificatePinner.Builder()
@@ -1605,6 +1636,11 @@ public final class CallTest {
     }
   }
 
+  @Test public void cancelInFlightBeforeResponseReadThrowsIOE_HTTPS() throws Exception {
+    enableTls();
+    cancelInFlightBeforeResponseReadThrowsIOE();
+  }
+
   @Test public void cancelInFlightBeforeResponseReadThrowsIOE_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     cancelInFlightBeforeResponseReadThrowsIOE();
@@ -1642,6 +1678,11 @@ public final class CallTest {
     callback.await(requestB.httpUrl()).assertFailure("Canceled");
   }
 
+  @Test public void canceledBeforeIOSignalsOnFailure_HTTPS() throws Exception {
+    enableTls();
+    canceledBeforeIOSignalsOnFailure();
+  }
+
   @Test public void canceledBeforeIOSignalsOnFailure_HTTP_2() throws Exception {
     enableProtocol(Protocol.HTTP_2);
     canceledBeforeIOSignalsOnFailure();
@@ -1667,6 +1708,11 @@ public final class CallTest {
 
     callback.await(requestA.httpUrl()).assertFailure("Canceled", "stream was reset: CANCEL",
         "Socket closed");
+  }
+
+  @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTPS() throws Exception {
+    enableTls();
+    canceledBeforeResponseReadSignalsOnFailure();
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure_HTTP_2() throws Exception {
@@ -1714,6 +1760,12 @@ public final class CallTest {
     latch.await();
     assertEquals("A", bodyRef.get());
     assertFalse(failureRef.get());
+  }
+
+  @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTPS()
+      throws Exception {
+    enableTls();
+    canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce();
   }
 
   @Test public void canceledAfterResponseIsDeliveredBreaksStreamButSignalsOnce_HTTP_2()
@@ -2087,11 +2139,15 @@ public final class CallTest {
    * -Xbootclasspath/p:/tmp/alpn-boot-8.0.0.v20140317}
    */
   private void enableProtocol(Protocol protocol) {
+    enableTls();
+    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    server.setProtocols(client.getProtocols());
+  }
+
+  private void enableTls() {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
     server.useHttps(sslContext.getSocketFactory(), false);
-    server.setProtocols(client.getProtocols());
   }
 
   private Buffer gzip(String data) throws IOException {
