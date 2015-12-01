@@ -158,7 +158,10 @@ public final class Spdy3ConnectionTest {
         stream.reply(headerEntries("b", "banana"), true);
       }
     };
-    new FramedConnection.Builder(true, peer.openSocket()).handler(handler).build();
+    new FramedConnection.Builder(true)
+        .socket(peer.openSocket())
+        .handler(handler)
+        .build();
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
@@ -621,7 +624,10 @@ public final class Spdy3ConnectionTest {
         stream.reply(headerEntries("c", "cola"), true);
       }
     };
-    new FramedConnection.Builder(true, peer.openSocket()).handler(handler).build();
+    new FramedConnection.Builder(true)
+        .socket(peer.openSocket())
+        .handler(handler)
+        .build();
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
@@ -1315,7 +1321,8 @@ public final class Spdy3ConnectionTest {
 
     String longString = ByteString.of(randomBytes(2048)).base64();
     Socket socket = peer.openSocket();
-    FramedConnection connection = new FramedConnection.Builder(true, socket)
+    FramedConnection connection = new FramedConnection.Builder(true)
+        .socket(socket)
         .protocol(SPDY3.getProtocol())
         .build();
     socket.shutdownOutput();
@@ -1343,7 +1350,8 @@ public final class Spdy3ConnectionTest {
 
   private FramedConnection.Builder connectionBuilder(MockSpdyPeer peer, Variant variant)
       throws IOException {
-    return new FramedConnection.Builder(true, peer.openSocket())
+    return new FramedConnection.Builder(true)
+        .socket(peer.openSocket())
         .protocol(variant.getProtocol());
   }
 
