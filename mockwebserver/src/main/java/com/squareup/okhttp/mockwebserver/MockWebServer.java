@@ -467,10 +467,11 @@ public final class MockWebServer implements TestRule {
 
         if (protocol != Protocol.HTTP_1_1) {
           FramedSocketHandler framedSocketHandler = new FramedSocketHandler(socket, protocol);
-          FramedConnection framedConnection =
-              new FramedConnection.Builder(false, socket).protocol(protocol)
-                  .handler(framedSocketHandler)
-                  .build();
+          FramedConnection framedConnection = new FramedConnection.Builder(false)
+              .socket(socket)
+              .protocol(protocol)
+              .handler(framedSocketHandler)
+              .build();
           openFramedConnections.add(framedConnection);
           openClientSockets.remove(socket);
           return;

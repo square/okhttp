@@ -82,7 +82,6 @@ public final class RealConnection implements Connection {
     this.route = route;
   }
 
-  // TODO(jwilson): make non public.
   public void connect(int connectTimeout, int readTimeout, int writeTimeout,
       List<ConnectionSpec> connectionSpecs, boolean connectionRetryEnabled) throws RouteException {
     if (protocol != null) throw new IllegalStateException("already connected");
@@ -149,7 +148,8 @@ public final class RealConnection implements Connection {
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
-      framedConnection = new FramedConnection.Builder(route.getAddress().url().host(), true, socket)
+      framedConnection = new FramedConnection.Builder(true)
+          .socket(socket, route.getAddress().url().host(), source, sink)
           .protocol(protocol).build();
       framedConnection.sendConnectionPreface();
     }

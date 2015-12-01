@@ -65,7 +65,8 @@ public final class FramedServer implements IncomingStreamHandler {
         if (protocol == null || !framedProtocols.contains(protocol)) {
           throw new ProtocolException("Protocol " + protocol + " unsupported");
         }
-        FramedConnection framedConnection = new FramedConnection.Builder(false, sslSocket)
+        FramedConnection framedConnection = new FramedConnection.Builder(false)
+            .socket(sslSocket)
             .protocol(protocol)
             .handler(this)
             .build();
