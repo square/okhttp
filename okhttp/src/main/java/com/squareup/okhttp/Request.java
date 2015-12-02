@@ -189,6 +189,10 @@ public final class Request {
     /**
      * Adds a header with {@code name} and {@code value}. Prefer this method for
      * multiply-valued headers like "Cookie".
+     *
+     * If we specify the header "Content-Length", the library internally overrides
+     * this header. Reason being, if the library performs internal transformations like
+     * compression, the length would change.
      */
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
