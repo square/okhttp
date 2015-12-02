@@ -70,11 +70,10 @@ public final class RealConnection implements Connection {
   private Socket socket;
   private Handshake handshake;
   private Protocol protocol;
-  public FramedConnection framedConnection;
+  public volatile FramedConnection framedConnection;
   public int streamCount;
   public BufferedSource source;
   public BufferedSink sink;
-  public int allocationLimit;
   public int allocationCount;
   public boolean noNewStreams;
 
@@ -112,7 +111,6 @@ public final class RealConnection implements Connection {
         sink = null;
         handshake = null;
         protocol = null;
-        framedConnection = null;
 
         if (routeException == null) {
           routeException = new RouteException(e);
@@ -148,10 +146,15 @@ public final class RealConnection implements Connection {
 
     if (protocol == Protocol.SPDY_3 || protocol == Protocol.HTTP_2) {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
-      framedConnection = new FramedConnection.Builder(true)
+
+      FramedConnection framedConnection = new FramedConnection.Builder(true)
           .socket(socket, route.getAddress().url().host(), source, sink)
-          .protocol(protocol).build();
+          .protocol(protocol)
+          .build();
       framedConnection.sendConnectionPreface();
+
+      // Only assign the framed connection once the preface has been sent successfully.
+      this.framedConnection = framedConnection;
     }
   }
 
@@ -302,6 +305,13 @@ public final class RealConnection implements Connection {
 
   @Override public Socket getSocket() {
     return socket;
+  }
+
+  public int allocationLimit() {
+    FramedConnection framedConnection = this.framedConnection;
+    return framedConnection != null
+        ? framedConnection.maxConcurrentStreams()
+        : 1;
   }
 
   /** Returns true if this connection is ready to host new streams. */

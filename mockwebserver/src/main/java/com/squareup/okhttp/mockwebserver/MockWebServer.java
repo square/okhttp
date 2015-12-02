@@ -30,6 +30,7 @@ import com.squareup.okhttp.internal.framed.FramedConnection;
 import com.squareup.okhttp.internal.framed.FramedStream;
 import com.squareup.okhttp.internal.framed.Header;
 import com.squareup.okhttp.internal.framed.IncomingStreamHandler;
+import com.squareup.okhttp.internal.framed.Settings;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
 import com.squareup.okhttp.internal.ws.WebSocketProtocol;
@@ -916,6 +917,11 @@ public final class MockWebServer implements TestRule {
     }
 
     private void writeResponse(FramedStream stream, MockResponse response) throws IOException {
+      Settings settings = response.getSettings();
+      if (settings != null) {
+        stream.getConnection().setSettings(settings);
+      }
+
       if (response.getSocketPolicy() == SocketPolicy.NO_RESPONSE) {
         return;
       }
