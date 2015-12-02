@@ -165,6 +165,8 @@ public final class StreamAllocation {
     }
     Route route = routeSelector.next();
     RealConnection newConnection = new RealConnection(route);
+    newConnection.allocationCount = 1;
+
     synchronized (connectionPool) {
       connectionPool.put(newConnection);
       this.connection = newConnection;
@@ -174,12 +176,6 @@ public final class StreamAllocation {
     newConnection.connect(connectTimeout, readTimeout, writeTimeout, address.getConnectionSpecs(),
         connectionRetryEnabled);
     routeDatabase().connected(newConnection.getRoute());
-
-    synchronized (connectionPool) {
-      // TODO(jwilson): what should this limit be?
-      newConnection.allocationLimit = newConnection.isMultiplexed() ? 100 : 1;
-      newConnection.allocationCount++;
-    }
 
     return newConnection;
   }

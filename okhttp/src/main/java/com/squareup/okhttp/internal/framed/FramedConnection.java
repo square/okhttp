@@ -112,9 +112,8 @@ public final class FramedConnection implements Closeable {
   long bytesLeftInWriteWindow;
 
   /** Settings we communicate to the peer. */
-  // TODO: Do we want to dynamically adjust settings, or KISS and only set once?
-  final Settings okHttpSettings = new Settings();
-      // okHttpSettings.set(Settings.MAX_CONCURRENT_STREAMS, 0, max);
+  Settings okHttpSettings = new Settings();
+
   private static final int OKHTTP_CLIENT_WINDOW_SIZE = 16 * 1024 * 1024;
 
   /** Settings we receive from the peer. */
@@ -208,6 +207,10 @@ public final class FramedConnection implements Closeable {
   /** Returns true if this connection is idle. */
   public synchronized boolean isIdle() {
     return idleStartTimeNs != Long.MAX_VALUE;
+  }
+
+  public synchronized int maxConcurrentStreams() {
+    return peerSettings.getMaxConcurrentStreams(Integer.MAX_VALUE);
   }
 
   /**
@@ -513,6 +516,19 @@ public final class FramedConnection implements Closeable {
     int windowSize = okHttpSettings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
     if (windowSize != Settings.DEFAULT_INITIAL_WINDOW_SIZE) {
       frameWriter.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+    }
+  }
+
+  /** Merges {@code settings} into this peer's settings and sends them to the remote peer. */
+  public void setSettings(Settings settings) throws IOException {
+    synchronized (frameWriter) {
+      synchronized (this) {
+        if (shutdown) {
+          throw new IOException("shutdown");
+        }
+        okHttpSettings.merge(settings);
+        frameWriter.settings(settings);
+      }
     }
   }
 

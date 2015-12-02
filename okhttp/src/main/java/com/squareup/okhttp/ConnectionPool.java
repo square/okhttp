@@ -126,7 +126,9 @@ public final class ConnectionPool {
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
   public synchronized Connection get(Address address) {
     for (RealConnection connection : connections) {
-      if (connection.allocationCount < connection.allocationLimit
+      // TODO(jwilson): this is awkward. We're already holding a lock on 'this', and
+      //     connection.allocationLimit() may also lock the FramedConnection.
+      if (connection.allocationCount < connection.allocationLimit()
           && address.equals(connection.getRoute().address)
           && !connection.noNewStreams) {
         connection.allocationCount++;
