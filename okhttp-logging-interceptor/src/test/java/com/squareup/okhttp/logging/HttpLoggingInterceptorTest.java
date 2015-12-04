@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import okio.Buffer;
 import okio.BufferedSink;
+import okio.ByteString;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -516,6 +518,45 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("")
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void bodyResponseNotIdentityEncoded() throws IOException {
+    setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+        .setHeader("Content-Encoding", "gzip")
+        .setHeader("Content-Type", PLAIN)
+        .setBody(new Buffer().write(ByteString.decodeBase64(
+            "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA="))));
+    client.newCall(request().build()).execute();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Encoding: gzip")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogMatch("Content-Length: \\d+")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("<-- END HTTP (encoded body omitted)")
+        .assertNoMoreLogs();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url + " HTTP/1.1")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- HTTP/1\\.1 200 OK \\(\\d+ms\\)")
+        .assertLogEqual("Content-Type: text/plain; charset=utf-8")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("")
+        .assertLogEqual("Hello, Hello, Hello")
+        .assertLogEqual("<-- END HTTP (19-byte body)")
         .assertNoMoreLogs();
   }
 

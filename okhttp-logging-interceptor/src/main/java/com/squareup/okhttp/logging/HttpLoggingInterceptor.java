@@ -178,8 +178,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
       }
 
-      String endMessage = "--> END " + request.method();
-      if (logBody && hasRequestBody) {
+      if (!logBody || !hasRequestBody) {
+        logger.log("--> END " + request.method());
+      } else if (bodyEncoded(request.headers())) {
+        logger.log("--> END " + request.method() + " (encoded body omitted)");
+      } else {
         Buffer buffer = new Buffer();
         requestBody.writeTo(buffer);
 
@@ -192,9 +195,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("");
         logger.log(buffer.readString(charset));
 
-        endMessage += " (" + requestBody.contentLength() + "-byte body)";
+        logger.log("--> END " + request.method()
+            + " (" + requestBody.contentLength() + "-byte body)");
       }
-      logger.log(endMessage);
     }
 
     long startNs = System.nanoTime();
@@ -212,8 +215,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log(headers.name(i) + ": " + headers.value(i));
       }
 
-      String endMessage = "<-- END HTTP";
-      if (logBody && HttpEngine.hasBody(response)) {
+      if (!logBody || !HttpEngine.hasBody(response)) {
+        logger.log("<-- END HTTP");
+      } else if (bodyEncoded(response.headers())) {
+        logger.log("<-- END HTTP (encoded body omitted)");
+      } else {
         BufferedSource source = responseBody.source();
         source.request(Long.MAX_VALUE); // Buffer the entire body.
         Buffer buffer = source.buffer();
@@ -229,12 +235,16 @@ public final class HttpLoggingInterceptor implements Interceptor {
           logger.log(buffer.clone().readString(charset));
         }
 
-        endMessage += " (" + buffer.size() + "-byte body)";
+        logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
       }
-      logger.log(endMessage);
     }
 
     return response;
+  }
+
+  private boolean bodyEncoded(Headers headers) {
+    String contentEncoding = headers.get("Content-Encoding");
+    return contentEncoding != null && !contentEncoding.equalsIgnoreCase("identity");
   }
 
   private static String protocol(Protocol protocol) {
