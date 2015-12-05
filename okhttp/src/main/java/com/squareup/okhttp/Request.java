@@ -189,6 +189,9 @@ public final class Request {
     /**
      * Adds a header with {@code name} and {@code value}. Prefer this method for
      * multiply-valued headers like "Cookie".
+     *
+     * <p>Note that for some headers including {@code Content-Length} and {@code Content-Encoding},
+     * OkHttp may replace {@code value} with a header derived from the request body.
      */
     public Builder addHeader(String name, String value) {
       headers.add(name, value);
