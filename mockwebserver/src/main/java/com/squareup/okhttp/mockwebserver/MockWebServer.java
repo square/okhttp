@@ -29,7 +29,6 @@ import com.squareup.okhttp.internal.framed.ErrorCode;
 import com.squareup.okhttp.internal.framed.FramedConnection;
 import com.squareup.okhttp.internal.framed.FramedStream;
 import com.squareup.okhttp.internal.framed.Header;
-import com.squareup.okhttp.internal.framed.IncomingStreamHandler;
 import com.squareup.okhttp.internal.framed.Settings;
 import com.squareup.okhttp.internal.http.HttpMethod;
 import com.squareup.okhttp.internal.ws.RealWebSocket;
@@ -467,11 +466,11 @@ public final class MockWebServer implements TestRule {
         }
 
         if (protocol != Protocol.HTTP_1_1) {
-          FramedSocketHandler framedSocketHandler = new FramedSocketHandler(socket, protocol);
+          FramedSocketHandler framedSocketListener = new FramedSocketHandler(socket, protocol);
           FramedConnection framedConnection = new FramedConnection.Builder(false)
               .socket(socket)
               .protocol(protocol)
-              .handler(framedSocketHandler)
+              .listener(framedSocketListener)
               .build();
           openFramedConnections.add(framedConnection);
           openClientSockets.remove(socket);
@@ -854,7 +853,7 @@ public final class MockWebServer implements TestRule {
   }
 
   /** Processes HTTP requests layered over framed protocols. */
-  private class FramedSocketHandler implements IncomingStreamHandler {
+  private class FramedSocketHandler extends FramedConnection.Listener {
     private final Socket socket;
     private final Protocol protocol;
     private final AtomicInteger sequenceNumber = new AtomicInteger();
@@ -864,7 +863,7 @@ public final class MockWebServer implements TestRule {
       this.protocol = protocol;
     }
 
-    @Override public void receive(FramedStream stream) throws IOException {
+    @Override public void onStream(FramedStream stream) throws IOException {
       RecordedRequest request = readRequest(stream);
       requestQueue.add(request);
       MockResponse response;

@@ -77,10 +77,10 @@ public final class FramedConnection implements Closeable {
   final boolean client;
 
   /**
-   * User code to run in response to an incoming stream. Callbacks must not be
-   * run on the callback executor.
+   * User code to run in response to incoming streams or settings. Calls to this are always invoked
+   * on {@link #executor}.
    */
-  private final IncomingStreamHandler handler;
+  private final Listener listener;
   private final Map<Integer, FramedStream> streams = new HashMap<>();
   private final String hostName;
   private int lastGoodStreamId;
@@ -132,7 +132,7 @@ public final class FramedConnection implements Closeable {
     protocol = builder.protocol;
     pushObserver = builder.pushObserver;
     client = builder.client;
-    handler = builder.handler;
+    listener = builder.listener;
     // http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-5.1.1
     nextStreamId = builder.client ? 1 : 2;
     if (builder.client && protocol == Protocol.HTTP_2) {
@@ -537,7 +537,7 @@ public final class FramedConnection implements Closeable {
     private String hostName;
     private BufferedSource source;
     private BufferedSink sink;
-    private IncomingStreamHandler handler = IncomingStreamHandler.REFUSE_INCOMING_STREAMS;
+    private Listener listener = Listener.REFUSE_INCOMING_STREAMS;
     private Protocol protocol = Protocol.SPDY_3;
     private PushObserver pushObserver = PushObserver.CANCEL;
     private boolean client;
@@ -564,8 +564,8 @@ public final class FramedConnection implements Closeable {
       return this;
     }
 
-    public Builder handler(IncomingStreamHandler handler) {
-      this.handler = handler;
+    public Builder listener(Listener listener) {
+      this.listener = listener;
       return this;
     }
 
@@ -672,9 +672,9 @@ public final class FramedConnection implements Closeable {
           executor.execute(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
             @Override public void execute() {
               try {
-                handler.receive(newStream);
+                listener.onStream(newStream);
               } catch (IOException e) {
-                logger.log(Level.INFO, "StreamHandler failure for " + hostName, e);
+                logger.log(Level.INFO, "FramedConnection.Listener failure for " + hostName, e);
                 try {
                   newStream.close(ErrorCode.PROTOCOL_ERROR);
                 } catch (IOException ignored) {
@@ -730,6 +730,11 @@ public final class FramedConnection implements Closeable {
             streamsToNotify = streams.values().toArray(new FramedStream[streams.size()]);
           }
         }
+        executor.execute(new NamedRunnable("OkHttp %s settings", hostName) {
+          @Override public void execute() {
+            listener.onSettings(FramedConnection.this);
+          }
+        });
       }
       if (streamsToNotify != null && delta != 0) {
         for (FramedStream stream : streamsToNotify) {
@@ -904,5 +909,35 @@ public final class FramedConnection implements Closeable {
         }
       }
     });
+  }
+
+  /** Listener of streams and settings initiated by the peer. */
+  public abstract static class Listener {
+    public static final Listener REFUSE_INCOMING_STREAMS = new Listener() {
+      @Override public void onStream(FramedStream stream) throws IOException {
+        stream.close(ErrorCode.REFUSED_STREAM);
+      }
+    };
+
+    /**
+     * Handle a new stream from this connection's peer. Implementations should
+     * respond by either {@linkplain FramedStream#reply replying to the stream}
+     * or {@linkplain FramedStream#close closing it}. This response does not
+     * need to be synchronous.
+     */
+    public abstract void onStream(FramedStream stream) throws IOException;
+
+    /**
+     * Notification that the connection's peer's settings may have changed.
+     * Implementations should take appropriate action to handle the updated
+     * settings.
+     *
+     * <p>It is the implementation's responsibility to handle concurrent calls
+     * to this method. A remote peer that sends multiple settings frames will
+     * trigger multiple calls to this method, and those calls are not
+     * necessarily serialized.
+     */
+    public void onSettings(FramedConnection connection) {
+    }
   }
 }
