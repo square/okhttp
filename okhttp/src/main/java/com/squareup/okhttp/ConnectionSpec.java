@@ -137,15 +137,15 @@ public final class ConnectionSpec {
   }
 
   /**
-   * Returns a copy of this that omits cipher suites and TLS versions not enabled by {@code
+   * Returns a copy of this that omits cipher suites and TLS versions not supported by {@code
    * sslSocket}.
    */
   private ConnectionSpec supportedSpec(SSLSocket sslSocket, boolean isFallback) {
     String[] cipherSuitesIntersection = cipherSuites != null
-        ? Util.intersect(String.class, cipherSuites, sslSocket.getEnabledCipherSuites())
+        ? Util.intersect(String.class, cipherSuites, sslSocket.getSupportedCipherSuites())
         : sslSocket.getEnabledCipherSuites();
     String[] tlsVersionsIntersection = tlsVersions != null
-        ? Util.intersect(String.class, tlsVersions, sslSocket.getEnabledProtocols())
+        ? Util.intersect(String.class, tlsVersions, sslSocket.getSupportedProtocols())
         : sslSocket.getEnabledProtocols();
 
     // In accordance with https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
@@ -162,14 +162,14 @@ public final class ConnectionSpec {
 
   /**
    * Returns {@code true} if the socket, as currently configured, supports this connection spec.
-   * In order for a socket to be compatible the enabled cipher suites and protocols must intersect.
+   * In order for a socket to be compatible the supported cipher suites and protocols must intersect.
    *
    * <p>For cipher suites, at least one of the {@link #cipherSuites() required cipher suites} must
-   * match the socket's enabled cipher suites. If there are no required cipher suites the socket
+   * match the socket's supported cipher suites. If there are no required cipher suites the socket
    * must have at least one cipher suite enabled.
    *
    * <p>For protocols, at least one of the {@link #tlsVersions() required protocols} must match the
-   * socket's enabled protocols.
+   * socket's supported protocols.
    */
   public boolean isCompatible(SSLSocket socket) {
     if (!tls) {
@@ -177,12 +177,12 @@ public final class ConnectionSpec {
     }
 
     if (tlsVersions != null
-        && !nonEmptyIntersection(tlsVersions, socket.getEnabledProtocols())) {
+        && !nonEmptyIntersection(tlsVersions, socket.getSupportedProtocols())) {
       return false;
     }
 
     if (cipherSuites != null
-        && !nonEmptyIntersection(cipherSuites, socket.getEnabledCipherSuites())) {
+        && !nonEmptyIntersection(cipherSuites, socket.getSupportedCipherSuites())) {
       return false;
     }
 
