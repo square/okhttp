@@ -239,6 +239,54 @@ public final class InterceptorTest {
     assertEquals("abc", recordedRequest.getBody().readUtf8());
   }
 
+  @Test public void applicationInterceptorsCannotRewriteToAnInvalidGetRequest() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .get()
+            .build();
+
+    client.interceptors().add(new Interceptor() {
+      @Override
+      public Response intercept(Chain chain) throws IOException {
+        Request originalRequest = chain.request();
+        return chain.proceed(originalRequest.newBuilder()
+                .method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"))
+                .build());
+      }
+    });
+
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException e){}
+  }
+
+  @Test public void applicationInterceptorsCannotRewriteToAnInvalidPostRequest() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+            .url(server.url("/"))
+            .get()
+            .build();
+
+    client.interceptors().add(new Interceptor() {
+      @Override
+      public Response intercept(Chain chain) throws IOException {
+        Request originalRequest = chain.request();
+        return chain.proceed(originalRequest.newBuilder()
+                .method("POST", null)
+                .build());
+      }
+    });
+
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException e){}
+  }
+
   @Test public void applicationInterceptorsRewriteRequestToServer() throws Exception {
     rewriteRequestToServer(client.interceptors());
   }

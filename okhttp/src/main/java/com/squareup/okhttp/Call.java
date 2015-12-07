@@ -239,6 +239,9 @@ public class Call {
         return interceptedResponse;
       }
 
+      // No more interceptors, check if the Request is still a valid Request
+      request.validate();
+
       // No more interceptors. Do HTTP.
       return getResponse(request, forWebSocket);
     }
