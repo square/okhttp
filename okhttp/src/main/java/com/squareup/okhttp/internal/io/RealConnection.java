@@ -67,7 +67,7 @@ public final class RealConnection implements Connection {
    * The application layer socket. Either an {@link SSLSocket} layered over {@link #rawSocket}, or
    * {@link #rawSocket} itself if this connection does not use SSL.
    */
-  private Socket socket;
+  public Socket socket;
   private Handshake handshake;
   private Protocol protocol;
   public volatile FramedConnection framedConnection;
@@ -76,6 +76,7 @@ public final class RealConnection implements Connection {
   public BufferedSink sink;
   public int allocationCount;
   public boolean noNewStreams;
+  public long idleAtNanos = Long.MAX_VALUE;
 
   public RealConnection(Route route) {
     this.route = route;

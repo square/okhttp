@@ -204,6 +204,28 @@ public final class NewConnectionPoolTest {
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
+  @Test public void connectionsAreEvicted() throws Exception {
+    server.enqueue(new MockResponse().setBody("a"));
+    server.enqueue(new MockResponse().setBody("b"));
+
+    client.setConnectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS));
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Response response1 = client.newCall(request).execute();
+    assertEquals("a", response1.body().string());
+
+    // Give the thread pool a chance to evict.
+    Thread.sleep(500);
+
+    Response response2 = client.newCall(request).execute();
+    assertEquals("b", response2.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
   private void enableHttp2() {
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setHostnameVerifier(new RecordingHostnameVerifier());

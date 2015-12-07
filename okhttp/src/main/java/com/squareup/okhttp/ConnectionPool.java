@@ -24,6 +24,10 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
@@ -57,7 +61,8 @@ public final class ConnectionPool {
     String keepAlive = System.getProperty("http.keepAlive");
     String keepAliveDuration = System.getProperty("http.keepAliveDuration");
     String maxIdleConnections = System.getProperty("http.maxConnections");
-    long keepAliveDurationMs = keepAliveDuration != null ? Long.parseLong(keepAliveDuration)
+    long keepAliveDurationMs = keepAliveDuration != null
+        ? Long.parseLong(keepAliveDuration)
         : DEFAULT_KEEP_ALIVE_DURATION_MS;
     if (keepAlive != null && !Boolean.parseBoolean(keepAlive)) {
       systemDefault = new ConnectionPool(0, keepAliveDurationMs);
@@ -68,16 +73,52 @@ public final class ConnectionPool {
     }
   }
 
+  /**
+   * A background thread is used to cleanup expired connections. There will be, at most, a single
+   * thread running per connection pool. We use a thread pool executor because it can shrink to
+   * zero threads, permitting this pool to be garbage collected.
+   */
+  private final Executor executor = new ThreadPoolExecutor(
+      0 /* corePoolSize */, 1 /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
+      new LinkedBlockingQueue<Runnable>(), Util.threadFactory("OkHttp ConnectionPool", true));
+
   /** The maximum number of idle connections for each address. */
   private final int maxIdleConnections;
   private final long keepAliveDurationNs;
+  private Runnable cleanupRunnable = new Runnable() {
+    @Override public void run() {
+      while (true) {
+        long waitNanos = cleanup(System.nanoTime());
+        if (waitNanos == -1) return;
+        if (waitNanos > 0) {
+          long waitMillis = waitNanos / 1000000L;
+          waitNanos -= (waitMillis * 1000000L);
+          synchronized (ConnectionPool.this) {
+            try {
+              ConnectionPool.this.wait(waitMillis, (int) waitNanos);
+            } catch (InterruptedException ignored) {
+            }
+          }
+        }
+      }
+    }
+  };
 
   private final Deque<RealConnection> connections = new ArrayDeque<>();
   final RouteDatabase routeDatabase = new RouteDatabase();
 
   public ConnectionPool(int maxIdleConnections, long keepAliveDurationMs) {
+    this(maxIdleConnections, keepAliveDurationMs, TimeUnit.MILLISECONDS);
+  }
+
+  public ConnectionPool(int maxIdleConnections, long keepAliveDuration, TimeUnit timeUnit) {
     this.maxIdleConnections = maxIdleConnections;
-    this.keepAliveDurationNs = keepAliveDurationMs * 1000 * 1000;
+    this.keepAliveDurationNs = timeUnit.toNanos(keepAliveDuration);
+
+    // Put a floor on the keep alive duration, otherwise cleanup will spin loop.
+    if (keepAliveDuration <= 0) {
+      throw new IllegalArgumentException("keepAliveDuration <= 0: " + keepAliveDuration);
+    }
   }
 
   public static ConnectionPool getDefault() {
@@ -140,6 +181,9 @@ public final class ConnectionPool {
 
   // TODO(jwilson): reduce visibility.
   public synchronized void put(RealConnection connection) {
+    if (connections.isEmpty()) {
+      executor.execute(cleanupRunnable);
+    }
     connections.add(connection);
   }
 
@@ -165,5 +209,65 @@ public final class ConnectionPool {
     for (RealConnection connection : evictedConnections) {
       Util.closeQuietly(connection.getSocket());
     }
+  }
+
+  /**
+   * Performs maintenance on this pool, evicting connections that have expired.
+   *
+   * <p>Returns the duration in nanos to sleep until the next scheduled call to this method.
+   * Returns -1 if no further cleanups are required.
+   */
+  long cleanup(long now) {
+    int inUseConnectionCount = 0;
+    long nanosUntilNextCleanup = -1L;
+    RealConnection connectionToEvict = null;
+
+    // Find either a connection to evict, or the time that the next eviction is due.
+    synchronized (this) {
+      for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
+        RealConnection connection = i.next();
+
+        // If the connection is in use, keep searching.
+        if (connection.allocationCount > 0) {
+          inUseConnectionCount++;
+          nanosUntilNextCleanup = keepAliveDurationNs;
+          continue;
+        }
+
+        // If the connection is ready to be evicted, we're done.
+        long evictAtNanos = connection.idleAtNanos + keepAliveDurationNs;
+        long nanosUntilEviction = evictAtNanos - now;
+        if (nanosUntilEviction <= 0) {
+          connection.noNewStreams = true;
+          connectionToEvict = connection;
+          i.remove();
+          break;
+        }
+
+        // Is this the next connection to evict?
+        if (nanosUntilNextCleanup == -1L || nanosUntilNextCleanup > nanosUntilEviction) {
+          nanosUntilNextCleanup = nanosUntilEviction;
+        }
+      }
+    }
+
+    if (connectionToEvict != null) {
+      Util.closeQuietly(connectionToEvict.getSocket());
+      // Cleanup again immediately.
+      return 0;
+    } else if (nanosUntilNextCleanup != -1) {
+      // A connection will be ready to evict soon.
+      return nanosUntilNextCleanup;
+    } else if (inUseConnectionCount != 0) {
+      // All connections are in use. It'll be at least the keep alive duration 'til we run again.
+      return keepAliveDurationNs;
+    } else {
+      // No connections, idle or in use.
+      return -1;
+    }
+  }
+
+  void setCleanupRunnableForTest(Runnable cleanupRunnable) {
+    this.cleanupRunnable = cleanupRunnable;
   }
 }

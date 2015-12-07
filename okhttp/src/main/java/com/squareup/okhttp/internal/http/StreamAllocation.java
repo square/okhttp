@@ -237,6 +237,9 @@ public final class StreamAllocation {
         }
         if (this.stream == null && (this.released || connection.noNewStreams)) {
           connection.allocationCount--;
+          if (connection.allocationCount == 0) {
+            connection.idleAtNanos = System.nanoTime();
+          }
           if (connection.streamCount > 0) {
             routeSelector = null;
           }
