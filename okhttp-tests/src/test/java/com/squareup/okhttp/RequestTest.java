@@ -174,6 +174,27 @@ public final class RequestTest {
     }
   }
 
+  @Test public void itDoesNotValidateTheRequest() throws Exception {
+
+    // Since Interceptors can rewrite an invalid Request to a valid Request,
+    // the builder should not validate it.
+
+    final String method = "PUT";
+    Request request = null;
+
+    try {
+      Request.Builder builder = new Request.Builder();
+      builder.url("http://localhost/api");
+      builder.method(method, null);
+      request = builder.build();
+    } catch (IllegalArgumentException e){
+      fail();
+    }
+
+    assertEquals(method, request.method());
+    assertNull(request.body());
+  }
+
   @Test public void headerForbidsControlCharacters() throws Exception {
     assertForbiddenHeader(null);
     assertForbiddenHeader("\u0000");

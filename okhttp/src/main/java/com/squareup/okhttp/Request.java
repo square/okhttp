@@ -117,6 +117,23 @@ public final class Request {
         + '}';
   }
 
+  /**
+   * Checks if the Request is valid.
+   *
+   * @throws IllegalStateException it is invalid.
+   */
+  public void validate() {
+    if (method == null || method.length() == 0) {
+      throw new IllegalStateException("method == null || method.length() == 0");
+    }
+    if (body != null && !HttpMethod.permitsRequestBody(method)) {
+      throw new IllegalStateException("method " + method + " must not have a request body.");
+    }
+    if (body == null && HttpMethod.requiresRequestBody(method)) {
+      throw new IllegalStateException("method " + method + " must have a request body.");
+    }
+  }
+
   public static class Builder {
     private HttpUrl url;
     private String method;
@@ -249,15 +266,6 @@ public final class Request {
     }
 
     public Builder method(String method, RequestBody body) {
-      if (method == null || method.length() == 0) {
-        throw new IllegalArgumentException("method == null || method.length() == 0");
-      }
-      if (body != null && !HttpMethod.permitsRequestBody(method)) {
-        throw new IllegalArgumentException("method " + method + " must not have a request body.");
-      }
-      if (body == null && HttpMethod.requiresRequestBody(method)) {
-        throw new IllegalArgumentException("method " + method + " must have a request body.");
-      }
       this.method = method;
       this.body = body;
       return this;

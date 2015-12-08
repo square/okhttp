@@ -218,10 +218,30 @@ public final class CallTest {
   @Test public void getWithRequestBody() throws Exception {
     server.enqueue(new MockResponse());
 
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"))
+        .build();
+
     try {
-      new Request.Builder().method("GET", RequestBody.create(MediaType.parse("text/plain"), "abc"));
-      fail();
-    } catch (IllegalArgumentException expected) {
+      executeSynchronously(request);
+      fail("GET cannot have a request body");
+    } catch (IllegalStateException expected) {
+    }
+  }
+
+  @Test public void postWithoutRequestBody() throws Exception {
+    server.enqueue(new MockResponse());
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .method("POST", null)
+        .build();
+
+    try {
+      executeSynchronously(request);
+      fail("POST must have a request body");
+    } catch (IllegalStateException expected) {
     }
   }
 
