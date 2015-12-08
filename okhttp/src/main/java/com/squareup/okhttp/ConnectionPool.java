@@ -187,9 +187,19 @@ public final class ConnectionPool {
     connections.add(connection);
   }
 
+  /**
+   * Notify this pool that {@code connection} has become idle. Returns true if the connection
+   * has been removed from the pool and should be closed.
+   */
   // TODO(jwilson): reduce visibility.
-  public synchronized void remove(RealConnection connection) {
-    connections.remove(connection);
+  public synchronized boolean connectionBecameIdle(RealConnection connection) {
+    if (connection.noNewStreams || maxIdleConnections == 0) {
+      connections.remove(connection);
+      return true;
+    } else {
+      notifyAll(); // Awake the cleanup thread: we may have exceeded the idle connection limit.
+      return false;
+    }
   }
 
   /** Close and remove all idle connections in the pool. */
@@ -212,15 +222,17 @@ public final class ConnectionPool {
   }
 
   /**
-   * Performs maintenance on this pool, evicting connections that have expired.
+   * Performs maintenance on this pool, evicting the connection that has been idle the longest if
+   * either it has exceeded the keep alive limit or the idle connections limit.
    *
    * <p>Returns the duration in nanos to sleep until the next scheduled call to this method.
    * Returns -1 if no further cleanups are required.
    */
   long cleanup(long now) {
     int inUseConnectionCount = 0;
-    long nanosUntilNextCleanup = -1L;
-    RealConnection connectionToEvict = null;
+    int idleConnectionCount = 0;
+    RealConnection longestIdleConnection = null;
+    long longestIdleDurationNs = Long.MIN_VALUE;
 
     // Find either a connection to evict, or the time that the next eviction is due.
     synchronized (this) {
@@ -230,41 +242,43 @@ public final class ConnectionPool {
         // If the connection is in use, keep searching.
         if (connection.allocationCount > 0) {
           inUseConnectionCount++;
-          nanosUntilNextCleanup = keepAliveDurationNs;
           continue;
         }
 
-        // If the connection is ready to be evicted, we're done.
-        long evictAtNanos = connection.idleAtNanos + keepAliveDurationNs;
-        long nanosUntilEviction = evictAtNanos - now;
-        if (nanosUntilEviction <= 0) {
-          connection.noNewStreams = true;
-          connectionToEvict = connection;
-          i.remove();
-          break;
-        }
+        idleConnectionCount++;
 
-        // Is this the next connection to evict?
-        if (nanosUntilNextCleanup == -1L || nanosUntilNextCleanup > nanosUntilEviction) {
-          nanosUntilNextCleanup = nanosUntilEviction;
+        // If the connection is ready to be evicted, we're done.
+        long idleDurationNs = now - connection.idleAtNanos;
+        if (idleDurationNs > longestIdleDurationNs) {
+          longestIdleDurationNs = idleDurationNs;
+          longestIdleConnection = connection;
         }
+      }
+
+      if (longestIdleDurationNs >= this.keepAliveDurationNs
+          || idleConnectionCount > this.maxIdleConnections) {
+        // We've found a connection to evict. Remove it from the list, then close it below (outside
+        // of the synchronized block).
+        connections.remove(longestIdleConnection);
+
+      } else if (idleConnectionCount > 0) {
+        // A connection will be ready to evict soon.
+        return keepAliveDurationNs - longestIdleDurationNs;
+
+      } else if (inUseConnectionCount > 0) {
+        // All connections are in use. It'll be at least the keep alive duration 'til we run again.
+        return keepAliveDurationNs;
+
+      } else {
+        // No connections, idle or in use.
+        return -1;
       }
     }
 
-    if (connectionToEvict != null) {
-      Util.closeQuietly(connectionToEvict.getSocket());
-      // Cleanup again immediately.
-      return 0;
-    } else if (nanosUntilNextCleanup != -1) {
-      // A connection will be ready to evict soon.
-      return nanosUntilNextCleanup;
-    } else if (inUseConnectionCount != 0) {
-      // All connections are in use. It'll be at least the keep alive duration 'til we run again.
-      return keepAliveDurationNs;
-    } else {
-      // No connections, idle or in use.
-      return -1;
-    }
+    Util.closeQuietly(longestIdleConnection.getSocket());
+
+    // Cleanup again immediately.
+    return 0;
   }
 
   void setCleanupRunnableForTest(Runnable cleanupRunnable) {

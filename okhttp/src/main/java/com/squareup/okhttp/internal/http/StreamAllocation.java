@@ -243,8 +243,7 @@ public final class StreamAllocation {
           if (connection.streamCount > 0) {
             routeSelector = null;
           }
-          if (connection.noNewStreams && connection.allocationCount == 0) {
-            connectionPool.remove(connection);
+          if (connection.allocationCount == 0 && connectionPool.connectionBecameIdle(connection)) {
             connectionToClose = connection;
           }
           connection = null;

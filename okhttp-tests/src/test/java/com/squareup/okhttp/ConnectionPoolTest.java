@@ -40,14 +40,14 @@ public final class ConnectionPoolTest {
   private final Route routeA1 = newRoute(addressA);
   private final Address addressB = newAddress("b");
   private final Route routeB1 = newRoute(addressB);
+  private final Address addressC = newAddress("c");
+  private final Route routeC1 = newRoute(addressC);
 
   @Test public void connectionsEvictedWhenIdleLongEnough() throws Exception {
-    ConnectionPool pool = new ConnectionPool(1, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
-    RealConnection c1 = new RealConnection(routeA1);
-    c1.idleAtNanos = 50L;
-    c1.socket = new Socket();
-    assertFalse(c1.socket.isClosed());
+
+    RealConnection c1 = newConnection(routeA1, 50L);
     pool.put(c1);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -77,13 +77,11 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
-    ConnectionPool pool = new ConnectionPool(1, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
-    RealConnection c1 = new RealConnection(routeA1);
+
+    RealConnection c1 = newConnection(routeA1, 50L);
     c1.allocationCount = 1;
-    c1.idleAtNanos = 50L;
-    c1.socket = new Socket();
-    assertFalse(c1.socket.isClosed());
     pool.put(c1);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -103,16 +101,13 @@ public final class ConnectionPoolTest {
   }
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
-    ConnectionPool pool = new ConnectionPool(1, 100L, TimeUnit.NANOSECONDS);
+    ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
-    RealConnection c1 = new RealConnection(routeA1);
-    c1.idleAtNanos = 75L;
-    c1.socket = new Socket();
+
+    RealConnection c1 = newConnection(routeA1, 75L);
     pool.put(c1);
 
-    RealConnection c2 = new RealConnection(routeB1);
-    c2.idleAtNanos = 50L;
-    c2.socket = new Socket();
+    RealConnection c2 = newConnection(routeB1, 50L);
     pool.put(c2);
 
     // Running at time 75, the pool returns that nothing can be evicted until time 150.
@@ -138,6 +133,41 @@ public final class ConnectionPoolTest {
     assertEquals(0, pool.getConnectionCount());
     assertTrue(c1.socket.isClosed());
     assertTrue(c2.socket.isClosed());
+  }
+
+  @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
+    ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    pool.setCleanupRunnableForTest(emptyRunnable);
+
+    RealConnection c1 = newConnection(routeA1, 50L);
+    pool.put(c1);
+
+    RealConnection c2 = newConnection(routeB1, 75L);
+    pool.put(c2);
+
+    // With 2 connections, there's no need to evict until the connections time out.
+    assertEquals(50L, pool.cleanup(100L));
+    assertEquals(2, pool.getConnectionCount());
+    assertFalse(c1.socket.isClosed());
+    assertFalse(c2.socket.isClosed());
+
+    // Add a third connection
+    RealConnection c3 = newConnection(routeC1, 75L);
+    pool.put(c3);
+
+    // The third connection bounces the first.
+    assertEquals(0L, pool.cleanup(100L));
+    assertEquals(2, pool.getConnectionCount());
+    assertTrue(c1.socket.isClosed());
+    assertFalse(c2.socket.isClosed());
+    assertFalse(c3.socket.isClosed());
+  }
+
+  private RealConnection newConnection(Route route, long idleAtNanos) {
+    RealConnection connection = new RealConnection(route);
+    connection.idleAtNanos = idleAtNanos;
+    connection.socket = new Socket();
+    return connection;
   }
 
   private Address newAddress(String name) {
