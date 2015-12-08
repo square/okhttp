@@ -69,7 +69,6 @@ import okio.GzipSink;
 import okio.Okio;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -1972,7 +1971,6 @@ public final class CallTest {
   }
 
   /** We had a bug where failed HTTP/2 calls could break the entire connection. */
-  @Ignore // TODO(jwilson): fix HttpEngine connection cleanups.
   @Test public void failingCallsDoNotInterfereWithConnection() throws Exception {
     enableProtocol(Protocol.HTTP_2);
 

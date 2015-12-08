@@ -23,7 +23,6 @@ import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -31,7 +30,7 @@ import org.junit.rules.Timeout;
 
 import static org.junit.Assert.assertEquals;
 
-public final class NewConnectionPoolTest {
+public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
@@ -101,7 +100,6 @@ public final class NewConnectionPoolTest {
     assertConnectionNotReused(request, request);
   }
 
-  @Ignore("TODO(jwilson): this is broken (and flaky). Fixed with new connection pool")
   @Test public void connectionsAreNotReusedIfPoolIsSizeZero() throws Exception {
     client.setConnectionPool(new ConnectionPool(0, 5000));
     server.enqueue(new MockResponse().setBody("a"));
