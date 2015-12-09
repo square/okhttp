@@ -41,6 +41,11 @@ public final class HttpMethod {
         || method.equals("LOCK");     // (WebDAV) body: create lock, without body: refresh lock
   }
 
+  public static boolean redirectsToGET(String method) {
+    // all requests but propfind should redirect to a GET request
+    return !method.equals("PROPFIND");
+  }
+
   private HttpMethod() {
   }
 }
