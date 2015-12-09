@@ -34,14 +34,17 @@ import com.squareup.okhttp.internal.framed.FramedConnection;
 import com.squareup.okhttp.internal.http.Http1xStream;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RouteException;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.net.ConnectException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -74,7 +77,7 @@ public final class RealConnection implements Connection {
   public int streamCount;
   public BufferedSource source;
   public BufferedSink sink;
-  public int allocationCount;
+  public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
   public boolean noNewStreams;
   public long idleAtNanos = Long.MAX_VALUE;
 

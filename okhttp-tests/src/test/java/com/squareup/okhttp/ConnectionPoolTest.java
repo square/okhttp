@@ -16,6 +16,7 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.RecordingOkAuthenticator;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import com.squareup.okhttp.internal.io.RealConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -81,7 +82,8 @@ public final class ConnectionPoolTest {
     pool.setCleanupRunnableForTest(emptyRunnable);
 
     RealConnection c1 = newConnection(routeA1, 50L);
-    c1.allocationCount = 1;
+    StreamAllocation streamAllocation = new StreamAllocation(pool, addressA);
+    streamAllocation.acquire(c1);
     pool.put(c1);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
@@ -161,6 +163,38 @@ public final class ConnectionPoolTest {
     assertTrue(c1.socket.isClosed());
     assertFalse(c2.socket.isClosed());
     assertFalse(c3.socket.isClosed());
+  }
+
+  @Test public void leakedAllocation() throws Exception {
+    ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
+    pool.setCleanupRunnableForTest(emptyRunnable);
+
+    RealConnection c1 = newConnection(routeA1, 0L);
+    pool.put(c1);
+    allocateAndLeakAllocation(pool, c1);
+
+    awaitGarbageCollection();
+    assertEquals(0L, pool.cleanup(100L));
+    assertEquals(Collections.emptyList(), c1.allocations);
+
+    assertTrue(c1.noNewStreams); // Can't allocate once a leak has been detected.
+  }
+
+  /** Use a helper method so there's no hidden reference remaining on the stack. */
+  private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
+    StreamAllocation leak = new StreamAllocation(pool, connection.getRoute().getAddress());
+    leak.acquire(connection);
+  }
+
+  /**
+   * See FinalizationTester for discussion on how to best trigger GC in tests.
+   * https://android.googlesource.com/platform/libcore/+/master/support/src/test/java/libcore/
+   * java/lang/ref/FinalizationTester.java
+   */
+  private void awaitGarbageCollection() throws InterruptedException {
+    Runtime.getRuntime().gc();
+    Thread.sleep(100);
+    System.runFinalization();
   }
 
   private RealConnection newConnection(Route route, long idleAtNanos) {
