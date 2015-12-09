@@ -897,6 +897,7 @@ public final class HttpEngine {
         : client.getProxy();
     int responseCode = userResponse.code();
 
+    final String method = userRequest.method();
     switch (responseCode) {
       case HTTP_PROXY_AUTH:
         if (selectedProxy.type() != Proxy.Type.HTTP) {
@@ -910,7 +911,7 @@ public final class HttpEngine {
       case HTTP_TEMP_REDIRECT:
         // "If the 307 or 308 status code is received in response to a request other than GET
         // or HEAD, the user agent MUST NOT automatically redirect the request"
-        if (!userRequest.method().equals("GET") && !userRequest.method().equals("HEAD")) {
+        if (!method.equals("GET") && !method.equals("HEAD")) {
             return null;
         }
         // fall-through
@@ -934,8 +935,12 @@ public final class HttpEngine {
 
         // Redirects don't include a request body.
         Request.Builder requestBuilder = userRequest.newBuilder();
-        if (HttpMethod.permitsRequestBody(userRequest.method())) {
-          requestBuilder.method("GET", null);
+        if (HttpMethod.permitsRequestBody(method)) {
+          if (HttpMethod.redirectsToGet(method)) {
+            requestBuilder.method("GET", null);
+          } else {
+            requestBuilder.method(method, null);
+          }
           requestBuilder.removeHeader("Transfer-Encoding");
           requestBuilder.removeHeader("Content-Length");
           requestBuilder.removeHeader("Content-Type");
