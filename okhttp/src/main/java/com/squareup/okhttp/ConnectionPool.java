@@ -16,9 +16,12 @@
  */
 package com.squareup.okhttp;
 
+import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
+import com.squareup.okhttp.internal.http.StreamAllocation;
 import com.squareup.okhttp.internal.io.RealConnection;
+import java.lang.ref.Reference;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -129,7 +132,7 @@ public final class ConnectionPool {
   public synchronized int getIdleConnectionCount() {
     int total = 0;
     for (RealConnection connection : connections) {
-      if (connection.allocationCount == 0) total++;
+      if (connection.allocations.isEmpty()) total++;
     }
     return total;
   }
@@ -165,14 +168,14 @@ public final class ConnectionPool {
   }
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
-  public synchronized Connection get(Address address) {
+  public synchronized Connection get(Address address, StreamAllocation streamAllocation) {
     for (RealConnection connection : connections) {
       // TODO(jwilson): this is awkward. We're already holding a lock on 'this', and
       //     connection.allocationLimit() may also lock the FramedConnection.
-      if (connection.allocationCount < connection.allocationLimit()
+      if (connection.allocations.size() < connection.allocationLimit()
           && address.equals(connection.getRoute().address)
           && !connection.noNewStreams) {
-        connection.allocationCount++;
+        streamAllocation.acquire(connection);
         return connection;
       }
     }
@@ -208,7 +211,7 @@ public final class ConnectionPool {
     synchronized (this) {
       for (Iterator<RealConnection> i = connections.iterator(); i.hasNext(); ) {
         RealConnection connection = i.next();
-        if (connection.allocationCount == 0) {
+        if (connection.allocations.isEmpty()) {
           connection.noNewStreams = true;
           evictedConnections.add(connection);
           i.remove();
@@ -240,7 +243,7 @@ public final class ConnectionPool {
         RealConnection connection = i.next();
 
         // If the connection is in use, keep searching.
-        if (connection.allocationCount > 0) {
+        if (pruneAndGetAllocationCount(connection, now) > 0) {
           inUseConnectionCount++;
           continue;
         }
@@ -279,6 +282,38 @@ public final class ConnectionPool {
 
     // Cleanup again immediately.
     return 0;
+  }
+
+  /**
+   * Prunes any leaked allocations and then returns the number of remaining live allocations on
+   * {@code connection}. Allocations are leaked if the connection is tracking them but the
+   * application code has abandoned them. Leak detection is imprecise and relies on garbage
+   * collection.
+   */
+  private int pruneAndGetAllocationCount(RealConnection connection, long now) {
+    List<Reference<StreamAllocation>> references = connection.allocations;
+    for (int i = 0; i < references.size(); ) {
+      Reference<StreamAllocation> reference = references.get(i);
+
+      if (reference.get() != null) {
+        i++;
+        continue;
+      }
+
+      // We've discovered a leaked allocation. This is an application bug.
+      Internal.logger.warning("A connection to " + connection.getRoute().getAddress().url()
+          + " was leaked. Did you forget to close a response body?");
+      references.remove(i);
+      connection.noNewStreams = true;
+
+      // If this was the last allocation, the connection is eligible for immediate eviction.
+      if (references.isEmpty()) {
+        connection.idleAtNanos = now - keepAliveDurationNs;
+        return 0;
+      }
+    }
+
+    return references.size();
   }
 
   void setCleanupRunnableForTest(Runnable cleanupRunnable) {

@@ -24,6 +24,8 @@ import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.io.RealConnection;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.net.ProtocolException;
 import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
@@ -148,7 +150,7 @@ public final class StreamAllocation {
     }
 
     // Attempt to get a connection from the pool.
-    RealConnection pooledConnection = (RealConnection) connectionPool.get(address);
+    RealConnection pooledConnection = (RealConnection) connectionPool.get(address, this);
     if (pooledConnection != null) {
       synchronized (connectionPool) {
         this.connection = pooledConnection;
@@ -165,7 +167,7 @@ public final class StreamAllocation {
     }
     Route route = routeSelector.next();
     RealConnection newConnection = new RealConnection(route);
-    newConnection.allocationCount = 1;
+    acquire(newConnection);
 
     synchronized (connectionPool) {
       connectionPool.put(newConnection);
@@ -236,15 +238,15 @@ public final class StreamAllocation {
           connection.noNewStreams = true;
         }
         if (this.stream == null && (this.released || connection.noNewStreams)) {
-          connection.allocationCount--;
-          if (connection.allocationCount == 0) {
-            connection.idleAtNanos = System.nanoTime();
-          }
+          release(connection);
           if (connection.streamCount > 0) {
             routeSelector = null;
           }
-          if (connection.allocationCount == 0 && connectionPool.connectionBecameIdle(connection)) {
-            connectionToClose = connection;
+          if (connection.allocations.isEmpty()) {
+            connection.idleAtNanos = System.nanoTime();
+            if (connectionPool.connectionBecameIdle(connection)) {
+              connectionToClose = connection;
+            }
           }
           connection = null;
         }
@@ -284,6 +286,26 @@ public final class StreamAllocation {
       }
     }
     deallocate(true, false, true);
+  }
+
+  /**
+   * Use this allocation to hold {@code connection}. Each call to this must be paired with a call to
+   * {@link #release} on the same connection.
+   */
+  public void acquire(RealConnection connection) {
+    connection.allocations.add(new WeakReference<>(this));
+  }
+
+  /** Remove this allocation from the connection's list of allocations. */
+  private void release(RealConnection connection) {
+    for (int i = 0, size = connection.allocations.size(); i < size; i++) {
+      Reference<StreamAllocation> reference = connection.allocations.get(i);
+      if (reference.get() == this) {
+        connection.allocations.remove(i);
+        return;
+      }
+    }
+    throw new IllegalStateException();
   }
 
   public boolean recover(RouteException e) {
