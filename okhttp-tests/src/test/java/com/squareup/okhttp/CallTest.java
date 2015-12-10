@@ -1377,6 +1377,27 @@ public final class CallTest {
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
   }
 
+  @Test public void propfindRedirectsToPropfind() throws Exception {
+    server.enqueue(new MockResponse()
+            .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+            .addHeader("Location: /page2")
+            .setBody("This page has moved!"));
+    server.enqueue(new MockResponse().setBody("Page 2"));
+
+    Response response = client.newCall(new Request.Builder()
+            .url(server.url("/page1"))
+            .method("PROPFIND", RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
+            .build()).execute();
+    assertEquals("Page 2", response.body().string());
+
+    RecordedRequest page1 = server.takeRequest();
+    assertEquals("PROPFIND /page1 HTTP/1.1", page1.getRequestLine());
+    assertEquals("Request Body", page1.getBody().readUtf8());
+
+    RecordedRequest page2 = server.takeRequest();
+    assertEquals("PROPFIND /page2 HTTP/1.1", page2.getRequestLine());
+  }
+
   @Test public void redirectsDoNotIncludeTooManyCookies() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server.enqueue(new MockResponse()
