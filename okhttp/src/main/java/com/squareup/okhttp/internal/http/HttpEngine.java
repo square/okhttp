@@ -936,7 +936,7 @@ public final class HttpEngine {
         // Redirects don't include a request body.
         Request.Builder requestBuilder = userRequest.newBuilder();
         if (HttpMethod.permitsRequestBody(method)) {
-          if (HttpMethod.redirectsToGET(method)) {
+          if (HttpMethod.redirectsToGet(method)) {
             requestBuilder.method("GET", null);
           } else {
             requestBuilder.method(method, null);
