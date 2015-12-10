@@ -20,6 +20,7 @@ import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
+import com.squareup.okhttp.Response;
 import com.squareup.okhttp.logging.HttpLoggingInterceptor.Level;
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -143,7 +144,8 @@ public final class HttpLoggingInterceptorTest {
     server.enqueue(new MockResponse()
         .setBody("Hello!")
         .setHeader("Content-Type", PLAIN));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -160,7 +162,8 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -191,7 +194,9 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
+    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Response response = client.newCall(request).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " HTTP/1.1")
@@ -226,7 +231,9 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.HEADERS);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(null, "Hi?")).build()).execute();
+    Request request = request().post(RequestBody.create(null, "Hi?")).build();
+    Response response = client.newCall(request).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " HTTP/1.1")
@@ -268,7 +275,8 @@ public final class HttpLoggingInterceptorTest {
         sink.writeUtf8("Hi!");
       }
     };
-    client.newCall(request().post(body).build()).execute();
+    Response response = client.newCall(request().post(body).build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " HTTP/1.1")
@@ -304,7 +312,8 @@ public final class HttpLoggingInterceptorTest {
     server.enqueue(new MockResponse()
         .setBody("Hello!")
         .setHeader("Content-Type", PLAIN));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -337,7 +346,8 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -377,7 +387,8 @@ public final class HttpLoggingInterceptorTest {
   private void bodyGetNoBody(int code) throws IOException {
     server.enqueue(new MockResponse()
         .setStatus("HTTP/1.1 " + code + " No Content"));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -408,7 +419,9 @@ public final class HttpLoggingInterceptorTest {
     setLevel(Level.BODY);
 
     server.enqueue(new MockResponse());
-    client.newCall(request().post(RequestBody.create(PLAIN, "Hi?")).build()).execute();
+    Request request = request().post(RequestBody.create(PLAIN, "Hi?")).build();
+    Response response = client.newCall(request).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> POST " + url + " HTTP/1.1")
@@ -449,7 +462,8 @@ public final class HttpLoggingInterceptorTest {
     server.enqueue(new MockResponse()
         .setBody("Hello!")
         .setHeader("Content-Type", PLAIN));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -488,7 +502,8 @@ public final class HttpLoggingInterceptorTest {
     server.enqueue(new MockResponse()
         .setChunkedBody("Hello!", 2)
         .setHeader("Content-Type", PLAIN));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     applicationLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")
@@ -529,7 +544,8 @@ public final class HttpLoggingInterceptorTest {
         .setHeader("Content-Type", PLAIN)
         .setBody(new Buffer().write(ByteString.decodeBase64(
             "H4sIAAAAAAAAAPNIzcnJ11HwQKIAdyO+9hMAAAA="))));
-    client.newCall(request().build()).execute();
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
 
     networkLogs
         .assertLogEqual("--> GET " + url + " HTTP/1.1")

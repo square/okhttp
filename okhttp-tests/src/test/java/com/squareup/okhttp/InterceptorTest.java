@@ -391,7 +391,8 @@ public final class InterceptorTest {
 
     client.interceptors().add(new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
-        chain.proceed(chain.request());
+        Response response1 = chain.proceed(chain.request());
+        response1.body().close();
         return chain.proceed(chain.request());
       }
     });

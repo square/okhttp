@@ -570,7 +570,8 @@ public final class CallTest {
         .build();
 
     Call call = client.newCall(request);
-    call.execute();
+    Response response = call.execute();
+    response.body().close();
 
     try {
       call.execute();
@@ -748,6 +749,8 @@ public final class CallTest {
       long elapsedNanos = System.nanoTime() - startNanos;
       long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
       assertTrue(String.format("Timed out: %sms", elapsedMillis), elapsedMillis < 500);
+    } finally {
+      bodySource.close();
     }
   }
 
@@ -1005,13 +1008,16 @@ public final class CallTest {
 
   @Test public void setFollowSslRedirectsFalse() throws Exception {
     enableTls();
-    server.enqueue(new MockResponse().setResponseCode(301).addHeader("Location: http://square.com"));
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location: http://square.com"));
 
     client.setFollowSslRedirects(false);
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
     assertEquals(301, response.code());
+    response.body().close();
   }
 
   @Test public void matchingPinnedCertificate() throws Exception {
@@ -1026,12 +1032,14 @@ public final class CallTest {
     for (Certificate certificate : response1.handshake().peerCertificates()) {
       certificatePinnerBuilder.add(server.getHostName(), CertificatePinner.pin(certificate));
     }
+    response1.body().close();
 
     // Make another request with certificate pinning. It should complete normally.
     client.setCertificatePinner(certificatePinnerBuilder.build());
     Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
     assertNotSame(response2.handshake(), response1.handshake());
+    response2.body().close();
   }
 
   @Test public void unmatchingPinnedCertificate() throws Exception {
