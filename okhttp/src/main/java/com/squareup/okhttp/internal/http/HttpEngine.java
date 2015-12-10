@@ -444,7 +444,7 @@ public final class HttpEngine {
       closeQuietly(userResponse.body());
     } else {
       // If this engine never achieved a response body, its stream allocation is dead.
-      streamAllocation.noNewStreams();
+      streamAllocation.connectionFailed();
     }
 
     return streamAllocation;
@@ -751,7 +751,7 @@ public final class HttpEngine {
 
     if ("close".equalsIgnoreCase(networkResponse.request().header("Connection"))
         || "close".equalsIgnoreCase(networkResponse.header("Connection"))) {
-      streamAllocation.noNewStreamsOnConnection();
+      streamAllocation.noNewStreams();
     }
 
     return networkResponse;

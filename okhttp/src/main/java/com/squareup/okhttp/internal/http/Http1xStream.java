@@ -248,7 +248,7 @@ public final class Http1xStream implements HttpStream {
     if (state != STATE_OPEN_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
     if (streamAllocation == null) throw new IllegalStateException("streamAllocation == null");
     state = STATE_READING_RESPONSE_BODY;
-    streamAllocation.noNewStreamsOnConnection();
+    streamAllocation.noNewStreams();
     return new UnknownLengthSource();
   }
 
@@ -368,7 +368,7 @@ public final class Http1xStream implements HttpStream {
 
       state = STATE_CLOSED;
       if (streamAllocation != null) {
-        streamAllocation.noNewStreamsOnConnection();
+        streamAllocation.noNewStreams();
         streamAllocation.streamFinished(Http1xStream.this);
       }
     }

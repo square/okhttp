@@ -128,7 +128,7 @@ public final class StreamAllocation {
       if (connection.isHealthy(doExtensiveHealthChecks)) {
         return candidate;
       }
-      deallocate(true, false, true);
+      connectionFailed();
     }
   }
 
@@ -210,13 +210,7 @@ public final class StreamAllocation {
   }
 
   /** Forbid new streams from being created on the connection that hosts this allocation. */
-  public void noNewStreamsOnConnection() {
-    deallocate(true, false, false);
-  }
-
-  /** Forbid new streams from being created on this allocation. */
   public void noNewStreams() {
-    // TODO(jwilson): fix this for HTTP/2 to not nuke the socket connection.
     deallocate(true, false, false);
   }
 
@@ -285,6 +279,11 @@ public final class StreamAllocation {
         }
       }
     }
+    connectionFailed();
+  }
+
+  /** Finish the current stream and prevent new streams from being created. */
+  public void connectionFailed() {
     deallocate(true, false, true);
   }
 
