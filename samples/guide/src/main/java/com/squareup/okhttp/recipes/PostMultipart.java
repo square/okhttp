@@ -16,7 +16,7 @@
 package com.squareup.okhttp.recipes;
 
 import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.MultipartBuilder;
+import com.squareup.okhttp.Multipart;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -37,8 +37,8 @@ public final class PostMultipart {
 
   public void run() throws Exception {
     // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
-    RequestBody requestBody = new MultipartBuilder()
-        .type(MultipartBuilder.FORM)
+    RequestBody requestBody = new Multipart.Builder()
+        .setType(Multipart.FORM)
         .addFormDataPart("title", "Square Logo")
         .addFormDataPart("image", "logo-square.png",
             RequestBody.create(MEDIA_TYPE_PNG, new File("website/static/logo-square.png")))
