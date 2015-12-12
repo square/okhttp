@@ -205,9 +205,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
     ResponseBody responseBody = response.body();
-    logger.log("<-- " + protocol(response.protocol()) + ' ' + response.code() + ' '
-        + response.message() + " (" + tookMs + "ms"
-        + (!logHeaders ? ", " + responseBody.contentLength() + "-byte body" : "") + ')');
+    logger.log("<-- " + response.code() + ' ' + response.message() + ' '
+        + response.request().urlString() + " (" + tookMs + "ms" + (!logHeaders ? ", "
+        + responseBody.contentLength() + "-byte body" : "") + ')');
 
     if (logHeaders) {
       Headers headers = response.headers();
