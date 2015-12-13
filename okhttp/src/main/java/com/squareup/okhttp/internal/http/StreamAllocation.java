@@ -147,30 +147,26 @@ public final class StreamAllocation {
       if (allocatedConnection != null && !allocatedConnection.noNewStreams) {
         return allocatedConnection;
       }
-    }
 
-    // Attempt to get a connection from the pool.
-    RealConnection pooledConnection = (RealConnection) connectionPool.get(address, this);
-    if (pooledConnection != null) {
-      synchronized (connectionPool) {
+      // Attempt to get a connection from the pool.
+      RealConnection pooledConnection = Internal.instance.get(connectionPool, address, this);
+      if (pooledConnection != null) {
         this.connection = pooledConnection;
-        if (canceled) throw new IOException("Canceled");
         return pooledConnection;
       }
-    }
 
-    // Attempt to create a connection.
-    synchronized (connectionPool) {
+      // Attempt to create a connection.
       if (routeSelector == null) {
         routeSelector = new RouteSelector(address, routeDatabase());
       }
     }
+
     Route route = routeSelector.next();
     RealConnection newConnection = new RealConnection(route);
     acquire(newConnection);
 
     synchronized (connectionPool) {
-      connectionPool.put(newConnection);
+      Internal.instance.put(connectionPool, newConnection);
       this.connection = newConnection;
       if (canceled) throw new IOException("Canceled");
     }
@@ -238,7 +234,7 @@ public final class StreamAllocation {
           }
           if (connection.allocations.isEmpty()) {
             connection.idleAtNanos = System.nanoTime();
-            if (connectionPool.connectionBecameIdle(connection)) {
+            if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
               connectionToClose = connection;
             }
           }

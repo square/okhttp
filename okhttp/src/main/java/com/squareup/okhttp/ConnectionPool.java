@@ -168,7 +168,8 @@ public final class ConnectionPool {
   }
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */
-  public synchronized Connection get(Address address, StreamAllocation streamAllocation) {
+  RealConnection get(Address address, StreamAllocation streamAllocation) {
+    assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
       // TODO(jwilson): this is awkward. We're already holding a lock on 'this', and
       //     connection.allocationLimit() may also lock the FramedConnection.
@@ -182,8 +183,8 @@ public final class ConnectionPool {
     return null;
   }
 
-  // TODO(jwilson): reduce visibility.
-  public synchronized void put(RealConnection connection) {
+  void put(RealConnection connection) {
+    assert (Thread.holdsLock(this));
     if (connections.isEmpty()) {
       executor.execute(cleanupRunnable);
     }
@@ -194,8 +195,8 @@ public final class ConnectionPool {
    * Notify this pool that {@code connection} has become idle. Returns true if the connection
    * has been removed from the pool and should be closed.
    */
-  // TODO(jwilson): reduce visibility.
-  public synchronized boolean connectionBecameIdle(RealConnection connection) {
+  boolean connectionBecameIdle(RealConnection connection) {
+    assert (Thread.holdsLock(this));
     if (connection.noNewStreams || maxIdleConnections == 0) {
       connections.remove(connection);
       return true;

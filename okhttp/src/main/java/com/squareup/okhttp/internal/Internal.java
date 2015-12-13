@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal;
 
+import com.squareup.okhttp.Address;
 import com.squareup.okhttp.Call;
 import com.squareup.okhttp.Callback;
 import com.squareup.okhttp.ConnectionPool;
@@ -23,6 +24,7 @@ import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.internal.http.StreamAllocation;
+import com.squareup.okhttp.internal.io.RealConnection;
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.logging.Logger;
@@ -50,6 +52,13 @@ public abstract class Internal {
   public abstract void setCache(OkHttpClient client, InternalCache internalCache);
 
   public abstract InternalCache internalCache(OkHttpClient client);
+
+  public abstract RealConnection get(
+      ConnectionPool pool, Address address, StreamAllocation streamAllocation);
+
+  public abstract void put(ConnectionPool pool, RealConnection connection);
+
+  public abstract boolean connectionBecameIdle(ConnectionPool pool, RealConnection connection);
 
   public abstract RouteDatabase routeDatabase(ConnectionPool connectionPool);
 

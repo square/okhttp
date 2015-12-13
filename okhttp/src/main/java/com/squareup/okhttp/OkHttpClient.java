@@ -21,6 +21,7 @@ import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
 import com.squareup.okhttp.internal.http.StreamAllocation;
+import com.squareup.okhttp.internal.io.RealConnection;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.net.CookieHandler;
 import java.net.MalformedURLException;
@@ -72,6 +73,20 @@ public class OkHttpClient implements Cloneable {
 
       @Override public InternalCache internalCache(OkHttpClient client) {
         return client.internalCache();
+      }
+
+      @Override public boolean connectionBecameIdle(
+          ConnectionPool pool, RealConnection connection) {
+        return pool.connectionBecameIdle(connection);
+      }
+
+      @Override public RealConnection get(
+          ConnectionPool pool, Address address, StreamAllocation streamAllocation) {
+        return pool.get(address, streamAllocation);
+      }
+
+      @Override public void put(ConnectionPool pool, RealConnection connection) {
+        pool.put(connection);
       }
 
       @Override public RouteDatabase routeDatabase(ConnectionPool connectionPool) {
