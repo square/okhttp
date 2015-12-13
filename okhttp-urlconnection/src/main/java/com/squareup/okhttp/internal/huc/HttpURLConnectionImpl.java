@@ -445,6 +445,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * retried. Throws an exception if the request failed permanently.
    */
   private boolean execute(boolean readResponse) throws IOException {
+    boolean releaseConnection = true;
     try {
       httpEngine.sendRequest();
       Connection connection = httpEngine.getConnection();
@@ -458,6 +459,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       if (readResponse) {
         httpEngine.readResponse();
       }
+      releaseConnection = false;
 
       return true;
     } catch (RequestException e) {
@@ -469,6 +471,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       // The attempt to connect via a route failed. The request will not have been sent.
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
+        releaseConnection = false;
         httpEngine = retryEngine;
         return false;
       }
@@ -481,6 +484,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       // An attempt to communicate with a server failed. The request may have been sent.
       HttpEngine retryEngine = httpEngine.recover(e);
       if (retryEngine != null) {
+        releaseConnection = false;
         httpEngine = retryEngine;
         return false;
       }
@@ -488,6 +492,12 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       // Give up; recovery is not possible.
       httpEngineFailure = e;
       throw e;
+    } finally {
+      // We're throwing an unchecked exception. Release any resources.
+      if (releaseConnection) {
+        StreamAllocation streamAllocation = httpEngine.close();
+        streamAllocation.release();
+      }
     }
   }
 

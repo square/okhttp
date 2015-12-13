@@ -226,6 +226,7 @@ public final class URLConnectionTest {
     assertEquals("d", connection.getHeaderField(1));
     assertEquals("A", connection.getHeaderFieldKey(2));
     assertEquals("e", connection.getHeaderField(2));
+    connection.getInputStream().close();
   }
 
   @Test public void serverSendsInvalidResponseHeaders() throws Exception {
@@ -318,6 +319,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("A"));
     connection = client.open(server.getUrl("/"));
     assertNull(connection.getErrorStream());
+    connection.getInputStream().close();
   }
 
   @Test public void getErrorStreamOnUnsuccessfulRequest() throws Exception {
@@ -335,8 +337,13 @@ public final class URLConnectionTest {
     server.enqueue(response);
     server.enqueue(response);
 
-    assertContent("ABCDE", client.open(server.getUrl("/")), 5);
-    assertContent("ABCDE", client.open(server.getUrl("/")), 5);
+    HttpURLConnection c1 = client.open(server.getUrl("/"));
+    assertContent("ABCDE", c1, 5);
+    HttpURLConnection c2 = client.open(server.getUrl("/"));
+    assertContent("ABCDE", c2, 5);
+
+    c1.getInputStream().close();
+    c2.getInputStream().close();
   }
 
   // Check that we recognize a few basic mime types by extension.
@@ -1013,6 +1020,7 @@ public final class URLConnectionTest {
       fail("Expected a connection closed exception");
     } catch (IOException expected) {
     }
+    in.close();
   }
 
   @Test public void disconnectBeforeConnect() throws IOException {
@@ -1075,6 +1083,7 @@ public final class URLConnectionTest {
     } catch (IOException expected) {
     }
     assertEquals("FGHIJKLMNOPQRSTUVWXYZ", readAscii(in, Integer.MAX_VALUE));
+    in.close();
     assertContent("ABCDEFGHIJKLMNOPQRSTUVWXYZ", client.open(server.getUrl("/")));
   }
 
@@ -1098,6 +1107,7 @@ public final class URLConnectionTest {
     assertEquals(401, conn.getResponseCode());
     assertEquals(401, conn.getResponseCode());
     assertEquals(1, server.getRequestCount());
+    conn.getErrorStream().close();
   }
 
   @Test public void nonHexChunkSize() throws IOException {
@@ -1111,6 +1121,7 @@ public final class URLConnectionTest {
       fail();
     } catch (IOException e) {
     }
+    connection.getInputStream().close();
   }
 
   @Test public void malformedChunkSize() throws IOException {
@@ -1123,6 +1134,8 @@ public final class URLConnectionTest {
       readAscii(connection.getInputStream(), Integer.MAX_VALUE);
       fail();
     } catch (IOException e) {
+    } finally {
+      connection.getInputStream().close();
     }
   }
 
@@ -1146,6 +1159,8 @@ public final class URLConnectionTest {
       readAscii(connection.getInputStream(), Integer.MAX_VALUE);
       fail();
     } catch (IOException e) {
+    } finally {
+      connection.getInputStream().close();
     }
   }
 
@@ -1348,6 +1363,7 @@ public final class URLConnectionTest {
     OutputStream outputStream = connection.getOutputStream();
     outputStream.write(body.getBytes("US-ASCII"));
     assertEquals(200, connection.getResponseCode());
+    connection.getInputStream().close();
 
     RecordedRequest request = server.takeRequest();
     assertEquals(body, request.getBody().readUtf8());
@@ -1501,7 +1517,8 @@ public final class URLConnectionTest {
     int responseCode = proxy ? 407 : 401;
     RecordingAuthenticator authenticator = new RecordingAuthenticator(null);
     Authenticator.setDefault(authenticator);
-    MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(responseCode)
+    MockResponse pleaseAuthenticate = new MockResponse()
+        .setResponseCode(responseCode)
         .addHeader(authHeader)
         .setBody("Please authenticate.");
     server.enqueue(pleaseAuthenticate);
@@ -1513,6 +1530,7 @@ public final class URLConnectionTest {
       connection = client.open(server.getUrl("/"));
     }
     assertEquals(responseCode, connection.getResponseCode());
+    connection.getErrorStream().close();
     return authenticator.calls;
   }
 
@@ -2222,6 +2240,7 @@ public final class URLConnectionTest {
       fail();
     } catch (SocketTimeoutException expected) {
     }
+    in.close();
   }
 
   /** Confirm that an unacknowledged write times out. */
@@ -2490,6 +2509,7 @@ public final class URLConnectionTest {
     } catch (NullPointerException expected) {
     }
     assertNull(connection.getContent(new Class[] { getClass() }));
+    connection.getInputStream().close();
   }
 
   @Test public void getOutputStreamOnGetFails() throws Exception {
@@ -2500,6 +2520,7 @@ public final class URLConnectionTest {
       fail();
     } catch (ProtocolException expected) {
     }
+    connection.getInputStream().close();
   }
 
   @Test public void getOutputAfterGetInputStreamFails() throws Exception {
@@ -2528,6 +2549,7 @@ public final class URLConnectionTest {
       fail();
     } catch (IllegalStateException expected) {
     }
+    connection.getInputStream().close();
   }
 
   @Test public void clientSendsContentLength() throws Exception {
@@ -2540,24 +2562,28 @@ public final class URLConnectionTest {
     assertEquals("A", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
     RecordedRequest request = server.takeRequest();
     assertEquals("3", request.getHeader("Content-Length"));
+    connection.getInputStream().close();
   }
 
   @Test public void getContentLengthConnects() throws Exception {
     server.enqueue(new MockResponse().setBody("ABC"));
     connection = client.open(server.getUrl("/"));
     assertEquals(3, connection.getContentLength());
+    connection.getInputStream().close();
   }
 
   @Test public void getContentTypeConnects() throws Exception {
     server.enqueue(new MockResponse().addHeader("Content-Type: text/plain").setBody("ABC"));
     connection = client.open(server.getUrl("/"));
     assertEquals("text/plain", connection.getContentType());
+    connection.getInputStream().close();
   }
 
   @Test public void getContentEncodingConnects() throws Exception {
     server.enqueue(new MockResponse().addHeader("Content-Encoding: identity").setBody("ABC"));
     connection = client.open(server.getUrl("/"));
     assertEquals("identity", connection.getContentEncoding());
+    connection.getInputStream().close();
   }
 
   // http://b/4361656
@@ -2787,6 +2813,7 @@ public final class URLConnectionTest {
     connection = client.open(server.getUrl("/"));
     connection.getResponseCode();
     assertEquals("A", connection.getHeaderField(""));
+    connection.getInputStream().close();
   }
 
   @Test public void requestHeaderValidationIsStrict() throws Exception {
