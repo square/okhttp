@@ -90,27 +90,6 @@ public final class Address {
     return url;
   }
 
-  /**
-   * Returns the hostname of the origin server.
-   *
-   * @deprecated prefer {@code address.url().host()}.
-   */
-  @Deprecated
-  public String getUriHost() {
-    return url.host();
-  }
-
-  /**
-   * Returns the port of the origin server; typically 80 or 443. Unlike
-   * may {@code getPort()} accessors, this method never returns -1.
-   *
-   * @deprecated prefer {@code address.url().port()}.
-   */
-  @Deprecated
-  public int getUriPort() {
-    return url.port();
-  }
-
   /** Returns the service that will be used to resolve IP addresses for hostnames. */
   public Dns getDns() {
     return dns;

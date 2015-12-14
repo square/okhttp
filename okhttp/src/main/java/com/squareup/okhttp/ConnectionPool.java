@@ -147,12 +147,6 @@ public final class ConnectionPool {
     return connections.size();
   }
 
-  /** @deprecated Use {@link #getMultiplexedConnectionCount()}. */
-  @Deprecated
-  public synchronized int getSpdyConnectionCount() {
-    return getMultiplexedConnectionCount();
-  }
-
   /** Returns total number of multiplexed connections in the pool. */
   public synchronized int getMultiplexedConnectionCount() {
     int total = 0;
