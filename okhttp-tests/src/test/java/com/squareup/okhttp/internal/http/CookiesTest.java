@@ -276,7 +276,7 @@ public class CookiesTest {
     server.enqueue(new MockResponse());
     server.start();
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
     assertEquals(Collections.<String, List<String>>emptyMap(),
         connection.getRequestProperties());
 
@@ -351,7 +351,7 @@ public class CookiesTest {
   }
 
   private Map<String,List<String>> get(MockWebServer server, String path) throws Exception {
-    URLConnection connection = new OkUrlFactory(client).open(server.getUrl(path));
+    URLConnection connection = new OkUrlFactory(client).open(server.url(path).url());
     Map<String, List<String>> headers = connection.getHeaderFields();
     connection.getInputStream().close();
     return headers;

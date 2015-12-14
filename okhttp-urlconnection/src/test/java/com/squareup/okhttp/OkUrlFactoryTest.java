@@ -50,7 +50,7 @@ public class OkUrlFactoryTest {
   @Test public void originServerSends407() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(407));
 
-    HttpURLConnection conn = factory.open(server.getUrl("/"));
+    HttpURLConnection conn = factory.open(server.url("/").url());
     try {
       conn.getResponseCode();
       fail();
@@ -61,7 +61,7 @@ public class OkUrlFactoryTest {
   @Test public void networkResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection = factory.open(server.getUrl("/"));
+    HttpURLConnection connection = factory.open(server.url("/").url());
     assertResponseHeader(connection, "NETWORK 200");
     assertResponseBody(connection, "Isla Sorna");
   }
@@ -69,7 +69,7 @@ public class OkUrlFactoryTest {
   @Test public void networkFailureResponseSourceHeader() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(404));
 
-    HttpURLConnection connection = factory.open(server.getUrl("/"));
+    HttpURLConnection connection = factory.open(server.url("/").url());
     assertResponseHeader(connection, "NETWORK 404");
     connection.getErrorStream().close();
   }
@@ -81,11 +81,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setResponseCode(304));
 
-    HttpURLConnection connection1 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection1 = factory.open(server.url("/").url());
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection2 = factory.open(server.url("/").url());
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 304");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -97,11 +97,11 @@ public class OkUrlFactoryTest {
         .setBody("Isla Nublar"));
     server.enqueue(new MockResponse().setBody("Isla Sorna"));
 
-    HttpURLConnection connection1 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection1 = factory.open(server.url("/").url());
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection2 = factory.open(server.url("/").url());
     assertResponseHeader(connection2, "CONDITIONAL_CACHE 200");
     assertResponseBody(connection2, "Isla Sorna");
   }
@@ -111,11 +111,11 @@ public class OkUrlFactoryTest {
         .addHeader("Expires: " + formatDate(2, TimeUnit.HOURS))
         .setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection1 = factory.open(server.url("/").url());
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection2 = factory.open(server.url("/").url());
     assertResponseHeader(connection2, "CACHE 200");
     assertResponseBody(connection2, "Isla Nublar");
   }
@@ -123,11 +123,11 @@ public class OkUrlFactoryTest {
   @Test public void noneResponseSourceHeaders() throws Exception {
     server.enqueue(new MockResponse().setBody("Isla Nublar"));
 
-    HttpURLConnection connection1 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection1 = factory.open(server.url("/").url());
     assertResponseHeader(connection1, "NETWORK 200");
     assertResponseBody(connection1, "Isla Nublar");
 
-    HttpURLConnection connection2 = factory.open(server.getUrl("/"));
+    HttpURLConnection connection2 = factory.open(server.url("/").url());
     connection2.setRequestProperty("Cache-Control", "only-if-cached");
     assertResponseHeader(connection2, "NONE");
   }
@@ -141,7 +141,7 @@ public class OkUrlFactoryTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    HttpURLConnection connection = factory.open(server.getUrl("/a"));
+    HttpURLConnection connection = factory.open(server.url("/a").url());
     connection.setInstanceFollowRedirects(false);
     assertResponseBody(connection, "A");
     assertResponseCode(connection, 302);

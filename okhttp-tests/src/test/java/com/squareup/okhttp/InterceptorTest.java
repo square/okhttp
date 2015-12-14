@@ -135,8 +135,8 @@ public final class InterceptorTest {
     Interceptor interceptor = new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
         Address address = chain.connection().getRoute().getAddress();
-        String sameHost = address.getUriHost();
-        int differentPort = address.getUriPort() + 1;
+        String sameHost = address.url().host();
+        int differentPort = address.url().port() + 1;
         return chain.proceed(chain.request().newBuilder()
             .url(HttpUrl.parse("http://" + sameHost + ":" + differentPort + "/"))
             .build());

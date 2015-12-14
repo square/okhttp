@@ -46,7 +46,7 @@ public class CustomDispatcherTest {
     };
     assertEquals(0, requestsMade.size());
     mockWebServer.setDispatcher(dispatcher);
-    final URL url = mockWebServer.getUrl("/");
+    final URL url = mockWebServer.url("/").url();
     final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
     conn.getResponseCode(); // Force the connection to hit the "server".
     // Make sure our dispatcher got the request.
@@ -86,7 +86,7 @@ public class CustomDispatcherTest {
   private Thread buildRequestThread(final String path, final AtomicInteger responseCode) {
     return new Thread(new Runnable() {
       @Override public void run() {
-        final URL url = mockWebServer.getUrl(path);
+        final URL url = mockWebServer.url(path).url();
         final HttpURLConnection conn;
         try {
           conn = (HttpURLConnection) url.openConnection();

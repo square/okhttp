@@ -175,13 +175,13 @@ public final class RealConnection implements Connection {
     try {
       // Create the wrapper over the connected socket.
       sslSocket = (SSLSocket) sslSocketFactory.createSocket(
-          rawSocket, address.getUriHost(), address.getUriPort(), true /* autoClose */);
+          rawSocket, address.url().host(), address.url().port(), true /* autoClose */);
 
       // Configure the socket's ciphers, TLS versions, and extensions.
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
       if (connectionSpec.supportsTlsExtensions()) {
         Platform.get().configureTlsExtensions(
-            sslSocket, address.getUriHost(), address.getProtocols());
+            sslSocket, address.url().host(), address.getProtocols());
       }
 
       // Force handshake. This can throw!
@@ -189,16 +189,16 @@ public final class RealConnection implements Connection {
       Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.getHostnameVerifier().verify(address.getUriHost(), sslSocket.getSession())) {
+      if (!address.getHostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
-        throw new SSLPeerUnverifiedException("Hostname " + address.getUriHost() + " not verified:"
+        throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
             + "\n    DN: " + cert.getSubjectDN().getName()
             + "\n    subjectAltNames: " + OkHostnameVerifier.allSubjectAltNames(cert));
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.getCertificatePinner().check(address.getUriHost(),
+      address.getCertificatePinner().check(address.url().host(),
           unverifiedHandshake.peerCertificates());
 
       // Success! Save the handshake and the ALPN protocol.

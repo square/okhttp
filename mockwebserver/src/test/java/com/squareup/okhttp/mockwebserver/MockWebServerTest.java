@@ -83,7 +83,7 @@ public final class MockWebServerTest {
   @Test public void regularResponse() throws Exception {
     server.enqueue(new MockResponse().setBody("hello world"));
 
-    URL url = server.getUrl("/");
+    URL url = server.url("/").url();
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setRequestProperty("Accept-Language", "en-US");
     InputStream in = connection.getInputStream();
@@ -99,11 +99,11 @@ public final class MockWebServerTest {
   @Test public void redirect() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server.getUrl("/new-path"))
+        .addHeader("Location: " + server.url("/new-path"))
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("This is the new location!"));
 
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     assertEquals("This is the new location!", reader.readLine());
@@ -129,7 +129,7 @@ public final class MockWebServerTest {
       }
     }.start();
 
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
     assertEquals("enqueued in the background", reader.readLine());
@@ -141,7 +141,7 @@ public final class MockWebServerTest {
         .clearHeaders()
         .addHeader("Transfer-encoding: chunked"));
 
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
     try {
       in.read();
@@ -157,7 +157,7 @@ public final class MockWebServerTest {
         .addHeader("Content-Length: 4"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    URLConnection urlConnection = server.getUrl("/").openConnection();
+    URLConnection urlConnection = server.url("/").url().openConnection();
     urlConnection.setReadTimeout(1000);
     InputStream in = urlConnection.getInputStream();
     assertEquals('A', in.read());
@@ -169,7 +169,7 @@ public final class MockWebServerTest {
     } catch (SocketTimeoutException expected) {
     }
 
-    URLConnection urlConnection2 = server.getUrl("/").openConnection();
+    URLConnection urlConnection2 = server.url("/").url().openConnection();
     InputStream in2 = urlConnection2.getInputStream();
     assertEquals('D', in2.read());
     assertEquals('E', in2.read());
@@ -185,10 +185,10 @@ public final class MockWebServerTest {
     server.enqueue(new MockResponse()); // The jdk's HttpUrlConnection is a bastard.
     server.enqueue(new MockResponse());
     try {
-      server.getUrl("/a").openConnection().getInputStream();
+      server.url("/a").url().openConnection().getInputStream();
     } catch (IOException expected) {
     }
-    server.getUrl("/b").openConnection().getInputStream(); // Should succeed.
+    server.url("/b").url().openConnection().getInputStream(); // Should succeed.
   }
 
   /**
@@ -200,7 +200,7 @@ public final class MockWebServerTest {
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
 
     long startNanos = System.nanoTime();
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     connection.setDoOutput(true);
     connection.getOutputStream().write("ABCDEF".getBytes("UTF-8"));
     InputStream in = connection.getInputStream();
@@ -222,7 +222,7 @@ public final class MockWebServerTest {
         .throttleBody(3, 500, TimeUnit.MILLISECONDS));
 
     long startNanos = System.nanoTime();
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
     assertEquals('A', in.read());
     assertEquals('B', in.read());
@@ -245,7 +245,7 @@ public final class MockWebServerTest {
         .setBodyDelay(1, SECONDS));
 
     long startNanos = System.nanoTime();
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     InputStream in = connection.getInputStream();
     assertEquals('A', in.read());
     long elapsedNanos = System.nanoTime() - startNanos;
@@ -258,7 +258,7 @@ public final class MockWebServerTest {
   @Test public void disconnectRequestHalfway() throws IOException {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_DURING_REQUEST_BODY));
 
-    HttpURLConnection connection = (HttpURLConnection) server.getUrl("/").openConnection();
+    HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
     connection.setRequestMethod("POST");
     connection.setDoOutput(true);
     connection.setFixedLengthStreamingMode(1024 * 1024 * 1024); // 1 GB
@@ -283,7 +283,7 @@ public final class MockWebServerTest {
         .setBody("ab")
         .setSocketPolicy(SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY));
 
-    URLConnection connection = server.getUrl("/").openConnection();
+    URLConnection connection = server.url("/").url().openConnection();
     assertEquals(2, connection.getContentLength());
     InputStream in = connection.getInputStream();
     assertEquals('a', in.read());
@@ -345,7 +345,7 @@ public final class MockWebServerTest {
     Statement statement = server.apply(new Statement() {
       @Override public void evaluate() throws Throwable {
         called.set(true);
-        server.getUrl("/").openConnection().connect();
+        server.url("/").url().openConnection().connect();
       }
     }, Description.EMPTY);
 
@@ -353,7 +353,7 @@ public final class MockWebServerTest {
 
     assertTrue(called.get());
     try {
-      server.getUrl("/").openConnection().connect();
+      server.url("/").url().openConnection().connect();
       fail();
     } catch (ConnectException expected) {
     }

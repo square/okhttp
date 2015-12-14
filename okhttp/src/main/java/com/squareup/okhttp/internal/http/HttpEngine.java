@@ -677,8 +677,8 @@ public final class HttpEngine {
         Address address = connection().getRoute().getAddress();
 
         // Confirm that the interceptor uses the connection we've already prepared.
-        if (!request.httpUrl().host().equals(address.getUriHost())
-            || request.httpUrl().port() != address.getUriPort()) {
+        if (!request.httpUrl().host().equals(address.url().host())
+            || request.httpUrl().port() != address.url().port()) {
           throw new IllegalStateException("network interceptor " + caller
               + " must retain the same host and port");
         }
