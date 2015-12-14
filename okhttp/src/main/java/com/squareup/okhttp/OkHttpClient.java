@@ -183,13 +183,14 @@ public class OkHttpClient implements Cloneable {
    *
    * @see URLConnection#setConnectTimeout(int)
    */
-  public void setConnectTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setConnectTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
     connectTimeout = (int) millis;
+    return this;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -203,13 +204,14 @@ public class OkHttpClient implements Cloneable {
    *
    * @see URLConnection#setReadTimeout(int)
    */
-  public void setReadTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setReadTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
     readTimeout = (int) millis;
+    return this;
   }
 
   /** Default read timeout (in milliseconds). */
@@ -221,13 +223,14 @@ public class OkHttpClient implements Cloneable {
    * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
    * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
    */
-  public void setWriteTimeout(long timeout, TimeUnit unit) {
+  public OkHttpClient setWriteTimeout(long timeout, TimeUnit unit) {
     if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
     if (unit == null) throw new IllegalArgumentException("unit == null");
     long millis = unit.toMillis(timeout);
     if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
     if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
     writeTimeout = (int) millis;
+    return this;
   }
 
   /** Default write timeout (in milliseconds). */
@@ -428,8 +431,9 @@ public class OkHttpClient implements Cloneable {
   }
 
   /** Configure this client to follow redirects. If unset, redirects be followed. */
-  public void setFollowRedirects(boolean followRedirects) {
+  public OkHttpClient setFollowRedirects(boolean followRedirects) {
     this.followRedirects = followRedirects;
+    return this;
   }
 
   public boolean getFollowRedirects() {
@@ -454,8 +458,9 @@ public class OkHttpClient implements Cloneable {
    * Set this to false to avoid retrying requests when doing so is destructive. In this case the
    * calling application should do its own recovery of connectivity failures.
    */
-  public void setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
+  public OkHttpClient setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
     this.retryOnConnectionFailure = retryOnConnectionFailure;
+    return this;
   }
 
   public boolean getRetryOnConnectionFailure() {
