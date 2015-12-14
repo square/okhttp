@@ -33,20 +33,21 @@ import javax.net.ssl.SSLSession;
  * javax.net.ssl.SSLSocketFactory} to set policy for new handshakes.
  */
 public final class Handshake {
-  private final String cipherSuite;
+  private final CipherSuite cipherSuite;
   private final List<Certificate> peerCertificates;
   private final List<Certificate> localCertificates;
 
-  private Handshake(
-      String cipherSuite, List<Certificate> peerCertificates, List<Certificate> localCertificates) {
+  private Handshake(CipherSuite cipherSuite, List<Certificate> peerCertificates,
+      List<Certificate> localCertificates) {
     this.cipherSuite = cipherSuite;
     this.peerCertificates = peerCertificates;
     this.localCertificates = localCertificates;
   }
 
   public static Handshake get(SSLSession session) {
-    String cipherSuite = session.getCipherSuite();
-    if (cipherSuite == null) throw new IllegalStateException("cipherSuite == null");
+    String cipherSuiteString = session.getCipherSuite();
+    if (cipherSuiteString == null) throw new IllegalStateException("cipherSuite == null");
+    CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
 
     Certificate[] peerCertificates;
     try {
@@ -66,15 +67,15 @@ public final class Handshake {
     return new Handshake(cipherSuite, peerCertificatesList, localCertificatesList);
   }
 
-  public static Handshake get(
-      String cipherSuite, List<Certificate> peerCertificates, List<Certificate> localCertificates) {
+  public static Handshake get(CipherSuite cipherSuite, List<Certificate> peerCertificates,
+      List<Certificate> localCertificates) {
     if (cipherSuite == null) throw new IllegalArgumentException("cipherSuite == null");
     return new Handshake(cipherSuite, Util.immutableList(peerCertificates),
         Util.immutableList(localCertificates));
   }
 
-  /** Returns a cipher suite name like "TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA". */
-  public String cipherSuite() {
+  /** Returns the cipher suite used for the connection. */
+  public CipherSuite cipherSuite() {
     return cipherSuite;
   }
 

@@ -367,6 +367,15 @@ public enum CipherSuite {
     this.javaName = javaName;
   }
 
+  /**
+   * Returns the Java name of this cipher suite. For some older cipher suites the Java name has the
+   * prefix {@code SSL_}, causing the Java name to be different from the {@linkplain #name() enum
+   * name} which is always prefixed {@code TLS_}.
+   */
+  public String javaName() {
+    return javaName;
+  }
+
   public static CipherSuite forJavaName(String javaName) {
     return javaName.startsWith("SSL_")
         ? valueOf("TLS_" + javaName.substring(4))

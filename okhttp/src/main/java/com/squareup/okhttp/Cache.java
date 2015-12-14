@@ -551,7 +551,8 @@ public final class Cache {
           if (blank.length() > 0) {
             throw new IOException("expected \"\" but was \"" + blank + "\"");
           }
-          String cipherSuite = source.readUtf8LineStrict();
+          String cipherSuiteString = source.readUtf8LineStrict();
+          CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
           List<Certificate> peerCertificates = readCertificateList(source);
           List<Certificate> localCertificates = readCertificateList(source);
           handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
@@ -603,7 +604,7 @@ public final class Cache {
 
       if (isHttps()) {
         sink.writeByte('\n');
-        sink.writeUtf8(handshake.cipherSuite());
+        sink.writeUtf8(handshake.cipherSuite().javaName());
         sink.writeByte('\n');
         writeCertList(sink, handshake.peerCertificates());
         writeCertList(sink, handshake.localCertificates());

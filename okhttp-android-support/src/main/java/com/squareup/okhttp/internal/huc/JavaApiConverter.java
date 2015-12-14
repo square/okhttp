@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.huc;
 
+import com.squareup.okhttp.CipherSuite;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
@@ -124,8 +125,9 @@ public final class JavaApiConverter {
 
       Certificate[] localCertificates = httpsUrlConnection.getLocalCertificates();
 
-      Handshake handshake = Handshake.get(
-          httpsUrlConnection.getCipherSuite(), nullSafeImmutableList(peerCertificates),
+      String cipherSuiteString = httpsUrlConnection.getCipherSuite();
+      CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
+      Handshake handshake = Handshake.get(cipherSuite, nullSafeImmutableList(peerCertificates),
           nullSafeImmutableList(localCertificates));
       okResponseBuilder.handshake(handshake);
     }
@@ -249,8 +251,10 @@ public final class JavaApiConverter {
       if (localCertificates == null) {
         localCertificates = Collections.emptyList();
       }
-      Handshake handshake = Handshake.get(
-          javaSecureCacheResponse.getCipherSuite(), peerCertificates, localCertificates);
+
+      String cipherSuiteString = javaSecureCacheResponse.getCipherSuite();
+      CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
+      Handshake handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
       okResponseBuilder.handshake(handshake);
     }
 
@@ -294,7 +298,7 @@ public final class JavaApiConverter {
       return new SecureCacheResponse() {
         @Override
         public String getCipherSuite() {
-          return handshake != null ? handshake.cipherSuite() : null;
+          return handshake != null ? handshake.cipherSuite().javaName() : null;
         }
 
         @Override
