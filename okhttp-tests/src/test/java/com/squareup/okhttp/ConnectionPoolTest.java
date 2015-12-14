@@ -48,8 +48,7 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(routeA1, 50L);
-    pool.put(c1);
+    RealConnection c1 = newConnection(pool, routeA1, 50L);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
@@ -81,10 +80,9 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(routeA1, 50L);
+    RealConnection c1 = newConnection(pool, routeA1, 50L);
     StreamAllocation streamAllocation = new StreamAllocation(pool, addressA);
     streamAllocation.acquire(c1);
-    pool.put(c1);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
@@ -106,11 +104,8 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(routeA1, 75L);
-    pool.put(c1);
-
-    RealConnection c2 = newConnection(routeB1, 50L);
-    pool.put(c2);
+    RealConnection c1 = newConnection(pool, routeA1, 75L);
+    RealConnection c2 = newConnection(pool, routeB1, 50L);
 
     // Running at time 75, the pool returns that nothing can be evicted until time 150.
     assertEquals(75L, pool.cleanup(75L));
@@ -141,11 +136,8 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(routeA1, 50L);
-    pool.put(c1);
-
-    RealConnection c2 = newConnection(routeB1, 75L);
-    pool.put(c2);
+    RealConnection c1 = newConnection(pool, routeA1, 50L);
+    RealConnection c2 = newConnection(pool, routeB1, 75L);
 
     // With 2 connections, there's no need to evict until the connections time out.
     assertEquals(50L, pool.cleanup(100L));
@@ -154,8 +146,7 @@ public final class ConnectionPoolTest {
     assertFalse(c2.socket.isClosed());
 
     // Add a third connection
-    RealConnection c3 = newConnection(routeC1, 75L);
-    pool.put(c3);
+    RealConnection c3 = newConnection(pool, routeC1, 75L);
 
     // The third connection bounces the first.
     assertEquals(0L, pool.cleanup(100L));
@@ -169,8 +160,7 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(routeA1, 0L);
-    pool.put(c1);
+    RealConnection c1 = newConnection(pool, routeA1, 0L);
     allocateAndLeakAllocation(pool, c1);
 
     awaitGarbageCollection();
@@ -197,10 +187,13 @@ public final class ConnectionPoolTest {
     System.runFinalization();
   }
 
-  private RealConnection newConnection(Route route, long idleAtNanos) {
+  private RealConnection newConnection(ConnectionPool pool, Route route, long idleAtNanos) {
     RealConnection connection = new RealConnection(route);
     connection.idleAtNanos = idleAtNanos;
     connection.socket = new Socket();
+    synchronized (pool) {
+      pool.put(connection);
+    }
     return connection;
   }
 
