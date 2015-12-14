@@ -20,9 +20,9 @@ public final class RequestLine {
     result.append(' ');
 
     if (includeAuthorityInRequestLine(request, proxyType)) {
-      result.append(request.httpUrl());
+      result.append(request.url());
     } else {
-      result.append(requestPath(request.httpUrl()));
+      result.append(requestPath(request.url()));
     }
 
     result.append(" HTTP/1.1");

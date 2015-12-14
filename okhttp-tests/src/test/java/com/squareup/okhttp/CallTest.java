@@ -134,7 +134,7 @@ public final class CallTest {
     Request request = new Request.Builder()
         .url(httpUrl)
         .build();
-    assertEquals(httpUrl, request.httpUrl());
+    assertEquals(httpUrl, request.url());
 
     executeSynchronously(request).assertSuccessful();
   }
@@ -631,7 +631,7 @@ public final class CallTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.httpUrl())
+    callback.await(request.url())
         .assertCode(200)
         .assertHeader("Content-Type", "text/plain")
         .assertBody("abc");
@@ -783,7 +783,7 @@ public final class CallTest {
     });
     Request request = new Request.Builder().url(server.url("/")).build();
     c.newCall(request).enqueue(callback);
-    RecordedResponse response = callback.await(request.httpUrl());
+    RecordedResponse response = callback.await(request.url());
     assertEquals(request, response.request);
   }
 
@@ -874,7 +874,7 @@ public final class CallTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.httpUrl()).assertHandshake();
+    callback.await(request.url()).assertHandshake();
   }
 
   @Test public void recoverWhenRetryOnConnectionFailureIsTrue() throws Exception {
@@ -966,7 +966,7 @@ public final class CallTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.httpUrl()).assertBody("abc");
+    callback.await(request.url()).assertBody("abc");
   }
 
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
@@ -1070,7 +1070,7 @@ public final class CallTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.httpUrl())
+    callback.await(request.url())
         .assertCode(200)
         .assertBody("abc");
 
@@ -1232,14 +1232,14 @@ public final class CallTest {
         .url(server.url("/"))
         .build();
     client.newCall(request1).enqueue(callback);
-    callback.await(request1.httpUrl()).assertCode(200).assertBody("A");
+    callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.url("/"))
         .build();
     client.newCall(request2).enqueue(callback);
-    callback.await(request2.httpUrl()).assertCode(200).assertBody("A");
+    callback.await(request2.url()).assertCode(200).assertBody("A");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
@@ -1304,14 +1304,14 @@ public final class CallTest {
         .url(server.url("/"))
         .build();
     client.newCall(request1).enqueue(callback);
-    callback.await(request1.httpUrl()).assertCode(200).assertBody("A");
+    callback.await(request1.url()).assertCode(200).assertBody("A");
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     Request request2 = new Request.Builder()
         .url(server.url("/"))
         .build();
     client.newCall(request2).enqueue(callback);
-    callback.await(request2.httpUrl()).assertCode(200).assertBody("B");
+    callback.await(request2.url()).assertCode(200).assertBody("B");
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
   }
 
@@ -1701,9 +1701,9 @@ public final class CallTest {
     Request requestB = new Request.Builder().url(server.url("/b")).tag("request B").build();
     client.newCall(requestB).enqueue(callback);
 
-    callback.await(requestA.httpUrl()).assertBody("A");
+    callback.await(requestA.url()).assertBody("A");
     // At this point we know the callback is ready, and that it will receive a cancel failure.
-    callback.await(requestB.httpUrl()).assertFailure("Canceled");
+    callback.await(requestB.url()).assertFailure("Canceled");
   }
 
   @Test public void canceledBeforeIOSignalsOnFailure_HTTPS() throws Exception {
@@ -1734,7 +1734,7 @@ public final class CallTest {
     call.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
 
-    callback.await(requestA.httpUrl()).assertFailure("Canceled", "stream was reset: CANCEL",
+    callback.await(requestA.url()).assertFailure("Canceled", "stream was reset: CANCEL",
         "Socket closed");
   }
 

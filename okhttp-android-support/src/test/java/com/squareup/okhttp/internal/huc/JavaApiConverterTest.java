@@ -118,7 +118,7 @@ public class JavaApiConverterTest {
 
     Response response = JavaApiConverter.createOkResponseForCacheGet(request, cacheResponse);
     Request cacheRequest = response.request();
-    assertEquals(request.httpUrl(), cacheRequest.httpUrl());
+    assertEquals(request.url(), cacheRequest.url());
     assertEquals(request.method(), cacheRequest.method());
     assertEquals(0, request.headers().size());
 
@@ -198,7 +198,7 @@ public class JavaApiConverterTest {
 
     Response response = JavaApiConverter.createOkResponseForCacheGet(request, cacheResponse);
     Request cacheRequest = response.request();
-    assertEquals(request.httpUrl(), cacheRequest.httpUrl());
+    assertEquals(request.url(), cacheRequest.url());
     assertEquals(request.method(), cacheRequest.method());
     assertEquals(0, request.headers().size());
 

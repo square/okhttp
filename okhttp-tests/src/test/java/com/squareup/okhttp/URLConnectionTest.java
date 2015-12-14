@@ -2890,7 +2890,7 @@ public final class URLConnectionTest {
 
     assertEquals(Proxy.NO_PROXY, authenticator.onlyProxy());
     Response response = authenticator.onlyResponse();
-    assertEquals("/private", response.request().url().getPath());
+    assertEquals("/private", response.request().url().url().getPath());
     assertEquals(Arrays.asList(new Challenge("Basic", "protected area")), response.challenges());
   }
 
@@ -2909,7 +2909,7 @@ public final class URLConnectionTest {
     assertEquals("oauthed abc123", server.takeRequest().getHeader("Authorization"));
 
     Response response = authenticator.onlyResponse();
-    assertEquals("/private", response.request().url().getPath());
+    assertEquals("/private", response.request().url().url().getPath());
     assertEquals(Arrays.asList(new Challenge("Bearer", "oauthed")), response.challenges());
   }
 
@@ -2928,10 +2928,10 @@ public final class URLConnectionTest {
     assertContent("c", client.open(server.url("/a").url()));
 
     Response challengeResponse = authenticator.responses.get(0);
-    assertEquals("/b", challengeResponse.request().url().getPath());
+    assertEquals("/b", challengeResponse.request().url().url().getPath());
 
     Response redirectedBy = challengeResponse.priorResponse();
-    assertEquals("/a", redirectedBy.request().url().getPath());
+    assertEquals("/a", redirectedBy.request().url().url().getPath());
   }
 
   @Test public void attemptAuthorization20Times() throws Exception {

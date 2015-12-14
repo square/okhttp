@@ -521,7 +521,7 @@ public final class HttpEngine {
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {
-      result.header("Host", Util.hostHeader(request.httpUrl()));
+      result.header("Host", Util.hostHeader(request.url()));
     }
 
     if (request.header("Connection") == null) {
@@ -677,8 +677,8 @@ public final class HttpEngine {
         Address address = connection().getRoute().getAddress();
 
         // Confirm that the interceptor uses the connection we've already prepared.
-        if (!request.httpUrl().host().equals(address.url().host())
-            || request.httpUrl().port() != address.url().port()) {
+        if (!request.url().host().equals(address.url().host())
+            || request.url().port() != address.url().port()) {
           throw new IllegalStateException("network interceptor " + caller
               + " must retain the same host and port");
         }
@@ -924,13 +924,13 @@ public final class HttpEngine {
 
         String location = userResponse.header("Location");
         if (location == null) return null;
-        HttpUrl url = userRequest.httpUrl().resolve(location);
+        HttpUrl url = userRequest.url().resolve(location);
 
         // Don't follow redirects to unsupported protocols.
         if (url == null) return null;
 
         // If configured, don't follow redirects between SSL and non-SSL.
-        boolean sameScheme = url.scheme().equals(userRequest.httpUrl().scheme());
+        boolean sameScheme = url.scheme().equals(userRequest.url().scheme());
         if (!sameScheme && !client.getFollowSslRedirects()) return null;
 
         // Redirects don't include a request body.
@@ -965,7 +965,7 @@ public final class HttpEngine {
    * connection used by this engine.
    */
   public boolean sameConnection(HttpUrl followUp) {
-    HttpUrl url = userRequest.httpUrl();
+    HttpUrl url = userRequest.url();
     return url.host().equals(followUp.host())
         && url.port() == followUp.port()
         && url.scheme().equals(followUp.scheme());
@@ -981,7 +981,7 @@ public final class HttpEngine {
       certificatePinner = client.getCertificatePinner();
     }
 
-    return new Address(request.httpUrl().host(), request.httpUrl().port(), client.getDns(),
+    return new Address(request.url().host(), request.url().port(), client.getDns(),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getAuthenticator(), client.getProxy(), client.getProtocols(),
         client.getConnectionSpecs(), client.getProxySelector());
