@@ -24,10 +24,14 @@ import static com.squareup.okhttp.internal.Util.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public final class MultipartBuilderTest {
-  @Test(expected = IllegalStateException.class)
-  public void onePartRequired() throws Exception {
-    new MultipartBuilder().build();
+public final class MultipartTest {
+  @Test public void onePartRequired() throws Exception {
+    try {
+      new Multipart.Builder().build();
+      fail();
+    } catch (IllegalStateException e) {
+      assertEquals("Multipart body must have at least one part.", e.getMessage());
+    }
   }
 
   @Test public void singlePart() throws Exception {
@@ -38,16 +42,19 @@ public final class MultipartBuilderTest {
         + "Hello, World!\r\n"
         + "--123--\r\n";
 
-    RequestBody requestBody = new MultipartBuilder("123")
+    Multipart multipart = new Multipart.Builder("123")
         .addPart(RequestBody.create(null, "Hello, World!"))
         .build();
 
-    assertEquals("multipart/mixed; boundary=123", requestBody.contentType().toString());
+    assertEquals("123", multipart.boundary());
+    assertEquals(Multipart.MIXED, multipart.type());
+    assertEquals("multipart/mixed; boundary=123", multipart.contentType().toString());
+    assertEquals(1, multipart.parts().size());
+    assertEquals(53, multipart.contentLength());
 
     Buffer buffer = new Buffer();
-    requestBody.writeTo(buffer);
-    assertEquals(53, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    multipart.writeTo(buffer);
+    assertEquals(buffer.size(), multipart.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -67,18 +74,21 @@ public final class MultipartBuilderTest {
         + "Fox\r\n"
         + "--123--\r\n";
 
-    RequestBody requestBody = new MultipartBuilder("123")
+    Multipart multipart = new Multipart.Builder("123")
         .addPart(RequestBody.create(null, "Quick"))
         .addPart(RequestBody.create(null, "Brown"))
         .addPart(RequestBody.create(null, "Fox"))
         .build();
 
-    assertEquals("multipart/mixed; boundary=123", requestBody.contentType().toString());
+    assertEquals("123", multipart.boundary());
+    assertEquals(Multipart.MIXED, multipart.type());
+    assertEquals("multipart/mixed; boundary=123", multipart.contentType().toString());
+    assertEquals(3, multipart.parts().size());
+    assertEquals(112, multipart.contentLength());
 
     Buffer buffer = new Buffer();
-    requestBody.writeTo(buffer);
-    assertEquals(112, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    multipart.writeTo(buffer);
+    assertEquals(buffer.size(), multipart.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -111,11 +121,11 @@ public final class MultipartBuilderTest {
         + "\r\n"
         + "--AaB03x--\r\n";
 
-    RequestBody requestBody = new MultipartBuilder("AaB03x")
-        .type(MultipartBuilder.FORM)
+    Multipart multipart = new Multipart.Builder("AaB03x")
+        .setType(Multipart.FORM)
         .addFormDataPart("submit-name", "Larry")
         .addFormDataPart("files", null,
-            new MultipartBuilder("BbC04y")
+            new Multipart.Builder("BbC04y")
                 .addPart(
                     Headers.of("Content-Disposition", "file; filename=\"file1.txt\""),
                     RequestBody.create(
@@ -130,12 +140,15 @@ public final class MultipartBuilderTest {
                 .build())
         .build();
 
-    assertEquals("multipart/form-data; boundary=AaB03x", requestBody.contentType().toString());
+    assertEquals("AaB03x", multipart.boundary());
+    assertEquals(Multipart.FORM, multipart.type());
+    assertEquals("multipart/form-data; boundary=AaB03x", multipart.contentType().toString());
+    assertEquals(2, multipart.parts().size());
+    assertEquals(568, multipart.contentLength());
 
     Buffer buffer = new Buffer();
-    requestBody.writeTo(buffer);
-    assertEquals(568, requestBody.contentLength());
-    assertEquals(buffer.size(), requestBody.contentLength());
+    multipart.writeTo(buffer);
+    assertEquals(buffer.size(), multipart.contentLength());
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -164,8 +177,8 @@ public final class MultipartBuilderTest {
         + "Alpha\r\n"
         + "--AaB03x--\r\n";
 
-    RequestBody requestBody = new MultipartBuilder("AaB03x")
-        .type(MultipartBuilder.FORM)
+    Multipart multipart = new Multipart.Builder("AaB03x")
+        .setType(Multipart.FORM)
         .addFormDataPart("field with spaces", "filename with spaces.txt",
             RequestBody.create(MediaType.parse("text/plain; charset=utf-8"), "okay"))
         .addFormDataPart("field with \"", "\"")
@@ -174,7 +187,7 @@ public final class MultipartBuilderTest {
         .build();
 
     Buffer buffer = new Buffer();
-    requestBody.writeTo(buffer);
+    multipart.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -209,24 +222,27 @@ public final class MultipartBuilderTest {
         + "Fox\r\n"
         + "--123--\r\n";
 
-    RequestBody requestBody = new MultipartBuilder("123")
+    Multipart multipart = new Multipart.Builder("123")
         .addPart(RequestBody.create(null, "Quick"))
         .addPart(new StreamingBody("Brown"))
         .addPart(RequestBody.create(null, "Fox"))
         .build();
 
-    assertEquals("multipart/mixed; boundary=123", requestBody.contentType().toString());
+    assertEquals("123", multipart.boundary());
+    assertEquals(Multipart.MIXED, multipart.type());
+    assertEquals("multipart/mixed; boundary=123", multipart.contentType().toString());
+    assertEquals(3, multipart.parts().size());
+    assertEquals(-1, multipart.contentLength());
 
     Buffer buffer = new Buffer();
-    requestBody.writeTo(buffer);
+    multipart.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
-    assertEquals(-1, requestBody.contentLength());
   }
 
   @Test public void contentTypeHeaderIsForbidden() throws Exception {
+    Multipart.Builder multipart = new Multipart.Builder();
     try {
-      new MultipartBuilder().addPart(
-          Headers.of("Content-Type", "text/plain"),
+      multipart.addPart(Headers.of("Content-Type", "text/plain"),
           RequestBody.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
@@ -234,9 +250,9 @@ public final class MultipartBuilderTest {
   }
 
   @Test public void contentLengthHeaderIsForbidden() throws Exception {
+    Multipart.Builder multipart = new Multipart.Builder();
     try {
-      new MultipartBuilder().addPart(
-          Headers.of("Content-Length", "13"),
+      multipart.addPart(Headers.of("Content-Length", "13"),
           RequestBody.create(null, "Hello, World!"));
       fail();
     } catch (IllegalArgumentException expected) {
