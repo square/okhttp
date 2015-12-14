@@ -7,7 +7,7 @@ _2015-12-13_
 
  *  **Rewritten connection management.** Previously OkHttp's connection pool
     managed both idle and active connections for HTTP/2, but only idle
-    connections for HTTP/1.x. Wth this update the connection pool manages both
+    connections for HTTP/1.x. With this update the connection pool manages both
     idle and active connections for everything. OkHttp now detects and warns on
     connections that were allocated but never released, and will enforce HTTP/2
     stream limits. This update also fixes `Call.cancel()` to not do I/O on the
