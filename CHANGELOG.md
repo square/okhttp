@@ -3,7 +3,7 @@ Change Log
 
 ## Version 2.7.0
 
-_2015-12-12_
+_2015-12-13_
 
  *  **Rewritten connection management.** Previously OkHttp's connection pool
     managed both idle and active connections for HTTP/2, but only idle
