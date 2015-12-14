@@ -210,7 +210,7 @@ public final class JavaApiConverter {
     }
 
     Request cacheRequest = new Request.Builder()
-        .url(request.httpUrl())
+        .url(request.url())
         .method(request.method(), null)
         .headers(varyHeaders)
         .build();
@@ -537,7 +537,7 @@ public final class JavaApiConverter {
     private final Response response;
 
     public CacheHttpURLConnection(Response response) {
-      super(response.request().url());
+      super(response.request().url().url());
       this.request = response.request();
       this.response = response;
 

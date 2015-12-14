@@ -413,7 +413,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       // The first request was insufficient. Prepare for another...
-      url = followUp.url();
+      url = followUp.url().url();
       requestHeaders = followUp.headers().newBuilder();
 
       // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM redirect
@@ -429,7 +429,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
 
       StreamAllocation streamAllocation = httpEngine.close();
-      if (!httpEngine.sameConnection(followUp.httpUrl())) {
+      if (!httpEngine.sameConnection(followUp.url())) {
         streamAllocation.release();
         streamAllocation = null;
       }

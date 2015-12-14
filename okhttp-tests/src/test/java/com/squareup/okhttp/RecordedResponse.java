@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.ws.WebSocket;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -45,7 +44,7 @@ public final class RecordedResponse {
     this.failure = failure;
   }
 
-  public RecordedResponse assertRequestUrl(URL url) {
+  public RecordedResponse assertRequestUrl(HttpUrl url) {
     assertEquals(url, request.url());
     return this;
   }

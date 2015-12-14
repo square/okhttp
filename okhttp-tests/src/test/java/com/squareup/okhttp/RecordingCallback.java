@@ -49,7 +49,7 @@ public class RecordingCallback implements Callback {
     while (true) {
       for (Iterator<RecordedResponse> i = responses.iterator(); i.hasNext(); ) {
         RecordedResponse recordedResponse = i.next();
-        if (recordedResponse.request.httpUrl().equals(url)) {
+        if (recordedResponse.request.url().equals(url)) {
           i.remove();
           return recordedResponse;
         }
@@ -65,7 +65,7 @@ public class RecordingCallback implements Callback {
 
   public synchronized void assertNoResponse(HttpUrl url) throws Exception {
     for (RecordedResponse recordedResponse : responses) {
-      if (recordedResponse.request.httpUrl().equals(url)) {
+      if (recordedResponse.request.url().equals(url)) {
         throw new AssertionError("Expected no response for " + url);
       }
     }

@@ -32,7 +32,6 @@ public final class Request {
   private final RequestBody body;
   private final Object tag;
 
-  private volatile URL javaNetUrl; // Lazily initialized.
   private volatile URI javaNetUri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -44,13 +43,8 @@ public final class Request {
     this.tag = builder.tag != null ? builder.tag : this;
   }
 
-  public HttpUrl httpUrl() {
+  public HttpUrl url() {
     return url;
-  }
-
-  public URL url() {
-    URL result = javaNetUrl;
-    return result != null ? result : (javaNetUrl = url.url());
   }
 
   public URI uri() throws IOException {

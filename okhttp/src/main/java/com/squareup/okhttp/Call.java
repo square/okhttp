@@ -146,7 +146,7 @@ public class Call {
     }
 
     String host() {
-      return originalRequest.httpUrl().host();
+      return originalRequest.url().host();
     }
 
     Request request() {
@@ -196,7 +196,7 @@ public class Call {
    */
   private String toLoggableString() {
     String string = canceled ? "canceled call" : "call";
-    HttpUrl redactedUrl = originalRequest.httpUrl().resolve("/...");
+    HttpUrl redactedUrl = originalRequest.url().resolve("/...");
     return string + " to " + redactedUrl;
   }
 
@@ -335,7 +335,7 @@ public class Call {
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
-      if (!engine.sameConnection(followUp.httpUrl())) {
+      if (!engine.sameConnection(followUp.url())) {
         streamAllocation.release();
         streamAllocation = null;
       }

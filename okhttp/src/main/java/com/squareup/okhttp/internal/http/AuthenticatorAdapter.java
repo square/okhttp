@@ -37,7 +37,7 @@ public final class AuthenticatorAdapter implements Authenticator {
   @Override public Request authenticate(Proxy proxy, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();
-    HttpUrl url = request.httpUrl();
+    HttpUrl url = request.url();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
@@ -59,7 +59,7 @@ public final class AuthenticatorAdapter implements Authenticator {
   @Override public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();
-    HttpUrl url = request.httpUrl();
+    HttpUrl url = request.url();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;

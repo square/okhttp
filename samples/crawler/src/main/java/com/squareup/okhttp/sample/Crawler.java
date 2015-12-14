@@ -106,7 +106,7 @@ public final class Crawler {
     Document document = Jsoup.parse(response.body().string(), url.toString());
     for (Element element : document.select("a[href]")) {
       String href = element.attr("href");
-      HttpUrl link = response.request().httpUrl().resolve(href);
+      HttpUrl link = response.request().url().resolve(href);
       if (link != null) queue.add(link);
     }
   }

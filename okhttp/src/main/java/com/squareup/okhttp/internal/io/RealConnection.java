@@ -234,7 +234,7 @@ public final class RealConnection implements Connection {
   private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     Request tunnelRequest = createTunnelRequest();
-    HttpUrl url = tunnelRequest.httpUrl();
+    HttpUrl url = tunnelRequest.url();
     String requestLine = "CONNECT " + url.host() + ":" + url.port() + " HTTP/1.1";
     while (true) {
       Http1xStream tunnelConnection = new Http1xStream(null, source, sink);

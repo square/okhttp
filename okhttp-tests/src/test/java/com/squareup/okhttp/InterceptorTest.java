@@ -380,7 +380,7 @@ public final class InterceptorTest {
         .build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(request.httpUrl())
+    callback.await(request.url())
         .assertCode(200)
         .assertHeader("OkHttp-Intercepted", "yep");
   }
@@ -412,7 +412,7 @@ public final class InterceptorTest {
 
     client.interceptors().add(new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
-        if (chain.request().url().getPath().equals("/b")) {
+        if (chain.request().url().encodedPath().equals("/b")) {
           Request requestA = new Request.Builder()
               .url(server.url("/a"))
               .build();
@@ -438,7 +438,7 @@ public final class InterceptorTest {
 
     client.interceptors().add(new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
-        if (chain.request().url().getPath().equals("/b")) {
+        if (chain.request().url().encodedPath().equals("/b")) {
           Request requestA = new Request.Builder()
               .url(server.url("/a"))
               .build();
@@ -446,7 +446,7 @@ public final class InterceptorTest {
           try {
             RecordingCallback callbackA = new RecordingCallback();
             client.newCall(requestA).enqueue(callbackA);
-            callbackA.await(requestA.httpUrl()).assertBody("a");
+            callbackA.await(requestA.url()).assertBody("a");
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -461,7 +461,7 @@ public final class InterceptorTest {
         .build();
     RecordingCallback callbackB = new RecordingCallback();
     client.newCall(requestB).enqueue(callbackB);
-    callbackB.await(requestB.httpUrl()).assertBody("b");
+    callbackB.await(requestB.url()).assertBody("b");
   }
 
   @Test public void applicationkInterceptorThrowsRuntimeExceptionSynchronous() throws Exception {
