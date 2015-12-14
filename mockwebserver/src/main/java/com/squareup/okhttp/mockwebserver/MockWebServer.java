@@ -42,7 +42,6 @@ import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URL;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
@@ -180,15 +179,6 @@ public final class MockWebServer implements TestRule {
           "setServerSocketFactory() must be called before start()");
     }
     this.serverSocketFactory = serverSocketFactory;
-  }
-
-  /**
-   * Returns a URL for connecting to this server.
-   * @param path the request path, such as "/".
-   */
-  @Deprecated
-  public URL getUrl(String path) {
-    return url(path).url();
   }
 
   /**
