@@ -47,7 +47,7 @@ public class OkApacheClientTest {
   @Test public void success() throws Exception {
     server.enqueue(new MockResponse().setBody("Hello, World!"));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     HttpResponse response = client.execute(request);
     String actual = EntityUtils.toString(response.getEntity());
     assertEquals("Hello, World!", actual);
@@ -57,7 +57,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setResponseCode(302).addHeader("Location", "/foo"));
     server.enqueue(new MockResponse().setBody("Hello, Redirect!"));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     HttpResponse response = client.execute(request);
     String actual = EntityUtils.toString(response.getEntity(), UTF_8);
     assertEquals("Hello, Redirect!", actual);
@@ -66,7 +66,7 @@ public class OkApacheClientTest {
   @Test public void sessionExpired() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(422));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     HttpResponse response = client.execute(request);
     assertEquals(422, response.getStatusLine().getStatusCode());
   }
@@ -75,13 +75,13 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().addHeader("Foo", "Bar"));
     server.enqueue(new MockResponse().addHeader("Foo", "Bar").addHeader("Foo", "Baz"));
 
-    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request1 = new HttpGet(server.url("/").url().toURI());
     HttpResponse response1 = client.execute(request1);
     Header[] headers1 = response1.getHeaders("Foo");
     assertEquals(1, headers1.length);
     assertEquals("Bar", headers1[0].getValue());
 
-    HttpGet request2 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request2 = new HttpGet(server.url("/").url().toURI());
     HttpResponse response2 = client.execute(request2);
     Header[] headers2 = response2.getHeaders("Foo");
     assertEquals(2, headers2.length);
@@ -92,7 +92,7 @@ public class OkApacheClientTest {
   @Test public void postByteEntity() throws Exception {
     server.enqueue(new MockResponse());
 
-    final HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    final HttpPost post = new HttpPost(server.url("/").url().toURI());
     byte[] body = "Hello, world!".getBytes(UTF_8);
     post.setEntity(new ByteArrayEntity(body));
     client.execute(post);
@@ -105,7 +105,7 @@ public class OkApacheClientTest {
   @Test public void postInputStreamEntity() throws Exception {
     server.enqueue(new MockResponse());
 
-    final HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    final HttpPost post = new HttpPost(server.url("/").url().toURI());
     byte[] body = "Hello, world!".getBytes(UTF_8);
     post.setEntity(new InputStreamEntity(new ByteArrayInputStream(body), body.length));
     client.execute(post);
@@ -116,7 +116,7 @@ public class OkApacheClientTest {
   }
   @Test public void postEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
-    final HttpPost post = new HttpPost(server.getUrl("/").toURI());
+    final HttpPost post = new HttpPost(server.url("/").url().toURI());
     client.execute(post);
     
     RecordedRequest request = server.takeRequest();
@@ -125,7 +125,7 @@ public class OkApacheClientTest {
   }
   @Test public void putEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
-    final HttpPut put = new HttpPut(server.getUrl("/").toURI());
+    final HttpPut put = new HttpPut(server.url("/").url().toURI());
     client.execute(put);
     
     RecordedRequest request = server.takeRequest();
@@ -137,7 +137,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse());
 
     HttpPost httpPost = new HttpPost();
-    httpPost.setURI(server.getUrl("/").toURI());
+    httpPost.setURI(server.url("/").url().toURI());
     httpPost.addHeader("Content-Type", "application/xml");
     httpPost.setEntity(new StringEntity("<yo/>"));
     client.execute(httpPost);
@@ -153,7 +153,7 @@ public class OkApacheClientTest {
         .setHeader("Content-Type", "application/json"));
     server.enqueue(new MockResponse().setBody("Hello, World!"));
 
-    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request1 = new HttpGet(server.url("/").url().toURI());
     HttpResponse response1 = client.execute(request1);
     Header[] headers1 = response1.getHeaders("Content-Type");
     assertEquals(1, headers1.length);
@@ -161,7 +161,7 @@ public class OkApacheClientTest {
     assertNotNull(response1.getEntity().getContentType());
     assertEquals("text/html", response1.getEntity().getContentType().getValue());
 
-    HttpGet request2 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request2 = new HttpGet(server.url("/").url().toURI());
     HttpResponse response2 = client.execute(request2);
     Header[] headers2 = response2.getHeaders("Content-Type");
     assertEquals(1, headers2.length);
@@ -169,7 +169,7 @@ public class OkApacheClientTest {
     assertNotNull(response2.getEntity().getContentType());
     assertEquals("application/json", response2.getEntity().getContentType().getValue());
 
-    HttpGet request3 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request3 = new HttpGet(server.url("/").url().toURI());
     HttpResponse response3 = client.execute(request3);
     Header[] headers3 = response3.getHeaders("Content-Type");
     assertEquals(0, headers3.length);
@@ -180,7 +180,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setBody("{\"Message\": { \"text\": \"Hello, World!\" } }")
         .setHeader("cONTENT-tYPE", "application/json"));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     HttpResponse response = client.execute(request);
     assertEquals("application/json", response.getEntity().getContentType().getValue());
   }
@@ -190,7 +190,7 @@ public class OkApacheClientTest {
     server.enqueue(new MockResponse().setBody(gzip(text))
         .setHeader("Content-Encoding", "gzip"));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     request.setHeader("Accept-encoding", "gzip"); // Not transparent gzip.
     HttpResponse response = client.execute(request);
     HttpEntity entity = response.getEntity();
@@ -210,7 +210,7 @@ public class OkApacheClientTest {
         .setHeader("Content-Encoding", "gzip")
         .setHeader("Content-Type", "application/json"));
 
-    HttpGet request1 = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request1 = new HttpGet(server.url("/").url().toURI());
     request1.setHeader("Accept-encoding", "gzip"); // Not transparent gzip.
 
     HttpResponse response = client.execute(request1);
@@ -237,7 +237,7 @@ public class OkApacheClientTest {
         .setHeader("Content-Encoding", "gzip")
         .setHeader("Content-Type", "application/json"));
 
-    HttpGet request = new HttpGet(server.getUrl("/").toURI());
+    HttpGet request = new HttpGet(server.url("/").url().toURI());
     HttpResponse response = client.execute(request);
     HttpEntity entity = response.getEntity();
 

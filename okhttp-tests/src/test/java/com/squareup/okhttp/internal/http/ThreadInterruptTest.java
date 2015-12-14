@@ -82,7 +82,7 @@ public final class ThreadInterruptTest {
 
     interruptLater(500);
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
     connection.setDoOutput(true);
     connection.setFixedLengthStreamingMode(requestBodySize);
     OutputStream requestBody = connection.getOutputStream();
@@ -109,7 +109,7 @@ public final class ThreadInterruptTest {
 
     interruptLater(500);
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
     InputStream responseBody = connection.getInputStream();
     byte[] buffer = new byte[1024];
     try {

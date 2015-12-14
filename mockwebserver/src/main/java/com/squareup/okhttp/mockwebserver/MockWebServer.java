@@ -228,7 +228,7 @@ public final class MockWebServer implements TestRule {
    * {@link #setProtocolNegotiationEnabled negotiation is disabled}.
    *
    * @param protocols the protocols to use, in order of preference. The list
-   *     must contain {@linkplain Protocol#HTTP_1_1}. It must not contain null.
+   * must contain {@linkplain Protocol#HTTP_1_1}. It must not contain null.
    */
   public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
@@ -243,8 +243,9 @@ public final class MockWebServer implements TestRule {
 
   /**
    * Serve requests with HTTPS rather than otherwise.
+   *
    * @param tunnelProxy true to expect the HTTP CONNECT method before
-   *     negotiating TLS.
+   * negotiating TLS.
    */
   public void useHttps(SSLSocketFactory sslSocketFactory, boolean tunnelProxy) {
     this.sslSocketFactory = sslSocketFactory;
@@ -268,9 +269,9 @@ public final class MockWebServer implements TestRule {
    * use this to verify the request was sent as intended within the given time.
    *
    * @param timeout how long to wait before giving up, in units of
-  *        {@code unit}
+   * {@code unit}
    * @param unit a {@code TimeUnit} determining how to interpret the
-   *        {@code timeout} parameter
+   * {@code timeout} parameter
    * @return the head of the request queue
    */
   public RecordedRequest takeRequest(long timeout, TimeUnit unit) throws InterruptedException {
@@ -292,7 +293,7 @@ public final class MockWebServer implements TestRule {
    * by the second enqueued response; and so on.
    *
    * @throws ClassCastException if the default dispatcher has been replaced
-   *     with {@link #setDispatcher(Dispatcher)}.
+   * with {@link #setDispatcher(Dispatcher)}.
    */
   public void enqueue(MockResponse response) {
     ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
@@ -307,8 +308,8 @@ public final class MockWebServer implements TestRule {
    * Starts the server on the loopback interface for the given port.
    *
    * @param port the port to listen to, or 0 for any available port. Automated
-   *     tests should always use port 0 to avoid flakiness when a specific port
-   *     is unavailable.
+   * tests should always use port 0 to avoid flakiness when a specific port
+   * is unavailable.
    */
   public void start(int port) throws IOException {
     start(InetAddress.getByName("localhost"), port);
@@ -318,10 +319,9 @@ public final class MockWebServer implements TestRule {
    * Starts the server on the given address and port.
    *
    * @param inetAddress the address to create the server socket on
-   *
    * @param port the port to listen to, or 0 for any available port. Automated
-   *     tests should always use port 0 to avoid flakiness when a specific port
-   *     is unavailable.
+   * tests should always use port 0 to avoid flakiness when a specific port
+   * is unavailable.
    */
   public void start(InetAddress inetAddress, int port) throws IOException {
     start(new InetSocketAddress(inetAddress, port));

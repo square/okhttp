@@ -78,7 +78,7 @@ public final class DisconnectTest {
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.start();
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
     disconnectLater(connection, 500);
 
     connection.setDoOutput(true);
@@ -105,7 +105,7 @@ public final class DisconnectTest {
         .throttleBody(64 * 1024, 125, TimeUnit.MILLISECONDS)); // 500 Kbps
     server.start();
 
-    HttpURLConnection connection = new OkUrlFactory(client).open(server.getUrl("/"));
+    HttpURLConnection connection = new OkUrlFactory(client).open(server.url("/").url());
     disconnectLater(connection, 500);
 
     InputStream responseBody = connection.getInputStream();
