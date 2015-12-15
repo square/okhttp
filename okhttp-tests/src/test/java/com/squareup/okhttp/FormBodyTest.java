@@ -21,26 +21,44 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public final class FormEncodingBuilderTest {
+public final class FormBodyTest {
   @Test public void urlEncoding() throws Exception {
-    RequestBody formEncoding = new FormEncodingBuilder()
+    FormBody body = new FormBody.Builder()
         .add("a+=& b", "c+=& d")
         .add("space, the", "final frontier")
         .add("%25", "%25")
         .build();
 
-    assertEquals("application/x-www-form-urlencoded", formEncoding.contentType().toString());
+    assertEquals(3, body.size());
+
+    assertEquals("a%2B%3D%26%20b", body.encodedName(0));
+    assertEquals("space%2C%20the", body.encodedName(1));
+    assertEquals("%2525", body.encodedName(2));
+
+    assertEquals("a+=& b", body.name(0));
+    assertEquals("space, the", body.name(1));
+    assertEquals("%25", body.name(2));
+
+    assertEquals("c%2B%3D%26%20d", body.encodedValue(0));
+    assertEquals("final%20frontier", body.encodedValue(1));
+    assertEquals("%2525", body.encodedValue(2));
+
+    assertEquals("c+=& d", body.value(0));
+    assertEquals("final frontier", body.value(1));
+    assertEquals("%25", body.value(2));
+
+    assertEquals("application/x-www-form-urlencoded", body.contentType().toString());
 
     String expected = "a%2B%3D%26%20b=c%2B%3D%26%20d&space%2C%20the=final%20frontier&%2525=%2525";
-    assertEquals(expected.length(), formEncoding.contentLength());
+    assertEquals(expected.length(), body.contentLength());
 
     Buffer out = new Buffer();
-    formEncoding.writeTo(out);
+    body.writeTo(out);
     assertEquals(expected, out.readUtf8());
   }
 
   @Test public void addEncoded() throws Exception {
-    RequestBody formEncoding = new FormEncodingBuilder()
+    FormBody body = new FormBody.Builder()
         .addEncoded("a+=& b", "c+=& d")
         .addEncoded("e+=& f", "g+=& h")
         .addEncoded("%25", "%25")
@@ -48,46 +66,46 @@ public final class FormEncodingBuilderTest {
 
     String expected = "a+%3D%26%20b=c+%3D%26%20d&e+%3D%26%20f=g+%3D%26%20h&%25=%25";
     Buffer out = new Buffer();
-    formEncoding.writeTo(out);
+    body.writeTo(out);
     assertEquals(expected, out.readUtf8());
   }
 
   @Test public void encodedPair() throws Exception {
-    RequestBody formEncoding = new FormEncodingBuilder()
+    FormBody body = new FormBody.Builder()
         .add("sim", "ple")
         .build();
 
     String expected = "sim=ple";
-    assertEquals(expected.length(), formEncoding.contentLength());
+    assertEquals(expected.length(), body.contentLength());
 
     Buffer buffer = new Buffer();
-    formEncoding.writeTo(buffer);
+    body.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
   }
 
   @Test public void encodeMultiplePairs() throws Exception {
-    RequestBody formEncoding = new FormEncodingBuilder()
+    FormBody body = new FormBody.Builder()
         .add("sim", "ple")
         .add("hey", "there")
         .add("help", "me")
         .build();
 
     String expected = "sim=ple&hey=there&help=me";
-    assertEquals(expected.length(), formEncoding.contentLength());
+    assertEquals(expected.length(), body.contentLength());
 
     Buffer buffer = new Buffer();
-    formEncoding.writeTo(buffer);
+    body.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
   }
 
   @Test public void buildEmptyForm() throws Exception {
-    RequestBody formEncoding = new FormEncodingBuilder().build();
+    FormBody body = new FormBody.Builder().build();
 
     String expected = "";
-    assertEquals(expected.length(), formEncoding.contentLength());
+    assertEquals(expected.length(), body.contentLength());
 
     Buffer buffer = new Buffer();
-    formEncoding.writeTo(buffer);
+    body.writeTo(buffer);
     assertEquals(expected, buffer.readUtf8());
   }
 
@@ -170,7 +188,7 @@ public final class FormEncodingBuilderTest {
 
   private String formEncode(int codePoint) throws IOException {
     // Wrap the codepoint with regular printable characters to prevent trimming.
-    RequestBody body = new FormEncodingBuilder()
+    FormBody body = new FormBody.Builder()
         .add("a", new String(new int[] { 'b', codePoint, 'c' }, 0, 3))
         .build();
     Buffer buffer = new Buffer();
