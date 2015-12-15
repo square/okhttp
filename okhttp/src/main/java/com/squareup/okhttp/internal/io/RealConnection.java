@@ -91,10 +91,10 @@ public final class RealConnection implements Connection {
 
     RouteException routeException = null;
     ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
-    Proxy proxy = route.getProxy();
-    Address address = route.getAddress();
+    Proxy proxy = route.proxy();
+    Address address = route.address();
 
-    if (route.getAddress().getSslSocketFactory() == null
+    if (route.address().getSslSocketFactory() == null
         && !connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
       throw new RouteException(new UnknownServiceException(
           "CLEARTEXT communication not supported: " + connectionSpecs));
@@ -134,14 +134,14 @@ public final class RealConnection implements Connection {
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
     rawSocket.setSoTimeout(readTimeout);
     try {
-      Platform.get().connectSocket(rawSocket, route.getSocketAddress(), connectTimeout);
+      Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
     } catch (ConnectException e) {
-      throw new ConnectException("Failed to connect to " + route.getSocketAddress());
+      throw new ConnectException("Failed to connect to " + route.socketAddress());
     }
     source = Okio.buffer(Okio.source(rawSocket));
     sink = Okio.buffer(Okio.sink(rawSocket));
 
-    if (route.getAddress().getSslSocketFactory() != null) {
+    if (route.address().getSslSocketFactory() != null) {
       connectTls(readTimeout, writeTimeout, connectionSpecSelector);
     } else {
       protocol = Protocol.HTTP_1_1;
@@ -152,7 +152,7 @@ public final class RealConnection implements Connection {
       socket.setSoTimeout(0); // Framed connection timeouts are set per-stream.
 
       FramedConnection framedConnection = new FramedConnection.Builder(true)
-          .socket(socket, route.getAddress().url().host(), source, sink)
+          .socket(socket, route.address().url().host(), source, sink)
           .protocol(protocol)
           .build();
       framedConnection.sendConnectionPreface();
@@ -168,7 +168,7 @@ public final class RealConnection implements Connection {
       createTunnel(readTimeout, writeTimeout);
     }
 
-    Address address = route.getAddress();
+    Address address = route.address();
     SSLSocketFactory sslSocketFactory = address.getSslSocketFactory();
     boolean success = false;
     SSLSocket sslSocket = null;
@@ -266,7 +266,7 @@ public final class RealConnection implements Connection {
 
         case HTTP_PROXY_AUTH:
           tunnelRequest = OkHeaders.processAuthHeader(
-              route.getAddress().getAuthenticator(), response, route.getProxy());
+              route.address().getAuthenticator(), response, route.proxy());
           if (tunnelRequest != null) continue;
           throw new IOException("Failed to authenticate with proxy");
 
@@ -286,8 +286,8 @@ public final class RealConnection implements Connection {
    */
   private Request createTunnelRequest() throws IOException {
     return new Request.Builder()
-        .url(route.getAddress().url())
-        .header("Host", Util.hostHeader(route.getAddress().url()))
+        .url(route.address().url())
+        .header("Host", Util.hostHeader(route.address().url()))
         .header("Proxy-Connection", "Keep-Alive")
         .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
         .build();
@@ -368,11 +368,11 @@ public final class RealConnection implements Connection {
 
   @Override public String toString() {
     return "Connection{"
-        + route.getAddress().url().host() + ":" + route.getAddress().url().port()
+        + route.address().url().host() + ":" + route.address().url().port()
         + ", proxy="
-        + route.getProxy()
+        + route.proxy()
         + " hostAddress="
-        + route.getSocketAddress()
+        + route.socketAddress()
         + " cipherSuite="
         + (handshake != null ? handshake.cipherSuite() : "none")
         + " protocol="

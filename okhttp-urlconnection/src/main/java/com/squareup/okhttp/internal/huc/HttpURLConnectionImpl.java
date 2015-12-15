@@ -514,7 +514,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final boolean usingProxy() {
     Proxy proxy = route != null
-        ? route.getProxy()
+        ? route.proxy()
         : client.getProxy();
     return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }

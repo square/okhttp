@@ -172,7 +172,7 @@ public final class ConnectionPoolTest {
 
   /** Use a helper method so there's no hidden reference remaining on the stack. */
   private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    StreamAllocation leak = new StreamAllocation(pool, connection.getRoute().getAddress());
+    StreamAllocation leak = new StreamAllocation(pool, connection.getRoute().address());
     leak.acquire(connection);
   }
 

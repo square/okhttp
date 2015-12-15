@@ -119,7 +119,7 @@ public final class Http1xStream implements HttpStream {
   @Override public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
     String requestLine = RequestLine.get(
-        request, httpEngine.getConnection().getRoute().getProxy().type());
+        request, httpEngine.getConnection().getRoute().proxy().type());
     writeRequest(request.headers(), requestLine);
   }
 
