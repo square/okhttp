@@ -173,7 +173,7 @@ public final class Cache {
   }
 
   private static String urlToKey(Request request) {
-    return Util.md5Hex(request.urlString());
+    return Util.md5Hex(request.url().toString());
   }
 
   Response get(Request request) {
@@ -565,7 +565,7 @@ public final class Cache {
     }
 
     public Entry(Response response) {
-      this.url = response.request().urlString();
+      this.url = response.request().url().toString();
       this.varyHeaders = OkHeaders.varyHeaders(response);
       this.requestMethod = response.request().method();
       this.protocol = response.protocol();
@@ -652,7 +652,7 @@ public final class Cache {
     }
 
     public boolean matches(Request request, Response response) {
-      return url.equals(request.urlString())
+      return url.equals(request.url().toString())
           && requestMethod.equals(request.method())
           && OkHeaders.varyMatches(response, varyHeaders, request);
     }

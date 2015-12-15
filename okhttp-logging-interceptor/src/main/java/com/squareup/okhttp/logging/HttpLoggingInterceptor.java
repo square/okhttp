@@ -206,7 +206,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
     ResponseBody responseBody = response.body();
     logger.log("<-- " + response.code() + ' ' + response.message() + ' '
-        + response.request().urlString() + " (" + tookMs + "ms" + (!logHeaders ? ", "
+        + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
         + responseBody.contentLength() + "-byte body" : "") + ')');
 
     if (logHeaders) {

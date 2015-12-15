@@ -140,7 +140,7 @@ public class Call {
     private final boolean forWebSocket;
 
     private AsyncCall(Callback responseCallback, boolean forWebSocket) {
-      super("OkHttp %s", originalRequest.urlString());
+      super("OkHttp %s", originalRequest.url().toString());
       this.responseCallback = responseCallback;
       this.forWebSocket = forWebSocket;
     }

@@ -214,7 +214,7 @@ public final class Response {
         + ", message="
         + message
         + ", url="
-        + request.urlString()
+        + request.url()
         + '}';
   }
 
