@@ -949,21 +949,21 @@ public final class MockWebServer implements TestRule {
         List<Header> pushedHeaders = new ArrayList<>();
         pushedHeaders.add(new Header(stream.getConnection().getProtocol() == Protocol.SPDY_3
             ? Header.TARGET_HOST
-            : Header.TARGET_AUTHORITY, url(pushPromise.getPath()).host()));
-        pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.getMethod()));
-        pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.getPath()));
-        Headers pushPromiseHeaders = pushPromise.getHeaders();
+            : Header.TARGET_AUTHORITY, url(pushPromise.path()).host()));
+        pushedHeaders.add(new Header(Header.TARGET_METHOD, pushPromise.method()));
+        pushedHeaders.add(new Header(Header.TARGET_PATH, pushPromise.path()));
+        Headers pushPromiseHeaders = pushPromise.headers();
         for (int i = 0, size = pushPromiseHeaders.size(); i < size; i++) {
           pushedHeaders.add(new Header(pushPromiseHeaders.name(i), pushPromiseHeaders.value(i)));
         }
-        String requestLine = pushPromise.getMethod() + ' ' + pushPromise.getPath() + " HTTP/1.1";
+        String requestLine = pushPromise.method() + ' ' + pushPromise.path() + " HTTP/1.1";
         List<Integer> chunkSizes = Collections.emptyList(); // No chunked encoding for SPDY.
-        requestQueue.add(new RecordedRequest(requestLine, pushPromise.getHeaders(), chunkSizes, 0,
+        requestQueue.add(new RecordedRequest(requestLine, pushPromise.headers(), chunkSizes, 0,
             new Buffer(), sequenceNumber.getAndIncrement(), socket));
-        boolean hasBody = pushPromise.getResponse().getBody() != null;
+        boolean hasBody = pushPromise.response().getBody() != null;
         FramedStream pushedStream =
             stream.getConnection().pushStream(stream.getId(), pushedHeaders, hasBody);
-        writeResponse(pushedStream, pushPromise.getResponse());
+        writeResponse(pushedStream, pushPromise.response());
       }
     }
   }
