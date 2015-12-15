@@ -475,8 +475,6 @@ public final class InterceptorTest {
   /**
    * When an interceptor throws an unexpected exception, synchronous callers can catch it and deal
    * with it.
-   *
-   * TODO(jwilson): test that resources are not leaked when this happens.
    */
   private void interceptorThrowsRuntimeExceptionSynchronous(
       List<Interceptor> interceptors) throws Exception {
@@ -533,8 +531,6 @@ public final class InterceptorTest {
   /**
    * When an interceptor throws an unexpected exception, asynchronous callers are left hanging. The
    * exception goes to the uncaught exception handler.
-   *
-   * TODO(jwilson): test that resources are not leaked when this happens.
    */
   private void interceptorThrowsRuntimeExceptionAsynchronous(
         List<Interceptor> interceptors) throws Exception {
