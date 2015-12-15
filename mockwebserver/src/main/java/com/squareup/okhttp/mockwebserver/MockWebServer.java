@@ -541,6 +541,7 @@ public final class MockWebServer implements TestRule {
               + " and responded: " + response);
         }
 
+        // See warnings associated with these socket policies in SocketPolicy.
         if (response.getSocketPolicy() == SocketPolicy.DISCONNECT_AT_END) {
           socket.close();
           return false;
