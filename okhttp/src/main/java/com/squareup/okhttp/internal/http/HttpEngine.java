@@ -674,7 +674,7 @@ public final class HttpEngine {
 
       if (index > 0) {
         Interceptor caller = client.networkInterceptors().get(index - 1);
-        Address address = connection().getRoute().getAddress();
+        Address address = connection().getRoute().address();
 
         // Confirm that the interceptor uses the connection we've already prepared.
         if (!request.url().host().equals(address.url().host())
@@ -893,7 +893,7 @@ public final class HttpEngine {
         ? connection.getRoute()
         : null;
     Proxy selectedProxy = route != null
-        ? route.getProxy()
+        ? route.proxy()
         : client.getProxy();
     int responseCode = userResponse.code();
 

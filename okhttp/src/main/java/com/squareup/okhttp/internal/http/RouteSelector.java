@@ -99,10 +99,10 @@ public final class RouteSelector {
    * failure on a connection returned by this route selector.
    */
   public void connectFailed(Route failedRoute, IOException failure) {
-    if (failedRoute.getProxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
+    if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
       address.getProxySelector().connectFailed(
-          address.url().uri(), failedRoute.getProxy().address(), failure);
+          address.url().uri(), failedRoute.proxy().address(), failure);
     }
 
     routeDatabase.failed(failedRoute);

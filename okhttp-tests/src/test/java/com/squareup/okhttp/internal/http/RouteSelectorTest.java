@@ -331,10 +331,10 @@ public final class RouteSelectorTest {
 
   private void assertRoute(Route route, Address address, Proxy proxy, InetAddress socketAddress,
       int socketPort) {
-    assertEquals(address, route.getAddress());
-    assertEquals(proxy, route.getProxy());
-    assertEquals(socketAddress, route.getSocketAddress().getAddress());
-    assertEquals(socketPort, route.getSocketAddress().getPort());
+    assertEquals(address, route.address());
+    assertEquals(proxy, route.proxy());
+    assertEquals(socketAddress, route.socketAddress().getAddress());
+    assertEquals(socketPort, route.socketAddress().getPort());
   }
 
   /** Returns an address that's without an SSL socket factory or hostname verifier. */

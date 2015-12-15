@@ -51,7 +51,7 @@ public final class Route {
     this.inetSocketAddress = inetSocketAddress;
   }
 
-  public Address getAddress() {
+  public Address address() {
     return address;
   }
 
@@ -62,11 +62,11 @@ public final class Route {
    * when it is null. When the address's proxy is null, the proxy selector is
    * used.
    */
-  public Proxy getProxy() {
+  public Proxy proxy() {
     return proxy;
   }
 
-  public InetSocketAddress getSocketAddress() {
+  public InetSocketAddress socketAddress() {
     return inetSocketAddress;
   }
 

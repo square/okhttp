@@ -296,7 +296,7 @@ public final class ConnectionPool {
       }
 
       // We've discovered a leaked allocation. This is an application bug.
-      Internal.logger.warning("A connection to " + connection.getRoute().getAddress().url()
+      Internal.logger.warning("A connection to " + connection.getRoute().address().url()
           + " was leaked. Did you forget to close a response body?");
       references.remove(i);
       connection.noNewStreams = true;
