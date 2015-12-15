@@ -15,6 +15,7 @@
  */
 package com.squareup.okhttp.internal.huc;
 
+import com.squareup.okhttp.CipherSuite;
 import com.squareup.okhttp.Handshake;
 import com.squareup.okhttp.Headers;
 import com.squareup.okhttp.MediaType;
@@ -176,7 +177,7 @@ public class JavaApiConverterTest {
       }
 
       @Override public String getCipherSuite() {
-        return "SuperSecure";
+        return "SSL_RSA_WITH_NULL_MD5";
       }
 
       @Override public List<Certificate> getLocalCertificateChain() {
@@ -211,7 +212,7 @@ public class JavaApiConverterTest {
 
     Handshake handshake = response.handshake();
     assertNotNull(handshake);
-    assertNotNullAndEquals("SuperSecure", handshake.cipherSuite());
+    assertNotNullAndEquals(CipherSuite.TLS_RSA_WITH_NULL_MD5, handshake.cipherSuite());
     assertEquals(localPrincipal, handshake.localPrincipal());
     assertEquals(serverPrincipal, handshake.peerPrincipal());
     assertEquals(serverCertificates, handshake.peerCertificates());
@@ -461,15 +462,15 @@ public class JavaApiConverterTest {
         .get()
         .url("https://secure/request")
         .build();
-    Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
-        Arrays.<Certificate>asList(LOCAL_CERT));
+    Handshake handshake = Handshake.get(CipherSuite.TLS_RSA_WITH_NULL_MD5,
+        Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .handshake(handshake)
         .build();
     HttpsURLConnection httpsUrlConnection =
         (HttpsURLConnection) JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
 
-    assertEquals("SecureCipher", httpsUrlConnection.getCipherSuite());
+    assertEquals("SSL_RSA_WITH_NULL_MD5", httpsUrlConnection.getCipherSuite());
     assertEquals(SERVER_CERT.getSubjectX500Principal(), httpsUrlConnection.getPeerPrincipal());
     assertArrayEquals(new Certificate[] { LOCAL_CERT }, httpsUrlConnection.getLocalCertificates());
     assertArrayEquals(new Certificate[] { SERVER_CERT },
@@ -551,8 +552,8 @@ public class JavaApiConverterTest {
             .post(createRequestBody("RequestBody") )
             .build();
     ResponseBody responseBody = createResponseBody("ResponseBody");
-    Handshake handshake = Handshake.get("SecureCipher", Arrays.<Certificate>asList(SERVER_CERT),
-        Arrays.<Certificate>asList(LOCAL_CERT));
+    Handshake handshake = Handshake.get(CipherSuite.TLS_RSA_WITH_NULL_MD5,
+        Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)
         .code(200)
@@ -569,7 +570,7 @@ public class JavaApiConverterTest {
     assertEquals(Arrays.asList("value1_1", "value1_2"), javaHeaders.get("key1"));
     assertEquals(Arrays.asList("HTTP/1.1 200 Fantastic"), javaHeaders.get(null));
     assertEquals("ResponseBody", readAll(javaCacheResponse.getBody()));
-    assertEquals(handshake.cipherSuite(), javaCacheResponse.getCipherSuite());
+    assertEquals(handshake.cipherSuite().javaName(), javaCacheResponse.getCipherSuite());
     assertEquals(handshake.localCertificates(), javaCacheResponse.getLocalCertificateChain());
     assertEquals(handshake.peerCertificates(), javaCacheResponse.getServerCertificateChain());
     assertEquals(handshake.localPrincipal(), javaCacheResponse.getLocalPrincipal());

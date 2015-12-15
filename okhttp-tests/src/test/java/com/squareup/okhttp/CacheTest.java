@@ -259,7 +259,7 @@ public final class CacheTest {
     assertEquals("ABC", in.readUtf8());
 
     // OpenJDK 6 fails on this line, complaining that the connection isn't open yet
-    String suite = response1.handshake().cipherSuite();
+    CipherSuite cipherSuite = response1.handshake().cipherSuite();
     List<Certificate> localCerts = response1.handshake().localCertificates();
     List<Certificate> serverCerts = response1.handshake().peerCertificates();
     Principal peerPrincipal = response1.handshake().peerPrincipal();
@@ -272,7 +272,7 @@ public final class CacheTest {
     assertEquals(1, cache.getNetworkCount());
     assertEquals(1, cache.getHitCount());
 
-    assertEquals(suite, response2.handshake().cipherSuite());
+    assertEquals(cipherSuite, response2.handshake().cipherSuite());
     assertEquals(localCerts, response2.handshake().localCertificates());
     assertEquals(serverCerts, response2.handshake().peerCertificates());
     assertEquals(peerPrincipal, response2.handshake().peerPrincipal());

@@ -57,7 +57,7 @@ abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
 
   @Override public String getCipherSuite() {
     Handshake handshake = handshake();
-    return handshake != null ? handshake.cipherSuite() : null;
+    return handshake != null ? handshake.cipherSuite().javaName() : null;
   }
 
   @Override public Certificate[] getLocalCertificates() {
