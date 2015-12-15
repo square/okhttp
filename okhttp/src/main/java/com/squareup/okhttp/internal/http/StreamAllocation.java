@@ -171,7 +171,7 @@ public final class StreamAllocation {
       if (canceled) throw new IOException("Canceled");
     }
 
-    newConnection.connect(connectTimeout, readTimeout, writeTimeout, address.getConnectionSpecs(),
+    newConnection.connect(connectTimeout, readTimeout, writeTimeout, address.connectionSpecs(),
         connectionRetryEnabled);
     routeDatabase().connected(newConnection.getRoute());
 

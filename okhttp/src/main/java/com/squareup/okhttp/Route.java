@@ -58,7 +58,7 @@ public final class Route {
   /**
    * Returns the {@link Proxy} of this route.
    *
-   * <strong>Warning:</strong> This may disagree with {@link Address#getProxy}
+   * <strong>Warning:</strong> This may disagree with {@link Address#proxy}
    * when it is null. When the address's proxy is null, the proxy selector is
    * used.
    */

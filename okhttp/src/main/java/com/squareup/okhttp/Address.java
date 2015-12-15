@@ -91,17 +91,17 @@ public final class Address {
   }
 
   /** Returns the service that will be used to resolve IP addresses for hostnames. */
-  public Dns getDns() {
+  public Dns dns() {
     return dns;
   }
 
   /** Returns the socket factory for new connections. */
-  public SocketFactory getSocketFactory() {
+  public SocketFactory socketFactory() {
     return socketFactory;
   }
 
   /** Returns the client's authenticator. */
-  public Authenticator getAuthenticator() {
+  public Authenticator authenticator() {
     return authenticator;
   }
 
@@ -109,11 +109,11 @@ public final class Address {
    * Returns the protocols the client supports. This method always returns a
    * non-null list that contains minimally {@link Protocol#HTTP_1_1}.
    */
-  public List<Protocol> getProtocols() {
+  public List<Protocol> protocols() {
     return protocols;
   }
 
-  public List<ConnectionSpec> getConnectionSpecs() {
+  public List<ConnectionSpec> connectionSpecs() {
     return connectionSpecs;
   }
 
@@ -121,30 +121,30 @@ public final class Address {
    * Returns this address's proxy selector. Only used if the proxy is null. If none of this
    * selector's proxies are reachable, a direct connection will be attempted.
    */
-  public ProxySelector getProxySelector() {
+  public ProxySelector proxySelector() {
     return proxySelector;
   }
 
   /**
    * Returns this address's explicitly-specified HTTP proxy, or null to
-   * delegate to the {@linkplain #getProxySelector proxy selector}.
+   * delegate to the {@linkplain #proxySelector proxy selector}.
    */
-  public Proxy getProxy() {
+  public Proxy proxy() {
     return proxy;
   }
 
   /** Returns the SSL socket factory, or null if this is not an HTTPS address. */
-  public SSLSocketFactory getSslSocketFactory() {
+  public SSLSocketFactory sslSocketFactory() {
     return sslSocketFactory;
   }
 
   /** Returns the hostname verifier, or null if this is not an HTTPS address. */
-  public HostnameVerifier getHostnameVerifier() {
+  public HostnameVerifier hostnameVerifier() {
     return hostnameVerifier;
   }
 
   /** Returns this address's certificate pinner, or null if this is not an HTTPS address. */
-  public CertificatePinner getCertificatePinner() {
+  public CertificatePinner certificatePinner() {
     return certificatePinner;
   }
 
