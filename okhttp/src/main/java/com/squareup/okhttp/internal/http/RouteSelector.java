@@ -58,7 +58,7 @@ public final class RouteSelector {
     this.address = address;
     this.routeDatabase = routeDatabase;
 
-    resetNextProxy(address.url(), address.getProxy());
+    resetNextProxy(address.url(), address.proxy());
   }
 
   /**
@@ -99,9 +99,9 @@ public final class RouteSelector {
    * failure on a connection returned by this route selector.
    */
   public void connectFailed(Route failedRoute, IOException failure) {
-    if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.getProxySelector() != null) {
+    if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.proxySelector() != null) {
       // Tell the proxy selector when we fail to connect on a fresh connection.
-      address.getProxySelector().connectFailed(
+      address.proxySelector().connectFailed(
           address.url().uri(), failedRoute.proxy().address(), failure);
     }
 
@@ -117,7 +117,7 @@ public final class RouteSelector {
       // Try each of the ProxySelector choices until one connection succeeds. If none succeed
       // then we'll try a direct connection below.
       proxies = new ArrayList<>();
-      List<Proxy> selectedProxies = address.getProxySelector().select(url.uri());
+      List<Proxy> selectedProxies = address.proxySelector().select(url.uri());
       if (selectedProxies != null) proxies.addAll(selectedProxies);
       // Finally try a direct connection. We only try it once!
       proxies.removeAll(Collections.singleton(Proxy.NO_PROXY));
@@ -172,7 +172,7 @@ public final class RouteSelector {
       inetSocketAddresses.add(InetSocketAddress.createUnresolved(socketHost, socketPort));
     } else {
       // Try each address for best behavior in mixed IPv4/IPv6 environments.
-      List<InetAddress> addresses = address.getDns().lookup(socketHost);
+      List<InetAddress> addresses = address.dns().lookup(socketHost);
       for (int i = 0, size = addresses.size(); i < size; i++) {
         InetAddress inetAddress = addresses.get(i);
         inetSocketAddresses.add(new InetSocketAddress(inetAddress, socketPort));

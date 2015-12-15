@@ -94,7 +94,7 @@ public final class RealConnection implements Connection {
     Proxy proxy = route.proxy();
     Address address = route.address();
 
-    if (route.address().getSslSocketFactory() == null
+    if (route.address().sslSocketFactory() == null
         && !connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
       throw new RouteException(new UnknownServiceException(
           "CLEARTEXT communication not supported: " + connectionSpecs));
@@ -103,7 +103,7 @@ public final class RealConnection implements Connection {
     while (protocol == null) {
       try {
         rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
-            ? address.getSocketFactory().createSocket()
+            ? address.socketFactory().createSocket()
             : new Socket(proxy);
         connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
       } catch (IOException e) {
@@ -141,7 +141,7 @@ public final class RealConnection implements Connection {
     source = Okio.buffer(Okio.source(rawSocket));
     sink = Okio.buffer(Okio.sink(rawSocket));
 
-    if (route.address().getSslSocketFactory() != null) {
+    if (route.address().sslSocketFactory() != null) {
       connectTls(readTimeout, writeTimeout, connectionSpecSelector);
     } else {
       protocol = Protocol.HTTP_1_1;
@@ -169,7 +169,7 @@ public final class RealConnection implements Connection {
     }
 
     Address address = route.address();
-    SSLSocketFactory sslSocketFactory = address.getSslSocketFactory();
+    SSLSocketFactory sslSocketFactory = address.sslSocketFactory();
     boolean success = false;
     SSLSocket sslSocket = null;
     try {
@@ -181,7 +181,7 @@ public final class RealConnection implements Connection {
       ConnectionSpec connectionSpec = connectionSpecSelector.configureSecureSocket(sslSocket);
       if (connectionSpec.supportsTlsExtensions()) {
         Platform.get().configureTlsExtensions(
-            sslSocket, address.url().host(), address.getProtocols());
+            sslSocket, address.url().host(), address.protocols());
       }
 
       // Force handshake. This can throw!
@@ -189,7 +189,7 @@ public final class RealConnection implements Connection {
       Handshake unverifiedHandshake = Handshake.get(sslSocket.getSession());
 
       // Verify that the socket's certificates are acceptable for the target host.
-      if (!address.getHostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
+      if (!address.hostnameVerifier().verify(address.url().host(), sslSocket.getSession())) {
         X509Certificate cert = (X509Certificate) unverifiedHandshake.peerCertificates().get(0);
         throw new SSLPeerUnverifiedException("Hostname " + address.url().host() + " not verified:"
             + "\n    certificate: " + CertificatePinner.pin(cert)
@@ -198,7 +198,7 @@ public final class RealConnection implements Connection {
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.getCertificatePinner().check(address.url().host(),
+      address.certificatePinner().check(address.url().host(),
           unverifiedHandshake.peerCertificates());
 
       // Success! Save the handshake and the ALPN protocol.
@@ -266,7 +266,7 @@ public final class RealConnection implements Connection {
 
         case HTTP_PROXY_AUTH:
           tunnelRequest = OkHeaders.processAuthHeader(
-              route.address().getAuthenticator(), response, route.proxy());
+              route.address().authenticator(), response, route.proxy());
           if (tunnelRequest != null) continue;
           throw new IOException("Failed to authenticate with proxy");
 
