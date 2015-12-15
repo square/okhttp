@@ -31,19 +31,19 @@ public final class PushPromise {
     this.response = response;
   }
 
-  public String getMethod() {
+  public String method() {
     return method;
   }
 
-  public String getPath() {
+  public String path() {
     return path;
   }
 
-  public Headers getHeaders() {
+  public Headers headers() {
     return headers;
   }
 
-  public MockResponse getResponse() {
+  public MockResponse response() {
     return response;
   }
 }
