@@ -29,14 +29,14 @@ public class MainTest {
   @Test public void simple() {
     Request request = fromArgs("http://example.com").createRequest();
     assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertNull(request.body());
   }
 
   @Test public void put() throws IOException {
     Request request = fromArgs("-X", "PUT", "-d", "foo", "http://example.com").createRequest();
     assertEquals("PUT", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals(3, request.body().contentLength());
   }
 
@@ -44,7 +44,7 @@ public class MainTest {
     Request request = fromArgs("-d", "foo", "http://example.com").createRequest();
     RequestBody body = request.body();
     assertEquals("POST", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
     assertEquals("foo", bodyAsString(body));
   }
@@ -53,7 +53,7 @@ public class MainTest {
     Request request = fromArgs("-d", "foo", "-X", "PUT", "http://example.com").createRequest();
     RequestBody body = request.body();
     assertEquals("PUT", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/x-www-form-urlencoded; charset=utf-8", body.contentType().toString());
     assertEquals("foo", bodyAsString(body));
   }
@@ -63,7 +63,7 @@ public class MainTest {
         "http://example.com").createRequest();
     RequestBody body = request.body();
     assertEquals("POST", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals("application/json; charset=utf-8", body.contentType().toString());
     assertEquals("foo", bodyAsString(body));
   }
@@ -71,7 +71,7 @@ public class MainTest {
   @Test public void referer() {
     Request request = fromArgs("-e", "foo", "http://example.com").createRequest();
     assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals("foo", request.header("Referer"));
     assertNull(request.body());
   }
@@ -79,7 +79,7 @@ public class MainTest {
   @Test public void userAgent() {
     Request request = fromArgs("-A", "foo", "http://example.com").createRequest();
     assertEquals("GET", request.method());
-    assertEquals("http://example.com/", request.urlString());
+    assertEquals("http://example.com/", request.url().toString());
     assertEquals("foo", request.header("User-Agent"));
     assertNull(request.body());
   }

@@ -56,10 +56,6 @@ public final class Request {
     }
   }
 
-  public String urlString() {
-    return url.toString();
-  }
-
   public String method() {
     return method;
   }

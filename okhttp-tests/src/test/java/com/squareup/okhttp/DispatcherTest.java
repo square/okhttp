@@ -132,7 +132,7 @@ public final class DispatcherTest {
     public void assertJobs(String... expectedUrls) {
       List<String> actualUrls = new ArrayList<>();
       for (AsyncCall call : calls) {
-        actualUrls.add(call.request().urlString());
+        actualUrls.add(call.request().url().toString());
       }
       assertEquals(Arrays.asList(expectedUrls), actualUrls);
     }
@@ -140,7 +140,7 @@ public final class DispatcherTest {
     public void finishJob(String url) {
       for (Iterator<AsyncCall> i = calls.iterator(); i.hasNext(); ) {
         AsyncCall call = i.next();
-        if (call.request().urlString().equals(url)) {
+        if (call.request().url().toString().equals(url)) {
           i.remove();
           dispatcher.finished(call);
           return;
