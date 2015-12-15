@@ -197,7 +197,7 @@ public final class Cache {
       return null;
     }
 
-    Response response = entry.response(request, snapshot);
+    Response response = entry.response(snapshot);
 
     if (!entry.matches(request, response)) {
       Util.closeQuietly(response.body());
@@ -657,7 +657,7 @@ public final class Cache {
           && OkHeaders.varyMatches(response, varyHeaders, request);
     }
 
-    public Response response(Request request, DiskLruCache.Snapshot snapshot) {
+    public Response response(DiskLruCache.Snapshot snapshot) {
       String contentType = responseHeaders.get("Content-Type");
       String contentLength = responseHeaders.get("Content-Length");
       Request cacheRequest = new Request.Builder()
