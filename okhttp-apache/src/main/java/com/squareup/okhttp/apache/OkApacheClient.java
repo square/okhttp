@@ -32,11 +32,9 @@ import static java.net.Proxy.Type.HTTP;
 import static org.apache.http.HttpVersion.HTTP_1_1;
 
 /**
- * Implements Apache's {@link HttpClient} API using {@link OkHttpClient}.
- * <p>
- * <strong>Warning:</strong> Many core features of Apache HTTP client are not implemented by this
- * API. This includes the keep-alive strategy, cookie store, credentials provider, route planner
- * and others.
+ * @deprecated OkHttp will be dropping its ability to be used with {@link HttpClient} in an
+ *     upcoming release. Applications that need this should either downgrade to the Apache
+ *     implementation or upgrade to OkHttp's Request/Response API.
  */
 public final class OkApacheClient implements HttpClient {
   private static Request transformRequest(HttpRequest request) {
