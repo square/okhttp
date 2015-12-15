@@ -13,6 +13,7 @@ import okio.GzipSink;
 import okio.Okio;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -258,6 +259,16 @@ public class OkApacheClientTest {
     assertEquals("application/json", entity.getContentType().getValue());
 
     assertEquals(text, EntityUtils.toString(entity, UTF_8));
+  }
+
+  @Test public void httpHost() throws Exception {
+    server.enqueue(new MockResponse());
+    HttpHost host = new HttpHost(server.getHostName(), server.getPort());
+    HttpGet get = new HttpGet(server.getUrl("/test").getFile());
+    client.execute(host, get);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("/test", request.getPath());
   }
 
   private static Buffer gzip(String body) throws IOException {
