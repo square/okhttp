@@ -28,12 +28,12 @@ public final class Challenge {
   }
 
   /** Returns the authentication scheme, like {@code Basic}. */
-  public String getScheme() {
+  public String scheme() {
     return scheme;
   }
 
   /** Returns the protection space. */
-  public String getRealm() {
+  public String realm() {
     return realm;
   }
 

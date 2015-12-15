@@ -40,11 +40,11 @@ public final class AuthenticatorAdapter implements Authenticator {
     HttpUrl url = request.url();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
-      if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
+      if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
 
       PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
           url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
-          challenge.getRealm(), challenge.getScheme(), url.url(), RequestorType.SERVER);
+          challenge.realm(), challenge.scheme(), url.url(), RequestorType.SERVER);
       if (auth == null) continue;
 
       String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
@@ -62,12 +62,12 @@ public final class AuthenticatorAdapter implements Authenticator {
     HttpUrl url = request.url();
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
-      if (!"Basic".equalsIgnoreCase(challenge.getScheme())) continue;
+      if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
 
       InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
       PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
           proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
-          url.scheme(), challenge.getRealm(), challenge.getScheme(), url.url(),
+          url.scheme(), challenge.realm(), challenge.scheme(), url.url(),
           RequestorType.PROXY);
       if (auth == null) continue;
 
