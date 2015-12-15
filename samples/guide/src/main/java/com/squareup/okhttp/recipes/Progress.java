@@ -84,7 +84,7 @@ public final class Progress {
       return responseBody.contentLength();
     }
 
-    @Override public BufferedSource source() throws IOException {
+    @Override public BufferedSource source() {
       if (bufferedSource == null) {
         bufferedSource = Okio.buffer(source(responseBody.source()));
       }
