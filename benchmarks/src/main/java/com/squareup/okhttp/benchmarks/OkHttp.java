@@ -15,12 +15,13 @@
  */
 package com.squareup.okhttp.benchmarks;
 
+import com.squareup.okhttp.Call;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.OkUrlFactory;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.okhttp.internal.SslContextBuilder;
 import java.io.IOException;
-import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
@@ -51,21 +52,22 @@ class OkHttp extends SynchronousHttpClient {
   }
 
   @Override public Runnable request(HttpUrl url) {
-    return new OkHttpRequest(url);
+    Call call = client.newCall(new Request.Builder().url(url).build());
+    return new OkHttpRequest(call);
   }
 
   class OkHttpRequest implements Runnable {
-    private final HttpUrl url;
+    private final Call call;
 
-    public OkHttpRequest(HttpUrl url) {
-      this.url = url;
+    public OkHttpRequest(Call call) {
+      this.call = call;
     }
 
     public void run() {
       long start = System.nanoTime();
       try {
-        HttpURLConnection urlConnection = new OkUrlFactory(client).open(url.url());
-        long total = readAllAndClose(urlConnection.getInputStream());
+        ResponseBody body = call.execute().body();
+        long total = readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
 
         if (VERBOSE) {
