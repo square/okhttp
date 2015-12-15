@@ -25,7 +25,7 @@ import okio.BufferedSink;
 import okio.ByteString;
 
 /** An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body. */
-public final class Multipart extends RequestBody {
+public final class MultipartBody extends RequestBody {
   /**
    * The "mixed" subtype of "multipart" is intended for use when the body
    * parts are independent and need to be bundled in a particular order. Any
@@ -74,7 +74,7 @@ public final class Multipart extends RequestBody {
   private final List<Part> parts;
   private long contentLength = -1L;
 
-  Multipart(ByteString boundary, MediaType type, List<Part> parts) {
+  MultipartBody(ByteString boundary, MediaType type, List<Part> parts) {
     this.boundary = boundary;
     this.originalType = type;
     this.contentType = MediaType.parse(type + "; boundary=" + boundary.utf8());
@@ -89,8 +89,17 @@ public final class Multipart extends RequestBody {
     return boundary.utf8();
   }
 
+  /** The number of parts in this multipart body. */
+  public int size() {
+    return parts.size();
+  }
+
   public List<Part> parts() {
     return parts;
+  }
+
+  public Part part(int index) {
+    return parts.get(index);
   }
 
   /** A combination of {@link #type()} and {@link #boundary()}. */
@@ -320,11 +329,11 @@ public final class Multipart extends RequestBody {
     }
 
     /** Assemble the specified parts into a request body. */
-    public Multipart build() {
+    public MultipartBody build() {
       if (parts.isEmpty()) {
         throw new IllegalStateException("Multipart body must have at least one part.");
       }
-      return new Multipart(boundary, type, parts);
+      return new MultipartBody(boundary, type, parts);
     }
   }
 }

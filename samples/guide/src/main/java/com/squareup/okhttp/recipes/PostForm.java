@@ -15,7 +15,7 @@
  */
 package com.squareup.okhttp.recipes;
 
-import com.squareup.okhttp.FormEncodingBuilder;
+import com.squareup.okhttp.FormBody;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
@@ -26,7 +26,7 @@ public final class PostForm {
   private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
-    RequestBody formBody = new FormEncodingBuilder()
+    RequestBody formBody = new FormBody.Builder()
         .add("search", "Jurassic Park")
         .build();
     Request request = new Request.Builder()
