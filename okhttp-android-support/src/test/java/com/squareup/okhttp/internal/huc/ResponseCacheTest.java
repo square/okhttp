@@ -1866,8 +1866,9 @@ public final class ResponseCacheTest {
         HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
         assertEquals(server.url("/").url(), uri.toURL());
         assertEquals(200, httpURLConnection.getResponseCode());
+        InputStream is = httpURLConnection.getInputStream();
         try {
-          httpURLConnection.getInputStream();
+          is.read();
           fail();
         } catch (UnsupportedOperationException expected) {
         }

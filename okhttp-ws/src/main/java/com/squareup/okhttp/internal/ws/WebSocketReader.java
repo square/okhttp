@@ -233,7 +233,7 @@ public final class WebSocketReader {
         return -1;
       }
 
-      @Override public BufferedSource source() throws IOException {
+      @Override public BufferedSource source() {
         return source;
       }
     };

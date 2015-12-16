@@ -319,8 +319,9 @@ public class JavaApiConverterTest {
         JavaApiConverter.createJavaUrlConnectionForCachePut(okResponse);
     // Check an arbitrary (not complete) set of methods that can be used to access the response
     // body.
+    InputStream is = httpUrlConnection.getInputStream();
     try {
-      httpUrlConnection.getInputStream();
+      is.read();
       fail();
     } catch (UnsupportedOperationException expected) {
     }
