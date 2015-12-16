@@ -540,7 +540,7 @@ public final class HttpEngine {
       // affect cookie choice besides "Host".
       Map<String, List<String>> headers = OkHeaders.toMultimap(result.build().headers(), null);
 
-      Map<String, List<String>> cookies = cookieHandler.get(request.uri(), headers);
+      Map<String, List<String>> cookies = cookieHandler.get(request.url().uri(), headers);
 
       // Add any new cookies to the request.
       OkHeaders.addCookies(result, cookies);
@@ -877,7 +877,7 @@ public final class HttpEngine {
   public void receiveHeaders(Headers headers) throws IOException {
     CookieHandler cookieHandler = client.getCookieHandler();
     if (cookieHandler != null) {
-      cookieHandler.put(userRequest.uri(), OkHeaders.toMultimap(headers, null));
+      cookieHandler.put(userRequest.url().uri(), OkHeaders.toMultimap(headers, null));
     }
   }
 
