@@ -16,7 +16,6 @@
 package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.http.HttpMethod;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
@@ -45,15 +44,6 @@ public final class Request {
 
   public HttpUrl url() {
     return url;
-  }
-
-  public URI uri() throws IOException {
-    try {
-      URI result = javaNetUri;
-      return result != null ? result : (javaNetUri = url.uri());
-    } catch (IllegalStateException e) {
-      throw new IOException(e.getMessage());
-    }
   }
 
   public String method() {

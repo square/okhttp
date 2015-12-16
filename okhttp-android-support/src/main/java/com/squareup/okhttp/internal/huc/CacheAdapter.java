@@ -52,7 +52,7 @@ public final class CacheAdapter implements InternalCache {
   }
 
   @Override public CacheRequest put(Response response) throws IOException {
-    URI uri = response.request().uri();
+    URI uri = response.request().url().uri();
     HttpURLConnection connection = JavaApiConverter.createJavaUrlConnectionForCachePut(response);
     final java.net.CacheRequest request = delegate.put(uri, connection);
     if (request == null) {
@@ -100,6 +100,6 @@ public final class CacheAdapter implements InternalCache {
    */
   private CacheResponse getJavaCachedResponse(Request request) throws IOException {
     Map<String, List<String>> headers = JavaApiConverter.extractJavaHeaders(request);
-    return delegate.get(request.uri(), request.method(), headers);
+    return delegate.get(request.url().uri(), request.method(), headers);
   }
 }

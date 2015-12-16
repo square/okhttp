@@ -26,13 +26,10 @@ import com.squareup.okhttp.internal.http.CacheRequest;
 import com.squareup.okhttp.internal.http.CacheStrategy;
 
 import java.io.IOException;
-import java.net.CacheResponse;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -132,7 +129,7 @@ public final class URLEncodingTest {
     Internal.instance.setCache(client, new InternalCache() {
       @Override
       public Response get(Request request) throws IOException {
-        uriReference.set(request.uri());
+        uriReference.set(request.url().uri());
         throw new UnsupportedOperationException();
       }
 

@@ -119,7 +119,7 @@ public final class RequestTest {
 
   @Test public void uninitializedURI() throws Exception {
     Request request = new Request.Builder().url("http://localhost/api").build();
-    assertEquals(new URI("http://localhost/api"), request.uri());
+    assertEquals(new URI("http://localhost/api"), request.url().uri());
     assertEquals(HttpUrl.parse("http://localhost/api"), request.url());
   }
 
