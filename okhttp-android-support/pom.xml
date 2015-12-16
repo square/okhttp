@@ -45,7 +45,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <excludePackageNames>com.squareup.okhttp.internal.*</excludePackageNames>
+          <excludePackageNames>okhttp3.internal.*</excludePackageNames>
           <links>
             <link>http://square.github.io/okhttp/javadoc/</link>
           </links>

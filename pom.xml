@@ -150,7 +150,7 @@
                 -->
               <property>
                 <name>listener</name>
-                <value>com.squareup.okhttp.testing.InstallUncaughtExceptionHandlerListener</value>
+                <value>okhttp3.testing.InstallUncaughtExceptionHandlerListener</value>
               </property>
             </properties>
           </configuration>

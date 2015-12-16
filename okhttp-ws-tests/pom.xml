@@ -50,7 +50,7 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass>com.squareup.okhttp.ws.AutobahnTester</mainClass>
+              <mainClass>okhttp3.ws.AutobahnTester</mainClass>
             </manifest>
           </archive>
         </configuration>

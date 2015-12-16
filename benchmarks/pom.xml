@@ -89,7 +89,7 @@
             <commandlineArgs>-Xbootclasspath/p:${bootclasspath}</commandlineArgs>
             <argument>-classpath</argument>
             <classpath />
-            <argument>com.squareup.okhttp.benchmarks.Benchmark</argument>
+            <argument>okhttp3.benchmarks.Benchmark</argument>
           </arguments>
         </configuration>
       </plugin>
