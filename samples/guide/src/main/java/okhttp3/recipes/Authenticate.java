@@ -15,30 +15,26 @@
  */
 package okhttp3.recipes;
 
+import java.io.IOException;
 import okhttp3.Authenticator;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import java.io.IOException;
-import java.net.Proxy;
+import okhttp3.Route;
 
 public final class Authenticate {
   private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
     client.setAuthenticator(new Authenticator() {
-      @Override public Request authenticate(Proxy proxy, Response response) {
+      @Override public Request authenticate(Route route, Response response) throws IOException {
         System.out.println("Authenticating for response: " + response);
         System.out.println("Challenges: " + response.challenges());
         String credential = Credentials.basic("jesse", "password1");
         return response.request().newBuilder()
             .header("Authorization", credential)
             .build();
-      }
-
-      @Override public Request authenticateProxy(Proxy proxy, Response response) {
-        return null; // Null indicates no attempt to authenticate.
       }
     });
 

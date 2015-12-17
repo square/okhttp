@@ -15,14 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.InternalCache;
-import okhttp3.internal.RouteDatabase;
-import okhttp3.internal.Util;
-import okhttp3.internal.http.AuthenticatorAdapter;
-import okhttp3.internal.http.StreamAllocation;
-import okhttp3.internal.io.RealConnection;
-import okhttp3.internal.tls.OkHostnameVerifier;
 import java.net.CookieHandler;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -38,6 +30,14 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.internal.Internal;
+import okhttp3.internal.InternalCache;
+import okhttp3.internal.RouteDatabase;
+import okhttp3.internal.Util;
+import okhttp3.internal.http.AuthenticatorAdapter;
+import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.io.RealConnection;
+import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
  * Configures and creates HTTP connections. Most applications can use a single
@@ -135,6 +135,7 @@ public class OkHttpClient implements Cloneable {
   private SSLSocketFactory sslSocketFactory;
   private HostnameVerifier hostnameVerifier;
   private CertificatePinner certificatePinner;
+  private Authenticator proxyAuthenticator;
   private Authenticator authenticator;
   private ConnectionPool connectionPool;
   private Dns dns;
@@ -166,6 +167,7 @@ public class OkHttpClient implements Cloneable {
     this.sslSocketFactory = okHttpClient.sslSocketFactory;
     this.hostnameVerifier = okHttpClient.hostnameVerifier;
     this.certificatePinner = okHttpClient.certificatePinner;
+    this.proxyAuthenticator = okHttpClient.proxyAuthenticator;
     this.authenticator = okHttpClient.authenticator;
     this.connectionPool = okHttpClient.connectionPool;
     this.dns = okHttpClient.dns;
@@ -384,10 +386,10 @@ public class OkHttpClient implements Cloneable {
   }
 
   /**
-   * Sets the authenticator used to respond to challenges from the remote web
-   * server or proxy server.
+   * Sets the authenticator used to respond to challenges from origin servers. Use {@link
+   * #setProxyAuthenticator} to set the authenticator for proxy servers.
    *
-   * <p>If unset, the {@link java.net.Authenticator#setDefault system-wide default}
+   * <p>If unset, the {@linkplain java.net.Authenticator#setDefault system-wide default}
    * authenticator will be used.
    */
   public OkHttpClient setAuthenticator(Authenticator authenticator) {
@@ -397,6 +399,22 @@ public class OkHttpClient implements Cloneable {
 
   public Authenticator getAuthenticator() {
     return authenticator;
+  }
+
+  /**
+   * Sets the authenticator used to respond to challenges from proxy servers. Use {@link
+   * #setAuthenticator} to set the authenticator for origin servers.
+   *
+   * <p>If unset, the {@linkplain java.net.Authenticator#setDefault system-wide default}
+   * authenticator will be used.
+   */
+  public OkHttpClient setProxyAuthenticator(Authenticator proxyAuthenticator) {
+    this.proxyAuthenticator = proxyAuthenticator;
+    return this;
+  }
+
+  public Authenticator getProxyAuthenticator() {
+    return proxyAuthenticator;
   }
 
   /**
@@ -603,6 +621,9 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.authenticator == null) {
       result.authenticator = AuthenticatorAdapter.INSTANCE;
+    }
+    if (result.proxyAuthenticator == null) {
+      result.proxyAuthenticator = AuthenticatorAdapter.INSTANCE;
     }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();

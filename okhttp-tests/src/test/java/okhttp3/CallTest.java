@@ -15,20 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.DoubleInetAddressDns;
-import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
-import okhttp3.internal.Version;
-import okhttp3.internal.http.FakeDns;
-import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.RecordingHostnameVerifier;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,6 +48,20 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.internal.DoubleInetAddressDns;
+import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
+import okhttp3.internal.Version;
+import okhttp3.internal.http.FakeDns;
+import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.RecordingHostnameVerifier;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -74,8 +74,8 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
-import static okhttp3.internal.Internal.logger;
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static okhttp3.internal.Internal.logger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -2077,7 +2077,7 @@ public final class CallTest {
 
     client.setSslSocketFactory(sslContext.getSocketFactory());
     client.setProxy(server.toProxyAddress());
-    client.setAuthenticator(new RecordingOkAuthenticator("password"));
+    client.setProxyAuthenticator(new RecordingOkAuthenticator("password"));
     client.setHostnameVerifier(new RecordingHostnameVerifier());
 
     Request request = new Request.Builder()
