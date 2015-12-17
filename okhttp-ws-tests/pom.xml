@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp</groupId>
+    <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>2.6.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-ws-tests</artifactId>
@@ -14,15 +14,16 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>okhttp-ws</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.squareup.okhttp</groupId>
-      <artifactId>okhttp-ws</artifactId>
-      <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -31,7 +32,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -40,6 +41,28 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <mainClass>okhttp3.ws.AutobahnTester</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Do not deploy this as an artifact to Maven central. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

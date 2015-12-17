@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp</groupId>
+    <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>2.6.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-android-support</artifactId>
@@ -15,13 +15,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-urlconnection</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -32,7 +32,7 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -45,7 +45,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
-          <excludePackageNames>com.squareup.okhttp.internal.*</excludePackageNames>
+          <excludePackageNames>okhttp3.internal.*</excludePackageNames>
           <links>
             <link>http://square.github.io/okhttp/javadoc/</link>
           </links>

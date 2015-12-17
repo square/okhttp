@@ -1,6 +1,93 @@
 Change Log
 ==========
 
+## Version 2.7.0
+
+_2015-12-13_
+
+ *  **Rewritten connection management.** Previously OkHttp's connection pool
+    managed both idle and active connections for HTTP/2, but only idle
+    connections for HTTP/1.x. With this update the connection pool manages both
+    idle and active connections for everything. OkHttp now detects and warns on
+    connections that were allocated but never released, and will enforce HTTP/2
+    stream limits. This update also fixes `Call.cancel()` to not do I/O on the
+    calling thread.
+ *  Fix: Don't log gzipped data in the logging interceptor.
+ *  Fix: Don't resolve DNS addresses when connecting through a SOCKS proxy.
+ *  Fix: Drop the synthetic `OkHttp-Selected-Protocol` response header.
+ *  Fix: Support 204 and 205 'No Content' replies in the logging interceptor.
+ *  New: Add `Call.isExecuted()`.
+
+
+## Version 2.6.0
+
+_2015-11-22_
+
+ *  **New Logging Interceptor.** The `logging-interceptor` subproject offers
+    simple request and response logging. It may be configured to log headers and
+    bodies for debugging. It requires this Maven dependency:
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okhttp</groupId>
+       <artifactId>logging-interceptor</artifactId>
+       <version>2.6.0</version>
+     </dependency>
+     ```
+
+    Configure basic logging like this:
+
+    ```java
+    HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+    loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+    client.networkInterceptors().add(loggingInterceptor);
+    ```
+
+    **Warning:** Avoid `Level.HEADERS` and `Level.BODY` in production because
+    they could leak passwords and other authentication credentials to insecure
+    logs.
+
+ *  **WebSocket API now uses `RequestBody` and `ResponseBody` for messages.**
+    This is a backwards-incompatible API change.
+
+ *  **The DNS service is now pluggable.** In some situations this may be useful
+    to manually prioritize specific IP addresses.
+
+ *  Fix: Don't throw when converting an `HttpUrl` to a `java.net.URI`.
+    Previously URLs with special characters like `|` and `[` would break when
+    subjected to URI’s overly-strict validation.
+ *  Fix: Don't re-encode `+` as `%20` in encoded URL query strings. OkHttp
+    prefers `%20` when doing its own encoding, but will retain `+` when that is
+    provided.
+ *  Fix: Enforce that callers call `WebSocket.close()` on IO errors. Error
+    handling in WebSockets is significantly improved.
+ *  Fix: Don't use SPDY/3 style header concatenation for HTTP/2 request headers.
+    This could have corrupted requests where multiple headers had the same name,
+    as in cookies.
+ *  Fix: Reject bad characters in the URL hostname. Previously characters like
+    `\0` would cause a late crash when building the request.
+ *  Fix: Allow interceptors to change the request method.
+ *  Fix: Don’t use the request's `User-Agent` or `Proxy-Authorization` when
+    connecting to an HTTPS server via an HTTP tunnel. The `Proxy-Authorization`
+    header was being leaked to the origin server.
+ *  Fix: Digits may be used in a URL scheme.
+ *  Fix: Improve connection timeout recovery.
+ *  Fix: Recover from `getsockname` crashes impacting Android releases prior to
+    4.2.2.
+ *  Fix: Drop partial support for HTTP/1.0. Previously OkHttp would send
+    `HTTP/1.0` on connections after seeing a response with `HTTP/1.0`. The fixed
+    behavior is consistent with Firefox and Chrome.
+ *  Fix: Allow a body in `OPTIONS` requests.
+ *  Fix: Don't percent-encode non-ASCII characters in URL fragments.
+ *  Fix: Handle null fragments.
+ *  Fix: Don’t crash on interceptors that throw `IOException` before a
+    connection is attempted.
+ *  New: Support [WebDAV][webdav] HTTP methods.
+ *  New: Buffer WebSocket frames for better performance.
+ *  New: Drop support for `TLS_DHE_DSS_WITH_AES_128_CBC_SHA`, our only remaining
+    DSS cipher suite. This is consistent with Firefox and Chrome which have also
+    dropped these cipher suite.
+
 ## Version 2.5.0
 
 _2015-08-25_
@@ -22,7 +109,7 @@ _2015-08-25_
     where changing a URL from `http` to `https` would leave it on port 80.
 
  *  **Okio has been updated to 1.6.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -81,7 +168,7 @@ _2015-05-16_
     Both are permitted-by-spec, but `%20` requires fewer special cases.
 
  *  **Okio has been updated to 1.4.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -93,7 +180,7 @@ _2015-05-16_
     Passing null will now fail for request methods that require a body. Instead
     use an empty body such as this one:
 
-    ```
+    ```java
         RequestBody.create(null, new byte[0]);
     ```
 
@@ -102,7 +189,7 @@ _2015-05-16_
    your app. You'll need to pin both the top-level domain and the `*.` domain
    for full coverage.
 
-    ```
+    ```java
      client.setCertificatePinner(new CertificatePinner.Builder()
          .add("publicobject.com",   "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
          .add("*.publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
@@ -159,7 +246,7 @@ _2015-03-16_
 
  *  **Okio updated to 1.3.0.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -264,14 +351,14 @@ _2014-11-04_
 
     To disable TLS fallback:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
     ```
 
     To disable cleartext connections, permitting `https` URLs only:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
     ```
@@ -305,7 +392,7 @@ _2014-11-04_
 
  *  **Okio updated to 1.0.1.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -385,7 +472,7 @@ advice on upgrading from 1.x to 2.x.
     agent.
  *  New: Guava-like API to create headers:
 
-    ```
+    ```java
     Headers headers = Headers.of(name1, value1, name2, value2, ...).
     ```
 
@@ -428,7 +515,7 @@ in addition to synchronous blocking calls.
     add the `okhttp-urlconnection` module to your project and use the
     `OkUrlFactory` to create new instances of `HttpURLConnection`:
 
-    ```
+    ```java
     // OkHttp 1.x:
     HttpURLConnection connection = client.open(url);
 
@@ -683,4 +770,5 @@ _2013-05-06_
 
 Initial release.
 
- [brick]: (https://noncombatant.org/2015/05/01/about-http-public-key-pinning/)
+ [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
+ [webdav]: https://tools.ietf.org/html/rfc4918
