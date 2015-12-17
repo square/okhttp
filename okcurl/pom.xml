@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp</groupId>
+    <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
     <version>3.0.0-SNAPSHOT</version>
   </parent>
@@ -14,12 +14,12 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>

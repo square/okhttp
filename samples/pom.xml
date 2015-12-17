@@ -4,12 +4,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp</groupId>
+    <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
     <version>3.0.0-SNAPSHOT</version>
   </parent>
 
-  <groupId>com.squareup.okhttp.sample</groupId>
+  <groupId>com.squareup.okhttp3.sample</groupId>
   <artifactId>sample-parent</artifactId>
   <packaging>pom</packaging>
   <name>Samples (Parent)</name>
