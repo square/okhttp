@@ -88,8 +88,8 @@ public abstract class ResponseBody implements Closeable {
     return contentType != null ? contentType.charset(UTF_8) : UTF_8;
   }
 
-  @Override public void close() throws IOException {
-    source().close();
+  @Override public void close() {
+    Util.closeQuietly(source());
   }
 
   /**
