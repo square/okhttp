@@ -37,7 +37,7 @@ public abstract class ResponseBody implements Closeable {
    * Returns the number of bytes in that will returned by {@link #bytes}, or
    * {@link #byteStream}, or -1 if unknown.
    */
-  public abstract long contentLength() throws IOException;
+  public abstract long contentLength();
 
   public final InputStream byteStream() {
     return source().inputStream();
