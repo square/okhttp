@@ -1,13 +1,5 @@
 package okhttp3.internal.http;
 
-import okhttp3.Authenticator;
-import okhttp3.Challenge;
-import okhttp3.Headers;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.Platform;
-import java.io.IOException;
-import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,9 +8,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import okhttp3.Challenge;
+import okhttp3.Headers;
 import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.Platform;
 
-import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static okhttp3.internal.Util.equal;
 
 /** Headers and utilities for internal use by OkHttp. */
@@ -275,17 +271,5 @@ public final class OkHeaders {
       }
     }
     return result;
-  }
-
-  /**
-   * React to a failed authorization response by looking up new credentials.
-   * Returns a request for a subsequent attempt, or null if no further attempts
-   * should be made.
-   */
-  public static Request processAuthHeader(Authenticator authenticator, Response response,
-      Proxy proxy) throws IOException {
-    return response.code() == HTTP_PROXY_AUTH
-        ? authenticator.authenticateProxy(proxy, response)
-        : authenticator.authenticate(proxy, response);
   }
 }

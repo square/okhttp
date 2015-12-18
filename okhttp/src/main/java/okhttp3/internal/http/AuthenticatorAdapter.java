@@ -15,12 +15,6 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.Authenticator;
-import okhttp3.Challenge;
-import okhttp3.Credentials;
-import okhttp3.HttpUrl;
-import okhttp3.Request;
-import okhttp3.Response;
 import java.io.IOException;
 import java.net.Authenticator.RequestorType;
 import java.net.InetAddress;
@@ -28,55 +22,52 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.util.List;
+import okhttp3.Authenticator;
+import okhttp3.Challenge;
+import okhttp3.Credentials;
+import okhttp3.HttpUrl;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Route;
 
 /** Adapts {@link java.net.Authenticator} to {@link Authenticator}. */
 public final class AuthenticatorAdapter implements Authenticator {
   /** Uses the global authenticator to get the password. */
   public static final Authenticator INSTANCE = new AuthenticatorAdapter();
 
-  @Override public Request authenticate(Proxy proxy, Response response) throws IOException {
+  @Override public Request authenticate(Route route, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();
     HttpUrl url = request.url();
+    boolean proxyAuthorization = response.code() == 407;
+    Proxy proxy = route.proxy();
+
     for (int i = 0, size = challenges.size(); i < size; i++) {
       Challenge challenge = challenges.get(i);
       if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
 
-      PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
-          url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
-          challenge.realm(), challenge.scheme(), url.url(), RequestorType.SERVER);
-      if (auth == null) continue;
+      PasswordAuthentication auth;
+      if (proxyAuthorization) {
+        InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
+        auth = java.net.Authenticator.requestPasswordAuthentication(
+            proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
+            url.scheme(), challenge.realm(), challenge.scheme(), url.url(),
+            RequestorType.PROXY);
+      } else {
+        auth = java.net.Authenticator.requestPasswordAuthentication(
+            url.host(), getConnectToInetAddress(proxy, url), url.port(), url.scheme(),
+            challenge.realm(), challenge.scheme(), url.url(), RequestorType.SERVER);
+      }
 
-      String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
-      return request.newBuilder()
-          .header("Authorization", credential)
-          .build();
+      if (auth != null) {
+        String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
+        return request.newBuilder()
+            .header(proxyAuthorization ? "Proxy-Authorization" : "Authorization", credential)
+            .build();
+      }
     }
-    return null;
 
-  }
-
-  @Override public Request authenticateProxy(Proxy proxy, Response response) throws IOException {
-    List<Challenge> challenges = response.challenges();
-    Request request = response.request();
-    HttpUrl url = request.url();
-    for (int i = 0, size = challenges.size(); i < size; i++) {
-      Challenge challenge = challenges.get(i);
-      if (!"Basic".equalsIgnoreCase(challenge.scheme())) continue;
-
-      InetSocketAddress proxyAddress = (InetSocketAddress) proxy.address();
-      PasswordAuthentication auth = java.net.Authenticator.requestPasswordAuthentication(
-          proxyAddress.getHostName(), getConnectToInetAddress(proxy, url), proxyAddress.getPort(),
-          url.scheme(), challenge.realm(), challenge.scheme(), url.url(),
-          RequestorType.PROXY);
-      if (auth == null) continue;
-
-      String credential = Credentials.basic(auth.getUserName(), new String(auth.getPassword()));
-      return request.newBuilder()
-          .header("Proxy-Authorization", credential)
-          .build();
-    }
-    return null;
+    return null; // No challenges were satisfied!
   }
 
   private InetAddress getConnectToInetAddress(Proxy proxy, HttpUrl url) throws IOException {

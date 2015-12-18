@@ -16,6 +16,20 @@
  */
 package okhttp3.internal.io;
 
+import java.io.IOException;
+import java.lang.ref.Reference;
+import java.net.ConnectException;
+import java.net.Proxy;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.UnknownServiceException;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
@@ -36,29 +50,15 @@ import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.tls.OkHostnameVerifier;
-import java.io.IOException;
-import java.lang.ref.Reference;
-import java.net.ConnectException;
-import java.net.Proxy;
-import java.net.Socket;
-import java.net.SocketTimeoutException;
-import java.net.UnknownServiceException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLPeerUnverifiedException;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Source;
 
-import static okhttp3.internal.Util.closeQuietly;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.Util.closeQuietly;
 
 public final class RealConnection implements Connection {
   private final Route route;
@@ -265,8 +265,7 @@ public final class RealConnection implements Connection {
           return;
 
         case HTTP_PROXY_AUTH:
-          tunnelRequest = OkHeaders.processAuthHeader(
-              route.address().authenticator(), response, route.proxy());
+          tunnelRequest = route.address().proxyAuthenticator().authenticate(route, response);
           if (tunnelRequest != null) continue;
           throw new IOException("Failed to authenticate with proxy");
 
