@@ -196,9 +196,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Throttles the response body writer to sleep for the given period after each
-   * series of {@code bytesPerPeriod} bytes are written. Use this to simulate
-   * network behavior.
+   * Throttles the request reader and response writer to sleep for the given period after each
+   * series of {@code bytesPerPeriod} bytes are transferred. Use this to simulate network behavior.
    */
   public MockResponse throttleBody(long bytesPerPeriod, long period, TimeUnit unit) {
     this.throttleBytesPerPeriod = bytesPerPeriod;

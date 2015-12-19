@@ -16,11 +16,11 @@
 
 package okhttp3.internal.framed;
 
-import okhttp3.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ByteString;
@@ -116,8 +117,9 @@ public final class MockSpdyPeer implements Closeable {
 
   public void play() throws IOException {
     if (serverSocket != null) throw new IllegalStateException();
-    serverSocket = new ServerSocket(0);
-    serverSocket.setReuseAddress(true);
+    serverSocket = new ServerSocket();
+    serverSocket.setReuseAddress(false);
+    serverSocket.bind(new InetSocketAddress("localhost", 0), 1);
     port = serverSocket.getLocalPort();
     executor.execute(new Runnable() {
       @Override public void run() {
