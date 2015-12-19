@@ -104,8 +104,6 @@ public class TwitterAuthInterceptor implements Interceptor {
     }
 
     if (request.method().equals("POST")) {
-      System.out.println(request.header("Content-Type"));
-
       RequestBody body = request.body();
 
       if (body instanceof FormBody) {
@@ -126,8 +124,6 @@ public class TwitterAuthInterceptor implements Interceptor {
         KeyValueParser.StandardKeyValueParser bodyParser =
             new KeyValueParser.StandardKeyValueParser("&", "=");
         bodyParser.parse(encodedBody, Arrays.<KeyValueHandler>asList(handler));
-
-        System.out.println(handler.toList());
 
         javaParams.addAll(handler.toList());
       }
