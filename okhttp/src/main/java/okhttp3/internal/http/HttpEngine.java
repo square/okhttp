@@ -17,6 +17,15 @@
 
 package okhttp3.internal.http;
 
+import java.io.IOException;
+import java.net.CookieHandler;
+import java.net.ProtocolException;
+import java.net.Proxy;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
@@ -33,15 +42,6 @@ import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
 import okhttp3.internal.Version;
-import java.io.IOException;
-import java.net.CookieHandler;
-import java.net.ProtocolException;
-import java.net.Proxy;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLSocketFactory;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -51,7 +51,6 @@ import okio.Sink;
 import okio.Source;
 import okio.Timeout;
 
-import static okhttp3.internal.Util.closeQuietly;
 import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
 import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
 import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
@@ -61,6 +60,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
 import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static okhttp3.internal.Util.closeQuietly;
 import static okhttp3.internal.Util.discard;
 import static okhttp3.internal.Util.hostHeader;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
@@ -893,20 +893,20 @@ public final class HttpEngine {
     Route route = connection != null
         ? connection.getRoute()
         : null;
-    Proxy selectedProxy = route != null
-        ? route.proxy()
-        : client.getProxy();
     int responseCode = userResponse.code();
 
     final String method = userRequest.method();
     switch (responseCode) {
       case HTTP_PROXY_AUTH:
+        Proxy selectedProxy = route != null
+            ? route.proxy()
+            : client.getProxy();
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        return OkHeaders.processAuthHeader(client.getAuthenticator(), userResponse, selectedProxy);
+        return client.getAuthenticator().authenticate(route, userResponse);
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:
@@ -984,7 +984,7 @@ public final class HttpEngine {
 
     return new Address(request.url().host(), request.url().port(), client.getDns(),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
-        client.getAuthenticator(), client.getProxy(), client.getProtocols(),
+        client.getProxyAuthenticator(), client.getProxy(), client.getProtocols(),
         client.getConnectionSpecs(), client.getProxySelector());
   }
 }

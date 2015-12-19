@@ -229,7 +229,7 @@ public final class WebSocketReader {
         return type;
       }
 
-      @Override public long contentLength() throws IOException {
+      @Override public long contentLength() {
         return -1;
       }
 

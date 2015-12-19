@@ -15,10 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.RecordingAuthenticator;
-import okhttp3.internal.http.AuthenticatorAdapter;
-import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.net.Authenticator;
 import java.net.CacheRequest;
@@ -34,6 +30,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
+import okhttp3.internal.RecordingAuthenticator;
+import okhttp3.internal.http.AuthenticatorAdapter;
+import okhttp3.internal.http.RecordingProxySelector;
+import okhttp3.internal.tls.OkHostnameVerifier;
 import org.junit.After;
 import org.junit.Test;
 
@@ -126,6 +126,7 @@ public final class OkHttpClientTest {
     assertSame(proxySelector, client.getProxySelector());
     assertSame(cookieManager, client.getCookieHandler());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
+    assertSame(AuthenticatorAdapter.INSTANCE, client.getProxyAuthenticator());
     assertSame(socketFactory, client.getSocketFactory());
     assertSame(hostnameVerifier, client.getHostnameVerifier());
     assertSame(certificatePinner, client.getCertificatePinner());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Square, Inc.
+ * Copyright (C) 2015 Square, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,45 +16,40 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.net.Proxy;
 
 /**
- * Responds to authentication challenges from the remote web or proxy server.
+ * Responds to an authentication challenge from either a remote web server or a proxy server.
+ * Implementations may either attempt to satisfy the challenge by returning a request that includes
+ * an authorization header, or they may refuse the challenge by returning null. In this case the
+ * unauthenticated response will be returned to the caller that triggered it.
+ *
+ * <p>When authentication is requested by an origin server, the response code is 401 and the
+ * implementation should respond with a new request that sets the "Authorization" header.
+ * <pre>   {@code
+ *
+ *    String credential = Credentials.basic(...)
+ *    return response.request().newBuilder()
+ *        .header("Authorization", credential)
+ *        .build();
+ * }</pre>
+ *
+ * <p>Whn authentication is requested by a proxy server, the response code is 407 and the
+ * implementation should respond with a new request that sets the "Proxy-Authorization" header.
+ *  <pre>   {@code
+ *
+ *    String credential = Credentials.basic(...)
+ *    return response.request().newBuilder()
+ *        .header("Proxy-Authorization", credential)
+ *        .build();
+ * }</pre>
+ *
+ * <p>Applications may configure OkHttp with an authenticator for origin servers, or proxy servers,
+ * or both.
  */
 public interface Authenticator {
   /**
-   * Returns a request that includes a credential to satisfy an authentication
-   * challenge in {@code response}. Returns null if the challenge cannot be
-   * satisfied. This method is called in response to an HTTP 401 unauthorized
-   * status code sent by the origin server.
-   *
-   * <p>Typical implementations will look up a credential and create a request
-   * derived from the initial request by setting the "Authorization" header.
-   * <pre>   {@code
-   *
-   *    String credential = Credentials.basic(...)
-   *    return response.request().newBuilder()
-   *        .header("Authorization", credential)
-   *        .build();
-   * }</pre>
+   * Returns a request that includes a credential to satisfy an authentication challenge in {@code
+   * response}. Returns null if the challenge cannot be satisfied.
    */
-  Request authenticate(Proxy proxy, Response response) throws IOException;
-
-  /**
-   * Returns a request that includes a credential to satisfy an authentication
-   * challenge made by {@code response}. Returns null if the challenge cannot be
-   * satisfied. This method is called in response to an HTTP 407 unauthorized
-   * status code sent by the proxy server.
-   *
-   * <p>Typical implementations will look up a credential and create a request
-   * derived from the initial request by setting the "Proxy-Authorization"
-   * header. <pre>   {@code
-   *
-   *    String credential = Credentials.basic(...)
-   *    return response.request().newBuilder()
-   *        .header("Proxy-Authorization", credential)
-   *        .build();
-   * }</pre>
-   */
-  Request authenticateProxy(Proxy proxy, Response response) throws IOException;
+  Request authenticate(Route route, Response response) throws IOException;
 }

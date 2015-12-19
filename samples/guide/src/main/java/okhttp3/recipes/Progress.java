@@ -80,7 +80,7 @@ public final class Progress {
       return responseBody.contentType();
     }
 
-    @Override public long contentLength() throws IOException {
+    @Override public long contentLength() {
       return responseBody.contentLength();
     }
 

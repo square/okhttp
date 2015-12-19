@@ -37,7 +37,7 @@ public abstract class ResponseBody implements Closeable {
    * Returns the number of bytes in that will returned by {@link #bytes}, or
    * {@link #byteStream}, or -1 if unknown.
    */
-  public abstract long contentLength() throws IOException;
+  public abstract long contentLength();
 
   public final InputStream byteStream() {
     return source().inputStream();
@@ -88,8 +88,8 @@ public abstract class ResponseBody implements Closeable {
     return contentType != null ? contentType.charset(UTF_8) : UTF_8;
   }
 
-  @Override public void close() throws IOException {
-    source().close();
+  @Override public void close() {
+    Util.closeQuietly(source());
   }
 
   /**

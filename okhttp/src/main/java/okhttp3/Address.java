@@ -15,13 +15,13 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.net.Proxy;
 import java.net.ProxySelector;
 import java.util.List;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.internal.Util;
 
 import static okhttp3.internal.Util.equal;
 
@@ -39,7 +39,7 @@ public final class Address {
   final HttpUrl url;
   final Dns dns;
   final SocketFactory socketFactory;
-  final Authenticator authenticator;
+  final Authenticator proxyAuthenticator;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
   final ProxySelector proxySelector;
@@ -50,7 +50,7 @@ public final class Address {
 
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
-      CertificatePinner certificatePinner, Authenticator authenticator, Proxy proxy,
+      CertificatePinner certificatePinner, Authenticator proxyAuthenticator, Proxy proxy,
       List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
     this.url = new HttpUrl.Builder()
         .scheme(sslSocketFactory != null ? "https" : "http")
@@ -64,8 +64,10 @@ public final class Address {
     if (socketFactory == null) throw new IllegalArgumentException("socketFactory == null");
     this.socketFactory = socketFactory;
 
-    if (authenticator == null) throw new IllegalArgumentException("authenticator == null");
-    this.authenticator = authenticator;
+    if (proxyAuthenticator == null) {
+      throw new IllegalArgumentException("proxyAuthenticator == null");
+    }
+    this.proxyAuthenticator = proxyAuthenticator;
 
     if (protocols == null) throw new IllegalArgumentException("protocols == null");
     this.protocols = Util.immutableList(protocols);
@@ -100,9 +102,9 @@ public final class Address {
     return socketFactory;
   }
 
-  /** Returns the client's authenticator. */
-  public Authenticator authenticator() {
-    return authenticator;
+  /** Returns the client's proxy authenticator. */
+  public Authenticator proxyAuthenticator() {
+    return proxyAuthenticator;
   }
 
   /**
@@ -153,7 +155,7 @@ public final class Address {
       Address that = (Address) other;
       return this.url.equals(that.url)
           && this.dns.equals(that.dns)
-          && this.authenticator.equals(that.authenticator)
+          && this.proxyAuthenticator.equals(that.proxyAuthenticator)
           && this.protocols.equals(that.protocols)
           && this.connectionSpecs.equals(that.connectionSpecs)
           && this.proxySelector.equals(that.proxySelector)
@@ -169,7 +171,7 @@ public final class Address {
     int result = 17;
     result = 31 * result + url.hashCode();
     result = 31 * result + dns.hashCode();
-    result = 31 * result + authenticator.hashCode();
+    result = 31 * result + proxyAuthenticator.hashCode();
     result = 31 * result + protocols.hashCode();
     result = 31 * result + connectionSpecs.hashCode();
     result = 31 * result + proxySelector.hashCode();
