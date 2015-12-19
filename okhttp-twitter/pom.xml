@@ -34,6 +34,11 @@
       <artifactId>jackson-dataformat-yaml</artifactId>
       <version>2.6.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>joauth</artifactId>
+      <version>6.0.2</version>
+    </dependency>
 
     <dependency>
       <groupId>junit</groupId>

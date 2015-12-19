@@ -1,7 +1,5 @@
 package okhttp.twitter;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class TwitterCredentials {
   public String username;
   public String consumerKey;
@@ -22,12 +20,23 @@ public class TwitterCredentials {
   }
 
   @Override public String toString() {
-    return "TwitterCredentials{" +
-        "username='" + username + '\'' +
-        ", consumerKey='" + consumerKey + '\'' +
-        ", consumerSecret='" + consumerSecret + '\'' +
-        ", token='" + token + '\'' +
-        ", secret='" + secret + '\'' +
-        '}';
+    return "TwitterCredentials{"
+        + "username='"
+        + username
+        + '\''
+        + ", consumerKey='"
+        + consumerKey
+        + '\''
+        +
+        ", consumerSecret='"
+        + consumerSecret
+        + '\''
+        + ", token='"
+        + token
+        + '\''
+        + ", secret='"
+        + secret
+        + '\''
+        + '}';
   }
 }

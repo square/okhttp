@@ -15,7 +15,8 @@ public class TwurlCredentialsStore implements CredentialsStore {
 
   public TwurlRc readTwurlRc() {
     ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-    objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
+    objectMapper.setPropertyNamingStrategy(
+        PropertyNamingStrategy.CAMEL_CASE_TO_LOWER_CASE_WITH_UNDERSCORES);
 
     try {
       return objectMapper.readValue(file, TwurlRc.class);

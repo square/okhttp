@@ -20,6 +20,11 @@
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>okhttp-twitter</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>okhttp-testing-support</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
