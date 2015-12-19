@@ -16,6 +16,10 @@
 package okhttp3.curl;
 
 import com.google.common.base.Joiner;
+import java.io.File;
+import okhttp.twitter.TwitterAuthInterceptor;
+import okhttp.twitter.TwitterCredentials;
+import okhttp.twitter.TwurlCredentialsStore;
 import okhttp3.ConnectionPool;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -124,6 +128,9 @@ public class Main extends HelpOption implements Runnable {
   @Arguments(title = "url", description = "Remote resource URL")
   public String url;
 
+  @Option(name = "--twitter", description = "Twitter Authentication")
+  public boolean twitterAuth;
+
   private OkHttpClient client;
 
   @Override public void run() {
@@ -184,6 +191,12 @@ public class Main extends HelpOption implements Runnable {
     }
     // If we don't set this reference, there's no way to clean shutdown persistent connections.
     client.setConnectionPool(ConnectionPool.getDefault());
+    if (twitterAuth) {
+      TwurlCredentialsStore credentialsStore =
+          new TwurlCredentialsStore(new File(System.getProperty("user.home"), ".twurlrc"));
+      TwitterCredentials credentials = credentialsStore.readDefaultCredentials();
+      client.networkInterceptors().add(new TwitterAuthInterceptor(credentials));
+    }
     return client;
   }
 

@@ -37,6 +37,7 @@
     <module>mockwebserver</module>
     <module>samples</module>
     <module>benchmarks</module>
+    <module>okhttp-twitter</module>
   </modules>
 
   <properties>

@@ -1,0 +1,13 @@
+---
+profiles:
+  PROFILE:
+    CONSUMER_KEY:
+      username: PROFILE
+      consumer_key: CONSUMER_KEY
+      consumer_secret: CONSUMER_SECRET
+      token: 1234-TOKEN
+      secret: SECRET
+configuration:
+  default_profile:
+  - PROFILE
+  - CONSUMER_KEY
