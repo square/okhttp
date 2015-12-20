@@ -15,13 +15,6 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.Address;
-import okhttp3.ConnectionPool;
-import okhttp3.Route;
-import okhttp3.internal.Internal;
-import okhttp3.internal.RouteDatabase;
-import okhttp3.internal.Util;
-import okhttp3.internal.io.RealConnection;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.lang.ref.Reference;
@@ -31,6 +24,13 @@ import java.net.SocketTimeoutException;
 import java.security.cert.CertificateException;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import okhttp3.Address;
+import okhttp3.ConnectionPool;
+import okhttp3.Route;
+import okhttp3.internal.Internal;
+import okhttp3.internal.RouteDatabase;
+import okhttp3.internal.Util;
+import okhttp3.internal.io.RealConnection;
 import okio.Sink;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -74,6 +74,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public final class StreamAllocation {
   public final Address address;
+  private Route route;
   private final ConnectionPool connectionPool;
 
   // State guarded by connectionPool.
@@ -86,6 +87,7 @@ public final class StreamAllocation {
   public StreamAllocation(ConnectionPool connectionPool, Address address) {
     this.connectionPool = connectionPool;
     this.address = address;
+    this.routeSelector = new RouteSelector(address, routeDatabase());
   }
 
   public HttpStream newStream(int connectTimeout, int readTimeout, int writeTimeout,
@@ -106,7 +108,6 @@ public final class StreamAllocation {
       }
 
       synchronized (connectionPool) {
-        resultConnection.streamCount++;
         stream = resultStream;
         return resultStream;
       }
@@ -128,7 +129,7 @@ public final class StreamAllocation {
       if (connection.isHealthy(doExtensiveHealthChecks)) {
         return candidate;
       }
-      connectionFailed();
+      connectionFailed(new IOException());
     }
   }
 
@@ -138,6 +139,7 @@ public final class StreamAllocation {
    */
   private RealConnection findConnection(int connectTimeout, int readTimeout, int writeTimeout,
       boolean connectionRetryEnabled) throws IOException, RouteException {
+    Route selectedRoute;
     synchronized (connectionPool) {
       if (released) throw new IllegalStateException("released");
       if (stream != null) throw new IllegalStateException("stream != null");
@@ -155,14 +157,16 @@ public final class StreamAllocation {
         return pooledConnection;
       }
 
-      // Attempt to create a connection.
-      if (routeSelector == null) {
-        routeSelector = new RouteSelector(address, routeDatabase());
-      }
+      selectedRoute = route;
     }
 
-    Route route = routeSelector.next();
-    RealConnection newConnection = new RealConnection(route);
+    if (selectedRoute == null) {
+      selectedRoute = routeSelector.next();
+      synchronized (connectionPool) {
+        route = selectedRoute;
+      }
+    }
+    RealConnection newConnection = new RealConnection(selectedRoute);
     acquire(newConnection);
 
     synchronized (connectionPool) {
@@ -178,13 +182,16 @@ public final class StreamAllocation {
     return newConnection;
   }
 
-  public void streamFinished(HttpStream stream) {
+  public void streamFinished(boolean noNewStreams, HttpStream stream) {
     synchronized (connectionPool) {
       if (stream == null || stream != this.stream) {
         throw new IllegalStateException("expected " + this.stream + " but was " + stream);
       }
+      if (!noNewStreams) {
+        connection.successCount++;
+      }
     }
-    deallocate(false, false, true);
+    deallocate(noNewStreams, false, true);
   }
 
   public HttpStream stream() {
@@ -229,9 +236,6 @@ public final class StreamAllocation {
         }
         if (this.stream == null && (this.released || connection.noNewStreams)) {
           release(connection);
-          if (connection.streamCount > 0) {
-            routeSelector = null;
-          }
           if (connection.allocations.isEmpty()) {
             connection.idleAtNanos = System.nanoTime();
             if (Internal.instance.connectionBecameIdle(connectionPool, connection)) {
@@ -262,24 +266,16 @@ public final class StreamAllocation {
     }
   }
 
-  private void connectionFailed(IOException e) {
+  public void connectionFailed(IOException e) {
     synchronized (connectionPool) {
-      if (routeSelector != null) {
-        if (connection.streamCount == 0) {
-          // Record the failure on a fresh route.
-          Route failedRoute = connection.getRoute();
-          routeSelector.connectFailed(failedRoute, e);
-        } else {
-          // We saw a failure on a recycled connection, reset this allocation with a fresh route.
-          routeSelector = null;
+      // Avoid this route if it's never seen a successful call.
+      if (connection != null && connection.successCount == 0) {
+        if (route != null && e != null) {
+          routeSelector.connectFailed(route, e);
         }
+        route = null;
       }
     }
-    connectionFailed();
-  }
-
-  /** Finish the current stream and prevent new streams from being created. */
-  public void connectionFailed() {
     deallocate(true, false, true);
   }
 
@@ -303,29 +299,9 @@ public final class StreamAllocation {
     throw new IllegalStateException();
   }
 
-  public boolean recover(RouteException e) {
-    if (connection != null) {
-      connectionFailed(e.getLastConnectException());
-    }
-
-    if ((routeSelector != null && !routeSelector.hasNext()) // No more routes to attempt.
-        || !isRecoverable(e)) {
-      return false;
-    }
-
-    return true;
-  }
-
   public boolean recover(IOException e, Sink requestBodyOut) {
     if (connection != null) {
-      int streamCount = connection.streamCount;
       connectionFailed(e);
-
-      if (streamCount == 1) {
-        // This isn't a recycled connection.
-        // TODO(jwilson): find a better way for this.
-        return false;
-      }
     }
 
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
@@ -344,42 +320,22 @@ public final class StreamAllocation {
       return false;
     }
 
-    // If there was an interruption or timeout, don't recover.
-    if (e instanceof InterruptedIOException) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean isRecoverable(RouteException e) {
-    // Problems with a route may mean the connection can be retried with a new route, or may
-    // indicate a client-side or server-side issue that should not be retried. To tell, we must look
-    // at the cause.
-
-    IOException ioe = e.getLastConnectException();
-
-    // If there was a protocol problem, don't recover.
-    if (ioe instanceof ProtocolException) {
-      return false;
-    }
-
     // If there was an interruption don't recover, but if there was a timeout
     // we should try the next route (if there is one).
-    if (ioe instanceof InterruptedIOException) {
-      return ioe instanceof SocketTimeoutException;
+    if (e instanceof InterruptedIOException) {
+      return e instanceof SocketTimeoutException;
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
     // again with a different route.
-    if (ioe instanceof SSLHandshakeException) {
+    if (e instanceof SSLHandshakeException) {
       // If the problem was a CertificateException from the X509TrustManager,
       // do not retry.
-      if (ioe.getCause() instanceof CertificateException) {
+      if (e.getCause() instanceof CertificateException) {
         return false;
       }
     }
-    if (ioe instanceof SSLPeerUnverifiedException) {
+    if (e instanceof SSLPeerUnverifiedException) {
       // e.g. a certificate pinning error.
       return false;
     }

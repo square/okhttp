@@ -291,7 +291,7 @@ public class Call {
         throw e.getCause();
       } catch (RouteException e) {
         // The attempt to connect via a route failed. The request will not have been sent.
-        HttpEngine retryEngine = engine.recover(e);
+        HttpEngine retryEngine = engine.recover(e.getLastConnectException(), null);
         if (retryEngine != null) {
           releaseConnection = false;
           engine = retryEngine;

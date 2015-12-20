@@ -28,9 +28,9 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public final class RecordingProxySelector extends ProxySelector {
-  final List<URI> requestedUris = new ArrayList<>();
-  List<Proxy> proxies = new ArrayList<>();
-  final List<String> failures = new ArrayList<>();
+  public final List<Proxy> proxies = new ArrayList<>();
+  public final List<URI> requestedUris = new ArrayList<>();
+  public final List<String> failures = new ArrayList<>();
 
   @Override public List<Proxy> select(URI uri) {
     requestedUris.add(uri);

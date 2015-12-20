@@ -289,7 +289,7 @@ public final class Http2xStream implements HttpStream {
     }
 
     @Override public void close() throws IOException {
-      streamAllocation.streamFinished(Http2xStream.this);
+      streamAllocation.streamFinished(false, Http2xStream.this);
       super.close();
     }
   }
