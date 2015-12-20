@@ -44,7 +44,7 @@
     <module name="LocalVariableName"/>
     <module name="MemberName"/>
     <module name="MethodName"/>
-    <module name="PackageName"/>
+    <!--<module name="PackageName"/>-->
     <module name="ParameterName"/>
     <module name="StaticVariableName"/>
     <module name="TypeName"/>
