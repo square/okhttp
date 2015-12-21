@@ -192,7 +192,7 @@ public final class HttpEngine {
    *
    * @throws RequestException if there was a problem with request setup. Unrecoverable.
    * @throws RouteException if the was a problem during connection via a specific route. Sometimes
-   *     recoverable. See {@link #recover(RouteException)}.
+   *     recoverable. See {@link #recover}.
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
    *     {@link #recover(IOException)}.
    *
@@ -341,31 +341,9 @@ public final class HttpEngine {
   }
 
   /**
-   * Attempt to recover from failure to connect via a route. Returns a new HTTP engine
-   * that should be used for the retry if there are other routes to try, or null if
-   * there are no more routes to try.
-   */
-  public HttpEngine recover(RouteException e) {
-    if (!streamAllocation.recover(e)) {
-      return null;
-    }
-
-    if (!client.getRetryOnConnectionFailure()) {
-      return null;
-    }
-
-    StreamAllocation streamAllocation = close();
-
-    // For failure recovery, use the same route selector with a new connection.
-    return new HttpEngine(client, userRequest, bufferRequestBody, callerWritesRequestBody,
-        forWebSocket, streamAllocation, (RetryableSink) requestBodyOut, priorResponse);
-  }
-
-  /**
    * Report and attempt to recover from a failure to communicate with a server. Returns a new
    * HTTP engine that should be used for the retry if {@code e} is recoverable, or null if
-   * the failure is permanent. Requests with a body can only be recovered if the
-   * body is buffered.
+   * the failure is permanent. Requests with a body can only be recovered if the body is buffered.
    */
   public HttpEngine recover(IOException e, Sink requestBodyOut) {
     if (!streamAllocation.recover(e, requestBodyOut)) {
@@ -445,7 +423,7 @@ public final class HttpEngine {
       closeQuietly(userResponse.body());
     } else {
       // If this engine never achieved a response body, its stream allocation is dead.
-      streamAllocation.connectionFailed();
+      streamAllocation.connectionFailed(null);
     }
 
     return streamAllocation;

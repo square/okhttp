@@ -74,7 +74,7 @@ public final class RealConnection implements Connection {
   private Handshake handshake;
   private Protocol protocol;
   public volatile FramedConnection framedConnection;
-  public int streamCount;
+  public int successCount;
   public BufferedSource source;
   public BufferedSink sink;
   public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();

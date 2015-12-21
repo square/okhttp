@@ -2344,11 +2344,13 @@ public final class URLConnectionTest {
   }
 
   @Test public void connectionCloseWithRedirect() throws IOException, InterruptedException {
-    MockResponse response = new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
+    MockResponse response = new MockResponse()
+        .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /foo")
         .addHeader("Connection: close");
     server.enqueue(response);
-    server.enqueue(new MockResponse().setBody("This is the new location!"));
+    server.enqueue(new MockResponse()
+        .setBody("This is the new location!"));
 
     URLConnection connection = client.open(server.url("/").url());
     assertEquals("This is the new location!",

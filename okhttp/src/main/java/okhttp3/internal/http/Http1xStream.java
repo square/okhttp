@@ -16,6 +16,9 @@
 
 package okhttp3.internal.http;
 
+import java.io.EOFException;
+import java.io.IOException;
+import java.net.ProtocolException;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -23,9 +26,6 @@ import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.io.RealConnection;
-import java.io.EOFException;
-import java.io.IOException;
-import java.net.ProtocolException;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -352,24 +352,15 @@ public final class Http1xStream implements HttpStream {
      * Closes the cache entry and makes the socket available for reuse. This
      * should be invoked when the end of the body has been reached.
      */
-    protected final void endOfInput() throws IOException {
+    protected final void endOfInput(boolean reuseConnection) throws IOException {
+      if (state == STATE_CLOSED) return;
       if (state != STATE_READING_RESPONSE_BODY) throw new IllegalStateException("state: " + state);
 
       detachTimeout(timeout);
 
       state = STATE_CLOSED;
       if (streamAllocation != null) {
-        streamAllocation.streamFinished(Http1xStream.this);
-      }
-    }
-
-    protected final void unexpectedEndOfInput() {
-      if (state == STATE_CLOSED) return;
-
-      state = STATE_CLOSED;
-      if (streamAllocation != null) {
-        streamAllocation.noNewStreams();
-        streamAllocation.streamFinished(Http1xStream.this);
+        streamAllocation.streamFinished(!reuseConnection, Http1xStream.this);
       }
     }
   }
@@ -381,7 +372,7 @@ public final class Http1xStream implements HttpStream {
     public FixedLengthSource(long length) throws IOException {
       bytesRemaining = length;
       if (bytesRemaining == 0) {
-        endOfInput();
+        endOfInput(true);
       }
     }
 
@@ -392,13 +383,13 @@ public final class Http1xStream implements HttpStream {
 
       long read = source.read(sink, Math.min(bytesRemaining, byteCount));
       if (read == -1) {
-        unexpectedEndOfInput(); // The server didn't supply the promised content length.
+        endOfInput(false); // The server didn't supply the promised content length.
         throw new ProtocolException("unexpected end of stream");
       }
 
       bytesRemaining -= read;
       if (bytesRemaining == 0) {
-        endOfInput();
+        endOfInput(true);
       }
       return read;
     }
@@ -406,9 +397,8 @@ public final class Http1xStream implements HttpStream {
     @Override public void close() throws IOException {
       if (closed) return;
 
-      if (bytesRemaining != 0
-          && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        unexpectedEndOfInput();
+      if (bytesRemaining != 0 && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
+        endOfInput(false);
       }
 
       closed = true;
@@ -438,7 +428,7 @@ public final class Http1xStream implements HttpStream {
 
       long read = source.read(sink, Math.min(byteCount, bytesRemainingInChunk));
       if (read == -1) {
-        unexpectedEndOfInput(); // The server didn't supply the promised chunk length.
+        endOfInput(false); // The server didn't supply the promised chunk length.
         throw new ProtocolException("unexpected end of stream");
       }
       bytesRemainingInChunk -= read;
@@ -463,14 +453,14 @@ public final class Http1xStream implements HttpStream {
       if (bytesRemainingInChunk == 0L) {
         hasMoreChunks = false;
         httpEngine.receiveHeaders(readHeaders());
-        endOfInput();
+        endOfInput(true);
       }
     }
 
     @Override public void close() throws IOException {
       if (closed) return;
       if (hasMoreChunks && !Util.discard(this, DISCARD_STREAM_TIMEOUT_MILLIS, MILLISECONDS)) {
-        unexpectedEndOfInput();
+        endOfInput(false);
       }
       closed = true;
     }
@@ -489,7 +479,7 @@ public final class Http1xStream implements HttpStream {
       long read = source.read(sink, byteCount);
       if (read == -1) {
         inputExhausted = true;
-        endOfInput();
+        endOfInput(true);
         return -1;
       }
       return read;
@@ -498,7 +488,7 @@ public final class Http1xStream implements HttpStream {
     @Override public void close() throws IOException {
       if (closed) return;
       if (!inputExhausted) {
-        unexpectedEndOfInput();
+        endOfInput(false);
       }
       closed = true;
     }

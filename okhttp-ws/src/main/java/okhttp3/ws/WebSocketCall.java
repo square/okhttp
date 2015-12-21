@@ -182,7 +182,7 @@ public final class WebSocketCall {
     @Override protected void close() throws IOException {
       replyExecutor.shutdown();
       streamAllocation.noNewStreams();
-      streamAllocation.streamFinished(streamAllocation.stream());
+      streamAllocation.streamFinished(true, streamAllocation.stream());
     }
   }
 }

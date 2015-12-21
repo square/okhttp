@@ -15,6 +15,10 @@
  */
 package okhttp3.internal.http;
 
+import java.io.IOException;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
 import okhttp3.Address;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
@@ -144,12 +148,21 @@ public final class RouteSelectorTest {
   }
 
   @Test public void proxySelectorReturnsNull() throws Exception {
-    Address address = httpAddress();
+    ProxySelector nullProxySelector = new ProxySelector() {
+      @Override public List<Proxy> select(URI uri) {
+        assertEquals(uriHost, uri.getHost());
+        return null;
+      }
 
-    proxySelector.proxies = null;
+      @Override public void connectFailed(
+          URI uri, SocketAddress socketAddress, IOException e) {
+        throw new AssertionError();
+      }
+    };
+
+    Address address = new Address(uriHost, uriPort, dns, socketFactory, null, null, null,
+        authenticator, null, protocols, connectionSpecs, nullProxySelector);
     RouteSelector routeSelector = new RouteSelector(address, routeDatabase);
-    proxySelector.assertRequests(address.url().uri());
-
     assertTrue(routeSelector.hasNext());
     dns.addresses(makeFakeAddresses(255, 1));
     assertRoute(routeSelector.next(), address, NO_PROXY, dns.address(0), uriPort);
