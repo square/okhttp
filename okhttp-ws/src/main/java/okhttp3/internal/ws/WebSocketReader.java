@@ -46,6 +46,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_BYTE_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
 import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
+import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame reader.
@@ -192,12 +193,7 @@ public final class WebSocketReader {
             throw new ProtocolException("Malformed close payload length of 1.");
           } else if (bufferSize != 0) {
             code = buffer.readShort();
-            if (code < 1000 || code >= 5000) {
-              throw new ProtocolException("Code must be in range [1000,5000): " + code);
-            }
-            if ((code >= 1004 && code <= 1006) || (code >= 1012 && code <= 2999)) {
-              throw new ProtocolException("Code " + code + " is reserved and may not be used.");
-            }
+            validateCloseCode(code, false);
 
             reason = buffer.readUtf8();
           }
