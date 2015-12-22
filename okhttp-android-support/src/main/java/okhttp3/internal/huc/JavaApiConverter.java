@@ -127,8 +127,8 @@ public final class JavaApiConverter {
 
       String cipherSuiteString = httpsUrlConnection.getCipherSuite();
       CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
-      Handshake handshake = Handshake.get(cipherSuite, nullSafeImmutableList(peerCertificates),
-          nullSafeImmutableList(localCertificates));
+      Handshake handshake = Handshake.get(null, cipherSuite,
+          nullSafeImmutableList(peerCertificates), nullSafeImmutableList(localCertificates));
       okResponseBuilder.handshake(handshake);
     }
 
@@ -254,7 +254,7 @@ public final class JavaApiConverter {
 
       String cipherSuiteString = javaSecureCacheResponse.getCipherSuite();
       CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
-      Handshake handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
+      Handshake handshake = Handshake.get(null, cipherSuite, peerCertificates, localCertificates);
       okResponseBuilder.handshake(handshake);
     }
 

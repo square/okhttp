@@ -1936,6 +1936,133 @@ public final class CacheTest {
     assertEquals("foo", response.header("etag"));
   }
 
+  /** Exercise the cache format in OkHttp 2.7 and all earlier releases. */
+  @Test public void testGoldenCacheHttpsResponseOkHttp27() throws Exception {
+    HttpUrl url = server.url("/");
+    String urlKey = Util.md5Hex(url.toString());
+    String entryMetadata = ""
+        + "" + url + "\n"
+        + "GET\n"
+        + "0\n"
+        + "HTTP/1.1 200 OK\n"
+        + "4\n"
+        + "Content-Length: 3\n"
+        + "OkHttp-Received-Millis: " + System.currentTimeMillis() + "\n"
+        + "OkHttp-Sent-Millis: " + System.currentTimeMillis() + "\n"
+        + "Cache-Control: max-age=60\n"
+        + "\n"
+        + "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256\n"
+        + "1\n"
+        + "MIIBnDCCAQWgAwIBAgIBATANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDEwlsb2NhbGhvc3QwHhcNMTUxMjIyMDEx"
+        + "MTQwWhcNMTUxMjIzMDExMTQwWjAUMRIwEAYDVQQDEwlsb2NhbGhvc3QwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJ"
+        + "AoGBAJTn2Dh8xYmegvpOSmsKb2Os6Cxf1L4fYbnHr/turInUD5r1P7ZAuxurY880q3GT5bUDoirS3IfucddrT1Ac"
+        + "AmUzEmk/FDjggiP8DlxFkY/XwXBlhRDVIp/mRuASPMGInckc0ZaixOkRFyrxADj+r1eaSmXCIvV5yTY6IaIokLj1"
+        + "AgMBAAEwDQYJKoZIhvcNAQELBQADgYEAFblnedqtfRqI9j2WDyPPoG0NTZf9xwjeUu+ju+Ktty8u9k7Lgrrd/DH2"
+        + "mQEtBD1Ctvp91MJfAClNg3faZzwClUyu5pd0QXRZEUwSwZQNen2QWDHRlVsItclBJ4t+AJLqTbwofWi4m4K8REOl"
+        + "593hD55E4+lY22JZiVQyjsQhe6I=\n"
+        + "0\n";
+    String entryBody = "abc";
+    String journalBody = ""
+        + "libcore.io.DiskLruCache\n"
+        + "1\n"
+        + "201105\n"
+        + "2\n"
+        + "\n"
+        + "DIRTY " + urlKey + "\n"
+        + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
+    writeFile(cache.getDirectory(), "journal", journalBody);
+    cache.close();
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    client.setCache(cache);
+
+    Response response = get(url);
+    assertEquals(entryBody, response.body().string());
+    assertEquals("3", response.header("Content-Length"));
+  }
+
+  /** The TLS version is present in OkHttp 3.0 and beyond. */
+  @Test public void testGoldenCacheHttpsResponseOkHttp30() throws Exception {
+    HttpUrl url = server.url("/");
+    String urlKey = Util.md5Hex(url.toString());
+    String entryMetadata = ""
+        + "" + url + "\n"
+        + "GET\n"
+        + "0\n"
+        + "HTTP/1.1 200 OK\n"
+        + "4\n"
+        + "Content-Length: 3\n"
+        + "OkHttp-Received-Millis: " + System.currentTimeMillis() + "\n"
+        + "OkHttp-Sent-Millis: " + System.currentTimeMillis() + "\n"
+        + "Cache-Control: max-age=60\n"
+        + "\n"
+        + "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256\n"
+        + "1\n"
+        + "MIIBnDCCAQWgAwIBAgIBATANBgkqhkiG9w0BAQsFADAUMRIwEAYDVQQDEwlsb2NhbGhvc3QwHhcNMTUxMjIyMDEx"
+        + "MTQwWhcNMTUxMjIzMDExMTQwWjAUMRIwEAYDVQQDEwlsb2NhbGhvc3QwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJ"
+        + "AoGBAJTn2Dh8xYmegvpOSmsKb2Os6Cxf1L4fYbnHr/turInUD5r1P7ZAuxurY880q3GT5bUDoirS3IfucddrT1Ac"
+        + "AmUzEmk/FDjggiP8DlxFkY/XwXBlhRDVIp/mRuASPMGInckc0ZaixOkRFyrxADj+r1eaSmXCIvV5yTY6IaIokLj1"
+        + "AgMBAAEwDQYJKoZIhvcNAQELBQADgYEAFblnedqtfRqI9j2WDyPPoG0NTZf9xwjeUu+ju+Ktty8u9k7Lgrrd/DH2"
+        + "mQEtBD1Ctvp91MJfAClNg3faZzwClUyu5pd0QXRZEUwSwZQNen2QWDHRlVsItclBJ4t+AJLqTbwofWi4m4K8REOl"
+        + "593hD55E4+lY22JZiVQyjsQhe6I=\n"
+        + "0\n"
+        + "TLSv1.2\n";
+    String entryBody = "abc";
+    String journalBody = ""
+        + "libcore.io.DiskLruCache\n"
+        + "1\n"
+        + "201105\n"
+        + "2\n"
+        + "\n"
+        + "DIRTY " + urlKey + "\n"
+        + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
+    writeFile(cache.getDirectory(), "journal", journalBody);
+    cache.close();
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    client.setCache(cache);
+
+    Response response = get(url);
+    assertEquals(entryBody, response.body().string());
+    assertEquals("3", response.header("Content-Length"));
+  }
+
+  @Test public void testGoldenCacheHttpResponseOkHttp30() throws Exception {
+    HttpUrl url = server.url("/");
+    String urlKey = Util.md5Hex(url.toString());
+    String entryMetadata = ""
+        + "" + url + "\n"
+        + "GET\n"
+        + "0\n"
+        + "HTTP/1.1 200 OK\n"
+        + "4\n"
+        + "Cache-Control: max-age=60\n"
+        + "Content-Length: 3\n"
+        + "OkHttp-Received-Millis: " + System.currentTimeMillis() + "\n"
+        + "OkHttp-Sent-Millis: " + System.currentTimeMillis() + "\n";
+    String entryBody = "abc";
+    String journalBody = ""
+        + "libcore.io.DiskLruCache\n"
+        + "1\n"
+        + "201105\n"
+        + "2\n"
+        + "\n"
+        + "DIRTY " + urlKey + "\n"
+        + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
+    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
+    writeFile(cache.getDirectory(), "journal", journalBody);
+    cache.close();
+    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    client.setCache(cache);
+
+    Response response = get(url);
+    assertEquals(entryBody, response.body().string());
+    assertEquals("3", response.header("Content-Length"));
+  }
+
   @Test public void evictAll() throws Exception {
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")

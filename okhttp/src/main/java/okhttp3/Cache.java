@@ -16,15 +16,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.DiskLruCache;
-import okhttp3.internal.InternalCache;
-import okhttp3.internal.Util;
-import okhttp3.internal.http.CacheRequest;
-import okhttp3.internal.http.CacheStrategy;
-import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
-import okhttp3.internal.http.StatusLine;
-import okhttp3.internal.io.FileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.security.cert.Certificate;
@@ -36,6 +27,15 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import okhttp3.internal.DiskLruCache;
+import okhttp3.internal.InternalCache;
+import okhttp3.internal.Util;
+import okhttp3.internal.http.CacheRequest;
+import okhttp3.internal.http.CacheStrategy;
+import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.io.FileSystem;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -507,6 +507,7 @@ public final class Cache {
      *   base64-encoded peerCertificate[0]
      *   base64-encoded peerCertificate[1]
      *   -1
+     *   TLSv1.2
      * }</pre>
      * The file is newline separated. The first two lines are the URL and
      * the request method. Next is the number of HTTP Vary request header
@@ -521,7 +522,8 @@ public final class Cache {
      * base64-encoded and appear each on their own line. The next line
      * contains the length of the local certificate chain. These
      * certificates are also base64-encoded and appear each on their own
-     * line. A length of -1 is used to encode a null array.
+     * line. A length of -1 is used to encode a null array. The last line is
+     * optional. If present, it contains the TLS version.
      */
     public Entry(Source in) throws IOException {
       try {
@@ -555,7 +557,10 @@ public final class Cache {
           CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
           List<Certificate> peerCertificates = readCertificateList(source);
           List<Certificate> localCertificates = readCertificateList(source);
-          handshake = Handshake.get(cipherSuite, peerCertificates, localCertificates);
+          TlsVersion tlsVersion = !source.exhausted()
+              ? TlsVersion.forJavaName(source.readUtf8LineStrict())
+              : null;
+          handshake = Handshake.get(tlsVersion, cipherSuite, peerCertificates, localCertificates);
         } else {
           handshake = null;
         }
@@ -608,6 +613,11 @@ public final class Cache {
         sink.writeByte('\n');
         writeCertList(sink, handshake.peerCertificates());
         writeCertList(sink, handshake.localCertificates());
+        // The handshake’s TLS version is null on HttpsURLConnection and on older cached responses.
+        if (handshake.tlsVersion() != null) {
+          sink.writeUtf8(handshake.tlsVersion().javaName());
+          sink.writeByte('\n');
+        }
       }
       sink.close();
     }

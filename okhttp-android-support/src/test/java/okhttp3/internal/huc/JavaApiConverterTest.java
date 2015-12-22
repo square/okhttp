@@ -464,7 +464,7 @@ public class JavaApiConverterTest {
         .get()
         .url("https://secure/request")
         .build();
-    Handshake handshake = Handshake.get(CipherSuite.TLS_RSA_WITH_NULL_MD5,
+    Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,
         Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .handshake(handshake)
@@ -554,7 +554,7 @@ public class JavaApiConverterTest {
             .post(createRequestBody("RequestBody") )
             .build();
     ResponseBody responseBody = createResponseBody("ResponseBody");
-    Handshake handshake = Handshake.get(CipherSuite.TLS_RSA_WITH_NULL_MD5,
+    Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,
         Arrays.<Certificate>asList(SERVER_CERT), Arrays.<Certificate>asList(LOCAL_CERT));
     Response okResponse = createArbitraryOkResponse(okRequest).newBuilder()
         .protocol(Protocol.HTTP_1_1)

@@ -86,6 +86,7 @@ public final class RecordedResponse {
 
   public RecordedResponse assertHandshake() {
     Handshake handshake = response.handshake();
+    assertNotNull(handshake.tlsVersion());
     assertNotNull(handshake.cipherSuite());
     assertNotNull(handshake.peerPrincipal());
     assertEquals(1, handshake.peerCertificates().size());
