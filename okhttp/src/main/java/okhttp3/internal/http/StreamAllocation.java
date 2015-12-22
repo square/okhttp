@@ -101,7 +101,7 @@ public final class StreamAllocation {
       if (resultConnection.framedConnection != null) {
         resultStream = new Http2xStream(this, resultConnection.framedConnection);
       } else {
-        resultConnection.getSocket().setSoTimeout(readTimeout);
+        resultConnection.socket().setSoTimeout(readTimeout);
         resultConnection.source.timeout().timeout(readTimeout, MILLISECONDS);
         resultConnection.sink.timeout().timeout(writeTimeout, MILLISECONDS);
         resultStream = new Http1xStream(this, resultConnection.source, resultConnection.sink);
@@ -177,7 +177,7 @@ public final class StreamAllocation {
 
     newConnection.connect(connectTimeout, readTimeout, writeTimeout, address.connectionSpecs(),
         connectionRetryEnabled);
-    routeDatabase().connected(newConnection.getRoute());
+    routeDatabase().connected(newConnection.route());
 
     return newConnection;
   }
@@ -247,7 +247,7 @@ public final class StreamAllocation {
       }
     }
     if (connectionToClose != null) {
-      Util.closeQuietly(connectionToClose.getSocket());
+      Util.closeQuietly(connectionToClose.socket());
     }
   }
 

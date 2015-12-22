@@ -32,6 +32,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import static okhttp3.internal.Util.closeQuietly;
+
 /**
  * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
  * requests that share the same {@link Address} may share a
@@ -168,7 +170,7 @@ public final class ConnectionPool {
       // TODO(jwilson): this is awkward. We're already holding a lock on 'this', and
       //     connection.allocationLimit() may also lock the FramedConnection.
       if (connection.allocations.size() < connection.allocationLimit()
-          && address.equals(connection.getRoute().address)
+          && address.equals(connection.route().address)
           && !connection.noNewStreams) {
         streamAllocation.acquire(connection);
         return connection;
@@ -215,7 +217,7 @@ public final class ConnectionPool {
     }
 
     for (RealConnection connection : evictedConnections) {
-      Util.closeQuietly(connection.getSocket());
+      closeQuietly(connection.socket());
     }
   }
 
@@ -273,7 +275,7 @@ public final class ConnectionPool {
       }
     }
 
-    Util.closeQuietly(longestIdleConnection.getSocket());
+    closeQuietly(longestIdleConnection.socket());
 
     // Cleanup again immediately.
     return 0;
@@ -296,7 +298,7 @@ public final class ConnectionPool {
       }
 
       // We've discovered a leaked allocation. This is an application bug.
-      Internal.logger.warning("A connection to " + connection.getRoute().address().url()
+      Internal.logger.warning("A connection to " + connection.route().address().url()
           + " was leaked. Did you forget to close a response body?");
       references.remove(i);
       connection.noNewStreams = true;
