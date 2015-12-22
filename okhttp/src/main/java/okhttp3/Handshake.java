@@ -16,7 +16,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -24,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
+import okhttp3.internal.Util;
 
 /**
  * A record of a TLS handshake. For HTTPS clients, the client is <i>local</i>
@@ -33,12 +33,14 @@ import javax.net.ssl.SSLSession;
  * javax.net.ssl.SSLSocketFactory} to set policy for new handshakes.
  */
 public final class Handshake {
+  private final TlsVersion tlsVersion;
   private final CipherSuite cipherSuite;
   private final List<Certificate> peerCertificates;
   private final List<Certificate> localCertificates;
 
-  private Handshake(CipherSuite cipherSuite, List<Certificate> peerCertificates,
-      List<Certificate> localCertificates) {
+  private Handshake(TlsVersion tlsVersion, CipherSuite cipherSuite,
+      List<Certificate> peerCertificates, List<Certificate> localCertificates) {
+    this.tlsVersion = tlsVersion;
     this.cipherSuite = cipherSuite;
     this.peerCertificates = peerCertificates;
     this.localCertificates = localCertificates;
@@ -48,6 +50,10 @@ public final class Handshake {
     String cipherSuiteString = session.getCipherSuite();
     if (cipherSuiteString == null) throw new IllegalStateException("cipherSuite == null");
     CipherSuite cipherSuite = CipherSuite.forJavaName(cipherSuiteString);
+
+    String tlsVersionString = session.getProtocol();
+    if (tlsVersionString == null) throw new IllegalStateException("tlsVersion == null");
+    TlsVersion tlsVersion = TlsVersion.forJavaName(tlsVersionString);
 
     Certificate[] peerCertificates;
     try {
@@ -64,14 +70,22 @@ public final class Handshake {
         ? Util.immutableList(localCertificates)
         : Collections.<Certificate>emptyList();
 
-    return new Handshake(cipherSuite, peerCertificatesList, localCertificatesList);
+    return new Handshake(tlsVersion, cipherSuite, peerCertificatesList, localCertificatesList);
   }
 
-  public static Handshake get(CipherSuite cipherSuite, List<Certificate> peerCertificates,
-      List<Certificate> localCertificates) {
+  public static Handshake get(TlsVersion tlsVersion, CipherSuite cipherSuite,
+      List<Certificate> peerCertificates, List<Certificate> localCertificates) {
     if (cipherSuite == null) throw new IllegalArgumentException("cipherSuite == null");
-    return new Handshake(cipherSuite, Util.immutableList(peerCertificates),
+    return new Handshake(tlsVersion, cipherSuite, Util.immutableList(peerCertificates),
         Util.immutableList(localCertificates));
+  }
+
+  /**
+   * Returns the TLS version used for this connection. May return null if the response was cached
+   * with a version of OkHttp prior to 3.0.
+   */
+  public TlsVersion tlsVersion() {
+    return tlsVersion;
   }
 
   /** Returns the cipher suite used for the connection. */
@@ -106,13 +120,15 @@ public final class Handshake {
   @Override public boolean equals(Object other) {
     if (!(other instanceof Handshake)) return false;
     Handshake that = (Handshake) other;
-    return cipherSuite.equals(that.cipherSuite)
+    return Util.equal(cipherSuite, that.cipherSuite)
+        && cipherSuite.equals(that.cipherSuite)
         && peerCertificates.equals(that.peerCertificates)
         && localCertificates.equals(that.localCertificates);
   }
 
   @Override public int hashCode() {
     int result = 17;
+    result = 31 * result + (tlsVersion != null ? tlsVersion.hashCode() : 0);
     result = 31 * result + cipherSuite.hashCode();
     result = 31 * result + peerCertificates.hashCode();
     result = 31 * result + localCertificates.hashCode();
