@@ -198,13 +198,13 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void serverCloseWithCode() throws IOException {
-    serverWriter.writeClose(1005, null);
-    assertData("880203ed");
+    serverWriter.writeClose(1001, null);
+    assertData("880203e9");
   }
 
   @Test public void serverCloseWithCodeAndReason() throws IOException {
-    serverWriter.writeClose(1005, "Hello");
-    assertData("880703ed48656c6c6f");
+    serverWriter.writeClose(1001, "Hello");
+    assertData("880703e948656c6c6f");
   }
 
   @Test public void clientEmptyClose() throws IOException {
@@ -213,13 +213,13 @@ public final class WebSocketWriterTest {
   }
 
   @Test public void clientCloseWithCode() throws IOException {
-    clientWriter.writeClose(1005, null);
-    assertData("888260b420bb6359");
+    clientWriter.writeClose(1001, null);
+    assertData("888260b420bb635d");
   }
 
   @Test public void clientCloseWithCodeAndReason() throws IOException {
-    clientWriter.writeClose(1005, "Hello");
-    assertData("888760b420bb635968de0cd84f");
+    clientWriter.writeClose(1001, "Hello");
+    assertData("888760b420bb635d68de0cd84f");
   }
 
   @Test public void closeWithOnlyReasonThrows() throws IOException {
@@ -232,7 +232,16 @@ public final class WebSocketWriterTest {
       clientWriter.writeClose(98724976, "Hello");
       fail();
     } catch (IllegalArgumentException e) {
-      assertEquals("Code must be in range [1000,5000).", e.getMessage());
+      assertEquals("Code must be in range [1000,5000): 98724976", e.getMessage());
+    }
+  }
+
+  @Test public void closeReservedThrows() throws IOException {
+    try {
+      clientWriter.writeClose(1005, "Hello");
+      fail();
+    } catch (IllegalArgumentException e) {
+      assertEquals("Code 1005 is reserved and may not be used.", e.getMessage());
     }
   }
 

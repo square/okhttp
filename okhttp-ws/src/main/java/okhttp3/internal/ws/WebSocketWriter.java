@@ -34,6 +34,7 @@ import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_LONG;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT;
 import static okhttp3.internal.ws.WebSocketProtocol.PAYLOAD_SHORT_MAX;
 import static okhttp3.internal.ws.WebSocketProtocol.toggleMask;
+import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 
 /**
  * An <a href="http://tools.ietf.org/html/rfc6455">RFC 6455</a>-compatible WebSocket frame writer.
@@ -97,8 +98,8 @@ public final class WebSocketWriter {
   public void writeClose(int code, String reason) throws IOException {
     Buffer payload = null;
     if (code != 0 || reason != null) {
-      if (code != 0 && (code < 1000 || code >= 5000)) {
-        throw new IllegalArgumentException("Code must be in range [1000,5000).");
+      if (code != 0) {
+        validateCloseCode(code, true);
       }
       payload = new Buffer();
       payload.writeShort(code);
