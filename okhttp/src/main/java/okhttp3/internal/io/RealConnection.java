@@ -297,7 +297,7 @@ public final class RealConnection implements Connection {
     return protocol != null;
   }
 
-  @Override public Route getRoute() {
+  @Override public Route route() {
     return route;
   }
 
@@ -306,7 +306,7 @@ public final class RealConnection implements Connection {
     closeQuietly(rawSocket);
   }
 
-  @Override public Socket getSocket() {
+  @Override public Socket socket() {
     return socket;
   }
 
@@ -349,7 +349,7 @@ public final class RealConnection implements Connection {
     return true;
   }
 
-  @Override public Handshake getHandshake() {
+  @Override public Handshake handshake() {
     return handshake;
   }
 
@@ -361,7 +361,7 @@ public final class RealConnection implements Connection {
     return framedConnection != null;
   }
 
-  @Override public Protocol getProtocol() {
+  @Override public Protocol protocol() {
     return protocol != null ? protocol : Protocol.HTTP_1_1;
   }
 

@@ -450,8 +450,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       httpEngine.sendRequest();
       Connection connection = httpEngine.getConnection();
       if (connection != null) {
-        route = connection.getRoute();
-        handshake = connection.getHandshake();
+        route = connection.route();
+        handshake = connection.handshake();
       } else {
         route = null;
         handshake = null;

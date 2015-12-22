@@ -653,7 +653,7 @@ public final class HttpEngine {
 
       if (index > 0) {
         Interceptor caller = client.networkInterceptors().get(index - 1);
-        Address address = connection().getRoute().address();
+        Address address = connection().route().address();
 
         // Confirm that the interceptor uses the connection we've already prepared.
         if (!request.url().host().equals(address.url().host())
@@ -717,7 +717,7 @@ public final class HttpEngine {
 
     Response networkResponse = httpStream.readResponseHeaders()
         .request(networkRequest)
-        .handshake(streamAllocation.connection().getHandshake())
+        .handshake(streamAllocation.connection().handshake())
         .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .build();
@@ -869,7 +869,7 @@ public final class HttpEngine {
     if (userResponse == null) throw new IllegalStateException();
     Connection connection = streamAllocation.connection();
     Route route = connection != null
-        ? connection.getRoute()
+        ? connection.route()
         : null;
     int responseCode = userResponse.code();
 

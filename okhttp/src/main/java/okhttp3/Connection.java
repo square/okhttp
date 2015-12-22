@@ -65,20 +65,25 @@ import java.net.Socket;
  */
 public interface Connection {
   /** Returns the route used by this connection. */
-  Route getRoute();
+  Route route();
 
   /**
-   * Returns the socket that this connection uses, or null if the connection
-   * is not currently connected.
+   * Returns the socket that this connection is using. Returns an {@linkplain
+   * javax.net.ssl.SSLSocket SSL socket} if this connection is HTTPS. If this is an HTTP/2 or SPDY
+   * connection the socket may be shared by multiple concurrent calls.
    */
-  Socket getSocket();
+  Socket socket();
 
-  Handshake getHandshake();
+  /**
+   * Returns the TLS handshake used to establish this connection, or null if the connection is not
+   * HTTPS.
+   */
+  Handshake handshake();
 
   /**
    * Returns the protocol negotiated by this connection, or {@link Protocol#HTTP_1_1} if no protocol
    * has been negotiated. This method returns {@link Protocol#HTTP_1_1} even if the remote peer is
    * using {@link Protocol#HTTP_1_0}.
    */
-  Protocol getProtocol();
+  Protocol protocol();
 }
