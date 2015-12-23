@@ -50,7 +50,7 @@ import okhttp3.internal.tls.OkHostnameVerifier;
  * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
  * safely modified with further configuration changes.
  */
-public class OkHttpClient implements Cloneable {
+public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
@@ -95,11 +95,11 @@ public class OkHttpClient implements Cloneable {
 
       @Override
       public void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket) {
-        call.enqueue(responseCallback, forWebSocket);
+        ((RealCall) call).enqueue(responseCallback, forWebSocket);
       }
 
       @Override public StreamAllocation callEngineGetStreamAllocation(Call call) {
-        return call.engine.streamAllocation;
+        return ((RealCall) call).engine.streamAllocation;
       }
 
       @Override
@@ -582,8 +582,8 @@ public class OkHttpClient implements Cloneable {
   /**
    * Prepares the {@code request} to be executed at some point in the future.
    */
-  public Call newCall(Request request) {
-    return new Call(this, request);
+  @Override public Call newCall(Request request) {
+    return new RealCall(this, request);
   }
 
   /**

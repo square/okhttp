@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
+import okhttp3.RealCall.AsyncCall;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -122,23 +123,23 @@ public final class DispatcherTest {
   }
 
   class RecordingExecutor extends AbstractExecutorService {
-    private List<Call.AsyncCall> calls = new ArrayList<>();
+    private List<AsyncCall> calls = new ArrayList<>();
 
     @Override public void execute(Runnable command) {
-      calls.add((Call.AsyncCall) command);
+      calls.add((AsyncCall) command);
     }
 
     public void assertJobs(String... expectedUrls) {
       List<String> actualUrls = new ArrayList<>();
-      for (Call.AsyncCall call : calls) {
+      for (AsyncCall call : calls) {
         actualUrls.add(call.request().url().toString());
       }
       assertEquals(Arrays.asList(expectedUrls), actualUrls);
     }
 
     public void finishJob(String url) {
-      for (Iterator<Call.AsyncCall> i = calls.iterator(); i.hasNext(); ) {
-        Call.AsyncCall call = i.next();
+      for (Iterator<AsyncCall> i = calls.iterator(); i.hasNext(); ) {
+        AsyncCall call = i.next();
         if (call.request().url().toString().equals(url)) {
           i.remove();
           dispatcher.finished(call);
