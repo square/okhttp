@@ -106,14 +106,14 @@ public final class FormBody extends RequestBody {
     private final List<String> values = new ArrayList<>();
 
     public Builder add(String name, String value) {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, true, true));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, true, true));
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, false, false, true, true));
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, false, false, true, true));
       return this;
     }
 
     public Builder addEncoded(String name, String value) {
-      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, true, true));
-      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, true, true));
+      names.add(HttpUrl.canonicalize(name, FORM_ENCODE_SET, true, false, true, true));
+      values.add(HttpUrl.canonicalize(value, FORM_ENCODE_SET, true, false, true, true));
       return this;
     }
 
