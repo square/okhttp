@@ -15,7 +15,7 @@
  */
 package okhttp3;
 
-import okhttp3.Call.AsyncCall;
+import okhttp3.RealCall.AsyncCall;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpEngine;
 import java.util.ArrayDeque;
@@ -47,7 +47,7 @@ public final class Dispatcher {
   private final Deque<AsyncCall> runningCalls = new ArrayDeque<>();
 
   /** In-flight synchronous calls. Includes canceled calls that haven't finished yet. */
-  private final Deque<Call> executedCalls = new ArrayDeque<>();
+  private final Deque<RealCall> executedCalls = new ArrayDeque<>();
 
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
@@ -129,7 +129,7 @@ public final class Dispatcher {
       }
     }
 
-    for (Call call : executedCalls) {
+    for (RealCall call : executedCalls) {
       if (Util.equal(tag, call.tag())) {
         call.cancel();
       }
@@ -169,7 +169,7 @@ public final class Dispatcher {
   }
 
   /** Used by {@code Call#execute} to signal it is in-flight. */
-  synchronized void executed(Call call) {
+  synchronized void executed(RealCall call) {
     executedCalls.add(call);
   }
 
