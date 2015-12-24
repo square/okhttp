@@ -15,6 +15,13 @@
  */
 package okhttp3.ws;
 
+import java.io.IOException;
+import java.net.ProtocolException;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import javax.net.ssl.SSLContext;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -24,13 +31,6 @@ import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.testing.RecordingHostnameVerifier;
-import java.io.IOException;
-import java.net.ProtocolException;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLContext;
 import okio.Buffer;
 import org.junit.After;
 import org.junit.Rule;

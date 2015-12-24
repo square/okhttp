@@ -15,9 +15,6 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.Protocol;
-import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -34,6 +31,9 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import okhttp3.Protocol;
+import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -44,13 +44,13 @@ import static okhttp3.internal.Internal.logger;
 import static okhttp3.internal.framed.Settings.DEFAULT_INITIAL_WINDOW_SIZE;
 
 /**
- * A socket connection to a remote peer. A connection hosts streams which can
- * send and receive data.
+ * A socket connection to a remote peer. A connection hosts streams which can send and receive
+ * data.
  *
- * <p>Many methods in this API are <strong>synchronous:</strong> the call is
- * completed before the method returns. This is typical for Java but atypical
- * for SPDY. This is motivated by exception transparency: an IOException that
- * was triggered by a certain caller can be caught and handled by that caller.
+ * <p>Many methods in this API are <strong>synchronous:</strong> the call is completed before the
+ * method returns. This is typical for Java but atypical for SPDY. This is motivated by exception
+ * transparency: an IOException that was triggered by a certain caller can be caught and handled by
+ * that caller.
  */
 public final class FramedConnection implements Closeable {
 
@@ -98,15 +98,14 @@ public final class FramedConnection implements Closeable {
   private int nextPingId;
 
   /**
-   * The total number of bytes consumed by the application, but not yet
-   * acknowledged by sending a {@code WINDOW_UPDATE} frame on this connection.
+   * The total number of bytes consumed by the application, but not yet acknowledged by sending a
+   * {@code WINDOW_UPDATE} frame on this connection.
    */
   // Visible for testing
   long unacknowledgedBytesRead = 0;
 
   /**
-   * Count of bytes that can be written on the connection before receiving a
-   * window update.
+   * Count of bytes that can be written on the connection before receiving a window update.
    */
   // Visible for testing
   long bytesLeftInWriteWindow;
@@ -180,8 +179,7 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Returns the number of {@link FramedStream#isOpen() open streams} on this
-   * connection.
+   * Returns the number of {@link FramedStream#isOpen() open streams} on this connection.
    */
   public synchronized int openStreamCount() {
     return streams.size();
@@ -214,8 +212,8 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Returns the time in ns when this connection became idle or Long.MAX_VALUE
-   * if connection is not idle.
+   * Returns the time in ns when this connection became idle or Long.MAX_VALUE if connection is not
+   * idle.
    */
   public synchronized long getIdleStartTimeNs() {
     return idleStartTimeNs;
@@ -224,10 +222,9 @@ public final class FramedConnection implements Closeable {
   /**
    * Returns a new server-initiated stream.
    *
-   * @param associatedStreamId the stream that triggered the sender to create
-   *     this stream.
-   * @param out true to create an output stream that we can use to send data
-   *     to the remote peer. Corresponds to {@code FLAG_FIN}.
+   * @param associatedStreamId the stream that triggered the sender to create this stream.
+   * @param out true to create an output stream that we can use to send data to the remote peer.
+   * Corresponds to {@code FLAG_FIN}.
    */
   public FramedStream pushStream(int associatedStreamId, List<Header> requestHeaders, boolean out)
       throws IOException {
@@ -240,9 +237,9 @@ public final class FramedConnection implements Closeable {
    * Returns a new locally-initiated stream.
    *
    * @param out true to create an output stream that we can use to send data to the remote peer.
-   *     Corresponds to {@code FLAG_FIN}.
+   * Corresponds to {@code FLAG_FIN}.
    * @param in true to create an input stream that the remote peer can use to send data to us.
-   *     Corresponds to {@code FLAG_UNIDIRECTIONAL}.
+   * Corresponds to {@code FLAG_UNIDIRECTIONAL}.
    */
   public FramedStream newStream(List<Header> requestHeaders, boolean out, boolean in)
       throws IOException {
@@ -337,8 +334,7 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * {@code delta} will be negative if a settings frame initial window is
-   * smaller than the last.
+   * {@code delta} will be negative if a settings frame initial window is smaller than the last.
    */
   void addBytesToWriteWindow(long delta) {
     bytesLeftInWriteWindow += delta;
@@ -372,8 +368,8 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Sends a ping frame to the peer. Use the returned object to await the
-   * ping's response and observe its round trip time.
+   * Sends a ping frame to the peer. Use the returned object to await the ping's response and
+   * observe its round trip time.
    */
   public Ping ping() throws IOException {
     Ping ping = new Ping();
@@ -421,10 +417,9 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Degrades this connection such that new streams can neither be created
-   * locally, nor accepted from the remote peer. Existing streams are not
-   * impacted. This is intended to permit an endpoint to gracefully stop
-   * accepting new requests without harming previously established streams.
+   * Degrades this connection such that new streams can neither be created locally, nor accepted
+   * from the remote peer. Existing streams are not impacted. This is intended to permit an endpoint
+   * to gracefully stop accepting new requests without harming previously established streams.
    */
   public void shutdown(ErrorCode statusCode) throws IOException {
     synchronized (frameWriter) {
@@ -442,9 +437,8 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Closes this connection. This cancels all open streams and unanswered
-   * pings. It closes the underlying input and output streams and shuts down
-   * internal executor services.
+   * Closes this connection. This cancels all open streams and unanswered pings. It closes the
+   * underlying input and output streams and shuts down internal executor services.
    */
   @Override public void close() throws IOException {
     close(ErrorCode.NO_ERROR, ErrorCode.CANCEL);
@@ -507,8 +501,8 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Sends a connection header if the current variant requires it. This should
-   * be called after {@link Builder#build} for all new connections.
+   * Sends a connection header if the current variant requires it. This should be called after
+   * {@link Builder#build} for all new connections.
    */
   public void sendConnectionPreface() throws IOException {
     frameWriter.connectionPreface();
@@ -543,8 +537,8 @@ public final class FramedConnection implements Closeable {
     private boolean client;
 
     /**
-     * @param client true if this peer initiated the connection; false if this
-     *     peer accepted the connection.
+     * @param client true if this peer initiated the connection; false if this peer accepted the
+     * connection.
      */
     public Builder(boolean client) throws IOException {
       this.client = client;
@@ -585,8 +579,8 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Methods in this class must not lock FrameWriter.  If a method needs to
-   * write a frame, create an async task to do so.
+   * Methods in this class must not lock FrameWriter.  If a method needs to write a frame, create an
+   * async task to do so.
    */
   class Reader extends NamedRunnable implements FrameReader.Handler {
     final FrameReader frameReader;
@@ -920,22 +914,19 @@ public final class FramedConnection implements Closeable {
     };
 
     /**
-     * Handle a new stream from this connection's peer. Implementations should
-     * respond by either {@linkplain FramedStream#reply replying to the stream}
-     * or {@linkplain FramedStream#close closing it}. This response does not
-     * need to be synchronous.
+     * Handle a new stream from this connection's peer. Implementations should respond by either
+     * {@linkplain FramedStream#reply replying to the stream} or {@linkplain FramedStream#close
+     * closing it}. This response does not need to be synchronous.
      */
     public abstract void onStream(FramedStream stream) throws IOException;
 
     /**
-     * Notification that the connection's peer's settings may have changed.
-     * Implementations should take appropriate action to handle the updated
-     * settings.
+     * Notification that the connection's peer's settings may have changed. Implementations should
+     * take appropriate action to handle the updated settings.
      *
-     * <p>It is the implementation's responsibility to handle concurrent calls
-     * to this method. A remote peer that sends multiple settings frames will
-     * trigger multiple calls to this method, and those calls are not
-     * necessarily serialized.
+     * <p>It is the implementation's responsibility to handle concurrent calls to this method. A
+     * remote peer that sends multiple settings frames will trigger multiple calls to this method,
+     * and those calls are not necessarily serialized.
      */
     public void onSettings(FramedConnection connection) {
     }

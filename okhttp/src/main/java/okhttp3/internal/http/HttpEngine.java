@@ -68,22 +68,15 @@ import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
 import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
- * Handles a single HTTP request/response pair. Each HTTP engine follows this
- * lifecycle:
- * <ol>
- * <li>It is created.
- * <li>The HTTP request message is sent with sendRequest(). Once the request
- * is sent it is an error to modify the request headers. After
- * sendRequest() has been called the request body can be written to if
- * it exists.
- * <li>The HTTP response message is read with readResponse(). After the
- * response has been read the response headers and body can be read.
- * All responses have a response body input stream, though in some
- * instances this stream is empty.
- * </ol>
+ * Handles a single HTTP request/response pair. Each HTTP engine follows this lifecycle: <ol> <li>It
+ * is created. <li>The HTTP request message is sent with sendRequest(). Once the request is sent it
+ * is an error to modify the request headers. After sendRequest() has been called the request body
+ * can be written to if it exists. <li>The HTTP response message is read with readResponse(). After
+ * the response has been read the response headers and body can be read. All responses have a
+ * response body input stream, though in some instances this stream is empty. </ol>
  *
- * <p>The request and response may be served by the HTTP response cache, by the
- * network, or by both in the event of a conditional GET.
+ * <p>The request and response may be served by the HTTP response cache, by the network, or by both
+ * in the event of a conditional GET.
  */
 public final class HttpEngine {
   /**
@@ -96,9 +89,11 @@ public final class HttpEngine {
     @Override public MediaType contentType() {
       return null;
     }
+
     @Override public long contentLength() {
       return 0;
     }
+
     @Override public BufferedSource source() {
       return new Buffer();
     }
@@ -114,43 +109,40 @@ public final class HttpEngine {
   long sentRequestMillis = -1;
 
   /**
-   * True if this client added an "Accept-Encoding: gzip" header field and is
-   * therefore responsible for also decompressing the transfer stream.
+   * True if this client added an "Accept-Encoding: gzip" header field and is therefore responsible
+   * for also decompressing the transfer stream.
    */
   private boolean transparentGzip;
 
   /**
-   * True if the request body must be completely buffered before transmission;
-   * false if it can be streamed. Buffering has two advantages: we don't need
-   * the content-length in advance and we can retransmit if necessary. The
-   * upside of streaming is that we can save memory.
+   * True if the request body must be completely buffered before transmission; false if it can be
+   * streamed. Buffering has two advantages: we don't need the content-length in advance and we can
+   * retransmit if necessary. The upside of streaming is that we can save memory.
    */
   public final boolean bufferRequestBody;
 
   /**
-   * The original application-provided request. Never modified by OkHttp. When
-   * follow-up requests are necessary, they are derived from this request.
+   * The original application-provided request. Never modified by OkHttp. When follow-up requests
+   * are necessary, they are derived from this request.
    */
   private final Request userRequest;
 
   /**
-   * The request to send on the network, or null for no network request. This is
-   * derived from the user request, and customized to support OkHttp features
-   * like compression and caching.
+   * The request to send on the network, or null for no network request. This is derived from the
+   * user request, and customized to support OkHttp features like compression and caching.
    */
   private Request networkRequest;
 
   /**
-   * The cached response, or null if the cache doesn't exist or cannot be used
-   * for this request. Conditional caching means this may be non-null even when
-   * the network request is non-null. Never modified by OkHttp.
+   * The cached response, or null if the cache doesn't exist or cannot be used for this request.
+   * Conditional caching means this may be non-null even when the network request is non-null. Never
+   * modified by OkHttp.
    */
   private Response cacheResponse;
 
   /**
-   * The user-visible response. This is derived from either the network
-   * response, cache response, or both. It is customized to support OkHttp
-   * features like compression and caching.
+   * The user-visible response. This is derived from either the network response, cache response, or
+   * both. It is customized to support OkHttp features like compression and caching.
    */
   private Response userResponse;
 
@@ -165,10 +157,10 @@ public final class HttpEngine {
 
   /**
    * @param request the HTTP request without a body. The body must be written via the engine's
-   *     request body stream.
-   * @param callerWritesRequestBody true for the {@code HttpURLConnection}-style interaction
-   *     model where control flow is returned to the calling application to write the request body
-   *     before the response body is readable.
+   * request body stream.
+   * @param callerWritesRequestBody true for the {@code HttpURLConnection}-style interaction model
+   * where control flow is returned to the calling application to write the request body before the
+   * response body is readable.
    */
   public HttpEngine(OkHttpClient client, Request request, boolean bufferRequestBody,
       boolean callerWritesRequestBody, boolean forWebSocket, StreamAllocation streamAllocation,
@@ -186,16 +178,14 @@ public final class HttpEngine {
   }
 
   /**
-   * Figures out what the response source will be, and opens a socket to that
-   * source if necessary. Prepares the request headers and gets ready to start
-   * writing the request body if it exists.
+   * Figures out what the response source will be, and opens a socket to that source if necessary.
+   * Prepares the request headers and gets ready to start writing the request body if it exists.
    *
    * @throws RequestException if there was a problem with request setup. Unrecoverable.
    * @throws RouteException if the was a problem during connection via a specific route. Sometimes
-   *     recoverable. See {@link #recover}.
+   * recoverable. See {@link #recover}.
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
-   *     {@link #recover(IOException)}.
-   *
+   * {@link #recover(IOException)}.
    */
   public void sendRequest() throws RequestException, RouteException, IOException {
     if (cacheStrategy != null) return; // Already sent.
@@ -252,7 +242,6 @@ public final class HttpEngine {
           requestBodyOut = httpStream.createRequestBody(networkRequest, contentLength);
         }
       }
-
     } else {
       streamAllocation.release();
 
@@ -292,10 +281,9 @@ public final class HttpEngine {
         : response;
   }
 
-
   /**
-   * Called immediately before the transport transmits HTTP request headers.
-   * This is used to observe the sent time should the request be cached.
+   * Called immediately before the transport transmits HTTP request headers. This is used to observe
+   * the sent time should the request be cached.
    */
   public void writingRequestHeaders() {
     if (sentRequestMillis != -1) throw new IllegalStateException();
@@ -341,9 +329,9 @@ public final class HttpEngine {
   }
 
   /**
-   * Report and attempt to recover from a failure to communicate with a server. Returns a new
-   * HTTP engine that should be used for the retry if {@code e} is recoverable, or null if
-   * the failure is permanent. Requests with a body can only be recovered if the body is buffered.
+   * Report and attempt to recover from a failure to communicate with a server. Returns a new HTTP
+   * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
+   * permanent. Requests with a body can only be recovered if the body is buffered.
    */
   public HttpEngine recover(IOException e, Sink requestBodyOut) {
     if (!streamAllocation.recover(e, requestBodyOut)) {
@@ -386,9 +374,8 @@ public final class HttpEngine {
   }
 
   /**
-   * Configure the socket connection to be either pooled or closed when it is
-   * either exhausted or closed. If it is unneeded when this is called, it will
-   * be released immediately.
+   * Configure the socket connection to be either pooled or closed when it is either exhausted or
+   * closed. If it is unneeded when this is called, it will be released immediately.
    */
   public void releaseStreamAllocation() throws IOException {
     streamAllocation.release();
@@ -463,8 +450,7 @@ public final class HttpEngine {
   }
 
   /**
-   * Returns true if the response must have a (possibly 0-length) body.
-   * See RFC 2616 section 4.3.
+   * Returns true if the response must have a (possibly 0-length) body. See RFC 2616 section 4.3.
    */
   public static boolean hasBody(Response response) {
     // HEAD requests never yield a body regardless of the response headers.
@@ -493,8 +479,8 @@ public final class HttpEngine {
   /**
    * Populates request with defaults and cookies.
    *
-   * <p>This client doesn't specify a default {@code Accept} header because it
-   * doesn't know what content types the application is interested in.
+   * <p>This client doesn't specify a default {@code Accept} header because it doesn't know what
+   * content types the application is interested in.
    */
   private Request networkRequest(Request request) throws IOException {
     Request.Builder result = request.newBuilder();
@@ -533,8 +519,8 @@ public final class HttpEngine {
   }
 
   /**
-   * Flushes the remaining request header and body, parses the HTTP response
-   * headers and starts reading the HTTP response body if it exists.
+   * Flushes the remaining request header and body, parses the HTTP response headers and starts
+   * reading the HTTP response body if it exists.
    */
   public void readResponse() throws IOException {
     if (userResponse != null) {
@@ -552,10 +538,8 @@ public final class HttpEngine {
     if (forWebSocket) {
       httpStream.writeRequestHeaders(networkRequest);
       networkResponse = readNetworkResponse();
-
     } else if (!callerWritesRequestBody) {
       networkResponse = new NetworkInterceptorChain(0, networkRequest).proceed(networkRequest);
-
     } else {
       // Emit the request body's buffer so that everything is in requestBodyOut.
       if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
@@ -799,8 +783,8 @@ public final class HttpEngine {
   }
 
   /**
-   * Returns true if {@code cached} should be used; false if {@code network}
-   * response should be used.
+   * Returns true if {@code cached} should be used; false if {@code network} response should be
+   * used.
    */
   private static boolean validate(Response cached, Response network) {
     if (network.code() == HTTP_NOT_MODIFIED) {
@@ -823,8 +807,7 @@ public final class HttpEngine {
   }
 
   /**
-   * Combines cached headers with a network headers as defined by RFC 2616,
-   * 13.5.3.
+   * Combines cached headers with a network headers as defined by RFC 2616, 13.5.3.
    */
   private static Headers combine(Headers cachedHeaders, Headers networkHeaders) throws IOException {
     Headers.Builder result = new Headers.Builder();
@@ -861,9 +844,9 @@ public final class HttpEngine {
   }
 
   /**
-   * Figures out the HTTP request to make in response to receiving this engine's
-   * response. This will either add authentication headers or follow redirects.
-   * If a follow-up is either unnecessary or not applicable, this returns null.
+   * Figures out the HTTP request to make in response to receiving this engine's response. This will
+   * either add authentication headers or follow redirects. If a follow-up is either unnecessary or
+   * not applicable, this returns null.
    */
   public Request followUpRequest() throws IOException {
     if (userResponse == null) throw new IllegalStateException();
@@ -891,7 +874,7 @@ public final class HttpEngine {
         // "If the 307 or 308 status code is received in response to a request other than GET
         // or HEAD, the user agent MUST NOT automatically redirect the request"
         if (!method.equals("GET") && !method.equals("HEAD")) {
-            return null;
+          return null;
         }
         // fall-through
       case HTTP_MULT_CHOICE:
@@ -940,8 +923,8 @@ public final class HttpEngine {
   }
 
   /**
-   * Returns true if an HTTP request for {@code followUp} can reuse the
-   * connection used by this engine.
+   * Returns true if an HTTP request for {@code followUp} can reuse the connection used by this
+   * engine.
    */
   public boolean sameConnection(HttpUrl followUp) {
     HttpUrl url = userRequest.url();

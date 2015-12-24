@@ -32,16 +32,14 @@ public enum HeadersMode {
   }
 
   /**
-   * Returns true if it is an error these headers to be the initial headers of a
-   * response.
+   * Returns true if it is an error these headers to be the initial headers of a response.
    */
   public boolean failIfHeadersAbsent() {
     return this == SPDY_HEADERS;
   }
 
   /**
-   * Returns true if it is an error these headers to be update existing headers
-   * of a response.
+   * Returns true if it is an error these headers to be update existing headers of a response.
    */
   public boolean failIfHeadersPresent() {
     return this == SPDY_REPLY;

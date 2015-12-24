@@ -19,13 +19,12 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
- * A {@link SSLSocketFactory} that delegates calls. Sockets can be configured after
- * creation by overriding {@link #configureSocket(javax.net.ssl.SSLSocket)}.
+ * A {@link SSLSocketFactory} that delegates calls. Sockets can be configured after creation by
+ * overriding {@link #configureSocket(javax.net.ssl.SSLSocket)}.
  */
 public class DelegatingSSLSocketFactory extends SSLSocketFactory {
 

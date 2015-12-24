@@ -15,20 +15,6 @@
  */
 package okhttp3.internal.huc;
 
-import okhttp3.CipherSuite;
-import okhttp3.Handshake;
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
-import okhttp3.internal.http.CacheRequest;
-import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
-import okhttp3.internal.http.StatusLine;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -48,6 +34,20 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.CipherSuite;
+import okhttp3.Handshake;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.internal.Internal;
+import okhttp3.internal.Util;
+import okhttp3.internal.http.CacheRequest;
+import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.http.StatusLine;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -62,9 +62,9 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Creates an OkHttp {@link Response} using the supplied {@link URI} and {@link URLConnection}
-   * to supply the data. The URLConnection is assumed to already be connected. If this method
-   * returns {@code null} the response is uncacheable.
+   * Creates an OkHttp {@link Response} using the supplied {@link URI} and {@link URLConnection} to
+   * supply the data. The URLConnection is assumed to already be connected. If this method returns
+   * {@code null} the response is uncacheable.
    */
   public static Response createOkResponseForCachePut(URI uri, URLConnection urlConnection)
       throws IOException {
@@ -264,9 +264,9 @@ public final class JavaApiConverter {
   /**
    * Creates an OkHttp {@link Request} from the supplied information.
    *
-   * <p>This method allows a {@code null} value for {@code requestHeaders} for situations
-   * where a connection is already connected and access to the headers has been lost.
-   * See {@link java.net.HttpURLConnection#getRequestProperties()} for details.
+   * <p>This method allows a {@code null} value for {@code requestHeaders} for situations where a
+   * connection is already connected and access to the headers has been lost. See {@link
+   * java.net.HttpURLConnection#getRequestProperties()} for details.
    */
   public static Request createOkRequest(
       URI uri, String requestMethod, Map<String, List<String>> requestHeaders) {
@@ -287,8 +287,8 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Creates a {@link java.net.CacheResponse} of the correct (sub)type using information
-   * gathered from the supplied {@link Response}.
+   * Creates a {@link java.net.CacheResponse} of the correct (sub)type using information gathered
+   * from the supplied {@link Response}.
    */
   public static CacheResponse createJavaCacheResponse(final Response response) {
     final Headers headers = response.headers();
@@ -364,6 +364,7 @@ public final class JavaApiConverter {
       public void abort() {
         okCacheRequest.abort();
       }
+
       @Override
       public OutputStream getBody() throws IOException {
         Sink body = okCacheRequest.body();
@@ -415,8 +416,8 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Extracts OkHttp headers from the supplied {@link Map}. Only real headers are
-   * extracted. Any entry (one with a {@code null} key) is discarded.
+   * Extracts OkHttp headers from the supplied {@link Map}. Only real headers are extracted. Any
+   * entry (one with a {@code null} key) is discarded.
    */
   // @VisibleForTesting
   static Headers extractOkHeaders(Map<String, List<String>> javaHeaders) {
@@ -438,9 +439,9 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Extracts the status line from the supplied Java API {@link java.net.HttpURLConnection}.
-   * As per the spec, the status line is held as the header with the null key. Returns {@code null}
-   * if there is no status line.
+   * Extracts the status line from the supplied Java API {@link java.net.HttpURLConnection}. As per
+   * the spec, the status line is held as the header with the null key. Returns {@code null} if
+   * there is no status line.
    */
   private static String extractStatusLine(HttpURLConnection httpUrlConnection) {
     // Java specifies that this will be be response header with a null key.
@@ -448,9 +449,9 @@ public final class JavaApiConverter {
   }
 
   /**
-   * Extracts the status line from the supplied Java API {@link java.net.CacheResponse}.
-   * As per the spec, the status line is held as the header with the null key. Throws a
-   * {@link ProtocolException} if there is no status line.
+   * Extracts the status line from the supplied Java API {@link java.net.CacheResponse}. As per the
+   * spec, the status line is held as the header with the null key. Throws a {@link
+   * ProtocolException} if there is no status line.
    */
   private static String extractStatusLine(CacheResponse javaResponse) throws IOException {
     Map<String, List<String>> javaResponseHeaders = javaResponse.getHeaders();
@@ -465,7 +466,7 @@ public final class JavaApiConverter {
       // The status line is missing. This suggests a badly behaving cache.
       throw new ProtocolException(
           "CacheResponse is missing a \'null\' header containing the status line. Headers="
-          + javaResponseHeaders);
+              + javaResponseHeaders);
     }
     return values.get(0);
   }
@@ -487,6 +488,7 @@ public final class JavaApiConverter {
       public long contentLength() {
         return OkHeaders.contentLength(okHeaders);
       }
+
       @Override public BufferedSource source() {
         return body;
       }
@@ -507,10 +509,12 @@ public final class JavaApiConverter {
         String contentTypeHeader = urlConnection.getContentType();
         return contentTypeHeader == null ? null : MediaType.parse(contentTypeHeader);
       }
+
       @Override public long contentLength() {
         String s = urlConnection.getHeaderField("Content-Length");
         return stringToLong(s);
       }
+
       @Override public BufferedSource source() {
         return body;
       }
@@ -518,10 +522,10 @@ public final class JavaApiConverter {
   }
 
   /**
-   * An {@link java.net.HttpURLConnection} that represents an HTTP request at the point where
-   * the request has been made, and the response headers have been received, but the body content,
-   * if present, has not been read yet. This intended to provide enough information for
-   * {@link java.net.ResponseCache} subclasses and no more.
+   * An {@link java.net.HttpURLConnection} that represents an HTTP request at the point where the
+   * request has been made, and the response headers have been received, but the body content, if
+   * present, has not been read yet. This intended to provide enough information for {@link
+   * java.net.ResponseCache} subclasses and no more.
    *
    * <p>Much of the method implementations are overrides to delegate to the OkHttp request and
    * response, or to deny access to information as a real HttpURLConnection would after connection.

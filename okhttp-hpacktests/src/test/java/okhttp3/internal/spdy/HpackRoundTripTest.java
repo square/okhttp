@@ -15,14 +15,13 @@
  */
 package okhttp3.internal.spdy;
 
+import java.util.Collection;
 import okhttp3.internal.spdy.hpackjson.Case;
 import okhttp3.internal.spdy.hpackjson.Story;
 import okio.Buffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import java.util.Collection;
 
 /**
  * Tests for round-tripping headers through hpack..
@@ -34,9 +33,9 @@ import java.util.Collection;
 @RunWith(Parameterized.class)
 public class HpackRoundTripTest extends HpackDecodeTestBase {
 
-  private static final String[] RAW_DATA = { "raw-data" };
+  private static final String[] RAW_DATA = {"raw-data"};
 
-  @Parameterized.Parameters(name="{0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Story[]> getStories() throws Exception {
     return createStories(RAW_DATA);
   }
@@ -59,5 +58,4 @@ public class HpackRoundTripTest extends HpackDecodeTestBase {
 
     testDecoder(story);
   }
-
 }

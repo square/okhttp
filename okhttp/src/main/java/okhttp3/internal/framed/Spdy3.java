@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.Protocol;
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.ProtocolException;
 import java.util.List;
 import java.util.zip.Deflater;
+import okhttp3.Protocol;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -30,8 +30,7 @@ import okio.DeflaterSink;
 import okio.Okio;
 
 /**
- * Read and write spdy/3.1 frames.
- * http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1
+ * Read and write spdy/3.1 frames. http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1
  */
 public final class Spdy3 implements Variant {
 
@@ -55,6 +54,7 @@ public final class Spdy3 implements Variant {
   static final int VERSION = 3;
 
   static final byte[] DICTIONARY;
+
   static {
     try {
       DICTIONARY = ("\u0000\u0000\u0000\u0007options\u0000\u0000\u0000\u0004hea"
@@ -119,8 +119,8 @@ public final class Spdy3 implements Variant {
     }
 
     /**
-     * Send the next frame to {@code handler}. Returns true unless there are no
-     * more frames on the stream.
+     * Send the next frame to {@code handler}. Returns true unless there are no more frames on the
+     * stream.
      */
     @Override public boolean nextFrame(Handler handler) throws IOException {
       int w1;

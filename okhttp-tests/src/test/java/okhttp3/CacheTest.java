@@ -16,13 +16,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
-import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.File;
 import java.io.IOException;
 import java.net.CookieHandler;
@@ -47,6 +40,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import okhttp3.internal.Internal;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
+import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -107,45 +107,45 @@ public final class CacheTest {
     // assertCached(false, 100);
     assertCached(false, 101);
     assertCached(false, 102);
-    assertCached(true,  200);
+    assertCached(true, 200);
     assertCached(false, 201);
     assertCached(false, 202);
-    assertCached(true,  203);
-    assertCached(true,  204);
+    assertCached(true, 203);
+    assertCached(true, 204);
     assertCached(false, 205);
     assertCached(false, 206); //Electing to not cache partial responses
     assertCached(false, 207);
-    assertCached(true,  300);
-    assertCached(true,  301);
-    assertCached(true,  302);
+    assertCached(true, 300);
+    assertCached(true, 301);
+    assertCached(true, 302);
     assertCached(false, 303);
     assertCached(false, 304);
     assertCached(false, 305);
     assertCached(false, 306);
-    assertCached(true,  307);
-    assertCached(true,  308);
+    assertCached(true, 307);
+    assertCached(true, 308);
     assertCached(false, 400);
     assertCached(false, 401);
     assertCached(false, 402);
     assertCached(false, 403);
-    assertCached(true,  404);
-    assertCached(true,  405);
+    assertCached(true, 404);
+    assertCached(true, 405);
     assertCached(false, 406);
     assertCached(false, 408);
     assertCached(false, 409);
     // the HTTP spec permits caching 410s, but the RI doesn't.
-    assertCached(true,  410);
+    assertCached(true, 410);
     assertCached(false, 411);
     assertCached(false, 412);
     assertCached(false, 413);
-    assertCached(true,  414);
+    assertCached(true, 414);
     assertCached(false, 415);
     assertCached(false, 416);
     assertCached(false, 417);
     assertCached(false, 418);
 
     assertCached(false, 500);
-    assertCached(true,  501);
+    assertCached(true, 501);
     assertCached(false, 502);
     assertCached(false, 503);
     assertCached(false, 504);
@@ -369,10 +369,9 @@ public final class CacheTest {
   }
 
   /**
-   * We've had bugs where caching and cross-protocol redirects yield class
-   * cast exceptions internal to the cache because we incorrectly assumed that
-   * HttpsURLConnection was always HTTPS and HttpURLConnection was always HTTP;
-   * in practice redirects mean that each can do either.
+   * We've had bugs where caching and cross-protocol redirects yield class cast exceptions internal
+   * to the cache because we incorrectly assumed that HttpsURLConnection was always HTTPS and
+   * HttpURLConnection was always HTTP; in practice redirects mean that each can do either.
    *
    * https://github.com/square/okhttp/issues/214
    */
@@ -740,8 +739,8 @@ public final class CacheTest {
 
   private RequestBody requestBodyOrNull(String requestMethod) {
     return (requestMethod.equals("POST") || requestMethod.equals("PUT"))
-          ? RequestBody.create(MediaType.parse("text/plain"), "foo")
-          : null;
+        ? RequestBody.create(MediaType.parse("text/plain"), "foo")
+        : null;
   }
 
   @Test public void postInvalidatesCache() throws Exception {
@@ -1262,8 +1261,8 @@ public final class CacheTest {
   }
 
   /**
-   * For Last-Modified and Date headers, we should echo the date back in the
-   * exact format we were served.
+   * For Last-Modified and Date headers, we should echo the date back in the exact format we were
+   * served.
    */
   @Test public void retainServedDateFormat() throws Exception {
     // Serve a response with a non-standard date format that OkHttp supports.
@@ -1774,7 +1773,7 @@ public final class CacheTest {
     assertEquals(Arrays.asList(expectedCookies), actualCookies);
   }
 
-  @Test public void doNotCachePartialResponse() throws Exception  {
+  @Test public void doNotCachePartialResponse() throws Exception {
     assertNotCached(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_PARTIAL)
         .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
@@ -1877,10 +1876,9 @@ public final class CacheTest {
   }
 
   /**
-   * Old implementations of OkHttp's response cache wrote header fields like
-   * ":status: 200 OK". This broke our cached response parser because it split
-   * on the first colon. This regression test exists to help us read these old
-   * bad cache entries.
+   * Old implementations of OkHttp's response cache wrote header fields like ":status: 200 OK". This
+   * broke our cached response parser because it split on the first colon. This regression test
+   * exists to help us read these old bad cache entries.
    *
    * https://github.com/square/okhttp/issues/227
    */
@@ -2278,7 +2276,6 @@ public final class CacheTest {
     return client.newCall(request).execute();
   }
 
-
   private void writeFile(File directory, String file, String content) throws IOException {
     BufferedSink sink = Okio.buffer(fileSystem.sink(new File(directory, file)));
     sink.writeUtf8(content);
@@ -2286,9 +2283,8 @@ public final class CacheTest {
   }
 
   /**
-   * @param delta the offset from the current date to use. Negative
-   * values yield dates in the past; positive values yield dates in the
-   * future.
+   * @param delta the offset from the current date to use. Negative values yield dates in the past;
+   * positive values yield dates in the future.
    */
   private String formatDate(long delta, TimeUnit timeUnit) {
     return formatDate(new Date(System.currentTimeMillis() + timeUnit.toMillis(delta)));
@@ -2358,9 +2354,8 @@ public final class CacheTest {
   }
 
   /**
-   * Shortens the body of {@code response} but not the corresponding headers.
-   * Only useful to test how clients respond to the premature conclusion of
-   * the HTTP body.
+   * Shortens the body of {@code response} but not the corresponding headers. Only useful to test
+   * how clients respond to the premature conclusion of the HTTP body.
    */
   private MockResponse truncateViolently(MockResponse response, int numBytesToKeep) {
     response.setSocketPolicy(DISCONNECT_AT_END);

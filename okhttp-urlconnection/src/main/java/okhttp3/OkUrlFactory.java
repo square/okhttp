@@ -15,19 +15,19 @@
  */
 package okhttp3;
 
-import okhttp3.internal.huc.HttpURLConnectionImpl;
-import okhttp3.internal.huc.HttpsURLConnectionImpl;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import okhttp3.internal.huc.HttpURLConnectionImpl;
+import okhttp3.internal.huc.HttpsURLConnectionImpl;
 
 /**
  * @deprecated OkHttp will be dropping its ability to be used with {@link HttpURLConnection} in an
- *     upcoming release. Applications that need this should either downgrade to the system's
- *     built-in {@link HttpURLConnection} or upgrade to OkHttp's Request/Response API.
+ * upcoming release. Applications that need this should either downgrade to the system's built-in
+ * {@link HttpURLConnection} or upgrade to OkHttp's Request/Response API.
  */
 public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   private final OkHttpClient client;
@@ -41,8 +41,8 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   }
 
   /**
-   * Returns a copy of this stream handler factory that includes a shallow copy
-   * of the internal {@linkplain OkHttpClient HTTP client}.
+   * Returns a copy of this stream handler factory that includes a shallow copy of the internal
+   * {@linkplain OkHttpClient HTTP client}.
    */
   @Override public OkUrlFactory clone() {
     return new OkUrlFactory(client.clone());

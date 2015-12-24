@@ -199,8 +199,7 @@ final class RealCall implements Call {
   }
 
   /**
-   * Performs the request and returns the response. May return null if this
-   * call was canceled.
+   * Performs the request and returns the response. May return null if this call was canceled.
    */
   Response getResponse(Request request, boolean forWebSocket) throws IOException {
     // Copy body metadata to the appropriate request headers.

@@ -15,16 +15,15 @@
  */
 package okhttp3.internal;
 
+import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.internal.http.CacheRequest;
 import okhttp3.internal.http.CacheStrategy;
-import java.io.IOException;
-import okhttp3.Cache;
 
 /**
- * OkHttp's internal cache interface. Applications shouldn't implement this:
- * instead use {@link Cache}.
+ * OkHttp's internal cache interface. Applications shouldn't implement this: instead use {@link
+ * okhttp3.Cache}.
  */
 public interface InternalCache {
   Response get(Request request) throws IOException;
@@ -32,16 +31,15 @@ public interface InternalCache {
   CacheRequest put(Response response) throws IOException;
 
   /**
-   * Remove any cache entries for the supplied {@code request}. This is invoked
-   * when the client invalidates the cache, such as when making POST requests.
+   * Remove any cache entries for the supplied {@code request}. This is invoked when the client
+   * invalidates the cache, such as when making POST requests.
    */
   void remove(Request request) throws IOException;
 
   /**
-   * Handles a conditional request hit by updating the stored cache response
-   * with the headers from {@code network}. The cached response body is not
-   * updated. If the stored response has changed since {@code cached} was
-   * returned, this does nothing.
+   * Handles a conditional request hit by updating the stored cache response with the headers from
+   * {@code network}. The cached response body is not updated. If the stored response has changed
+   * since {@code cached} was returned, this does nothing.
    */
   void update(Response cached, Response network) throws IOException;
 

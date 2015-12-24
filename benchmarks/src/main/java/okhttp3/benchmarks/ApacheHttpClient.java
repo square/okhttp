@@ -15,13 +15,13 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.HttpUrl;
-import okhttp3.internal.SslContextBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import javax.net.ssl.SSLContext;
+import okhttp3.HttpUrl;
+import okhttp3.internal.SslContextBuilder;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;

@@ -16,20 +16,12 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
-import java.net.URI;
-import okhttp3.Address;
-import okhttp3.Authenticator;
-import okhttp3.ConnectionSpec;
-import okhttp3.Protocol;
-import okhttp3.Route;
-import okhttp3.internal.RouteDatabase;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +32,14 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Address;
+import okhttp3.Authenticator;
+import okhttp3.ConnectionSpec;
+import okhttp3.Protocol;
+import okhttp3.Route;
+import okhttp3.internal.RouteDatabase;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -335,10 +335,10 @@ public final class RouteSelectorTest {
     socketAddress = new InetSocketAddress(InetAddress.getByName("localhost"), 1234);
     assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
     socketAddress = new InetSocketAddress(
-        InetAddress.getByAddress(new byte[] { 127, 0, 0, 1 }), 1234);
+        InetAddress.getByAddress(new byte[] {127, 0, 0, 1}), 1234);
     assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
     socketAddress = new InetSocketAddress(
-        InetAddress.getByAddress("foobar", new byte[] { 127, 0, 0, 1 }), 1234);
+        InetAddress.getByAddress("foobar", new byte[] {127, 0, 0, 1}), 1234);
     assertEquals("127.0.0.1", RouteSelector.getHostString(socketAddress));
   }
 
@@ -366,7 +366,7 @@ public final class RouteSelectorTest {
       List<InetAddress> result = new ArrayList<>();
       for (int i = 0; i < count; i++) {
         result.add(InetAddress.getByAddress(
-            new byte[] { (byte) prefix, (byte) 0, (byte) 0, (byte) i }));
+            new byte[] {(byte) prefix, (byte) 0, (byte) 0, (byte) i}));
       }
       return result;
     } catch (UnknownHostException e) {

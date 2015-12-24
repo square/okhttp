@@ -1,15 +1,15 @@
 // Copyright 2013 Square, Inc.
 package okhttp3.apache;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -32,9 +32,9 @@ import static java.net.Proxy.Type.HTTP;
 import static org.apache.http.HttpVersion.HTTP_1_1;
 
 /**
- * @deprecated OkHttp will be dropping its ability to be used with {@link HttpClient} in an
- *     upcoming release. Applications that need this should either downgrade to the Apache
- *     implementation or upgrade to OkHttp's Request/Response API.
+ * @deprecated OkHttp will be dropping its ability to be used with {@link HttpClient} in an upcoming
+ * release. Applications that need this should either downgrade to the Apache implementation or
+ * upgrade to OkHttp's Request/Response API.
  */
 public final class OkApacheClient implements HttpClient {
   private static Request transformRequest(HttpRequest request) {

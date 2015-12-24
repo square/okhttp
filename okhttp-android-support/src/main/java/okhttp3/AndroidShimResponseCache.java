@@ -15,8 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.huc.JavaApiConverter;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.CacheRequest;
@@ -26,6 +24,7 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import okhttp3.internal.huc.JavaApiConverter;
 
 /**
  * A class provided for use by Android so that it can continue supporting a {@link ResponseCache}
@@ -80,60 +79,55 @@ public class AndroidShimResponseCache extends ResponseCache {
   }
 
   /**
-   * Returns the number of bytes currently being used to store the values in
-   * this cache. This may be greater than the {@link #maxSize} if a background
-   * deletion is pending.
+   * Returns the number of bytes currently being used to store the values in this cache. This may be
+   * greater than the {@link #maxSize} if a background deletion is pending.
    */
   public long size() throws IOException {
     return delegate.getSize();
   }
 
   /**
-   * Returns the maximum number of bytes that this cache should use to store
-   * its data.
+   * Returns the maximum number of bytes that this cache should use to store its data.
    */
   public long maxSize() {
     return delegate.getMaxSize();
   }
 
   /**
-   * Force buffered operations to the filesystem. This ensures that responses
-   * written to the cache will be available the next time the cache is opened,
-   * even if this process is killed.
+   * Force buffered operations to the filesystem. This ensures that responses written to the cache
+   * will be available the next time the cache is opened, even if this process is killed.
    */
   public void flush() throws IOException {
     delegate.flush();
   }
 
   /**
-   * Returns the number of HTTP requests that required the network to either
-   * supply a response or validate a locally cached response.
+   * Returns the number of HTTP requests that required the network to either supply a response or
+   * validate a locally cached response.
    */
   public int getNetworkCount() {
     return delegate.getNetworkCount();
   }
 
   /**
-   * Returns the number of HTTP requests whose response was provided by the
-   * cache. This may include conditional {@code GET} requests that were
-   * validated over the network.
+   * Returns the number of HTTP requests whose response was provided by the cache. This may include
+   * conditional {@code GET} requests that were validated over the network.
    */
   public int getHitCount() {
     return delegate.getHitCount();
   }
 
   /**
-   * Returns the total number of HTTP requests that were made. This includes
-   * both client requests and requests that were made on the client's behalf
-   * to handle a redirects and retries.
+   * Returns the total number of HTTP requests that were made. This includes both client requests
+   * and requests that were made on the client's behalf to handle a redirects and retries.
    */
   public int getRequestCount() {
     return delegate.getRequestCount();
   }
 
   /**
-   * Uninstalls the cache and releases any active resources. Stored contents
-   * will remain on the filesystem.
+   * Uninstalls the cache and releases any active resources. Stored contents will remain on the
+   * filesystem.
    */
   public void close() throws IOException {
     delegate.close();
@@ -145,5 +139,4 @@ public class AndroidShimResponseCache extends ResponseCache {
   public void delete() throws IOException {
     delegate.delete();
   }
-
 }

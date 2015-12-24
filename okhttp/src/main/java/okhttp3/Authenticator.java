@@ -35,7 +35,7 @@ import java.io.IOException;
  *
  * <p>Whn authentication is requested by a proxy server, the response code is 407 and the
  * implementation should respond with a new request that sets the "Proxy-Authorization" header.
- *  <pre>   {@code
+ * <pre>   {@code
  *
  *    String credential = Credentials.basic(...)
  *    return response.request().newBuilder()

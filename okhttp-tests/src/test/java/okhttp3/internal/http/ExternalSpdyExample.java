@@ -16,10 +16,6 @@
 
 package okhttp3.internal.http;
 
-import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
-import okhttp3.Protocol;
-import okhttp3.internal.Util;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -27,6 +23,10 @@ import java.util.List;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
+import okhttp3.OkHttpClient;
+import okhttp3.OkUrlFactory;
+import okhttp3.Protocol;
+import okhttp3.internal.Util;
 
 import static okhttp3.internal.http.OkHeaders.SELECTED_PROTOCOL;
 

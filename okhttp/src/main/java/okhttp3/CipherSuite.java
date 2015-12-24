@@ -356,7 +356,7 @@ public enum CipherSuite {
 
   /**
    * @param javaName the name used by Java APIs for this cipher suite. Different than the IANA name
-   *     for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
+   * for older cipher suites because the prefix is {@code SSL_} instead of {@code TLS_}.
    * @param value the integer identifier for this cipher suite. (Documentation only.)
    * @param rfc the RFC describing this cipher suite. (Documentation only.)
    * @param sinceJavaVersion the first major Java release supporting this cipher suite.

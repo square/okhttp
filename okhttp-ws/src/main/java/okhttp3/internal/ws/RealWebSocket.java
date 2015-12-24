@@ -15,17 +15,17 @@
  */
 package okhttp3.internal.ws;
 
+import java.io.IOException;
+import java.net.ProtocolException;
+import java.util.Random;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.internal.NamedRunnable;
 import okhttp3.ws.WebSocket;
 import okhttp3.ws.WebSocketListener;
-import java.io.IOException;
-import java.net.ProtocolException;
-import java.util.Random;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -89,8 +89,8 @@ public abstract class RealWebSocket implements WebSocket {
   }
 
   /**
-   * Read a single message from the web socket and deliver it to the listener. This method should
-   * be called in a loop with the return value indicating whether looping should continue.
+   * Read a single message from the web socket and deliver it to the listener. This method should be
+   * called in a loop with the return value indicating whether looping should continue.
    */
   public boolean readMessage() {
     try {

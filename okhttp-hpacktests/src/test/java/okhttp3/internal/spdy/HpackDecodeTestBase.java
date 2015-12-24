@@ -15,13 +15,13 @@
  */
 package okhttp3.internal.spdy;
 
-import okhttp3.internal.spdy.hpackjson.Case;
-import okhttp3.internal.spdy.hpackjson.HpackJsonUtil;
-import okhttp3.internal.spdy.hpackjson.Story;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
+import okhttp3.internal.spdy.hpackjson.Case;
+import okhttp3.internal.spdy.hpackjson.HpackJsonUtil;
+import okhttp3.internal.spdy.hpackjson.Story;
 import okio.Buffer;
 
 import static org.junit.Assert.assertEquals;
@@ -44,7 +44,7 @@ public class HpackDecodeTestBase {
         fail("No stories for: " + interopTestName);
       }
       for (Story story : stories) {
-        result.add(new Story[] { story });
+        result.add(new Story[] {story});
       }
     }
     return result;
@@ -60,8 +60,7 @@ public class HpackDecodeTestBase {
   }
 
   /**
-   * Expects wire to be set for all cases, and compares the decoder's output to
-   * expected headers.
+   * Expects wire to be set for all cases, and compares the decoder's output to expected headers.
    */
   protected void testDecoder() throws Exception {
     testDecoder(story);
@@ -75,9 +74,10 @@ public class HpackDecodeTestBase {
           hpackReader.getAndResetHeaderList());
     }
   }
+
   /**
-   * Checks if {@code expected} and {@code observed} are equal when viewed as a
-   * set and headers are deduped.
+   * Checks if {@code expected} and {@code observed} are equal when viewed as a set and headers are
+   * deduped.
    *
    * TODO: See if duped headers should be preserved on decode and verify.
    */

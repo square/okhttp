@@ -15,14 +15,14 @@
  */
 package okhttp3;
 
-import okhttp3.internal.http.HttpMethod;
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
+import okhttp3.internal.http.HttpMethod;
 
 /**
- * An HTTP request. Instances of this class are immutable if their {@link #body}
- * is null or itself immutable.
+ * An HTTP request. Instances of this class are immutable if their {@link #body} is null or itself
+ * immutable.
  */
 public final class Request {
   private final HttpUrl url;
@@ -75,8 +75,8 @@ public final class Request {
   }
 
   /**
-   * Returns the cache control directives for this response. This is never null,
-   * even if this response contains no {@code Cache-Control} header.
+   * Returns the cache control directives for this response. This is never null, even if this
+   * response contains no {@code Cache-Control} header.
    */
   public CacheControl cacheControl() {
     CacheControl result = cacheControl;
@@ -127,7 +127,7 @@ public final class Request {
      * Sets the URL target of this request.
      *
      * @throws IllegalArgumentException if {@code url} is not a valid HTTP or HTTPS URL. Avoid this
-     *     exception by calling {@link HttpUrl#parse}; it returns null for invalid URLs.
+     * exception by calling {@link HttpUrl#parse}; it returns null for invalid URLs.
      */
     public Builder url(String url) {
       if (url == null) throw new IllegalArgumentException("url == null");
@@ -148,7 +148,7 @@ public final class Request {
      * Sets the URL target of this request.
      *
      * @throws IllegalArgumentException if the scheme of {@code url} is not {@code http} or {@code
-     *     https}.
+     * https}.
      */
     public Builder url(URL url) {
       if (url == null) throw new IllegalArgumentException("url == null");
@@ -158,8 +158,8 @@ public final class Request {
     }
 
     /**
-     * Sets the header named {@code name} to {@code value}. If this request
-     * already has any headers with that name, they are all replaced.
+     * Sets the header named {@code name} to {@code value}. If this request already has any headers
+     * with that name, they are all replaced.
      */
     public Builder header(String name, String value) {
       headers.set(name, value);
@@ -167,8 +167,8 @@ public final class Request {
     }
 
     /**
-     * Adds a header with {@code name} and {@code value}. Prefer this method for
-     * multiply-valued headers like "Cookie".
+     * Adds a header with {@code name} and {@code value}. Prefer this method for multiply-valued
+     * headers like "Cookie".
      *
      * <p>Note that for some headers including {@code Content-Length} and {@code Content-Encoding},
      * OkHttp may replace {@code value} with a header derived from the request body.
@@ -190,9 +190,9 @@ public final class Request {
     }
 
     /**
-     * Sets this request's {@code Cache-Control} header, replacing any cache
-     * control headers already present. If {@code cacheControl} doesn't define
-     * any directives, this clears this request's cache-control headers.
+     * Sets this request's {@code Cache-Control} header, replacing any cache control headers already
+     * present. If {@code cacheControl} doesn't define any directives, this clears this request's
+     * cache-control headers.
      */
     public Builder cacheControl(CacheControl cacheControl) {
       String value = cacheControl.toString();
@@ -244,9 +244,8 @@ public final class Request {
     }
 
     /**
-     * Attaches {@code tag} to the request. It can be used later to cancel the
-     * request. If the tag is unspecified or null, the request is canceled by
-     * using the request itself as the tag.
+     * Attaches {@code tag} to the request. It can be used later to cancel the request. If the tag
+     * is unspecified or null, the request is canceled by using the request itself as the tag.
      */
     public Builder tag(Object tag) {
       this.tag = tag;

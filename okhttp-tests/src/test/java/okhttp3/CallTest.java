@@ -579,14 +579,14 @@ public final class CallTest {
     try {
       call.execute();
       fail();
-    } catch (IllegalStateException e){
+    } catch (IllegalStateException e) {
       assertEquals("Already Executed", e.getMessage());
     }
 
     try {
       call.enqueue(callback);
       fail();
-    } catch (IllegalStateException e){
+    } catch (IllegalStateException e) {
       assertEquals("Already Executed", e.getMessage());
     }
 
@@ -609,14 +609,14 @@ public final class CallTest {
     try {
       call.execute();
       fail();
-    } catch (IllegalStateException e){
+    } catch (IllegalStateException e) {
       assertEquals("Already Executed", e.getMessage());
     }
 
     try {
       call.enqueue(callback);
       fail();
-    } catch (IllegalStateException e){
+    } catch (IllegalStateException e) {
       assertEquals("Already Executed", e.getMessage());
     }
 
@@ -822,6 +822,7 @@ public final class CallTest {
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain");
       }
+
       @Override public void writeTo(BufferedSink sink) throws IOException {
         sink.writeUtf8("abc");
         sink.timeout().deadline(5, TimeUnit.SECONDS);
@@ -839,6 +840,7 @@ public final class CallTest {
       @Override public MediaType contentType() {
         return MediaType.parse("text/plain");
       }
+
       @Override public void writeTo(BufferedSink sink) throws IOException {
         assertFalse(sink.timeout().hasDeadline());
         sink.writeUtf8("def");
@@ -2246,8 +2248,8 @@ public final class CallTest {
 
   /**
    * Used during tests that involve TLS connection fallback attempts. OkHttp includes the
-   * TLS_FALLBACK_SCSV cipher on fallback connections. See
-   * {@link FallbackTestClientSocketFactory} for details.
+   * TLS_FALLBACK_SCSV cipher on fallback connections. See {@link FallbackTestClientSocketFactory}
+   * for details.
    */
   private void suppressTlsFallbackScsv(OkHttpClient client) {
     FallbackTestClientSocketFactory clientSocketFactory =

@@ -19,17 +19,19 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 
 /**
- * The concrete route used by a connection to reach an abstract origin server.
- * When creating a connection the client has many options:
+ * The concrete route used by a connection to reach an abstract origin server. When creating a
+ * connection the client has many options:
+ *
  * <ul>
- *   <li><strong>HTTP proxy:</strong> a proxy server may be explicitly
- *       configured for the client. Otherwise the {@linkplain java.net.ProxySelector
- *       proxy selector} is used. It may return multiple proxies to attempt.
- *   <li><strong>IP address:</strong> whether connecting directly to an origin
- *       server or a proxy, opening a socket requires an IP address. The DNS
- *       server may return multiple IP addresses to attempt.
+ *     <li><strong>HTTP proxy:</strong> a proxy server may be explicitly configured for the client.
+ *         Otherwise the {@linkplain java.net.ProxySelector proxy selector} is used. It may return
+ *         multiple proxies to attempt.
+ *     <li><strong>IP address:</strong> whether connecting directly to an origin server or a proxy,
+ *         opening a socket requires an IP address. The DNS server may return multiple IP addresses
+ *         to attempt.
  * </ul>
- * Each route is a specific selection of these options.
+ *
+ * <p>Each route is a specific selection of these options.
  */
 public final class Route {
   final Address address;
@@ -58,9 +60,8 @@ public final class Route {
   /**
    * Returns the {@link Proxy} of this route.
    *
-   * <strong>Warning:</strong> This may disagree with {@link Address#proxy}
-   * when it is null. When the address's proxy is null, the proxy selector is
-   * used.
+   * <strong>Warning:</strong> This may disagree with {@link Address#proxy} when it is null. When
+   * the address's proxy is null, the proxy selector is used.
    */
   public Proxy proxy() {
     return proxy;

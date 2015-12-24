@@ -20,12 +20,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * This class was originally composed from the following classes in
- * <a href="https://github.com/twitter/hpack">Twitter Hpack</a>.
+ * This class was originally composed from the following classes in <a
+ * href="https://github.com/twitter/hpack">Twitter Hpack</a>.
+ *
  * <ul>
- * <li>{@code com.twitter.hpack.HuffmanEncoder}</li>
- * <li>{@code com.twitter.hpack.HuffmanDecoder}</li>
- * <li>{@code com.twitter.hpack.HpackUtil}</li>
+ *     <li>{@code com.twitter.hpack.HuffmanEncoder}</li>
+ *     <li>{@code com.twitter.hpack.HuffmanDecoder}</li>
+ *     <li>{@code com.twitter.hpack.HpackUtil}</li>
  * </ul>
  */
 class Huffman {

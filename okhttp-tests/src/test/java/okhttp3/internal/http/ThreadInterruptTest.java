@@ -15,13 +15,6 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.DelegatingServerSocketFactory;
-import okhttp3.DelegatingSocketFactory;
-import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -30,13 +23,17 @@ import java.net.HttpURLConnection;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.TimeUnit;
-
+import javax.net.ServerSocketFactory;
+import javax.net.SocketFactory;
+import okhttp3.DelegatingServerSocketFactory;
+import okhttp3.DelegatingSocketFactory;
+import okhttp3.OkHttpClient;
+import okhttp3.OkUrlFactory;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.net.ServerSocketFactory;
-import javax.net.SocketFactory;
 
 import static org.junit.Assert.fail;
 

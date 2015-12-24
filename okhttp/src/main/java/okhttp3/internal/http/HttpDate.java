@@ -51,7 +51,7 @@ public final class HttpDate {
       "EEE, dd MMM yyyy HH:mm:ss zzz", // RFC 822, updated by RFC 1123 with any TZ
       "EEEE, dd-MMM-yy HH:mm:ss zzz", // RFC 850, obsoleted by RFC 1036 with any TZ.
       "EEE MMM d HH:mm:ss yyyy", // ANSI C's asctime() format
-       // Alternative formats.
+      // Alternative formats.
       "EEE, dd-MMM-yyyy HH:mm:ss z",
       "EEE, dd-MMM-yyyy HH-mm-ss z",
       "EEE, dd MMM yy HH:mm:ss z",

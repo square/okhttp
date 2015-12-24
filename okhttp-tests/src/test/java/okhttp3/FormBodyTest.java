@@ -189,7 +189,7 @@ public final class FormBodyTest {
   private String formEncode(int codePoint) throws IOException {
     // Wrap the codepoint with regular printable characters to prevent trimming.
     FormBody body = new FormBody.Builder()
-        .add("a", new String(new int[] { 'b', codePoint, 'c' }, 0, 3))
+        .add("a", new String(new int[] {'b', codePoint, 'c'}, 0, 3))
         .build();
     Buffer buffer = new Buffer();
     body.writeTo(buffer);

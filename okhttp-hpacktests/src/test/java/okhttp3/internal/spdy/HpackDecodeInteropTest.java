@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.spdy;
 
-import okhttp3.internal.spdy.hpackjson.Story;
 import java.util.Collection;
+import okhttp3.internal.spdy.hpackjson.Story;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -30,7 +30,7 @@ public class HpackDecodeInteropTest extends HpackDecodeTestBase {
     super(story);
   }
 
-  @Parameterized.Parameters(name="{0}")
+  @Parameterized.Parameters(name = "{0}")
   public static Collection<Story[]> createStories() throws Exception {
     return createStories(storiesForCurrentDraft());
   }

@@ -15,9 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +24,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -502,8 +502,8 @@ public final class InterceptorTest {
     Interceptor modifyHeaderInterceptor = new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
         return chain.proceed(chain.request().newBuilder()
-          .header("User-Agent", "intercepted request")
-          .build());
+            .header("User-Agent", "intercepted request")
+            .build());
       }
     };
 
@@ -533,7 +533,7 @@ public final class InterceptorTest {
    * exception goes to the uncaught exception handler.
    */
   private void interceptorThrowsRuntimeExceptionAsynchronous(
-        List<Interceptor> interceptors) throws Exception {
+      List<Interceptor> interceptors) throws Exception {
     interceptors.add(new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
         throw new RuntimeException("boom!");

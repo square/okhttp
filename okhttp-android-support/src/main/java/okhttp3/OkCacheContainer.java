@@ -16,8 +16,8 @@
 package okhttp3;
 
 /**
- * An interface that allows OkHttp to detect that a {@link java.net.ResponseCache} contains a
- * {@link Cache}.
+ * An interface that allows OkHttp to detect that a {@link java.net.ResponseCache} contains a {@link
+ * Cache}.
  */
 public interface OkCacheContainer {
   Cache getCache();

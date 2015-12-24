@@ -20,8 +20,8 @@ package okhttp3.internal.tls;
 import javax.security.auth.x500.X500Principal;
 
 /**
- * A distinguished name (DN) parser. This parser only supports extracting a
- * string value from a DN. It doesn't support values in the hex-string style.
+ * A distinguished name (DN) parser. This parser only supports extracting a string value from a DN.
+ * It doesn't support values in the hex-string style.
  */
 final class DistinguishedNameParser {
   private final String dn;
@@ -341,8 +341,8 @@ final class DistinguishedNameParser {
   }
 
   /**
-   * Parses the DN and returns the most significant attribute value
-   * for an attribute type, or null if none found.
+   * Parses the DN and returns the most significant attribute value for an attribute type, or null
+   * if none found.
    *
    * @param attributeType attribute type to look for (e.g. "ca")
    */

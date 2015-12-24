@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.framed;
 
+import java.net.HttpURLConnection;
 import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.RecordedRequest;
-import java.net.HttpURLConnection;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

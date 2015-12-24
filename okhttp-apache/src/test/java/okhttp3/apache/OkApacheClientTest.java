@@ -1,13 +1,13 @@
 package okhttp3.apache;
 
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.util.zip.GZIPInputStream;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.GzipSink;
 import okio.Okio;
@@ -114,20 +114,22 @@ public class OkApacheClientTest {
     assertEquals("Hello, world!", request.getBody().readUtf8());
     assertEquals(request.getHeader("Content-Length"), "13");
   }
+
   @Test public void postEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
     final HttpPost post = new HttpPost(server.url("/").url().toURI());
     client.execute(post);
-    
+
     RecordedRequest request = server.takeRequest();
     assertEquals(0, request.getBodySize());
     assertNotNull(request.getBody());
   }
+
   @Test public void putEmptyEntity() throws Exception {
     server.enqueue(new MockResponse());
     final HttpPut put = new HttpPut(server.url("/").url().toURI());
     client.execute(put);
-    
+
     RecordedRequest request = server.takeRequest();
     assertEquals(0, request.getBodySize());
     assertNotNull(request.getBody());

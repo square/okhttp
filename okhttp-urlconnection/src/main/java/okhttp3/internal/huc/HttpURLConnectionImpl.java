@@ -17,29 +17,6 @@
 
 package okhttp3.internal.huc;
 
-import okhttp3.Connection;
-import okhttp3.Handshake;
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.Route;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Platform;
-import okhttp3.internal.Util;
-import okhttp3.internal.Version;
-import okhttp3.internal.http.HttpDate;
-import okhttp3.internal.http.HttpEngine;
-import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.http.OkHeaders;
-import okhttp3.internal.http.RequestException;
-import okhttp3.internal.http.RetryableSink;
-import okhttp3.internal.http.RouteException;
-import okhttp3.internal.http.StatusLine;
-import okhttp3.internal.http.StreamAllocation;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,20 +40,42 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import okhttp3.Connection;
+import okhttp3.Handshake;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Route;
+import okhttp3.internal.Internal;
+import okhttp3.internal.Platform;
+import okhttp3.internal.Util;
+import okhttp3.internal.Version;
+import okhttp3.internal.http.HttpDate;
+import okhttp3.internal.http.HttpEngine;
+import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.http.RequestException;
+import okhttp3.internal.http.RetryableSink;
+import okhttp3.internal.http.RouteException;
+import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.http.StreamAllocation;
 import okio.BufferedSink;
 import okio.Sink;
 
 /**
- * This implementation uses HttpEngine to send requests and receive responses.
- * This class may use multiple HttpEngines to follow redirects, authentication
- * retries, etc. to retrieve the final response body.
+ * This implementation uses HttpEngine to send requests and receive responses. This class may use
+ * multiple HttpEngines to follow redirects, authentication retries, etc. to retrieve the final
+ * response body.
  *
- * <h3>What does 'connected' mean?</h3>
- * This class inherits a {@code connected} field from the superclass. That field
- * is <strong>not</strong> used to indicate whether this URLConnection is
- * currently connected. Instead, it indicates whether a connection has ever been
- * attempted. Once a connection has been attempted, certain properties (request
- * header fields, request method, etc.) are immutable.
+ * <h3>What does 'connected' mean?</h3> This class inherits a {@code connected} field from the
+ * superclass. That field is <strong>not</strong> used to indicate whether this URLConnection is
+ * currently connected. Instead, it indicates whether a connection has ever been attempted. Once a
+ * connection has been attempted, certain properties (request header fields, request method, etc.)
+ * are immutable.
  */
 public class HttpURLConnectionImpl extends HttpURLConnection {
   private static final Set<String> METHODS = new LinkedHashSet<>(
@@ -96,14 +95,14 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   private Headers responseHeaders;
 
   /**
-   * The most recently attempted route. This will be null if we haven't sent a
-   * request yet, or if the response comes from a cache.
+   * The most recently attempted route. This will be null if we haven't sent a request yet, or if
+   * the response comes from a cache.
    */
   private Route route;
 
   /**
-   * The most recently received TLS handshake. This will be null if we haven't
-   * connected yet, or if the most recent connection was HTTP (and not HTTPS).
+   * The most recently received TLS handshake. This will be null if we haven't connected yet, or if
+   * the most recent connection was HTTP (and not HTTPS).
    */
   Handshake handshake;
 
@@ -134,8 +133,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /**
-   * Returns an input stream from the server in the case of error such as the
-   * requested file (txt, htm, html) is not found on the remote server.
+   * Returns an input stream from the server in the case of error such as the requested file (txt,
+   * htm, html) is not found on the remote server.
    */
   @Override public final InputStream getErrorStream() {
     try {
@@ -176,8 +175,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /**
-   * Returns the value of the field at {@code position}. Returns null if there
-   * are fewer than {@code position} headers.
+   * Returns the value of the field at {@code position}. Returns null if there are fewer than {@code
+   * position} headers.
    */
   @Override public final String getHeaderField(int position) {
     try {
@@ -188,9 +187,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /**
-   * Returns the value of the field corresponding to the {@code fieldName}, or
-   * null if there is no such field. If the field has multiple values, the
-   * last value is returned.
+   * Returns the value of the field corresponding to the {@code fieldName}, or null if there is no
+   * such field. If the field has multiple values, the last value is returned.
    */
   @Override public final String getHeaderField(String fieldName) {
     try {
@@ -384,9 +382,8 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /**
-   * Aggressively tries to get the final HTTP response, potentially making
-   * many HTTP requests in the process in order to cope with redirects and
-   * authentication.
+   * Aggressively tries to get the final HTTP response, potentially making many HTTP requests in the
+   * process in order to cope with redirects and authentication.
    */
   private HttpEngine getResponse() throws IOException {
     initHttpEngine();
@@ -440,9 +437,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   /**
-   * Sends a request and optionally reads a response. Returns true if the
-   * request was successfully executed, and false if the request can be
-   * retried. Throws an exception if the request failed permanently.
+   * Sends a request and optionally reads a response. Returns true if the request was successfully
+   * executed, and false if the request can be retried. Throws an exception if the request failed
+   * permanently.
    */
   private boolean execute(boolean readResponse) throws IOException {
     boolean releaseConnection = true;
@@ -503,14 +500,15 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   /**
    * Returns true if either:
+   *
    * <ul>
    *   <li>A specific proxy was explicitly configured for this connection.
    *   <li>The response has already been retrieved, and a proxy was {@link
    *       java.net.ProxySelector selected} in order to get it.
    * </ul>
    *
-   * <p><strong>Warning:</strong> This method may return false before attempting
-   * to connect and true afterwards.
+   * <p><strong>Warning:</strong> This method may return false before attempting to connect and true
+   * afterwards.
    */
   @Override public final boolean usingProxy() {
     Proxy proxy = route != null

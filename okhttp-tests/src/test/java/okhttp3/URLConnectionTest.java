@@ -16,18 +16,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.RecordingAuthenticator;
-import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
-import okhttp3.internal.Version;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -69,6 +57,18 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.Internal;
+import okhttp3.internal.RecordingAuthenticator;
+import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.SingleInetAddressDns;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
+import okhttp3.internal.Version;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.RecordingHostnameVerifier;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -636,8 +636,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * When a pooled connection fails, don't blame the route. Otherwise pooled
-   * connection failures can cause unnecessary SSL fallbacks.
+   * When a pooled connection fails, don't blame the route. Otherwise pooled connection failures can
+   * cause unnecessary SSL fallbacks.
    *
    * https://github.com/square/okhttp/issues/515
    */
@@ -733,11 +733,23 @@ public final class URLConnectionTest {
 
   public void testConnectViaSocketFactory(boolean useHttps) throws IOException {
     SocketFactory uselessSocketFactory = new SocketFactory() {
-      public Socket createSocket() { throw new IllegalArgumentException("useless"); }
-      public Socket createSocket(InetAddress host, int port) { return null; }
+      public Socket createSocket() {
+        throw new IllegalArgumentException("useless");
+      }
+
+      public Socket createSocket(InetAddress host, int port) {
+        return null;
+      }
+
       public Socket createSocket(InetAddress address, int port, InetAddress localAddress,
-          int localPort) { return null; }
-      public Socket createSocket(String host, int port) { return null; }
+          int localPort) {
+        return null;
+      }
+
+      public Socket createSocket(String host, int port) {
+        return null;
+      }
+
       public Socket createSocket(String host, int port, InetAddress localHost, int localPort) {
         return null;
       }
@@ -837,8 +849,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * We weren't honoring all of the appropriate proxy system properties when
-   * connecting via HTTPS. http://b/3097518
+   * We weren't honoring all of the appropriate proxy system properties when connecting via HTTPS.
+   * http://b/3097518
    */
   @Test public void connectViaHttpProxyToHttpsUsingProxySystemProperty() throws Exception {
     testConnectViaHttpProxyToHttps(ProxyConfig.PROXY_SYSTEM_PROPERTY);
@@ -849,8 +861,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * We were verifying the wrong hostname when connecting to an HTTPS site
-   * through a proxy. http://b/3097277
+   * We were verifying the wrong hostname when connecting to an HTTPS site through a proxy.
+   * http://b/3097277
    */
   private void testConnectViaHttpProxyToHttps(ProxyConfig proxyConfig) throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
@@ -1050,9 +1062,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * Reads {@code count} characters from the stream. If the stream is
-   * exhausted before {@code count} characters can be read, the remaining
-   * characters are returned and the stream is closed.
+   * Reads {@code count} characters from the stream. If the stream is exhausted before {@code count}
+   * characters can be read, the remaining characters are returned and the stream is closed.
    */
   private String readAscii(InputStream in, int count) throws IOException {
     StringBuilder result = new StringBuilder();
@@ -1100,9 +1111,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * We've had a bug where we forget the HTTP response when we see response
-   * code 401. This causes a new HTTP request to be issued for every call into
-   * the URLConnection.
+   * We've had a bug where we forget the HTTP response when we see response code 401. This causes a
+   * new HTTP request to be issued for every call into the URLConnection.
    */
   @Test public void unauthorizedResponseHandling() throws IOException {
     MockResponse response = new MockResponse().addHeader("WWW-Authenticate: challenge")
@@ -1177,9 +1187,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * This test checks whether connections are gzipped by default. This
-   * behavior in not required by the API, so a failure of this test does not
-   * imply a bug in the implementation.
+   * This test checks whether connections are gzipped by default. This behavior in not required by
+   * the API, so a failure of this test does not imply a bug in the implementation.
    */
   @Test public void gzipEncodingEnabledByDefault() throws IOException, InterruptedException {
     server.enqueue(new MockResponse()
@@ -1239,9 +1248,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * Test a bug where gzip input streams weren't exhausting the input stream,
-   * which corrupted the request that followed or prevented connection reuse.
-   * http://code.google.com/p/android/issues/detail?id=7059
+   * Test a bug where gzip input streams weren't exhausting the input stream, which corrupted the
+   * request that followed or prevented connection reuse. http://code.google.com/p/android/issues/detail?id=7059
    * http://code.google.com/p/android/issues/detail?id=38817
    */
   private void testClientConfiguredGzipContentEncodingAndConnectionReuse(TransferKind transferKind,
@@ -1402,7 +1410,7 @@ public final class URLConnectionTest {
     Authenticator.setDefault(new RecordingAuthenticator());
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
-    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    byte[] requestBody = {'A', 'B', 'C', 'D'};
     if (streamingMode == StreamingMode.FIXED_LENGTH) {
       connection.setFixedLengthStreamingMode(requestBody.length);
     } else if (streamingMode == StreamingMode.CHUNKED) {
@@ -1684,7 +1692,7 @@ public final class URLConnectionTest {
     client.client().setHostnameVerifier(new RecordingHostnameVerifier());
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
-    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    byte[] requestBody = {'A', 'B', 'C', 'D'};
     if (streamingMode == StreamingMode.FIXED_LENGTH) {
       connection.setFixedLengthStreamingMode(requestBody.length);
     } else if (streamingMode == StreamingMode.CHUNKED) {
@@ -1723,7 +1731,7 @@ public final class URLConnectionTest {
     Authenticator.setDefault(new RecordingAuthenticator());
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
-    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    byte[] requestBody = {'A', 'B', 'C', 'D'};
     OutputStream outputStream = connection.getOutputStream();
     outputStream.write(requestBody);
     outputStream.close();
@@ -2046,7 +2054,7 @@ public final class URLConnectionTest {
     connection = client.open(server.url("/page1").url());
     connection.setDoOutput(true);
     transferKind.setForRequest(connection, 4);
-    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    byte[] requestBody = {'A', 'B', 'C', 'D'};
     OutputStream outputStream = connection.getOutputStream();
     outputStream.write(requestBody);
     outputStream.close();
@@ -2144,7 +2152,7 @@ public final class URLConnectionTest {
 
     connection = client.open(server.url("/page1").url());
     connection.setRequestMethod(method);
-    byte[] requestBody = { 'A', 'B', 'C', 'D' };
+    byte[] requestBody = {'A', 'B', 'C', 'D'};
     if (method.equals("POST")) {
       connection.setDoOutput(true);
       OutputStream outputStream = connection.getOutputStream();
@@ -2159,7 +2167,7 @@ public final class URLConnectionTest {
 
     if (method.equals("GET")) {
       assertEquals("Page 2", response);
-    } else if (method.equals("HEAD"))  {
+    } else if (method.equals("HEAD")) {
       assertEquals("", response);
     } else {
       // Methods other than GET/HEAD shouldn't follow the redirect
@@ -2215,7 +2223,7 @@ public final class URLConnectionTest {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
     RecordingTrustManager trustManager = new RecordingTrustManager();
     SSLContext sc = SSLContext.getInstance("TLS");
-    sc.init(null, new TrustManager[] { trustManager }, new java.security.SecureRandom());
+    sc.init(null, new TrustManager[] {trustManager}, new java.security.SecureRandom());
 
     client.client().setHostnameVerifier(hostnameVerifier);
     client.client().setSslSocketFactory(sc.getSocketFactory());
@@ -2362,8 +2370,7 @@ public final class URLConnectionTest {
   }
 
   /**
-   * Retry redirects if the socket is closed.
-   * https://code.google.com/p/android/issues/detail?id=41576
+   * Retry redirects if the socket is closed. https://code.google.com/p/android/issues/detail?id=41576
    */
   @Test public void sameConnectionRedirectAndReuse() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
@@ -2409,9 +2416,9 @@ public final class URLConnectionTest {
   }
 
   /**
-   * We explicitly permit apps to close the upload stream even after it has
-   * been transmitted.  We also permit flush so that buffered streams can
-   * do a no-op flush when they are closed. http://b/3038470
+   * We explicitly permit apps to close the upload stream even after it has been transmitted.  We
+   * also permit flush so that buffered streams can do a no-op flush when they are closed.
+   * http://b/3038470
    */
   private void testFlushAfterStreamTransmitted(TransferKind transferKind) throws IOException {
     server.enqueue(new MockResponse().setBody("abc"));
@@ -2521,11 +2528,11 @@ public final class URLConnectionTest {
     } catch (NullPointerException expected) {
     }
     try {
-      connection.getContent(new Class[] { null });
+      connection.getContent(new Class[] {null});
       fail();
     } catch (NullPointerException expected) {
     }
-    assertNull(connection.getContent(new Class[] { getClass() }));
+    assertNull(connection.getContent(new Class[] {getClass()}));
     connection.getInputStream().close();
   }
 
@@ -2574,7 +2581,7 @@ public final class URLConnectionTest {
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
     OutputStream out = connection.getOutputStream();
-    out.write(new byte[] { 'A', 'B', 'C' });
+    out.write(new byte[] {'A', 'B', 'C'});
     out.close();
     assertEquals("A", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
     RecordedRequest request = server.takeRequest();
@@ -2916,8 +2923,8 @@ public final class URLConnectionTest {
 
   @Test public void customTokenAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
-            .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
-            .setBody("Please authenticate.");
+        .addHeader("WWW-Authenticate: Bearer realm=\"oauthed\"")
+        .setBody("Please authenticate.");
     server.enqueue(pleaseAuthenticate);
     server.enqueue(new MockResponse().setBody("A"));
 
@@ -3120,10 +3127,9 @@ public final class URLConnectionTest {
   }
 
   /**
-   * We had a bug where we attempted to gunzip responses that didn't have a
-   * body. This only came up with 304s since that response code can include
-   * headers (like "Content-Encoding") without any content to go along with it.
-   * https://github.com/square/okhttp/issues/358
+   * We had a bug where we attempted to gunzip responses that didn't have a body. This only came up
+   * with 304s since that response code can include headers (like "Content-Encoding") without any
+   * content to go along with it. https://github.com/square/okhttp/issues/358
    */
   @Test public void noTransparentGzipFor304NotModified() throws Exception {
     server.enqueue(new MockResponse()
@@ -3170,8 +3176,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * The RFC is unclear in this regard as it only specifies that this should
-   * invalidate the cache entry (if any).
+   * The RFC is unclear in this regard as it only specifies that this should invalidate the cache
+   * entry (if any).
    */
   @Test public void bodyPermittedOnDelete() throws Exception {
     server.enqueue(new MockResponse());
@@ -3304,8 +3310,8 @@ public final class URLConnectionTest {
   }
 
   /**
-   * Reads at most {@code limit} characters from {@code in} and asserts that
-   * content equals {@code expected}.
+   * Reads at most {@code limit} characters from {@code in} and asserts that content equals {@code
+   * expected}.
    */
   private void assertContent(String expected, HttpURLConnection connection, int limit)
       throws IOException {
@@ -3327,6 +3333,7 @@ public final class URLConnectionTest {
           throws IOException {
         response.setChunkedBody(content, chunkSize);
       }
+
       @Override void setForRequest(HttpURLConnection connection, int contentLength) {
         connection.setChunkedStreamingMode(5);
       }
@@ -3335,6 +3342,7 @@ public final class URLConnectionTest {
       @Override void setBody(MockResponse response, Buffer content, int chunkSize) {
         response.setBody(content);
       }
+
       @Override void setForRequest(HttpURLConnection connection, int contentLength) {
         connection.setFixedLengthStreamingMode(contentLength);
       }
@@ -3345,6 +3353,7 @@ public final class URLConnectionTest {
         response.setSocketPolicy(DISCONNECT_AT_END);
         response.removeHeader("Content-Length");
       }
+
       @Override void setForRequest(HttpURLConnection connection, int contentLength) {
       }
     };
@@ -3416,7 +3425,7 @@ public final class URLConnectionTest {
     private final List<String> calls = new ArrayList<String>();
 
     public X509Certificate[] getAcceptedIssuers() {
-      return new X509Certificate[] { };
+      return new X509Certificate[] {};
     }
 
     public void checkClientTrusted(X509Certificate[] chain, String authType)
@@ -3466,8 +3475,8 @@ public final class URLConnectionTest {
 
   /**
    * Used during tests that involve TLS connection fallback attempts. OkHttp includes the
-   * TLS_FALLBACK_SCSV cipher on fallback connections. See
-   * {@link FallbackTestClientSocketFactory} for details.
+   * TLS_FALLBACK_SCSV cipher on fallback connections. See {@link FallbackTestClientSocketFactory}
+   * for details.
    */
   private void suppressTlsFallbackScsv(OkHttpClient client) {
     FallbackTestClientSocketFactory clientSocketFactory =

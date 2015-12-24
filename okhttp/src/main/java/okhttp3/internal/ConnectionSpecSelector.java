@@ -16,7 +16,6 @@
 
 package okhttp3.internal;
 
-import okhttp3.ConnectionSpec;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.ProtocolException;
@@ -28,11 +27,12 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
+import okhttp3.ConnectionSpec;
 
 /**
- * Handles the connection spec fallback strategy: When a secure socket connection fails
- * due to a handshake / protocol problem the connection may be retried with different protocols.
- * Instances are stateful and should be created and used for a single connection attempt.
+ * Handles the connection spec fallback strategy: When a secure socket connection fails due to a
+ * handshake / protocol problem the connection may be retried with different protocols. Instances
+ * are stateful and should be created and used for a single connection attempt.
  */
 public final class ConnectionSpecSelector {
 
@@ -81,11 +81,11 @@ public final class ConnectionSpecSelector {
   }
 
   /**
-   * Reports a failure to complete a connection. Determines the next {@link ConnectionSpec} to
-   * try, if any.
+   * Reports a failure to complete a connection. Determines the next {@link ConnectionSpec} to try,
+   * if any.
    *
-   * @return {@code true} if the connection should be retried using
-   *     {@link #configureSecureSocket(SSLSocket)} or {@code false} if not
+   * @return {@code true} if the connection should be retried using {@link
+   * #configureSecureSocket(SSLSocket)} or {@code false} if not
    */
   public boolean connectionFailed(IOException e) {
     // Any future attempt to connect using this strategy will be a fallback attempt.
@@ -120,7 +120,6 @@ public final class ConnectionSpecSelector {
       // e.g. a certificate pinning error.
       return false;
     }
-
 
     // On Android, SSLProtocolExceptions can be caused by TLS_FALLBACK_SCSV failures, which means we
     // retry those when we probably should not.

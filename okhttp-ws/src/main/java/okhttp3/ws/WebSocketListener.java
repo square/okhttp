@@ -15,20 +15,19 @@
  */
 package okhttp3.ws;
 
+import java.io.IOException;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import java.io.IOException;
 import okio.Buffer;
 
 /** Listener for server-initiated messages on a connected {@link WebSocket}. */
 public interface WebSocketListener {
   /**
    * Called when the request has successfully been upgraded to a web socket. This method is called
-   * on the message reading thread to allow setting up any state before the
-   * {@linkplain #onMessage message}, {@linkplain #onPong pong}, and {@link #onClose close}
-   * callbacks start.
-   * <p>
-   * <b>Do not</b> use this callback to write to the web socket. Start a new thread or use
+   * on the message reading thread to allow setting up any state before the {@linkplain #onMessage
+   * message}, {@linkplain #onPong pong}, and {@link #onClose close} callbacks start.
+   *
+   * <p><b>Do not</b> use this callback to write to the web socket. Start a new thread or use
    * another thread in your application.
    */
   void onOpen(WebSocket webSocket, Response response);
@@ -42,12 +41,12 @@ public interface WebSocketListener {
   void onFailure(IOException e, Response response);
 
   /**
-   * Called when a server message is received. The {@code type} indicates whether the
-   * {@code payload} should be interpreted as UTF-8 text or binary data.
+   * Called when a server message is received. The {@code type} indicates whether the {@code
+   * payload} should be interpreted as UTF-8 text or binary data.
    *
    * <p>Implementations <strong>must</strong> call {@code source.close()} before returning. This
-   * indicates completion of parsing the message payload and will consume any remaining bytes in
-   * the message.
+   * indicates completion of parsing the message payload and will consume any remaining bytes in the
+   * message.
    *
    * <p>The {@linkplain ResponseBody#contentType() content type} of {@code message} will be either
    * {@link WebSocket#TEXT} or {@link WebSocket#BINARY} which indicates the format of the message.
@@ -61,9 +60,8 @@ public interface WebSocketListener {
   void onPong(Buffer payload);
 
   /**
-   * Called when the server sends a close message. This may have been initiated
-   * from a call to {@link WebSocket#close(int, String) close()} or as an unprompted
-   * message from the server.
+   * Called when the server sends a close message. This may have been initiated from a call to
+   * {@link WebSocket#close(int, String) close()} or as an unprompted message from the server.
    *
    * @param code The <a href="http://tools.ietf.org/html/rfc6455#section-7.4.1">RFC-compliant</a>
    * status code.

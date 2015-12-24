@@ -23,8 +23,8 @@ import java.util.Arrays;
  */
 public final class Settings {
   /**
-   * From the SPDY/3 and HTTP/2 specs, the default initial window size for all
-   * streams is 64 KiB. (Chrome 25 uses 10 MiB).
+   * From the SPDY/3 and HTTP/2 specs, the default initial window size for all streams is 64 KiB.
+   * (Chrome 25 uses 10 MiB).
    */
   static final int DEFAULT_INITIAL_WINDOW_SIZE = 64 * 1024;
 
@@ -212,8 +212,8 @@ public final class Settings {
   }
 
   /**
-   * Returns true if this user agent should use this setting in future spdy/3
-   * connections to the same host.
+   * Returns true if this user agent should use this setting in future spdy/3 connections to the
+   * same host.
    */
   boolean persistValue(int id) {
     int bit = 1 << id;
@@ -227,8 +227,8 @@ public final class Settings {
   }
 
   /**
-   * Writes {@code other} into this. If any setting is populated by this and
-   * {@code other}, the value and flags from {@code other} will be kept.
+   * Writes {@code other} into this. If any setting is populated by this and {@code other}, the
+   * value and flags from {@code other} will be kept.
    */
   void merge(Settings other) {
     for (int i = 0; i < COUNT; i++) {

@@ -1,8 +1,8 @@
 package okhttp3.apache;
 
+import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import java.io.IOException;
 import okio.BufferedSink;
 import org.apache.http.HttpEntity;
 

@@ -15,8 +15,6 @@
  */
 package okhttp3.internal;
 
-import okhttp3.ConnectionSpec;
-import okhttp3.TlsVersion;
 import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.util.Arrays;
@@ -25,6 +23,8 @@ import java.util.Set;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
+import okhttp3.ConnectionSpec;
+import okhttp3.TlsVersion;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -91,7 +91,7 @@ public class ConnectionSpecSelectorTest {
     ConnectionSpecSelector connectionSpecSelector = createConnectionSpecSelector(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, sslV3);
 
-    TlsVersion[] enabledSocketTlsVersions = { TlsVersion.TLS_1_1, TlsVersion.TLS_1_0 };
+    TlsVersion[] enabledSocketTlsVersions = {TlsVersion.TLS_1_1, TlsVersion.TLS_1_0};
     SSLSocket socket = createSocketWithEnabledProtocols(enabledSocketTlsVersions);
 
     // MODERN_TLS is used here.

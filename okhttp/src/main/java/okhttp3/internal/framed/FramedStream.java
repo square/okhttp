@@ -37,17 +37,16 @@ public final class FramedStream {
   // blocking operations are performed while the lock is held.
 
   /**
-   * The total number of bytes consumed by the application (with {@link
-   * FramedDataSource#read}), but not yet acknowledged by sending a {@code
-   * WINDOW_UPDATE} frame on this stream.
+   * The total number of bytes consumed by the application (with {@link FramedDataSource#read}), but
+   * not yet acknowledged by sending a {@code WINDOW_UPDATE} frame on this stream.
    */
   // Visible for testing
   long unacknowledgedBytesRead = 0;
 
   /**
-   * Count of bytes that can be written on the stream before receiving a
-   * window update. Even if this is positive, writes will block until there
-   * available bytes in {@code connection.bytesLeftInWriteWindow}.
+   * Count of bytes that can be written on the stream before receiving a window update. Even if this
+   * is positive, writes will block until there available bytes in {@code
+   * connection.bytesLeftInWriteWindow}.
    */
   // guarded by this
   long bytesLeftInWriteWindow;
@@ -67,9 +66,9 @@ public final class FramedStream {
   private final StreamTimeout writeTimeout = new StreamTimeout();
 
   /**
-   * The reason why this stream was abnormally closed. If there are multiple
-   * reasons to abnormally close this stream (such as both peers closing it
-   * near-simultaneously) then this is the first reason known to this peer.
+   * The reason why this stream was abnormally closed. If there are multiple reasons to abnormally
+   * close this stream (such as both peers closing it near-simultaneously) then this is the first
+   * reason known to this peer.
    */
   private ErrorCode errorCode = null;
 
@@ -95,13 +94,14 @@ public final class FramedStream {
 
   /**
    * Returns true if this stream is open. A stream is open until either:
+   *
    * <ul>
-   * <li>A {@code SYN_RESET} frame abnormally terminates the stream.
-   * <li>Both input and output streams have transmitted all data and
-   * headers.
+   *     <li>A {@code SYN_RESET} frame abnormally terminates the stream.
+   *     <li>Both input and output streams have transmitted all data and headers.
    * </ul>
-   * Note that the input stream may continue to yield data even after a stream
-   * reports itself as not open. This is because input data is buffered.
+   *
+   * <p>Note that the input stream may continue to yield data even after a stream reports itself as
+   * not open. This is because input data is buffered.
    */
   public synchronized boolean isOpen() {
     if (errorCode != null) {
@@ -130,8 +130,8 @@ public final class FramedStream {
   }
 
   /**
-   * Returns the stream's response headers, blocking if necessary if they
-   * have not been received yet.
+   * Returns the stream's response headers, blocking if necessary if they have not been received
+   * yet.
    */
   public synchronized List<Header> getResponseHeaders() throws IOException {
     readTimeout.enter();
@@ -147,8 +147,8 @@ public final class FramedStream {
   }
 
   /**
-   * Returns the reason why this stream was closed, or null if it closed
-   * normally or has not yet been closed.
+   * Returns the reason why this stream was closed, or null if it closed normally or has not yet
+   * been closed.
    */
   public synchronized ErrorCode getErrorCode() {
     return errorCode;
@@ -157,8 +157,8 @@ public final class FramedStream {
   /**
    * Sends a reply to an incoming stream.
    *
-   * @param out true to create an output stream that we can use to send data
-   * to the remote peer. Corresponds to {@code FLAG_FIN}.
+   * @param out true to create an output stream that we can use to send data to the remote peer.
+   * Corresponds to {@code FLAG_FIN}.
    */
   public void reply(List<Header> responseHeaders, boolean out) throws IOException {
     assert (!Thread.holdsLock(FramedStream.this));
@@ -199,8 +199,8 @@ public final class FramedStream {
   /**
    * Returns a sink that can be used to write data to the peer.
    *
-   * @throws IllegalStateException if this stream was initiated by the peer
-   *     and a {@link #reply} has not yet been sent.
+   * @throws IllegalStateException if this stream was initiated by the peer and a {@link #reply} has
+   * not yet been sent.
    */
   public Sink getSink() {
     synchronized (this) {
@@ -212,8 +212,8 @@ public final class FramedStream {
   }
 
   /**
-   * Abnormally terminate this stream. This blocks until the {@code RST_STREAM}
-   * frame has been transmitted.
+   * Abnormally terminate this stream. This blocks until the {@code RST_STREAM} frame has been
+   * transmitted.
    */
   public void close(ErrorCode rstStatusCode) throws IOException {
     if (!closeInternal(rstStatusCode)) {
@@ -223,8 +223,8 @@ public final class FramedStream {
   }
 
   /**
-   * Abnormally terminate this stream. This enqueues a {@code RST_STREAM}
-   * frame and returns immediately.
+   * Abnormally terminate this stream. This enqueues a {@code RST_STREAM} frame and returns
+   * immediately.
    */
   public void closeLater(ErrorCode errorCode) {
     if (!closeInternal(errorCode)) {
@@ -307,9 +307,9 @@ public final class FramedStream {
   }
 
   /**
-   * A source that reads the incoming data frames of a stream. Although this
-   * class uses synchronization to safely receive incoming data frames, it is
-   * not intended for use by multiple readers.
+   * A source that reads the incoming data frames of a stream. Although this class uses
+   * synchronization to safely receive incoming data frames, it is not intended for use by multiple
+   * readers.
    */
   private final class FramedDataSource implements Source {
     /** Buffer to receive data from the network into. Only accessed by the reader thread. */
@@ -325,8 +325,8 @@ public final class FramedStream {
     private boolean closed;
 
     /**
-     * True if either side has cleanly shut down this stream. We will
-     * receive no more bytes beyond those already in the buffer.
+     * True if either side has cleanly shut down this stream. We will receive no more bytes beyond
+     * those already in the buffer.
      */
     private boolean finished;
 
@@ -464,23 +464,21 @@ public final class FramedStream {
   }
 
   /**
-   * A sink that writes outgoing data frames of a stream. This class is not
-   * thread safe.
+   * A sink that writes outgoing data frames of a stream. This class is not thread safe.
    */
   final class FramedDataSink implements Sink {
     private static final long EMIT_BUFFER_SIZE = 16384;
 
     /**
-     * Buffer of outgoing data. This batches writes of small writes into this sink as larges
-     * frames written to the outgoing connection. Batching saves the (small) framing overhead.
+     * Buffer of outgoing data. This batches writes of small writes into this sink as larges frames
+     * written to the outgoing connection. Batching saves the (small) framing overhead.
      */
     private final Buffer sendBuffer = new Buffer();
 
     private boolean closed;
 
     /**
-     * True if either side has cleanly shut down this stream. We shall send
-     * no more bytes.
+     * True if either side has cleanly shut down this stream. We shall send no more bytes.
      */
     private boolean finished;
 
@@ -561,8 +559,7 @@ public final class FramedStream {
   }
 
   /**
-   * {@code delta} will be negative if a settings frame initial window is
-   * smaller than the last.
+   * {@code delta} will be negative if a settings frame initial window is smaller than the last.
    */
   void addBytesToWriteWindow(long delta) {
     bytesLeftInWriteWindow += delta;
@@ -580,8 +577,8 @@ public final class FramedStream {
   }
 
   /**
-   * Like {@link #wait}, but throws an {@code InterruptedIOException} when
-   * interrupted instead of the more awkward {@link InterruptedException}.
+   * Like {@link #wait}, but throws an {@code InterruptedIOException} when interrupted instead of
+   * the more awkward {@link InterruptedException}.
    */
   private void waitForIo() throws InterruptedIOException {
     try {
@@ -592,9 +589,8 @@ public final class FramedStream {
   }
 
   /**
-   * The Okio timeout watchdog will call {@link #timedOut} if the timeout is
-   * reached. In that case we close the stream (asynchronously) which will
-   * notify the waiting thread.
+   * The Okio timeout watchdog will call {@link #timedOut} if the timeout is reached. In that case
+   * we close the stream (asynchronously) which will notify the waiting thread.
    */
   class StreamTimeout extends AsyncTimeout {
     @Override protected void timedOut() {

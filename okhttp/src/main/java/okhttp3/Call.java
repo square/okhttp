@@ -18,29 +18,25 @@ package okhttp3;
 import java.io.IOException;
 
 /**
- * A call is a request that has been prepared for execution. A call can be
- * canceled. As this object represents a single request/response pair (stream),
- * it cannot be executed twice.
+ * A call is a request that has been prepared for execution. A call can be canceled. As this object
+ * represents a single request/response pair (stream), it cannot be executed twice.
  */
 public interface Call {
   /**
-   * Invokes the request immediately, and blocks until the response can be
-   * processed or is in error.
+   * Invokes the request immediately, and blocks until the response can be processed or is in
+   * error.
    *
-   * <p>The caller may read the response body with the response's
-   * {@link Response#body} method.  To facilitate connection recycling, callers
-   * should always {@link ResponseBody#close() close the response body}.
+   * <p>The caller may read the response body with the response's {@link Response#body} method.  To
+   * facilitate connection recycling, callers should always {@link ResponseBody#close() close the
+   * response body}.
    *
-   * <p>Note that transport-layer success (receiving a HTTP response code,
-   * headers and body) does not necessarily indicate application-layer success:
-   * {@code response} may still indicate an unhappy HTTP response code like 404
-   * or 500.
+   * <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does
+   * not necessarily indicate application-layer success: {@code response} may still indicate an
+   * unhappy HTTP response code like 404 or 500.
    *
-   * @throws IOException if the request could not be executed due to
-   *     cancellation, a connectivity problem or timeout. Because networks can
-   *     fail during an exchange, it is possible that the remote server
-   *     accepted the request before the failure.
-   *
+   * @throws IOException if the request could not be executed due to cancellation, a connectivity
+   * problem or timeout. Because networks can fail during an exchange, it is possible that the
+   * remote server accepted the request before the failure.
    * @throws IllegalStateException when the call has already been executed.
    */
   Response execute() throws IOException;
@@ -48,22 +44,18 @@ public interface Call {
   /**
    * Schedules the request to be executed at some point in the future.
    *
-   * <p>The {@link OkHttpClient#getDispatcher dispatcher} defines when the
-   * request will run: usually immediately unless there are several other
-   * requests currently being executed.
+   * <p>The {@link OkHttpClient#getDispatcher dispatcher} defines when the request will run: usually
+   * immediately unless there are several other requests currently being executed.
    *
-   * <p>This client will later call back {@code responseCallback} with either
-   * an HTTP response or a failure exception. If you {@link #cancel} a request
-   * before it completes the callback will not be invoked.
+   * <p>This client will later call back {@code responseCallback} with either an HTTP response or a
+   * failure exception. If you {@link #cancel} a request before it completes the callback will not
+   * be invoked.
    *
    * @throws IllegalStateException when the call has already been executed.
    */
   void enqueue(Callback responseCallback);
 
-  /**
-   * Cancels the request, if possible. Requests that are already complete
-   * cannot be canceled.
-   */
+  /** Cancels the request, if possible. Requests that are already complete cannot be canceled. */
   void cancel();
 
   /**

@@ -17,13 +17,13 @@
 
 package okhttp3.internal.tls;
 
-import okhttp3.internal.Util;
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
+import okhttp3.internal.Util;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -32,8 +32,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Tests for our hostname verifier. Most of these tests are from AOSP, which
- * itself includes tests from the Apache HTTP Client test suite.
+ * Tests for our hostname verifier. Most of these tests are from AOSP, which itself includes tests
+ * from the Apache HTTP Client test suite.
  */
 public final class HostnameVerifierTest {
   private HostnameVerifier verifier = OkHostnameVerifier.INSTANCE;
@@ -144,9 +144,9 @@ public final class HostnameVerifierTest {
   }
 
   /**
-   * Ignored due to incompatibilities between Android and Java on how non-ASCII
-   * subject alt names are parsed. Android fails to parse these, which means we
-   * fall back to the CN. The RI does parse them, so the CN is unused.
+   * Ignored due to incompatibilities between Android and Java on how non-ASCII subject alt names
+   * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
+   * them, so the CN is unused.
    */
   @Test @Ignore public void verifyNonAsciiSubjectAlt() throws Exception {
     // CN=foo.com, subjectAlt=bar.com, subjectAlt=&#x82b1;&#x5b50;.co.jp
@@ -329,9 +329,9 @@ public final class HostnameVerifierTest {
   }
 
   /**
-   * Ignored due to incompatibilities between Android and Java on how non-ASCII
-   * subject alt names are parsed. Android fails to parse these, which means we
-   * fall back to the CN. The RI does parse them, so the CN is unused.
+   * Ignored due to incompatibilities between Android and Java on how non-ASCII subject alt names
+   * are parsed. Android fails to parse these, which means we fall back to the CN. The RI does parse
+   * them, so the CN is unused.
    */
   @Test @Ignore public void testWilcardNonAsciiSubjectAlt() throws Exception {
     // CN=*.foo.com, subjectAlt=*.bar.com, subjectAlt=*.&#x82b1;&#x5b50;.co.jp
@@ -432,10 +432,9 @@ public final class HostnameVerifierTest {
   }
 
   /**
-   * Earlier implementations of Android's hostname verifier required that
-   * wildcard names wouldn't match "*.com" or similar. This was a nonstandard
-   * check that we've since dropped. It is the CA's responsibility to not hand
-   * out certificates that match so broadly.
+   * Earlier implementations of Android's hostname verifier required that wildcard names wouldn't
+   * match "*.com" or similar. This was a nonstandard check that we've since dropped. It is the CA's
+   * responsibility to not hand out certificates that match so broadly.
    */
   @Test public void wildcardsDoesNotNeedTwoDots() throws Exception {
     // openssl req -x509 -nodes -days 36500 -subj '/CN=*.com' -newkey rsa:512 -out cert.pem

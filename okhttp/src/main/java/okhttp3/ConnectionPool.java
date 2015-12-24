@@ -16,11 +16,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.RouteDatabase;
-import okhttp3.internal.Util;
-import okhttp3.internal.http.StreamAllocation;
-import okhttp3.internal.io.RealConnection;
 import java.lang.ref.Reference;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,31 +26,34 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.internal.Internal;
+import okhttp3.internal.RouteDatabase;
+import okhttp3.internal.Util;
+import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.io.RealConnection;
 
 import static okhttp3.internal.Util.closeQuietly;
 
 /**
- * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP
- * requests that share the same {@link Address} may share a
- * {@link Connection}. This class implements the policy of which connections to
- * keep open for future use.
+ * Manages reuse of HTTP and SPDY connections for reduced network latency. HTTP requests that share
+ * the same {@link Address} may share a {@link Connection}. This class implements the policy of
+ * which connections to keep open for future use.
  *
- * <p>The {@link #getDefault() system-wide default} uses system properties for
- * tuning parameters:
+ * <p>The {@link #getDefault() system-wide default} uses system properties for tuning parameters:
+ *
  * <ul>
- *     <li>{@code http.keepAlive} true if HTTP and SPDY connections should be
- *         pooled at all. Default is true.
- *     <li>{@code http.maxConnections} maximum number of idle connections to
- *         each to keep in the pool. Default is 5.
- *     <li>{@code http.keepAliveDuration} Time in milliseconds to keep the
- *         connection alive in the pool before closing it. Default is 5 minutes.
- *         This property isn't used by {@code HttpURLConnection}.
+ *     <li>{@code http.keepAlive} true if HTTP and SPDY connections should be pooled at all. Default
+ *         is true.
+ *     <li>{@code http.maxConnections} maximum number of idle connections to each to keep in the
+ *         pool. Default is 5.
+ *     <li>{@code http.keepAliveDuration} Time in milliseconds to keep the connection alive in the
+ *         pool before closing it. Default is 5 minutes. This property isn't used by {@code
+ *         HttpURLConnection}.
  * </ul>
  *
- * <p>The default instance <i>doesn't</i> adjust its configuration as system
- * properties are changed. This assumes that the applications that set these
- * parameters do so before making HTTP connections, and that this class is
- * initialized lazily.
+ * <p>The default instance <i>doesn't</i> adjust its configuration as system properties are changed.
+ * This assumes that the applications that set these parameters do so before making HTTP
+ * connections, and that this class is initialized lazily.
  */
 public final class ConnectionPool {
   private static final long DEFAULT_KEEP_ALIVE_DURATION_MS = 5 * 60 * 1000; // 5 min
@@ -80,8 +78,8 @@ public final class ConnectionPool {
 
   /**
    * A background thread is used to cleanup expired connections. There will be, at most, a single
-   * thread running per connection pool. We use a thread pool executor because it can shrink to
-   * zero threads, permitting this pool to be garbage collected.
+   * thread running per connection pool. We use a thread pool executor because it can shrink to zero
+   * threads, permitting this pool to be garbage collected.
    */
   private final Executor executor = new ThreadPoolExecutor(
       0 /* corePoolSize */, 1 /* maximumPoolSize */, 60L /* keepAliveTime */, TimeUnit.SECONDS,
@@ -188,8 +186,8 @@ public final class ConnectionPool {
   }
 
   /**
-   * Notify this pool that {@code connection} has become idle. Returns true if the connection
-   * has been removed from the pool and should be closed.
+   * Notify this pool that {@code connection} has become idle. Returns true if the connection has
+   * been removed from the pool and should be closed.
    */
   boolean connectionBecameIdle(RealConnection connection) {
     assert (Thread.holdsLock(this));
@@ -225,8 +223,8 @@ public final class ConnectionPool {
    * Performs maintenance on this pool, evicting the connection that has been idle the longest if
    * either it has exceeded the keep alive limit or the idle connections limit.
    *
-   * <p>Returns the duration in nanos to sleep until the next scheduled call to this method.
-   * Returns -1 if no further cleanups are required.
+   * <p>Returns the duration in nanos to sleep until the next scheduled call to this method. Returns
+   * -1 if no further cleanups are required.
    */
   long cleanup(long now) {
     int inUseConnectionCount = 0;
@@ -260,15 +258,12 @@ public final class ConnectionPool {
         // We've found a connection to evict. Remove it from the list, then close it below (outside
         // of the synchronized block).
         connections.remove(longestIdleConnection);
-
       } else if (idleConnectionCount > 0) {
         // A connection will be ready to evict soon.
         return keepAliveDurationNs - longestIdleDurationNs;
-
       } else if (inUseConnectionCount > 0) {
         // All connections are in use. It'll be at least the keep alive duration 'til we run again.
         return keepAliveDurationNs;
-
       } else {
         // No connections, idle or in use.
         return -1;

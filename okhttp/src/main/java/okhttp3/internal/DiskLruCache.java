@@ -16,7 +16,6 @@
 
 package okhttp3.internal;
 
-import okhttp3.internal.io.FileSystem;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -33,6 +32,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okhttp3.internal.io.FileSystem;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -42,48 +42,44 @@ import okio.Source;
 import okio.Timeout;
 
 /**
- * A cache that uses a bounded amount of space on a filesystem. Each cache
- * entry has a string key and a fixed number of values. Each key must match
- * the regex <strong>[a-z0-9_-]{1,64}</strong>. Values are byte sequences,
- * accessible as streams or files. Each value must be between {@code 0} and
- * {@code Integer.MAX_VALUE} bytes in length.
+ * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
+ * and a fixed number of values. Each key must match the regex <strong>[a-z0-9_-]{1,64}</strong>.
+ * Values are byte sequences, accessible as streams or files. Each value must be between {@code 0}
+ * and {@code Integer.MAX_VALUE} bytes in length.
  *
- * <p>The cache stores its data in a directory on the filesystem. This
- * directory must be exclusive to the cache; the cache may delete or overwrite
- * files from its directory. It is an error for multiple processes to use the
- * same cache directory at the same time.
+ * <p>The cache stores its data in a directory on the filesystem. This directory must be exclusive
+ * to the cache; the cache may delete or overwrite files from its directory. It is an error for
+ * multiple processes to use the same cache directory at the same time.
  *
- * <p>This cache limits the number of bytes that it will store on the
- * filesystem. When the number of stored bytes exceeds the limit, the cache will
- * remove entries in the background until the limit is satisfied. The limit is
- * not strict: the cache may temporarily exceed it while waiting for files to be
- * deleted. The limit does not include filesystem overhead or the cache
- * journal so space-sensitive applications should set a conservative limit.
+ * <p>This cache limits the number of bytes that it will store on the filesystem. When the number of
+ * stored bytes exceeds the limit, the cache will remove entries in the background until the limit
+ * is satisfied. The limit is not strict: the cache may temporarily exceed it while waiting for
+ * files to be deleted. The limit does not include filesystem overhead or the cache journal so
+ * space-sensitive applications should set a conservative limit.
  *
- * <p>Clients call {@link #edit} to create or update the values of an entry. An
- * entry may have only one editor at one time; if a value is not available to be
- * edited then {@link #edit} will return null.
+ * <p>Clients call {@link #edit} to create or update the values of an entry. An entry may have only
+ * one editor at one time; if a value is not available to be edited then {@link #edit} will return
+ * null.
+ *
  * <ul>
- *     <li>When an entry is being <strong>created</strong> it is necessary to
- *         supply a full set of values; the empty value should be used as a
- *         placeholder if necessary.
- *     <li>When an entry is being <strong>edited</strong>, it is not necessary
- *         to supply data for every value; values default to their previous
- *         value.
+ *     <li>When an entry is being <strong>created</strong> it is necessary to supply a full set of
+ *         values; the empty value should be used as a placeholder if necessary.
+ *     <li>When an entry is being <strong>edited</strong>, it is not necessary to supply data for
+ *         every value; values default to their previous value.
  * </ul>
- * Every {@link #edit} call must be matched by a call to {@link Editor#commit}
- * or {@link Editor#abort}. Committing is atomic: a read observes the full set
- * of values as they were before or after the commit, but never a mix of values.
  *
- * <p>Clients call {@link #get} to read a snapshot of an entry. The read will
- * observe the value at the time that {@link #get} was called. Updates and
- * removals after the call do not impact ongoing reads.
+ * <p>Every {@link #edit} call must be matched by a call to {@link Editor#commit} or {@link
+ * Editor#abort}. Committing is atomic: a read observes the full set of values as they were before
+ * or after the commit, but never a mix of values.
  *
- * <p>This class is tolerant of some I/O errors. If files are missing from the
- * filesystem, the corresponding entries will be dropped from the cache. If
- * an error occurs while writing a cache value, the edit will fail silently.
- * Callers should handle other problems by catching {@code IOException} and
- * responding appropriately.
+ * <p>Clients call {@link #get} to read a snapshot of an entry. The read will observe the value at
+ * the time that {@link #get} was called. Updates and removals after the call do not impact ongoing
+ * reads.
+ *
+ * <p>This class is tolerant of some I/O errors. If files are missing from the filesystem, the
+ * corresponding entries will be dropped from the cache. If an error occurs while writing a cache
+ * value, the edit will fail silently. Callers should handle other problems by catching {@code
+ * IOException} and responding appropriately.
  */
 public final class DiskLruCache implements Closeable {
   static final String JOURNAL_FILE = "journal";
@@ -157,9 +153,9 @@ public final class DiskLruCache implements Closeable {
   private boolean closed;
 
   /**
-   * To differentiate between old and current snapshots, each entry is given
-   * a sequence number each time an edit is committed. A snapshot is stale if
-   * its sequence number is not equal to its entry's sequence number.
+   * To differentiate between old and current snapshots, each entry is given a sequence number each
+   * time an edit is committed. A snapshot is stale if its sequence number is not equal to its
+   * entry's sequence number.
    */
   private long nextSequenceNumber = 0;
 
@@ -348,8 +344,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Computes the initial size and collects garbage as a part of opening the
-   * cache. Dirty entries are assumed to be inconsistent and will be deleted.
+   * Computes the initial size and collects garbage as a part of opening the cache. Dirty entries
+   * are assumed to be inconsistent and will be deleted.
    */
   private void processJournal() throws IOException {
     fileSystem.delete(journalFileTmp);
@@ -371,8 +367,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Creates a new journal that omits redundant information. This replaces the
-   * current journal if it exists.
+   * Creates a new journal that omits redundant information. This replaces the current journal if it
+   * exists.
    */
   private synchronized void rebuildJournal() throws IOException {
     if (journalWriter != null) {
@@ -414,9 +410,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Returns a snapshot of the entry named {@code key}, or null if it doesn't
-   * exist is not currently readable. If a value is returned, it is moved to
-   * the head of the LRU queue.
+   * Returns a snapshot of the entry named {@code key}, or null if it doesn't exist is not currently
+   * readable. If a value is returned, it is moved to the head of the LRU queue.
    */
   public synchronized Snapshot get(String key) throws IOException {
     initialize();
@@ -439,8 +434,7 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Returns an editor for the entry named {@code key}, or null if another
-   * edit is in progress.
+   * Returns an editor for the entry named {@code key}, or null if another edit is in progress.
    */
   public Editor edit(String key) throws IOException {
     return edit(key, ANY_SEQUENCE_NUMBER);
@@ -483,16 +477,15 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Returns the maximum number of bytes that this cache should use to store
-   * its data.
+   * Returns the maximum number of bytes that this cache should use to store its data.
    */
   public synchronized long getMaxSize() {
     return maxSize;
   }
 
   /**
-   * Changes the maximum number of bytes the cache can store and queues a job
-   * to trim the existing store, if necessary.
+   * Changes the maximum number of bytes the cache can store and queues a job to trim the existing
+   * store, if necessary.
    */
   public synchronized void setMaxSize(long maxSize) {
     this.maxSize = maxSize;
@@ -502,9 +495,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Returns the number of bytes currently being used to store the values in
-   * this cache. This may be greater than the max size if a background
-   * deletion is pending.
+   * Returns the number of bytes currently being used to store the values in this cache. This may be
+   * greater than the max size if a background deletion is pending.
    */
   public synchronized long size() throws IOException {
     initialize();
@@ -572,8 +564,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * We only rebuild the journal when it will halve the size of the journal
-   * and eliminate at least 2000 ops.
+   * We only rebuild the journal when it will halve the size of the journal and eliminate at least
+   * 2000 ops.
    */
   private boolean journalRebuildRequired() {
     final int redundantOpCompactThreshold = 2000;
@@ -582,9 +574,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Drops the entry for {@code key} if it exists and can be removed. If the
-   * entry for {@code key} is currently being edited, that edit will complete
-   * normally but its value will not be stored.
+   * Drops the entry for {@code key} if it exists and can be removed. If the entry for {@code key}
+   * is currently being edited, that edit will complete normally but its value will not be stored.
    *
    * @return true if an entry was removed.
    */
@@ -666,9 +657,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Closes the cache and deletes all of its stored values. This will delete
-   * all files in the cache directory including files that weren't created by
-   * the cache.
+   * Closes the cache and deletes all of its stored values. This will delete all files in the cache
+   * directory including files that weren't created by the cache.
    */
   public void delete() throws IOException {
     close();
@@ -676,8 +666,8 @@ public final class DiskLruCache implements Closeable {
   }
 
   /**
-   * Deletes all stored values from the cache. In-flight edits will complete
-   * normally but their values will not be stored.
+   * Deletes all stored values from the cache. In-flight edits will complete normally but their
+   * values will not be stored.
    */
   public synchronized void evictAll() throws IOException {
     initialize();
@@ -781,9 +771,8 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns an editor for this snapshot's entry, or null if either the
-     * entry has changed since this snapshot was created or if another edit
-     * is in progress.
+     * Returns an editor for this snapshot's entry, or null if either the entry has changed since
+     * this snapshot was created or if another edit is in progress.
      */
     public Editor edit() throws IOException {
       return DiskLruCache.this.edit(key, sequenceNumber);
@@ -835,8 +824,8 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns an unbuffered input stream to read the last committed value,
-     * or null if no value has been committed.
+     * Returns an unbuffered input stream to read the last committed value, or null if no value has
+     * been committed.
      */
     public Source newSource(int index) throws IOException {
       synchronized (DiskLruCache.this) {
@@ -855,11 +844,9 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Returns a new unbuffered output stream to write the value at
-     * {@code index}. If the underlying output stream encounters errors
-     * when writing to the filesystem, this edit will be aborted when
-     * {@link #commit} is called. The returned output stream does not throw
-     * IOExceptions.
+     * Returns a new unbuffered output stream to write the value at {@code index}. If the underlying
+     * output stream encounters errors when writing to the filesystem, this edit will be aborted
+     * when {@link #commit} is called. The returned output stream does not throw IOExceptions.
      */
     public Sink newSink(int index) throws IOException {
       synchronized (DiskLruCache.this) {
@@ -887,8 +874,8 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Commits this edit so it is visible to readers.  This releases the
-     * edit lock so another edit may be started on the same key.
+     * Commits this edit so it is visible to readers.  This releases the edit lock so another edit
+     * may be started on the same key.
      */
     public void commit() throws IOException {
       synchronized (DiskLruCache.this) {
@@ -903,8 +890,8 @@ public final class DiskLruCache implements Closeable {
     }
 
     /**
-     * Aborts this edit. This releases the edit lock so another edit may be
-     * started on the same key.
+     * Aborts this edit. This releases the edit lock so another edit may be started on the same
+     * key.
      */
     public void abort() throws IOException {
       synchronized (DiskLruCache.this) {

@@ -15,15 +15,15 @@
  */
 package okhttp3.internal;
 
-import okhttp3.Route;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import okhttp3.Route;
 
 /**
- * A blacklist of failed routes to avoid when creating a new connection to a
- * target address. This is used so that OkHttp can learn from its mistakes: if
- * there was a failure attempting to connect to a specific IP address or proxy
- * server, that failure is remembered and alternate routes are preferred.
+ * A blacklist of failed routes to avoid when creating a new connection to a target address. This is
+ * used so that OkHttp can learn from its mistakes: if there was a failure attempting to connect to
+ * a specific IP address or proxy server, that failure is remembered and alternate routes are
+ * preferred.
  */
 public final class RouteDatabase {
   private final Set<Route> failedRoutes = new LinkedHashSet<>();

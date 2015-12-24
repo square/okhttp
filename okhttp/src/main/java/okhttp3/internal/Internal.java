@@ -15,6 +15,10 @@
  */
 package okhttp3.internal;
 
+import java.net.MalformedURLException;
+import java.net.UnknownHostException;
+import java.util.logging.Logger;
+import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -25,10 +29,6 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
-import java.net.MalformedURLException;
-import java.net.UnknownHostException;
-import java.util.logging.Logger;
-import javax.net.ssl.SSLSocket;
 
 /**
  * Escalate internal APIs in {@code okhttp3} so they can be used from OkHttp's implementation
@@ -69,5 +69,6 @@ public abstract class Internal {
 
   // TODO delete the following when web sockets move into the main package.
   public abstract void callEnqueue(Call call, Callback responseCallback, boolean forWebSocket);
+
   public abstract StreamAllocation callEngineGetStreamAllocation(Call call);
 }

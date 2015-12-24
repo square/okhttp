@@ -29,18 +29,17 @@ import okio.Okio;
 import okio.Source;
 
 /**
- * Reads a SPDY/3 Name/Value header block. This class is made complicated by the
- * requirement that we're strict with which bytes we put in the compressed bytes
- * buffer. We need to put all compressed bytes into that buffer -- but no other
- * bytes.
+ * Reads a SPDY/3 Name/Value header block. This class is made complicated by the requirement that
+ * we're strict with which bytes we put in the compressed bytes buffer. We need to put all
+ * compressed bytes into that buffer -- but no other bytes.
  */
 class NameValueBlockReader {
   /** This source transforms compressed bytes into uncompressed bytes. */
   private final InflaterSource inflaterSource;
 
   /**
-   * How many compressed bytes must be read into inflaterSource before
-   * {@link #readNameValueBlock} returns.
+   * How many compressed bytes must be read into inflaterSource before {@link #readNameValueBlock}
+   * returns.
    */
   private int compressedLimit;
 

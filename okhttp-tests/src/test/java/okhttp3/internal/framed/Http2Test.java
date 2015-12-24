@@ -15,17 +15,16 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.ByteString;
 import okio.GzipSink;
 import okio.Okio;
-import org.junit.Assert;
 import org.junit.Test;
 
 import static okhttp3.TestUtil.headerEntries;
@@ -730,7 +729,7 @@ public class Http2Test {
   private static List<Header> largeHeaders() {
     String[] nameValues = new String[32];
     char[] chars = new char[512];
-    for (int i = 0; i < nameValues.length;) {
+    for (int i = 0; i < nameValues.length; ) {
       Arrays.fill(chars, (char) i);
       nameValues[i++] = nameValues[i++] = String.valueOf(chars);
     }
@@ -739,7 +738,7 @@ public class Http2Test {
 
   private static void writeMedium(BufferedSink sink, int i) throws IOException {
     sink.writeByte((i >>> 16) & 0xff);
-    sink.writeByte((i >>>  8) & 0xff);
-    sink.writeByte( i         & 0xff);
+    sink.writeByte((i >>> 8) & 0xff);
+    sink.writeByte(i & 0xff);
   }
 }

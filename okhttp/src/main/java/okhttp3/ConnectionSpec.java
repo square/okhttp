@@ -162,8 +162,8 @@ public final class ConnectionSpec {
   }
 
   /**
-   * Returns {@code true} if the socket, as currently configured, supports this connection spec.
-   * In order for a socket to be compatible the enabled cipher suites and protocols must intersect.
+   * Returns {@code true} if the socket, as currently configured, supports this connection spec. In
+   * order for a socket to be compatible the enabled cipher suites and protocols must intersect.
    *
    * <p>For cipher suites, at least one of the {@link #cipherSuites() required cipher suites} must
    * match the socket's enabled cipher suites. If there are no required cipher suites the socket
@@ -191,9 +191,9 @@ public final class ConnectionSpec {
   }
 
   /**
-   * An N*M intersection that terminates if any intersection is found. The sizes of both
-   * arguments are assumed to be so small, and the likelihood of an intersection so great, that it
-   * is not worth the CPU cost of sorting or the memory cost of hashing.
+   * An N*M intersection that terminates if any intersection is found. The sizes of both arguments
+   * are assumed to be so small, and the likelihood of an intersection so great, that it is not
+   * worth the CPU cost of sorting or the memory cost of hashing.
    */
   private static boolean nonEmptyIntersection(String[] a, String[] b) {
     if (a == null || b == null || a.length == 0 || b.length == 0) {

@@ -1,29 +1,26 @@
 package okhttp3;
 
-import okhttp3.internal.http.HeaderParser;
 import java.util.concurrent.TimeUnit;
+import okhttp3.internal.http.HeaderParser;
 
 /**
- * A Cache-Control header with cache directives from a server or client. These
- * directives set policy on what responses can be stored, and which requests can
- * be satisfied by those stored responses.
+ * A Cache-Control header with cache directives from a server or client. These directives set policy
+ * on what responses can be stored, and which requests can be satisfied by those stored responses.
  *
- * <p>See <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">RFC
- * 2616, 14.9</a>.
+ * <p>See <a href="http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.9">RFC 2616,
+ * 14.9</a>.
  */
 public final class CacheControl {
   /**
-   * Cache control request directives that require network validation of
-   * responses. Note that such requests may be assisted by the cache via
-   * conditional GET requests.
+   * Cache control request directives that require network validation of responses. Note that such
+   * requests may be assisted by the cache via conditional GET requests.
    */
   public static final CacheControl FORCE_NETWORK = new Builder().noCache().build();
 
   /**
-   * Cache control request directives that uses the cache only, even if the
-   * cached response is stale. If the response isn't available in the cache or
-   * requires server validation, the call will fail with a {@code 504
-   * Unsatisfiable Request}.
+   * Cache control request directives that uses the cache only, even if the cached response is
+   * stale. If the response isn't available in the cache or requires server validation, the call
+   * will fail with a {@code 504 Unsatisfiable Request}.
    */
   public static final CacheControl FORCE_CACHE = new Builder()
       .onlyIfCached()
@@ -76,10 +73,9 @@ public final class CacheControl {
   }
 
   /**
-   * In a response, this field's name "no-cache" is misleading. It doesn't
-   * prevent us from caching the response; it only means we have to validate the
-   * response with the origin server before returning it. We can do this with a
-   * conditional GET.
+   * In a response, this field's name "no-cache" is misleading. It doesn't prevent us from caching
+   * the response; it only means we have to validate the response with the origin server before
+   * returning it. We can do this with a conditional GET.
    *
    * <p>In a request, it means do not use a cache to satisfy the request.
    */
@@ -93,17 +89,15 @@ public final class CacheControl {
   }
 
   /**
-   * The duration past the response's served date that it can be served without
-   * validation.
+   * The duration past the response's served date that it can be served without validation.
    */
   public int maxAgeSeconds() {
     return maxAgeSeconds;
   }
 
   /**
-   * The "s-maxage" directive is the max age for shared caches. Not to be
-   * confused with "max-age" for non-shared caches, As in Firefox and Chrome,
-   * this directive is not honored by this cache.
+   * The "s-maxage" directive is the max age for shared caches. Not to be confused with "max-age"
+   * for non-shared caches, As in Firefox and Chrome, this directive is not honored by this cache.
    */
   public int sMaxAgeSeconds() {
     return sMaxAgeSeconds;
@@ -130,11 +124,10 @@ public final class CacheControl {
   }
 
   /**
-   * This field's name "only-if-cached" is misleading. It actually means "do
-   * not use the network". It is set by a client who only wants to make a
-   * request if it can be fully satisfied by the cache. Cached responses that
-   * would require validation (ie. conditional gets) are not permitted if this
-   * header is set.
+   * This field's name "only-if-cached" is misleading. It actually means "do not use the network".
+   * It is set by a client who only wants to make a request if it can be fully satisfied by the
+   * cache. Cached responses that would require validation (ie. conditional gets) are not permitted
+   * if this header is set.
    */
   public boolean onlyIfCached() {
     return onlyIfCached;
@@ -145,8 +138,8 @@ public final class CacheControl {
   }
 
   /**
-   * Returns the cache directives of {@code headers}. This honors both
-   * Cache-Control and Pragma headers if they are present.
+   * Returns the cache directives of {@code headers}. This honors both Cache-Control and Pragma
+   * headers if they are present.
    */
   public static CacheControl parse(Headers headers) {
     boolean noCache = false;
@@ -291,12 +284,11 @@ public final class CacheControl {
     }
 
     /**
-     * Sets the maximum age of a cached response. If the cache response's age
-     * exceeds {@code maxAge}, it will not be used and a network request will
-     * be made.
+     * Sets the maximum age of a cached response. If the cache response's age exceeds {@code
+     * maxAge}, it will not be used and a network request will be made.
      *
-     * @param maxAge a non-negative integer. This is stored and transmitted with
-     *     {@link TimeUnit#SECONDS} precision; finer precision will be lost.
+     * @param maxAge a non-negative integer. This is stored and transmitted with {@link
+     * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxAge(int maxAge, TimeUnit timeUnit) {
       if (maxAge < 0) throw new IllegalArgumentException("maxAge < 0: " + maxAge);
@@ -308,13 +300,11 @@ public final class CacheControl {
     }
 
     /**
-     * Accept cached responses that have exceeded their freshness lifetime by
-     * up to {@code maxStale}. If unspecified, stale cache responses will not be
-     * used.
+     * Accept cached responses that have exceeded their freshness lifetime by up to {@code
+     * maxStale}. If unspecified, stale cache responses will not be used.
      *
-     * @param maxStale a non-negative integer. This is stored and transmitted
-     *     with {@link TimeUnit#SECONDS} precision; finer precision will be
-     *     lost.
+     * @param maxStale a non-negative integer. This is stored and transmitted with {@link
+     * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder maxStale(int maxStale, TimeUnit timeUnit) {
       if (maxStale < 0) throw new IllegalArgumentException("maxStale < 0: " + maxStale);
@@ -326,14 +316,12 @@ public final class CacheControl {
     }
 
     /**
-     * Sets the minimum number of seconds that a response will continue to be
-     * fresh for. If the response will be stale when {@code minFresh} have
-     * elapsed, the cached response will not be used and a network request will
-     * be made.
+     * Sets the minimum number of seconds that a response will continue to be fresh for. If the
+     * response will be stale when {@code minFresh} have elapsed, the cached response will not be
+     * used and a network request will be made.
      *
-     * @param minFresh a non-negative integer. This is stored and transmitted
-     *     with {@link TimeUnit#SECONDS} precision; finer precision will be
-     *     lost.
+     * @param minFresh a non-negative integer. This is stored and transmitted with {@link
+     * TimeUnit#SECONDS} precision; finer precision will be lost.
      */
     public Builder minFresh(int minFresh, TimeUnit timeUnit) {
       if (minFresh < 0) throw new IllegalArgumentException("minFresh < 0: " + minFresh);
@@ -345,8 +333,8 @@ public final class CacheControl {
     }
 
     /**
-     * Only accept the response if it is in the cache. If the response isn't
-     * cached, a {@code 504 Unsatisfiable Request} response will be returned.
+     * Only accept the response if it is in the cache. If the response isn't cached, a {@code 504
+     * Unsatisfiable Request} response will be returned.
      */
     public Builder onlyIfCached() {
       this.onlyIfCached = true;

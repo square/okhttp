@@ -32,21 +32,19 @@ import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
 
 /**
- * A HostnameVerifier consistent with <a
- * href="http://www.ietf.org/rfc/rfc2818.txt">RFC 2818</a>.
+ * A HostnameVerifier consistent with <a href="http://www.ietf.org/rfc/rfc2818.txt">RFC 2818</a>.
  */
 public final class OkHostnameVerifier implements HostnameVerifier {
   public static final OkHostnameVerifier INSTANCE = new OkHostnameVerifier();
 
   /**
-   * Quick and dirty pattern to differentiate IP addresses from hostnames. This
-   * is an approximation of Android's private InetAddress#isNumeric API.
+   * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
+   * of Android's private InetAddress#isNumeric API.
    *
-   * <p>This matches IPv6 addresses as a hex string containing at least one
-   * colon, and possibly including dots after the first colon. It matches IPv4
-   * addresses as strings containing only decimal digits and dots. This pattern
-   * matches strings like "a:.23" and "54" that are neither IP addresses nor
-   * hostnames; they will be verified as IP addresses (which is a more strict
+   * <p>This matches IPv6 addresses as a hex string containing at least one colon, and possibly
+   * including dots after the first colon. It matches IPv4 addresses as strings containing only
+   * decimal digits and dots. This pattern matches strings like "a:.23" and "54" that are neither IP
+   * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
    * verification).
    */
   private static final Pattern VERIFY_AS_IP_ADDRESS = Pattern.compile(
@@ -159,8 +157,8 @@ public final class OkHostnameVerifier implements HostnameVerifier {
    * Returns {@code true} iff {@code hostName} matches the domain name {@code pattern}.
    *
    * @param hostName lower-case host name.
-   * @param pattern domain name pattern from certificate. May be a wildcard pattern such as
-   *        {@code *.android.com}.
+   * @param pattern domain name pattern from certificate. May be a wildcard pattern such as {@code
+   * *.android.com}.
    */
   private boolean verifyHostName(String hostName, String pattern) {
     // Basic sanity checks

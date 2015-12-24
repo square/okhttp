@@ -15,18 +15,18 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.Call;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.ResponseBody;
-import okhttp3.internal.SslContextBuilder;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Call;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.ResponseBody;
+import okhttp3.internal.SslContextBuilder;
 
 class OkHttp extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;

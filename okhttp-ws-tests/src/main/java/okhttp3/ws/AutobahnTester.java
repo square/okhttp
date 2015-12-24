@@ -15,12 +15,6 @@
  */
 package okhttp3.ws;
 
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Version;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -28,6 +22,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.internal.Version;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -35,8 +35,8 @@ import static okhttp3.ws.WebSocket.BINARY;
 import static okhttp3.ws.WebSocket.TEXT;
 
 /**
- * Exercises the web socket implementation against the
- * <a href="http://autobahn.ws/testsuite/">Autobahn Testsuite</a>.
+ * Exercises the web socket implementation against the <a
+ * href="http://autobahn.ws/testsuite/">Autobahn Testsuite</a>.
  */
 public final class AutobahnTester {
   private static final String HOST = "ws://localhost:9001";

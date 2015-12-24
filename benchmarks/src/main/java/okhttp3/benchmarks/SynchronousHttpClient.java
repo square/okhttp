@@ -15,12 +15,12 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.HttpUrl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import okhttp3.HttpUrl;
 
 /** Any HTTP client with a blocking API. */
 abstract class SynchronousHttpClient implements HttpClient {

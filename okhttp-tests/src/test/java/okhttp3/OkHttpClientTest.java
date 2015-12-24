@@ -106,8 +106,7 @@ public final class OkHttpClientTest {
   }
 
   /**
-   * Confirm that {@code copyWithDefaults} gets some default implementations
-   * from the core library.
+   * Confirm that {@code copyWithDefaults} gets some default implementations from the core library.
    */
   @Test public void copyWithDefaultsWhenDefaultIsGlobal() throws Exception {
     ProxySelector proxySelector = new RecordingProxySelector();
@@ -164,8 +163,8 @@ public final class OkHttpClientTest {
   }
 
   /**
-   * When copying the client, stateful things like the connection pool are
-   * shared across all clients.
+   * When copying the client, stateful things like the connection pool are shared across all
+   * clients.
    */
   @Test public void cloneSharesStatefulInstances() throws Exception {
     OkHttpClient client = new OkHttpClient();

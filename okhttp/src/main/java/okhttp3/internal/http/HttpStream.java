@@ -16,17 +16,17 @@
 
 package okhttp3.internal.http;
 
+import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import java.io.IOException;
 import okio.Sink;
 
 public interface HttpStream {
   /**
-   * The timeout to use while discarding a stream of input data. Since this is
-   * used for connection reuse, this timeout should be significantly less than
-   * the time it takes to establish a new connection.
+   * The timeout to use while discarding a stream of input data. Since this is used for connection
+   * reuse, this timeout should be significantly less than the time it takes to establish a new
+   * connection.
    */
   int DISCARD_STREAM_TIMEOUT_MILLIS = 100;
 
@@ -37,8 +37,7 @@ public interface HttpStream {
   void writeRequestHeaders(Request request) throws IOException;
 
   /**
-   * Sends the request body returned by {@link #createRequestBody} to the
-   * remote peer.
+   * Sends the request body returned by {@link #createRequestBody} to the remote peer.
    */
   void writeRequestBody(RetryableSink requestBody) throws IOException;
 

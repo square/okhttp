@@ -15,6 +15,9 @@
  */
 package okhttp3.logging;
 
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Connection;
 import okhttp3.Headers;
 import okhttp3.Interceptor;
@@ -27,19 +30,15 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Platform;
 import okhttp3.internal.http.HttpEngine;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
 import okio.Buffer;
 import okio.BufferedSource;
 
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
- * {@linkplain OkHttpClient#interceptors() application interceptor} or as a
- * {@linkplain OkHttpClient#networkInterceptors() network interceptor}.
- * <p>
- * The format of the logs created by this class should not be considered stable and may change
- * slightly between releases. If you need a stable logging format, use your own interceptor.
+ * {@linkplain OkHttpClient#interceptors() application interceptor} or as a {@linkplain
+ * OkHttpClient#networkInterceptors() network interceptor}. <p> The format of the logs created by
+ * this class should not be considered stable and may change slightly between releases. If you need
+ * a stable logging format, use your own interceptor.
  */
 public final class HttpLoggingInterceptor implements Interceptor {
   private static final Charset UTF8 = Charset.forName("UTF-8");
@@ -49,8 +48,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     NONE,
     /**
      * Logs request and response lines.
-     * <p>
-     * Example:
+     *
+     * <p>Example:
      * <pre>{@code
      * --> POST /greeting HTTP/1.1 (3-byte body)
      *
@@ -60,8 +59,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     BASIC,
     /**
      * Logs request and response lines and their respective headers.
-     * <p>
-     * Example:
+     *
+     * <p>Example:
      * <pre>{@code
      * --> POST /greeting HTTP/1.1
      * Host: example.com
@@ -78,8 +77,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
     HEADERS,
     /**
      * Logs request and response lines and their respective headers and bodies (if present).
-     * <p>
-     * Example:
+     *
+     * <p>Example:
      * <pre>{@code
      * --> POST /greeting HTTP/1.1
      * Host: example.com

@@ -15,9 +15,9 @@
  */
 package okhttp3;
 
-import okhttp3.ws.WebSocket;
 import java.io.IOException;
 import java.util.Arrays;
+import okhttp3.ws.WebSocket;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -96,8 +96,7 @@ public final class RecordedResponse {
   }
 
   /**
-   * Asserts that the current response was redirected and returns the prior
-   * response.
+   * Asserts that the current response was redirected and returns the prior response.
    */
   public RecordedResponse priorResponse() {
     Response priorResponse = response.priorResponse();
@@ -107,8 +106,7 @@ public final class RecordedResponse {
   }
 
   /**
-   * Asserts that the current response used the network and returns the network
-   * response.
+   * Asserts that the current response used the network and returns the network response.
    */
   public RecordedResponse networkResponse() {
     Response networkResponse = response.networkResponse();
@@ -130,8 +128,7 @@ public final class RecordedResponse {
   }
 
   /**
-   * Asserts that the current response used the cache and returns the cache
-   * response.
+   * Asserts that the current response used the cache and returns the cache response.
    */
   public RecordedResponse cacheResponse() {
     Response cacheResponse = response.cacheResponse();

@@ -15,8 +15,6 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.HttpUrl;
-import okhttp3.internal.SslContextBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -27,6 +25,8 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.HttpUrl;
+import okhttp3.internal.SslContextBuilder;
 
 class UrlConnection extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;

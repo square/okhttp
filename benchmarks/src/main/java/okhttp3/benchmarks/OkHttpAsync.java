@@ -15,14 +15,6 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.Callback;
-import okhttp3.Dispatcher;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.SslContextBuilder;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -32,6 +24,14 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Callback;
+import okhttp3.Dispatcher;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.internal.SslContextBuilder;
 
 class OkHttpAsync implements HttpClient {
   private static final boolean VERBOSE = false;
