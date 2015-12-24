@@ -15,13 +15,13 @@
  */
 package okhttp3.recipes;
 
+import java.io.IOException;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-import okhttp3.Request;
-import java.io.IOException;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.ForwardingSource;
@@ -52,7 +52,7 @@ public final class Progress {
         return originalResponse.newBuilder()
             .body(new ProgressResponseBody(originalResponse.body(), progressListener))
             .build();
-        }
+      }
     });
 
     Response response = client.newCall(request).execute();
@@ -94,6 +94,7 @@ public final class Progress {
     private Source source(Source source) {
       return new ForwardingSource(source) {
         long totalBytesRead = 0L;
+
         @Override public long read(Buffer sink, long byteCount) throws IOException {
           long bytesRead = super.read(sink, byteCount);
           // read() returns the number of bytes read, or -1 if this source is exhausted.

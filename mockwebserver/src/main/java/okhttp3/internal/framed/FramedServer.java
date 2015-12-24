@@ -16,10 +16,6 @@
 
 package okhttp3.internal.framed;
 
-import okhttp3.Protocol;
-import okhttp3.internal.Platform;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
 import java.io.File;
 import java.io.IOException;
 import java.net.ProtocolException;
@@ -31,6 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Protocol;
+import okhttp3.internal.Platform;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;

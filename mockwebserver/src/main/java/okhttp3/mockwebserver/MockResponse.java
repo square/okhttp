@@ -15,14 +15,13 @@
  */
 package okhttp3.mockwebserver;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.internal.Internal;
 import okhttp3.internal.framed.Settings;
 import okhttp3.ws.WebSocketListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import okhttp3.Protocol;
 import okio.Buffer;
 
 /** A scripted response to be replayed by the mock web server. */
@@ -83,8 +82,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Removes all HTTP headers including any "Content-Length" and
-   * "Transfer-encoding" headers that were added by default.
+   * Removes all HTTP headers including any "Content-Length" and "Transfer-encoding" headers that
+   * were added by default.
    */
   public MockResponse clearHeaders() {
     headers = new Headers.Builder();
@@ -92,8 +91,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Adds {@code header} as an HTTP header. For well-formed HTTP {@code header}
-   * should contain a name followed by a colon and a value.
+   * Adds {@code header} as an HTTP header. For well-formed HTTP {@code header} should contain a
+   * name followed by a colon and a value.
    */
   public MockResponse addHeader(String header) {
     headers.add(header);
@@ -101,8 +100,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Adds a new header with the name and value. This may be used to add multiple
-   * headers with the same name.
+   * Adds a new header with the name and value. This may be used to add multiple headers with the
+   * same name.
    */
   public MockResponse addHeader(String name, Object value) {
     headers.add(name, String.valueOf(value));
@@ -110,9 +109,9 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Adds a new header with the name and value. This may be used to add multiple
-   * headers with the same name. Unlike {@link #addHeader(String, Object)} this
-   * does not validate the name and value.
+   * Adds a new header with the name and value. This may be used to add multiple headers with the
+   * same name. Unlike {@link #addHeader(String, Object)} this does not validate the name and
+   * value.
    */
   public MockResponse addHeaderLenient(String name, Object value) {
     Internal.instance.addLenient(headers, name, String.valueOf(value));
@@ -120,8 +119,7 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Removes all headers named {@code name}, then adds a new header with the
-   * name and value.
+   * Removes all headers named {@code name}, then adds a new header with the name and value.
    */
   public MockResponse setHeader(String name, Object value) {
     removeHeader(name);
@@ -157,8 +155,7 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Sets the response body to {@code body}, chunked every {@code maxChunkSize}
-   * bytes.
+   * Sets the response body to {@code body}, chunked every {@code maxChunkSize} bytes.
    */
   public MockResponse setChunkedBody(Buffer body, int maxChunkSize) {
     removeHeader("Content-Length");
@@ -179,8 +176,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Sets the response body to the UTF-8 encoded bytes of {@code body}, chunked
-   * every {@code maxChunkSize} bytes.
+   * Sets the response body to the UTF-8 encoded bytes of {@code body}, chunked every {@code
+   * maxChunkSize} bytes.
    */
   public MockResponse setChunkedBody(String body, int maxChunkSize) {
     return setChunkedBody(new Buffer().writeUtf8(body), maxChunkSize);
@@ -215,8 +212,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * Set the delayed time of the response body to {@code delay}. This applies to the
-   * response body only; response headers are not affected.
+   * Set the delayed time of the response body to {@code delay}. This applies to the response body
+   * only; response headers are not affected.
    */
   public MockResponse setBodyDelay(long delay, TimeUnit unit) {
     bodyDelayAmount = delay;
@@ -229,9 +226,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * When {@link MockWebServer#setProtocols(java.util.List) protocols}
-   * include {@linkplain Protocol#HTTP_2}, this attaches a
-   * pushed stream to this response.
+   * When {@link MockWebServer#setProtocols(java.util.List) protocols} include {@linkplain
+   * okhttp3.Protocol#HTTP_2}, this attaches a pushed stream to this response.
    */
   public MockResponse withPush(PushPromise promise) {
     this.promises.add(promise);
@@ -244,9 +240,8 @@ public final class MockResponse implements Cloneable {
   }
 
   /**
-   * When {@linkplain MockWebServer#setProtocols(java.util.List) protocols}
-   * include {@linkplain Protocol#HTTP_2 HTTP/2}, this
-   * pushes {@code settings} before writing the response.
+   * When {@linkplain MockWebServer#setProtocols(java.util.List) protocols} include {@linkplain
+   * okhttp3.Protocol#HTTP_2 HTTP/2}, this pushes {@code settings} before writing the response.
    */
   public MockResponse withSettings(Settings settings) {
     this.settings = settings;

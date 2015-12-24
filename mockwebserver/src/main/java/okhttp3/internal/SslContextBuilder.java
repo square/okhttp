@@ -38,11 +38,11 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
 /**
- * Constructs an SSL context for testing. This uses Bouncy Castle to generate a
- * self-signed certificate for a single hostname such as "localhost".
+ * Constructs an SSL context for testing. This uses Bouncy Castle to generate a self-signed
+ * certificate for a single hostname such as "localhost".
  *
- * <p>The crypto performed by this class is relatively slow. Clients should
- * reuse SSL context instances where possible.
+ * <p>The crypto performed by this class is relatively slow. Clients should reuse SSL context
+ * instances where possible.
  */
 public final class SslContextBuilder {
   static {
@@ -57,8 +57,8 @@ public final class SslContextBuilder {
   private long notAfter = System.currentTimeMillis() + ONE_DAY_MILLIS;
 
   /**
-   * @param hostName the subject of the host. For TLS this should be the
-   * domain name that the client uses to identify the server.
+   * @param hostName the subject of the host. For TLS this should be the domain name that the client
+   * uses to identify the server.
    */
   public SslContextBuilder(String hostName) {
     this.hostName = hostName;
@@ -87,7 +87,7 @@ public final class SslContextBuilder {
 
     // Put 'em in a key store.
     KeyStore keyStore = newEmptyKeyStore(password);
-    Certificate[] certificateChain = { certificate };
+    Certificate[] certificateChain = {certificate};
     keyStore.setKeyEntry("private", keyPair.getPrivate(), password, certificateChain);
     keyStore.setCertificateEntry("cert", certificate);
 
@@ -111,8 +111,8 @@ public final class SslContextBuilder {
   }
 
   /**
-   * Generates a certificate for {@code hostName} containing {@code keyPair}'s
-   * public key, signed by {@code keyPair}'s private key.
+   * Generates a certificate for {@code hostName} containing {@code keyPair}'s public key, signed by
+   * {@code keyPair}'s private key.
    */
   @SuppressWarnings("deprecation") // use the old Bouncy Castle APIs to reduce dependencies.
   public X509Certificate selfSignedCertificate(KeyPair keyPair, String serialNumber)

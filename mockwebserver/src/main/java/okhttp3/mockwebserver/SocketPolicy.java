@@ -32,35 +32,32 @@ package okhttp3.mockwebserver;
 public enum SocketPolicy {
 
   /**
-   * Keep the socket open after the response. This is the default HTTP/1.1
-   * behavior.
+   * Keep the socket open after the response. This is the default HTTP/1.1 behavior.
    */
   KEEP_OPEN,
 
   /**
-   * Close the socket after the response. This is the default HTTP/1.0
-   * behavior.
+   * Close the socket after the response. This is the default HTTP/1.0 behavior.
    *
    * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   DISCONNECT_AT_END,
 
   /**
-   * Wrap the socket with SSL at the completion of this request/response pair.
-   * Used for CONNECT messages to tunnel SSL over an HTTP proxy.
+   * Wrap the socket with SSL at the completion of this request/response pair. Used for CONNECT
+   * messages to tunnel SSL over an HTTP proxy.
    */
   UPGRADE_TO_SSL_AT_END,
 
   /**
-   * Request immediate close of connection without even reading the request. Use
-   * to simulate buggy SSL servers closing connections in response to
-   * unrecognized TLS extensions.
+   * Request immediate close of connection without even reading the request. Use to simulate buggy
+   * SSL servers closing connections in response to unrecognized TLS extensions.
    */
   DISCONNECT_AT_START,
 
   /**
-   * Close connection after reading the request but before writing the response.
-   * Use this to simulate late connection pool failures.
+   * Close connection after reading the request but before writing the response. Use this to
+   * simulate late connection pool failures.
    */
   DISCONNECT_AFTER_REQUEST,
 
@@ -74,24 +71,22 @@ public enum SocketPolicy {
   FAIL_HANDSHAKE,
 
   /**
-   * Shutdown the socket input after sending the response. For testing bad
-   * behavior.
+   * Shutdown the socket input after sending the response. For testing bad behavior.
    *
    * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_INPUT_AT_END,
 
   /**
-   * Shutdown the socket output after sending the response. For testing bad
-   * behavior.
+   * Shutdown the socket output after sending the response. For testing bad behavior.
    *
    * <p>See {@link SocketPolicy} for reasons why this can cause test flakiness and how to avoid it.
    */
   SHUTDOWN_OUTPUT_AT_END,
 
   /**
-   * Don't respond to the request but keep the socket open. For testing
-   * read response header timeout issue.
+   * Don't respond to the request but keep the socket open. For testing read response header timeout
+   * issue.
    */
   NO_RESPONSE
 }

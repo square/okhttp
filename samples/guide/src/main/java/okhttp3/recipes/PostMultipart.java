@@ -15,20 +15,19 @@
  */
 package okhttp3.recipes;
 
+import java.io.File;
+import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import java.io.File;
-import java.io.IOException;
 
 public final class PostMultipart {
   /**
-   * The imgur client ID for OkHttp recipes. If you're using imgur for anything
-   * other than running these examples, please request your own client ID!
-   *   https://api.imgur.com/oauth2
+   * The imgur client ID for OkHttp recipes. If you're using imgur for anything other than running
+   * these examples, please request your own client ID! https://api.imgur.com/oauth2
    */
   private static final String IMGUR_CLIENT_ID = "9199fdef135c122";
   private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");

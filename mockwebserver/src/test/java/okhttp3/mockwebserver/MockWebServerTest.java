@@ -15,7 +15,6 @@
  */
 package okhttp3.mockwebserver;
 
-import okhttp3.Headers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import okhttp3.Headers;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -115,8 +115,8 @@ public final class MockWebServerTest {
   }
 
   /**
-   * Test that MockWebServer blocks for a call to enqueue() if a request
-   * is made before a mock response is ready.
+   * Test that MockWebServer blocks for a call to enqueue() if a request is made before a mock
+   * response is ready.
    */
   @Test public void dispatchBlocksWaitingForEnqueue() throws Exception {
     new Thread() {
@@ -192,8 +192,8 @@ public final class MockWebServerTest {
   }
 
   /**
-   * Throttle the request body by sleeping 500ms after every 3 bytes. With a
-   * 6-byte request, this should yield one sleep for a total delay of 500ms.
+   * Throttle the request body by sleeping 500ms after every 3 bytes. With a 6-byte request, this
+   * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleRequest() throws Exception {
     server.enqueue(new MockResponse()
@@ -213,8 +213,8 @@ public final class MockWebServerTest {
   }
 
   /**
-   * Throttle the response body by sleeping 500ms after every 3 bytes. With a
-   * 6-byte response, this should yield one sleep for a total delay of 500ms.
+   * Throttle the response body by sleeping 500ms after every 3 bytes. With a 6-byte response, this
+   * should yield one sleep for a total delay of 500ms.
    */
   @Test public void throttleResponse() throws Exception {
     server.enqueue(new MockResponse()

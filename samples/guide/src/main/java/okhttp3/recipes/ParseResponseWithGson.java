@@ -16,11 +16,11 @@
 package okhttp3.recipes;
 
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.Map;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import java.io.IOException;
-import java.util.Map;
 
 public final class ParseResponseWithGson {
   private final OkHttpClient client = new OkHttpClient();
