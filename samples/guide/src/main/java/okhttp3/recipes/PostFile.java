@@ -15,13 +15,13 @@
  */
 package okhttp3.recipes;
 
+import java.io.File;
+import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import java.io.File;
-import java.io.IOException;
 
 public final class PostFile {
   public static final MediaType MEDIA_TYPE_MARKDOWN

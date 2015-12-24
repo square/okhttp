@@ -16,11 +16,11 @@
 
 package okhttp3.mockwebserver;
 
-import okhttp3.Headers;
-import okhttp3.TlsVersion;
 import java.net.Socket;
 import java.util.List;
 import javax.net.ssl.SSLSocket;
+import okhttp3.Headers;
+import okhttp3.TlsVersion;
 import okio.Buffer;
 
 /** An HTTP request that came into the mock web server. */
@@ -82,16 +82,15 @@ public final class RecordedRequest {
   }
 
   /**
-   * Returns the sizes of the chunks of this request's body, or an empty list
-   * if the request's body was empty or unchunked.
+   * Returns the sizes of the chunks of this request's body, or an empty list if the request's body
+   * was empty or unchunked.
    */
   public List<Integer> getChunkSizes() {
     return chunkSizes;
   }
 
   /**
-   * Returns the total size of the body of this POST request (before
-   * truncation).
+   * Returns the total size of the body of this POST request (before truncation).
    */
   public long getBodySize() {
     return bodySize;
@@ -108,9 +107,8 @@ public final class RecordedRequest {
   }
 
   /**
-   * Returns the index of this request on its HTTP connection. Since a single
-   * HTTP connection may serve multiple requests, each request is assigned its
-   * own sequence number.
+   * Returns the index of this request on its HTTP connection. Since a single HTTP connection may
+   * serve multiple requests, each request is assigned its own sequence number.
    */
   public int getSequenceNumber() {
     return sequenceNumber;

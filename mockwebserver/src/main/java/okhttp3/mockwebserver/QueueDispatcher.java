@@ -21,8 +21,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 /**
- * Default dispatcher that processes a script of responses. Populate the script
- * by calling {@link #enqueueResponse(MockResponse)}.
+ * Default dispatcher that processes a script of responses. Populate the script by calling {@link
+ * #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
   private static final Logger logger = Logger.getLogger(QueueDispatcher.class.getName());

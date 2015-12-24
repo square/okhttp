@@ -1,5 +1,8 @@
 package okhttp3.recipes;
 
+import java.io.IOException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -8,9 +11,6 @@ import okhttp3.ResponseBody;
 import okhttp3.ws.WebSocket;
 import okhttp3.ws.WebSocketCall;
 import okhttp3.ws.WebSocketListener;
-import java.io.IOException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import okio.Buffer;
 import okio.ByteString;
 

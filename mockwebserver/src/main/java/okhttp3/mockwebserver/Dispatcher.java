@@ -18,17 +18,16 @@ package okhttp3.mockwebserver;
 /** Handler for mock server requests. */
 public abstract class Dispatcher {
   /**
-   * Returns a response to satisfy {@code request}. This method may block (for
-   * instance, to wait on a CountdownLatch).
+   * Returns a response to satisfy {@code request}. This method may block (for instance, to wait on
+   * a CountdownLatch).
    */
   public abstract MockResponse dispatch(RecordedRequest request) throws InterruptedException;
 
   /**
-   * Returns an early guess of the next response, used for policy on how an
-   * incoming request should be received. The default implementation returns an
-   * empty response. Mischievous implementations can return other values to test
-   * HTTP edge cases, such as unhappy socket policies or throttled request
-   * bodies.
+   * Returns an early guess of the next response, used for policy on how an incoming request should
+   * be received. The default implementation returns an empty response. Mischievous implementations
+   * can return other values to test HTTP edge cases, such as unhappy socket policies or throttled
+   * request bodies.
    */
   public MockResponse peek() {
     return new MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN);

@@ -16,15 +16,15 @@
 package okhttp3.recipes;
 
 import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
-import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import okio.BufferedSink;
 import okio.GzipSink;
 import okio.Okio;
@@ -33,7 +33,8 @@ public final class RequestBodyCompression {
   /**
    * The Google API KEY for OkHttp recipes. If you're using Google APIs for anything other than
    * running these examples, please request your own client ID!
-   *   https://console.developers.google.com/project
+   *
+   * https://console.developers.google.com/project
    */
   public static final String GOOGLE_API_KEY = "AIzaSyAx2WZYe0My0i-uGurpvraYJxO7XNbwiGs";
   public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");

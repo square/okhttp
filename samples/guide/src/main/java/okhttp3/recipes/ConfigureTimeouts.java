@@ -15,10 +15,10 @@
  */
 package okhttp3.recipes;
 
+import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import java.util.concurrent.TimeUnit;
 
 public final class ConfigureTimeouts {
   private final OkHttpClient client;

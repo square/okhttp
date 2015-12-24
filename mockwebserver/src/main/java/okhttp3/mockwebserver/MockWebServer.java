@@ -17,23 +17,6 @@
 
 package okhttp3.mockwebserver;
 
-import okhttp3.Headers;
-import okhttp3.HttpUrl;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.Platform;
-import okhttp3.internal.Util;
-import okhttp3.internal.framed.ErrorCode;
-import okhttp3.internal.framed.FramedConnection;
-import okhttp3.internal.framed.FramedStream;
-import okhttp3.internal.framed.Header;
-import okhttp3.internal.framed.Settings;
-import okhttp3.internal.http.HttpMethod;
-import okhttp3.internal.ws.RealWebSocket;
-import okhttp3.internal.ws.WebSocketProtocol;
-import okhttp3.ws.WebSocketListener;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -69,6 +52,23 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Platform;
+import okhttp3.internal.Util;
+import okhttp3.internal.framed.ErrorCode;
+import okhttp3.internal.framed.FramedConnection;
+import okhttp3.internal.framed.FramedStream;
+import okhttp3.internal.framed.Header;
+import okhttp3.internal.framed.Settings;
+import okhttp3.internal.http.HttpMethod;
+import okhttp3.internal.ws.RealWebSocket;
+import okhttp3.internal.ws.WebSocketProtocol;
+import okhttp3.ws.WebSocketListener;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -93,8 +93,8 @@ import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
 
 /**
- * A scriptable web server. Callers supply canned responses and the server
- * replays them upon request in sequence.
+ * A scriptable web server. Callers supply canned responses and the server replays them upon request
+ * in sequence.
  */
 public final class MockWebServer implements TestRule {
   private static final X509TrustManager UNTRUSTED_TRUST_MANAGER = new X509TrustManager() {
@@ -202,9 +202,8 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Returns a cookie domain for this server. This returns the server's
-   * non-loopback host name if it is known. Otherwise this returns ".local" for
-   * this server's loopback name.
+   * Returns a cookie domain for this server. This returns the server's non-loopback host name if it
+   * is known. Otherwise this returns ".local" for this server's loopback name.
    */
   public String getCookieDomain() {
     String hostName = getHostName();
@@ -212,29 +211,26 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Sets the number of bytes of the POST body to keep in memory to the given
-   * limit.
+   * Sets the number of bytes of the POST body to keep in memory to the given limit.
    */
   public void setBodyLimit(long maxBodyLength) {
     this.bodyLimit = maxBodyLength;
   }
 
   /**
-   * Sets whether ALPN is used on incoming HTTPS connections to
-   * negotiate a protocol like HTTP/1.1 or HTTP/2. Call this method to disable
-   * negotiation and restrict connections to HTTP/1.1.
+   * Sets whether ALPN is used on incoming HTTPS connections to negotiate a protocol like HTTP/1.1
+   * or HTTP/2. Call this method to disable negotiation and restrict connections to HTTP/1.1.
    */
   public void setProtocolNegotiationEnabled(boolean protocolNegotiationEnabled) {
     this.protocolNegotiationEnabled = protocolNegotiationEnabled;
   }
 
   /**
-   * Indicates the protocols supported by ALPN on incoming HTTPS
-   * connections. This list is ignored when
-   * {@link #setProtocolNegotiationEnabled negotiation is disabled}.
+   * Indicates the protocols supported by ALPN on incoming HTTPS connections. This list is ignored
+   * when {@link #setProtocolNegotiationEnabled negotiation is disabled}.
    *
-   * @param protocols the protocols to use, in order of preference. The list
-   * must contain {@linkplain Protocol#HTTP_1_1}. It must not contain null.
+   * @param protocols the protocols to use, in order of preference. The list must contain
+   * {@linkplain Protocol#HTTP_1_1}. It must not contain null.
    */
   public void setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
@@ -250,8 +246,7 @@ public final class MockWebServer implements TestRule {
   /**
    * Serve requests with HTTPS rather than otherwise.
    *
-   * @param tunnelProxy true to expect the HTTP CONNECT method before
-   * negotiating TLS.
+   * @param tunnelProxy true to expect the HTTP CONNECT method before negotiating TLS.
    */
   public void useHttps(SSLSocketFactory sslSocketFactory, boolean tunnelProxy) {
     this.sslSocketFactory = sslSocketFactory;
@@ -259,9 +254,9 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Awaits the next HTTP request, removes it, and returns it. Callers should
-   * use this to verify the request was sent as intended. This method will block until the
-   * request is available, possibly forever.
+   * Awaits the next HTTP request, removes it, and returns it. Callers should use this to verify the
+   * request was sent as intended. This method will block until the request is available, possibly
+   * forever.
    *
    * @return the head of the request queue
    */
@@ -270,14 +265,12 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Awaits the next HTTP request (waiting up to the
-   * specified wait time if necessary), removes it, and returns it. Callers should
-   * use this to verify the request was sent as intended within the given time.
+   * Awaits the next HTTP request (waiting up to the specified wait time if necessary), removes it,
+   * and returns it. Callers should use this to verify the request was sent as intended within the
+   * given time.
    *
-   * @param timeout how long to wait before giving up, in units of
-   * {@code unit}
-   * @param unit a {@code TimeUnit} determining how to interpret the
-   * {@code timeout} parameter
+   * @param timeout how long to wait before giving up, in units of {@code unit}
+   * @param unit a {@code TimeUnit} determining how to interpret the {@code timeout} parameter
    * @return the head of the request queue
    */
   public RecordedRequest takeRequest(long timeout, TimeUnit unit) throws InterruptedException {
@@ -285,21 +278,20 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Returns the number of HTTP requests received thus far by this server. This
-   * may exceed the number of HTTP connections when connection reuse is in
-   * practice.
+   * Returns the number of HTTP requests received thus far by this server. This may exceed the
+   * number of HTTP connections when connection reuse is in practice.
    */
   public int getRequestCount() {
     return requestCount.get();
   }
 
   /**
-   * Scripts {@code response} to be returned to a request made in sequence. The
-   * first request is served by the first enqueued response; the second request
-   * by the second enqueued response; and so on.
+   * Scripts {@code response} to be returned to a request made in sequence. The first request is
+   * served by the first enqueued response; the second request by the second enqueued response; and
+   * so on.
    *
-   * @throws ClassCastException if the default dispatcher has been replaced
-   * with {@link #setDispatcher(Dispatcher)}.
+   * @throws ClassCastException if the default dispatcher has been replaced with {@link
+   * #setDispatcher(Dispatcher)}.
    */
   public void enqueue(MockResponse response) {
     ((QueueDispatcher) dispatcher).enqueueResponse(response.clone());
@@ -313,9 +305,8 @@ public final class MockWebServer implements TestRule {
   /**
    * Starts the server on the loopback interface for the given port.
    *
-   * @param port the port to listen to, or 0 for any available port. Automated
-   * tests should always use port 0 to avoid flakiness when a specific port
-   * is unavailable.
+   * @param port the port to listen to, or 0 for any available port. Automated tests should always
+   * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   public void start(int port) throws IOException {
     start(InetAddress.getByName("localhost"), port);
@@ -325,9 +316,8 @@ public final class MockWebServer implements TestRule {
    * Starts the server on the given address and port.
    *
    * @param inetAddress the address to create the server socket on
-   * @param port the port to listen to, or 0 for any available port. Automated
-   * tests should always use port 0 to avoid flakiness when a specific port
-   * is unavailable.
+   * @param port the port to listen to, or 0 for any available port. Automated tests should always
+   * use port 0 to avoid flakiness when a specific port is unavailable.
    */
   public void start(InetAddress inetAddress, int port) throws IOException {
     start(new InetSocketAddress(inetAddress, port));
@@ -565,7 +555,7 @@ public final class MockWebServer implements TestRule {
 
   private void processHandshakeFailure(Socket raw) throws Exception {
     SSLContext context = SSLContext.getInstance("TLS");
-    context.init(null, new TrustManager[] { UNTRUSTED_TRUST_MANAGER }, new SecureRandom());
+    context.init(null, new TrustManager[] {UNTRUSTED_TRUST_MANAGER}, new SecureRandom());
     SSLSocketFactory sslSocketFactory = context.getSocketFactory();
     SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket(
         raw, raw.getInetAddress().getHostAddress(), raw.getPort(), true);
@@ -743,9 +733,9 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Transfer bytes from {@code source} to {@code sink} until either {@code byteCount}
-   * bytes have been transferred or {@code source} is exhausted. The transfer is
-   * throttled according to {@code policy}.
+   * Transfer bytes from {@code source} to {@code sink} until either {@code byteCount} bytes have
+   * been transferred or {@code source} is exhausted. The transfer is throttled according to {@code
+   * policy}.
    */
   private void throttledTransfer(MockResponse policy, Socket socket, BufferedSource source,
       BufferedSink sink, long byteCount, boolean isRequest) throws IOException {
@@ -801,10 +791,9 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Sets the dispatcher used to match incoming requests to mock responses.
-   * The default dispatcher simply serves a fixed sequence of responses from
-   * a {@link #enqueue(MockResponse) queue}; custom dispatchers can vary the
-   * response based on timing or the content of the request.
+   * Sets the dispatcher used to match incoming requests to mock responses. The default dispatcher
+   * simply serves a fixed sequence of responses from a {@link #enqueue(MockResponse) queue}; custom
+   * dispatchers can vary the response based on timing or the content of the request.
    */
   public void setDispatcher(Dispatcher dispatcher) {
     if (dispatcher == null) throw new NullPointerException();

@@ -2,14 +2,14 @@ package okhttp3.sample;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class OkHttpContributors {
   private static final String ENDPOINT = "https://api.github.com/repos/square/okhttp/contributors";
