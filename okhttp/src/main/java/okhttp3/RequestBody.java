@@ -15,10 +15,10 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import okhttp3.internal.Util;
 import okio.BufferedSink;
 import okio.ByteString;
 import okio.Okio;
@@ -29,8 +29,8 @@ public abstract class RequestBody {
   public abstract MediaType contentType();
 
   /**
-   * Returns the number of bytes that will be written to {@code out} in a call
-   * to {@link #writeTo}, or -1 if that count is unknown.
+   * Returns the number of bytes that will be written to {@code out} in a call to {@link #writeTo},
+   * or -1 if that count is unknown.
    */
   public long contentLength() throws IOException {
     return -1;
@@ -40,8 +40,8 @@ public abstract class RequestBody {
   public abstract void writeTo(BufferedSink sink) throws IOException;
 
   /**
-   * Returns a new request body that transmits {@code content}. If {@code
-   * contentType} is non-null and lacks a charset, this will use UTF-8.
+   * Returns a new request body that transmits {@code content}. If {@code contentType} is non-null
+   * and lacks a charset, this will use UTF-8.
    */
   public static RequestBody create(MediaType contentType, String content) {
     Charset charset = Util.UTF_8;

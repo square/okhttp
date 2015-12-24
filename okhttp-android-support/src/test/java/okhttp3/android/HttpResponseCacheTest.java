@@ -16,12 +16,6 @@
 
 package okhttp3.android;
 
-import okhttp3.AndroidInternal;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import java.io.File;
 import java.io.InputStream;
 import java.net.CacheRequest;
@@ -31,6 +25,12 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import okhttp3.AndroidInternal;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.OkUrlFactory;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -133,8 +133,8 @@ public final class HttpResponseCacheTest {
   }
 
   /**
-   * Make sure that statistics tracking are wired all the way through the
-   * wrapper class. http://code.google.com/p/android/issues/detail?id=25418
+   * Make sure that statistics tracking are wired all the way through the wrapper class.
+   * http://code.google.com/p/android/issues/detail?id=25418
    */
   @Test public void statisticsTracking() throws Exception {
     HttpResponseCache cache = HttpResponseCache.install(cacheDir, 10 * 1024 * 1024);

@@ -29,8 +29,8 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class FallbackTestClientSocketFactory extends DelegatingSSLSocketFactory {
   /**
-   * The cipher suite used during TLS connection fallback to indicate a fallback.
-   * See https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
+   * The cipher suite used during TLS connection fallback to indicate a fallback. See
+   * https://tools.ietf.org/html/draft-ietf-tls-downgrade-scsv-00
    */
   public static final String TLS_FALLBACK_SCSV = "TLS_FALLBACK_SCSV";
 

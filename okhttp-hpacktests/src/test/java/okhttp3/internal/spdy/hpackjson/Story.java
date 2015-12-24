@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representation of one story, a set of request headers to encode or decode.
- * This class is used reflectively with Gson to parse stories from files.
+ * Representation of one story, a set of request headers to encode or decode. This class is used
+ * reflectively with Gson to parse stories from files.
  */
 public class Story implements Cloneable {
 

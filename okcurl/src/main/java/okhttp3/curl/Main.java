@@ -16,17 +16,6 @@
 package okhttp3.curl;
 
 import com.google.common.base.Joiner;
-import okhttp3.ConnectionPool;
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.internal.http.StatusLine;
-import okhttp3.internal.framed.Http2;
-
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
 import io.airlift.command.HelpOption;
@@ -49,6 +38,16 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.ConnectionPool;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.internal.framed.Http2;
+import okhttp3.internal.http.StatusLine;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -84,16 +83,16 @@ public class Main extends HelpOption implements Runnable {
     return Joiner.on(", ").join(Protocol.values());
   }
 
-  @Option(name = { "-X", "--request" }, description = "Specify request command to use")
+  @Option(name = {"-X", "--request"}, description = "Specify request command to use")
   public String method;
 
-  @Option(name = { "-d", "--data" }, description = "HTTP POST data")
+  @Option(name = {"-d", "--data"}, description = "HTTP POST data")
   public String data;
 
-  @Option(name = { "-H", "--header" }, description = "Custom header to pass to server")
+  @Option(name = {"-H", "--header"}, description = "Custom header to pass to server")
   public List<String> headers;
 
-  @Option(name = { "-A", "--user-agent" }, description = "User-Agent to send to server")
+  @Option(name = {"-A", "--user-agent"}, description = "User-Agent to send to server")
   public String userAgent = NAME + "/" + versionString();
 
   @Option(name = "--connect-timeout", description = "Maximum time allowed for connection (seconds)")
@@ -102,23 +101,23 @@ public class Main extends HelpOption implements Runnable {
   @Option(name = "--read-timeout", description = "Maximum time allowed for reading data (seconds)")
   public int readTimeout = DEFAULT_TIMEOUT;
 
-  @Option(name = { "-L", "--location" }, description = "Follow redirects")
+  @Option(name = {"-L", "--location"}, description = "Follow redirects")
   public boolean followRedirects;
 
-  @Option(name = { "-k", "--insecure" },
+  @Option(name = {"-k", "--insecure"},
       description = "Allow connections to SSL sites without certs")
   public boolean allowInsecure;
 
-  @Option(name = { "-i", "--include" }, description = "Include protocol headers in the output")
+  @Option(name = {"-i", "--include"}, description = "Include protocol headers in the output")
   public boolean showHeaders;
 
   @Option(name = "--frames", description = "Log HTTP/2 frames to STDERR")
   public boolean showHttp2Frames;
 
-  @Option(name = { "-e", "--referer" }, description = "Referer URL")
+  @Option(name = {"-e", "--referer"}, description = "Referer URL")
   public String referer;
 
-  @Option(name = { "-V", "--version" }, description = "Show version number and quit")
+  @Option(name = {"-V", "--version"}, description = "Show version number and quit")
   public boolean version;
 
   @Arguments(title = "url", description = "Remote resource URL")
@@ -258,7 +257,7 @@ public class Main extends HelpOption implements Runnable {
           return null;
         }
       };
-      context.init(null, new TrustManager[] { permissive }, null);
+      context.init(null, new TrustManager[] {permissive}, null);
       return context.getSocketFactory();
     } catch (Exception e) {
       throw new AssertionError(e);

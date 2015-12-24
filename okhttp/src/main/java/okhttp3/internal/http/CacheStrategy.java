@@ -1,10 +1,10 @@
 package okhttp3.internal.http;
 
+import java.util.Date;
 import okhttp3.CacheControl;
 import okhttp3.Headers;
 import okhttp3.Request;
 import okhttp3.Response;
-import java.util.Date;
 
 import static java.net.HttpURLConnection.HTTP_BAD_METHOD;
 import static java.net.HttpURLConnection.HTTP_GONE;
@@ -20,12 +20,12 @@ import static java.net.HttpURLConnection.HTTP_REQ_TOO_LONG;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * Given a request and cached response, this figures out whether to use the
- * network, the cache, or both.
+ * Given a request and cached response, this figures out whether to use the network, the cache, or
+ * both.
  *
- * <p>Selecting a cache strategy may add conditions to the request (like the
- * "If-Modified-Since" header for conditional GETs) or warnings to the cached
- * response (if the cached data is potentially stale).
+ * <p>Selecting a cache strategy may add conditions to the request (like the "If-Modified-Since"
+ * header for conditional GETs) or warnings to the cached response (if the cached data is
+ * potentially stale).
  */
 public final class CacheStrategy {
   /** The request to send on the network, or null if this call doesn't use the network. */
@@ -39,10 +39,7 @@ public final class CacheStrategy {
     this.cacheResponse = cacheResponse;
   }
 
-  /**
-   * Returns true if {@code response} can be stored to later serve another
-   * request.
-   */
+  /** Returns true if {@code response} can be stored to later serve another request. */
   public static boolean isCacheable(Response response, Request request) {
     // Always go to network for uncacheable response codes (RFC 7231 section 6.1),
     // This implementation doesn't support caching partial content.
@@ -58,8 +55,8 @@ public final class CacheStrategy {
       case HTTP_REQ_TOO_LONG:
       case HTTP_NOT_IMPLEMENTED:
       case StatusLine.HTTP_PERM_REDIRECT:
-      // These codes can be cached unless headers forbid it.
-      break;
+        // These codes can be cached unless headers forbid it.
+        break;
 
       case HTTP_MOVED_TEMP:
       case StatusLine.HTTP_TEMP_REDIRECT:
@@ -97,20 +94,20 @@ public final class CacheStrategy {
     private String lastModifiedString;
 
     /**
-     * The expiration date of the cached response, if known. If both this field
-     * and the max age are set, the max age is preferred.
+     * The expiration date of the cached response, if known. If both this field and the max age are
+     * set, the max age is preferred.
      */
     private Date expires;
 
     /**
-     * Extension header set by OkHttp specifying the timestamp when the cached
-     * HTTP request was first initiated.
+     * Extension header set by OkHttp specifying the timestamp when the cached HTTP request was
+     * first initiated.
      */
     private long sentRequestMillis;
 
     /**
-     * Extension header set by OkHttp specifying the timestamp when the cached
-     * HTTP response was first received.
+     * Extension header set by OkHttp specifying the timestamp when the cached HTTP response was
+     * first received.
      */
     private long receivedResponseMillis;
 
@@ -152,8 +149,7 @@ public final class CacheStrategy {
     }
 
     /**
-     * Returns a strategy to satisfy {@code request} using the a cached response
-     * {@code response}.
+     * Returns a strategy to satisfy {@code request} using the a cached response {@code response}.
      */
     public CacheStrategy get() {
       CacheStrategy candidate = getCandidate();
@@ -237,8 +233,8 @@ public final class CacheStrategy {
     }
 
     /**
-     * Returns the number of milliseconds that the response was fresh for,
-     * starting from the served date.
+     * Returns the number of milliseconds that the response was fresh for, starting from the served
+     * date.
      */
     private long computeFreshnessLifetime() {
       CacheControl responseCaching = cacheResponse.cacheControl();
@@ -266,8 +262,8 @@ public final class CacheStrategy {
     }
 
     /**
-     * Returns the current age of the response, in milliseconds. The calculation
-     * is specified by RFC 2616, 13.2.3 Age Calculations.
+     * Returns the current age of the response, in milliseconds. The calculation is specified by RFC
+     * 2616, 13.2.3 Age Calculations.
      */
     private long cacheResponseAge() {
       long apparentReceivedAge = servedDate != null
@@ -282,18 +278,17 @@ public final class CacheStrategy {
     }
 
     /**
-     * Returns true if computeFreshnessLifetime used a heuristic. If we used a
-     * heuristic to serve a cached response older than 24 hours, we are required
-     * to attach a warning.
+     * Returns true if computeFreshnessLifetime used a heuristic. If we used a heuristic to serve a
+     * cached response older than 24 hours, we are required to attach a warning.
      */
     private boolean isFreshnessLifetimeHeuristic() {
       return cacheResponse.cacheControl().maxAgeSeconds() == -1 && expires == null;
     }
 
     /**
-     * Returns true if the request contains conditions that save the server from
-     * sending a response that the client has locally. When a request is enqueued
-     * with its own conditions, the built-in response cache won't be used.
+     * Returns true if the request contains conditions that save the server from sending a response
+     * that the client has locally. When a request is enqueued with its own conditions, the built-in
+     * response cache won't be used.
      */
     private static boolean hasConditions(Request request) {
       return request.header("If-Modified-Since") != null || request.header("If-None-Match") != null;

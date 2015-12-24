@@ -16,6 +16,14 @@
 
 package okhttp3.internal.http;
 
+import java.io.IOException;
+import java.net.ProtocolException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import okhttp3.Headers;
 import okhttp3.Protocol;
 import okhttp3.Request;
@@ -26,14 +34,6 @@ import okhttp3.internal.framed.ErrorCode;
 import okhttp3.internal.framed.FramedConnection;
 import okhttp3.internal.framed.FramedStream;
 import okhttp3.internal.framed.Header;
-import java.io.IOException;
-import java.net.ProtocolException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import okio.ByteString;
 import okio.ForwardingSource;
 import okio.Okio;
@@ -152,9 +152,9 @@ public final class Http2xStream implements HttpStream {
   }
 
   /**
-   * Returns a list of alternating names and values containing a SPDY request.
-   * Names are all lowercase. No names are repeated. If any name has multiple
-   * values, they are concatenated using "\0" as a delimiter.
+   * Returns a list of alternating names and values containing a SPDY request. Names are all
+   * lowercase. No names are repeated. If any name has multiple values, they are concatenated using
+   * "\0" as a delimiter.
    */
   public static List<Header> spdy3HeadersList(Request request) {
     Headers headers = request.headers();

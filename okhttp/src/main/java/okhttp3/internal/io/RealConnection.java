@@ -227,9 +227,8 @@ public final class RealConnection implements Connection {
   }
 
   /**
-   * To make an HTTPS connection over an HTTP proxy, send an unencrypted
-   * CONNECT request to create the proxy connection. This may need to be
-   * retried if the proxy requires authorization.
+   * To make an HTTPS connection over an HTTP proxy, send an unencrypted CONNECT request to create
+   * the proxy connection. This may need to be retried if the proxy requires authorization.
    */
   private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
@@ -277,11 +276,10 @@ public final class RealConnection implements Connection {
   }
 
   /**
-   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if
-   * no tunnel is necessary. Everything in the tunnel request is sent
-   * unencrypted to the proxy server, so tunnels include only the minimum set of
-   * headers. This avoids sending potentially sensitive data like HTTP cookies
-   * to the proxy unencrypted.
+   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if no tunnel is
+   * necessary. Everything in the tunnel request is sent unencrypted to the proxy server, so tunnels
+   * include only the minimum set of headers. This avoids sending potentially sensitive data like
+   * HTTP cookies to the proxy unencrypted.
    */
   private Request createTunnelRequest() throws IOException {
     return new Request.Builder()
@@ -354,8 +352,8 @@ public final class RealConnection implements Connection {
   }
 
   /**
-   * Returns true if this is a SPDY connection. Such connections can be used
-   * in multiple HTTP requests simultaneously.
+   * Returns true if this is a SPDY connection. Such connections can be used in multiple HTTP
+   * requests simultaneously.
    */
   public boolean isMultiplexed() {
     return framedConnection != null;

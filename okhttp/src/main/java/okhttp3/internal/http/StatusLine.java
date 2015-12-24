@@ -1,9 +1,9 @@
 package okhttp3.internal.http;
 
-import okhttp3.Protocol;
-import okhttp3.Response;
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Protocol;
+import okhttp3.Response;
 
 /** An HTTP response status line like "HTTP/1.1 200 OK". */
 public final class StatusLine {

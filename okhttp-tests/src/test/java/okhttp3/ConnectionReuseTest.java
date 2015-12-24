@@ -15,14 +15,14 @@
  */
 package okhttp3;
 
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
+import javax.net.ssl.SSLContext;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
 import okhttp3.testing.RecordingHostnameVerifier;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;

@@ -1012,7 +1012,7 @@ public final class HttpUrlTest {
     assertEquals("http://host/=[]:;%22~%7C%3F%23@%5E%2F$%25*", url.toString());
     assertEquals("http://host/=%5B%5D:;%22~%7C%3F%23@%5E%2F$%25*", url.uri().toString());
   }
-  
+
   @Test public void toUriQueryParameterNameSpecialCharacters() throws Exception {
     HttpUrl url = new HttpUrl.Builder()
         .scheme("http")
@@ -1307,8 +1307,8 @@ public final class HttpUrlTest {
   }
 
   /**
-   * Although HttpUrl prefers percent-encodings in uppercase, it should preserve the exact
-   * structure of the original encoding.
+   * Although HttpUrl prefers percent-encodings in uppercase, it should preserve the exact structure
+   * of the original encoding.
    */
   @Test public void rawEncodingRetained() throws Exception {
     String urlString = "http://%6d%6D:%6d%6D@host/%6d%6D?%6d%6D#%6d%6D";

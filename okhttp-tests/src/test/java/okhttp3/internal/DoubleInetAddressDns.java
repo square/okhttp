@@ -15,11 +15,11 @@
  */
 package okhttp3.internal;
 
-import okhttp3.Dns;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.List;
+import okhttp3.Dns;
 
 /**
  * A network that always resolves two IP addresses per host. Use this when testing route selection

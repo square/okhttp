@@ -25,9 +25,8 @@ import okio.Timeout;
 import static okhttp3.internal.Util.checkOffsetAndCount;
 
 /**
- * An HTTP request body that's completely buffered in memory. This allows
- * the post body to be transparently re-sent if the HTTP request must be
- * sent multiple times.
+ * An HTTP request body that's completely buffered in memory. This allows the post body to be
+ * transparently re-sent if the HTTP request must be sent multiple times.
  */
 public final class RetryableSink implements Sink {
   private boolean closed;

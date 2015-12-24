@@ -15,14 +15,14 @@
  */
 package okhttp3.ws;
 
-import okhttp3.MediaType;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.ws.WebSocketReader;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import okhttp3.MediaType;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.internal.ws.WebSocketReader;
 import okio.Buffer;
 
 import static okhttp3.ws.WebSocket.BINARY;

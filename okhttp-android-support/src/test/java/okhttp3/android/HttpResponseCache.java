@@ -16,10 +16,6 @@
 
 package okhttp3.android;
 
-import okhttp3.Cache;
-import okhttp3.AndroidShimResponseCache;
-import okhttp3.OkCacheContainer;
-
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -30,15 +26,18 @@ import java.net.URI;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
+import okhttp3.AndroidShimResponseCache;
+import okhttp3.Cache;
+import okhttp3.OkCacheContainer;
 
 /**
  * A copy of android.net.http.HttpResponseCache taken from AOSP. Android need to keep this code
  * working somehow. Dependencies on okhttp3 are com.android.okhttp on Android.
  *
  * <p>This class exists in okhttp-android-support to help keep the API as it always has been on
- * Android. The public API cannot be changed. This class delegates to
- * {@link AndroidShimResponseCache}, a class that exists in a package that
- * enables it to interact with non-public OkHttp classes.
+ * Android. The public API cannot be changed. This class delegates to {@link
+ * AndroidShimResponseCache}, a class that exists in a package that enables it to interact with
+ * non-public OkHttp classes.
  */
 public final class HttpResponseCache extends ResponseCache implements Closeable, OkCacheContainer {
 
@@ -49,8 +48,8 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
   }
 
   /**
-   * Returns the currently-installed {@code HttpResponseCache}, or null if
-   * there is no cache installed or it is not a {@code HttpResponseCache}.
+   * Returns the currently-installed {@code HttpResponseCache}, or null if there is no cache
+   * installed or it is not a {@code HttpResponseCache}.
    */
   public static HttpResponseCache getInstalled() {
     ResponseCache installed = ResponseCache.getDefault();
@@ -66,9 +65,8 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
    * @param directory the directory to hold cache data.
    * @param maxSize the maximum size of the cache in bytes.
    * @return the newly-installed cache
-   * @throws java.io.IOException if {@code directory} cannot be used for this cache.
-   *     Most applications should respond to this exception by logging a
-   *     warning.
+   * @throws java.io.IOException if {@code directory} cannot be used for this cache. Most
+   * applications should respond to this exception by logging a warning.
    */
   public static synchronized HttpResponseCache install(File directory, long maxSize) throws
       IOException {
@@ -103,9 +101,8 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
   }
 
   /**
-   * Returns the number of bytes currently being used to store the values in
-   * this cache. This may be greater than the {@link #maxSize} if a background
-   * deletion is pending.
+   * Returns the number of bytes currently being used to store the values in this cache. This may be
+   * greater than the {@link #maxSize} if a background deletion is pending.
    */
   public long size() {
     try {
@@ -117,17 +114,15 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
   }
 
   /**
-   * Returns the maximum number of bytes that this cache should use to store
-   * its data.
+   * Returns the maximum number of bytes that this cache should use to store its data.
    */
   public long maxSize() {
     return shimResponseCache.maxSize();
   }
 
   /**
-   * Force buffered operations to the filesystem. This ensures that responses
-   * written to the cache will be available the next time the cache is opened,
-   * even if this process is killed.
+   * Force buffered operations to the filesystem. This ensures that responses written to the cache
+   * will be available the next time the cache is opened, even if this process is killed.
    */
   public void flush() {
     try {
@@ -137,34 +132,32 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
   }
 
   /**
-   * Returns the number of HTTP requests that required the network to either
-   * supply a response or validate a locally cached response.
+   * Returns the number of HTTP requests that required the network to either supply a response or
+   * validate a locally cached response.
    */
   public int getNetworkCount() {
     return shimResponseCache.getNetworkCount();
   }
 
   /**
-   * Returns the number of HTTP requests whose response was provided by the
-   * cache. This may include conditional {@code GET} requests that were
-   * validated over the network.
+   * Returns the number of HTTP requests whose response was provided by the cache. This may include
+   * conditional {@code GET} requests that were validated over the network.
    */
   public int getHitCount() {
     return shimResponseCache.getHitCount();
   }
 
   /**
-   * Returns the total number of HTTP requests that were made. This includes
-   * both client requests and requests that were made on the client's behalf
-   * to handle a redirects and retries.
+   * Returns the total number of HTTP requests that were made. This includes both client requests
+   * and requests that were made on the client's behalf to handle a redirects and retries.
    */
   public int getRequestCount() {
     return shimResponseCache.getRequestCount();
   }
 
   /**
-   * Uninstalls the cache and releases any active resources. Stored contents
-   * will remain on the filesystem.
+   * Uninstalls the cache and releases any active resources. Stored contents will remain on the
+   * filesystem.
    */
   @Override public void close() throws IOException {
     if (ResponseCache.getDefault() == this) {
@@ -187,5 +180,4 @@ public final class HttpResponseCache extends ResponseCache implements Closeable,
   public Cache getCache() {
     return shimResponseCache.getCache();
   }
-
 }

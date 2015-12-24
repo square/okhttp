@@ -214,8 +214,8 @@ public final class ConnectionSpecTest {
 
     tlsSpec.apply(sslSocket, false);
     assertEquals(Arrays.asList(
-            CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
-            CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName),
+        CipherSuite.TLS_RSA_WITH_RC4_128_SHA.javaName,
+        CipherSuite.TLS_RSA_WITH_RC4_128_MD5.javaName),
         Arrays.asList(sslSocket.getEnabledCipherSuites()));
   }
 
@@ -249,10 +249,10 @@ public final class ConnectionSpecTest {
     });
 
     socket.setEnabledProtocols(
-        new String[] { TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName });
+        new String[] {TlsVersion.TLS_1_2.javaName, TlsVersion.TLS_1_1.javaName});
     assertTrue(tlsSpec.isCompatible(socket));
 
-    socket.setEnabledProtocols(new String[] { TlsVersion.TLS_1_1.javaName });
+    socket.setEnabledProtocols(new String[] {TlsVersion.TLS_1_1.javaName});
     assertFalse(tlsSpec.isCompatible(socket));
   }
 

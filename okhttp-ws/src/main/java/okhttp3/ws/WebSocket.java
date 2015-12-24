@@ -15,9 +15,9 @@
  */
 package okhttp3.ws;
 
+import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import java.io.IOException;
 import okio.Buffer;
 
 /** Blocking interface to connect and write to a web socket. */
@@ -50,11 +50,11 @@ public interface WebSocket {
 
   /**
    * Send a close frame to the server.
-   * <p>
-   * The corresponding {@link WebSocketListener} will continue to get messages until its
-   * {@link WebSocketListener#onClose onClose()} method is called.
-   * <p>
-   * It is an error to call this method before calling close on an active writer. Calling this
+   *
+   * <p>The corresponding {@link WebSocketListener} will continue to get messages until its {@link
+   * WebSocketListener#onClose onClose()} method is called.
+   *
+   * <p>It is an error to call this method before calling close on an active writer. Calling this
    * method more than once has no effect.
    *
    * @throws IOException if unable to write the close message. Resources will still be freed.

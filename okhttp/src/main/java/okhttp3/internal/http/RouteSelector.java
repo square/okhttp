@@ -15,10 +15,6 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.Address;
-import okhttp3.HttpUrl;
-import okhttp3.Route;
-import okhttp3.internal.RouteDatabase;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -29,11 +25,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import okhttp3.Address;
+import okhttp3.HttpUrl;
+import okhttp3.Route;
+import okhttp3.internal.RouteDatabase;
 
 /**
- * Selects routes to connect to an origin server. Each connection requires a
- * choice of proxy server, IP address, and TLS mode. Connections may also be
- * recycled.
+ * Selects routes to connect to an origin server. Each connection requires a choice of proxy server,
+ * IP address, and TLS mode. Connections may also be recycled.
  */
 public final class RouteSelector {
   private final Address address;
@@ -62,8 +61,7 @@ public final class RouteSelector {
   }
 
   /**
-   * Returns true if there's another route to attempt. Every address has at
-   * least one route.
+   * Returns true if there's another route to attempt. Every address has at least one route.
    */
   public boolean hasNext() {
     return hasNextInetSocketAddress()
@@ -95,8 +93,8 @@ public final class RouteSelector {
   }
 
   /**
-   * Clients should invoke this method when they encounter a connectivity
-   * failure on a connection returned by this route selector.
+   * Clients should invoke this method when they encounter a connectivity failure on a connection
+   * returned by this route selector.
    */
   public void connectFailed(Route failedRoute, IOException failure) {
     if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.proxySelector() != null) {

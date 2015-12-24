@@ -15,7 +15,6 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.Socket;
@@ -26,6 +25,7 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import okhttp3.internal.Util;
 import okio.AsyncTimeout;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -274,6 +274,7 @@ public final class Spdy3ConnectionTest {
       @Override public void onStream(FramedStream stream) throws IOException {
         throw new AssertionError();
       }
+
       @Override public void onSettings(FramedConnection connection) {
         maxConcurrentStreams.set(connection.maxConcurrentStreams());
       }
@@ -475,8 +476,7 @@ public final class Spdy3ConnectionTest {
   }
 
   /**
-   * Test that the client sends a RST_STREAM if doing so won't disrupt the
-   * output stream.
+   * Test that the client sends a RST_STREAM if doing so won't disrupt the output stream.
    */
   @Test public void clientClosesClientInputStream() throws Exception {
     // write the mocking script
@@ -517,8 +517,7 @@ public final class Spdy3ConnectionTest {
   }
 
   /**
-   * Test that the client doesn't send a RST_STREAM if doing so will disrupt
-   * the output stream.
+   * Test that the client doesn't send a RST_STREAM if doing so will disrupt the output stream.
    */
   @Test public void clientClosesClientInputStreamIfOutputStreamIsClosed() throws Exception {
     // write the mocking script

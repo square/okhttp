@@ -40,23 +40,24 @@ import static okhttp3.internal.Util.checkOffsetAndCount;
 import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
 
 /**
- * A socket connection that can be used to send HTTP/1.1 messages. This class
- * strictly enforces the following lifecycle:
+ * A socket connection that can be used to send HTTP/1.1 messages. This class strictly enforces the
+ * following lifecycle:
+ *
  * <ol>
- *   <li>{@link #writeRequest Send request headers}.
- *   <li>Open a sink to write the request body. Either {@link
- *       #newFixedLengthSink fixed-length} or {@link #newChunkedSink chunked}.
- *   <li>Write to and then close that sink.
- *   <li>{@link #readResponse Read response headers}.
- *   <li>Open a source to read the response body. Either {@link
- *       #newFixedLengthSource fixed-length}, {@link #newChunkedSource chunked}
- *       or {@link #newUnknownLengthSource unknown length}.
- *   <li>Read from and close that source.
+ *     <li>{@linkplain #writeRequest Send request headers}.
+ *     <li>Open a sink to write the request body. Either {@linkplain #newFixedLengthSink
+ *         fixed-length} or {@link #newChunkedSink chunked}.
+ *     <li>Write to and then close that sink.
+ *     <li>{@linkplain #readResponse Read response headers}.
+ *     <li>Open a source to read the response body. Either {@linkplain #newFixedLengthSource
+ *         fixed-length}, {@linkplain #newChunkedSource chunked} or {@linkplain
+ *         #newUnknownLengthSource unknown length}.
+ *     <li>Read from and close that source.
  * </ol>
- * <p>Exchanges that do not have a request body may skip creating and closing
- * the request body. Exchanges that do not have a response body can call {@link
- * #newFixedLengthSource(long) newFixedLengthSource(0)} and may skip reading and
- * closing that source.
+ *
+ * <p>Exchanges that do not have a request body may skip creating and closing the request body.
+ * Exchanges that do not have a response body can call {@link #newFixedLengthSource(long)
+ * newFixedLengthSource(0)} and may skip reading and closing that source.
  */
 public final class Http1xStream implements HttpStream {
   private static final int STATE_IDLE = 0; // Idle connections are ready to write request headers.
@@ -107,14 +108,12 @@ public final class Http1xStream implements HttpStream {
   /**
    * Prepares the HTTP headers and sends them to the server.
    *
-   * <p>For streaming requests with a body, headers must be prepared
-   * <strong>before</strong> the output stream has been written to. Otherwise
-   * the body would need to be buffered!
+   * <p>For streaming requests with a body, headers must be prepared <strong>before</strong> the
+   * output stream has been written to. Otherwise the body would need to be buffered!
    *
-   * <p>For non-streaming requests with a body, headers must be prepared
-   * <strong>after</strong> the output stream has been written to and closed.
-   * This ensures that the {@code Content-Length} header field receives the
-   * proper value.
+   * <p>For non-streaming requests with a body, headers must be prepared <strong>after</strong> the
+   * output stream has been written to and closed. This ensures that the {@code Content-Length}
+   * header field receives the proper value.
    */
   @Override public void writeRequestHeaders(Request request) throws IOException {
     httpEngine.writingRequestHeaders();
@@ -165,7 +164,7 @@ public final class Http1xStream implements HttpStream {
   public void writeRequest(Headers headers, String requestLine) throws IOException {
     if (state != STATE_IDLE) throw new IllegalStateException("state: " + state);
     sink.writeUtf8(requestLine).writeUtf8("\r\n");
-    for (int i = 0, size = headers.size(); i < size; i ++) {
+    for (int i = 0, size = headers.size(); i < size; i++) {
       sink.writeUtf8(headers.name(i))
           .writeUtf8(": ")
           .writeUtf8(headers.value(i))
@@ -304,9 +303,8 @@ public final class Http1xStream implements HttpStream {
   }
 
   /**
-   * An HTTP body with alternating chunk sizes and chunk bodies. It is the
-   * caller's responsibility to buffer chunks; typically by using a buffered
-   * sink with this sink.
+   * An HTTP body with alternating chunk sizes and chunk bodies. It is the caller's responsibility
+   * to buffer chunks; typically by using a buffered sink with this sink.
    */
   private final class ChunkedSink implements Sink {
     private final ForwardingTimeout timeout = new ForwardingTimeout(sink.timeout());
@@ -349,8 +347,8 @@ public final class Http1xStream implements HttpStream {
     }
 
     /**
-     * Closes the cache entry and makes the socket available for reuse. This
-     * should be invoked when the end of the body has been reached.
+     * Closes the cache entry and makes the socket available for reuse. This should be invoked when
+     * the end of the body has been reached.
      */
     protected final void endOfInput(boolean reuseConnection) throws IOException {
       if (state == STATE_CLOSED) return;

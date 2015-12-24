@@ -15,12 +15,12 @@
  */
 package okhttp3;
 
-import okhttp3.internal.SslContextBuilder;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.cert.X509Certificate;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import okhttp3.internal.SslContextBuilder;
 import okio.ByteString;
 import org.junit.Test;
 
@@ -165,7 +165,8 @@ public final class CertificatePinnerTest {
     certificatePinner.check("a.example.com", keypairACertificate1);
   }
 
-  @Test public void successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname() throws Exception {
+  @Test public void successfulMatchAcceptsAnyMatchingCertificateForWildcardHostname()
+      throws Exception {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add("*.example.com", keypairBCertificate1Pin)
         .build();
@@ -194,7 +195,8 @@ public final class CertificatePinnerTest {
     certificatePinner.check("a.example.com", keypairBCertificate1);
   }
 
-  @Test public void successfulCheckForOneHostnameWithWildcardAndDirectCertificate() throws Exception {
+  @Test public void successfulCheckForOneHostnameWithWildcardAndDirectCertificate()
+      throws Exception {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add("*.example.com", keypairACertificate1Pin)
         .add("a.example.com", keypairBCertificate1Pin)
@@ -204,7 +206,8 @@ public final class CertificatePinnerTest {
     certificatePinner.check("a.example.com", keypairBCertificate1);
   }
 
-  @Test public void unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate() throws Exception {
+  @Test public void unsuccessfulCheckForOneHostnameWithWildcardAndDirectCertificate()
+      throws Exception {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add("*.example.com", keypairACertificate1Pin)
         .add("a.example.com", keypairBCertificate1Pin)
@@ -223,8 +226,9 @@ public final class CertificatePinnerTest {
         .add("second.com", keypairCCertificate1Pin)
         .build();
 
-    Set<ByteString> expectedPins = setOf(keypairACertificate1PinBase64, keypairBCertificate1PinBase64);
-    Set<ByteString> matchedPins  = certificatePinner.findMatchingPins("first.com");
+    Set<ByteString> expectedPins =
+        setOf(keypairACertificate1PinBase64, keypairBCertificate1PinBase64);
+    Set<ByteString> matchedPins = certificatePinner.findMatchingPins("first.com");
 
     assertEquals(expectedPins, matchedPins);
   }
@@ -236,8 +240,9 @@ public final class CertificatePinnerTest {
         .add("b.example.com", keypairCCertificate1Pin)
         .build();
 
-    Set<ByteString> expectedPins = setOf(keypairACertificate1PinBase64, keypairBCertificate1PinBase64);
-    Set<ByteString> matchedPins  = certificatePinner.findMatchingPins("a.example.com");
+    Set<ByteString> expectedPins =
+        setOf(keypairACertificate1PinBase64, keypairBCertificate1PinBase64);
+    Set<ByteString> matchedPins = certificatePinner.findMatchingPins("a.example.com");
 
     assertEquals(expectedPins, matchedPins);
   }

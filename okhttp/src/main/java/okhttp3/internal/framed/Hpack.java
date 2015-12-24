@@ -33,9 +33,9 @@ import okio.Source;
  *
  * http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12
  *
- * This implementation uses an array for the dynamic table and a list for
- * indexed entries.  Dynamic entries are added to the array, starting in the
- * last position moving forward.  When the array fills, it is doubled.
+ * This implementation uses an array for the dynamic table and a list for indexed entries.  Dynamic
+ * entries are added to the array, starting in the last position moving forward.  When the array
+ * fills, it is doubled.
  */
 final class Hpack {
   private static final int PREFIX_4_BITS = 0x0f;
@@ -136,11 +136,11 @@ final class Hpack {
     }
 
     /**
-     * Called by the reader when the peer sent {@link Settings#HEADER_TABLE_SIZE}.
-     * While this establishes the maximum dynamic table size, the
-     * {@link #maxDynamicTableByteCount} set during processing may limit the
-     * table size to a smaller amount.
-     * <p> Evicts entries or clears the table as needed.
+     * Called by the reader when the peer sent {@link Settings#HEADER_TABLE_SIZE}. While this
+     * establishes the maximum dynamic table size, the {@link #maxDynamicTableByteCount} set during
+     * processing may limit the table size to a smaller amount.
+     *
+     * <p>Evicts entries or clears the table as needed.
      */
     void headerTableSizeSetting(int headerTableSizeSetting) {
       this.headerTableSizeSetting = headerTableSizeSetting;
@@ -185,8 +185,8 @@ final class Hpack {
     }
 
     /**
-     * Read {@code byteCount} bytes of headers from the source stream. This
-     * implementation does not propagate the never indexed flag of a header.
+     * Read {@code byteCount} bytes of headers from the source stream. This implementation does not
+     * propagate the never indexed flag of a header.
      */
     void readHeaders() throws IOException {
       while (!source.exhausted()) {
@@ -420,8 +420,8 @@ final class Hpack {
   }
 
   /**
-   * An HTTP/2 response cannot contain uppercase header characters and must
-   * be treated as malformed.
+   * An HTTP/2 response cannot contain uppercase header characters and must be treated as
+   * malformed.
    */
   private static ByteString checkLowercase(ByteString name) throws IOException {
     for (int i = 0, length = name.size(); i < length; i++) {

@@ -20,5 +20,6 @@ import okio.Sink;
 
 public interface CacheRequest {
   Sink body() throws IOException;
+
   void abort();
 }

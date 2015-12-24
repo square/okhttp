@@ -16,10 +16,10 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
+import okhttp3.internal.Util;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,8 +30,8 @@ import static org.junit.Assert.fail;
 /**
  * Test MediaType API and parsing.
  *
- * <p>This test includes tests from <a
- * href="https://code.google.com/p/guava-libraries/">Guava's</a> MediaTypeTest.
+ * <p>This test includes tests from <a href="https://code.google.com/p/guava-libraries/">Guava's</a>
+ * MediaTypeTest.
  */
 public class MediaTypeTest {
   @Test public void testParse() throws Exception {

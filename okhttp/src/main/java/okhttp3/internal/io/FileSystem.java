@@ -28,9 +28,9 @@ import okio.Source;
  * implementations may be used to inject faults (for testing) or to transform stored data (to add
  * encryption, for example).
  *
- * <p>All operations on a file system are racy. For example, guarding a call to {@link #source}
- * with {@link #exists} does not guarantee that {@link FileNotFoundException} will not be thrown.
- * The file may be moved between the two calls!
+ * <p>All operations on a file system are racy. For example, guarding a call to {@link #source} with
+ * {@link #exists} does not guarantee that {@link FileNotFoundException} will not be thrown. The
+ * file may be moved between the two calls!
  *
  * <p>This interface is less ambitious than {@link java.nio.file.FileSystem} introduced in Java 7.
  * It lacks important features like file watching, metadata, permissions, and disk space

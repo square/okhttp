@@ -1,9 +1,5 @@
 package okhttp3;
 
-import okhttp3.internal.http.OkHeaders;
-import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -13,6 +9,10 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import okhttp3.internal.http.OkHeaders;
+import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
 import okio.BufferedSource;
 import org.junit.After;
 import org.junit.Before;
@@ -44,8 +44,8 @@ public class OkUrlFactoryTest {
   }
 
   /**
-   * Response code 407 should only come from proxy servers. Android's client
-   * throws if it is sent by an origin server.
+   * Response code 407 should only come from proxy servers. Android's client throws if it is sent by
+   * an origin server.
    */
   @Test public void originServerSends407() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(407));

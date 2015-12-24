@@ -15,10 +15,10 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 
@@ -72,8 +72,8 @@ public final class FormBody extends RequestBody {
 
   /**
    * Either writes this request to {@code sink} or measures its content length. We have one method
-   * do double-duty to make sure the counting and content are consistent, particularly when it
-   * comes to awkward operations like measuring the encoded length of header strings, or the
+   * do double-duty to make sure the counting and content are consistent, particularly when it comes
+   * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
    */
   private long writeOrCountBytes(BufferedSink sink, boolean countBytes) {

@@ -16,7 +16,6 @@
  */
 package okhttp3.internal.huc;
 
-import okhttp3.Handshake;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,10 +31,11 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Handshake;
 
 /**
- * Implement an HTTPS connection by delegating to an HTTP connection for
- * everything but the HTTPS-specific stuff.
+ * Implement an HTTPS connection by delegating to an HTTP connection for everything but the
+ * HTTPS-specific stuff.
  */
 abstract class DelegatingHttpsURLConnection extends HttpsURLConnection {
   private final HttpURLConnection delegate;

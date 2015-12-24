@@ -16,13 +16,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.Internal;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
-import okhttp3.internal.io.InMemoryFileSystem;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -52,6 +45,13 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
+import okhttp3.internal.Internal;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
+import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -109,57 +109,57 @@ public final class UrlConnectionCacheTest {
    * http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html#sec13.4
    */
   @Test public void responseCachingByResponseCode() throws Exception {
-      // Test each documented HTTP/1.1 code, plus the first unused value in each range.
-      // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
+    // Test each documented HTTP/1.1 code, plus the first unused value in each range.
+    // http://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html
 
-      // We can't test 100 because it's not really a response.
-      // assertCached(false, 100);
-      assertCached(false, 101);
-      assertCached(false, 102);
-      assertCached(true,  200);
-      assertCached(false, 201);
-      assertCached(false, 202);
-      assertCached(true,  203);
-      assertCached(true,  204);
-      assertCached(false, 205);
-      assertCached(false, 206); //Electing to not cache partial responses
-      assertCached(false, 207);
-      assertCached(true,  300);
-      assertCached(true,  301);
-      assertCached(true,  302);
-      assertCached(false, 303);
-      assertCached(false, 304);
-      assertCached(false, 305);
-      assertCached(false, 306);
-      assertCached(true,  307);
-      assertCached(true,  308);
-      assertCached(false, 400);
-      assertCached(false, 401);
-      assertCached(false, 402);
-      assertCached(false, 403);
-      assertCached(true,  404);
-      assertCached(true,  405);
-      assertCached(false, 406);
-      assertCached(false, 408);
-      assertCached(false, 409);
-      // the HTTP spec permits caching 410s, but the RI doesn't.
-      assertCached(true,  410);
-      assertCached(false, 411);
-      assertCached(false, 412);
-      assertCached(false, 413);
-      assertCached(true,  414);
-      assertCached(false, 415);
-      assertCached(false, 416);
-      assertCached(false, 417);
-      assertCached(false, 418);
+    // We can't test 100 because it's not really a response.
+    // assertCached(false, 100);
+    assertCached(false, 101);
+    assertCached(false, 102);
+    assertCached(true, 200);
+    assertCached(false, 201);
+    assertCached(false, 202);
+    assertCached(true, 203);
+    assertCached(true, 204);
+    assertCached(false, 205);
+    assertCached(false, 206); //Electing to not cache partial responses
+    assertCached(false, 207);
+    assertCached(true, 300);
+    assertCached(true, 301);
+    assertCached(true, 302);
+    assertCached(false, 303);
+    assertCached(false, 304);
+    assertCached(false, 305);
+    assertCached(false, 306);
+    assertCached(true, 307);
+    assertCached(true, 308);
+    assertCached(false, 400);
+    assertCached(false, 401);
+    assertCached(false, 402);
+    assertCached(false, 403);
+    assertCached(true, 404);
+    assertCached(true, 405);
+    assertCached(false, 406);
+    assertCached(false, 408);
+    assertCached(false, 409);
+    // the HTTP spec permits caching 410s, but the RI doesn't.
+    assertCached(true, 410);
+    assertCached(false, 411);
+    assertCached(false, 412);
+    assertCached(false, 413);
+    assertCached(true, 414);
+    assertCached(false, 415);
+    assertCached(false, 416);
+    assertCached(false, 417);
+    assertCached(false, 418);
 
-      assertCached(false, 500);
-      assertCached(true,  501);
-      assertCached(false, 502);
-      assertCached(false, 503);
-      assertCached(false, 504);
-      assertCached(false, 505);
-      assertCached(false, 506);
+    assertCached(false, 500);
+    assertCached(true, 501);
+    assertCached(false, 502);
+    assertCached(false, 503);
+    assertCached(false, 504);
+    assertCached(false, 505);
+    assertCached(false, 506);
   }
 
   private void assertCached(boolean shouldPut, int responseCode) throws Exception {
@@ -352,10 +352,9 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * We've had bugs where caching and cross-protocol redirects yield class
-   * cast exceptions internal to the cache because we incorrectly assumed that
-   * HttpsURLConnection was always HTTPS and HttpURLConnection was always HTTP;
-   * in practice redirects mean that each can do either.
+   * We've had bugs where caching and cross-protocol redirects yield class cast exceptions internal
+   * to the cache because we incorrectly assumed that HttpsURLConnection was always HTTPS and
+   * HttpURLConnection was always HTTP; in practice redirects mean that each can do either.
    *
    * https://github.com/square/okhttp/issues/214
    */
@@ -1038,8 +1037,8 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * Confirm that {@link URLConnection#setIfModifiedSince} causes an
-   * If-Modified-Since header with a GMT timestamp.
+   * Confirm that {@link URLConnection#setIfModifiedSince} causes an If-Modified-Since header with a
+   * GMT timestamp.
    *
    * https://code.google.com/p/android/issues/detail?id=66135
    */
@@ -1056,8 +1055,8 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * For Last-Modified and Date headers, we should echo the date back in the
-   * exact format we were served.
+   * For Last-Modified and Date headers, we should echo the date back in the exact format we were
+   * served.
    */
   @Test public void retainServedDateFormat() throws Exception {
     // Serve a response with a non-standard date format that OkHttp supports.
@@ -1503,9 +1502,9 @@ public final class UrlConnectionCacheTest {
 
   @Test public void cachePlusRange() throws Exception {
     assertNotCached(new MockResponse().setResponseCode(HttpURLConnection.HTTP_PARTIAL)
-            .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
-            .addHeader("Content-Range: bytes 100-100/200")
-            .addHeader("Cache-Control: max-age=60"));
+        .addHeader("Date: " + formatDate(0, TimeUnit.HOURS))
+        .addHeader("Content-Range: bytes 100-100/200")
+        .addHeader("Cache-Control: max-age=60"));
   }
 
   @Test public void conditionalHitUpdatesCache() throws Exception {
@@ -1590,10 +1589,9 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * Old implementations of OkHttp's response cache wrote header fields like
-   * ":status: 200 OK". This broke our cached response parser because it split
-   * on the first colon. This regression test exists to help us read these old
-   * bad cache entries.
+   * Old implementations of OkHttp's response cache wrote header fields like ":status: 200 OK". This
+   * broke our cached response parser because it split on the first colon. This regression test
+   * exists to help us read these old bad cache entries.
    *
    * https://github.com/square/okhttp/issues/227
    */
@@ -1656,9 +1654,8 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * @param delta the offset from the current date to use. Negative
-   * values yield dates in the past; positive values yield dates in the
-   * future.
+   * @param delta the offset from the current date to use. Negative values yield dates in the past;
+   * positive values yield dates in the future.
    */
   private String formatDate(long delta, TimeUnit timeUnit) {
     return formatDate(new Date(System.currentTimeMillis() + timeUnit.toMillis(delta)));
@@ -1733,9 +1730,8 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * Shortens the body of {@code response} but not the corresponding headers.
-   * Only useful to test how clients respond to the premature conclusion of
-   * the HTTP body.
+   * Shortens the body of {@code response} but not the corresponding headers. Only useful to test
+   * how clients respond to the premature conclusion of the HTTP body.
    */
   private MockResponse truncateViolently(MockResponse response, int numBytesToKeep) {
     response.setSocketPolicy(DISCONNECT_AT_END);
@@ -1748,9 +1744,8 @@ public final class UrlConnectionCacheTest {
   }
 
   /**
-   * Reads {@code count} characters from the stream. If the stream is
-   * exhausted before {@code count} characters can be read, the remaining
-   * characters are returned and the stream is closed.
+   * Reads {@code count} characters from the stream. If the stream is exhausted before {@code count}
+   * characters can be read, the remaining characters are returned and the stream is closed.
    */
   private String readAscii(URLConnection connection, int count) throws IOException {
     HttpURLConnection httpConnection = (HttpURLConnection) connection;

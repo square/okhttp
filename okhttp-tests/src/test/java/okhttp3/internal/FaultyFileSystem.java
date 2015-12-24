@@ -15,12 +15,12 @@
  */
 package okhttp3.internal;
 
-import okhttp3.internal.io.FileSystem;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import okhttp3.internal.io.FileSystem;
 import okio.Buffer;
 import okio.ForwardingSink;
 import okio.Sink;

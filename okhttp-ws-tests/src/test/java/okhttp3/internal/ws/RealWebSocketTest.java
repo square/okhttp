@@ -15,14 +15,14 @@
  */
 package okhttp3.internal.ws;
 
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okhttp3.ws.WebSocketRecorder;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.Executor;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import okhttp3.ws.WebSocketRecorder;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -112,7 +112,7 @@ public final class RealWebSocketTest {
   @Test public void binaryMessage() throws IOException {
     client.sendMessage(RequestBody.create(BINARY, "Hello!"));
     server.readMessage();
-    serverListener.assertBinaryMessage(new byte[] { 'H', 'e', 'l', 'l', 'o', '!' });
+    serverListener.assertBinaryMessage(new byte[] {'H', 'e', 'l', 'l', 'o', '!'});
   }
 
   @Test public void missingContentTypeThrows() throws IOException {

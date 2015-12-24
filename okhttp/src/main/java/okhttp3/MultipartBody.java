@@ -15,11 +15,11 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -27,46 +27,42 @@ import okio.ByteString;
 /** An <a href="http://www.ietf.org/rfc/rfc2387.txt">RFC 2387</a>-compliant request body. */
 public final class MultipartBody extends RequestBody {
   /**
-   * The "mixed" subtype of "multipart" is intended for use when the body
-   * parts are independent and need to be bundled in a particular order. Any
-   * "multipart" subtypes that an implementation does not recognize must be
-   * treated as being of subtype "mixed".
+   * The "mixed" subtype of "multipart" is intended for use when the body parts are independent and
+   * need to be bundled in a particular order. Any "multipart" subtypes that an implementation does
+   * not recognize must be treated as being of subtype "mixed".
    */
   public static final MediaType MIXED = MediaType.parse("multipart/mixed");
 
   /**
-   * The "multipart/alternative" type is syntactically identical to
-   * "multipart/mixed", but the semantics are different. In particular, each
-   * of the body parts is an "alternative" version of the same information.
+   * The "multipart/alternative" type is syntactically identical to "multipart/mixed", but the
+   * semantics are different. In particular, each of the body parts is an "alternative" version of
+   * the same information.
    */
   public static final MediaType ALTERNATIVE = MediaType.parse("multipart/alternative");
 
   /**
-   * This type is syntactically identical to "multipart/mixed", but the
-   * semantics are different. In particular, in a digest, the default {@code
-   * Content-Type} value for a body part is changed from "text/plain" to
-   * "message/rfc822".
+   * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
+   * particular, in a digest, the default {@code Content-Type} value for a body part is changed from
+   * "text/plain" to "message/rfc822".
    */
   public static final MediaType DIGEST = MediaType.parse("multipart/digest");
 
   /**
-   * This type is syntactically identical to "multipart/mixed", but the
-   * semantics are different. In particular, in a parallel entity, the order
-   * of body parts is not significant.
+   * This type is syntactically identical to "multipart/mixed", but the semantics are different. In
+   * particular, in a parallel entity, the order of body parts is not significant.
    */
   public static final MediaType PARALLEL = MediaType.parse("multipart/parallel");
 
   /**
-   * The media-type multipart/form-data follows the rules of all multipart
-   * MIME data streams as outlined in RFC 2046. In forms, there are a series
-   * of fields to be supplied by the user who fills out the form. Each field
-   * has a name. Within a given form, the names are unique.
+   * The media-type multipart/form-data follows the rules of all multipart MIME data streams as
+   * outlined in RFC 2046. In forms, there are a series of fields to be supplied by the user who
+   * fills out the form. Each field has a name. Within a given form, the names are unique.
    */
   public static final MediaType FORM = MediaType.parse("multipart/form-data");
 
-  private static final byte[] COLONSPACE = { ':', ' ' };
-  private static final byte[] CRLF = { '\r', '\n' };
-  private static final byte[] DASHDASH = { '-', '-' };
+  private static final byte[] COLONSPACE = {':', ' '};
+  private static final byte[] CRLF = {'\r', '\n'};
+  private static final byte[] DASHDASH = {'-', '-'};
 
   private final ByteString boundary;
   private final MediaType originalType;
@@ -119,8 +115,8 @@ public final class MultipartBody extends RequestBody {
 
   /**
    * Either writes this request to {@code sink} or measures its content length. We have one method
-   * do double-duty to make sure the counting and content are consistent, particularly when it
-   * comes to awkward operations like measuring the encoded length of header strings, or the
+   * do double-duty to make sure the counting and content are consistent, particularly when it comes
+   * to awkward operations like measuring the encoded length of header strings, or the
    * length-in-digits of an encoded integer.
    */
   private long writeOrCountBytes(BufferedSink sink, boolean countBytes) throws IOException {
@@ -194,13 +190,12 @@ public final class MultipartBody extends RequestBody {
   /**
    * Appends a quoted-string to a StringBuilder.
    *
-   * <p>RFC 2388 is rather vague about how one should escape special characters
-   * in form-data parameters, and as it turns out Firefox and Chrome actually
-   * do rather different things, and both say in their comments that they're
-   * not really sure what the right approach is. We go with Chrome's behavior
-   * (which also experimentally seems to match what IE does), but if you
-   * actually want to have a good chance of things working, please avoid
-   * double-quotes, newlines, percent signs, and the like in your field names.
+   * <p>RFC 2388 is rather vague about how one should escape special characters in form-data
+   * parameters, and as it turns out Firefox and Chrome actually do rather different things, and
+   * both say in their comments that they're not really sure what the right approach is. We go with
+   * Chrome's behavior (which also experimentally seems to match what IE does), but if you actually
+   * want to have a good chance of things working, please avoid double-quotes, newlines, percent
+   * signs, and the like in your field names.
    */
   static StringBuilder appendQuotedString(StringBuilder target, String key) {
     target.append('"');
@@ -224,7 +219,6 @@ public final class MultipartBody extends RequestBody {
     target.append('"');
     return target;
   }
-
 
   public static final class Part {
     public static Part create(RequestBody body) {
@@ -286,9 +280,8 @@ public final class MultipartBody extends RequestBody {
     }
 
     /**
-     * Set the MIME type. Expected values for {@code type} are {@link #MIXED} (the
-     * default), {@link #ALTERNATIVE}, {@link #DIGEST}, {@link #PARALLEL} and
-     * {@link #FORM}.
+     * Set the MIME type. Expected values for {@code type} are {@link #MIXED} (the default), {@link
+     * #ALTERNATIVE}, {@link #DIGEST}, {@link #PARALLEL} and {@link #FORM}.
      */
     public Builder setType(MediaType type) {
       if (type == null) {

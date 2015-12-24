@@ -15,9 +15,9 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.Protocol;
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.Protocol;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -44,9 +44,8 @@ public final class StatusLineTest {
   }
 
   /**
-   * This is not defined in the protocol but some servers won't add the leading
-   * empty space when the message is empty.
-   * http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
+   * This is not defined in the protocol but some servers won't add the leading empty space when the
+   * message is empty. http://www.w3.org/Protocols/rfc2616/rfc2616-sec6.html#sec6.1
    */
   @Test public void emptyMessageAndNoLeadingSpace() throws IOException {
     int version = 1;

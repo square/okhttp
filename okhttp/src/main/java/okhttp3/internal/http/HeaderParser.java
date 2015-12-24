@@ -18,9 +18,8 @@ package okhttp3.internal.http;
 
 public final class HeaderParser {
   /**
-   * Returns the next index in {@code input} at or after {@code pos} that
-   * contains a character from {@code characters}. Returns the input length if
-   * none of the requested characters can be found.
+   * Returns the next index in {@code input} at or after {@code pos} that contains a character from
+   * {@code characters}. Returns the input length if none of the requested characters can be found.
    */
   public static int skipUntil(String input, int pos, String characters) {
     for (; pos < input.length(); pos++) {
@@ -32,8 +31,8 @@ public final class HeaderParser {
   }
 
   /**
-   * Returns the next non-whitespace character in {@code input} that is white
-   * space. Result is undefined if input contains newline characters.
+   * Returns the next non-whitespace character in {@code input} that is white space. Result is
+   * undefined if input contains newline characters.
    */
   public static int skipWhitespace(String input, int pos) {
     for (; pos < input.length(); pos++) {
@@ -46,8 +45,8 @@ public final class HeaderParser {
   }
 
   /**
-   * Returns {@code value} as a positive integer, or 0 if it is negative, or
-   * {@code defaultValue} if it cannot be parsed.
+   * Returns {@code value} as a positive integer, or 0 if it is negative, or {@code defaultValue} if
+   * it cannot be parsed.
    */
   public static int parseSeconds(String value, int defaultValue) {
     try {

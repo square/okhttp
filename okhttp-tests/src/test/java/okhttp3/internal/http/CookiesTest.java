@@ -16,11 +16,6 @@
 
 package okhttp3.internal.http;
 
-import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
@@ -33,6 +28,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.OkHttpClient;
+import okhttp3.OkUrlFactory;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -206,12 +206,12 @@ public class CookiesTest {
     RecordedRequest request = server.takeRequest();
 
     assertEquals("$Version=\"1\"; "
-            + "a=\"android\";$Path=\"/\";$Domain=\""
-            + server.getCookieDomain()
-            + "\"; "
-            + "b=\"banana\";$Path=\"/\";$Domain=\""
-            + server.getCookieDomain()
-            + "\"", request.getHeader("Cookie"));
+        + "a=\"android\";$Path=\"/\";$Domain=\""
+        + server.getCookieDomain()
+        + "\"; "
+        + "b=\"banana\";$Path=\"/\";$Domain=\""
+        + server.getCookieDomain()
+        + "\"", request.getHeader("Cookie"));
   }
 
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
@@ -238,11 +238,11 @@ public class CookiesTest {
     RecordedRequest request = redirectSource.takeRequest();
 
     assertEquals("$Version=\"1\"; "
-            + "c=\"cookie\";$Path=\"/\";$Domain=\""
-            + redirectSource.getCookieDomain()
-            + "\";$Port=\""
-            + portList
-            + "\"", request.getHeader("Cookie"));
+        + "c=\"cookie\";$Path=\"/\";$Domain=\""
+        + redirectSource.getCookieDomain()
+        + "\";$Port=\""
+        + portList
+        + "\"", request.getHeader("Cookie"));
 
     for (String header : redirectTarget.takeRequest().getHeaders().names()) {
       if (header.startsWith("Cookie")) {
@@ -252,10 +252,9 @@ public class CookiesTest {
   }
 
   /**
-   * Test which headers show up where. The cookie manager should be notified
-   * of both user-specified and derived headers like {@code Host}. Headers
-   * named {@code Cookie} or {@code Cookie2} that are returned by the cookie
-   * manager should show up in the request and in {@code
+   * Test which headers show up where. The cookie manager should be notified of both user-specified
+   * and derived headers like {@code Host}. Headers named {@code Cookie} or {@code Cookie2} that are
+   * returned by the cookie manager should show up in the request and in {@code
    * getRequestProperties}.
    */
   @Test public void testHeadersSentToCookieHandler() throws IOException, InterruptedException {
@@ -324,7 +323,7 @@ public class CookiesTest {
       }
     });
     MockWebServer server = new MockWebServer();
-    server. enqueue(new MockResponse());
+    server.enqueue(new MockResponse());
     server.start();
 
     get(server, "/");
@@ -350,11 +349,10 @@ public class CookiesTest {
     }
   }
 
-  private Map<String,List<String>> get(MockWebServer server, String path) throws Exception {
+  private Map<String, List<String>> get(MockWebServer server, String path) throws Exception {
     URLConnection connection = new OkUrlFactory(client).open(server.url(path).url());
     Map<String, List<String>> headers = connection.getHeaderFields();
     connection.getInputStream().close();
     return headers;
   }
-
 }

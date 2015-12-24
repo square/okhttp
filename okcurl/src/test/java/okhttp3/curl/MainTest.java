@@ -15,9 +15,9 @@
  */
 package okhttp3.curl;
 
+import java.io.IOException;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import java.io.IOException;
 import okio.Buffer;
 import org.junit.Test;
 

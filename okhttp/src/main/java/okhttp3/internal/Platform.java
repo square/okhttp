@@ -17,7 +17,6 @@
 package okhttp3.internal;
 
 import android.util.Log;
-import okhttp3.Protocol;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import javax.net.ssl.SSLSocket;
+import okhttp3.Protocol;
 import okio.Buffer;
 
 import static okhttp3.internal.Internal.logger;
@@ -38,16 +38,20 @@ import static okhttp3.internal.Internal.logger;
  * Access to platform-specific features.
  *
  * <h3>Server name indication (SNI)</h3>
- * Supported on Android 2.3+.
+ *
+ * <p>Supported on Android 2.3+.
  *
  * <h3>Session Tickets</h3>
- * Supported on Android 2.3+.
+ *
+ * <p>Supported on Android 2.3+.
  *
  * <h3>Android Traffic Stats (Socket Tagging)</h3>
- * Supported on Android 4.0+.
+ *
+ * <p>Supported on Android 4.0+.
  *
  * <h3>ALPN (Application Layer Protocol Negotiation)</h3>
- * Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
+ *
+ * <p>Supported on Android 5.0+. The APIs were present in Android 4.4, but that implementation was
  * unstable.
  *
  * Supported on OpenJDK 7 and 8 (via the JettyALPN-boot library).
@@ -77,8 +81,7 @@ public class Platform {
   /**
    * Configure TLS extensions on {@code sslSocket} for {@code route}.
    *
-   * @param hostname non-null for client-side handshakes; null for
-   *     server-side handshakes.
+   * @param hostname non-null for client-side handshakes; null for server-side handshakes.
    */
   public void configureTlsExtensions(SSLSocket sslSocket, String hostname,
       List<Protocol> protocols) {
@@ -217,7 +220,7 @@ public class Platform {
 
       // Enable ALPN.
       if (setAlpnProtocols != null && setAlpnProtocols.isSupported(sslSocket)) {
-        Object[] parameters = { concatLengthPrefixed(protocols) };
+        Object[] parameters = {concatLengthPrefixed(protocols)};
         setAlpnProtocols.invokeWithoutCheckedException(sslSocket, parameters);
       }
     }
@@ -297,7 +300,7 @@ public class Platform {
       }
       try {
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
-            new Class[] { clientProviderClass, serverProviderClass }, new JettyNegoProvider(names));
+            new Class[] {clientProviderClass, serverProviderClass}, new JettyNegoProvider(names));
         putMethod.invoke(null, sslSocket, provider);
       } catch (InvocationTargetException | IllegalAccessException e) {
         throw new AssertionError(e);
@@ -329,8 +332,8 @@ public class Platform {
   }
 
   /**
-   * Handle the methods of ALPN's ClientProvider and ServerProvider
-   * without a compile-time dependency on those interfaces.
+   * Handle the methods of ALPN's ClientProvider and ServerProvider without a compile-time
+   * dependency on those interfaces.
    */
   private static class JettyNegoProvider implements InvocationHandler {
     /** This peer's supported protocols. */

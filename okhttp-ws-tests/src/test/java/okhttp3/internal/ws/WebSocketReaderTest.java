@@ -15,14 +15,14 @@
  */
 package okhttp3.internal.ws;
 
-import okhttp3.ResponseBody;
-import okhttp3.ws.WebSocketRecorder;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+import okhttp3.ResponseBody;
+import okhttp3.ws.WebSocketRecorder;
 import okhttp3.ws.WebSocketRecorder.MessageDelegate;
 import okio.Buffer;
 import okio.BufferedSource;

@@ -85,5 +85,6 @@ public final class HpackJsonUtil {
     return result;
   }
 
-  private HpackJsonUtil() { } // Utilities only.
+  private HpackJsonUtil() {
+  } // Utilities only.
 }

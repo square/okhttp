@@ -21,8 +21,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type,
- * appropriate to describe the content type of an HTTP request or response body.
+ * An <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> Media Type, appropriate to describe
+ * the content type of an HTTP request or response body.
  */
 public final class MediaType {
   private static final String TOKEN = "([a-zA-Z0-9-!#$%&'*+.^_`{|}~]+)";
@@ -44,8 +44,8 @@ public final class MediaType {
   }
 
   /**
-   * Returns a media type for {@code string}, or null if {@code string} is not a
-   * well-formed media type.
+   * Returns a media type for {@code string}, or null if {@code string} is not a well-formed media
+   * type.
    */
   public static MediaType parse(String string) {
     Matcher typeSubtype = TYPE_SUBTYPE.matcher(string);
@@ -74,40 +74,38 @@ public final class MediaType {
   }
 
   /**
-   * Returns the high-level media type, such as "text", "image", "audio",
-   * "video", or "application".
+   * Returns the high-level media type, such as "text", "image", "audio", "video", or
+   * "application".
    */
   public String type() {
     return type;
   }
 
   /**
-   * Returns a specific media subtype, such as "plain" or "png", "mpeg",
-   * "mp4" or "xml".
+   * Returns a specific media subtype, such as "plain" or "png", "mpeg", "mp4" or "xml".
    */
   public String subtype() {
     return subtype;
   }
 
   /**
-   * Returns the charset of this media type, or null if this media type doesn't
-   * specify a charset.
+   * Returns the charset of this media type, or null if this media type doesn't specify a charset.
    */
   public Charset charset() {
     return charset != null ? Charset.forName(charset) : null;
   }
 
   /**
-   * Returns the charset of this media type, or {@code defaultValue} if this
-   * media type doesn't specify a charset.
+   * Returns the charset of this media type, or {@code defaultValue} if this media type doesn't
+   * specify a charset.
    */
   public Charset charset(Charset defaultValue) {
     return charset != null ? Charset.forName(charset) : defaultValue;
   }
 
   /**
-   * Returns the encoded media type, like "text/plain; charset=utf-8",
-   * appropriate for use in a Content-Type header.
+   * Returns the encoded media type, like "text/plain; charset=utf-8", appropriate for use in a
+   * Content-Type header.
    */
   @Override public String toString() {
     return mediaType;

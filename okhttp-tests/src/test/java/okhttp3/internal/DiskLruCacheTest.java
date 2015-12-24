@@ -15,7 +15,6 @@
  */
 package okhttp3.internal;
 
-import okhttp3.internal.io.FileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -26,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Executor;
+import okhttp3.internal.io.FileSystem;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
@@ -282,8 +282,8 @@ public final class DiskLruCacheTest {
   }
 
   /**
-   * Each read sees a snapshot of the file at the time read was called.
-   * This means that two reads of the same key can see different data.
+   * Each read sees a snapshot of the file at the time read was called. This means that two reads of
+   * the same key can see different data.
    */
   @Test public void readAndWriteOverlapsMaintainConsistency() throws Exception {
     DiskLruCache.Editor v1Creator = cache.edit("k1");
@@ -859,9 +859,8 @@ public final class DiskLruCacheTest {
   }
 
   /**
-   * We had a long-lived bug where {@link DiskLruCache#trimToSize} could
-   * infinite loop if entries being edited required deletion for the operation
-   * to complete.
+   * We had a long-lived bug where {@link DiskLruCache#trimToSize} could infinite loop if entries
+   * being edited required deletion for the operation to complete.
    */
   @Test public void trimToSizeWithActiveEdit() throws Exception {
     set("a", "a1234", "a1234");
@@ -1275,7 +1274,8 @@ public final class DiskLruCacheTest {
     editor.commit();
   }
 
-  public static void setString(DiskLruCache.Editor editor, int index, String value) throws IOException {
+  public static void setString(DiskLruCache.Editor editor, int index, String value)
+      throws IOException {
     BufferedSink writer = Okio.buffer(editor.newSink(index));
     writer.writeUtf8(value);
     writer.close();

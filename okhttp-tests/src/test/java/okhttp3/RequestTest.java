@@ -15,13 +15,13 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
 import java.util.Collections;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import org.junit.Test;
 
@@ -125,7 +125,8 @@ public final class RequestTest {
 
   @Test public void newBuilderUrlResetsUrl() throws Exception {
     Request requestWithoutCache = new Request.Builder().url("http://localhost/api").build();
-    Request builtRequestWithoutCache = requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
+    Request builtRequestWithoutCache =
+        requestWithoutCache.newBuilder().url("http://localhost/api/foo").build();
     assertEquals(HttpUrl.parse("http://localhost/api/foo"), builtRequestWithoutCache.url());
 
     Request requestWithCache = new Request.Builder().url("http://localhost/api").build();

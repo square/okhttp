@@ -15,18 +15,16 @@
  */
 package okhttp3.testing;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 import org.junit.runner.notification.RunListener;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 /**
- * A {@link org.junit.runner.notification.RunListener} used to install an aggressive default
- * {@link java.lang.Thread.UncaughtExceptionHandler} similar to the one found on Android.
- * No exceptions should escape from OkHttp that might cause apps to be killed or tests to fail on
- * Android.
+ * A {@link org.junit.runner.notification.RunListener} used to install an aggressive default {@link
+ * java.lang.Thread.UncaughtExceptionHandler} similar to the one found on Android. No exceptions
+ * should escape from OkHttp that might cause apps to be killed or tests to fail on Android.
  */
 public class InstallUncaughtExceptionHandlerListener extends RunListener {
 

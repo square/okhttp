@@ -1,12 +1,12 @@
 package okhttp3;
 
-import okhttp3.internal.framed.Header;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import okhttp3.internal.framed.Header;
 
 public final class TestUtil {
   private TestUtil() {

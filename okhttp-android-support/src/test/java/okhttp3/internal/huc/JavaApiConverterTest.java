@@ -15,18 +15,6 @@
  */
 package okhttp3.internal.huc;
 
-import okhttp3.CipherSuite;
-import okhttp3.Handshake;
-import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
-import okhttp3.internal.Internal;
-import okhttp3.internal.Util;
-import okhttp3.mockwebserver.MockWebServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -50,9 +38,20 @@ import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import okhttp3.CipherSuite;
+import okhttp3.Handshake;
+import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.internal.Internal;
+import okhttp3.internal.Util;
+import okhttp3.mockwebserver.MockWebServer;
 import okio.Buffer;
 import okio.BufferedSource;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -185,7 +184,8 @@ public class JavaApiConverterTest {
         return localCertificates;
       }
 
-      @Override public List<Certificate> getServerCertificateChain() throws SSLPeerUnverifiedException {
+      @Override public List<Certificate> getServerCertificateChain()
+          throws SSLPeerUnverifiedException {
         return serverCertificates;
       }
 
@@ -223,7 +223,7 @@ public class JavaApiConverterTest {
   @Test public void createOkRequest_nullRequestHeaders() throws Exception {
     URI uri = new URI("http://foo/bar");
 
-    Map<String,List<String>> javaRequestHeaders = null;
+    Map<String, List<String>> javaRequestHeaders = null;
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
     assertFalse(request.isHttps());
     assertEquals(uri, request.url().uri());
@@ -235,7 +235,7 @@ public class JavaApiConverterTest {
   @Test public void createOkRequest_nonNullRequestHeaders() throws Exception {
     URI uri = new URI("https://foo/bar");
 
-    Map<String,List<String>> javaRequestHeaders = new HashMap<>();
+    Map<String, List<String>> javaRequestHeaders = new HashMap<>();
     javaRequestHeaders.put("Foo", Arrays.asList("Bar"));
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
     assertTrue(request.isHttps());
@@ -253,7 +253,7 @@ public class JavaApiConverterTest {
   @Test public void createOkRequest_nullRequestHeaderKey() throws Exception {
     URI uri = new URI("https://foo/bar");
 
-    Map<String,List<String>> javaRequestHeaders = new HashMap<>();
+    Map<String, List<String>> javaRequestHeaders = new HashMap<>();
     javaRequestHeaders.put(null, Arrays.asList("GET / HTTP 1.1"));
     javaRequestHeaders.put("Foo", Arrays.asList("Bar"));
     Request request = JavaApiConverter.createOkRequest(uri, "POST", javaRequestHeaders);
@@ -474,8 +474,8 @@ public class JavaApiConverterTest {
 
     assertEquals("SSL_RSA_WITH_NULL_MD5", httpsUrlConnection.getCipherSuite());
     assertEquals(SERVER_CERT.getSubjectX500Principal(), httpsUrlConnection.getPeerPrincipal());
-    assertArrayEquals(new Certificate[] { LOCAL_CERT }, httpsUrlConnection.getLocalCertificates());
-    assertArrayEquals(new Certificate[] { SERVER_CERT },
+    assertArrayEquals(new Certificate[] {LOCAL_CERT}, httpsUrlConnection.getLocalCertificates());
+    assertArrayEquals(new Certificate[] {SERVER_CERT},
         httpsUrlConnection.getServerCertificates());
     assertEquals(LOCAL_CERT.getSubjectX500Principal(), httpsUrlConnection.getLocalPrincipal());
   }
@@ -551,7 +551,7 @@ public class JavaApiConverterTest {
     Request okRequest =
         createArbitraryOkRequest().newBuilder()
             .url("https://secure/request")
-            .post(createRequestBody("RequestBody") )
+            .post(createRequestBody("RequestBody"))
             .build();
     ResponseBody responseBody = createResponseBody("ResponseBody");
     Handshake handshake = Handshake.get(null, CipherSuite.TLS_RSA_WITH_NULL_MD5,

@@ -15,8 +15,6 @@
  */
 package okhttp3.benchmarks;
 
-import okhttp3.HttpUrl;
-import okhttp3.internal.SslContextBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -46,6 +44,8 @@ import java.util.Deque;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import okhttp3.HttpUrl;
+import okhttp3.internal.SslContextBuilder;
 
 /** Netty isn't an HTTP client, but it's almost one. */
 class NettyHttpClient implements HttpClient {

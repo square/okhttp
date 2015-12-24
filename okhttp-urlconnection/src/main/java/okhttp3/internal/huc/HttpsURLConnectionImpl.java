@@ -16,11 +16,11 @@
  */
 package okhttp3.internal.huc;
 
-import okhttp3.Handshake;
-import okhttp3.OkHttpClient;
 import java.net.URL;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Handshake;
+import okhttp3.OkHttpClient;
 
 public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   private final HttpURLConnectionImpl delegate;

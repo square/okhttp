@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -25,28 +24,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import okhttp3.internal.Util;
 import okio.ByteString;
 
 import static java.util.Collections.unmodifiableSet;
 
 /**
- * Constrains which certificates are trusted. Pinning certificates defends
- * against attacks on certificate authorities. It also prevents connections
- * through man-in-the-middle certificate authorities either known or unknown to
- * the application's user.
+ * Constrains which certificates are trusted. Pinning certificates defends against attacks on
+ * certificate authorities. It also prevents connections through man-in-the-middle certificate
+ * authorities either known or unknown to the application's user.
  *
- * <p>This class currently pins a certificate's Subject Public Key Info as
- * described on <a href="http://goo.gl/AIx3e5">Adam Langley's Weblog</a>. Pins
- * are base-64 SHA-1 hashes, consistent with the format Chromium uses for <a
- * href="http://goo.gl/XDh6je">static certificates</a>. See Chromium's <a
- * href="http://goo.gl/4CCnGs">pinsets</a> for hostnames that are pinned in that
+ * <p>This class currently pins a certificate's Subject Public Key Info as described on <a
+ * href="http://goo.gl/AIx3e5">Adam Langley's Weblog</a>. Pins are base-64 SHA-1 hashes, consistent
+ * with the format Chromium uses for <a href="http://goo.gl/XDh6je">static certificates</a>. See
+ * Chromium's <a href="http://goo.gl/4CCnGs">pinsets</a> for hostnames that are pinned in that
  * browser.
  *
  * <h3>Setting up Certificate Pinning</h3>
- * The easiest way to pin a host is turn on pinning with a broken configuration
- * and read the expected configuration when the connection fails. Be sure to
- * do this on a trusted network, and without man-in-the-middle tools like <a
- * href="http://charlesproxy.com">Charles</a> or <a
+ *
+ * <p>The easiest way to pin a host is turn on pinning with a broken configuration and read the
+ * expected configuration when the connection fails. Be sure to do this on a trusted network, and
+ * without man-in-the-middle tools like <a href="http://charlesproxy.com">Charles</a> or <a
  * href="http://fiddlertool.com">Fiddler</a>.
  *
  * <p>For example, to pin {@code https://publicobject.com}, start with a broken
@@ -92,42 +90,39 @@ import static java.util.Collections.unmodifiableSet;
  *       .build();
  * }</pre>
  *
- * Pinning is per-hostname and/or per-wildcard pattern. To pin both
- * {@code publicobject.com} and {@code www.publicobject.com}, you must
- * configure both hostnames.
+ * Pinning is per-hostname and/or per-wildcard pattern. To pin both {@code publicobject.com} and
+ * {@code www.publicobject.com}, you must configure both hostnames.
  *
  * <p>Wildcard pattern rules:
  * <ol>
- *   <li>Asterisk {@code *} is only permitted in the left-most
- *       domain name label and must be the only character in that label
- *       (i.e., must match the whole left-most label). For example,
- *       {@code *.example.com} is permitted, while {@code *a.example.com},
- *       {@code a*.example.com}, {@code a*b.example.com}, {@code a.*.example.com}
- *       are not permitted.
- *   <li>Asterisk {@code *} cannot match across domain name labels.
- *       For example, {@code *.example.com} matches {@code test.example.com}
- *       but does not match {@code sub.test.example.com}.
- *   <li>Wildcard patterns for single-label domain names are not permitted.
+ *     <li>Asterisk {@code *} is only permitted in the left-most domain name label and must be the
+ *         only character in that label (i.e., must match the whole left-most label). For example,
+ *         {@code *.example.com} is permitted, while {@code *a.example.com}, {@code a*.example.com},
+ *         {@code a*b.example.com}, {@code a.*.example.com} are not permitted.
+ *     <li>Asterisk {@code *} cannot match across domain name labels. For example,
+ *         {@code *.example.com} matches {@code test.example.com} but does not match
+ *         {@code sub.test.example.com}.
+ *     <li>Wildcard patterns for single-label domain names are not permitted.
  * </ol>
  *
- * If hostname pinned directly and via wildcard pattern, both
- * direct and wildcard pins will be used. For example: {@code *.example.com} pinned
- * with {@code pin1} and {@code a.example.com} pinned with {@code pin2},
- * to check {@code a.example.com} both {@code pin1} and {@code pin2} will be used.
+ * If hostname pinned directly and via wildcard pattern, both direct and wildcard pins will be used.
+ * For example: {@code *.example.com} pinned with {@code pin1} and {@code a.example.com} pinned with
+ * {@code pin2}, to check {@code a.example.com} both {@code pin1} and {@code pin2} will be used.
  *
  * <h3>Warning: Certificate Pinning is Dangerous!</h3>
- * Pinning certificates limits your server team's abilities to update their TLS
- * certificates. By pinning certificates, you take on additional operational
- * complexity and limit your ability to migrate between certificate authorities.
- * Do not use certificate pinning without the blessing of your server's TLS
- * administrator!
+ *
+ * <p>Pinning certificates limits your server team's abilities to update their TLS certificates. By
+ * pinning certificates, you take on additional operational complexity and limit your ability to
+ * migrate between certificate authorities. Do not use certificate pinning without the blessing of
+ * your server's TLS administrator!
  *
  * <h4>Note about self-signed certificates</h4>
- * {@link CertificatePinner} can not be used to pin self-signed certificate
- * if such certificate is not accepted by {@link javax.net.ssl.TrustManager}.
  *
- * @see <a href="https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning">
- *     OWASP: Certificate and Public Key Pinning</a>
+ * <p>{@link CertificatePinner} can not be used to pin self-signed certificate if such certificate
+ * is not accepted by {@link javax.net.ssl.TrustManager}.
+ *
+ * @see <a href="https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning"> OWASP:
+ * Certificate and Public Key Pinning</a>
  */
 public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
@@ -139,13 +134,12 @@ public final class CertificatePinner {
   }
 
   /**
-   * Confirms that at least one of the certificates pinned for {@code hostname}
-   * is in {@code peerCertificates}. Does nothing if there are no certificates
-   * pinned for {@code hostname}. OkHttp calls this after a successful TLS
-   * handshake, but before the connection is used.
+   * Confirms that at least one of the certificates pinned for {@code hostname} is in {@code
+   * peerCertificates}. Does nothing if there are no certificates pinned for {@code hostname}.
+   * OkHttp calls this after a successful TLS handshake, but before the connection is used.
    *
-   * @throws SSLPeerUnverifiedException if {@code peerCertificates} don't match
-   *     the certificates pinned for {@code hostname}.
+   * @throws SSLPeerUnverifiedException if {@code peerCertificates} don't match the certificates
+   * pinned for {@code hostname}.
    */
   public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
@@ -182,15 +176,15 @@ public final class CertificatePinner {
   }
 
   /**
-   * Returns list of matching certificates' pins for the hostname
-   * or {@code null} if hostname does not have pinned certificates.
+   * Returns list of matching certificates' pins for the hostname or {@code null} if hostname does
+   * not have pinned certificates.
    */
   Set<ByteString> findMatchingPins(String hostname) {
-    Set<ByteString> directPins   = hostnameToPins.get(hostname);
+    Set<ByteString> directPins = hostnameToPins.get(hostname);
     Set<ByteString> wildcardPins = null;
 
     int indexOfFirstDot = hostname.indexOf('.');
-    int indexOfLastDot  = hostname.lastIndexOf('.');
+    int indexOfLastDot = hostname.lastIndexOf('.');
 
     // Skip hostnames with one dot symbol for wildcard pattern search
     //   example.com   will  be skipped
@@ -215,9 +209,9 @@ public final class CertificatePinner {
   }
 
   /**
-   * Returns the SHA-1 of {@code certificate}'s public key. This uses the
-   * mechanism Moxie Marlinspike describes in <a
-   * href="https://github.com/moxie0/AndroidPinning">Android Pinning</a>.
+   * Returns the SHA-1 of {@code certificate}'s public key. This uses the mechanism Moxie
+   * Marlinspike describes in <a href="https://github.com/moxie0/AndroidPinning">Android
+   * Pinning</a>.
    */
   public static String pin(Certificate certificate) {
     if (!(certificate instanceof X509Certificate)) {
@@ -238,9 +232,8 @@ public final class CertificatePinner {
      * Pins certificates for {@code hostname}.
      *
      * @param hostname lower-case host name or wildcard pattern such as {@code *.example.com}.
-     * @param pins SHA-1 hashes. Each pin is a SHA-1 hash of a
-     *     certificate's Subject Public Key Info, base64-encoded and prefixed with
-     *     {@code sha1/}.
+     * @param pins SHA-1 hashes. Each pin is a SHA-1 hash of a certificate's Subject Public Key
+     * Info, base64-encoded and prefixed with {@code sha1/}.
      */
     public Builder add(String hostname, String... pins) {
       if (hostname == null) throw new IllegalArgumentException("hostname == null");

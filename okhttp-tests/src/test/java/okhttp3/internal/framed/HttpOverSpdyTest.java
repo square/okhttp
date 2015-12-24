@@ -15,20 +15,6 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.Cache;
-import okhttp3.ConnectionPool;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
-import okhttp3.Protocol;
-import okhttp3.internal.RecordingAuthenticator;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.Util;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
-import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.RecordingHostnameVerifier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
@@ -45,6 +31,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
+import okhttp3.Cache;
+import okhttp3.ConnectionPool;
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.OkUrlFactory;
+import okhttp3.Protocol;
+import okhttp3.internal.RecordingAuthenticator;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.Util;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
+import okhttp3.testing.RecordingHostnameVerifier;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -77,7 +77,7 @@ public abstract class HttpOverSpdyTest {
   protected HttpURLConnection connection;
   protected Cache cache;
 
-  protected HttpOverSpdyTest(Protocol protocol){
+  protected HttpOverSpdyTest(Protocol protocol) {
     this.protocol = protocol;
   }
 
@@ -266,16 +266,15 @@ public abstract class HttpOverSpdyTest {
   }
 
   /**
-   * Test to ensure we don't  throw a read timeout on responses that are
-   * progressing.  For this case, we take a 4KiB body and throttle it to
-   * 1KiB/second.  We set the read timeout to two seconds.  If our
-   * implementation is acting correctly, it will not throw, as it is
-   * progressing.
+   * Test to ensure we don't  throw a read timeout on responses that are progressing.  For this
+   * case, we take a 4KiB body and throttle it to 1KiB/second.  We set the read timeout to two
+   * seconds.  If our implementation is acting correctly, it will not throw, as it is progressing.
    */
   @Test public void readTimeoutMoreGranularThanBodySize() throws Exception {
     char[] body = new char[4096]; // 4KiB to read
     Arrays.fill(body, 'y');
-    server.enqueue(new MockResponse().setBody(new String(body)).throttleBody(1024, 1, SECONDS)); // slow connection 1KiB/second
+    server.enqueue(new MockResponse().setBody(new String(body))
+        .throttleBody(1024, 1, SECONDS)); // slow connection 1KiB/second
 
     connection = client.open(server.url("/").url());
     connection.setReadTimeout(2000); // 2 seconds to read something.
@@ -283,11 +282,10 @@ public abstract class HttpOverSpdyTest {
   }
 
   /**
-   * Test to ensure we throw a read timeout on responses that are progressing
-   * too slowly.  For this case, we take a 2KiB body and throttle it to
-   * 1KiB/second.  We set the read timeout to half a second.  If our
-   * implementation is acting correctly, it will throw, as a byte doesn't
-   * arrive in time.
+   * Test to ensure we throw a read timeout on responses that are progressing too slowly.  For this
+   * case, we take a 2KiB body and throttle it to 1KiB/second.  We set the read timeout to half a
+   * second.  If our implementation is acting correctly, it will throw, as a byte doesn't arrive in
+   * time.
    */
   @Test public void readTimeoutOnSlowConnection() throws Exception {
     char[] body = new char[2048]; // 2KiB to read
@@ -442,6 +440,7 @@ public abstract class HttpOverSpdyTest {
   class SpdyRequest implements Runnable {
     String path;
     CountDownLatch countDownLatch;
+
     public SpdyRequest(String path, CountDownLatch countDownLatch) {
       this.path = path;
       this.countDownLatch = countDownLatch;

@@ -15,17 +15,17 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.Headers;
-import okhttp3.Protocol;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.framed.Header;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.Headers;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.framed.Header;
 import org.junit.Assert;
 import org.junit.Test;
 

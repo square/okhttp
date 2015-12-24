@@ -18,13 +18,6 @@ package okhttp3.benchmarks;
 import com.google.caliper.Param;
 import com.google.caliper.model.ArbitraryMeasurement;
 import com.google.caliper.runner.CaliperMain;
-import okhttp3.HttpUrl;
-import okhttp3.Protocol;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,13 +27,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
+import okhttp3.HttpUrl;
+import okhttp3.Protocol;
+import okhttp3.internal.SslContextBuilder;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 import okio.Buffer;
 import okio.GzipSink;
 
 /**
- * This benchmark is fake, but may be useful for certain relative comparisons.
- * It uses a local connection to a MockWebServer to measure how many identical
- * requests per second can be carried over a fixed number of threads.
+ * This benchmark is fake, but may be useful for certain relative comparisons. It uses a local
+ * connection to a MockWebServer to measure how many identical requests per second can be carried
+ * over a fixed number of threads.
  */
 public class Benchmark extends com.google.caliper.Benchmark {
   private static final int NUM_REPORTS = 10;
@@ -48,16 +48,16 @@ public class Benchmark extends com.google.caliper.Benchmark {
 
   private final Random random = new Random(0);
 
-  /** Which client to run.*/
+  /** Which client to run. */
   @Param
   Client client;
 
   /** How many concurrent requests to execute. */
-  @Param({ "1", "10" })
+  @Param({"1", "10"})
   int concurrencyLevel;
 
   /** How many requests to enqueue to await threads to execute them. */
-  @Param({ "10" })
+  @Param({"10"})
   int targetBacklog;
 
   /** True to use TLS. */
@@ -74,11 +74,11 @@ public class Benchmark extends com.google.caliper.Benchmark {
   boolean chunked;
 
   /** The size of the HTTP response body, in uncompressed bytes. */
-  @Param({ "128", "1048576" })
+  @Param({"128", "1048576"})
   int bodyByteCount;
 
   /** How many additional headers were included, beyond the built-in ones. */
-  @Param({ "0", "20" })
+  @Param({"0", "20"})
   int headerCount;
 
   /** Which ALPN protocols are in use. Only useful with TLS. */

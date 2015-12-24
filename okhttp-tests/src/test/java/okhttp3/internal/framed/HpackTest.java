@@ -41,8 +41,8 @@ public class HpackTest {
   }
 
   /**
-   * Variable-length quantity special cases strings which are longer than 127
-   * bytes.  Values such as cookies can be 4KiB, and should be possible to send.
+   * Variable-length quantity special cases strings which are longer than 127 bytes.  Values such as
+   * cookies can be 4KiB, and should be possible to send.
    *
    * <p> http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-12#section-5.2
    */
@@ -61,8 +61,8 @@ public class HpackTest {
   }
 
   /**
-   * HPACK has a max header table size, which can be smaller than the max header message.
-   * Ensure the larger header content is not lost.
+   * HPACK has a max header table size, which can be smaller than the max header message. Ensure the
+   * larger header content is not lost.
    */
   @Test public void tooLargeToHPackIsStillEmitted() throws IOException {
     bytesIn.writeByte(0x00); // Literal indexed

@@ -15,9 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.RecordingOkAuthenticator;
-import okhttp3.internal.http.StreamAllocation;
-import okhttp3.internal.io.RealConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -25,6 +22,9 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
+import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.http.StreamAllocation;
+import okhttp3.internal.io.RealConnection;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

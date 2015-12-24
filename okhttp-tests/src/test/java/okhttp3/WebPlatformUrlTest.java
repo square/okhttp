@@ -15,10 +15,10 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.internal.Util;
 import okio.BufferedSource;
 import okio.Okio;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public final class WebPlatformUrlTest {
     try {
       List<Object[]> result = new ArrayList<>();
       for (WebPlatformUrlTestData urlTestData : loadTests()) {
-        result.add(new Object[] { urlTestData });
+        result.add(new Object[] {urlTestData});
       }
       return result;
     } catch (IOException e) {

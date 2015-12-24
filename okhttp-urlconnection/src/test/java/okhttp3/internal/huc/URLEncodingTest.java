@@ -16,6 +16,12 @@
 
 package okhttp3.internal.huc;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.concurrent.atomic.AtomicReference;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.Request;
@@ -24,28 +30,20 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
 import okhttp3.internal.http.CacheRequest;
 import okhttp3.internal.http.CacheStrategy;
-
-import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 /**
- * Exercises HttpURLConnection to convert URL to a URI. Unlike URL#toURI,
- * HttpURLConnection recovers from URLs with unescaped but unsupported URI
- * characters like '{' and '|' by escaping these characters.
+ * Exercises HttpURLConnection to convert URL to a URI. Unlike URL#toURI, HttpURLConnection recovers
+ * from URLs with unescaped but unsupported URI characters like '{' and '|' by escaping these
+ * characters.
  */
 public final class URLEncodingTest {
   /**
-   * This test goes through the exhaustive set of interesting ASCII characters
-   * because most of those characters are interesting in some way according to
-   * RFC 2396 and RFC 2732. http://b/1158780
+   * This test goes through the exhaustive set of interesting ASCII characters because most of those
+   * characters are interesting in some way according to RFC 2396 and RFC 2732. http://b/1158780
    */
   @Test @Ignore public void lenientUrlToUri() throws Exception {
     // alphanum

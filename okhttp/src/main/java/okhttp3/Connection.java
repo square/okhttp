@@ -30,19 +30,23 @@ import java.net.Socket;
  * connection as a single request/response exchange.
  *
  * <h3>Modern TLS</h3>
- * There are tradeoffs when selecting which options to include when negotiating a secure connection
- * to a remote host. Newer TLS options are quite useful:
+ *
+ * <p>There are tradeoffs when selecting which options to include when negotiating a secure
+ * connection to a remote host. Newer TLS options are quite useful:
+ *
  * <ul>
- *   <li>Server Name Indication (SNI) enables one IP address to negotiate secure connections for
- *       multiple domain names.
- *   <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used for
- *       different HTTP and SPDY protocols.
+ *     <li>Server Name Indication (SNI) enables one IP address to negotiate secure connections for
+ *         multiple domain names.
+ *     <li>Application Layer Protocol Negotiation (ALPN) enables the HTTPS port (443) to be used for
+ *         different HTTP and SPDY protocols.
  * </ul>
- * Unfortunately, older HTTPS servers refuse to connect when such options are presented. Rather than
- * avoiding these options entirely, this class allows a connection to be attempted with modern
+ *
+ * <p>Unfortunately, older HTTPS servers refuse to connect when such options are presented. Rather
+ * than avoiding these options entirely, this class allows a connection to be attempted with modern
  * options and then retried without them should the attempt fail.
  *
  * <h3>Connection Reuse</h3>
+ *
  * <p>Each connection can carry a varying number streams, depending on the underlying protocol being
  * used. HTTP/1.x connections can carry either zero or one streams. HTTP/2 connections can carry any
  * number of streams, dynamically configured with {@code SETTINGS_MAX_CONCURRENT_STREAMS}. A
@@ -53,8 +57,8 @@ import java.net.Socket;
  * challenges, we prefer to use the same physical connection for all streams in the sequence. There
  * are potential performance and behavior consequences to this preference. To support this feature,
  * this class separates <i>allocations</i> from <i>streams</i>. An allocation is created by a call,
- * used for one or more streams, and then released. An allocated connection won't be stolen by
- * other calls while a redirect or authorization challenge is being handled.
+ * used for one or more streams, and then released. An allocated connection won't be stolen by other
+ * calls while a redirect or authorization challenge is being handled.
  *
  * <p>When the maximum concurrent streams limit is reduced, some allocations will be rescinded.
  * Attempting to create new streams on these allocations will fail.

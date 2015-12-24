@@ -15,11 +15,11 @@
  */
 package okhttp3;
 
+import java.util.List;
+import javax.net.SocketFactory;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.AuthenticatorAdapter;
 import okhttp3.internal.http.RecordingProxySelector;
-import java.util.List;
-import javax.net.SocketFactory;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

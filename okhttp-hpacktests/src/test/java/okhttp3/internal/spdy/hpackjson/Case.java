@@ -23,9 +23,8 @@ import okhttp3.internal.framed.Header;
 import okio.ByteString;
 
 /**
- * Representation of an individual case (set of headers and wire format).
- * There are many cases for a single story.  This class is used reflectively
- * with Gson to parse stories.
+ * Representation of an individual case (set of headers and wire format). There are many cases for a
+ * single story.  This class is used reflectively with Gson to parse stories.
  */
 public class Case implements Cloneable {
 

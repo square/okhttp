@@ -47,8 +47,8 @@ public final class OkHeaders {
   public static final String RECEIVED_MILLIS = PREFIX + "-Received-Millis";
 
   /**
-   * Synthetic response header: the selected
-   * {@link Protocol protocol} ("spdy/3.1", "http/1.1", etc).
+   * Synthetic response header: the selected {@link Protocol protocol} ("spdy/3.1", "http/1.1",
+   * etc).
    */
   public static final String SELECTED_PROTOCOL = PREFIX + "-Selected-Protocol";
 
@@ -82,8 +82,8 @@ public final class OkHeaders {
   /**
    * Returns an immutable map containing each field to its list of values.
    *
-   * @param valueForNullKey the request line for requests, or the status line
-   *     for responses. If non-null, this value is mapped to the null key.
+   * @param valueForNullKey the request line for requests, or the status line for responses. If
+   * non-null, this value is mapped to the null key.
    */
   public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
     Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
@@ -116,8 +116,8 @@ public final class OkHeaders {
   }
 
   /**
-   * Send all cookies in one big header, as recommended by
-   * <a href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
+   * Send all cookies in one big header, as recommended by <a
+   * href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
    */
   private static String buildCookieHeader(List<String> cookies) {
     if (cookies.size() == 1) return cookies.get(0);
@@ -130,8 +130,8 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns true if none of the Vary headers have changed between {@code
-   * cachedRequest} and {@code newRequest}.
+   * Returns true if none of the Vary headers have changed between {@code cachedRequest} and {@code
+   * newRequest}.
    */
   public static boolean varyMatches(
       Response cachedResponse, Headers cachedRequest, Request newRequest) {
@@ -142,16 +142,14 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns true if a Vary header contains an asterisk. Such responses cannot
-   * be cached.
+   * Returns true if a Vary header contains an asterisk. Such responses cannot be cached.
    */
   public static boolean hasVaryAll(Response response) {
     return hasVaryAll(response.headers());
   }
 
   /**
-   * Returns true if a Vary header contains an asterisk. Such responses cannot
-   * be cached.
+   * Returns true if a Vary header contains an asterisk. Such responses cannot be cached.
    */
   public static boolean hasVaryAll(Headers responseHeaders) {
     return varyFields(responseHeaders).contains("*");
@@ -162,8 +160,7 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns the names of the request headers that need to be checked for
-   * equality when caching.
+   * Returns the names of the request headers that need to be checked for equality when caching.
    */
   public static Set<String> varyFields(Headers responseHeaders) {
     Set<String> result = Collections.emptySet();
@@ -182,8 +179,8 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns the subset of the headers in {@code response}'s request that
-   * impact the content of response's body.
+   * Returns the subset of the headers in {@code response}'s request that impact the content of
+   * response's body.
    */
   public static Headers varyHeaders(Response response) {
     // Use the request headers sent over the network, since that's what the
@@ -195,8 +192,8 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns the subset of the headers in {@code requestHeaders} that
-   * impact the content of response's body.
+   * Returns the subset of the headers in {@code requestHeaders} that impact the content of
+   * response's body.
    */
   public static Headers varyHeaders(Headers requestHeaders, Headers responseHeaders) {
     Set<String> varyFields = varyFields(responseHeaders);
@@ -213,8 +210,8 @@ public final class OkHeaders {
   }
 
   /**
-   * Returns true if {@code fieldName} is an end-to-end HTTP header, as
-   * defined by RFC 2616, 13.5.1.
+   * Returns true if {@code fieldName} is an end-to-end HTTP header, as defined by RFC 2616,
+   * 13.5.1.
    */
   static boolean isEndToEnd(String fieldName) {
     return !"Connection".equalsIgnoreCase(fieldName)
@@ -228,8 +225,7 @@ public final class OkHeaders {
   }
 
   /**
-   * Parse RFC 2617 challenges. This API is only interested in the scheme
-   * name and realm.
+   * Parse RFC 2617 challenges. This API is only interested in the scheme name and realm.
    */
   public static List<Challenge> parseChallenges(Headers responseHeaders, String challengeHeader) {
     // auth-scheme = token

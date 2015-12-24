@@ -40,15 +40,14 @@ import okhttp3.internal.io.RealConnection;
 import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
- * Configures and creates HTTP connections. Most applications can use a single
- * OkHttpClient for all of their HTTP requests - benefiting from a shared
- * response cache, thread pool, connection re-use, etc.
+ * Configures and creates HTTP connections. Most applications can use a single OkHttpClient for all
+ * of their HTTP requests - benefiting from a shared response cache, thread pool, connection re-use,
+ * etc.
  *
- * <p>Instances of OkHttpClient are intended to be fully configured before they're
- * shared - once shared they should be treated as immutable and can safely be used
- * to concurrently open new connections. If required, threads can call
- * {@link #clone()} to make a shallow copy of the OkHttpClient that can be
- * safely modified with further configuration changes.
+ * <p>Instances of OkHttpClient are intended to be fully configured before they're shared - once
+ * shared they should be treated as immutable and can safely be used to concurrently open new
+ * connections. If required, threads can call {@link #clone()} to make a shallow copy of the
+ * OkHttpClient that can be safely modified with further configuration changes.
  */
 public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
@@ -241,10 +240,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the HTTP proxy that will be used by connections created by this
-   * client. This takes precedence over {@link #setProxySelector}, which is
-   * only honored when this proxy is null (which it is by default). To disable
-   * proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
+   * Sets the HTTP proxy that will be used by connections created by this client. This takes
+   * precedence over {@link #setProxySelector}, which is only honored when this proxy is null (which
+   * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
    */
   public OkHttpClient setProxy(Proxy proxy) {
     this.proxy = proxy;
@@ -256,13 +254,12 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the proxy selection policy to be used if no {@link #setProxy proxy}
-   * is specified explicitly. The proxy selector may return multiple proxies;
-   * in that case they will be tried in sequence until a successful connection
-   * is established.
+   * Sets the proxy selection policy to be used if no {@link #setProxy proxy} is specified
+   * explicitly. The proxy selector may return multiple proxies; in that case they will be tried in
+   * sequence until a successful connection is established.
    *
-   * <p>If unset, the {@link ProxySelector#getDefault() system-wide default}
-   * proxy selector will be used.
+   * <p>If unset, the {@link ProxySelector#getDefault() system-wide default} proxy selector will be
+   * used.
    */
   public OkHttpClient setProxySelector(ProxySelector proxySelector) {
     this.proxySelector = proxySelector;
@@ -274,11 +271,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the cookie handler to be used to read outgoing cookies and write
-   * incoming cookies.
+   * Sets the cookie handler to be used to read outgoing cookies and write incoming cookies.
    *
-   * <p>If unset, the {@link CookieHandler#getDefault() system-wide default}
-   * cookie handler will be used.
+   * <p>If unset, the {@link CookieHandler#getDefault() system-wide default} cookie handler will be
+   * used.
    */
   public OkHttpClient setCookieHandler(CookieHandler cookieHandler) {
     this.cookieHandler = cookieHandler;
@@ -324,13 +320,12 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the socket factory used to create connections. OkHttp only uses
-   * the parameterless {@link SocketFactory#createSocket() createSocket()}
-   * method to create unconnected sockets. Overriding this method,
-   * e. g., allows the socket to be bound to a specific local address.
+   * Sets the socket factory used to create connections. OkHttp only uses the parameterless {@link
+   * SocketFactory#createSocket() createSocket()} method to create unconnected sockets. Overriding
+   * this method, e. g., allows the socket to be bound to a specific local address.
    *
-   * <p>If unset, the {@link SocketFactory#getDefault() system-wide default}
-   * socket factory will be used.
+   * <p>If unset, the {@link SocketFactory#getDefault() system-wide default} socket factory will be
+   * used.
    */
   public OkHttpClient setSocketFactory(SocketFactory socketFactory) {
     this.socketFactory = socketFactory;
@@ -356,8 +351,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the verifier used to confirm that response certificates apply to
-   * requested hostnames for HTTPS connections.
+   * Sets the verifier used to confirm that response certificates apply to requested hostnames for
+   * HTTPS connections.
    *
    * <p>If unset, a default hostname verifier will be used.
    */
@@ -371,10 +366,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the certificate pinner that constrains which certificates are trusted.
-   * By default HTTPS connections rely on only the {@link #setSslSocketFactory
-   * SSL socket factory} to establish trust. Pinning certificates avoids the
-   * need to trust certificate authorities.
+   * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
+   * connections rely on only the {@link #setSslSocketFactory SSL socket factory} to establish
+   * trust. Pinning certificates avoids the need to trust certificate authorities.
    */
   public OkHttpClient setCertificatePinner(CertificatePinner certificatePinner) {
     this.certificatePinner = certificatePinner;
@@ -420,8 +414,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   /**
    * Sets the connection pool used to recycle HTTP and HTTPS connections.
    *
-   * <p>If unset, the {@link ConnectionPool#getDefault() system-wide
-   * default} connection pool will be used.
+   * <p>If unset, the {@link ConnectionPool#getDefault() system-wide default} connection pool will
+   * be used.
    */
   public OkHttpClient setConnectionPool(ConnectionPool connectionPool) {
     this.connectionPool = connectionPool;
@@ -433,11 +427,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Configure this client to follow redirects from HTTPS to HTTP and from HTTP
-   * to HTTPS.
+   * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
    *
-   * <p>If unset, protocol redirects will be followed. This is different than
-   * the built-in {@code HttpURLConnection}'s default.
+   * <p>If unset, protocol redirects will be followed. This is different than the built-in {@code
+   * HttpURLConnection}'s default.
    */
   public OkHttpClient setFollowSslRedirects(boolean followProtocolRedirects) {
     this.followSslRedirects = followProtocolRedirects;
@@ -490,8 +483,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the dispatcher used to set policy and execute asynchronous requests.
-   * Must not be null.
+   * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
    */
   public OkHttpClient setDispatcher(Dispatcher dispatcher) {
     if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
@@ -504,34 +496,32 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Configure the protocols used by this client to communicate with remote
-   * servers. By default this client will prefer the most efficient transport
-   * available, falling back to more ubiquitous protocols. Applications should
-   * only call this method to avoid specific compatibility problems, such as web
-   * servers that behave incorrectly when SPDY is enabled.
+   * Configure the protocols used by this client to communicate with remote servers. By default this
+   * client will prefer the most efficient transport available, falling back to more ubiquitous
+   * protocols. Applications should only call this method to avoid specific compatibility problems,
+   * such as web servers that behave incorrectly when SPDY is enabled.
    *
    * <p>The following protocols are currently supported:
+   *
    * <ul>
    *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
    *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
    *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-17">h2</a>
    * </ul>
    *
-   * <p><strong>This is an evolving set.</strong> Future releases include
-   * support for transitional protocols. The http/1.1 transport will never be
-   * dropped.
+   * <p><strong>This is an evolving set.</strong> Future releases include support for transitional
+   * protocols. The http/1.1 transport will never be dropped.
    *
    * <p>If multiple protocols are specified, <a
-   * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a>
-   * will be used to negotiate a transport.
+   * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> will be used to
+   * negotiate a transport.
    *
-   * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are
-   * initiated with {@code HTTP/1.1} only. If the server responds with {@code
-   * HTTP/1.0}, that will be exposed by {@link Response#protocol()}.
+   * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are initiated with {@code
+   * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
+   * Response#protocol()}.
    *
-   * @param protocols the protocols to use, in order of preference. The list
-   *     must contain {@link Protocol#HTTP_1_1}. It must not contain null or
-   *     {@link Protocol#HTTP_1_0}.
+   * @param protocols the protocols to use, in order of preference. The list must contain {@link
+   * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
    */
   public OkHttpClient setProtocols(List<Protocol> protocols) {
     protocols = Util.immutableList(protocols);
@@ -587,8 +577,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Cancels all scheduled or in-flight calls tagged with {@code tag}. Requests
-   * that are already complete cannot be canceled.
+   * Cancels all scheduled or in-flight calls tagged with {@code tag}. Requests that are already
+   * complete cannot be canceled.
    */
   public OkHttpClient cancel(Object tag) {
     getDispatcher().cancel(tag);
@@ -596,8 +586,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Returns a shallow copy of this OkHttpClient that uses the system-wide
-   * default for each field that hasn't been explicitly configured.
+   * Returns a shallow copy of this OkHttpClient that uses the system-wide default for each field
+   * that hasn't been explicitly configured.
    */
   OkHttpClient copyWithDefaults() {
     OkHttpClient result = new OkHttpClient(this);
@@ -641,15 +631,13 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Java and Android programs default to using a single global SSL context,
-   * accessible to HTTP clients as {@link SSLSocketFactory#getDefault()}. If we
-   * used the shared SSL context, when OkHttp enables ALPN for its SPDY-related
-   * stuff, it would also enable ALPN for other usages, which might crash them
-   * because ALPN is enabled when it isn't expected to be.
+   * Java and Android programs default to using a single global SSL context, accessible to HTTP
+   * clients as {@link SSLSocketFactory#getDefault()}. If we used the shared SSL context, when
+   * OkHttp enables ALPN for its SPDY-related stuff, it would also enable ALPN for other usages,
+   * which might crash them because ALPN is enabled when it isn't expected to be.
    *
-   * <p>This code avoids that by defaulting to an OkHttp-created SSL context.
-   * The drawback of this approach is that apps that customize the global SSL
-   * context will lose these customizations.
+   * <p>This code avoids that by defaulting to an OkHttp-created SSL context. The drawback of this
+   * approach is that apps that customize the global SSL context will lose these customizations.
    */
   private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
     if (defaultSslSocketFactory == null) {

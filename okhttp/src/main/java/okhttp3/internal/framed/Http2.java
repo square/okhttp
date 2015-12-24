@@ -15,10 +15,10 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.Protocol;
 import java.io.IOException;
 import java.util.List;
 import java.util.logging.Logger;
+import okhttp3.Protocol;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;
@@ -26,18 +26,17 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
-import static okhttp3.internal.framed.Http2.FrameLogger.formatHeader;
 import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
+import static okhttp3.internal.framed.Http2.FrameLogger.formatHeader;
 import static okio.ByteString.EMPTY;
 
 /**
  * Read and write HTTP/2 frames.
- * <p>
- * This implementation assumes we do not send an increased
- * {@link Settings#getMaxFrameSize frame size setting} to the peer. Hence, we
- * expect all frames to have a max length of {@link #INITIAL_MAX_FRAME_SIZE}.
- * <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-17
+ *
+ * <p>This implementation assumes we do not send an increased {@link Settings#getMaxFrameSize frame
+ * size setting} to the peer. Hence, we expect all frames to have a max length of {@link
+ * #INITIAL_MAX_FRAME_SIZE}. <p>http://tools.ietf.org/html/draft-ietf-httpbis-http2-17
  */
 public final class Http2 implements Variant {
   private static final Logger logger = Logger.getLogger(FrameLogger.class.getName());
@@ -73,8 +72,7 @@ public final class Http2 implements Variant {
   static final byte FLAG_COMPRESSED = 0x20; // Used for data.
 
   /**
-   * Creates a frame reader with max header table size of 4096 and data frame
-   * compression disabled.
+   * Creates a frame reader with max header table size of 4096 and data frame compression disabled.
    */
   @Override public FrameReader newReader(BufferedSource source, boolean client) {
     return new Reader(source, 4096, client);
@@ -505,8 +503,11 @@ public final class Http2 implements Variant {
       for (int i = 0; i < Settings.COUNT; i++) {
         if (!settings.isSet(i)) continue;
         int id = i;
-        if (id == 4) id = 3; // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
-        else if (id == 7) id = 4; // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
+        if (id == 4) {
+          id = 3; // SETTINGS_MAX_CONCURRENT_STREAMS renumbered.
+        } else if (id == 7) {
+          id = 4; // SETTINGS_INITIAL_WINDOW_SIZE renumbered.
+        }
         sink.writeShort(id);
         sink.writeInt(settings.get(i));
       }
@@ -585,9 +586,8 @@ public final class Http2 implements Variant {
   }
 
   /**
-   * Decompression of the header block occurs above the framing layer. This
-   * class lazily reads continuation frames as they are needed by {@link
-   * Hpack.Reader#readHeaders()}.
+   * Decompression of the header block occurs above the framing layer. This class lazily reads
+   * continuation frames as they are needed by {@link Hpack.Reader#readHeaders()}.
    */
   static final class ContinuationSource implements Source {
     private final BufferedSource source;
@@ -657,8 +657,7 @@ public final class Http2 implements Variant {
    * </pre>
    * Where direction is {@code <<} for inbound and {@code >>} for outbound.
    *
-   * <p> For example, the following would indicate a HEAD request sent from
-   * the client.
+   * <p>For example, the following would indicate a HEAD request sent from the client.
    * <pre>
    * {@code
    *   << 0x0000000f    12 HEADERS       END_HEADERS|END_STREAM
@@ -675,8 +674,8 @@ public final class Http2 implements Variant {
     }
 
     /**
-     * Looks up valid string representing flags from the table. Invalid
-     * combinations are represented in binary.
+     * Looks up valid string representing flags from the table. Invalid combinations are represented
+     * in binary.
      */
     // Visible for testing.
     static String formatFlags(byte type, byte flags) {
@@ -716,8 +715,8 @@ public final class Http2 implements Variant {
     };
 
     /**
-     * Lookup table for valid flags for DATA, HEADERS, CONTINUATION. Invalid
-     * combinations are represented in binary.
+     * Lookup table for valid flags for DATA, HEADERS, CONTINUATION. Invalid combinations are
+     * represented in binary.
      */
     private static final String[] FLAGS = new String[0x40]; // Highest bit flag is 0x20.
     private static final String[] BINARY = new String[256];
@@ -734,7 +733,7 @@ public final class Http2 implements Variant {
 
       FLAGS[FLAG_PADDED] = "PADDED";
       for (int prefixFlag : prefixFlags) {
-         FLAGS[prefixFlag | FLAG_PADDED] = FLAGS[prefixFlag] + "|PADDED";
+        FLAGS[prefixFlag | FLAG_PADDED] = FLAGS[prefixFlag] + "|PADDED";
       }
 
       FLAGS[FLAG_END_HEADERS] = "END_HEADERS"; // Same as END_PUSH_PROMISE.
@@ -759,13 +758,13 @@ public final class Http2 implements Variant {
 
   private static int readMedium(BufferedSource source) throws IOException {
     return (source.readByte() & 0xff) << 16
-        |  (source.readByte() & 0xff) <<  8
-        |  (source.readByte() & 0xff);
+        | (source.readByte() & 0xff) << 8
+        | (source.readByte() & 0xff);
   }
 
   private static void writeMedium(BufferedSink sink, int i) throws IOException {
     sink.writeByte((i >>> 16) & 0xff);
-    sink.writeByte((i >>>  8) & 0xff);
-    sink.writeByte(i          & 0xff);
+    sink.writeByte((i >>> 8) & 0xff);
+    sink.writeByte(i & 0xff);
   }
 }

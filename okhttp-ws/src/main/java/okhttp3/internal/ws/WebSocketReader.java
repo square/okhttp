@@ -15,12 +15,12 @@
  */
 package okhttp3.internal.ws;
 
-import okhttp3.MediaType;
-import okhttp3.ResponseBody;
-import okhttp3.ws.WebSocket;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ProtocolException;
+import okhttp3.MediaType;
+import okhttp3.ResponseBody;
+import okhttp3.ws.WebSocket;
 import okio.Buffer;
 import okio.BufferedSource;
 import okio.Okio;
@@ -54,8 +54,11 @@ import static okhttp3.internal.ws.WebSocketProtocol.validateCloseCode;
 public final class WebSocketReader {
   public interface FrameCallback {
     void onMessage(ResponseBody body) throws IOException;
+
     void onPing(Buffer buffer);
+
     void onPong(Buffer buffer);
+
     void onClose(int code, String reason);
   }
 
@@ -89,11 +92,12 @@ public final class WebSocketReader {
 
   /**
    * Process the next protocol frame.
+   *
    * <ul>
-   * <li>If it is a control frame this will result in a single call to {@link FrameCallback}.</li>
-   * <li>If it is a message frame this will result in a single call to {@link
-   * FrameCallback#onMessage}. If the message spans multiple frames, each interleaved control
-   * frame will result in a corresponding call to {@link FrameCallback}.
+   *     <li>If it is a control frame this will result in a single call to {@link FrameCallback}.
+   *     <li>If it is a message frame this will result in a single call to {@link
+   *         FrameCallback#onMessage}. If the message spans multiple frames, each interleaved
+   *         control frame will result in a corresponding call to {@link FrameCallback}.
    * </ul>
    */
   public void processNextFrame() throws IOException {

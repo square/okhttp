@@ -15,13 +15,13 @@
  */
 package okhttp3;
 
-import okhttp3.internal.Util;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -34,8 +34,8 @@ public abstract class ResponseBody implements Closeable {
   public abstract MediaType contentType();
 
   /**
-   * Returns the number of bytes in that will returned by {@link #bytes}, or
-   * {@link #byteStream}, or -1 if unknown.
+   * Returns the number of bytes in that will returned by {@link #bytes}, or {@link #byteStream}, or
+   * -1 if unknown.
    */
   public abstract long contentLength();
 
@@ -65,9 +65,9 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a character stream decoded with the charset
-   * of the Content-Type header. If that header is either absent or lacks a
-   * charset, this will attempt to decode the response body as UTF-8.
+   * Returns the response as a character stream decoded with the charset of the Content-Type header.
+   * If that header is either absent or lacks a charset, this will attempt to decode the response
+   * body as UTF-8.
    */
   public final Reader charStream() {
     Reader r = reader;
@@ -75,9 +75,9 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns the response as a string decoded with the charset of the
-   * Content-Type header. If that header is either absent or lacks a charset,
-   * this will attempt to decode the response body as UTF-8.
+   * Returns the response as a string decoded with the charset of the Content-Type header. If that
+   * header is either absent or lacks a charset, this will attempt to decode the response body as
+   * UTF-8.
    */
   public final String string() throws IOException {
     return new String(bytes(), charset().name());
@@ -93,8 +93,8 @@ public abstract class ResponseBody implements Closeable {
   }
 
   /**
-   * Returns a new response body that transmits {@code content}. If {@code
-   * contentType} is non-null and lacks a charset, this will use UTF-8.
+   * Returns a new response body that transmits {@code content}. If {@code contentType} is non-null
+   * and lacks a charset, this will use UTF-8.
    */
   public static ResponseBody create(MediaType contentType, String content) {
     Charset charset = UTF_8;

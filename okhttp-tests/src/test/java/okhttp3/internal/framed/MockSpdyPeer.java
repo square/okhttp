@@ -83,8 +83,8 @@ public final class MockSpdyPeer implements Closeable {
   }
 
   /**
-   * Sends a manually-constructed frame. This is useful to test frames that
-   * won't be generated naturally.
+   * Sends a manually-constructed frame. This is useful to test frames that won't be generated
+   * naturally.
    */
   public void sendFrame(byte[] frame) throws IOException {
     outFrames.add(new OutFrame(frameCount++, bytesOut.size(), false));
@@ -92,9 +92,9 @@ public final class MockSpdyPeer implements Closeable {
   }
 
   /**
-   * Shortens the last frame from its original length to {@code length}. This
-   * will cause the peer to close the socket as soon as this frame has been
-   * written; otherwise the peer stays open until explicitly closed.
+   * Shortens the last frame from its original length to {@code length}. This will cause the peer to
+   * close the socket as soon as this frame has been written; otherwise the peer stays open until
+   * explicitly closed.
    */
   public FrameWriter truncateLastFrame(int length) {
     OutFrame lastFrame = outFrames.remove(outFrames.size() - 1);

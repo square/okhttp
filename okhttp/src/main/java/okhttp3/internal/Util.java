@@ -16,7 +16,6 @@
 
 package okhttp3.internal;
 
-import okhttp3.HttpUrl;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -35,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import okhttp3.HttpUrl;
 import okio.Buffer;
 import okio.ByteString;
 import okio.Source;
@@ -62,8 +62,8 @@ public final class Util {
   }
 
   /**
-   * Closes {@code closeable}, ignoring any checked exceptions. Does nothing
-   * if {@code closeable} is null.
+   * Closes {@code closeable}, ignoring any checked exceptions. Does nothing if {@code closeable} is
+   * null.
    */
   public static void closeQuietly(Closeable closeable) {
     if (closeable != null) {
@@ -77,8 +77,8 @@ public final class Util {
   }
 
   /**
-   * Closes {@code socket}, ignoring any checked exceptions. Does nothing if
-   * {@code socket} is null.
+   * Closes {@code socket}, ignoring any checked exceptions. Does nothing if {@code socket} is
+   * null.
    */
   public static void closeQuietly(Socket socket) {
     if (socket != null) {
@@ -94,8 +94,8 @@ public final class Util {
   }
 
   /**
-   * Closes {@code serverSocket}, ignoring any checked exceptions. Does nothing if
-   * {@code serverSocket} is null.
+   * Closes {@code serverSocket}, ignoring any checked exceptions. Does nothing if {@code
+   * serverSocket} is null.
    */
   public static void closeQuietly(ServerSocket serverSocket) {
     if (serverSocket != null) {
@@ -109,8 +109,8 @@ public final class Util {
   }
 
   /**
-   * Closes {@code a} and {@code b}. If either close fails, this completes
-   * the other close and rethrows the first encountered exception.
+   * Closes {@code a} and {@code b}. If either close fails, this completes the other close and
+   * rethrows the first encountered exception.
    */
   public static void closeAll(Closeable a, Closeable b) throws IOException {
     Throwable thrown = null;
@@ -132,8 +132,8 @@ public final class Util {
   }
 
   /**
-   * Attempts to exhaust {@code source}, returning true if successful. This is useful when reading
-   * a complete source is helpful, such as when doing so completes a cache body or frees a socket
+   * Attempts to exhaust {@code source}, returning true if successful. This is useful when reading a
+   * complete source is helpful, such as when doing so completes a cache body or frees a socket
    * connection for reuse.
    */
   public static boolean discard(Source source, int timeout, TimeUnit timeUnit) {
@@ -230,8 +230,8 @@ public final class Util {
   }
 
   /**
-   * Returns an array containing containing only elements found in {@code first}  and also in
-   * {@code second}. The returned elements are in the same order as in {@code first}.
+   * Returns an array containing containing only elements found in {@code first}  and also in {@code
+   * second}. The returned elements are in the same order as in {@code first}.
    */
   @SuppressWarnings("unchecked")
   public static <T> T[] intersect(Class<T> arrayType, T[] first, T[] second) {
@@ -240,8 +240,8 @@ public final class Util {
   }
 
   /**
-   * Returns a list containing containing only elements found in {@code first}  and also in
-   * {@code second}. The returned elements are in the same order as in {@code first}.
+   * Returns a list containing containing only elements found in {@code first}  and also in {@code
+   * second}. The returned elements are in the same order as in {@code first}.
    */
   private static <T> List<T> intersect(T[] first, T[] second) {
     List<T> result = new ArrayList<>();

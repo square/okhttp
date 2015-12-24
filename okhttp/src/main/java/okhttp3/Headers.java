@@ -17,7 +17,6 @@
 
 package okhttp3;
 
-import okhttp3.internal.http.HttpDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -26,24 +25,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import okhttp3.internal.http.HttpDate;
 
 /**
- * The header fields of a single HTTP message. Values are uninterpreted strings;
- * use {@code Request} and {@code Response} for interpreted headers. This class
- * maintains the order of the header fields within the HTTP message.
+ * The header fields of a single HTTP message. Values are uninterpreted strings; use {@code Request}
+ * and {@code Response} for interpreted headers. This class maintains the order of the header fields
+ * within the HTTP message.
  *
- * <p>This class tracks header values line-by-line. A field with multiple comma-
- * separated values on the same line will be treated as a field with a single
- * value by this class. It is the caller's responsibility to detect and split
- * on commas if their field permits multiple values. This simplifies use of
- * single-valued fields whose values routinely contain commas, such as cookies
- * or dates.
+ * <p>This class tracks header values line-by-line. A field with multiple comma- separated values on
+ * the same line will be treated as a field with a single value by this class. It is the caller's
+ * responsibility to detect and split on commas if their field permits multiple values. This
+ * simplifies use of single-valued fields whose values routinely contain commas, such as cookies or
+ * dates.
  *
- * <p>This class trims whitespace from values. It never returns values with
- * leading or trailing whitespace.
+ * <p>This class trims whitespace from values. It never returns values with leading or trailing
+ * whitespace.
  *
- * <p>Instances of this class are immutable. Use {@link Builder} to create
- * instances.
+ * <p>Instances of this class are immutable. Use {@link Builder} to create instances.
  */
 public final class Headers {
   private final String[] namesAndValues;
@@ -62,9 +60,8 @@ public final class Headers {
   }
 
   /**
-   * Returns the last value corresponding to the specified field parsed as an
-   * HTTP date, or null if either the field is absent or cannot be parsed as a
-   * date.
+   * Returns the last value corresponding to the specified field parsed as an HTTP date, or null if
+   * either the field is absent or cannot be parsed as a date.
    */
   public Date getDate(String name) {
     String value = get(name);
@@ -155,9 +152,8 @@ public final class Headers {
   }
 
   /**
-   * Returns headers for the alternating header names and values. There must be
-   * an even number of arguments, and they must alternate between header names
-   * and values.
+   * Returns headers for the alternating header names and values. There must be an even number of
+   * arguments, and they must alternate between header names and values.
    */
   public static Headers of(String... namesAndValues) {
     if (namesAndValues == null || namesAndValues.length % 2 != 0) {
@@ -247,8 +243,8 @@ public final class Headers {
     }
 
     /**
-     * Add a field with the specified value without any validation. Only
-     * appropriate for headers from the remote peer or cache.
+     * Add a field with the specified value without any validation. Only appropriate for headers
+     * from the remote peer or cache.
      */
     Builder addLenient(String name, String value) {
       namesAndValues.add(name);
@@ -268,8 +264,8 @@ public final class Headers {
     }
 
     /**
-     * Set a field with the specified value. If the field is not found, it is
-     * added. If the field is found, the existing values are replaced.
+     * Set a field with the specified value. If the field is not found, it is added. If the field is
+     * found, the existing values are replaced.
      */
     public Builder set(String name, String value) {
       checkNameAndValue(name, value);

@@ -47,17 +47,15 @@ public final class WebSocketProtocol {
   static final int OPCODE_FLAG_CONTROL = 0b00001000;
 
   /**
-   * Byte 1 flag for whether the payload data is masked.
-   * <p>
-   * If this flag is set, the next four bytes represent the mask key. These bytes appear after
-   * any additional bytes specified by {@link #B1_MASK_LENGTH}.
+   * Byte 1 flag for whether the payload data is masked. <p> If this flag is set, the next four
+   * bytes represent the mask key. These bytes appear after any additional bytes specified by {@link
+   * #B1_MASK_LENGTH}.
    */
   static final int B1_FLAG_MASK = 0b10000000;
   /**
-   * Byte 1 mask for the payload length.
-   * <p>
-   * If this value is {@link #PAYLOAD_SHORT}, the next two bytes represent the length.
-   * If this value is {@link #PAYLOAD_LONG}, the next eight bytes represent the length.
+   * Byte 1 mask for the payload length. <p> If this value is {@link #PAYLOAD_SHORT}, the next two
+   * bytes represent the length. If this value is {@link #PAYLOAD_LONG}, the next eight bytes
+   * represent the length.
    */
   static final int B1_MASK_LENGTH = 0b01111111;
 

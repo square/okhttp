@@ -15,8 +15,8 @@
  */
 package okhttp3.internal.framed;
 
-import okhttp3.internal.Util;
 import java.io.IOException;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
 import org.junit.Test;

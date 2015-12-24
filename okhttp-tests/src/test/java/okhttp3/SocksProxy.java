@@ -15,8 +15,6 @@
  */
 package okhttp3;
 
-import okhttp3.internal.NamedRunnable;
-import okhttp3.internal.Util;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -31,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.BufferedSource;

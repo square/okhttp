@@ -15,11 +15,6 @@
  */
 package okhttp3.internal.huc;
 
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.InternalCache;
-import okhttp3.internal.http.CacheRequest;
-import okhttp3.internal.http.CacheStrategy;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.CacheResponse;
@@ -28,6 +23,11 @@ import java.net.ResponseCache;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.internal.InternalCache;
+import okhttp3.internal.http.CacheRequest;
+import okhttp3.internal.http.CacheStrategy;
 import okio.Okio;
 import okio.Sink;
 
@@ -95,8 +95,8 @@ public final class CacheAdapter implements InternalCache {
   }
 
   /**
-   * Returns the {@link CacheResponse} from the delegate by converting the
-   * OkHttp {@link Request} into the arguments required by the {@link ResponseCache}.
+   * Returns the {@link CacheResponse} from the delegate by converting the OkHttp {@link Request}
+   * into the arguments required by the {@link ResponseCache}.
    */
   private CacheResponse getJavaCachedResponse(Request request) throws IOException {
     Map<String, List<String>> headers = JavaApiConverter.extractJavaHeaders(request);

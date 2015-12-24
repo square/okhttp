@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
  */
 public final class RouteException extends Exception {
   private static final Method addSuppressedExceptionMethod;
+
   static {
     Method m;
     try {
@@ -34,6 +35,7 @@ public final class RouteException extends Exception {
     }
     addSuppressedExceptionMethod = m;
   }
+
   private IOException lastException;
 
   public RouteException(IOException cause) {

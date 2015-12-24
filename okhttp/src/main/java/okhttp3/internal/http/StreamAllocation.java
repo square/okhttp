@@ -39,38 +39,38 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * This class coordinates the relationship between three entities:
  *
  * <ul>
- *   <li><strong>Connections:</strong> physical socket connections to remote servers. These are
- *       potentially slow to establish so it is necessary to be able to cancel a connection
- *       currently being connected.
- *   <li><strong>Streams:</strong> logical HTTP request/response pairs that are layered on
- *       connections. Each connection has its own allocation limit, which defines how many
- *       concurrent streams that connection can carry. HTTP/1.x connections can carry 1 stream
- *       at a time, SPDY and HTTP/2 typically carry multiple.
- *   <li><strong>Calls:</strong> a logical sequence of streams, typically an initial request and
- *       its follow up requests. We prefer to keep all streams of a single call on the same
- *       connection for better behavior and locality.
+ *     <li><strong>Connections:</strong> physical socket connections to remote servers. These are
+ *         potentially slow to establish so it is necessary to be able to cancel a connection
+ *         currently being connected.
+ *     <li><strong>Streams:</strong> logical HTTP request/response pairs that are layered on
+ *         connections. Each connection has its own allocation limit, which defines how many
+ *         concurrent streams that connection can carry. HTTP/1.x connections can carry 1 stream
+ *         at a time, SPDY and HTTP/2 typically carry multiple.
+ *     <li><strong>Calls:</strong> a logical sequence of streams, typically an initial request and
+ *         its follow up requests. We prefer to keep all streams of a single call on the same
+ *         connection for better behavior and locality.
  * </ul>
  *
- * <p>Instances of this class act on behalf of the call, using one or more streams over one or
- * more connections. This class has APIs to release each of the above resources:
+ * <p>Instances of this class act on behalf of the call, using one or more streams over one or more
+ * connections. This class has APIs to release each of the above resources:
  *
  * <ul>
- *   <li>{@link #noNewStreams()} prevents the connection from being used for new streams in the
- *       future. Use this after a {@code Connection: close} header, or when the connection may be
- *       inconsistent.
- *   <li>{@link #streamFinished streamFinished()} releases the active stream from this allocation.
- *       Note that only one stream may be active at a given time, so it is necessary to call {@link
- *       #streamFinished streamFinished()} before creating a subsequent stream with {@link
- *       #newStream newStream()}.
- *   <li>{@link #release()} removes the call's hold on the connection. Note that this won't
- *       immediately free the connection if there is a stream still lingering. That happens when a
- *       call is complete but its response body has yet to be fully consumed.
+ *     <li>{@link #noNewStreams()} prevents the connection from being used for new streams in the
+ *         future. Use this after a {@code Connection: close} header, or when the connection may be
+ *         inconsistent.
+ *     <li>{@link #streamFinished streamFinished()} releases the active stream from this allocation.
+ *         Note that only one stream may be active at a given time, so it is necessary to call
+ *         {@link #streamFinished streamFinished()} before creating a subsequent stream with {@link
+ *         #newStream newStream()}.
+ *     <li>{@link #release()} removes the call's hold on the connection. Note that this won't
+ *         immediately free the connection if there is a stream still lingering. That happens when a
+ *         call is complete but its response body has yet to be fully consumed.
  * </ul>
  *
- * <p>This class supports {@linkplain #cancel asynchronous canceling}. This is intended to have
- * the smallest blast radius possible. If an HTTP/2 stream is active, canceling will cancel that
- * stream but not the other streams sharing its connection. But if the TLS handshake is still in
- * progress then canceling may break the entire connection.
+ * <p>This class supports {@linkplain #cancel asynchronous canceling}. This is intended to have the
+ * smallest blast radius possible. If an HTTP/2 stream is active, canceling will cancel that stream
+ * but not the other streams sharing its connection. But if the TLS handshake is still in progress
+ * then canceling may break the entire connection.
  */
 public final class StreamAllocation {
   public final Address address;

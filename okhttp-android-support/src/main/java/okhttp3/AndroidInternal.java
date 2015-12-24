@@ -15,9 +15,8 @@
  */
 package okhttp3;
 
-import okhttp3.internal.huc.CacheAdapter;
-
 import java.net.ResponseCache;
+import okhttp3.internal.huc.CacheAdapter;
 
 /**
  * Back doors to enable the use of OkHttp within the Android platform libraries. OkHttp is used to

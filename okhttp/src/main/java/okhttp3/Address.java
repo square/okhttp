@@ -26,14 +26,13 @@ import okhttp3.internal.Util;
 import static okhttp3.internal.Util.equal;
 
 /**
- * A specification for a connection to an origin server. For simple connections,
- * this is the server's hostname and port. If an explicit proxy is requested (or
- * {@linkplain Proxy#NO_PROXY no proxy} is explicitly requested), this also includes
- * that proxy information. For secure connections the address also includes the
- * SSL socket factory, hostname verifier, and certificate pinner.
+ * A specification for a connection to an origin server. For simple connections, this is the
+ * server's hostname and port. If an explicit proxy is requested (or {@linkplain Proxy#NO_PROXY no
+ * proxy} is explicitly requested), this also includes that proxy information. For secure
+ * connections the address also includes the SSL socket factory, hostname verifier, and certificate
+ * pinner.
  *
- * <p>HTTP requests that share the same {@code Address} may also share the same
- * {@link Connection}.
+ * <p>HTTP requests that share the same {@code Address} may also share the same {@link Connection}.
  */
 public final class Address {
   final HttpUrl url;
@@ -108,8 +107,8 @@ public final class Address {
   }
 
   /**
-   * Returns the protocols the client supports. This method always returns a
-   * non-null list that contains minimally {@link Protocol#HTTP_1_1}.
+   * Returns the protocols the client supports. This method always returns a non-null list that
+   * contains minimally {@link Protocol#HTTP_1_1}.
    */
   public List<Protocol> protocols() {
     return protocols;
@@ -128,8 +127,8 @@ public final class Address {
   }
 
   /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to
-   * delegate to the {@linkplain #proxySelector proxy selector}.
+   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
+   * #proxySelector proxy selector}.
    */
   public Proxy proxy() {
     return proxy;

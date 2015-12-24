@@ -17,10 +17,9 @@
 
 package okhttp3.internal;
 
-import org.junit.Test;
-
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -38,7 +37,8 @@ public class OptionalMethodTest {
       return "string";
     }
 
-    public void voidMethod() {}
+    public void voidMethod() {
+    }
   }
 
   @SuppressWarnings("unused")
@@ -70,7 +70,8 @@ public class OptionalMethodTest {
       throw new NumberFormatException();
     }
 
-    protected void nonPublic() {}
+    protected void nonPublic() {
+    }
   }
 
   private final static OptionalMethod<BaseClass> STRING_METHOD_RETURNS_ANY =
@@ -194,8 +195,10 @@ public class OptionalMethodTest {
     assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1); // no args
     assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, 123);
     assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, true);
-    assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, new Object());
-    assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, "one", "two");
+    assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1,
+        new Object());
+    assertIllegalArgumentExceptionOnInvoke(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, "one",
+        "two");
   }
 
   @Test
@@ -268,11 +271,15 @@ public class OptionalMethodTest {
   @Test
   public void invokeOptionalBadArgs() throws Exception {
     SubClass1 subClass1 = new SubClass1();
-    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1); // no args
+    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS,
+        subClass1); // no args
     assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, 123);
-    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, true);
-    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, new Object());
-    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1, "one", "two");
+    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1,
+        true);
+    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1,
+        new Object());
+    assertIllegalArgumentExceptionOnInvokeOptional(METHOD_WITH_ARGS_CORRECT_PARAMS, subClass1,
+        "one", "two");
   }
 
   @Test
