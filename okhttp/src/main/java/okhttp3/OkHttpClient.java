@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.net.CookieHandler;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -124,7 +123,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   private final List<Interceptor> interceptors = new ArrayList<>();
   private final List<Interceptor> networkInterceptors = new ArrayList<>();
   private ProxySelector proxySelector;
-  private CookieHandler cookieHandler;
+  private CookieJar cookieJar;
 
   /** Non-null if this client is caching; possibly by {@code cache}. */
   private InternalCache internalCache;
@@ -159,7 +158,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     this.interceptors.addAll(okHttpClient.interceptors);
     this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
     this.proxySelector = okHttpClient.proxySelector;
-    this.cookieHandler = okHttpClient.cookieHandler;
+    this.cookieJar = okHttpClient.cookieJar;
     this.cache = okHttpClient.cache;
     this.internalCache = cache != null ? cache.internalCache : okHttpClient.internalCache;
     this.socketFactory = okHttpClient.socketFactory;
@@ -271,18 +270,18 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the cookie handler to be used to read outgoing cookies and write incoming cookies.
+   * Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to
+   * outgoing HTTP requests.
    *
-   * <p>If unset, the {@link CookieHandler#getDefault() system-wide default} cookie handler will be
-   * used.
+   * <p>If unset, {@linkplain CookieJar#NO_COOKIES no cookies} will be accepted nor provided.
    */
-  public OkHttpClient setCookieHandler(CookieHandler cookieHandler) {
-    this.cookieHandler = cookieHandler;
+  public OkHttpClient setCookieJar(CookieJar cookieJar) {
+    this.cookieJar = cookieJar;
     return this;
   }
 
-  public CookieHandler getCookieHandler() {
-    return cookieHandler;
+  public CookieJar getCookieJar() {
+    return cookieJar;
   }
 
   /** Sets the response cache to be used to read and write cached responses. */
@@ -594,8 +593,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     if (result.proxySelector == null) {
       result.proxySelector = ProxySelector.getDefault();
     }
-    if (result.cookieHandler == null) {
-      result.cookieHandler = CookieHandler.getDefault();
+    if (result.cookieJar == null) {
+      result.cookieJar = CookieJar.NO_COOKIES;
     }
     if (result.socketFactory == null) {
       result.socketFactory = SocketFactory.getDefault();

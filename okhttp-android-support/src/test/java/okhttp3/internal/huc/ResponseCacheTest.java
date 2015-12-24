@@ -62,6 +62,7 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.internal.Internal;
+import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -109,11 +110,9 @@ public final class ResponseCacheTest {
     AndroidInternal.setResponseCache(new OkUrlFactory(client), cache);
 
     cookieManager = new CookieManager();
-    CookieManager.setDefault(cookieManager);
   }
 
   @After public void tearDown() throws Exception {
-    CookieManager.setDefault(null);
     ResponseCache.setDefault(null);
   }
 
@@ -1468,6 +1467,7 @@ public final class ResponseCacheTest {
   }
 
   @Test public void cachePlusCookies() throws Exception {
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie: a=FIRST; domain=" + server.getCookieDomain() + ";")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))

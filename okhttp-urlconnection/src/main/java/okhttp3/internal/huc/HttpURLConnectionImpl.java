@@ -51,6 +51,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
+import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
@@ -210,7 +211,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
-      return OkHeaders.toMultimap(getHeaders(),
+      return JavaNetHeaders.toMultimap(getHeaders(),
           StatusLine.get(getResponse().getResponse()).toString());
     } catch (IOException e) {
       return Collections.emptyMap();
@@ -223,7 +224,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
           "Cannot access request header fields after connection is set");
     }
 
-    return OkHeaders.toMultimap(requestHeaders.build(), null);
+    return JavaNetHeaders.toMultimap(requestHeaders.build(), null);
   }
 
   @Override public final InputStream getInputStream() throws IOException {

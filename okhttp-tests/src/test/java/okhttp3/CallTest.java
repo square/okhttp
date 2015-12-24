@@ -50,6 +50,7 @@ import javax.net.ssl.SSLProtocolException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.internal.DoubleInetAddressDns;
+import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.SslContextBuilder;
@@ -1439,7 +1440,7 @@ public final class CallTest {
     String portList = Integer.toString(server.getPort());
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(server.url("/").uri(), cookie);
-    client.setCookieHandler(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
 
     Response response = client.newCall(new Request.Builder()
         .url(server.url("/page1"))

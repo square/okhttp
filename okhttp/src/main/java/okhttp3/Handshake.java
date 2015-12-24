@@ -29,8 +29,8 @@ import okhttp3.internal.Util;
  * A record of a TLS handshake. For HTTPS clients, the client is <i>local</i> and the remote server
  * is its <i>peer</i>.
  *
- * <p>This value object describes a completed handshake. Use {@link javax.net.ssl.SSLSocketFactory}
- * to set policy for new handshakes.
+ * <p>This value object describes a completed handshake. Use {@link ConnectionSpec} to set policy
+ * for new handshakes.
  */
 public final class Handshake {
   private final TlsVersion tlsVersion;

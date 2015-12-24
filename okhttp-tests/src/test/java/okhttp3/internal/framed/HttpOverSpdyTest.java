@@ -37,6 +37,7 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.Protocol;
+import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
@@ -370,7 +371,7 @@ public abstract class HttpOverSpdyTest {
 
   @Test public void acceptAndTransmitCookies() throws Exception {
     CookieManager cookieManager = new CookieManager();
-    client.client().setCookieHandler(cookieManager);
+    client.client().setCookieJar(new JavaNetCookieJar(cookieManager));
 
     server.enqueue(new MockResponse()
         .addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
