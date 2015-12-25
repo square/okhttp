@@ -18,7 +18,6 @@ package okhttp3;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
@@ -41,6 +40,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import okhttp3.internal.Internal;
+import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
 import okhttp3.internal.io.InMemoryFileSystem;
@@ -86,12 +86,11 @@ public final class CacheTest {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client.setCache(cache);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
   }
 
   @After public void tearDown() throws Exception {
     ResponseCache.setDefault(null);
-    CookieHandler.setDefault(null);
     cache.delete();
   }
 

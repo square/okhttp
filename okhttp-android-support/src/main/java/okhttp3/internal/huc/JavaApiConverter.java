@@ -43,6 +43,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.Internal;
+import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.CacheRequest;
 import okhttp3.internal.http.HttpMethod;
@@ -332,7 +333,7 @@ public final class JavaApiConverter {
         @Override
         public Map<String, List<String>> getHeaders() throws IOException {
           // Java requires that the entry with a null key be the status line.
-          return OkHeaders.toMultimap(headers, StatusLine.get(response).toString());
+          return JavaNetHeaders.toMultimap(headers, StatusLine.get(response).toString());
         }
 
         @Override
@@ -346,7 +347,7 @@ public final class JavaApiConverter {
         @Override
         public Map<String, List<String>> getHeaders() throws IOException {
           // Java requires that the entry with a null key be the status line.
-          return OkHeaders.toMultimap(headers, StatusLine.get(response).toString());
+          return JavaNetHeaders.toMultimap(headers, StatusLine.get(response).toString());
         }
 
         @Override
@@ -394,7 +395,7 @@ public final class JavaApiConverter {
    * Extracts an immutable request header map from the supplied {@link Headers}.
    */
   static Map<String, List<String>> extractJavaHeaders(Request request) {
-    return OkHeaders.toMultimap(request.headers(), null);
+    return JavaNetHeaders.toMultimap(request.headers(), null);
   }
 
   /**
@@ -585,7 +586,7 @@ public final class JavaApiConverter {
       // spec. There seems no good reason why this should fail while getRequestProperty() is ok.
       // We don't fail here, because we need all request header values for caching Vary responses
       // correctly.
-      return OkHeaders.toMultimap(request.headers(), null);
+      return JavaNetHeaders.toMultimap(request.headers(), null);
     }
 
     @Override
@@ -659,7 +660,7 @@ public final class JavaApiConverter {
 
     @Override
     public Map<String, List<String>> getHeaderFields() {
-      return OkHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
+      return JavaNetHeaders.toMultimap(response.headers(), StatusLine.get(response).toString());
     }
 
     @Override

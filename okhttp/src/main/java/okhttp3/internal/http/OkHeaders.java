@@ -1,12 +1,24 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package okhttp3.internal.http;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import okhttp3.Challenge;
 import okhttp3.Headers;
@@ -19,20 +31,6 @@ import static okhttp3.internal.Util.equal;
 
 /** Headers and utilities for internal use by OkHttp. */
 public final class OkHeaders {
-  private static final Comparator<String> FIELD_NAME_COMPARATOR = new Comparator<String>() {
-    // @FindBugsSuppressWarnings("ES_COMPARING_PARAMETER_STRING_WITH_EQ")
-    @Override public int compare(String a, String b) {
-      if (a == b) {
-        return 0;
-      } else if (a == null) {
-        return -1;
-      } else if (b == null) {
-        return 1;
-      } else {
-        return String.CASE_INSENSITIVE_ORDER.compare(a, b);
-      }
-    }
-  };
 
   static final String PREFIX = Platform.get().getPrefix();
 
@@ -77,56 +75,6 @@ public final class OkHeaders {
     } catch (NumberFormatException e) {
       return -1;
     }
-  }
-
-  /**
-   * Returns an immutable map containing each field to its list of values.
-   *
-   * @param valueForNullKey the request line for requests, or the status line for responses. If
-   * non-null, this value is mapped to the null key.
-   */
-  public static Map<String, List<String>> toMultimap(Headers headers, String valueForNullKey) {
-    Map<String, List<String>> result = new TreeMap<>(FIELD_NAME_COMPARATOR);
-    for (int i = 0, size = headers.size(); i < size; i++) {
-      String fieldName = headers.name(i);
-      String value = headers.value(i);
-
-      List<String> allValues = new ArrayList<>();
-      List<String> otherValues = result.get(fieldName);
-      if (otherValues != null) {
-        allValues.addAll(otherValues);
-      }
-      allValues.add(value);
-      result.put(fieldName, Collections.unmodifiableList(allValues));
-    }
-    if (valueForNullKey != null) {
-      result.put(null, Collections.unmodifiableList(Collections.singletonList(valueForNullKey)));
-    }
-    return Collections.unmodifiableMap(result);
-  }
-
-  public static void addCookies(Request.Builder builder, Map<String, List<String>> cookieHeaders) {
-    for (Map.Entry<String, List<String>> entry : cookieHeaders.entrySet()) {
-      String key = entry.getKey();
-      if (("Cookie".equalsIgnoreCase(key) || "Cookie2".equalsIgnoreCase(key))
-          && !entry.getValue().isEmpty()) {
-        builder.addHeader(key, buildCookieHeader(entry.getValue()));
-      }
-    }
-  }
-
-  /**
-   * Send all cookies in one big header, as recommended by <a
-   * href="http://tools.ietf.org/html/rfc6265#section-4.2.1">RFC 6265</a>.
-   */
-  private static String buildCookieHeader(List<String> cookies) {
-    if (cookies.size() == 1) return cookies.get(0);
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0, size = cookies.size(); i < size; i++) {
-      if (i > 0) sb.append("; ");
-      sb.append(cookies.get(i));
-    }
-    return sb.toString();
   }
 
   /**

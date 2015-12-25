@@ -17,29 +17,32 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
-import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import okhttp3.CookieJar;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
+import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -54,15 +57,10 @@ public class CookiesTest {
     client = new OkHttpClient();
   }
 
-  @After
-  public void tearDown() throws Exception {
-    CookieHandler.setDefault(null);
-  }
-
   @Test
   public void testNetscapeResponse() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -90,7 +88,7 @@ public class CookiesTest {
 
   @Test public void testRfc2109Response() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -120,7 +118,7 @@ public class CookiesTest {
 
   @Test public void testRfc2965Response() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -154,7 +152,7 @@ public class CookiesTest {
 
   @Test public void testQuotedAttributeValues() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -200,7 +198,7 @@ public class CookiesTest {
     cookieB.setDomain(server.getCookieDomain());
     cookieB.setPath("/");
     cookieManager.getCookieStore().add(server.url("/").uri(), cookieB);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
 
     get(server, "/");
     RecordedRequest request = server.takeRequest();
@@ -232,7 +230,7 @@ public class CookiesTest {
     String portList = Integer.toString(redirectSource.getPort());
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(redirectSource.url("/").uri(), cookie);
-    CookieHandler.setDefault(cookieManager);
+    client.setCookieJar(new JavaNetCookieJar(cookieManager));
 
     get(redirectSource, "/");
     RecordedRequest request = redirectSource.takeRequest();
@@ -253,22 +251,25 @@ public class CookiesTest {
 
   /**
    * Test which headers show up where. The cookie manager should be notified of both user-specified
-   * and derived headers like {@code Host}. Headers named {@code Cookie} or {@code Cookie2} that are
-   * returned by the cookie manager should show up in the request and in {@code
-   * getRequestProperties}.
+   * and derived headers like {@code Host}. All headers returned from the cookie jar are retained
+   * including {@code Cookie}, {@code Cookie2}, and any other headers.
+   *
+   * <p>This behavior is different from {@link JavaNetCookieJar}, which retains only headers named
+   * {@code Cookie} and {@code Cookie2}.
    */
   @Test public void testHeadersSentToCookieHandler() throws IOException, InterruptedException {
-    final Map<String, List<String>> cookieHandlerHeaders = new HashMap<>();
-    CookieHandler.setDefault(new CookieManager() {
-      @Override
-      public Map<String, List<String>> get(URI uri,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        cookieHandlerHeaders.putAll(requestHeaders);
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("Cookie", Collections.singletonList("Bar=bar"));
-        result.put("Cookie2", Collections.singletonList("Baz=baz"));
-        result.put("Quux", Collections.singletonList("quux"));
-        return result;
+    final AtomicReference<Headers> requestHeadersRef = new AtomicReference<>();
+    client.setCookieJar(new CookieJar() {
+      @Override public void saveFromResponse(HttpUrl url, Headers headers) {
+      }
+
+      @Override public Headers loadForRequest(HttpUrl url, Headers headers) {
+        requestHeadersRef.set(headers);
+        Headers.Builder result = headers.newBuilder();
+        result.add("Cookie", "Bar=bar");
+        result.add("Cookie2", "Baz=baz");
+        result.add("Quux", "quux");
+        return result.build();
       }
     });
     MockWebServer server = new MockWebServer();
@@ -287,10 +288,13 @@ public class CookiesTest {
 
     RecordedRequest request = server.takeRequest();
 
-    assertContainsAll(cookieHandlerHeaders.keySet(), "Foo");
-    assertContainsAll(cookieHandlerHeaders.keySet(),
-        "Content-type", "User-Agent", "Connection", "Host");
-    assertFalse(cookieHandlerHeaders.containsKey("Cookie"));
+    Headers requestHeaders = requestHeadersRef.get();
+    assertEquals(Arrays.asList("foo"), requestHeaders.values("Foo"));
+    assertNotNull(requestHeadersRef.get().get("Content-Type"));
+    assertNotNull(requestHeadersRef.get().get("User-Agent"));
+    assertNotNull(requestHeadersRef.get().get("Connection"));
+    assertNotNull(requestHeadersRef.get().get("Host"));
+    assertNull(requestHeadersRef.get().get("Cookie"));
 
     /*
      * The API specifies that calling getRequestProperties() on a connected instance should fail
@@ -309,17 +313,19 @@ public class CookiesTest {
     assertEquals("foo", request.getHeader("Foo"));
     assertEquals("Bar=bar", request.getHeader("Cookie"));
     assertEquals("Baz=baz", request.getHeader("Cookie2"));
-    assertNull(request.getHeader("Quux"));
+    assertEquals("quux", request.getHeader("Quux"));
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
-    CookieHandler.setDefault(new CookieManager() {
-      @Override public Map<String, List<String>> get(URI uri,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("COOKIE", Collections.singletonList("Bar=bar"));
-        result.put("cooKIE2", Collections.singletonList("Baz=baz"));
-        return result;
+    client.setCookieJar(new CookieJar() {
+      @Override public void saveFromResponse(HttpUrl url, Headers headers) {
+      }
+
+      @Override public Headers loadForRequest(HttpUrl url, Headers headers) {
+        return headers.newBuilder()
+            .add("COOKIE", "Bar=bar")
+            .add("cooKIE2", "Baz=baz")
+            .build();
       }
     });
     MockWebServer server = new MockWebServer();

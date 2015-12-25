@@ -18,17 +18,15 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
-import java.net.CookieHandler;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
+import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
@@ -498,17 +496,13 @@ public final class HttpEngine {
       result.header("Accept-Encoding", "gzip");
     }
 
-    CookieHandler cookieHandler = client.getCookieHandler();
-    if (cookieHandler != null) {
-      // Capture the request headers added so far so that they can be offered to the CookieHandler.
-      // This is mostly to stay close to the RI; it is unlikely any of the headers above would
-      // affect cookie choice besides "Host".
-      Map<String, List<String>> headers = OkHeaders.toMultimap(result.build().headers(), null);
-
-      Map<String, List<String>> cookies = cookieHandler.get(request.url().uri(), headers);
-
-      // Add any new cookies to the request.
-      OkHeaders.addCookies(result, cookies);
+    CookieJar cookieJar = client.getCookieJar();
+    if (cookieJar != CookieJar.NO_COOKIES) {
+      Headers headersWithoutCookies = result.build().headers();
+      Headers headersWithCookies = cookieJar.loadForRequest(request.url(), headersWithoutCookies);
+      if (headersWithoutCookies != headersWithCookies) {
+        result.headers(headersWithCookies);
+      }
     }
 
     if (request.header("User-Agent") == null) {
@@ -837,9 +831,8 @@ public final class HttpEngine {
   }
 
   public void receiveHeaders(Headers headers) throws IOException {
-    CookieHandler cookieHandler = client.getCookieHandler();
-    if (cookieHandler != null) {
-      cookieHandler.put(userRequest.url().uri(), OkHeaders.toMultimap(headers, null));
+    if (headers.size() > 0) {
+      client.getCookieJar().saveFromResponse(userRequest.url(), headers);
     }
   }
 

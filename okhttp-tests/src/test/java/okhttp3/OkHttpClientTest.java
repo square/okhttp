@@ -110,20 +110,17 @@ public final class OkHttpClientTest {
    */
   @Test public void copyWithDefaultsWhenDefaultIsGlobal() throws Exception {
     ProxySelector proxySelector = new RecordingProxySelector();
-    CookieManager cookieManager = new CookieManager();
     Authenticator authenticator = new RecordingAuthenticator();
     SocketFactory socketFactory = SocketFactory.getDefault(); // Global isn't configurable.
     OkHostnameVerifier hostnameVerifier = OkHostnameVerifier.INSTANCE; // Global isn't configurable.
     CertificatePinner certificatePinner = CertificatePinner.DEFAULT; // Global isn't configurable.
 
-    CookieManager.setDefault(cookieManager);
     ProxySelector.setDefault(proxySelector);
     Authenticator.setDefault(authenticator);
 
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
 
     assertSame(proxySelector, client.getProxySelector());
-    assertSame(cookieManager, client.getCookieHandler());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getProxyAuthenticator());
     assertSame(socketFactory, client.getSocketFactory());
