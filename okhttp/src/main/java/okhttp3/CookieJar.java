@@ -51,8 +51,8 @@ public interface CookieJar {
    *
    * <p><strong>Warning:</strong> it is the implementor's responsibility to reject cookies that
    * don't {@linkplain HttpCookie#domainMatches match} {@code url}. Otherwise an attacker on {@code
-   * https://attacker.example.com/} may set cookies for {@code https://victim.example.com/},
-   * resulting in session fixation.
+   * https://attacker.com/} may set cookies for {@code https://victim.com/}, resulting in session
+   * fixation.
    */
   void saveFromResponse(HttpUrl url, Headers headers);
 

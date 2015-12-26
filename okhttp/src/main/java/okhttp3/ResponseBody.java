@@ -27,6 +27,32 @@ import okio.BufferedSource;
 
 import static okhttp3.internal.Util.UTF_8;
 
+/**
+ * A one-shot stream from the origin server to the client application with the raw bytes of the
+ * response body. Each response body is supported by an active connection to the webserver. This
+ * imposes both obligations and limits on the client application.
+ *
+ * <h3>The response body must be closed.</h3>
+ *
+ * <p>Each response body is backed by a limited resource like a socket (live network responses) or
+ * an open file (for cached responses). Failing to close the response body will leak these resources
+ * and may ultimately cause the application to slow down or crash. Close the response body by
+ * calling either {@link ResponseBody#close close()}, {@link InputStream#close()
+ * byteStream().close()}, or {@link Reader#close() reader().close()}. The {@link #bytes()} and
+ * {@link #string()} methods both close the response body automatically.
+ *
+ * <h3>The response body can be consumed only once.</h3>
+ *
+ * <p>This class may be used to stream very large responses. For example, it is possible to use this
+ * class to read a response that is larger than the entire memory allocated to the current process.
+ * It can even stream a response larger than the total storage on the current device, which is a
+ * common requirement for video streaming applications.
+ *
+ * <p>Because this class does not buffer the full response in memory, the application may not
+ * re-read the bytes of the response. Use this one shot to read the entire response into memory with
+ * {@link #bytes()} or {@link #string()}. Or stream the response with either {@link #source()},
+ * {@link #byteStream()}, or {@link #charStream()}.
+ */
 public abstract class ResponseBody implements Closeable {
   /** Multiple calls to {@link #charStream()} must return the same instance. */
   private Reader reader;
