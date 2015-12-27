@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import okhttp3.HttpUrl;
@@ -45,6 +46,9 @@ public final class Util {
 
   /** A cheap and type-safe constant for the UTF-8 Charset. */
   public static final Charset UTF_8 = Charset.forName("UTF-8");
+
+  /** GMT and UTC are equivalent for our purposes. */
+  public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
 
   private Util() {
   }
@@ -297,5 +301,74 @@ public final class Util {
     System.arraycopy(array, 0, result, 0, array.length);
     result[result.length - 1] = value;
     return result;
+  }
+
+  /**
+   * Increments {@code pos} until {@code input[pos]} is not ASCII whitespace. Stops at {@code
+   * limit}.
+   */
+  public static int skipLeadingAsciiWhitespace(String input, int pos, int limit) {
+    for (int i = pos; i < limit; i++) {
+      switch (input.charAt(i)) {
+        case '\t':
+        case '\n':
+        case '\f':
+        case '\r':
+        case ' ':
+          continue;
+        default:
+          return i;
+      }
+    }
+    return limit;
+  }
+
+  /**
+   * Decrements {@code limit} until {@code input[limit - 1]} is not ASCII whitespace. Stops at
+   * {@code pos}.
+   */
+  public static int skipTrailingAsciiWhitespace(String input, int pos, int limit) {
+    for (int i = limit - 1; i >= pos; i--) {
+      switch (input.charAt(i)) {
+        case '\t':
+        case '\n':
+        case '\f':
+        case '\r':
+        case ' ':
+          continue;
+        default:
+          return i + 1;
+      }
+    }
+    return pos;
+  }
+
+  /** Equivalent to {@code string.substring(pos, limit).trim()}. */
+  public static String trimSubstring(String string, int pos, int limit) {
+    int start = skipLeadingAsciiWhitespace(string, pos, limit);
+    int end = skipTrailingAsciiWhitespace(string, start, limit);
+    return string.substring(start, end);
+  }
+
+  /**
+   * Returns the index of the first character in {@code input} that contains a character in {@code
+   * delimiters}. Returns limit if there is no such character.
+   */
+  public static int delimiterOffset(String input, int pos, int limit, String delimiters) {
+    for (int i = pos; i < limit; i++) {
+      if (delimiters.indexOf(input.charAt(i)) != -1) return i;
+    }
+    return limit;
+  }
+
+  /**
+   * Returns the index of the first character in {@code input} that is {@code delimiter}. Returns
+   * limit if there is no such character.
+   */
+  public static int delimiterOffset(String input, int pos, int limit, char delimiter) {
+    for (int i = pos; i < limit; i++) {
+      if (input.charAt(i) == delimiter) return i;
+    }
+    return limit;
   }
 }

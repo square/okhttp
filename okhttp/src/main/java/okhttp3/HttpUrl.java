@@ -31,6 +31,10 @@ import java.util.Locale;
 import java.util.Set;
 import okio.Buffer;
 
+import static okhttp3.internal.Util.delimiterOffset;
+import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
+import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
+
 /**
  * A uniform resource locator (URL) with a scheme of either {@code http} or {@code https}. Use this
  * class to compose and decompose Internet addresses. For example, this code will compose and print
@@ -473,7 +477,7 @@ public final class HttpUrl {
     List<String> result = new ArrayList<>();
     for (int i = pathStart; i < pathEnd; ) {
       i++; // Skip the '/'.
-      int segmentEnd = delimiterOffset(url, i, pathEnd, "/");
+      int segmentEnd = delimiterOffset(url, i, pathEnd, '/');
       result.add(url.substring(i, segmentEnd));
       i = segmentEnd;
     }
@@ -492,7 +496,7 @@ public final class HttpUrl {
   public String encodedQuery() {
     if (queryNamesAndValues == null) return null; // No query.
     int queryStart = url.indexOf('?') + 1;
-    int queryEnd = delimiterOffset(url, queryStart + 1, url.length(), "#");
+    int queryEnd = delimiterOffset(url, queryStart + 1, url.length(), '#');
     return url.substring(queryStart, queryEnd);
   }
 
@@ -1034,7 +1038,7 @@ public final class HttpUrl {
               // User info precedes.
               if (!hasPassword) {
                 int passwordColonOffset = delimiterOffset(
-                    input, pos, componentDelimiterOffset, ":");
+                    input, pos, componentDelimiterOffset, ':');
                 String canonicalUsername = canonicalize(
                     input, pos, passwordColonOffset, USERNAME_ENCODE_SET, true, false, false, true);
                 this.encodedUsername = hasUsername
@@ -1093,7 +1097,7 @@ public final class HttpUrl {
 
       // Query.
       if (pos < limit && input.charAt(pos) == '?') {
-        int queryDelimiterOffset = delimiterOffset(input, pos, limit, "#");
+        int queryDelimiterOffset = delimiterOffset(input, pos, limit, '#');
         this.encodedQueryNamesAndValues = queryStringToNamesAndValues(canonicalize(
             input, pos + 1, queryDelimiterOffset, QUERY_ENCODE_SET, true, false, true, true));
         pos = queryDelimiterOffset;
@@ -1187,46 +1191,6 @@ public final class HttpUrl {
       } else {
         encodedPathSegments.add("");
       }
-    }
-
-    /**
-     * Increments {@code pos} until {@code input[pos]} is not ASCII whitespace. Stops at {@code
-     * limit}.
-     */
-    private int skipLeadingAsciiWhitespace(String input, int pos, int limit) {
-      for (int i = pos; i < limit; i++) {
-        switch (input.charAt(i)) {
-          case '\t':
-          case '\n':
-          case '\f':
-          case '\r':
-          case ' ':
-            continue;
-          default:
-            return i;
-        }
-      }
-      return limit;
-    }
-
-    /**
-     * Decrements {@code limit} until {@code input[limit - 1]} is not ASCII whitespace. Stops at
-     * {@code pos}.
-     */
-    private int skipTrailingAsciiWhitespace(String input, int pos, int limit) {
-      for (int i = limit - 1; i >= pos; i--) {
-        switch (input.charAt(i)) {
-          case '\t':
-          case '\n':
-          case '\f':
-          case '\r':
-          case ' ':
-            continue;
-          default:
-            return i + 1;
-        }
-      }
-      return pos;
     }
 
     /**
@@ -1498,17 +1462,6 @@ public final class HttpUrl {
         return -1; // Invalid port.
       }
     }
-  }
-
-  /**
-   * Returns the index of the first character in {@code input} that contains a character in {@code
-   * delimiters}. Returns limit if there is no such character.
-   */
-  private static int delimiterOffset(String input, int pos, int limit, String delimiters) {
-    for (int i = pos; i < limit; i++) {
-      if (delimiters.indexOf(input.charAt(i)) != -1) return i;
-    }
-    return limit;
   }
 
   static String percentDecode(String encoded, boolean plusIsSpace) {
