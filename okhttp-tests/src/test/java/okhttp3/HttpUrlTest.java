@@ -108,6 +108,22 @@ public final class HttpUrlTest {
     assertEquals(null, HttpUrl.parse("#fragment"));
   }
 
+  @Test public void newBuilderResolve() throws Exception {
+    // Non-exhaustive tests because implementation is the same as resolve.
+    HttpUrl base = HttpUrl.parse("http://host/a/b");
+    assertEquals(HttpUrl.parse("https://host2/"), base.newBuilder("https://host2").build());
+    assertEquals(HttpUrl.parse("http://host2/"), base.newBuilder("//host2").build());
+    assertEquals(HttpUrl.parse("http://host/path"), base.newBuilder("/path").build());
+    assertEquals(HttpUrl.parse("http://host/a/path"), base.newBuilder("path").build());
+    assertEquals(HttpUrl.parse("http://host/a/b?query"), base.newBuilder("?query").build());
+    assertEquals(HttpUrl.parse("http://host/a/b#fragment"), base.newBuilder("#fragment").build());
+    assertEquals(HttpUrl.parse("http://host/a/b"), base.newBuilder("").build());
+    assertEquals(null, base.newBuilder("ftp://b"));
+    assertEquals(null, base.newBuilder("ht+tp://b"));
+    assertEquals(null, base.newBuilder("ht-tp://b"));
+    assertEquals(null, base.newBuilder("ht.tp://b"));
+  }
+
   @Test public void resolveNoScheme() throws Exception {
     HttpUrl base = HttpUrl.parse("http://host/a/b");
     assertEquals(HttpUrl.parse("http://host2/"), base.resolve("//host2"));
