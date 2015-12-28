@@ -25,30 +25,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Pattern;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
+
+import static okhttp3.internal.Util.verifyAsIpAddress;
 
 /**
  * A HostnameVerifier consistent with <a href="http://www.ietf.org/rfc/rfc2818.txt">RFC 2818</a>.
  */
 public final class OkHostnameVerifier implements HostnameVerifier {
   public static final OkHostnameVerifier INSTANCE = new OkHostnameVerifier();
-
-  /**
-   * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
-   * of Android's private InetAddress#isNumeric API.
-   *
-   * <p>This matches IPv6 addresses as a hex string containing at least one colon, and possibly
-   * including dots after the first colon. It matches IPv4 addresses as strings containing only
-   * decimal digits and dots. This pattern matches strings like "a:.23" and "54" that are neither IP
-   * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
-   * verification).
-   */
-  private static final Pattern VERIFY_AS_IP_ADDRESS = Pattern.compile(
-      "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)");
 
   private static final int ALT_DNS_NAME = 2;
   private static final int ALT_IPA_NAME = 7;
@@ -72,13 +60,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
         : verifyHostName(host, certificate);
   }
 
-  static boolean verifyAsIpAddress(String host) {
-    return VERIFY_AS_IP_ADDRESS.matcher(host).matches();
-  }
-
-  /**
-   * Returns true if {@code certificate} matches {@code ipAddress}.
-   */
+  /** Returns true if {@code certificate} matches {@code ipAddress}. */
   private boolean verifyIpAddress(String ipAddress, X509Certificate certificate) {
     List<String> altNames = getSubjectAltNames(certificate, ALT_IPA_NAME);
     for (int i = 0, size = altNames.size(); i < size; i++) {
@@ -89,9 +71,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
     return false;
   }
 
-  /**
-   * Returns true if {@code certificate} matches {@code hostName}.
-   */
+  /** Returns true if {@code certificate} matches {@code hostName}. */
   private boolean verifyHostName(String hostName, X509Certificate certificate) {
     hostName = hostName.toLowerCase(Locale.US);
     boolean hasDns = false;

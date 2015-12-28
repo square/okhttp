@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.net.IDN;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -27,11 +26,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import okio.Buffer;
 
 import static okhttp3.internal.Util.delimiterOffset;
+import static okhttp3.internal.Util.domainToAscii;
 import static okhttp3.internal.Util.skipLeadingAsciiWhitespace;
 import static okhttp3.internal.Util.skipTrailingAsciiWhitespace;
 
@@ -1387,47 +1386,6 @@ public final class HttpUrl {
 
       if (b != addressOffset + 4) return false; // Too few groups. We wanted exactly four.
       return true; // Success.
-    }
-
-    /**
-     * Performs IDN ToASCII encoding and canonicalize the result to lowercase. e.g. This converts
-     * {@code ☃.net} to {@code xn--n3h.net}, and {@code WwW.GoOgLe.cOm} to {@code www.google.com}.
-     * {@code null} will be returned if the input cannot be ToASCII encoded or if the result
-     * contains unsupported ASCII characters.
-     */
-    private static String domainToAscii(String input) {
-      try {
-        String result = IDN.toASCII(input).toLowerCase(Locale.US);
-        if (result.isEmpty()) return null;
-
-        // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
-        if (containsInvalidHostnameAsciiCodes(result)) {
-          return null;
-        }
-        // TODO: implement all label limits.
-        return result;
-      } catch (IllegalArgumentException e) {
-        return null;
-      }
-    }
-
-    private static boolean containsInvalidHostnameAsciiCodes(String hostnameAscii) {
-      for (int i = 0; i < hostnameAscii.length(); i++) {
-        char c = hostnameAscii.charAt(i);
-        // The WHATWG Host parsing rules accepts some character codes which are invalid by
-        // definition for OkHttp's host header checks (and the WHATWG Host syntax definition). Here
-        // we rule out characters that would cause problems in host headers.
-        if (c <= '\u001f' || c >= '\u007f') {
-          return true;
-        }
-        // Check for the characters mentioned in the WHATWG Host parsing spec:
-        // U+0000, U+0009, U+000A, U+000D, U+0020, "#", "%", "/", ":", "?", "@", "[", "\", and "]"
-        // (excluding the characters covered above).
-        if (" #%/:?@[\\]".indexOf(c) != -1) {
-          return true;
-        }
-      }
-      return false;
     }
 
     private static String inet6AddressToAscii(byte[] address) {
