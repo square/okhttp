@@ -597,11 +597,13 @@ public final class HttpUrl {
     return fragment;
   }
 
-  /** Returns the URL that would be retrieved by following {@code link} from this URL. */
+  /**
+   * Returns the URL that would be retrieved by following {@code link} from this URL, or null if
+   * the resulting URL is not well-formed.
+   */
   public HttpUrl resolve(String link) {
-    Builder builder = new Builder();
-    Builder.ParseResult result = builder.parse(this, link);
-    return result == Builder.ParseResult.SUCCESS ? builder.build() : null;
+    Builder builder = newBuilder(link);
+    return builder != null ? builder.build() : null;
   }
 
   public Builder newBuilder() {
@@ -617,6 +619,16 @@ public final class HttpUrl {
     result.encodedQuery(encodedQuery());
     result.encodedFragment = encodedFragment();
     return result;
+  }
+
+  /**
+   * Returns a builder for the URL that would be retrieved by following {@code link} from this URL,
+   * or null if the resulting URL is not well-formed.
+   */
+  public Builder newBuilder(String link) {
+    Builder builder = new Builder();
+    Builder.ParseResult result = builder.parse(this, link);
+    return result == Builder.ParseResult.SUCCESS ? builder : null;
   }
 
   /**
