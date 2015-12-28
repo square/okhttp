@@ -47,6 +47,13 @@ import java.io.IOException;
  * or both.
  */
 public interface Authenticator {
+  /** An authenticator that knows no credentials and makes no attempt to authenticate. */
+  Authenticator NONE = new Authenticator() {
+    @Override public Request authenticate(Route route, Response response) {
+      return null;
+    }
+  };
+
   /**
    * Returns a request that includes a credential to satisfy an authentication challenge in {@code
    * response}. Returns null if the challenge cannot be satisfied.

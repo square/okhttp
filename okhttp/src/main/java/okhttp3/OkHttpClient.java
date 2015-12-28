@@ -33,7 +33,6 @@ import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
 import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.AuthenticatorAdapter;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
 import okhttp3.internal.tls.OkHostnameVerifier;
@@ -382,8 +381,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    * Sets the authenticator used to respond to challenges from origin servers. Use {@link
    * #setProxyAuthenticator} to set the authenticator for proxy servers.
    *
-   * <p>If unset, the {@linkplain java.net.Authenticator#setDefault system-wide default}
-   * authenticator will be used.
+   * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
    */
   public OkHttpClient setAuthenticator(Authenticator authenticator) {
     this.authenticator = authenticator;
@@ -398,8 +396,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    * Sets the authenticator used to respond to challenges from proxy servers. Use {@link
    * #setAuthenticator} to set the authenticator for origin servers.
    *
-   * <p>If unset, the {@linkplain java.net.Authenticator#setDefault system-wide default}
-   * authenticator will be used.
+   * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
    */
   public OkHttpClient setProxyAuthenticator(Authenticator proxyAuthenticator) {
     this.proxyAuthenticator = proxyAuthenticator;
@@ -609,10 +606,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       result.certificatePinner = CertificatePinner.DEFAULT;
     }
     if (result.authenticator == null) {
-      result.authenticator = AuthenticatorAdapter.INSTANCE;
+      result.authenticator = Authenticator.NONE;
     }
     if (result.proxyAuthenticator == null) {
-      result.proxyAuthenticator = AuthenticatorAdapter.INSTANCE;
+      result.proxyAuthenticator = Authenticator.NONE;
     }
     if (result.connectionPool == null) {
       result.connectionPool = ConnectionPool.getDefault();

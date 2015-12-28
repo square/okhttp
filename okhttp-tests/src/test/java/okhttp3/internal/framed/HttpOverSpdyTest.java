@@ -41,6 +41,7 @@ import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
+import okhttp3.JavaNetAuthenticator;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -220,6 +221,7 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 

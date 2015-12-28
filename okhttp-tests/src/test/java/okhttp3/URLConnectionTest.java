@@ -966,6 +966,7 @@ public final class URLConnectionTest {
         new MockResponse().setSocketPolicy(UPGRADE_TO_SSL_AT_END).clearHeaders());
     server.enqueue(new MockResponse().setBody("A"));
 
+    client.client().setProxyAuthenticator(new JavaNetAuthenticator());
     client.client().setProxy(server.toProxyAddress());
 
     URL url = new URL("https://android.com/foo");
@@ -1408,6 +1409,7 @@ public final class URLConnectionTest {
     server.enqueue(pleaseAuthenticate);
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
     byte[] requestBody = {'A', 'B', 'C', 'D'};
@@ -1546,6 +1548,7 @@ public final class URLConnectionTest {
         .setBody("Please authenticate.");
     server.enqueue(pleaseAuthenticate);
 
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     if (proxy) {
       client.client().setProxy(server.toProxyAddress());
       connection = client.open(new URL("http://android.com"));
@@ -1729,6 +1732,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     connection.setDoOutput(true);
     byte[] requestBody = {'A', 'B', 'C', 'D'};
@@ -1763,6 +1767,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -1795,6 +1800,7 @@ public final class URLConnectionTest {
     server.enqueue(successfulResponse);
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -1819,6 +1825,7 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
+    client.client().setAuthenticator(new JavaNetAuthenticator());
     connection = client.open(server.url("/").url());
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
   }
