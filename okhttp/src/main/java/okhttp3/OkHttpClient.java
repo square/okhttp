@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
@@ -122,7 +121,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   private List<ConnectionSpec> connectionSpecs;
   private final List<Interceptor> interceptors = new ArrayList<>();
   private final List<Interceptor> networkInterceptors = new ArrayList<>();
-  private ProxySelector proxySelector;
   private CookieJar cookieJar;
 
   /** Non-null if this client is caching; possibly by {@code cache}. */
@@ -157,7 +155,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     this.connectionSpecs = okHttpClient.connectionSpecs;
     this.interceptors.addAll(okHttpClient.interceptors);
     this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
-    this.proxySelector = okHttpClient.proxySelector;
     this.cookieJar = okHttpClient.cookieJar;
     this.cache = okHttpClient.cache;
     this.internalCache = cache != null ? cache.internalCache : okHttpClient.internalCache;
@@ -239,9 +236,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Sets the HTTP proxy that will be used by connections created by this client. This takes
-   * precedence over {@link #setProxySelector}, which is only honored when this proxy is null (which
-   * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
+   * Sets the HTTP proxy that will be used by connections created by this client.
+   * To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
    */
   public OkHttpClient setProxy(Proxy proxy) {
     this.proxy = proxy;
@@ -250,23 +246,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
   public Proxy getProxy() {
     return proxy;
-  }
-
-  /**
-   * Sets the proxy selection policy to be used if no {@link #setProxy proxy} is specified
-   * explicitly. The proxy selector may return multiple proxies; in that case they will be tried in
-   * sequence until a successful connection is established.
-   *
-   * <p>If unset, the {@link ProxySelector#getDefault() system-wide default} proxy selector will be
-   * used.
-   */
-  public OkHttpClient setProxySelector(ProxySelector proxySelector) {
-    this.proxySelector = proxySelector;
-    return this;
-  }
-
-  public ProxySelector getProxySelector() {
-    return proxySelector;
   }
 
   /**
@@ -460,9 +439,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    *       increase availability of multi-homed services.
    *   <li><strong>Stale pooled connections.</strong> The {@link ConnectionPool} reuses sockets
    *       to decrease request latency, but these connections will occasionally time out.
-   *   <li><strong>Unreachable proxy servers.</strong> A {@link ProxySelector} can be used to
-   *       attempt multiple proxy servers in sequence, eventually falling back to a direct
-   *       connection.
+   *   <li><strong>Unreachable proxy servers.</strong> falling back to a direct connection.
    * </ul>
    *
    * Set this to false to avoid retrying requests when doing so is destructive. In this case the
@@ -590,9 +567,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    */
   OkHttpClient copyWithDefaults() {
     OkHttpClient result = new OkHttpClient(this);
-    if (result.proxySelector == null) {
-      result.proxySelector = ProxySelector.getDefault();
-    }
     if (result.cookieJar == null) {
       result.cookieJar = CookieJar.NO_COOKIES;
     }

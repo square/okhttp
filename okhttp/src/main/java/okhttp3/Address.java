@@ -16,7 +16,6 @@
 package okhttp3;
 
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.util.List;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
@@ -41,7 +40,6 @@ public final class Address {
   final Authenticator proxyAuthenticator;
   final List<Protocol> protocols;
   final List<ConnectionSpec> connectionSpecs;
-  final ProxySelector proxySelector;
   final Proxy proxy;
   final SSLSocketFactory sslSocketFactory;
   final HostnameVerifier hostnameVerifier;
@@ -50,7 +48,7 @@ public final class Address {
   public Address(String uriHost, int uriPort, Dns dns, SocketFactory socketFactory,
       SSLSocketFactory sslSocketFactory, HostnameVerifier hostnameVerifier,
       CertificatePinner certificatePinner, Authenticator proxyAuthenticator, Proxy proxy,
-      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs, ProxySelector proxySelector) {
+      List<Protocol> protocols, List<ConnectionSpec> connectionSpecs) {
     this.url = new HttpUrl.Builder()
         .scheme(sslSocketFactory != null ? "https" : "http")
         .host(uriHost)
@@ -73,9 +71,6 @@ public final class Address {
 
     if (connectionSpecs == null) throw new IllegalArgumentException("connectionSpecs == null");
     this.connectionSpecs = Util.immutableList(connectionSpecs);
-
-    if (proxySelector == null) throw new IllegalArgumentException("proxySelector == null");
-    this.proxySelector = proxySelector;
 
     this.proxy = proxy;
     this.sslSocketFactory = sslSocketFactory;
@@ -119,16 +114,7 @@ public final class Address {
   }
 
   /**
-   * Returns this address's proxy selector. Only used if the proxy is null. If none of this
-   * selector's proxies are reachable, a direct connection will be attempted.
-   */
-  public ProxySelector proxySelector() {
-    return proxySelector;
-  }
-
-  /**
-   * Returns this address's explicitly-specified HTTP proxy, or null to delegate to the {@linkplain
-   * #proxySelector proxy selector}.
+   * Returns this address's explicitly-specified HTTP proxy.
    */
   public Proxy proxy() {
     return proxy;
@@ -157,7 +143,6 @@ public final class Address {
           && this.proxyAuthenticator.equals(that.proxyAuthenticator)
           && this.protocols.equals(that.protocols)
           && this.connectionSpecs.equals(that.connectionSpecs)
-          && this.proxySelector.equals(that.proxySelector)
           && equal(this.proxy, that.proxy)
           && equal(this.sslSocketFactory, that.sslSocketFactory)
           && equal(this.hostnameVerifier, that.hostnameVerifier)
@@ -173,7 +158,6 @@ public final class Address {
     result = 31 * result + proxyAuthenticator.hashCode();
     result = 31 * result + protocols.hashCode();
     result = 31 * result + connectionSpecs.hashCode();
-    result = 31 * result + proxySelector.hashCode();
     result = 31 * result + (proxy != null ? proxy.hashCode() : 0);
     result = 31 * result + (sslSocketFactory != null ? sslSocketFactory.hashCode() : 0);
     result = 31 * result + (hostnameVerifier != null ? hostnameVerifier.hashCode() : 0);

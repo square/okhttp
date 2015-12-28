@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.util.Collections;
@@ -60,29 +59,6 @@ public final class SocksProxyTest {
     assertEquals("def", response2.body().string());
 
     // The HTTP calls should share a single connection.
-    assertEquals(1, socksProxy.connectionCount());
-  }
-
-  @Test public void proxySelector() throws Exception {
-    server.enqueue(new MockResponse().setBody("abc"));
-
-    ProxySelector proxySelector = new ProxySelector() {
-      @Override public List<Proxy> select(URI uri) {
-        return Collections.singletonList(socksProxy.proxy());
-      }
-
-      @Override public void connectFailed(URI uri, SocketAddress socketAddress, IOException e) {
-        throw new AssertionError();
-      }
-    };
-
-    OkHttpClient client = new OkHttpClient()
-        .setProxySelector(proxySelector);
-
-    Request request = new Request.Builder().url(server.url("/")).build();
-    Response response = client.newCall(request).execute();
-    assertEquals("abc", response.body().string());
-
     assertEquals(1, socksProxy.connectionCount());
   }
 

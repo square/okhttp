@@ -939,6 +939,6 @@ public final class HttpEngine {
     return new Address(request.url().host(), request.url().port(), client.getDns(),
         client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.getProxyAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionSpecs(), client.getProxySelector());
+        client.getConnectionSpecs());
   }
 }

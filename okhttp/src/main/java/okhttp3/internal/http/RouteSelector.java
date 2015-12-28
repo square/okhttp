@@ -97,12 +97,6 @@ public final class RouteSelector {
    * returned by this route selector.
    */
   public void connectFailed(Route failedRoute, IOException failure) {
-    if (failedRoute.proxy().type() != Proxy.Type.DIRECT && address.proxySelector() != null) {
-      // Tell the proxy selector when we fail to connect on a fresh connection.
-      address.proxySelector().connectFailed(
-          address.url().uri(), failedRoute.proxy().address(), failure);
-    }
-
     routeDatabase.failed(failedRoute);
   }
 
@@ -112,14 +106,8 @@ public final class RouteSelector {
       // If the user specifies a proxy, try that and only that.
       proxies = Collections.singletonList(proxy);
     } else {
-      // Try each of the ProxySelector choices until one connection succeeds. If none succeed
-      // then we'll try a direct connection below.
-      proxies = new ArrayList<>();
-      List<Proxy> selectedProxies = address.proxySelector().select(url.uri());
-      if (selectedProxies != null) proxies.addAll(selectedProxies);
       // Finally try a direct connection. We only try it once!
-      proxies.removeAll(Collections.singleton(Proxy.NO_PROXY));
-      proxies.add(Proxy.NO_PROXY);
+      proxies = Collections.singletonList(Proxy.NO_PROXY);
     }
     nextProxyIndex = 0;
   }

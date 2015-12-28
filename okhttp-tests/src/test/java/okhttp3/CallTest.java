@@ -57,7 +57,6 @@ import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.FakeDns;
-import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -775,29 +774,6 @@ public final class CallTest {
       fail();
     } catch (InterruptedIOException expected) {
     }
-  }
-
-  /**
-   * Make a request with two routes. The first route will time out because it's connecting via a
-   * null proxy server. The second will succeed.
-   */
-  @Test public void connectTimeoutsAttemptsAlternateRoute() throws Exception {
-    InetSocketAddress nullServerAddress = startNullServer();
-
-    RecordingProxySelector proxySelector = new RecordingProxySelector();
-    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, nullServerAddress));
-    proxySelector.proxies.add(server.toProxyAddress());
-
-    server.enqueue(new MockResponse()
-        .setBody("success!"));
-
-    client.setProxySelector(proxySelector);
-    client.setReadTimeout(100, TimeUnit.MILLISECONDS);
-
-    Request request = new Request.Builder().url("http://android.com/").build();
-    executeSynchronously(request)
-        .assertCode(200)
-        .assertBody("success!");
   }
 
   /** https://github.com/square/okhttp/issues/1801 */

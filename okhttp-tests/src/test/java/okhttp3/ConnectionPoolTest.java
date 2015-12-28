@@ -17,7 +17,6 @@ package okhttp3;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
@@ -200,8 +199,7 @@ public final class ConnectionPoolTest {
   private Address newAddress(String name) {
     return new Address(name, 1, Dns.SYSTEM, SocketFactory.getDefault(), null, null, null,
         new RecordingOkAuthenticator("password"), null, Collections.<Protocol>emptyList(),
-        Collections.<ConnectionSpec>emptyList(),
-        ProxySelector.getDefault());
+        Collections.<ConnectionSpec>emptyList());
   }
 
   private Route newRoute(Address address) {

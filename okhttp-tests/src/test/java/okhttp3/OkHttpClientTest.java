@@ -21,7 +21,6 @@ import java.net.CacheRequest;
 import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.CookieManager;
-import java.net.ProxySelector;
 import java.net.ResponseCache;
 import java.net.URI;
 import java.net.URLConnection;
@@ -32,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.http.AuthenticatorAdapter;
-import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.tls.OkHostnameVerifier;
 import org.junit.After;
 import org.junit.Test;
@@ -45,13 +43,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
-  private static final ProxySelector DEFAULT_PROXY_SELECTOR = ProxySelector.getDefault();
   private static final CookieHandler DEFAULT_COOKIE_HANDLER = CookieManager.getDefault();
   private static final ResponseCache DEFAULT_RESPONSE_CACHE = ResponseCache.getDefault();
   private static final Authenticator DEFAULT_AUTHENTICATOR = null; // No Authenticator.getDefault().
 
   @After public void tearDown() throws Exception {
-    ProxySelector.setDefault(DEFAULT_PROXY_SELECTOR);
     CookieManager.setDefault(DEFAULT_COOKIE_HANDLER);
     ResponseCache.setDefault(DEFAULT_RESPONSE_CACHE);
     Authenticator.setDefault(DEFAULT_AUTHENTICATOR);
@@ -109,18 +105,15 @@ public final class OkHttpClientTest {
    * Confirm that {@code copyWithDefaults} gets some default implementations from the core library.
    */
   @Test public void copyWithDefaultsWhenDefaultIsGlobal() throws Exception {
-    ProxySelector proxySelector = new RecordingProxySelector();
     Authenticator authenticator = new RecordingAuthenticator();
     SocketFactory socketFactory = SocketFactory.getDefault(); // Global isn't configurable.
     OkHostnameVerifier hostnameVerifier = OkHostnameVerifier.INSTANCE; // Global isn't configurable.
     CertificatePinner certificatePinner = CertificatePinner.DEFAULT; // Global isn't configurable.
 
-    ProxySelector.setDefault(proxySelector);
     Authenticator.setDefault(authenticator);
 
     OkHttpClient client = new OkHttpClient().copyWithDefaults();
 
-    assertSame(proxySelector, client.getProxySelector());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getAuthenticator());
     assertSame(AuthenticatorAdapter.INSTANCE, client.getProxyAuthenticator());
     assertSame(socketFactory, client.getSocketFactory());

@@ -26,7 +26,6 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
@@ -302,12 +301,6 @@ public final class URLConnectionTest {
 
   private void testRequestBodySurvivesRetries(TransferKind transferKind) throws Exception {
     server.enqueue(new MockResponse().setBody("abc"));
-
-    // Use a misconfigured proxy to guarantee that the request is retried.
-    FakeProxySelector proxySelector = new FakeProxySelector();
-    proxySelector.proxies.add(server2.toProxyAddress());
-    client.client().setProxySelector(proxySelector);
-    server2.shutdown();
 
     connection = client.open(server.url("/def").url());
     connection.setDoOutput(true);
@@ -1975,34 +1968,6 @@ public final class URLConnectionTest {
     assertEquals("Expected connection reuse", 1, server2.takeRequest().getSequenceNumber());
   }
 
-  @Test public void redirectWithProxySelector() throws Exception {
-    final List<URI> proxySelectionRequests = new ArrayList<URI>();
-    client.client().setProxySelector(new ProxySelector() {
-      @Override public List<Proxy> select(URI uri) {
-        proxySelectionRequests.add(uri);
-        MockWebServer proxyServer = (uri.getPort() == server.getPort())
-            ? server
-            : server2;
-        return Arrays.asList(proxyServer.toProxyAddress());
-      }
-
-      @Override public void connectFailed(URI uri, SocketAddress address, IOException failure) {
-        throw new AssertionError();
-      }
-    });
-
-    server2.enqueue(new MockResponse().setBody("This is the 2nd server!"));
-
-    server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + server2.url("/b").url().toString())
-        .setBody("This page has moved!"));
-
-    assertContent("This is the 2nd server!", client.open(server.url("/a").url()));
-
-    assertEquals(Arrays.asList(server.url("/").url().toURI(), server2.url("/").url().toURI()),
-        proxySelectionRequests);
-  }
-
   @Test public void redirectWithAuthentication() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
 
@@ -2896,10 +2861,6 @@ public final class URLConnectionTest {
     fail("TODO");
   }
 
-  @Test @Ignore public void pooledConnectionProblemsNotReportedToProxySelector() {
-    fail("TODO");
-  }
-
   @Test public void customBasicAuthenticator() throws Exception {
     MockResponse pleaseAuthenticate = new MockResponse().setResponseCode(401)
         .addHeader("WWW-Authenticate: Basic realm=\"protected area\"")
@@ -3444,19 +3405,6 @@ public final class URLConnectionTest {
         result.add(certificate.getSubjectDN() + " " + certificate.getSerialNumber());
       }
       return result.toString();
-    }
-  }
-
-  private static class FakeProxySelector extends ProxySelector {
-    List<Proxy> proxies = new ArrayList<>();
-
-    @Override public List<Proxy> select(URI uri) {
-      // Don't handle 'socket' schemes, which the RI's Socket class may request (for SOCKS).
-      return uri.getScheme().equals("http") || uri.getScheme().equals("https") ? proxies
-          : Collections.singletonList(Proxy.NO_PROXY);
-    }
-
-    @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     }
   }
 

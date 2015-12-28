@@ -19,7 +19,6 @@ import java.util.List;
 import javax.net.SocketFactory;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.AuthenticatorAdapter;
-import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,22 +30,13 @@ public final class AddressTest {
   private Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
   private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
   private List<ConnectionSpec> connectionSpecs = Util.immutableList(ConnectionSpec.MODERN_TLS);
-  private RecordingProxySelector proxySelector = new RecordingProxySelector();
 
   @Test public void equalsAndHashcode() throws Exception {
     Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, connectionSpecs);
     Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, proxySelector);
+        authenticator, null, protocols, connectionSpecs);
     assertEquals(a, b);
     assertEquals(a.hashCode(), b.hashCode());
-  }
-
-  @Test public void differentProxySelectorsAreDifferent() throws Exception {
-    Address a = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
-    Address b = new Address("square.com", 80, dns, socketFactory, null, null, null,
-        authenticator, null, protocols, connectionSpecs, new RecordingProxySelector());
-    assertFalse(a.equals(b));
   }
 }
