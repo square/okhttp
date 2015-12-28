@@ -71,7 +71,7 @@ public final class RouteSelectorTest {
   private final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
   private HostnameVerifier hostnameVerifier;
 
-  private final Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
+  private final Authenticator authenticator = Authenticator.NONE;
   private final List<Protocol> protocols = Arrays.asList(Protocol.HTTP_1_1);
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();

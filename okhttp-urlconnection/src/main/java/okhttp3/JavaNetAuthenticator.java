@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.http;
+package okhttp3;
 
 import java.io.IOException;
 import java.net.Authenticator.RequestorType;
@@ -22,19 +22,13 @@ import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.util.List;
-import okhttp3.Authenticator;
-import okhttp3.Challenge;
-import okhttp3.Credentials;
-import okhttp3.HttpUrl;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.Route;
 
-/** Adapts {@link java.net.Authenticator} to {@link Authenticator}. */
-public final class AuthenticatorAdapter implements Authenticator {
-  /** Uses the global authenticator to get the password. */
-  public static final Authenticator INSTANCE = new AuthenticatorAdapter();
-
+/**
+ * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use
+ * {@link java.net.Authenticator} with {@link OkHttpClient#setAuthenticator} or {@link
+ * OkHttpClient#setProxyAuthenticator(Authenticator)}.
+ */
+public final class JavaNetAuthenticator implements Authenticator {
   @Override public Request authenticate(Route route, Response response) throws IOException {
     List<Challenge> challenges = response.challenges();
     Request request = response.request();

@@ -18,7 +18,6 @@ package okhttp3;
 import java.util.List;
 import javax.net.SocketFactory;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.AuthenticatorAdapter;
 import okhttp3.internal.http.RecordingProxySelector;
 import org.junit.Test;
 
@@ -28,7 +27,7 @@ import static org.junit.Assert.assertFalse;
 public final class AddressTest {
   private Dns dns = Dns.SYSTEM;
   private SocketFactory socketFactory = SocketFactory.getDefault();
-  private Authenticator authenticator = AuthenticatorAdapter.INSTANCE;
+  private Authenticator authenticator = Authenticator.NONE;
   private List<Protocol> protocols = Util.immutableList(Protocol.HTTP_1_1);
   private List<ConnectionSpec> connectionSpecs = Util.immutableList(ConnectionSpec.MODERN_TLS);
   private RecordingProxySelector proxySelector = new RecordingProxySelector();
