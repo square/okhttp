@@ -23,9 +23,17 @@ import java.util.regex.Pattern;
 
 import static okhttp3.internal.Util.UTC;
 import static okhttp3.internal.Util.delimiterOffset;
+import static okhttp3.internal.Util.domainToAscii;
 import static okhttp3.internal.Util.trimSubstring;
+import static okhttp3.internal.Util.verifyAsIpAddress;
 
-/** An <a href="http://tools.ietf.org/html/rfc6265">RFC 6265</a> Cookie. */
+/**
+ * An <a href="http://tools.ietf.org/html/rfc6265">RFC 6265</a> Cookie.
+ *
+ * <p>This class doesn't support additional attributes on cookies, like <a
+ * href="https://code.google.com/p/chromium/issues/detail?id=232693">Chromium's Priority=HIGH
+ * extension</a>.
+ */
 public final class Cookie {
   private static final Pattern YEAR_PATTERN
       = Pattern.compile("(\\d{2,4})[^\\d]*");
@@ -41,20 +49,20 @@ public final class Cookie {
   private final long expiresAt;
   private final String domain;
   private final String path;
-  private final boolean secureOnly;
+  private final boolean secure;
   private final boolean httpOnly;
 
-  private final boolean persistent;
-  private final boolean hostOnly; // True if there's no domain attribute
+  private final boolean persistent; // True if 'expires' or 'max-age' is present.
+  private final boolean hostOnly; // True unless 'domain' is present.
 
   private Cookie(String name, String value, long expiresAt, String domain, String path,
-      boolean secureOnly, boolean httpOnly, boolean hostOnly, boolean persistent) {
+      boolean secure, boolean httpOnly, boolean hostOnly, boolean persistent) {
     this.name = name;
     this.value = value;
     this.expiresAt = expiresAt;
     this.domain = domain;
     this.path = path;
-    this.secureOnly = secureOnly;
+    this.secure = secure;
     this.httpOnly = httpOnly;
     this.hostOnly = hostOnly;
     this.persistent = persistent;
@@ -100,6 +108,84 @@ public final class Cookie {
    */
   public boolean hostOnly() {
     return hostOnly;
+  }
+
+  /**
+   * Returns the cookie's domain. If {@link #hostOnly()} returns true this is the only domain that
+   * matches this cookie; otherwise it matches this domain and all subdomains.
+   */
+  public String domain() {
+    return domain;
+  }
+
+  /**
+   * Returns this cookie's path. This cookie matches URLs prefixed with path segments that match
+   * this path's segments. For example, if this path is {@code /foo} this cookie matches requests to
+   * {@code /foo} and {@code /foo/bar}, but not {@code /} or {@code /football}.
+   */
+  public String path() {
+    return path;
+  }
+
+  /**
+   * Returns true if this cookie should be limited to only HTTP APIs. In web browsers this prevents
+   * the cookie from being accessible to scripts.
+   */
+  public boolean httpOnly() {
+    return httpOnly;
+  }
+
+  /** Returns true if this cookie should be limited to only HTTPS requests. */
+  public boolean secure() {
+    return secure;
+  }
+
+  /**
+   * Returns true if this cookie should be included on a request to {@code url}. In addition to this
+   * check callers should also confirm that this cookie has not expired.
+   */
+  public boolean matches(HttpUrl url) {
+    boolean domainMatch = hostOnly
+        ? url.host().equals(domain)
+        : domainMatch(url, domain);
+    if (!domainMatch) return false;
+
+    if (!pathMatch(url, path)) return false;
+
+    if (secure && !url.isHttps()) return false;
+
+    return true;
+  }
+
+  private static boolean domainMatch(HttpUrl url, String domain) {
+    String urlHost = url.host();
+
+    if (urlHost.equals(domain)) {
+      return true; // As in 'example.com' matching 'example.com'.
+    }
+
+    if (urlHost.endsWith(domain)
+        && urlHost.charAt(urlHost.length() - domain.length() - 1) == '.'
+        && !verifyAsIpAddress(urlHost)) {
+      return true; // As in 'example.com' matching 'www.example.com'.
+    }
+
+    return false;
+  }
+
+  private static boolean pathMatch(HttpUrl url, String path) {
+    String urlPath = url.encodedPath();
+
+    if (urlPath.equals(path)) {
+      return true; // As in '/foo' matching '/foo'.
+    }
+
+    if (urlPath.startsWith(path)) {
+      if (path.endsWith("/")) return true; // As in '/' matching '/foo'.
+      if (urlPath.charAt(path.length()) == '/') return true; // As in '/foo' matching '/foo/bar'.
+    }
+
+    return false;
   }
 
   /**
@@ -157,8 +243,12 @@ public final class Cookie {
           // Ignore this attribute, it isn't recognizable as a max age.
         }
       } else if (attributeName.equalsIgnoreCase("domain")) {
-        domain = parseDomain(attributeValue);
-        hostOnly = false;
+        try {
+          domain = parseDomain(attributeValue);
+          hostOnly = false;
+        } catch (IllegalArgumentException e) {
+          // Ignore this attribute, it isn't recognizable as a domain.
+        }
       } else if (attributeName.equalsIgnoreCase("path")) {
         path = attributeValue;
       } else if (attributeName.equalsIgnoreCase("secure")) {
@@ -182,15 +272,20 @@ public final class Cookie {
       if (expiresAt < currentTimeMillis) expiresAt = Long.MAX_VALUE; // Clamp overflow.
     }
 
+    // If the domain is present, it must domain match. Otherwise we have a host-only cookie.
+    if (domain == null) {
+      domain = url.host();
+    } else if (!domainMatch(url, domain)) {
+      return null; // No domain match? This is either incompetence or malice!
+    }
+
     // If the path is absent or didn't start with '/', use the default path. It's a string like
     // '/foo/bar' for a URL like 'http://example.com/foo/bar/baz'. It always starts with '/'.
     if (path == null || !path.startsWith("/")) {
       String encodedPath = url.encodedPath();
       int lastSlash = encodedPath.lastIndexOf('/');
-      path = lastSlash == 0 ? encodedPath.substring(0, lastSlash) : "/";
+      path = lastSlash != 0 ? encodedPath.substring(0, lastSlash) : "/";
     }
-
-    // TODO(jwilson): validate that the domain matches.
 
     return new Cookie(cookieName, cookieValue, expiresAt, domain, path, secureOnly, httpOnly,
         hostOnly, persistent);
@@ -295,14 +390,17 @@ public final class Cookie {
    * or {@code .example.com}.
    */
   private static String parseDomain(String s) {
+    if (s.endsWith(".")) {
+      throw new IllegalArgumentException();
+    }
     if (s.startsWith(".")) {
       s = s.substring(1);
     }
-    return s.toLowerCase(Locale.US);
-  }
-
-  public boolean matches(HttpUrl url) {
-    throw new UnsupportedOperationException("TODO");
+    String canonicalDomain = domainToAscii(s);
+    if (canonicalDomain == null) {
+      throw new IllegalArgumentException();
+    }
+    return canonicalDomain;
   }
 
   @Override public String toString() {

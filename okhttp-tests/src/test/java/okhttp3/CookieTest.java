@@ -19,7 +19,6 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import okhttp3.internal.Util;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -27,8 +26,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class CookieTest {
-  HttpUrl url = HttpUrl.parse("http://example.com/");
+public final class CookieTest {
+  HttpUrl url = HttpUrl.parse("https://example.com/");
 
   @Test public void test() throws Exception {
     Cookie cookie = Cookie.parse(url, "SID=31d4d96e407aad42");
@@ -179,7 +178,6 @@ public class CookieTest {
         Cookie.parse(url, "a=b; Expires=Thu, 01 Jan 1970 00:00:60 GMT").expiresAt());
   }
 
-  @Ignore("cookie matching isn't implemented")
   @Test public void domainMatches() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=example.com");
     assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
@@ -188,7 +186,6 @@ public class CookieTest {
   }
 
   /** If no domain is present, match only the origin domain. */
-  @Ignore("cookie matching isn't implemented")
   @Test public void domainMatchesNoDomain() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b");
     assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
@@ -197,7 +194,6 @@ public class CookieTest {
   }
 
   /** Ignore an optional leading `.` in the domain. */
-  @Ignore("cookie matching isn't implemented")
   @Test public void domainMatchesIgnoresLeadingDot() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=.example.com");
     assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
@@ -206,12 +202,69 @@ public class CookieTest {
   }
 
   /** Ignore the entire attribute if the domain ends with `.`. */
-  @Ignore("cookie matching isn't implemented")
   @Test public void domainIgnoredWithTrailingDot() throws Exception {
     Cookie cookie = Cookie.parse(url, "a=b; domain=example.com.");
     assertTrue(cookie.matches(HttpUrl.parse("http://example.com")));
     assertFalse(cookie.matches(HttpUrl.parse("http://www.example.com")));
     assertFalse(cookie.matches(HttpUrl.parse("http://square.com")));
+  }
+
+  @Test public void idnDomainMatches() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://☃.net/"), "a=b; domain=☃.net");
+    assertTrue(cookie.matches(HttpUrl.parse("http://☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://xn--n3h.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://www.☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://www.xn--n3h.net/")));
+  }
+
+  @Test public void punycodeDomainMatches() throws Exception {
+    Cookie cookie = Cookie.parse(HttpUrl.parse("http://xn--n3h.net/"), "a=b; domain=xn--n3h.net");
+    assertTrue(cookie.matches(HttpUrl.parse("http://☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://xn--n3h.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://www.☃.net/")));
+    assertTrue(cookie.matches(HttpUrl.parse("http://www.xn--n3h.net/")));
+  }
+
+  @Test public void domainMatchesIpAddress() throws Exception {
+    HttpUrl urlWithIp = HttpUrl.parse("http://123.45.234.56/");
+    assertNull(Cookie.parse(urlWithIp, "a=b; domain=234.56"));
+    assertEquals("123.45.234.56", Cookie.parse(urlWithIp, "a=b; domain=123.45.234.56").domain());
+  }
+
+  @Test public void hostOnly() throws Exception {
+    assertTrue(Cookie.parse(url, "a=b").hostOnly());
+    assertFalse(Cookie.parse(url, "a=b; domain=example.com").hostOnly());
+  }
+
+  @Test public void defaultPath() throws Exception {
+    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"), "a=b").path());
+    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/"), "a=b").path());
+    assertEquals("/", Cookie.parse(HttpUrl.parse("http://example.com/foo"), "a=b").path());
+    assertEquals("/", Cookie.parse(HttpUrl.parse("http://example.com/"), "a=b").path());
+  }
+
+  @Test public void defaultPathIsUsedIfPathDoesntHaveLeadingSlash() throws Exception {
+    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+        "a=b; path=quux").path());
+    assertEquals("/foo", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+        "a=b; path=").path());
+  }
+
+  @Test public void pathAttributeDoesntNeedToMatch() throws Exception {
+    assertEquals("/quux", Cookie.parse(HttpUrl.parse("http://example.com/"),
+        "a=b; path=/quux").path());
+    assertEquals("/quux", Cookie.parse(HttpUrl.parse("http://example.com/foo/bar"),
+        "a=b; path=/quux").path());
+  }
+
+  @Test public void httpOnly() throws Exception {
+    assertFalse(Cookie.parse(url, "a=b").httpOnly());
+    assertTrue(Cookie.parse(url, "a=b; HttpOnly").httpOnly());
+  }
+
+  @Test public void secure() throws Exception {
+    assertFalse(Cookie.parse(url, "a=b").secure());
+    assertTrue(Cookie.parse(url, "a=b; Secure").secure());
   }
 
   @Test public void maxAgeTakesPrecedenceOverExpires() throws Exception {

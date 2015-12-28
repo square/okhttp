@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.IDN;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
@@ -30,10 +31,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import okhttp3.HttpUrl;
 import okio.Buffer;
 import okio.ByteString;
@@ -49,6 +52,19 @@ public final class Util {
 
   /** GMT and UTC are equivalent for our purposes. */
   public static final TimeZone UTC = TimeZone.getTimeZone("GMT");
+
+  /**
+   * Quick and dirty pattern to differentiate IP addresses from hostnames. This is an approximation
+   * of Android's private InetAddress#isNumeric API.
+   *
+   * <p>This matches IPv6 addresses as a hex string containing at least one colon, and possibly
+   * including dots after the first colon. It matches IPv4 addresses as strings containing only
+   * decimal digits and dots. This pattern matches strings like "a:.23" and "54" that are neither IP
+   * addresses nor hostnames; they will be verified as IP addresses (which is a more strict
+   * verification).
+   */
+  private static final Pattern VERIFY_AS_IP_ADDRESS = Pattern.compile(
+      "([0-9a-fA-F]*:[0-9a-fA-F:.]*)|([\\d.]+)");
 
   private Util() {
   }
@@ -370,5 +386,51 @@ public final class Util {
       if (input.charAt(i) == delimiter) return i;
     }
     return limit;
+  }
+
+  /**
+   * Performs IDN ToASCII encoding and canonicalize the result to lowercase. e.g. This converts
+   * {@code ☃.net} to {@code xn--n3h.net}, and {@code WwW.GoOgLe.cOm} to {@code www.google.com}.
+   * {@code null} will be returned if the input cannot be ToASCII encoded or if the result
+   * contains unsupported ASCII characters.
+   */
+  public static String domainToAscii(String input) {
+    try {
+      String result = IDN.toASCII(input).toLowerCase(Locale.US);
+      if (result.isEmpty()) return null;
+
+      // Confirm that the IDN ToASCII result doesn't contain any illegal characters.
+      if (containsInvalidHostnameAsciiCodes(result)) {
+        return null;
+      }
+      // TODO: implement all label limits.
+      return result;
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+  private static boolean containsInvalidHostnameAsciiCodes(String hostnameAscii) {
+    for (int i = 0; i < hostnameAscii.length(); i++) {
+      char c = hostnameAscii.charAt(i);
+      // The WHATWG Host parsing rules accepts some character codes which are invalid by
+      // definition for OkHttp's host header checks (and the WHATWG Host syntax definition). Here
+      // we rule out characters that would cause problems in host headers.
+      if (c <= '\u001f' || c >= '\u007f') {
+        return true;
+      }
+      // Check for the characters mentioned in the WHATWG Host parsing spec:
+      // U+0000, U+0009, U+000A, U+000D, U+0020, "#", "%", "/", ":", "?", "@", "[", "\", and "]"
+      // (excluding the characters covered above).
+      if (" #%/:?@[\\]".indexOf(c) != -1) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Returns true if {@code host} is not a host name and might be an IP address. */
+  public static boolean verifyAsIpAddress(String host) {
+    return VERIFY_AS_IP_ADDRESS.matcher(host).matches();
   }
 }
