@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
+import okhttp3.internal.Internal;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
@@ -32,11 +33,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public final class ConnectionPoolTest {
-  private final Runnable emptyRunnable = new Runnable() {
-    @Override public void run() {
-    }
-  };
-
   private final Address addressA = newAddress("a");
   private final Route routeA1 = newRoute(addressA);
   private final Address addressB = newAddress("b");
@@ -44,9 +40,13 @@ public final class ConnectionPoolTest {
   private final Address addressC = newAddress("c");
   private final Route routeC1 = newRoute(addressC);
 
+  static {
+    Internal.initializeInstanceForTests();
+  }
+
   @Test public void connectionsEvictedWhenIdleLongEnough() throws Exception {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunnableForTest(emptyRunnable);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
 
@@ -78,7 +78,7 @@ public final class ConnectionPoolTest {
 
   @Test public void inUseConnectionsNotEvicted() throws Exception {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunnableForTest(emptyRunnable);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     StreamAllocation streamAllocation = new StreamAllocation(pool, addressA);
@@ -102,7 +102,7 @@ public final class ConnectionPoolTest {
 
   @Test public void cleanupPrioritizesEarliestEviction() throws Exception {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunnableForTest(emptyRunnable);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 75L);
     RealConnection c2 = newConnection(pool, routeB1, 50L);
@@ -134,7 +134,7 @@ public final class ConnectionPoolTest {
 
   @Test public void oldestConnectionsEvictedIfIdleLimitExceeded() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunnableForTest(emptyRunnable);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 50L);
     RealConnection c2 = newConnection(pool, routeB1, 75L);
@@ -158,7 +158,7 @@ public final class ConnectionPoolTest {
 
   @Test public void leakedAllocation() throws Exception {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
-    pool.setCleanupRunnableForTest(emptyRunnable);
+    pool.cleanupRunning = true; // Prevent the cleanup runnable from being started.
 
     RealConnection c1 = newConnection(pool, routeA1, 0L);
     allocateAndLeakAllocation(pool, c1);

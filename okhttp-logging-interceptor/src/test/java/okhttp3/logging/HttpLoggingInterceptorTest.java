@@ -66,7 +66,6 @@ public final class HttpLoggingInterceptorTest {
   @Before public void setUp() {
     client.networkInterceptors().add(networkInterceptor);
     client.interceptors().add(applicationInterceptor);
-    client.setConnectionPool(null);
 
     host = server.getHostName() + ":" + server.getPort();
     url = server.url("/");

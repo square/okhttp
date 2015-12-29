@@ -847,10 +847,6 @@ public final class UrlConnectionCacheTest {
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    ConnectionPool pool = ConnectionPool.getDefault();
-    pool.evictAll();
-    client.client().setConnectionPool(pool);
-
     assertEquals("A", readAscii(client.open(server.url("/").url())));
     assertEquals("A", readAscii(client.open(server.url("/").url())));
     assertEquals(1, client.client().getConnectionPool().getIdleConnectionCount());

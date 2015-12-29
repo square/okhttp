@@ -38,7 +38,6 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import okhttp3.ConnectionPool;
 import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -181,8 +180,6 @@ public class Main extends HelpOption implements Runnable {
       client.setSslSocketFactory(createInsecureSslSocketFactory());
       client.setHostnameVerifier(createInsecureHostnameVerifier());
     }
-    // If we don't set this reference, there's no way to clean shutdown persistent connections.
-    client.setConnectionPool(ConnectionPool.getDefault());
     return client;
   }
 

@@ -1309,10 +1309,6 @@ public final class URLConnectionTest {
         .clearHeaders()
         .setSocketPolicy(DISCONNECT_AT_END));
 
-    ConnectionPool pool = ConnectionPool.getDefault();
-    pool.evictAll();
-    client.client().setConnectionPool(pool);
-
     HttpURLConnection connection = client.open(server.url("/").url());
     assertContent("{}", connection);
     assertEquals(0, client.client().getConnectionPool().getIdleConnectionCount());

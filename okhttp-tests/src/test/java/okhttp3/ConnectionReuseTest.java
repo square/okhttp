@@ -101,7 +101,7 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreNotReusedIfPoolIsSizeZero() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5000));
+    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
@@ -112,7 +112,7 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsReusedWithRedirectEvenIfPoolIsSizeZero() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5000));
+    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")
@@ -129,7 +129,7 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5000));
+    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")

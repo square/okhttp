@@ -134,7 +134,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   private CertificatePinner certificatePinner;
   private Authenticator proxyAuthenticator;
   private Authenticator authenticator;
-  private ConnectionPool connectionPool;
+  private ConnectionPool connectionPool = new ConnectionPool();
   private Dns dns;
   private boolean followSslRedirects = true;
   private boolean followRedirects = true;
@@ -410,10 +410,10 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   /**
    * Sets the connection pool used to recycle HTTP and HTTPS connections.
    *
-   * <p>If unset, the {@link ConnectionPool#getDefault() system-wide default} connection pool will
-   * be used.
+   * <p>If unset, a new connection pool will be used.
    */
   public OkHttpClient setConnectionPool(ConnectionPool connectionPool) {
+    if (connectionPool == null) throw new NullPointerException("connectionPool == null");
     this.connectionPool = connectionPool;
     return this;
   }
@@ -610,9 +610,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     }
     if (result.proxyAuthenticator == null) {
       result.proxyAuthenticator = Authenticator.NONE;
-    }
-    if (result.connectionPool == null) {
-      result.connectionPool = ConnectionPool.getDefault();
     }
     if (result.protocols == null) {
       result.protocols = DEFAULT_PROTOCOLS;
