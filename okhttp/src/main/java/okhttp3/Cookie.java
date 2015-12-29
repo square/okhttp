@@ -15,11 +15,17 @@
  */
 package okhttp3;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import okhttp3.internal.Util;
+import okhttp3.internal.http.HttpDate;
 
 import static okhttp3.internal.Util.UTC;
 import static okhttp3.internal.Util.delimiterOffset;
@@ -68,6 +74,22 @@ public final class Cookie {
     this.persistent = persistent;
   }
 
+  private Cookie(Builder builder) {
+    if (builder.name == null) throw new IllegalArgumentException("builder.name == null");
+    if (builder.value == null) throw new IllegalArgumentException("builder.value == null");
+    if (builder.domain == null) throw new IllegalArgumentException("builder.domain == null");
+
+    this.name = builder.name;
+    this.value = builder.value;
+    this.expiresAt = builder.expiresAt;
+    this.domain = builder.domain;
+    this.path = builder.path;
+    this.secure = builder.secure;
+    this.httpOnly = builder.httpOnly;
+    this.persistent = builder.persistent;
+    this.hostOnly = builder.hostOnly;
+  }
+
   /** Returns a non-empty string with this cookie's name. */
   public String name() {
     return name;
@@ -85,8 +107,8 @@ public final class Cookie {
 
   /**
    * Returns the time that this cookie expires, in the same format as {@link
-   * System#currentTimeMillis()}. This is {@link Long#MAX_VALUE} if the cookie is not persistent, in
-   * which case it will expire at the end of the current session.
+   * System#currentTimeMillis()}. This is December 31, 9999 if the cookie is {@linkplain
+   * #persistent() not persistent}, in which case it will expire at the end of the current session.
    *
    * <p>This may return a value less than the current time, in which case the cookie is already
    * expired. Webservers may return expired cookies as a mechanism to delete previously set cookies
@@ -209,7 +231,7 @@ public final class Cookie {
 
     String cookieValue = trimSubstring(setCookie, pairEqualsSign + 1, cookiePairEnd);
 
-    long expiresAt = Long.MAX_VALUE;
+    long expiresAt = HttpDate.MAX_DATE;
     long deltaSeconds = -1L;
     String domain = null;
     String path = null;
@@ -253,7 +275,7 @@ public final class Cookie {
         path = attributeValue;
       } else if (attributeName.equalsIgnoreCase("secure")) {
         secureOnly = true;
-      } else if (attributeName.equalsIgnoreCase("HttpOnly")) {
+      } else if (attributeName.equalsIgnoreCase("httponly")) {
         httpOnly = true;
       }
 
@@ -269,7 +291,9 @@ public final class Cookie {
           ? deltaSeconds * 1000
           : Long.MAX_VALUE;
       expiresAt = currentTimeMillis + deltaMilliseconds;
-      if (expiresAt < currentTimeMillis) expiresAt = Long.MAX_VALUE; // Clamp overflow.
+      if (expiresAt < currentTimeMillis || expiresAt > HttpDate.MAX_DATE) {
+        expiresAt = HttpDate.MAX_DATE; // Handle overflow & limit the date range.
+      }
     }
 
     // If the domain is present, it must domain match. Otherwise we have a host-only cookie.
@@ -403,7 +427,136 @@ public final class Cookie {
     return canonicalDomain;
   }
 
+  /** Returns all of the cookies from a set of HTTP response headers. */
+  public static List<Cookie> parseAll(HttpUrl url, Headers headers) {
+    List<String> cookieStrings = headers.values("Set-Cookie");
+    List<Cookie> cookies = null;
+
+    for (int i = 0, size = cookieStrings.size(); i < size; i++) {
+      Cookie cookie = Cookie.parse(url, cookieStrings.get(i));
+      if (cookie == null) continue;
+      if (cookies == null) cookies = new ArrayList<>();
+      cookies.add(cookie);
+    }
+
+    return cookies != null
+        ? Collections.unmodifiableList(cookies)
+        : Collections.<Cookie>emptyList();
+  }
+
+  /**
+   * Builds a cookie. The {@linkplain #name() name}, {@linkplain #value() value}, and {@linkplain
+   * #domain() domain} values must all be set before calling {@link #build}.
+   */
+  public static final class Builder {
+    String name;
+    String value;
+    long expiresAt = HttpDate.MAX_DATE;
+    String domain;
+    String path = "/";
+    boolean secure;
+    boolean httpOnly;
+    boolean persistent;
+    boolean hostOnly;
+
+    public Builder name(String name) {
+      if (name == null) throw new NullPointerException("name == null");
+      if (!name.trim().equals(name)) throw new IllegalArgumentException("name is not trimmed");
+      this.name = name;
+      return this;
+    }
+
+    public Builder value(String value) {
+      if (value == null) throw new NullPointerException("value == null");
+      if (!value.trim().equals(value)) throw new IllegalArgumentException("value is not trimmed");
+      this.value = value;
+      return this;
+    }
+
+    public Builder expiresAt(long expiresAt) {
+      if (expiresAt <= 0) expiresAt = Long.MIN_VALUE;
+      if (expiresAt > HttpDate.MAX_DATE) expiresAt = HttpDate.MAX_DATE;
+      this.expiresAt = expiresAt;
+      this.persistent = true;
+      return this;
+    }
+
+    /**
+     * Set the domain pattern for this cookie. The cookie will match {@code domain} and all of its
+     * subdomains.
+     */
+    public Builder domain(String domain) {
+      return domain(domain, false);
+    }
+
+    /**
+     * Set the host-only domain for this cookie. The cookie will match {@code domain} but none of
+     * its subdomains.
+     */
+    public Builder hostOnlyDomain(String domain) {
+      return domain(domain, true);
+    }
+
+    private Builder domain(String domain, boolean hostOnly) {
+      if (domain == null) throw new IllegalArgumentException("domain == null");
+      String canonicalDomain = Util.domainToAscii(domain);
+      if (canonicalDomain == null) {
+        throw new IllegalArgumentException("unexpected domain: " + domain);
+      }
+      this.domain = canonicalDomain;
+      this.hostOnly = hostOnly;
+      return this;
+    }
+
+    public Builder path(String path) {
+      if (!path.startsWith("/")) throw new IllegalArgumentException("path must start with '/'");
+      this.path = path;
+      return this;
+    }
+
+    public Builder secure() {
+      this.secure = true;
+      return this;
+    }
+
+    public Builder httpOnly() {
+      this.httpOnly = true;
+      return this;
+    }
+
+    public Cookie build() {
+      return new Cookie(this);
+    }
+  }
+
   @Override public String toString() {
-    return name + '=' + value;
+    StringBuilder result = new StringBuilder();
+    result.append(name);
+    result.append('=');
+    result.append(value);
+
+    if (persistent) {
+      if (expiresAt == Long.MIN_VALUE) {
+        result.append("; max-age=0");
+      } else {
+        result.append("; expires=").append(HttpDate.format(new Date(expiresAt)));
+      }
+    }
+
+    if (!hostOnly) {
+      result.append("; domain=").append(domain);
+    }
+
+    result.append("; path=").append(path);
+
+    if (secure) {
+      result.append("; secure");
+    }
+
+    if (httpOnly) {
+      result.append("; httponly");
+    }
+
+    return result.toString();
   }
 }

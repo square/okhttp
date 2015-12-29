@@ -28,6 +28,8 @@ import static okhttp3.internal.Util.UTC;
  * Best-effort parser for HTTP dates.
  */
 public final class HttpDate {
+  /** The last four-digit year: "Fri, 31 Dec 9999 23:59:59 GMT". */
+  public static final long MAX_DATE = 253402300799999L;
 
   /**
    * Most websites serve cookies in the blessed format. Eagerly create the parser to ensure such
