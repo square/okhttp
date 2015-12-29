@@ -32,8 +32,8 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import okhttp3.Cache;
-import okhttp3.ConnectionPool;
 import okhttp3.HttpUrl;
+import okhttp3.JavaNetAuthenticator;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.Protocol;
@@ -41,7 +41,6 @@ import okhttp3.internal.JavaNetCookieJar;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
-import okhttp3.JavaNetAuthenticator;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -396,9 +395,6 @@ public abstract class HttpOverSpdyTest {
 
   /** https://github.com/square/okhttp/issues/1191 */
   @Test public void disconnectWithStreamNotEstablished() throws Exception {
-    ConnectionPool connectionPool = new ConnectionPool(5, 5000);
-    client.client().setConnectionPool(connectionPool);
-
     server.enqueue(new MockResponse().setBody("abc"));
 
     // Disconnect before the stream is created. A connection is still established!
@@ -407,7 +403,7 @@ public abstract class HttpOverSpdyTest {
     connection1.disconnect();
 
     // That connection is pooled, and it works.
-    assertEquals(1, connectionPool.getMultiplexedConnectionCount());
+    assertEquals(1, client.client().getConnectionPool().getMultiplexedConnectionCount());
     HttpURLConnection connection2 = client.open(server.url("/").url());
     assertContent("abc", connection2, 3);
     assertEquals(0, server.takeRequest().getSequenceNumber());

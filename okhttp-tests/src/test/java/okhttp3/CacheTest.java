@@ -999,10 +999,6 @@ public final class CacheTest {
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    ConnectionPool pool = ConnectionPool.getDefault();
-    pool.evictAll();
-    client.setConnectionPool(pool);
-
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals(1, client.getConnectionPool().getIdleConnectionCount());
