@@ -39,7 +39,7 @@ public final class CacheControl {
   private final boolean onlyIfCached;
   private final boolean noTransform;
 
-  String headerValue; // Lazily computed, if absent.
+  String headerValue; // Lazily computed, null if absent.
 
   private CacheControl(boolean noCache, boolean noStore, int maxAgeSeconds, int sMaxAgeSeconds,
       boolean isPrivate, boolean isPublic, boolean mustRevalidate, int maxStaleSeconds,
