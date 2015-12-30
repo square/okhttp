@@ -18,13 +18,9 @@ package okhttp3.internal.framed;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Authenticator;
-import java.net.CookieManager;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,12 +28,13 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import okhttp3.Cache;
+import okhttp3.Cookie;
 import okhttp3.HttpUrl;
 import okhttp3.JavaNetAuthenticator;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.Protocol;
-import okhttp3.internal.JavaNetCookieJar;
+import okhttp3.RecordingCookieJar;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
@@ -370,27 +367,35 @@ public abstract class HttpOverSpdyTest {
     in2.close();
   }
 
-  @Test public void acceptAndTransmitCookies() throws Exception {
-    CookieManager cookieManager = new CookieManager();
-    client.client().setCookieJar(new JavaNetCookieJar(cookieManager));
+  @Test public void sendRequestCookies() throws Exception {
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+    Cookie requestCookie = new Cookie.Builder()
+        .name("a")
+        .value("b")
+        .domain(server.getHostName())
+        .build();
+    cookieJar.enqueueRequestCookies(requestCookie);
+    client.client().setCookieJar(cookieJar);
+
+    server.enqueue(new MockResponse());
+    HttpUrl url = server.url("/");
+    assertContent("", client.open(url.url()), Integer.MAX_VALUE);
+
+    RecordedRequest request = server.takeRequest();
+    assertEquals("a=b", request.getHeader("Cookie"));
+  }
+
+  @Test public void receiveResponseCookies() throws Exception {
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+    client.client().setCookieJar(cookieJar);
 
     server.enqueue(new MockResponse()
-        .addHeader("set-cookie: c=oreo; domain=" + server.getCookieDomain())
-        .setBody("A"));
-    server.enqueue(new MockResponse()
-        .setBody("B"));
+        .addHeader("set-cookie: a=b"));
 
     HttpUrl url = server.url("/");
-    assertContent("A", client.open(url.url()), Integer.MAX_VALUE);
-    Map<String, List<String>> requestHeaders = Collections.emptyMap();
-    assertEquals(Collections.singletonMap("Cookie", Arrays.asList("c=oreo")),
-        cookieManager.get(url.uri(), requestHeaders));
+    assertContent("", client.open(url.url()), Integer.MAX_VALUE);
 
-    assertContent("B", client.open(url.url()), Integer.MAX_VALUE);
-    RecordedRequest requestA = server.takeRequest();
-    assertNull(requestA.getHeader("Cookie"));
-    RecordedRequest requestB = server.takeRequest();
-    assertEquals("c=oreo", requestB.getHeader("Cookie"));
+    cookieJar.assertResponseCookies("a=b; path=/");
   }
 
   /** https://github.com/square/okhttp/issues/1191 */

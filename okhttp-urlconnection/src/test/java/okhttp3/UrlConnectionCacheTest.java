@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.CookieManager;
-import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
 import java.net.URL;
@@ -33,7 +32,6 @@ import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -1405,20 +1403,24 @@ public final class UrlConnectionCacheTest {
   }
 
   @Test public void cachePlusCookies() throws Exception {
-    server.enqueue(new MockResponse().addHeader(
-        "Set-Cookie: a=FIRST; domain=" + server.getCookieDomain() + ";")
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+    client.client().setCookieJar(cookieJar);
+
+    server.enqueue(new MockResponse()
+        .addHeader("Set-Cookie: a=FIRST")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
         .setBody("A"));
-    server.enqueue(new MockResponse().addHeader(
-        "Set-Cookie: a=SECOND; domain=" + server.getCookieDomain() + ";")
+    server.enqueue(new MockResponse()
+        .addHeader("Set-Cookie: a=SECOND")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     URL url = server.url("/").url();
     assertEquals("A", readAscii(client.open(url)));
-    assertCookies(url, "a=FIRST");
+    cookieJar.assertResponseCookies("a=FIRST; path=/");
+
     assertEquals("A", readAscii(client.open(url)));
-    assertCookies(url, "a=SECOND");
+    cookieJar.assertResponseCookies("a=SECOND; path=/");
   }
 
   @Test public void getHeadersReturnsNetworkEndToEndHeaders() throws Exception {
@@ -1485,14 +1487,6 @@ public final class UrlConnectionCacheTest {
     URLConnection connection2 = client.open(server.url("/").url());
     assertEquals("A", readAscii(connection2));
     assertEquals("299 test danger", connection2.getHeaderField("Warning"));
-  }
-
-  public void assertCookies(URL url, String... expectedCookies) throws Exception {
-    List<String> actualCookies = new ArrayList<>();
-    for (HttpCookie cookie : cookieManager.getCookieStore().get(url.toURI())) {
-      actualCookies.add(cookie.toString());
-    }
-    assertEquals(Arrays.asList(expectedCookies), actualCookies);
   }
 
   @Test public void cachePlusRange() throws Exception {

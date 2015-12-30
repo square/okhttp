@@ -1427,6 +1427,48 @@ public final class CallTest {
     assertEquals("PROPFIND /page2 HTTP/1.1", page2.getRequestLine());
   }
 
+  @Test public void responseCookies() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Set-Cookie", "a=b; Expires=Thu, 01 Jan 1970 00:00:00 GMT")
+        .addHeader("Set-Cookie", "c=d; Expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure"));
+
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+    client.setCookieJar(cookieJar);
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+
+    List<Cookie> responseCookies = cookieJar.takeResponseCookies();
+    assertEquals(2, responseCookies.size());
+    assertEquals("a=b; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/",
+        responseCookies.get(0).toString());
+    assertEquals("c=d; expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure",
+        responseCookies.get(1).toString());
+  }
+
+  @Test public void requestCookies() throws Exception {
+    server.enqueue(new MockResponse());
+
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+
+    cookieJar.enqueueRequestCookies(
+        new Cookie.Builder().name("a").value("b").domain(server.getHostName()).build(),
+        new Cookie.Builder().name("c").value("d").domain(server.getHostName()).build());
+    client.setCookieJar(cookieJar);
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(request)
+        .assertCode(200);
+
+    RecordedRequest recordedRequest = server.takeRequest();
+    assertEquals("a=b; c=d", recordedRequest.getHeader("Cookie"));
+  }
+
   @Test public void redirectsDoNotIncludeTooManyCookies() throws Exception {
     server2.enqueue(new MockResponse().setBody("Page 2"));
     server.enqueue(new MockResponse()
@@ -1435,7 +1477,7 @@ public final class CallTest {
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
-    cookie.setDomain(server.getCookieDomain());
+    cookie.setDomain(server.getHostName());
     cookie.setPath("/");
     String portList = Integer.toString(server.getPort());
     cookie.setPortlist(portList);
@@ -1448,11 +1490,7 @@ public final class CallTest {
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest request1 = server.takeRequest();
-    assertEquals("$Version=\"1\"; c=\"cookie\";$Path=\"/\";$Domain=\""
-        + server.getCookieDomain()
-        + "\";$Port=\""
-        + portList
-        + "\"", request1.getHeader("Cookie"));
+    assertEquals("c=cookie", request1.getHeader("Cookie"));
 
     RecordedRequest request2 = server2.takeRequest();
     assertNull(request2.getHeader("Cookie"));
