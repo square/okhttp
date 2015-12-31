@@ -30,8 +30,6 @@ import okio.Source;
 
 public final class Progress {
 
-  private final OkHttpClient client = new OkHttpClient();
-
   public void run() throws Exception {
     Request request = new Request.Builder()
         .url("https://publicobject.com/helloworld.txt")
@@ -46,14 +44,16 @@ public final class Progress {
       }
     };
 
-    client.networkInterceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        Response originalResponse = chain.proceed(chain.request());
-        return originalResponse.newBuilder()
-            .body(new ProgressResponseBody(originalResponse.body(), progressListener))
-            .build();
-      }
-    });
+    OkHttpClient client = new OkHttpClient.Builder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            Response originalResponse = chain.proceed(chain.request());
+            return originalResponse.newBuilder()
+                .body(new ProgressResponseBody(originalResponse.body(), progressListener))
+                .build();
+          }
+        })
+        .build();
 
     Response response = client.newCall(request).execute();
     if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);

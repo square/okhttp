@@ -6,10 +6,29 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.framed.Header;
 
 public final class TestUtil {
   private TestUtil() {
+  }
+
+  private static final ConnectionPool connectionPool = new ConnectionPool();
+
+  /**
+   * Returns an OkHttpClient for all tests to use as a starting point.
+   *
+   * <p>The shared instance allows all tests to share a single connection pool, which prevents idle
+   * connections from consuming unnecessary resources while connections wait to be evicted.
+   *
+   * <p>This client is also configured to be slightly more deterministic, returning a single IP
+   * address for all hosts, regardless of the actual number of IP addresses reported by DNS.
+   */
+  public static OkHttpClient defaultClient() {
+    return new OkHttpClient.Builder()
+        .setConnectionPool(connectionPool)
+        .setDns(new SingleInetAddressDns()) // Prevent unexpected fallback addresses.
+        .build();
   }
 
   public static List<Header> headerEntries(String... elements) {

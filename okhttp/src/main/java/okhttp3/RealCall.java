@@ -39,9 +39,7 @@ final class RealCall implements Call {
   HttpEngine engine;
 
   protected RealCall(OkHttpClient client, Request originalRequest) {
-    // Copy the client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is executed.
-    this.client = client.copyWithDefaults();
+    this.client = client;
     this.originalRequest = originalRequest;
   }
 

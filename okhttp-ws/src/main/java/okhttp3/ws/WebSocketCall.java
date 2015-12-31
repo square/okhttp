@@ -64,11 +64,9 @@ public final class WebSocketCall {
     random.nextBytes(nonce);
     key = ByteString.of(nonce).base64();
 
-    // Copy the client. Otherwise changes (socket factory, redirect policy,
-    // etc.) may incorrectly be reflected in the request when it is executed.
-    client = client.clone();
-    // Force HTTP/1.1 until the WebSocket over HTTP/2 version is finalized.
-    client.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
+    client = client.newBuilder()
+        .setProtocols(Collections.singletonList(Protocol.HTTP_1_1))
+        .build();
 
     request = request.newBuilder()
         .header("Upgrade", "websocket")

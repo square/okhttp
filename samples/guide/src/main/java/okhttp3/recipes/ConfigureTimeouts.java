@@ -24,10 +24,11 @@ public final class ConfigureTimeouts {
   private final OkHttpClient client;
 
   public ConfigureTimeouts() throws Exception {
-    client = new OkHttpClient();
-    client.setConnectTimeout(10, TimeUnit.SECONDS);
-    client.setWriteTimeout(10, TimeUnit.SECONDS);
-    client.setReadTimeout(30, TimeUnit.SECONDS);
+    client = new OkHttpClient.Builder()
+        .setConnectTimeout(10, TimeUnit.SECONDS)
+        .setWriteTimeout(10, TimeUnit.SECONDS)
+        .setReadTimeout(30, TimeUnit.SECONDS)
+        .build();
   }
 
   public void run() throws Exception {

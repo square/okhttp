@@ -46,11 +46,9 @@ public final class ThreadInterruptTest {
   private OkHttpClient client;
 
   @Before public void setUp() throws Exception {
-    server = new MockWebServer();
-    client = new OkHttpClient();
-
     // Sockets on some platforms can have large buffers that mean writes do not block when
     // required. These socket factories explicitly set the buffer sizes on sockets created.
+    server = new MockWebServer();
     server.setServerSocketFactory(
         new DelegatingServerSocketFactory(ServerSocketFactory.getDefault()) {
           @Override
@@ -60,14 +58,16 @@ public final class ThreadInterruptTest {
             return serverSocket;
           }
         });
-    client.setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
-      @Override
-      protected Socket configureSocket(Socket socket) throws IOException {
-        socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
-        socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
-        return socket;
-      }
-    });
+    client = new OkHttpClient.Builder()
+        .setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+          @Override
+          protected Socket configureSocket(Socket socket) throws IOException {
+            socket.setSendBufferSize(SOCKET_BUFFER_SIZE);
+            socket.setReceiveBufferSize(SOCKET_BUFFER_SIZE);
+            return socket;
+          }
+        })
+        .build();
   }
 
   @Test public void interruptWritingRequestBody() throws Exception {

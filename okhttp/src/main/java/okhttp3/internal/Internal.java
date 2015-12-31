@@ -39,7 +39,7 @@ public abstract class Internal {
 
   public static void initializeInstanceForTests() {
     // Needed in tests to ensure that the instance is actually pointing to something.
-    new OkHttpClient();
+    new OkHttpClient.Builder().build();
   }
 
   public static Internal instance;
@@ -48,7 +48,7 @@ public abstract class Internal {
 
   public abstract void addLenient(Headers.Builder builder, String name, String value);
 
-  public abstract void setCache(OkHttpClient client, InternalCache internalCache);
+  public abstract void setCache(OkHttpClient.Builder builder, InternalCache internalCache);
 
   public abstract InternalCache internalCache(OkHttpClient client);
 

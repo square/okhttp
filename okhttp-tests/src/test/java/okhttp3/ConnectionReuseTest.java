@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 
 public final class ConnectionReuseTest {
@@ -35,7 +36,7 @@ public final class ConnectionReuseTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
   private SSLContext sslContext = SslContextBuilder.localhost();
-  private OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
     server.enqueue(new MockResponse().setBody("a"));
@@ -101,7 +102,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsAreNotReusedIfPoolIsSizeZero() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    client = client.newBuilder()
+        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build();
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
@@ -112,7 +115,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsReusedWithRedirectEvenIfPoolIsSizeZero() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    client = client.newBuilder()
+        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build();
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")
@@ -129,7 +134,9 @@ public final class ConnectionReuseTest {
   }
 
   @Test public void connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() throws Exception {
-    client.setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS));
+    client = client.newBuilder()
+        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .build();
     server.enqueue(new MockResponse()
         .setResponseCode(301)
         .addHeader("Location: /b")
@@ -206,7 +213,9 @@ public final class ConnectionReuseTest {
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
 
-    client.setConnectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS));
+    client = client.newBuilder()
+        .setConnectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
+        .build();
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
@@ -225,9 +234,11 @@ public final class ConnectionReuseTest {
   }
 
   private void enableHttp2() {
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .build();
     server.useHttps(sslContext.getSocketFactory(), false);
     server.setProtocols(client.getProtocols());
   }

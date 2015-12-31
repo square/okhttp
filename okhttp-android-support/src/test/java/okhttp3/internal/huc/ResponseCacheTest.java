@@ -62,6 +62,7 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.internal.Internal;
+import okhttp3.internal.InternalCache;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -96,17 +97,16 @@ public final class ResponseCacheTest {
 
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private SSLContext sslContext = SslContextBuilder.localhost();
-  private OkHttpClient client;
   private ResponseCache cache;
   private CookieManager cookieManager;
+  private OkUrlFactory urlFactory;
 
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
 
-    client = new OkHttpClient();
-
     cache = AndroidShimResponseCache.create(cacheRule.getRoot(), 10 * 1024 * 1024);
-    AndroidInternal.setResponseCache(new OkUrlFactory(client), cache);
+    urlFactory = new OkUrlFactory(new OkHttpClient.Builder().build());
+    AndroidInternal.setResponseCache(urlFactory, cache);
 
     cookieManager = new CookieManager();
   }
@@ -116,7 +116,7 @@ public final class ResponseCacheTest {
   }
 
   private HttpURLConnection openConnection(URL url) {
-    return new OkUrlFactory(client).open(url);
+    return urlFactory.open(url);
   }
 
   /**
@@ -345,8 +345,10 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEF"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(hostnameVerifier);
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build());
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.url("/").url());
     assertEquals("ABC", readAscii(connection1));
@@ -382,8 +384,10 @@ public final class ResponseCacheTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.url("/").url()));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(hostnameVerifier);
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build());
 
     HttpURLConnection connection1 = openConnection(server.url("/").url());
     assertEquals("ABC", readAscii(connection1));
@@ -1452,8 +1456,10 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(hostnameVerifier);
+    urlFactory.setClient(urlFactory.client().newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build());
 
     URL url = server.url("/").url();
     HttpURLConnection connection1 = openConnection(url);
@@ -1839,7 +1845,7 @@ public final class ResponseCacheTest {
         .addHeader("fgh: ijk")
         .setBody(body));
 
-    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
+    setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) throws IOException {
         HttpURLConnection httpURLConnection = (HttpURLConnection) connection;
         assertEquals(server.url("/").url(), uri.toURL());
@@ -1867,7 +1873,7 @@ public final class ResponseCacheTest {
   /** Don't explode if the cache returns a null body. http://b/3373699 */
   @Test public void responseCacheReturnsNullOutputStream() throws Exception {
     final AtomicBoolean aborted = new AtomicBoolean();
-    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
+    setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheRequest put(URI uri, URLConnection connection) {
         return new CacheRequest() {
           @Override public void abort() {
@@ -1897,7 +1903,7 @@ public final class ResponseCacheTest {
     String cachedContentString = "Hello";
     final byte[] cachedContent = cachedContentString.getBytes(StandardCharsets.US_ASCII);
 
-    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
+    setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override
       public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders)
@@ -1966,7 +1972,7 @@ public final class ResponseCacheTest {
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    AndroidInternal.setResponseCache(new OkUrlFactory(client), new InsecureResponseCache(cache));
+    AndroidInternal.setResponseCache(urlFactory, new InsecureResponseCache(cache));
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.url("/").url());
     connection1.setSSLSocketFactory(sslContext.getSocketFactory());
@@ -1985,7 +1991,7 @@ public final class ResponseCacheTest {
         .setBody("ABC"));
 
     final AtomicReference<Map<String, List<String>>> requestHeadersRef = new AtomicReference<>();
-    Internal.instance.setCache(client, new CacheAdapter(new AbstractResponseCache() {
+    setInternalCache(new CacheAdapter(new AbstractResponseCache() {
       @Override public CacheResponse get(URI uri, String requestMethod,
           Map<String, List<String>> requestHeaders) throws IOException {
         requestHeadersRef.set(requestHeaders);
@@ -2160,5 +2166,11 @@ public final class ResponseCacheTest {
     URLConnection connection2 = server.url("/").url().openConnection();
     assertFalse(connection2 instanceof HttpURLConnectionImpl);
     assertEquals("B", readAscii(connection2));
+  }
+
+  private void setInternalCache(InternalCache internalCache) {
+    OkHttpClient.Builder builder = urlFactory.client().newBuilder();
+    Internal.instance.setCache(builder, internalCache);
+    urlFactory.setClient(builder.build());
   }
 }

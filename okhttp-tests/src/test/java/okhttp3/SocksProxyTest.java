@@ -48,8 +48,9 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("abc"));
     server.enqueue(new MockResponse().setBody("def"));
 
-    OkHttpClient client = new OkHttpClient()
-        .setProxy(socksProxy.proxy());
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setProxy(socksProxy.proxy())
+        .build();
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request1).execute();
@@ -76,8 +77,9 @@ public final class SocksProxyTest {
       }
     };
 
-    OkHttpClient client = new OkHttpClient()
-        .setProxySelector(proxySelector);
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setProxySelector(proxySelector)
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
@@ -90,8 +92,9 @@ public final class SocksProxyTest {
     // This testcase will fail if the target is resolved locally instead of through the proxy.
     server.enqueue(new MockResponse().setBody("abc"));
 
-    OkHttpClient client = new OkHttpClient()
-        .setProxy(socksProxy.proxy());
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setProxy(socksProxy.proxy())
+        .build();
 
     HttpUrl url = server.url("/")
         .newBuilder()

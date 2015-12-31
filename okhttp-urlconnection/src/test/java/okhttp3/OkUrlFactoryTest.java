@@ -33,9 +33,10 @@ public class OkUrlFactoryTest {
   private Cache cache;
 
   @Before public void setUp() throws IOException {
-    OkHttpClient client = new OkHttpClient();
     cache = new Cache(new File("/cache/"), 10 * 1024 * 1024, fileSystem);
-    client.setCache(cache);
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setCache(cache)
+        .build();
     factory = new OkUrlFactory(client);
   }
 

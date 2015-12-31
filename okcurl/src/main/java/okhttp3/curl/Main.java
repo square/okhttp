@@ -168,19 +168,19 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private OkHttpClient createClient() {
-    OkHttpClient client = new OkHttpClient();
-    client.setFollowSslRedirects(followRedirects);
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    builder.setFollowSslRedirects(followRedirects);
     if (connectTimeout != DEFAULT_TIMEOUT) {
-      client.setConnectTimeout(connectTimeout, SECONDS);
+      builder.setConnectTimeout(connectTimeout, SECONDS);
     }
     if (readTimeout != DEFAULT_TIMEOUT) {
-      client.setReadTimeout(readTimeout, SECONDS);
+      builder.setReadTimeout(readTimeout, SECONDS);
     }
     if (allowInsecure) {
-      client.setSslSocketFactory(createInsecureSslSocketFactory());
-      client.setHostnameVerifier(createInsecureHostnameVerifier());
+      builder.setSslSocketFactory(createInsecureSslSocketFactory());
+      builder.setHostnameVerifier(createInsecureHostnameVerifier());
     }
-    return client;
+    return builder.build();
   }
 
   private String getRequestMethod() {

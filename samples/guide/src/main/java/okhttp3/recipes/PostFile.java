@@ -27,7 +27,7 @@ public final class PostFile {
   public static final MediaType MEDIA_TYPE_MARKDOWN
       = MediaType.parse("text/x-markdown; charset=utf-8");
 
-  private final OkHttpClient client = new OkHttpClient();
+  private final OkHttpClient client = new OkHttpClient.Builder().build();
 
   public void run() throws Exception {
     File file = new File("README.md");

@@ -47,10 +47,11 @@ class OkHttpAsync implements HttpClient {
     concurrencyLevel = benchmark.concurrencyLevel;
     targetBacklog = benchmark.targetBacklog;
 
-    client = new OkHttpClient();
-    client.setProtocols(benchmark.protocols);
-    client.setDispatcher(new Dispatcher(new ThreadPoolExecutor(benchmark.concurrencyLevel,
-        benchmark.concurrencyLevel, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>())));
+    client = new OkHttpClient.Builder()
+        .setProtocols(benchmark.protocols)
+        .setDispatcher(new Dispatcher(new ThreadPoolExecutor(benchmark.concurrencyLevel,
+            benchmark.concurrencyLevel, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>())))
+        .build();
 
     if (benchmark.tls) {
       SSLContext sslContext = SslContextBuilder.localhost();
@@ -60,8 +61,10 @@ class OkHttpAsync implements HttpClient {
           return true;
         }
       };
-      client.setSslSocketFactory(socketFactory);
-      client.setHostnameVerifier(hostnameVerifier);
+      client = client.newBuilder()
+          .setSslSocketFactory(socketFactory)
+          .setHostnameVerifier(hostnameVerifier)
+          .build();
     }
 
     callback = new Callback() {

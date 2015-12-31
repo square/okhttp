@@ -40,8 +40,9 @@ public final class RewriteResponseCacheControl {
     Cache cache = new Cache(cacheDirectory, 1024 * 1024);
     cache.evictAll();
 
-    client = new OkHttpClient();
-    client.setCache(cache);
+    client = new OkHttpClient.Builder()
+        .setCache(cache)
+        .build();
   }
 
   public void run() throws Exception {
@@ -52,17 +53,20 @@ public final class RewriteResponseCacheControl {
           .url("https://api.github.com/search/repositories?q=http")
           .build();
 
+      OkHttpClient clientForCall;
       if (i == 2) {
         // Force this request's response to be written to the cache. This way, subsequent responses
         // can be read from the cache.
         System.out.println("Force cache: true");
-        client.networkInterceptors().add(REWRITE_CACHE_CONTROL_INTERCEPTOR);
+        clientForCall = client.newBuilder()
+            .addNetworkInterceptor(REWRITE_CACHE_CONTROL_INTERCEPTOR)
+            .build();
       } else {
         System.out.println("Force cache: false");
-        client.networkInterceptors().clear();
+        clientForCall = client;
       }
 
-      Response response = client.newCall(request).execute();
+      Response response = clientForCall.newCall(request).execute();
       response.body().close();
       if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 

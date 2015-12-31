@@ -22,7 +22,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public final class PerCallSettings {
-  private final OkHttpClient client = new OkHttpClient();
+  private final OkHttpClient client = new OkHttpClient.Builder().build();
 
   public void run() throws Exception {
     Request request = new Request.Builder()
@@ -30,20 +30,24 @@ public final class PerCallSettings {
         .build();
 
     try {
-      OkHttpClient cloned = client.clone(); // Clone to make a customized OkHttp for this request.
-      cloned.setReadTimeout(500, TimeUnit.MILLISECONDS);
+      // Copy to customize OkHttp for this request.
+      OkHttpClient copy = client.newBuilder()
+          .setReadTimeout(500, TimeUnit.MILLISECONDS)
+          .build();
 
-      Response response = cloned.newCall(request).execute();
+      Response response = copy.newCall(request).execute();
       System.out.println("Response 1 succeeded: " + response);
     } catch (IOException e) {
       System.out.println("Response 1 failed: " + e);
     }
 
     try {
-      OkHttpClient cloned = client.clone(); // Clone to make a customized OkHttp for this request.
-      cloned.setReadTimeout(3000, TimeUnit.MILLISECONDS);
+      // Copy to customize OkHttp for this request.
+      OkHttpClient copy = client.newBuilder()
+          .setReadTimeout(3000, TimeUnit.MILLISECONDS)
+          .build();
 
-      Response response = cloned.newCall(request).execute();
+      Response response = copy.newCall(request).execute();
       System.out.println("Response 2 succeeded: " + response);
     } catch (IOException e) {
       System.out.println("Response 2 failed: " + e);

@@ -45,7 +45,7 @@ public final class AutobahnTester {
     new AutobahnTester().run();
   }
 
-  final OkHttpClient client = new OkHttpClient();
+  final OkHttpClient client = new OkHttpClient.Builder().build();
 
   private WebSocketCall newWebSocket(String path) {
     Request request = new Request.Builder().url(HOST + path).build();

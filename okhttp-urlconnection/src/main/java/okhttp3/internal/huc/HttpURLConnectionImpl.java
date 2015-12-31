@@ -83,7 +83,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
   private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
 
-  final OkHttpClient client;
+  OkHttpClient client;
 
   private Headers.Builder requestHeaders = new Headers.Builder();
 
@@ -278,12 +278,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public void setConnectTimeout(int timeoutMillis) {
-    client.setConnectTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setConnectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+        .build();
   }
 
   @Override
   public void setInstanceFollowRedirects(boolean followRedirects) {
-    client.setFollowRedirects(followRedirects);
+    client = client.newBuilder()
+        .setFollowRedirects(followRedirects)
+        .build();
   }
 
   @Override public boolean getInstanceFollowRedirects() {
@@ -295,7 +299,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public void setReadTimeout(int timeoutMillis) {
-    client.setReadTimeout(timeoutMillis, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setReadTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+        .build();
   }
 
   @Override public int getReadTimeout() {
@@ -370,7 +376,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     // If we're currently not using caches, make sure the engine's client doesn't have one.
     OkHttpClient engineClient = client;
     if (Internal.instance.internalCache(engineClient) != null && !getUseCaches()) {
-      engineClient = client.clone().setCache(null);
+      engineClient = client.newBuilder()
+          .setCache(null)
+          .build();
     }
 
     return new HttpEngine(engineClient, request, bufferRequestBody, true, false, streamAllocation,
@@ -603,7 +611,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         throw new IllegalStateException(e);
       }
     }
-    client.setProtocols(protocolsList);
+    client = client.newBuilder()
+        .setProtocols(protocolsList)
+        .build();
   }
 
   @Override public void setRequestMethod(String method) throws ProtocolException {

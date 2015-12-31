@@ -71,7 +71,7 @@ public abstract class HttpOverSpdyTest {
 
   protected SSLContext sslContext = SslContextBuilder.localhost();
   protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-  protected final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
+  protected OkUrlFactory client;
   protected HttpURLConnection connection;
   protected Cache cache;
 
@@ -81,10 +81,12 @@ public abstract class HttpOverSpdyTest {
 
   @Before public void setUp() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.client().setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
-    client.client().setSslSocketFactory(sslContext.getSocketFactory());
-    client.client().setHostnameVerifier(hostnameVerifier);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
+    client = new OkUrlFactory(new OkHttpClient.Builder()
+        .setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build());
   }
 
   @After public void tearDown() throws Exception {
@@ -217,7 +219,9 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setBody("Successful auth!"));
 
     Authenticator.setDefault(new RecordingAuthenticator());
-    client.client().setAuthenticator(new JavaNetAuthenticator());
+    client.setClient(client.client().newBuilder()
+        .setAuthenticator(new JavaNetAuthenticator())
+        .build());
     connection = client.open(server.url("/").url());
     assertEquals("Successful auth!", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
 
@@ -319,7 +323,9 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responsesAreCached() throws IOException {
-    client.client().setCache(cache);
+    client.setClient(client.client().newBuilder()
+        .setCache(cache)
+        .build());
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
 
@@ -335,7 +341,9 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void conditionalCache() throws IOException {
-    client.client().setCache(cache);
+    client.setClient(client.client().newBuilder()
+        .setCache(cache)
+        .build());
 
     server.enqueue(new MockResponse().addHeader("ETag: v1").setBody("A"));
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
@@ -351,7 +359,9 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
-    client.client().setCache(cache);
+    client.setClient(client.client().newBuilder()
+        .setCache(cache)
+        .build());
 
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("ABCD"));
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("EFGH"));
@@ -375,7 +385,9 @@ public abstract class HttpOverSpdyTest {
         .domain(server.getHostName())
         .build();
     cookieJar.enqueueRequestCookies(requestCookie);
-    client.client().setCookieJar(cookieJar);
+    client.setClient(client.client().newBuilder()
+        .setCookieJar(cookieJar)
+        .build());
 
     server.enqueue(new MockResponse());
     HttpUrl url = server.url("/");
@@ -387,7 +399,9 @@ public abstract class HttpOverSpdyTest {
 
   @Test public void receiveResponseCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client.client().setCookieJar(cookieJar);
+    client.setClient(client.client().newBuilder()
+        .setCookieJar(cookieJar)
+        .build());
 
     server.enqueue(new MockResponse()
         .addHeader("set-cookie: a=b"));

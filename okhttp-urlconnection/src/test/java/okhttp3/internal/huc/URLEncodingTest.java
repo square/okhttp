@@ -123,8 +123,8 @@ public final class URLEncodingTest {
   private URI backdoorUrlToUri(URL url) throws Exception {
     final AtomicReference<URI> uriReference = new AtomicReference<>();
 
-    OkHttpClient client = new OkHttpClient();
-    Internal.instance.setCache(client, new InternalCache() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
+    Internal.instance.setCache(builder, new InternalCache() {
       @Override
       public Response get(Request request) throws IOException {
         uriReference.set(request.url().uri());
@@ -158,7 +158,7 @@ public final class URLEncodingTest {
     });
 
     try {
-      HttpURLConnection connection = new OkUrlFactory(client).open(url);
+      HttpURLConnection connection = new OkUrlFactory(builder.build()).open(url);
       connection.getResponseCode();
     } catch (Exception expected) {
       if (expected.getCause() instanceof URISyntaxException) {

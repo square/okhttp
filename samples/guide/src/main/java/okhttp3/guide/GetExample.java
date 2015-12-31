@@ -6,7 +6,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class GetExample {
-  OkHttpClient client = new OkHttpClient();
+  OkHttpClient client = new OkHttpClient.Builder().build();
 
   String run(String url) throws IOException {
     Request request = new Request.Builder()

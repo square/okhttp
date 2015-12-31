@@ -46,7 +46,7 @@ public final class HttpLoggingInterceptorTest {
 
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client;
   private String host;
   private HttpUrl url;
 
@@ -64,8 +64,10 @@ public final class HttpLoggingInterceptorTest {
   }
 
   @Before public void setUp() {
-    client.networkInterceptors().add(networkInterceptor);
-    client.interceptors().add(applicationInterceptor);
+    client = new OkHttpClient.Builder()
+        .addNetworkInterceptor(networkInterceptor)
+        .addInterceptor(applicationInterceptor)
+        .build();
 
     host = server.getHostName() + ":" + server.getPort();
     url = server.url("/");

@@ -26,7 +26,7 @@ import okhttp3.Response;
 
 public class CancelCall {
   private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-  private final OkHttpClient client = new OkHttpClient();
+  private final OkHttpClient client = new OkHttpClient.Builder().build();
 
   public void run() throws Exception {
     Request request = new Request.Builder()
