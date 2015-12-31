@@ -123,11 +123,21 @@ public final class StreamAllocation {
       int writeTimeout, boolean connectionRetryEnabled, boolean doExtensiveHealthChecks)
       throws IOException, RouteException {
     while (true) {
-      RealConnection candidate = findConnection(
-          connectTimeout, readTimeout, writeTimeout, connectionRetryEnabled);
-      if (connection.isHealthy(doExtensiveHealthChecks)) {
+      RealConnection candidate = findConnection(connectTimeout, readTimeout, writeTimeout,
+          connectionRetryEnabled);
+
+      // If this is a brand new connection, we can skip the extensive health checks.
+      synchronized (connectionPool) {
+        if (candidate.streamCount == 0) {
+          return candidate;
+        }
+      }
+
+      // Otherwise do a potentially-slow check to confirm that the pooled connection is still good.
+      if (candidate.isHealthy(doExtensiveHealthChecks)) {
         return candidate;
       }
+
       connectionFailed();
     }
   }
