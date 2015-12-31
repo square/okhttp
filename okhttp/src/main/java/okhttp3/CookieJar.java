@@ -15,53 +15,48 @@
  */
 package okhttp3;
 
-import java.net.HttpCookie;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Provides <strong>policy</strong> and <strong>persistence</strong> for HTTP cookies.
  *
- * <p>As policy, implementations of this interface are responsible for selecting which cookies
- * to accept and which to reject. A reasonable policy is to reject all cookies, though that may be
+ * <p>As policy, implementations of this interface are responsible for selecting which cookies to
+ * accept and which to reject. A reasonable policy is to reject all cookies, though that may be
  * interfere with session-based authentication schemes that require cookies.
  *
  * <p>As persistence, implementations of this interface must also provide storage of cookies. Simple
  * implementations may store cookies in memory; sophisticated ones may use the file system or
- * database to hold accepted cookies. The implementation should delete cookies that have expired
- * and limit the resources required for cookie storage.
+ * database to hold accepted cookies. The <a
+ * href="https://tools.ietf.org/html/rfc6265#section-5.3">cookie storage model</a> specifies
+ * policies for updating and expiring cookies.
  */
 public interface CookieJar {
   /** A cookie jar that never accepts any cookies. */
   CookieJar NO_COOKIES = new CookieJar() {
-    @Override public void saveFromResponse(HttpUrl url, Headers headers) {
+    @Override public void saveFromResponse(HttpUrl url, List<Cookie> cookies) {
     }
-    @Override public Headers loadForRequest(HttpUrl url, Headers headers) {
-      return headers;
+
+    @Override public List<Cookie> loadForRequest(HttpUrl url) {
+      return Collections.emptyList();
     }
   };
 
   /**
-   * Saves cookies from HTTP response headers to this store according to this jar's policy.
-   *
-   * <p>Most implementations should use {@link java.net.HttpCookie#parse HttpCookie.parse()} to
-   * convert raw HTTP header strings into a cookie model.
+   * Saves {@code cookies} from an HTTP response to this store according to this jar's policy.
    *
    * <p>Note that this method may be called a second time for a single HTTP response if the response
-   * includes a trailer. For this obscure HTTP feature, {@code headers} contains only the trailer
-   * fields.
-   *
-   * <p><strong>Warning:</strong> it is the implementor's responsibility to reject cookies that
-   * don't {@linkplain HttpCookie#domainMatches match} {@code url}. Otherwise an attacker on {@code
-   * https://attacker.com/} may set cookies for {@code https://victim.com/}, resulting in session
-   * fixation.
+   * includes a trailer. For this obscure HTTP feature, {@code cookies} contains only the trailer's
+   * cookies.
    */
-  void saveFromResponse(HttpUrl url, Headers headers);
+  void saveFromResponse(HttpUrl url, List<Cookie> cookies);
 
   /**
-   * Load cookies from the jar for an HTTP request to {@code url}. This method returns the full set
-   * of headers for the network request; this is typically a superset of {@code headers}.
+   * Load cookies from the jar for an HTTP request to {@code url}. This method returns a possibly
+   * empty list of cookies for the network request.
    *
    * <p>Simple implementations will return the accepted cookies that have not yet expired and that
-   * {@linkplain HttpCookie#domainMatches match} {@code url}.
+   * {@linkplain Cookie#matches match} {@code url}.
    */
-  Headers loadForRequest(HttpUrl url, Headers headers);
+  List<Cookie> loadForRequest(HttpUrl url);
 }

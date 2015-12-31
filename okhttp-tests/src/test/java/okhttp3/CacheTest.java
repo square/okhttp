@@ -1670,20 +1670,23 @@ public final class CacheTest {
   }
 
   @Test public void cachePlusCookies() throws Exception {
+    RecordingCookieJar cookieJar = new RecordingCookieJar();
+    client.setCookieJar(cookieJar);
+
     server.enqueue(new MockResponse()
-        .addHeader("Set-Cookie: a=FIRST; domain=" + server.getCookieDomain() + ";")
+        .addHeader("Set-Cookie: a=FIRST")
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Cache-Control: max-age=0")
         .setBody("A"));
     server.enqueue(new MockResponse()
-        .addHeader("Set-Cookie: a=SECOND; domain=" + server.getCookieDomain() + ";")
+        .addHeader("Set-Cookie: a=SECOND")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
-    assertCookies(url, "a=FIRST");
+    cookieJar.assertResponseCookies("a=FIRST; path=/");
     assertEquals("A", get(url).body().string());
-    assertCookies(url, "a=SECOND");
+    cookieJar.assertResponseCookies("a=SECOND; path=/");
   }
 
   @Test public void getHeadersReturnsNetworkEndToEndHeaders() throws Exception {

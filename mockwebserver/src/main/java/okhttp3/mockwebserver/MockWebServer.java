@@ -202,15 +202,6 @@ public final class MockWebServer implements TestRule {
   }
 
   /**
-   * Returns a cookie domain for this server. This returns the server's non-loopback host name if it
-   * is known. Otherwise this returns ".local" for this server's loopback name.
-   */
-  public String getCookieDomain() {
-    String hostName = getHostName();
-    return hostName.contains(".") ? hostName : ".local";
-  }
-
-  /**
    * Sets the number of bytes of the POST body to keep in memory to the given limit.
    */
   public void setBodyLimit(long maxBodyLength) {

@@ -21,11 +21,13 @@ import java.io.IOException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.util.Date;
+import java.util.List;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
+import okhttp3.Cookie;
 import okhttp3.CookieJar;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
@@ -496,13 +498,9 @@ public final class HttpEngine {
       result.header("Accept-Encoding", "gzip");
     }
 
-    CookieJar cookieJar = client.getCookieJar();
-    if (cookieJar != CookieJar.NO_COOKIES) {
-      Headers headersWithoutCookies = result.build().headers();
-      Headers headersWithCookies = cookieJar.loadForRequest(request.url(), headersWithoutCookies);
-      if (headersWithoutCookies != headersWithCookies) {
-        result.headers(headersWithCookies);
-      }
+    List<Cookie> cookies = client.getCookieJar().loadForRequest(request.url());
+    if (!cookies.isEmpty()) {
+      result.header("Cookie", cookieHeader(cookies));
     }
 
     if (request.header("User-Agent") == null) {
@@ -510,6 +508,19 @@ public final class HttpEngine {
     }
 
     return result.build();
+  }
+
+  /** Returns a 'Cookie' HTTP request header with all cookies, like {@code a=b; c=d}. */
+  private String cookieHeader(List<Cookie> cookies) {
+    StringBuilder cookieHeader = new StringBuilder();
+    for (int i = 0, size = cookies.size(); i < size; i++) {
+      if (i > 0) {
+        cookieHeader.append("; ");
+      }
+      Cookie cookie = cookies.get(i);
+      cookieHeader.append(cookie.name()).append('=').append(cookie.value());
+    }
+    return cookieHeader.toString();
   }
 
   /**
@@ -831,9 +842,12 @@ public final class HttpEngine {
   }
 
   public void receiveHeaders(Headers headers) throws IOException {
-    if (headers.size() > 0) {
-      client.getCookieJar().saveFromResponse(userRequest.url(), headers);
-    }
+    if (client.getCookieJar() == CookieJar.NO_COOKIES) return;
+
+    List<Cookie> cookies = Cookie.parseAll(userRequest.url(), headers);
+    if (cookies.isEmpty()) return;
+
+    client.getCookieJar().saveFromResponse(userRequest.url(), cookies);
   }
 
   /**
