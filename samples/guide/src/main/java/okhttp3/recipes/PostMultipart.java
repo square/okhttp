@@ -32,7 +32,7 @@ public final class PostMultipart {
   private static final String IMGUR_CLIENT_ID = "9199fdef135c122";
   private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
 
-  private final OkHttpClient client = new OkHttpClient.Builder().build();
+  private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
     // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image

@@ -44,7 +44,7 @@ public final class WebSocketCallTest {
   private final SSLContext sslContext = SslContextBuilder.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final Random random = new Random(0);
-  private OkHttpClient client = new OkHttpClient.Builder().build();
+  private OkHttpClient client = new OkHttpClient();
 
   @After public void tearDown() {
     listener.assertExhausted();

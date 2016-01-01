@@ -56,7 +56,7 @@ public final class HttpResponseCacheTest {
 
   @Before public void setUp() throws Exception {
     cacheDir = cacheRule.getRoot();
-    urlFactory = new OkUrlFactory(new OkHttpClient.Builder().build());
+    urlFactory = new OkUrlFactory(new OkHttpClient());
   }
 
   @After public void tearDown() throws Exception {

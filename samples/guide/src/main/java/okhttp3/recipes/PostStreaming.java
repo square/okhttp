@@ -27,7 +27,7 @@ public final class PostStreaming {
   public static final MediaType MEDIA_TYPE_MARKDOWN
       = MediaType.parse("text/x-markdown; charset=utf-8");
 
-  private final OkHttpClient client = new OkHttpClient.Builder().build();
+  private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
     RequestBody requestBody = new RequestBody() {

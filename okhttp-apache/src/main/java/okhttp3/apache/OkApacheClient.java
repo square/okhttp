@@ -138,7 +138,7 @@ public final class OkApacheClient implements HttpClient {
   private OkHttpClient client;
 
   public OkApacheClient() {
-    this(new OkHttpClient.Builder().build());
+    this(new OkHttpClient());
   }
 
   public OkApacheClient(OkHttpClient client) {
