@@ -34,7 +34,7 @@ public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://twitter.com");
     OkHttpClient client = new OkHttpClient.Builder()
-        .setProtocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .protocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build();
     HttpsURLConnection connection = (HttpsURLConnection) new OkUrlFactory(client)
         .open(url);

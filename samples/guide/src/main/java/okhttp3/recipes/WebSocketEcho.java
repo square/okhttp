@@ -29,7 +29,7 @@ public final class WebSocketEcho implements WebSocketListener {
     WebSocketCall.create(client, request).enqueue(this);
 
     // Trigger shutdown of the dispatcher's executor so this process can exit cleanly.
-    client.getDispatcher().getExecutorService().shutdown();
+    client.dispatcher().getExecutorService().shutdown();
   }
 
   @Override public void onOpen(final WebSocket webSocket, Response response) {

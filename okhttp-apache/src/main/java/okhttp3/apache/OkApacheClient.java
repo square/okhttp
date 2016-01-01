@@ -101,7 +101,7 @@ public final class OkApacheClient implements HttpClient {
   private final HttpParams params = new AbstractHttpParams() {
     @Override public Object getParameter(String name) {
       if (name.equals(ConnRouteParams.DEFAULT_PROXY)) {
-        Proxy proxy = client.getProxy();
+        Proxy proxy = client.proxy();
         if (proxy == null) {
           return null;
         }
@@ -119,7 +119,7 @@ public final class OkApacheClient implements HttpClient {
           proxy = new Proxy(HTTP, new InetSocketAddress(host.getHostName(), host.getPort()));
         }
         client = client.newBuilder()
-            .setProxy(proxy)
+            .proxy(proxy)
             .build();
         return this;
       }

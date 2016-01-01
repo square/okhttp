@@ -36,7 +36,7 @@ public class AndroidInternal {
       // make the ResponseCache look like an InternalCache, we can unwrap the Cache instead.
       // This means that Cache stats will be correctly updated.
       OkCacheContainer okCacheContainer = (OkCacheContainer) responseCache;
-      builder.setCache(okCacheContainer.getCache());
+      builder.cache(okCacheContainer.getCache());
     } else {
       builder.setInternalCache(responseCache != null ? new CacheAdapter(responseCache) : null);
     }

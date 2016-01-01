@@ -49,22 +49,22 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
 
   @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
     delegate.client = delegate.client.newBuilder()
-        .setHostnameVerifier(hostnameVerifier)
+        .hostnameVerifier(hostnameVerifier)
         .build();
   }
 
   @Override public HostnameVerifier getHostnameVerifier() {
-    return delegate.client.getHostnameVerifier();
+    return delegate.client.hostnameVerifier();
   }
 
   @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
     delegate.client = delegate.client.newBuilder()
-        .setSslSocketFactory(sslSocketFactory)
+        .sslSocketFactory(sslSocketFactory)
         .build();
   }
 
   @Override public SSLSocketFactory getSSLSocketFactory() {
-    return delegate.client.getSslSocketFactory();
+    return delegate.client.sslSocketFactory();
   }
 
   @Override public long getContentLengthLong() {

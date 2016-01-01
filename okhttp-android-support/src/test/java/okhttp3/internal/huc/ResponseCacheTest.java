@@ -346,8 +346,8 @@ public final class ResponseCacheTest {
         .setBody("DEF"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(hostnameVerifier)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(hostnameVerifier)
         .build());
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.url("/").url());
@@ -385,8 +385,8 @@ public final class ResponseCacheTest {
         .addHeader("Location: " + server2.url("/").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(hostnameVerifier)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(hostnameVerifier)
         .build());
 
     HttpURLConnection connection1 = openConnection(server.url("/").url());
@@ -1457,8 +1457,8 @@ public final class ResponseCacheTest {
         .setBody("B"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(hostnameVerifier)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(hostnameVerifier)
         .build());
 
     URL url = server.url("/").url();

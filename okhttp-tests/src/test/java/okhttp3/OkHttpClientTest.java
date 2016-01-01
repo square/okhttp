@@ -44,35 +44,35 @@ public final class OkHttpClientTest {
 
   @Test public void timeoutDefaults() {
     OkHttpClient client = defaultClient();
-    assertEquals(10_000, client.getConnectTimeout());
-    assertEquals(10_000, client.getReadTimeout());
-    assertEquals(10_000, client.getWriteTimeout());
+    assertEquals(10_000, client.connectTimeoutMillis());
+    assertEquals(10_000, client.readTimeoutMillis());
+    assertEquals(10_000, client.writeTimeoutMillis());
   }
 
   @Test public void timeoutValidRange() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      builder.setConnectTimeout(1, TimeUnit.NANOSECONDS);
+      builder.connectTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.setWriteTimeout(1, TimeUnit.NANOSECONDS);
+      builder.writeTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.setReadTimeout(1, TimeUnit.NANOSECONDS);
+      builder.readTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.setConnectTimeout(365, TimeUnit.DAYS);
+      builder.connectTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.setWriteTimeout(365, TimeUnit.DAYS);
+      builder.writeTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      builder.setReadTimeout(365, TimeUnit.DAYS);
+      builder.readTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
   }
@@ -101,21 +101,21 @@ public final class OkHttpClientTest {
 
     // Values should be non-null.
     OkHttpClient a = client.newBuilder().build();
-    assertNotNull(a.getDispatcher());
-    assertNotNull(a.getConnectionPool());
-    assertNotNull(a.getSslSocketFactory());
+    assertNotNull(a.dispatcher());
+    assertNotNull(a.connectionPool());
+    assertNotNull(a.sslSocketFactory());
 
     // Multiple clients share the instances.
     OkHttpClient b = client.newBuilder().build();
-    assertSame(a.getDispatcher(), b.getDispatcher());
-    assertSame(a.getConnectionPool(), b.getConnectionPool());
-    assertSame(a.getSslSocketFactory(), b.getSslSocketFactory());
+    assertSame(a.dispatcher(), b.dispatcher());
+    assertSame(a.connectionPool(), b.connectionPool());
+    assertSame(a.sslSocketFactory(), b.sslSocketFactory());
   }
 
   @Test public void setProtocolsRejectsHttp10() throws Exception {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      builder.setProtocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
+      builder.protocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
       fail();
     } catch (IllegalArgumentException expected) {
     }

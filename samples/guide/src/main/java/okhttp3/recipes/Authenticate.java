@@ -25,7 +25,7 @@ import okhttp3.Route;
 
 public final class Authenticate {
   private final OkHttpClient client = new OkHttpClient.Builder()
-      .setAuthenticator(new Authenticator() {
+      .authenticator(new Authenticator() {
         @Override public Request authenticate(Route route, Response response) throws IOException {
           System.out.println("Authenticating for response: " + response);
           System.out.println("Challenges: " + response.challenges());

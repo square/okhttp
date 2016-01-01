@@ -53,12 +53,12 @@ final class RealCall implements Call {
       executed = true;
     }
     try {
-      client.getDispatcher().executed(this);
+      client.dispatcher().executed(this);
       Response result = getResponseWithInterceptorChain(false);
       if (result == null) throw new IOException("Canceled");
       return result;
     } finally {
-      client.getDispatcher().finished(this);
+      client.dispatcher().finished(this);
     }
   }
 
@@ -75,7 +75,7 @@ final class RealCall implements Call {
       if (executed) throw new IllegalStateException("Already Executed");
       executed = true;
     }
-    client.getDispatcher().enqueue(new AsyncCall(responseCallback, forWebSocket));
+    client.dispatcher().enqueue(new AsyncCall(responseCallback, forWebSocket));
   }
 
   @Override public void cancel() {
@@ -141,7 +141,7 @@ final class RealCall implements Call {
           responseCallback.onFailure(request, e);
         }
       } finally {
-        client.getDispatcher().finished(this);
+        client.dispatcher().finished(this);
       }
     }
   }

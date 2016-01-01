@@ -122,7 +122,7 @@ public final class Crawler {
 
     Cache cache = new Cache(new File(args[0]), cacheByteCount);
     OkHttpClient client = new OkHttpClient.Builder()
-        .setCache(cache)
+        .cache(cache)
         .build();
 
     Crawler crawler = new Crawler(client);

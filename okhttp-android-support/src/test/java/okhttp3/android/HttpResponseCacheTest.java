@@ -48,16 +48,15 @@ import static org.junit.Assert.fail;
  * A port of Android's android.net.http.HttpResponseCacheTest to JUnit4.
  */
 public final class HttpResponseCacheTest {
-
   @Rule public TemporaryFolder cacheRule = new TemporaryFolder();
   @Rule public MockWebServer server = new MockWebServer();
 
   private File cacheDir;
-  private OkUrlFactory client;
+  private OkUrlFactory urlFactory;
 
   @Before public void setUp() throws Exception {
     cacheDir = cacheRule.getRoot();
-    client = new OkUrlFactory(new OkHttpClient.Builder().build());
+    urlFactory = new OkUrlFactory(new OkHttpClient.Builder().build());
   }
 
   @After public void tearDown() throws Exception {
@@ -165,8 +164,8 @@ public final class HttpResponseCacheTest {
   // This mimics the Android HttpHandler, which is found in the okhttp3 package.
   private URLConnection openUrl(HttpUrl url) {
     ResponseCache responseCache = ResponseCache.getDefault();
-    AndroidInternal.setResponseCache(client, responseCache);
-    return client.open(url.url());
+    AndroidInternal.setResponseCache(urlFactory, responseCache);
+    return urlFactory.open(url.url());
   }
 
   private void initializeCache(HttpResponseCache cache) {

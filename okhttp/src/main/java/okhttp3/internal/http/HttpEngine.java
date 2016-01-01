@@ -172,7 +172,7 @@ public final class HttpEngine {
     this.forWebSocket = forWebSocket;
     this.streamAllocation = streamAllocation != null
         ? streamAllocation
-        : new StreamAllocation(client.getConnectionPool(), createAddress(client, request));
+        : new StreamAllocation(client.connectionPool(), createAddress(client, request));
     this.requestBodyOut = requestBodyOut;
     this.priorResponse = priorResponse;
   }
@@ -270,9 +270,9 @@ public final class HttpEngine {
 
   private HttpStream connect() throws RouteException, RequestException, IOException {
     boolean doExtensiveHealthChecks = !networkRequest.method().equals("GET");
-    return streamAllocation.newStream(client.getConnectTimeout(),
-        client.getReadTimeout(), client.getWriteTimeout(),
-        client.getRetryOnConnectionFailure(), doExtensiveHealthChecks);
+    return streamAllocation.newStream(client.connectTimeoutMillis(),
+        client.readTimeoutMillis(), client.writeTimeoutMillis(),
+        client.retryOnConnectionFailure(), doExtensiveHealthChecks);
   }
 
   private static Response stripBody(Response response) {
@@ -338,7 +338,7 @@ public final class HttpEngine {
       return null;
     }
 
-    if (!client.getRetryOnConnectionFailure()) {
+    if (!client.retryOnConnectionFailure()) {
       return null;
     }
 
@@ -498,7 +498,7 @@ public final class HttpEngine {
       result.header("Accept-Encoding", "gzip");
     }
 
-    List<Cookie> cookies = client.getCookieJar().loadForRequest(request.url());
+    List<Cookie> cookies = client.cookieJar().loadForRequest(request.url());
     if (!cookies.isEmpty()) {
       result.header("Cookie", cookieHeader(cookies));
     }
@@ -842,12 +842,12 @@ public final class HttpEngine {
   }
 
   public void receiveHeaders(Headers headers) throws IOException {
-    if (client.getCookieJar() == CookieJar.NO_COOKIES) return;
+    if (client.cookieJar() == CookieJar.NO_COOKIES) return;
 
     List<Cookie> cookies = Cookie.parseAll(userRequest.url(), headers);
     if (cookies.isEmpty()) return;
 
-    client.getCookieJar().saveFromResponse(userRequest.url(), cookies);
+    client.cookieJar().saveFromResponse(userRequest.url(), cookies);
   }
 
   /**
@@ -868,13 +868,13 @@ public final class HttpEngine {
       case HTTP_PROXY_AUTH:
         Proxy selectedProxy = route != null
             ? route.proxy()
-            : client.getProxy();
+            : client.proxy();
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
         // fall-through
       case HTTP_UNAUTHORIZED:
-        return client.getAuthenticator().authenticate(route, userResponse);
+        return client.authenticator().authenticate(route, userResponse);
 
       case HTTP_PERM_REDIRECT:
       case HTTP_TEMP_REDIRECT:
@@ -889,7 +889,7 @@ public final class HttpEngine {
       case HTTP_MOVED_TEMP:
       case HTTP_SEE_OTHER:
         // Does the client allow redirects?
-        if (!client.getFollowRedirects()) return null;
+        if (!client.followRedirects()) return null;
 
         String location = userResponse.header("Location");
         if (location == null) return null;
@@ -900,7 +900,7 @@ public final class HttpEngine {
 
         // If configured, don't follow redirects between SSL and non-SSL.
         boolean sameScheme = url.scheme().equals(userRequest.url().scheme());
-        if (!sameScheme && !client.getFollowSslRedirects()) return null;
+        if (!sameScheme && !client.followSslRedirects()) return null;
 
         // Redirects don't include a request body.
         Request.Builder requestBuilder = userRequest.newBuilder();
@@ -945,14 +945,14 @@ public final class HttpEngine {
     HostnameVerifier hostnameVerifier = null;
     CertificatePinner certificatePinner = null;
     if (request.isHttps()) {
-      sslSocketFactory = client.getSslSocketFactory();
-      hostnameVerifier = client.getHostnameVerifier();
-      certificatePinner = client.getCertificatePinner();
+      sslSocketFactory = client.sslSocketFactory();
+      hostnameVerifier = client.hostnameVerifier();
+      certificatePinner = client.certificatePinner();
     }
 
-    return new Address(request.url().host(), request.url().port(), client.getDns(),
-        client.getSocketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
-        client.getProxyAuthenticator(), client.getProxy(), client.getProtocols(),
-        client.getConnectionSpecs(), client.getProxySelector());
+    return new Address(request.url().host(), request.url().port(), client.dns(),
+        client.socketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
+        client.proxyAuthenticator(), client.proxy(), client.protocols(),
+        client.connectionSpecs(), client.proxySelector());
   }
 }

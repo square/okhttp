@@ -265,7 +265,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
         ? url.getPort()
         : HttpUrl.defaultPort(url.getProtocol());
     if (usingProxy()) {
-      InetSocketAddress proxyAddress = (InetSocketAddress) client.getProxy().address();
+      InetSocketAddress proxyAddress = (InetSocketAddress) client.proxy().address();
       hostName = proxyAddress.getHostName();
       hostPort = proxyAddress.getPort();
     }
@@ -279,33 +279,33 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public void setConnectTimeout(int timeoutMillis) {
     client = client.newBuilder()
-        .setConnectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+        .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
         .build();
   }
 
   @Override
   public void setInstanceFollowRedirects(boolean followRedirects) {
     client = client.newBuilder()
-        .setFollowRedirects(followRedirects)
+        .followRedirects(followRedirects)
         .build();
   }
 
   @Override public boolean getInstanceFollowRedirects() {
-    return client.getFollowRedirects();
+    return client.followRedirects();
   }
 
   @Override public int getConnectTimeout() {
-    return client.getConnectTimeout();
+    return client.connectTimeoutMillis();
   }
 
   @Override public void setReadTimeout(int timeoutMillis) {
     client = client.newBuilder()
-        .setReadTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
+        .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
         .build();
   }
 
   @Override public int getReadTimeout() {
-    return client.getReadTimeout();
+    return client.readTimeoutMillis();
   }
 
   private void initHttpEngine() throws IOException {
@@ -377,7 +377,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     OkHttpClient engineClient = client;
     if (Internal.instance.internalCache(engineClient) != null && !getUseCaches()) {
       engineClient = client.newBuilder()
-          .setCache(null)
+          .cache(null)
           .build();
     }
 
@@ -522,7 +522,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final boolean usingProxy() {
     Proxy proxy = route != null
         ? route.proxy()
-        : client.getProxy();
+        : client.proxy();
     return proxy != null && proxy.type() != Proxy.Type.DIRECT;
   }
 
@@ -602,7 +602,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   private void setProtocols(String protocolsString, boolean append) {
     List<Protocol> protocolsList = new ArrayList<>();
     if (append) {
-      protocolsList.addAll(client.getProtocols());
+      protocolsList.addAll(client.protocols());
     }
     for (String protocol : protocolsString.split(",", -1)) {
       try {
@@ -612,7 +612,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       }
     }
     client = client.newBuilder()
-        .setProtocols(protocolsList)
+        .protocols(protocolsList)
         .build();
   }
 

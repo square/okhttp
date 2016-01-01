@@ -560,7 +560,7 @@ public final class InterceptorTest {
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
     client = client.newBuilder()
-        .setDispatcher(new Dispatcher(executor))
+        .dispatcher(new Dispatcher(executor))
         .build();
 
     Request request = new Request.Builder()
@@ -586,7 +586,7 @@ public final class InterceptorTest {
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
     client = client.newBuilder()
-        .setDispatcher(new Dispatcher(executor))
+        .dispatcher(new Dispatcher(executor))
         .build();
 
     Request request = new Request.Builder()
@@ -616,7 +616,7 @@ public final class InterceptorTest {
 
     ExceptionCatchingExecutor executor = new ExceptionCatchingExecutor();
     client = client.newBuilder()
-        .setDispatcher(new Dispatcher(executor))
+        .dispatcher(new Dispatcher(executor))
         .build();
 
     Request request = new Request.Builder()

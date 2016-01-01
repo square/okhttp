@@ -18,7 +18,7 @@ public final class DispatcherTest {
   RecordingCallback callback = new RecordingCallback();
   Dispatcher dispatcher = new Dispatcher(executor);
   OkHttpClient client = new OkHttpClient.Builder()
-      .setDispatcher(dispatcher)
+      .dispatcher(dispatcher)
       .build();
 
   @Before public void setUp() throws Exception {
