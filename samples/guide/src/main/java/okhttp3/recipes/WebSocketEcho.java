@@ -21,7 +21,7 @@ public final class WebSocketEcho implements WebSocketListener {
   private final Executor writeExecutor = Executors.newSingleThreadExecutor();
 
   private void run() throws IOException {
-    OkHttpClient client = new OkHttpClient.Builder().build();
+    OkHttpClient client = new OkHttpClient();
 
     Request request = new Request.Builder()
         .url("ws://echo.websocket.org")

@@ -110,30 +110,34 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     };
   }
 
-  private final Dispatcher dispatcher;
-  private final Proxy proxy;
-  private final List<Protocol> protocols;
-  private final List<ConnectionSpec> connectionSpecs;
-  private final List<Interceptor> interceptors;
-  private final List<Interceptor> networkInterceptors;
-  private final ProxySelector proxySelector;
-  private final CookieJar cookieJar;
-  private final Cache cache;
-  private final InternalCache internalCache;
-  private final SocketFactory socketFactory;
-  private final SSLSocketFactory sslSocketFactory;
-  private final HostnameVerifier hostnameVerifier;
-  private final CertificatePinner certificatePinner;
-  private final Authenticator proxyAuthenticator;
-  private final Authenticator authenticator;
-  private final ConnectionPool connectionPool;
-  private final Dns dns;
-  private final boolean followSslRedirects;
-  private final boolean followRedirects;
-  private final boolean retryOnConnectionFailure;
-  private final int connectTimeout;
-  private final int readTimeout;
-  private final int writeTimeout;
+  final Dispatcher dispatcher;
+  final Proxy proxy;
+  final List<Protocol> protocols;
+  final List<ConnectionSpec> connectionSpecs;
+  final List<Interceptor> interceptors;
+  final List<Interceptor> networkInterceptors;
+  final ProxySelector proxySelector;
+  final CookieJar cookieJar;
+  final Cache cache;
+  final InternalCache internalCache;
+  final SocketFactory socketFactory;
+  final SSLSocketFactory sslSocketFactory;
+  final HostnameVerifier hostnameVerifier;
+  final CertificatePinner certificatePinner;
+  final Authenticator proxyAuthenticator;
+  final Authenticator authenticator;
+  final ConnectionPool connectionPool;
+  final Dns dns;
+  final boolean followSslRedirects;
+  final boolean followRedirects;
+  final boolean retryOnConnectionFailure;
+  final int connectTimeout;
+  final int readTimeout;
+  final int writeTimeout;
+
+  public OkHttpClient() {
+    this(new Builder());
+  }
 
   private OkHttpClient(Builder builder) {
     this.dispatcher = builder.dispatcher;
@@ -302,30 +306,30 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   public static final class Builder {
-    private Dispatcher dispatcher;
-    private Proxy proxy;
-    private List<Protocol> protocols;
-    private List<ConnectionSpec> connectionSpecs;
-    private final List<Interceptor> interceptors = new ArrayList<>();
-    private final List<Interceptor> networkInterceptors = new ArrayList<>();
-    private ProxySelector proxySelector;
-    private CookieJar cookieJar;
-    private Cache cache;
-    private InternalCache internalCache;
-    private SocketFactory socketFactory;
-    private SSLSocketFactory sslSocketFactory;
-    private HostnameVerifier hostnameVerifier;
-    private CertificatePinner certificatePinner;
-    private Authenticator proxyAuthenticator;
-    private Authenticator authenticator;
-    private ConnectionPool connectionPool;
-    private Dns dns;
-    private boolean followSslRedirects;
-    private boolean followRedirects;
-    private boolean retryOnConnectionFailure;
-    private int connectTimeout;
-    private int readTimeout;
-    private int writeTimeout;
+    Dispatcher dispatcher;
+    Proxy proxy;
+    List<Protocol> protocols;
+    List<ConnectionSpec> connectionSpecs;
+    final List<Interceptor> interceptors = new ArrayList<>();
+    final List<Interceptor> networkInterceptors = new ArrayList<>();
+    ProxySelector proxySelector;
+    CookieJar cookieJar;
+    Cache cache;
+    InternalCache internalCache;
+    SocketFactory socketFactory;
+    SSLSocketFactory sslSocketFactory;
+    HostnameVerifier hostnameVerifier;
+    CertificatePinner certificatePinner;
+    Authenticator proxyAuthenticator;
+    Authenticator authenticator;
+    ConnectionPool connectionPool;
+    Dns dns;
+    boolean followSslRedirects;
+    boolean followRedirects;
+    boolean retryOnConnectionFailure;
+    int connectTimeout;
+    int readTimeout;
+    int writeTimeout;
 
     public Builder() {
       dispatcher = new Dispatcher();

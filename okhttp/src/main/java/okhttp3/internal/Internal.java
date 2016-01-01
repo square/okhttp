@@ -39,7 +39,7 @@ public abstract class Internal {
 
   public static void initializeInstanceForTests() {
     // Needed in tests to ensure that the instance is actually pointing to something.
-    new OkHttpClient.Builder().build();
+    new OkHttpClient();
   }
 
   public static Internal instance;

@@ -11,7 +11,7 @@ public class PostExample {
   public static final MediaType JSON
       = MediaType.parse("application/json; charset=utf-8");
 
-  OkHttpClient client = new OkHttpClient.Builder().build();
+  OkHttpClient client = new OkHttpClient();
 
   String post(String url, String json) throws IOException {
     RequestBody body = RequestBody.create(JSON, json);

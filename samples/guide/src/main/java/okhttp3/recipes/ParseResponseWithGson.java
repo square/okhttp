@@ -23,7 +23,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public final class ParseResponseWithGson {
-  private final OkHttpClient client = new OkHttpClient.Builder().build();
+  private final OkHttpClient client = new OkHttpClient();
   private final Gson gson = new Gson();
 
   public void run() throws Exception {

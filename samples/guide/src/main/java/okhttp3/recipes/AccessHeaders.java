@@ -21,7 +21,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public final class AccessHeaders {
-  private final OkHttpClient client = new OkHttpClient.Builder().build();
+  private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
     Request request = new Request.Builder()

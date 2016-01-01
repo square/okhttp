@@ -23,7 +23,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public final class PostForm {
-  private final OkHttpClient client = new OkHttpClient.Builder().build();
+  private final OkHttpClient client = new OkHttpClient();
 
   public void run() throws Exception {
     RequestBody formBody = new FormBody.Builder()

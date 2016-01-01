@@ -24,7 +24,7 @@ public class OkHttpContributors {
   }
 
   public static void main(String... args) throws Exception {
-    OkHttpClient client = new OkHttpClient.Builder().build();
+    OkHttpClient client = new OkHttpClient();
 
     // Create request for remote resource.
     Request request = new Request.Builder()

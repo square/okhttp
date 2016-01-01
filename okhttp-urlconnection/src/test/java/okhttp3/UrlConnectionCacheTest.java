@@ -81,7 +81,7 @@ public final class UrlConnectionCacheTest {
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private final SSLContext sslContext = SslContextBuilder.localhost();
-  private OkUrlFactory urlFactory = new OkUrlFactory(new OkHttpClient.Builder().build());
+  private OkUrlFactory urlFactory = new OkUrlFactory(new OkHttpClient());
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 

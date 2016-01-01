@@ -67,7 +67,7 @@ public class CacheAdapterTest {
 
   @Before public void setUp() throws Exception {
     server = new MockWebServer();
-    client = new OkHttpClient.Builder().build();
+    client = new OkHttpClient();
   }
 
   @After public void tearDown() throws Exception {

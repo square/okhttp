@@ -105,7 +105,7 @@ public final class ResponseCacheTest {
     server.setProtocolNegotiationEnabled(false);
 
     cache = AndroidShimResponseCache.create(cacheRule.getRoot(), 10 * 1024 * 1024);
-    urlFactory = new OkUrlFactory(new OkHttpClient.Builder().build());
+    urlFactory = new OkUrlFactory(new OkHttpClient());
     AndroidInternal.setResponseCache(urlFactory, cache);
 
     cookieManager = new CookieManager();
