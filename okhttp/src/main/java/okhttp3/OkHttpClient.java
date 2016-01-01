@@ -18,7 +18,6 @@ package okhttp3;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.ProxySelector;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -174,33 +173,33 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /** Default connect timeout (in milliseconds). */
-  public int getConnectTimeout() {
+  public int connectTimeoutMillis() {
     return connectTimeout;
   }
 
   /** Default read timeout (in milliseconds). */
-  public int getReadTimeout() {
+  public int readTimeoutMillis() {
     return readTimeout;
   }
 
   /** Default write timeout (in milliseconds). */
-  public int getWriteTimeout() {
+  public int writeTimeoutMillis() {
     return writeTimeout;
   }
 
-  public Proxy getProxy() {
+  public Proxy proxy() {
     return proxy;
   }
 
-  public ProxySelector getProxySelector() {
+  public ProxySelector proxySelector() {
     return proxySelector;
   }
 
-  public CookieJar getCookieJar() {
+  public CookieJar cookieJar() {
     return cookieJar;
   }
 
-  public Cache getCache() {
+  public Cache cache() {
     return cache;
   }
 
@@ -208,59 +207,59 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     return cache != null ? cache.internalCache : internalCache;
   }
 
-  public Dns getDns() {
+  public Dns dns() {
     return dns;
   }
 
-  public SocketFactory getSocketFactory() {
+  public SocketFactory socketFactory() {
     return socketFactory;
   }
 
-  public SSLSocketFactory getSslSocketFactory() {
+  public SSLSocketFactory sslSocketFactory() {
     return sslSocketFactory;
   }
 
-  public HostnameVerifier getHostnameVerifier() {
+  public HostnameVerifier hostnameVerifier() {
     return hostnameVerifier;
   }
 
-  public CertificatePinner getCertificatePinner() {
+  public CertificatePinner certificatePinner() {
     return certificatePinner;
   }
 
-  public Authenticator getAuthenticator() {
+  public Authenticator authenticator() {
     return authenticator;
   }
 
-  public Authenticator getProxyAuthenticator() {
+  public Authenticator proxyAuthenticator() {
     return proxyAuthenticator;
   }
 
-  public ConnectionPool getConnectionPool() {
+  public ConnectionPool connectionPool() {
     return connectionPool;
   }
 
-  public boolean getFollowSslRedirects() {
+  public boolean followSslRedirects() {
     return followSslRedirects;
   }
 
-  public boolean getFollowRedirects() {
+  public boolean followRedirects() {
     return followRedirects;
   }
 
-  public boolean getRetryOnConnectionFailure() {
+  public boolean retryOnConnectionFailure() {
     return retryOnConnectionFailure;
   }
 
-  public Dispatcher getDispatcher() {
+  public Dispatcher dispatcher() {
     return dispatcher;
   }
 
-  public List<Protocol> getProtocols() {
+  public List<Protocol> protocols() {
     return protocols;
   }
 
-  public List<ConnectionSpec> getConnectionSpecs() {
+  public List<ConnectionSpec> connectionSpecs() {
     return connectionSpecs;
   }
 
@@ -294,7 +293,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
    * complete cannot be canceled.
    */
   public OkHttpClient cancel(Object tag) {
-    getDispatcher().cancel(tag);
+    dispatcher().cancel(tag);
     return this;
   }
 
@@ -380,10 +379,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * Sets the default connect timeout for new connections. A value of 0 means no timeout,
      * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
      * milliseconds.
-     *
-     * @see URLConnection#setConnectTimeout(int)
      */
-    public Builder setConnectTimeout(long timeout, TimeUnit unit) {
+    public Builder connectTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
       if (unit == null) throw new IllegalArgumentException("unit == null");
       long millis = unit.toMillis(timeout);
@@ -396,10 +393,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     /**
      * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-     *
-     * @see URLConnection#setReadTimeout(int)
      */
-    public Builder setReadTimeout(long timeout, TimeUnit unit) {
+    public Builder readTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
       if (unit == null) throw new IllegalArgumentException("unit == null");
       long millis = unit.toMillis(timeout);
@@ -413,7 +408,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
      * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
      */
-    public Builder setWriteTimeout(long timeout, TimeUnit unit) {
+    public Builder writeTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
       if (unit == null) throw new IllegalArgumentException("unit == null");
       long millis = unit.toMillis(timeout);
@@ -425,24 +420,24 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this client. This takes
-     * precedence over {@link #setProxySelector}, which is only honored when this proxy is null
+     * precedence over {@link #proxySelector}, which is only honored when this proxy is null
      * (which it is by default). To disable proxy use completely, call {@code
      * setProxy(Proxy.NO_PROXY)}.
      */
-    public Builder setProxy(Proxy proxy) {
+    public Builder proxy(Proxy proxy) {
       this.proxy = proxy;
       return this;
     }
 
     /**
-     * Sets the proxy selection policy to be used if no {@link #setProxy proxy} is specified
+     * Sets the proxy selection policy to be used if no {@link #proxy proxy} is specified
      * explicitly. The proxy selector may return multiple proxies; in that case they will be tried
      * in sequence until a successful connection is established.
      *
      * <p>If unset, the {@link ProxySelector#getDefault() system-wide default} proxy selector will
      * be used.
      */
-    public Builder setProxySelector(ProxySelector proxySelector) {
+    public Builder proxySelector(ProxySelector proxySelector) {
       this.proxySelector = proxySelector;
       return this;
     }
@@ -453,7 +448,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      *
      * <p>If unset, {@linkplain CookieJar#NO_COOKIES no cookies} will be accepted nor provided.
      */
-    public Builder setCookieJar(CookieJar cookieJar) {
+    public Builder cookieJar(CookieJar cookieJar) {
       this.cookieJar = cookieJar;
       return this;
     }
@@ -464,7 +459,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       this.cache = null;
     }
 
-    public Builder setCache(Cache cache) {
+    public Builder cache(Cache cache) {
       this.cache = cache;
       this.internalCache = null;
       return this;
@@ -475,7 +470,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      *
      * <p>If unset, the {@link Dns#SYSTEM system-wide default} DNS will be used.
      */
-    public Builder setDns(Dns dns) {
+    public Builder dns(Dns dns) {
       this.dns = dns;
       return this;
     }
@@ -488,7 +483,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, the {@link SocketFactory#getDefault() system-wide default} socket factory will
      * be used.
      */
-    public Builder setSocketFactory(SocketFactory socketFactory) {
+    public Builder socketFactory(SocketFactory socketFactory) {
       this.socketFactory = socketFactory;
       return this;
     }
@@ -498,7 +493,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      *
      * <p>If unset, a lazily created SSL socket factory will be used.
      */
-    public Builder setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
+    public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory) {
       this.sslSocketFactory = sslSocketFactory;
       return this;
     }
@@ -509,39 +504,39 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      *
      * <p>If unset, a default hostname verifier will be used.
      */
-    public Builder setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+    public Builder hostnameVerifier(HostnameVerifier hostnameVerifier) {
       this.hostnameVerifier = hostnameVerifier;
       return this;
     }
 
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
-     * connections rely on only the {@link #setSslSocketFactory SSL socket factory} to establish
+     * connections rely on only the {@link #sslSocketFactory SSL socket factory} to establish
      * trust. Pinning certificates avoids the need to trust certificate authorities.
      */
-    public Builder setCertificatePinner(CertificatePinner certificatePinner) {
+    public Builder certificatePinner(CertificatePinner certificatePinner) {
       this.certificatePinner = certificatePinner;
       return this;
     }
 
     /**
      * Sets the authenticator used to respond to challenges from origin servers. Use {@link
-     * #setProxyAuthenticator} to set the authenticator for proxy servers.
+     * #proxyAuthenticator} to set the authenticator for proxy servers.
      *
      * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
      */
-    public Builder setAuthenticator(Authenticator authenticator) {
+    public Builder authenticator(Authenticator authenticator) {
       this.authenticator = authenticator;
       return this;
     }
 
     /**
      * Sets the authenticator used to respond to challenges from proxy servers. Use {@link
-     * #setAuthenticator} to set the authenticator for origin servers.
+     * #authenticator} to set the authenticator for origin servers.
      *
      * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
      */
-    public Builder setProxyAuthenticator(Authenticator proxyAuthenticator) {
+    public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
       this.proxyAuthenticator = proxyAuthenticator;
       return this;
     }
@@ -551,7 +546,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      *
      * <p>If unset, a new connection pool will be used.
      */
-    public Builder setConnectionPool(ConnectionPool connectionPool) {
+    public Builder connectionPool(ConnectionPool connectionPool) {
       if (connectionPool == null) throw new NullPointerException("connectionPool == null");
       this.connectionPool = connectionPool;
       return this;
@@ -563,13 +558,13 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, protocol redirects will be followed. This is different than the built-in {@code
      * HttpURLConnection}'s default.
      */
-    public Builder setFollowSslRedirects(boolean followProtocolRedirects) {
+    public Builder followSslRedirects(boolean followProtocolRedirects) {
       this.followSslRedirects = followProtocolRedirects;
       return this;
     }
 
     /** Configure this client to follow redirects. If unset, redirects be followed. */
-    public Builder setFollowRedirects(boolean followRedirects) {
+    public Builder followRedirects(boolean followRedirects) {
       this.followRedirects = followRedirects;
       return this;
     }
@@ -592,7 +587,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * Set this to false to avoid retrying requests when doing so is destructive. In this case the
      * calling application should do its own recovery of connectivity failures.
      */
-    public Builder setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
+    public Builder retryOnConnectionFailure(boolean retryOnConnectionFailure) {
       this.retryOnConnectionFailure = retryOnConnectionFailure;
       return this;
     }
@@ -600,7 +595,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     /**
      * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
      */
-    public Builder setDispatcher(Dispatcher dispatcher) {
+    public Builder dispatcher(Dispatcher dispatcher) {
       if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
       this.dispatcher = dispatcher;
       return this;
@@ -635,7 +630,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * @param protocols the protocols to use, in order of preference. The list must contain {@link
      * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
      */
-    public Builder setProtocols(List<Protocol> protocols) {
+    public Builder protocols(List<Protocol> protocols) {
       protocols = Util.immutableList(protocols);
       if (!protocols.contains(Protocol.HTTP_1_1)) {
         throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
@@ -650,7 +645,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       return this;
     }
 
-    public Builder setConnectionSpecs(List<ConnectionSpec> connectionSpecs) {
+    public Builder connectionSpecs(List<ConnectionSpec> connectionSpecs) {
       this.connectionSpecs = Util.immutableList(connectionSpecs);
       return this;
     }

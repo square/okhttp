@@ -48,8 +48,8 @@ class OkHttpAsync implements HttpClient {
     targetBacklog = benchmark.targetBacklog;
 
     client = new OkHttpClient.Builder()
-        .setProtocols(benchmark.protocols)
-        .setDispatcher(new Dispatcher(new ThreadPoolExecutor(benchmark.concurrencyLevel,
+        .protocols(benchmark.protocols)
+        .dispatcher(new Dispatcher(new ThreadPoolExecutor(benchmark.concurrencyLevel,
             benchmark.concurrencyLevel, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>())))
         .build();
 
@@ -62,8 +62,8 @@ class OkHttpAsync implements HttpClient {
         }
       };
       client = client.newBuilder()
-          .setSslSocketFactory(socketFactory)
-          .setHostnameVerifier(hostnameVerifier)
+          .sslSocketFactory(socketFactory)
+          .hostnameVerifier(hostnameVerifier)
           .build();
     }
 

@@ -54,13 +54,13 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   }
 
   public HttpURLConnection open(URL url) {
-    return open(url, client.getProxy());
+    return open(url, client.proxy());
   }
 
   HttpURLConnection open(URL url, Proxy proxy) {
     String protocol = url.getProtocol();
     OkHttpClient copy = client.newBuilder()
-        .setProxy(proxy)
+        .proxy(proxy)
         .build();
 
     if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);

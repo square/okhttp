@@ -86,8 +86,8 @@ public final class CacheTest {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
     client = new OkHttpClient.Builder()
-        .setCache(cache)
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cache(cache)
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
   }
 
@@ -252,8 +252,8 @@ public final class CacheTest {
         .setBody("ABC"));
 
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -355,8 +355,8 @@ public final class CacheTest {
         .setBody("DEF"));
 
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
     Response response1 = get(server.url("/"));
@@ -396,8 +396,8 @@ public final class CacheTest {
         .addHeader("Location: " + server2.url("/")));
 
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
     Response response1 = get(server.url("/"));
@@ -1009,7 +1009,7 @@ public final class CacheTest {
 
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, client.getConnectionPool().getIdleConnectionCount());
+    assertEquals(1, client.connectionPool().getIdleConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
@@ -1659,8 +1659,8 @@ public final class CacheTest {
         .setBody("B"));
 
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
     HttpUrl url = server.url("/");
@@ -1682,7 +1682,7 @@ public final class CacheTest {
   @Test public void cachePlusCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
     client = client.newBuilder()
-        .setCookieJar(cookieJar)
+        .cookieJar(cookieJar)
         .build();
 
     server.enqueue(new MockResponse()
@@ -1937,7 +1937,7 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
-        .setCache(cache)
+        .cache(cache)
         .build();
 
     Response response = get(url);
@@ -1986,7 +1986,7 @@ public final class CacheTest {
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
-        .setCache(cache)
+        .cache(cache)
         .build();
 
     Response response = get(url);
@@ -2035,7 +2035,7 @@ public final class CacheTest {
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
-        .setCache(cache)
+        .cache(cache)
         .build();
 
     Response response = get(url);
@@ -2071,7 +2071,7 @@ public final class CacheTest {
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
-        .setCache(cache)
+        .cache(cache)
         .build();
 
     Response response = get(url);
@@ -2088,8 +2088,8 @@ public final class CacheTest {
 
     HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
-    client.getCache().evictAll();
-    assertEquals(0, client.getCache().getSize());
+    client.cache().evictAll();
+    assertEquals(0, client.cache().getSize());
     assertEquals("B", get(url).body().string());
   }
 

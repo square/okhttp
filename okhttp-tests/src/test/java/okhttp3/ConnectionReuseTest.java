@@ -103,7 +103,7 @@ public final class ConnectionReuseTest {
 
   @Test public void connectionsAreNotReusedIfPoolIsSizeZero() throws Exception {
     client = client.newBuilder()
-        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build();
     server.enqueue(new MockResponse().setBody("a"));
     server.enqueue(new MockResponse().setBody("b"));
@@ -116,7 +116,7 @@ public final class ConnectionReuseTest {
 
   @Test public void connectionsReusedWithRedirectEvenIfPoolIsSizeZero() throws Exception {
     client = client.newBuilder()
-        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build();
     server.enqueue(new MockResponse()
         .setResponseCode(301)
@@ -135,7 +135,7 @@ public final class ConnectionReuseTest {
 
   @Test public void connectionsNotReusedWithRedirectIfDiscardingResponseIsSlow() throws Exception {
     client = client.newBuilder()
-        .setConnectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
+        .connectionPool(new ConnectionPool(0, 5, TimeUnit.SECONDS))
         .build();
     server.enqueue(new MockResponse()
         .setResponseCode(301)
@@ -214,7 +214,7 @@ public final class ConnectionReuseTest {
     server.enqueue(new MockResponse().setBody("b"));
 
     client = client.newBuilder()
-        .setConnectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
+        .connectionPool(new ConnectionPool(5, 250, TimeUnit.MILLISECONDS))
         .build();
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -235,12 +235,12 @@ public final class ConnectionReuseTest {
 
   private void enableHttp2() {
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(new RecordingHostnameVerifier())
-        .setProtocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .protocols(Arrays.asList(Protocol.HTTP_2, Protocol.HTTP_1_1))
         .build();
     server.useHttps(sslContext.getSocketFactory(), false);
-    server.setProtocols(client.getProtocols());
+    server.setProtocols(client.protocols());
   }
 
   private void assertConnectionReused(Request... requests) throws Exception {

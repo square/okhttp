@@ -36,7 +36,7 @@ class OkHttp extends SynchronousHttpClient {
   @Override public void prepare(Benchmark benchmark) {
     super.prepare(benchmark);
     client = new OkHttpClient.Builder()
-        .setProtocols(benchmark.protocols)
+        .protocols(benchmark.protocols)
         .build();
 
     if (benchmark.tls) {
@@ -48,8 +48,8 @@ class OkHttp extends SynchronousHttpClient {
         }
       };
       client = new OkHttpClient.Builder()
-          .setSslSocketFactory(socketFactory)
-          .setHostnameVerifier(hostnameVerifier)
+          .sslSocketFactory(socketFactory)
+          .hostnameVerifier(hostnameVerifier)
           .build();
     }
   }

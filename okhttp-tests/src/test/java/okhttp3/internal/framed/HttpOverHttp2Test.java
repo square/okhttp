@@ -41,7 +41,7 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
         .withPush(pushPromise);
     server.enqueue(response);
 
-    connection = client.open(server.url("/foo").url());
+    connection = urlFactory.open(server.url("/foo").url());
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
     assertEquals(200, connection.getResponseCode());
     assertEquals("Sweet", connection.getResponseMessage());
@@ -65,7 +65,7 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
         .withPush(pushPromise);
     server.enqueue(response);
 
-    connection = client.open(server.url("/foo").url());
+    connection = urlFactory.open(server.url("/foo").url());
     assertContent("ABCDE", connection, Integer.MAX_VALUE);
     assertEquals(200, connection.getResponseCode());
     assertEquals("Sweet", connection.getResponseMessage());
@@ -90,18 +90,18 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
 
     // Read & write a full request to confirm settings are accepted.
     server.enqueue(new MockResponse().withSettings(settings));
-    HttpURLConnection settingsConnection = client.open(server.url("/").url());
+    HttpURLConnection settingsConnection = urlFactory.open(server.url("/").url());
     assertContent("", settingsConnection, Integer.MAX_VALUE);
 
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
     server.enqueue(new MockResponse().setBody("GHI"));
 
-    HttpURLConnection connection1 = client.open(server.url("/").url());
+    HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
     connection1.connect();
-    HttpURLConnection connection2 = client.open(server.url("/").url());
+    HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
     connection2.connect();
-    HttpURLConnection connection3 = client.open(server.url("/").url());
+    HttpURLConnection connection3 = urlFactory.open(server.url("/").url());
     connection3.connect();
     assertContent("ABC", connection1, Integer.MAX_VALUE);
     assertContent("DEF", connection2, Integer.MAX_VALUE);

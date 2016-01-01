@@ -27,7 +27,7 @@ public final class CertificatePinning {
 
   public CertificatePinning() {
     client = new OkHttpClient.Builder()
-        .setCertificatePinner(
+        .certificatePinner(
             new CertificatePinner.Builder()
                 .add("publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
                 .add("publicobject.com", "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")

@@ -32,7 +32,7 @@ public final class PerCallSettings {
     try {
       // Copy to customize OkHttp for this request.
       OkHttpClient copy = client.newBuilder()
-          .setReadTimeout(500, TimeUnit.MILLISECONDS)
+          .readTimeout(500, TimeUnit.MILLISECONDS)
           .build();
 
       Response response = copy.newCall(request).execute();
@@ -44,7 +44,7 @@ public final class PerCallSettings {
     try {
       // Copy to customize OkHttp for this request.
       OkHttpClient copy = client.newBuilder()
-          .setReadTimeout(3000, TimeUnit.MILLISECONDS)
+          .readTimeout(3000, TimeUnit.MILLISECONDS)
           .build();
 
       Response response = copy.newCall(request).execute();

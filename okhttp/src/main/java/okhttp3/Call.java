@@ -47,7 +47,7 @@ public interface Call {
   /**
    * Schedules the request to be executed at some point in the future.
    *
-   * <p>The {@link OkHttpClient#getDispatcher dispatcher} defines when the request will run: usually
+   * <p>The {@link OkHttpClient#dispatcher dispatcher} defines when the request will run: usually
    * immediately unless there are several other requests currently being executed.
    *
    * <p>This client will later call back {@code responseCallback} with either an HTTP response or a

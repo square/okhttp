@@ -116,8 +116,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(hostnameVerifier)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(hostnameVerifier)
         .build();
 
     connection = new OkUrlFactory(client).open(serverUrl);
@@ -234,8 +234,8 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(hostnameVerifier)
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(hostnameVerifier)
         .build();
 
     connection = new OkUrlFactory(client).open(serverUrl);

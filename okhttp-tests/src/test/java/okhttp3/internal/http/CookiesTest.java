@@ -51,7 +51,7 @@ public class CookiesTest {
   public void testNetscapeResponse() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
     MockWebServer server = new MockWebServer();
     server.start();
@@ -81,7 +81,7 @@ public class CookiesTest {
   @Test public void testRfc2109Response() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
     MockWebServer server = new MockWebServer();
     server.start();
@@ -111,7 +111,7 @@ public class CookiesTest {
   @Test public void testQuotedAttributeValues() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
     MockWebServer server = new MockWebServer();
     server.start();
@@ -154,7 +154,7 @@ public class CookiesTest {
     cookieB.setPath("/");
     cookieManager.getCookieStore().add(server.url("/").uri(), cookieB);
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
 
     get(server.url("/"));
@@ -182,7 +182,7 @@ public class CookiesTest {
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(redirectSource.url("/").uri(), cookie);
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
 
     get(redirectSource.url("/"));
@@ -199,7 +199,7 @@ public class CookiesTest {
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
     client = client.newBuilder()
-        .setCookieJar(new JavaNetCookieJar(new CookieManager() {
+        .cookieJar(new JavaNetCookieJar(new CookieManager() {
           @Override public Map<String, List<String>> get(URI uri,
               Map<String, List<String>> requestHeaders) throws IOException {
             Map<String, List<String>> result = new HashMap<>();

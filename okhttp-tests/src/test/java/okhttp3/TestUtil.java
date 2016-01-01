@@ -26,8 +26,8 @@ public final class TestUtil {
    */
   public static OkHttpClient defaultClient() {
     return new OkHttpClient.Builder()
-        .setConnectionPool(connectionPool)
-        .setDns(new SingleInetAddressDns()) // Prevent unexpected fallback addresses.
+        .connectionPool(connectionPool)
+        .dns(new SingleInetAddressDns()) // Prevent unexpected fallback addresses.
         .build();
   }
 

@@ -39,7 +39,7 @@ public final class CustomTrust {
   public CustomTrust() {
     SSLContext sslContext = sslContextForTrustedCertificates(trustedCertificatesInputStream());
     client = new OkHttpClient.Builder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContext.getSocketFactory())
         .build();
   }
 

@@ -169,16 +169,16 @@ public class Main extends HelpOption implements Runnable {
 
   private OkHttpClient createClient() {
     OkHttpClient.Builder builder = new OkHttpClient.Builder();
-    builder.setFollowSslRedirects(followRedirects);
+    builder.followSslRedirects(followRedirects);
     if (connectTimeout != DEFAULT_TIMEOUT) {
-      builder.setConnectTimeout(connectTimeout, SECONDS);
+      builder.connectTimeout(connectTimeout, SECONDS);
     }
     if (readTimeout != DEFAULT_TIMEOUT) {
-      builder.setReadTimeout(readTimeout, SECONDS);
+      builder.readTimeout(readTimeout, SECONDS);
     }
     if (allowInsecure) {
-      builder.setSslSocketFactory(createInsecureSslSocketFactory());
-      builder.setHostnameVerifier(createInsecureHostnameVerifier());
+      builder.sslSocketFactory(createInsecureSslSocketFactory());
+      builder.hostnameVerifier(createInsecureHostnameVerifier());
     }
     return builder.build();
   }
@@ -235,7 +235,7 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private void close() {
-    client.getConnectionPool().evictAll(); // Close any persistent connections.
+    client.connectionPool().evictAll(); // Close any persistent connections.
   }
 
   private static SSLSocketFactory createInsecureSslSocketFactory() {

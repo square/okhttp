@@ -30,7 +30,7 @@ public final class CacheResponse {
     Cache cache = new Cache(cacheDirectory, cacheSize);
 
     client = new OkHttpClient.Builder()
-        .setCache(cache)
+        .cache(cache)
         .build();
   }
 

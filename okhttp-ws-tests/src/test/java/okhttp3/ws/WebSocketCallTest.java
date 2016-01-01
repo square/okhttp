@@ -175,8 +175,8 @@ public final class WebSocketCallTest {
   @Test public void wssScheme() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
     websocketScheme("wss");
@@ -185,8 +185,8 @@ public final class WebSocketCallTest {
   @Test public void httpsScheme() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
     client = client.newBuilder()
-        .setSslSocketFactory(sslContext.getSocketFactory())
-        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
     websocketScheme("https");

@@ -133,8 +133,8 @@ public final class Http2xStream implements HttpStream {
         : spdy3HeadersList(request);
     boolean hasResponseBody = true;
     stream = framedConnection.newStream(requestHeaders, permitsRequestBody, hasResponseBody);
-    stream.readTimeout().timeout(httpEngine.client.getReadTimeout(), TimeUnit.MILLISECONDS);
-    stream.writeTimeout().timeout(httpEngine.client.getWriteTimeout(), TimeUnit.MILLISECONDS);
+    stream.readTimeout().timeout(httpEngine.client.readTimeoutMillis(), TimeUnit.MILLISECONDS);
+    stream.writeTimeout().timeout(httpEngine.client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
   }
 
   @Override public void writeRequestBody(RetryableSink requestBody) throws IOException {

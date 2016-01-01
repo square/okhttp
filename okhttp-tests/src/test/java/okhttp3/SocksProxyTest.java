@@ -49,7 +49,7 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("def"));
 
     OkHttpClient client = new OkHttpClient.Builder()
-        .setProxy(socksProxy.proxy())
+        .proxy(socksProxy.proxy())
         .build();
 
     Request request1 = new Request.Builder().url(server.url("/")).build();
@@ -78,7 +78,7 @@ public final class SocksProxyTest {
     };
 
     OkHttpClient client = new OkHttpClient.Builder()
-        .setProxySelector(proxySelector)
+        .proxySelector(proxySelector)
         .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -93,7 +93,7 @@ public final class SocksProxyTest {
     server.enqueue(new MockResponse().setBody("abc"));
 
     OkHttpClient client = new OkHttpClient.Builder()
-        .setProxy(socksProxy.proxy())
+        .proxy(socksProxy.proxy())
         .build();
 
     HttpUrl url = server.url("/")

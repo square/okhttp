@@ -59,7 +59,7 @@ public final class ThreadInterruptTest {
           }
         });
     client = new OkHttpClient.Builder()
-        .setSocketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
+        .socketFactory(new DelegatingSocketFactory(SocketFactory.getDefault()) {
           @Override
           protected Socket configureSocket(Socket socket) throws IOException {
             socket.setSendBufferSize(SOCKET_BUFFER_SIZE);

@@ -41,7 +41,7 @@ public final class RewriteResponseCacheControl {
     cache.evictAll();
 
     client = new OkHttpClient.Builder()
-        .setCache(cache)
+        .cache(cache)
         .build();
   }
 
