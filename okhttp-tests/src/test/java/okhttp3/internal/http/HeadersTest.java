@@ -302,4 +302,36 @@ public final class HeadersTest {
     assertEquals(2, headerMap.get("cache-control").size());
     assertEquals(1, headerMap.get("user-agent").size());
   }
+
+  @Test public void nameIndexesAreStrict() {
+    Headers headers = Headers.of("a", "b", "c", "d");
+    try {
+      headers.name(-1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    assertEquals("a", headers.name(0));
+    assertEquals("c", headers.name(1));
+    try {
+      headers.name(2);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
+
+  @Test public void valueIndexesAreStrict() {
+    Headers headers = Headers.of("a", "b", "c", "d");
+    try {
+      headers.value(-1);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+    assertEquals("b", headers.value(0));
+    assertEquals("d", headers.value(1));
+    try {
+      headers.value(2);
+      fail();
+    } catch (IndexOutOfBoundsException expected) {
+    }
+  }
 }

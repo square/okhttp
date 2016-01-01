@@ -181,7 +181,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final String getHeaderField(int position) {
     try {
-      return getHeaders().value(position);
+      Headers headers = getHeaders();
+      if (position < 0 || position >= headers.size()) return null;
+      return headers.value(position);
     } catch (IOException e) {
       return null;
     }
@@ -203,7 +205,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final String getHeaderFieldKey(int position) {
     try {
-      return getHeaders().name(position);
+      Headers headers = getHeaders();
+      if (position < 0 || position >= headers.size()) return null;
+      return headers.name(position);
     } catch (IOException e) {
       return null;
     }

@@ -73,22 +73,14 @@ public final class Headers {
     return namesAndValues.length / 2;
   }
 
-  /** Returns the field at {@code position} or null if that is out of range. */
+  /** Returns the field at {@code position}. */
   public String name(int index) {
-    int nameIndex = index * 2;
-    if (nameIndex < 0 || nameIndex >= namesAndValues.length) {
-      return null;
-    }
-    return namesAndValues[nameIndex];
+    return namesAndValues[index * 2];
   }
 
-  /** Returns the value at {@code index} or null if that is out of range. */
+  /** Returns the value at {@code index}. */
   public String value(int index) {
-    int valueIndex = index * 2 + 1;
-    if (valueIndex < 0 || valueIndex >= namesAndValues.length) {
-      return null;
-    }
-    return namesAndValues[valueIndex];
+    return namesAndValues[index * 2 + 1];
   }
 
   /** Returns an immutable case-insensitive set of header names. */

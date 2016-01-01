@@ -590,8 +590,7 @@ public final class URLConnectionTest {
     assertEquals(1, server.takeRequest().getSequenceNumber());
   }
 
-  @Test public void connectViaHttpsReusingConnectionsDifferentFactories()
-      throws IOException, InterruptedException {
+  @Test public void connectViaHttpsReusingConnectionsDifferentFactories() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setBody("this response comes via HTTPS"));
     server.enqueue(new MockResponse().setBody("another response via HTTPS"));
@@ -604,8 +603,11 @@ public final class URLConnectionTest {
     HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
     assertContent("this response comes via HTTPS", connection1);
 
+    SSLContext sslContext2 = SSLContext.getInstance("TLS");
+    sslContext2.init(null, null, null);
+    SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(null)
+        .sslSocketFactory(sslSocketFactory2)
         .build());
     HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
     try {
