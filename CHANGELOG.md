@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 2.7.1
+
+_2016-01-01_
+
+ *  Fix: Don't do a health check on newly-created connections. This is
+    unnecessary work that could put the client in an inconsistent state if the
+    health check fails.
+
+
 ## Version 2.7.0
 
 _2015-12-12_
