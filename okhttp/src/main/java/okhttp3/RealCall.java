@@ -45,6 +45,10 @@ final class RealCall implements Call {
     this.originalRequest = originalRequest;
   }
 
+  @Override public Request request() {
+    return originalRequest;
+  }
+
   @Override public Response execute() throws IOException {
     synchronized (this) {
       if (executed) throw new IllegalStateException("Already Executed");

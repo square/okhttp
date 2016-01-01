@@ -22,6 +22,9 @@ import java.io.IOException;
  * represents a single request/response pair (stream), it cannot be executed twice.
  */
 public interface Call {
+  /** Returns the original request that initiated this call. */
+  Request request();
+
   /**
    * Invokes the request immediately, and blocks until the response can be processed or is in
    * error.
