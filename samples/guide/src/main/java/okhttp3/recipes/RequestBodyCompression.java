@@ -39,11 +39,9 @@ public final class RequestBodyCompression {
   public static final String GOOGLE_API_KEY = "AIzaSyAx2WZYe0My0i-uGurpvraYJxO7XNbwiGs";
   public static final MediaType MEDIA_TYPE_JSON = MediaType.parse("application/json");
 
-  private final OkHttpClient client = new OkHttpClient();
-
-  public RequestBodyCompression() {
-    client.interceptors().add(new GzipRequestInterceptor());
-  }
+  private final OkHttpClient client = new OkHttpClient.Builder()
+      .addInterceptor(new GzipRequestInterceptor())
+      .build();
 
   public void run() throws Exception {
     Map<String, String> requestBody = new LinkedHashMap<>();

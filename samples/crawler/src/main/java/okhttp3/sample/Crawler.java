@@ -120,9 +120,10 @@ public final class Crawler {
     int threadCount = 20;
     long cacheByteCount = 1024L * 1024L * 100L;
 
-    OkHttpClient client = new OkHttpClient();
     Cache cache = new Cache(new File(args[0]), cacheByteCount);
-    client.setCache(cache);
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setCache(cache)
+        .build();
 
     Crawler crawler = new Crawler(client);
     crawler.queue.add(HttpUrl.parse(args[1]));

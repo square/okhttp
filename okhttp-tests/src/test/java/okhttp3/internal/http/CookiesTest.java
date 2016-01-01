@@ -37,6 +37,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.Test;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -44,12 +45,14 @@ import static org.junit.Assert.fail;
 
 /** Android's CookiesTest. */
 public class CookiesTest {
-  private final OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client = defaultClient();
 
   @Test
   public void testNetscapeResponse() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -77,7 +80,9 @@ public class CookiesTest {
 
   @Test public void testRfc2109Response() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -105,7 +110,9 @@ public class CookiesTest {
 
   @Test public void testQuotedAttributeValues() throws Exception {
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
     MockWebServer server = new MockWebServer();
     server.start();
 
@@ -146,7 +153,9 @@ public class CookiesTest {
     cookieB.setDomain(server.getHostName());
     cookieB.setPath("/");
     cookieManager.getCookieStore().add(server.url("/").uri(), cookieB);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
 
     get(server.url("/"));
     RecordedRequest request = server.takeRequest();
@@ -172,7 +181,9 @@ public class CookiesTest {
     String portList = Integer.toString(redirectSource.getPort());
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(redirectSource.url("/").uri(), cookie);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
 
     get(redirectSource.url("/"));
     RecordedRequest request = redirectSource.takeRequest();
@@ -187,15 +198,17 @@ public class CookiesTest {
   }
 
   @Test public void testCookiesSentIgnoresCase() throws Exception {
-    client.setCookieJar(new JavaNetCookieJar(new CookieManager() {
-      @Override public Map<String, List<String>> get(URI uri,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("COOKIE", Collections.singletonList("Bar=bar"));
-        result.put("cooKIE2", Collections.singletonList("Baz=baz"));
-        return result;
-      }
-    }));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(new CookieManager() {
+          @Override public Map<String, List<String>> get(URI uri,
+              Map<String, List<String>> requestHeaders) throws IOException {
+            Map<String, List<String>> result = new HashMap<>();
+            result.put("COOKIE", Collections.singletonList("Bar=bar"));
+            result.put("cooKIE2", Collections.singletonList("Baz=baz"));
+            return result;
+          }
+        }))
+        .build();
 
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());

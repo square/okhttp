@@ -34,6 +34,7 @@ import okhttp3.AbstractResponseCache;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
 import okhttp3.internal.Internal;
+import okhttp3.internal.InternalCache;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -66,7 +67,7 @@ public class CacheAdapterTest {
 
   @Before public void setUp() throws Exception {
     server = new MockWebServer();
-    client = new OkHttpClient();
+    client = new OkHttpClient.Builder().build();
   }
 
   @After public void tearDown() throws Exception {
@@ -90,7 +91,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setCache(client, new CacheAdapter(responseCache));
+    setInternalCache(new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key1", "value1");
@@ -113,9 +114,11 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setCache(client, new CacheAdapter(responseCache));
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(hostnameVerifier);
+    setInternalCache(new CacheAdapter(responseCache));
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build();
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key1", "value1");
@@ -157,7 +160,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setCache(client, new CacheAdapter(responseCache));
+    setInternalCache(new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
     connection.setRequestProperty("key", "value");
@@ -196,7 +199,7 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setCache(client, new CacheAdapter(responseCache));
+    setInternalCache(new CacheAdapter(responseCache));
 
     connection = new OkUrlFactory(client).open(serverUrl);
 
@@ -229,9 +232,11 @@ public class CacheAdapterTest {
         return null;
       }
     };
-    Internal.instance.setCache(client, new CacheAdapter(responseCache));
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(hostnameVerifier);
+    setInternalCache(new CacheAdapter(responseCache));
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(hostnameVerifier)
+        .build();
 
     connection = new OkUrlFactory(client).open(serverUrl);
     executeGet(connection);
@@ -261,5 +266,11 @@ public class CacheAdapterTest {
     server.enqueue(mockResponse);
     server.start();
     return server.url("/").url();
+  }
+
+  private void setInternalCache(InternalCache internalCache) {
+    OkHttpClient.Builder builder = client.newBuilder();
+    Internal.instance.setCache(builder, internalCache);
+    client = builder.build();
   }
 }

@@ -48,7 +48,9 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   }
 
   @Override public void setHostnameVerifier(HostnameVerifier hostnameVerifier) {
-    delegate.client.setHostnameVerifier(hostnameVerifier);
+    delegate.client = delegate.client.newBuilder()
+        .setHostnameVerifier(hostnameVerifier)
+        .build();
   }
 
   @Override public HostnameVerifier getHostnameVerifier() {
@@ -56,7 +58,9 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   }
 
   @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
-    delegate.client.setSslSocketFactory(sslSocketFactory);
+    delegate.client = delegate.client.newBuilder()
+        .setSslSocketFactory(sslSocketFactory)
+        .build();
   }
 
   @Override public SSLSocketFactory getSSLSocketFactory() {

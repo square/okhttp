@@ -33,8 +33,9 @@ import static okhttp3.internal.http.OkHeaders.SELECTED_PROTOCOL;
 public final class ExternalHttp2Example {
   public static void main(String[] args) throws Exception {
     URL url = new URL("https://twitter.com");
-    OkHttpClient client = new OkHttpClient()
-        .setProtocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1));
+    OkHttpClient client = new OkHttpClient.Builder()
+        .setProtocols(Util.immutableList(Protocol.HTTP_2, Protocol.HTTP_1_1))
+        .build();
     HttpsURLConnection connection = (HttpsURLConnection) new OkUrlFactory(client)
         .open(url);
 

@@ -24,24 +24,9 @@ import okhttp3.Response;
 
 public final class LoggingInterceptors {
   private static final Logger logger = Logger.getLogger(LoggingInterceptors.class.getName());
-  private final OkHttpClient client = new OkHttpClient();
-
-  public LoggingInterceptors() {
-    client.networkInterceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        long t1 = System.nanoTime();
-        Request request = chain.request();
-        logger.info(String.format("Sending request %s on %s%n%s",
-            request.url(), chain.connection(), request.headers()));
-        Response response = chain.proceed(request);
-
-        long t2 = System.nanoTime();
-        logger.info(String.format("Received response for %s in %.1fms%n%s",
-            request.url(), (t2 - t1) / 1e6d, response.headers()));
-        return response;
-      }
-    });
-  }
+  private final OkHttpClient client = new OkHttpClient.Builder()
+      .addInterceptor(new LoggingInterceptor())
+      .build();
 
   public void run() throws Exception {
     Request request = new Request.Builder()
@@ -50,6 +35,21 @@ public final class LoggingInterceptors {
 
     Response response = client.newCall(request).execute();
     response.body().close();
+  }
+
+  private static class LoggingInterceptor implements Interceptor {
+    @Override public Response intercept(Chain chain) throws IOException {
+      long t1 = System.nanoTime();
+      Request request = chain.request();
+      logger.info(String.format("Sending request %s on %s%n%s",
+          request.url(), chain.connection(), request.headers()));
+      Response response = chain.proceed(request);
+
+      long t2 = System.nanoTime();
+      logger.info(String.format("Received response for %s in %.1fms%n%s",
+          request.url(), (t2 - t1) / 1e6d, response.headers()));
+      return response;
+    }
   }
 
   public static void main(String... args) throws Exception {

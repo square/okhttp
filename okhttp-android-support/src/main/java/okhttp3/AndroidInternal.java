@@ -30,15 +30,16 @@ public class AndroidInternal {
 
   /** Sets the response cache to be used to read and write cached responses. */
   public static void setResponseCache(OkUrlFactory okUrlFactory, ResponseCache responseCache) {
-    OkHttpClient client = okUrlFactory.client();
+    OkHttpClient.Builder builder = okUrlFactory.client().newBuilder();
     if (responseCache instanceof OkCacheContainer) {
       // Avoid adding layers of wrappers. Rather than wrap the ResponseCache in yet another layer to
       // make the ResponseCache look like an InternalCache, we can unwrap the Cache instead.
       // This means that Cache stats will be correctly updated.
       OkCacheContainer okCacheContainer = (OkCacheContainer) responseCache;
-      client.setCache(okCacheContainer.getCache());
+      builder.setCache(okCacheContainer.getCache());
     } else {
-      client.setInternalCache(responseCache != null ? new CacheAdapter(responseCache) : null);
+      builder.setInternalCache(responseCache != null ? new CacheAdapter(responseCache) : null);
     }
+    okUrlFactory.setClient(builder.build());
   }
 }

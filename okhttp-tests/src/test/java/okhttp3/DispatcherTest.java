@@ -17,7 +17,9 @@ public final class DispatcherTest {
   RecordingExecutor executor = new RecordingExecutor();
   RecordingCallback callback = new RecordingCallback();
   Dispatcher dispatcher = new Dispatcher(executor);
-  OkHttpClient client = new OkHttpClient().setDispatcher(dispatcher);
+  OkHttpClient client = new OkHttpClient.Builder()
+      .setDispatcher(dispatcher)
+      .build();
 
   @Before public void setUp() throws Exception {
     dispatcher.setMaxRequests(20);

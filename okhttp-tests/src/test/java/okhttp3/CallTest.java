@@ -78,6 +78,7 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import static java.net.CookiePolicy.ACCEPT_ORIGINAL_SERVER;
+import static okhttp3.TestUtil.defaultClient;
 import static okhttp3.internal.Internal.logger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -93,7 +94,7 @@ public final class CallTest {
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private SSLContext sslContext = SslContextBuilder.localhost();
-  private OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client = defaultClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
   private Cache cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
@@ -101,7 +102,6 @@ public final class CallTest {
 
   @Before public void setUp() throws Exception {
     logger.addHandler(logHandler);
-    client.setDns(new SingleInetAddressDns()); // Prevent unexpected fallback addresses.
   }
 
   @After public void tearDown() throws Exception {
@@ -381,7 +381,9 @@ public final class CallTest {
         .build();
 
     String credential = Credentials.basic("jesse", "secret");
-    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+    client = client.newBuilder()
+        .setAuthenticator(new RecordingOkAuthenticator(credential))
+        .build();
 
     Response response = client.newCall(request).execute();
     assertEquals(200, response.code());
@@ -404,7 +406,9 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("Success!"));
 
     String credential = Credentials.basic("jesse", "secret");
-    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+    client = client.newBuilder()
+        .setAuthenticator(new RecordingOkAuthenticator(credential))
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     executeSynchronously(request)
@@ -418,7 +422,9 @@ public final class CallTest {
     }
 
     String credential = Credentials.basic("jesse", "secret");
-    client.setAuthenticator(new RecordingOkAuthenticator(credential));
+    client = client.newBuilder()
+        .setAuthenticator(new RecordingOkAuthenticator(credential))
+        .build();
 
     try {
       client.newCall(new Request.Builder().url(server.url("/0")).build()).execute();
@@ -733,11 +739,15 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("def").throttleBody(1, 750, TimeUnit.MILLISECONDS));
 
     // First request: time out after 1000ms.
-    client.setReadTimeout(1000, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setReadTimeout(1000, TimeUnit.MILLISECONDS)
+        .build();
     executeSynchronously(new Request.Builder().url(server.url("/a")).build()).assertBody("abc");
 
     // Second request: time out after 250ms.
-    client.setReadTimeout(250, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setReadTimeout(250, TimeUnit.MILLISECONDS)
+        .build();
     Request request = new Request.Builder().url(server.url("/b")).build();
     Response response = client.newCall(request).execute();
     BufferedSource bodySource = response.body().source();
@@ -766,7 +776,9 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("unreachable!"));
 
-    client.setReadTimeout(100, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setReadTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     try {
@@ -791,8 +803,10 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("success!"));
 
-    client.setProxySelector(proxySelector);
-    client.setReadTimeout(100, TimeUnit.MILLISECONDS);
+    client = client.newBuilder()
+        .setProxySelector(proxySelector)
+        .setReadTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
 
     Request request = new Request.Builder().url("http://android.com/").build();
     executeSynchronously(request)
@@ -802,12 +816,13 @@ public final class CallTest {
 
   /** https://github.com/square/okhttp/issues/1801 */
   @Test public void asyncCallEngineInitialized() throws Exception {
-    OkHttpClient c = new OkHttpClient();
-    c.interceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        throw new IOException();
-      }
-    });
+    OkHttpClient c = new OkHttpClient.Builder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            throw new IOException();
+          }
+        })
+        .build();
     Request request = new Request.Builder().url(server.url("/")).build();
     c.newCall(request).enqueue(callback);
     RecordedResponse response = callback.await(request.url());
@@ -911,7 +926,9 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("retry success"));
 
-    client.setDns(new DoubleInetAddressDns());
+    client = client.newBuilder()
+        .setDns(new DoubleInetAddressDns())
+        .build();
     assertTrue(client.getRetryOnConnectionFailure());
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -924,8 +941,10 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST));
     server.enqueue(new MockResponse().setBody("unreachable!"));
 
-    client.setDns(new DoubleInetAddressDns());
-    client.setRetryOnConnectionFailure(false);
+    client = client.newBuilder()
+        .setDns(new DoubleInetAddressDns())
+        .setRetryOnConnectionFailure(false)
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     executeSynchronously(request).assertBody("seed connection pool");
@@ -942,9 +961,11 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
-    suppressTlsFallbackScsv(client);
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setDns(new SingleInetAddressDns());
+    client = client.newBuilder()
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setDns(new SingleInetAddressDns())
+        .setSslSocketFactory(suppressTlsFallbackClientSocketFactory())
+        .build();
 
     executeSynchronously(new Request.Builder().url(server.url("/")).build())
         .assertBody("abc");
@@ -964,9 +985,11 @@ public final class CallTest {
 
     RecordingSSLSocketFactory clientSocketFactory =
         new RecordingSSLSocketFactory(sslContext.getSocketFactory());
-    client.setSslSocketFactory(clientSocketFactory);
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setDns(new SingleInetAddressDns());
+    client = client.newBuilder()
+        .setSslSocketFactory(clientSocketFactory)
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setDns(new SingleInetAddressDns())
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     try {
@@ -987,8 +1010,10 @@ public final class CallTest {
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
-    suppressTlsFallbackScsv(client);
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setSslSocketFactory(suppressTlsFallbackClientSocketFactory())
+        .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -999,14 +1024,15 @@ public final class CallTest {
   }
 
   @Test public void noRecoveryFromTlsHandshakeFailureWhenTlsFallbackIsDisabled() throws Exception {
-    client.setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
+    client = client.newBuilder()
+        .setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setDns(new SingleInetAddressDns())
+        .setSslSocketFactory(suppressTlsFallbackClientSocketFactory())
+        .build();
 
     server.useHttps(sslContext.getSocketFactory(), false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
-
-    suppressTlsFallbackScsv(client);
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
-    client.setDns(new SingleInetAddressDns());
 
     Request request = new Request.Builder().url(server.url("/")).build();
     try {
@@ -1021,8 +1047,9 @@ public final class CallTest {
 
   @Test public void cleartextCallsFailWhenCleartextIsDisabled() throws Exception {
     // Configure the client with only TLS configurations. No cleartext!
-    client.setConnectionSpecs(
-        Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
+    client = client.newBuilder()
+        .setConnectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS))
+        .build();
 
     server.enqueue(new MockResponse());
 
@@ -1041,7 +1068,9 @@ public final class CallTest {
         .setResponseCode(301)
         .addHeader("Location: http://square.com"));
 
-    client.setFollowSslRedirects(false);
+    client = client.newBuilder()
+        .setFollowSslRedirects(false)
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response = client.newCall(request).execute();
@@ -1064,7 +1093,9 @@ public final class CallTest {
     response1.body().close();
 
     // Make another request with certificate pinning. It should complete normally.
-    client.setCertificatePinner(certificatePinnerBuilder.build());
+    client = client.newBuilder()
+        .setCertificatePinner(certificatePinnerBuilder.build())
+        .build();
     Request request2 = new Request.Builder().url(server.url("/")).build();
     Response response2 = client.newCall(request2).execute();
     assertNotSame(response2.handshake(), response1.handshake());
@@ -1076,9 +1107,11 @@ public final class CallTest {
     server.enqueue(new MockResponse());
 
     // Pin publicobject.com's cert.
-    client.setCertificatePinner(new CertificatePinner.Builder()
-        .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
-        .build());
+    client = client.newBuilder()
+        .setCertificatePinner(new CertificatePinner.Builder()
+            .add(server.getHostName(), "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+            .build())
+        .build();
 
     // When we pin the wrong certificate, connectivity fails.
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -1145,7 +1178,9 @@ public final class CallTest {
         .addHeader("Vary: Accept-Charset")
         .setBody("A"));
 
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     // Store a response in the cache.
     HttpUrl url = server.url("/");
@@ -1197,7 +1232,9 @@ public final class CallTest {
         .addHeader("Donut: b")
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     // Store a response in the cache.
     HttpUrl url = server.url("/");
@@ -1255,7 +1292,9 @@ public final class CallTest {
         .clearHeaders()
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Request request1 = new Request.Builder()
         .url(server.url("/"))
@@ -1282,7 +1321,9 @@ public final class CallTest {
         .addHeader("Donut: b")
         .setBody("B"));
 
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Request cacheStoreRequest = new Request.Builder()
         .url(server.url("/"))
@@ -1327,7 +1368,9 @@ public final class CallTest {
     server.enqueue(new MockResponse().setBody("A").addHeader("ETag: v1"));
     server.enqueue(new MockResponse().setBody("B"));
 
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Request request1 = new Request.Builder()
         .url(server.url("/"))
@@ -1433,7 +1476,9 @@ public final class CallTest {
         .addHeader("Set-Cookie", "c=d; Expires=Fri, 02 Jan 1970 23:59:59 GMT; path=/bar; secure"));
 
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client.setCookieJar(cookieJar);
+    client = client.newBuilder()
+        .setCookieJar(cookieJar)
+        .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -1457,7 +1502,9 @@ public final class CallTest {
     cookieJar.enqueueRequestCookies(
         new Cookie.Builder().name("a").value("b").domain(server.getHostName()).build(),
         new Cookie.Builder().name("c").value("d").domain(server.getHostName()).build());
-    client.setCookieJar(cookieJar);
+    client = client.newBuilder()
+        .setCookieJar(cookieJar)
+        .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -1482,7 +1529,9 @@ public final class CallTest {
     String portList = Integer.toString(server.getPort());
     cookie.setPortlist(portList);
     cookieManager.getCookieStore().add(server.url("/").uri(), cookie);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = client.newBuilder()
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
 
     Response response = client.newCall(new Request.Builder()
         .url(server.url("/page1"))
@@ -1504,7 +1553,9 @@ public final class CallTest {
         .setResponseCode(302)
         .addHeader("Location: " + server2.url("/b")));
 
-    client.setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")));
+    client = client.newBuilder()
+        .setAuthenticator(new RecordingOkAuthenticator(Credentials.basic("jesse", "secret")))
+        .build();
 
     Request request = new Request.Builder().url(server.url("/a")).build();
     Response response = client.newCall(request).execute();
@@ -1876,12 +1927,13 @@ public final class CallTest {
   }
 
   @Test public void cancelWithInterceptor() throws Exception {
-    client.interceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        chain.proceed(chain.request());
-        throw new AssertionError(); // We expect an exception.
-      }
-    });
+    client = client.newBuilder()
+        .addInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            chain.proceed(chain.request());
+            throw new AssertionError(); // We expect an exception.
+          }
+        }).build();
 
     Call call = client.newCall(new Request.Builder().url(server.url("/a")).build());
     call.cancel();
@@ -1929,7 +1981,9 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody(gzip("abcabcabc"))
         .addHeader("Content-Encoding: gzip"));
-    client.setAuthenticator(new RecordingOkAuthenticator("password"));
+    client = client.newBuilder()
+        .setAuthenticator(new RecordingOkAuthenticator("password"))
+        .build();
 
     Request request = new Request.Builder()
         .url(server.url("/"))
@@ -1992,7 +2046,9 @@ public final class CallTest {
         .setBody("A"));
     server.enqueue(new MockResponse().setBody("B"));
 
-    client.setFollowRedirects(false);
+    client = client.newBuilder()
+        .setFollowRedirects(false)
+        .build();
     RecordedResponse recordedResponse = executeSynchronously(
         new Request.Builder().url(server.url("/a")).build());
 
@@ -2055,7 +2111,9 @@ public final class CallTest {
     // Configure a DNS that returns our MockWebServer for every hostname.
     FakeDns dns = new FakeDns();
     dns.addresses(Dns.SYSTEM.lookup(server.url("/").host()));
-    client.setDns(dns);
+    client = client.newBuilder()
+        .setDns(dns)
+        .build();
 
     server.enqueue(new MockResponse());
     Request request = new Request.Builder()
@@ -2104,10 +2162,12 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("encrypted response from the origin server"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setProxy(server.toProxyAddress());
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-    client.setHostnameVerifier(hostnameVerifier);
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setProxy(server.toProxyAddress())
+        .setHostnameVerifier(hostnameVerifier)
+        .build();
 
     Request request = new Request.Builder()
         .url("https://android.com/foo")
@@ -2142,10 +2202,12 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("response body"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setProxy(server.toProxyAddress());
-    client.setProxyAuthenticator(new RecordingOkAuthenticator("password"));
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setProxy(server.toProxyAddress())
+        .setProxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .build();
 
     Request request = new Request.Builder()
         .url("https://android.com/foo")
@@ -2179,9 +2241,11 @@ public final class CallTest {
     server.enqueue(new MockResponse()
         .setBody("response body"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setProxy(server.toProxyAddress());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setProxy(server.toProxyAddress())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .build();
 
     Request request = new Request.Builder()
         .url("https://android.com/foo")
@@ -2211,7 +2275,9 @@ public final class CallTest {
         throw new IOException("write body fail!");
       }
     };
-    OkHttpClient nonRetryingClient = client.clone().setRetryOnConnectionFailure(false);
+    OkHttpClient nonRetryingClient = client.newBuilder()
+        .setRetryOnConnectionFailure(false)
+        .build();
     Call call = nonRetryingClient.newCall(new Request.Builder()
         .url(server.url("/"))
         .post(requestBody)
@@ -2235,13 +2301,17 @@ public final class CallTest {
    */
   private void enableProtocol(Protocol protocol) {
     enableTls();
-    client.setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1));
+    client = client.newBuilder()
+        .setProtocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
+        .build();
     server.setProtocols(client.getProtocols());
   }
 
   private void enableTls() {
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .build();
     server.useHttps(sslContext.getSocketFactory(), false);
   }
 
@@ -2290,9 +2360,7 @@ public final class CallTest {
    * TLS_FALLBACK_SCSV cipher on fallback connections. See {@link FallbackTestClientSocketFactory}
    * for details.
    */
-  private void suppressTlsFallbackScsv(OkHttpClient client) {
-    FallbackTestClientSocketFactory clientSocketFactory =
-        new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
-    client.setSslSocketFactory(clientSocketFactory);
+  private FallbackTestClientSocketFactory suppressTlsFallbackClientSocketFactory() {
+    return new FallbackTestClientSocketFactory(sslContext.getSocketFactory());
   }
 }

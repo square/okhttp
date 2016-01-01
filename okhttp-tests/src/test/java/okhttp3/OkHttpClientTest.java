@@ -16,29 +16,19 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.net.CacheRequest;
-import java.net.CacheResponse;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.ProxySelector;
 import java.net.ResponseCache;
-import java.net.URI;
-import java.net.URLConnection;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import javax.net.SocketFactory;
-import okhttp3.internal.http.RecordingProxySelector;
-import okhttp3.internal.tls.OkHostnameVerifier;
 import org.junit.After;
 import org.junit.Test;
 
+import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class OkHttpClientTest {
@@ -53,99 +43,51 @@ public final class OkHttpClientTest {
   }
 
   @Test public void timeoutDefaults() {
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient client = defaultClient();
     assertEquals(10_000, client.getConnectTimeout());
     assertEquals(10_000, client.getReadTimeout());
     assertEquals(10_000, client.getWriteTimeout());
   }
 
   @Test public void timeoutValidRange() {
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      client.setConnectTimeout(1, TimeUnit.NANOSECONDS);
+      builder.setConnectTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      client.setWriteTimeout(1, TimeUnit.NANOSECONDS);
+      builder.setWriteTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      client.setReadTimeout(1, TimeUnit.NANOSECONDS);
+      builder.setReadTimeout(1, TimeUnit.NANOSECONDS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      client.setConnectTimeout(365, TimeUnit.DAYS);
+      builder.setConnectTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      client.setWriteTimeout(365, TimeUnit.DAYS);
+      builder.setWriteTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
     try {
-      client.setReadTimeout(365, TimeUnit.DAYS);
+      builder.setReadTimeout(365, TimeUnit.DAYS);
     } catch (IllegalArgumentException ignored) {
     }
-  }
-
-  /** Confirm that {@code copyWithDefaults} gets expected constant values. */
-  @Test public void copyWithDefaultsWhenDefaultIsAConstant() throws Exception {
-    OkHttpClient client = new OkHttpClient().copyWithDefaults();
-    assertNull(client.internalCache());
-    assertEquals(10_000, client.getConnectTimeout());
-    assertEquals(10_000, client.getReadTimeout());
-    assertEquals(10_000, client.getWriteTimeout());
-    assertTrue(client.getFollowSslRedirects());
-    assertNull(client.getProxy());
-    assertEquals(Arrays.asList(Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1),
-        client.getProtocols());
-  }
-
-  /**
-   * Confirm that {@code copyWithDefaults} gets some default implementations from the core library.
-   */
-  @Test public void copyWithDefaultsWhenDefaultIsGlobal() throws Exception {
-    ProxySelector proxySelector = new RecordingProxySelector();
-    SocketFactory socketFactory = SocketFactory.getDefault(); // Global isn't configurable.
-    OkHostnameVerifier hostnameVerifier = OkHostnameVerifier.INSTANCE; // Global isn't configurable.
-    CertificatePinner certificatePinner = CertificatePinner.DEFAULT; // Global isn't configurable.
-
-    ProxySelector.setDefault(proxySelector);
-
-    OkHttpClient client = new OkHttpClient().copyWithDefaults();
-
-    assertSame(proxySelector, client.getProxySelector());
-    assertSame(socketFactory, client.getSocketFactory());
-    assertSame(hostnameVerifier, client.getHostnameVerifier());
-    assertSame(certificatePinner, client.getCertificatePinner());
-  }
-
-  /** There is no default cache. */
-  @Test public void copyWithDefaultsCacheIsNull() throws Exception {
-    OkHttpClient client = new OkHttpClient().copyWithDefaults();
-    assertNull(client.getCache());
-  }
-
-  @Test public void copyWithDefaultsDoesNotHonorGlobalResponseCache() {
-    ResponseCache.setDefault(new ResponseCache() {
-      @Override public CacheResponse get(URI uri, String requestMethod,
-          Map<String, List<String>> requestHeaders) throws IOException {
-        throw new AssertionError();
-      }
-
-      @Override public CacheRequest put(URI uri, URLConnection connection) {
-        throw new AssertionError();
-      }
-    });
-
-    OkHttpClient client = new OkHttpClient().copyWithDefaults();
-    assertNull(client.internalCache());
   }
 
   @Test public void clonedInterceptorsListsAreIndependent() throws Exception {
-    OkHttpClient original = new OkHttpClient();
-    OkHttpClient clone = original.clone();
-    clone.interceptors().add(null);
-    clone.networkInterceptors().add(null);
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        return chain.proceed(chain.request());
+      }
+    };
+    OkHttpClient original = defaultClient();
+    original.newBuilder()
+        .addInterceptor(interceptor)
+        .addNetworkInterceptor(interceptor)
+        .build();
     assertEquals(0, original.interceptors().size());
     assertEquals(0, original.networkInterceptors().size());
   }
@@ -155,27 +97,25 @@ public final class OkHttpClientTest {
    * clients.
    */
   @Test public void cloneSharesStatefulInstances() throws Exception {
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient client = defaultClient();
 
     // Values should be non-null.
-    OkHttpClient a = client.clone().copyWithDefaults();
-    assertNotNull(a.routeDatabase());
+    OkHttpClient a = client.newBuilder().build();
     assertNotNull(a.getDispatcher());
     assertNotNull(a.getConnectionPool());
     assertNotNull(a.getSslSocketFactory());
 
     // Multiple clients share the instances.
-    OkHttpClient b = client.clone().copyWithDefaults();
-    assertSame(a.routeDatabase(), b.routeDatabase());
+    OkHttpClient b = client.newBuilder().build();
     assertSame(a.getDispatcher(), b.getDispatcher());
     assertSame(a.getConnectionPool(), b.getConnectionPool());
     assertSame(a.getSslSocketFactory(), b.getSslSocketFactory());
   }
 
   @Test public void setProtocolsRejectsHttp10() throws Exception {
-    OkHttpClient client = new OkHttpClient();
+    OkHttpClient.Builder builder = new OkHttpClient.Builder();
     try {
-      client.setProtocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
+      builder.setProtocols(Arrays.asList(Protocol.HTTP_1_0, Protocol.HTTP_1_1));
       fail();
     } catch (IllegalArgumentException expected) {
     }

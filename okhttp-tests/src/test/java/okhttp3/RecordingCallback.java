@@ -62,12 +62,4 @@ public class RecordingCallback implements Callback {
 
     throw new AssertionError("Timed out waiting for response to " + url);
   }
-
-  public synchronized void assertNoResponse(HttpUrl url) throws Exception {
-    for (RecordedResponse recordedResponse : responses) {
-      if (recordedResponse.request.url().equals(url)) {
-        throw new AssertionError("Expected no response for " + url);
-      }
-    }
-  }
 }

@@ -29,8 +29,9 @@ public final class CacheResponse {
     int cacheSize = 10 * 1024 * 1024; // 10 MiB
     Cache cache = new Cache(cacheDirectory, cacheSize);
 
-    client = new OkHttpClient();
-    client.setCache(cache);
+    client = new OkHttpClient.Builder()
+        .setCache(cache)
+        .build();
   }
 
   public void run() throws Exception {

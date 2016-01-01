@@ -81,15 +81,17 @@ public final class UrlConnectionCacheTest {
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private final SSLContext sslContext = SslContextBuilder.localhost();
-  private final OkUrlFactory client = new OkUrlFactory(new OkHttpClient());
+  private OkUrlFactory client = new OkUrlFactory(new OkHttpClient.Builder().build());
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client.client().setCache(cache);
-    client.client().setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = new OkUrlFactory(new OkHttpClient.Builder()
+        .setCache(cache)
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build());
   }
 
   @After public void tearDown() throws Exception {
@@ -331,8 +333,10 @@ public final class UrlConnectionCacheTest {
         .setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
-    client.client().setSslSocketFactory(sslContext.getSocketFactory());
-    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setClient(client.client().newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build());
 
     HttpsURLConnection connection1 = (HttpsURLConnection) client.open(server.url("/").url());
     assertEquals("ABC", readAscii(connection1));
@@ -367,8 +371,10 @@ public final class UrlConnectionCacheTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.url("/").url()));
 
-    client.client().setSslSocketFactory(sslContext.getSocketFactory());
-    client.client().setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client.setClient(client.client().newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build());
 
     HttpURLConnection connection1 = client.open(server.url("/").url());
     assertEquals("ABC", readAscii(connection1));
@@ -1404,7 +1410,9 @@ public final class UrlConnectionCacheTest {
 
   @Test public void cachePlusCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client.client().setCookieJar(cookieJar);
+    client.setClient(client.client().newBuilder()
+        .setCookieJar(cookieJar)
+        .build());
 
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie: a=FIRST")
@@ -1628,7 +1636,9 @@ public final class UrlConnectionCacheTest {
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
-    client.client().setCache(cache);
+    client.setClient(client.client().newBuilder()
+        .setCache(cache)
+        .build());
 
     HttpURLConnection connection = client.open(url);
     assertEquals(entryBody, readAscii(connection));

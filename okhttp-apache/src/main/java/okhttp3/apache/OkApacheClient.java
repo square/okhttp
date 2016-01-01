@@ -118,7 +118,9 @@ public final class OkApacheClient implements HttpClient {
         if (host != null) {
           proxy = new Proxy(HTTP, new InetSocketAddress(host.getHostName(), host.getPort()));
         }
-        client.setProxy(proxy);
+        client = client.newBuilder()
+            .setProxy(proxy)
+            .build();
         return this;
       }
       throw new IllegalArgumentException(name);
@@ -133,10 +135,10 @@ public final class OkApacheClient implements HttpClient {
     }
   };
 
-  private final OkHttpClient client;
+  private OkHttpClient client;
 
   public OkApacheClient() {
-    this(new OkHttpClient());
+    this(new OkHttpClient.Builder().build());
   }
 
   public OkApacheClient(OkHttpClient client) {

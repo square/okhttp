@@ -78,15 +78,17 @@ public final class CacheTest {
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
   private final SSLContext sslContext = SslContextBuilder.localhost();
-  private final OkHttpClient client = new OkHttpClient();
+  private OkHttpClient client;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
 
   @Before public void setUp() throws Exception {
     server.setProtocolNegotiationEnabled(false);
     cache = new Cache(new File("/cache/"), Integer.MAX_VALUE, fileSystem);
-    client.setCache(cache);
-    client.setCookieJar(new JavaNetCookieJar(cookieManager));
+    client = new OkHttpClient.Builder()
+        .setCache(cache)
+        .setCookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
   }
 
   @After public void tearDown() throws Exception {
@@ -249,8 +251,10 @@ public final class CacheTest {
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build();
 
     Request request = new Request.Builder().url(server.url("/")).build();
     Response response1 = client.newCall(request).execute();
@@ -350,8 +354,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("DEF"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build();
 
     Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
@@ -389,8 +395,10 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_MOVED_PERM)
         .addHeader("Location: " + server2.url("/")));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build();
 
     Response response1 = get(server.url("/"));
     assertEquals("ABC", response1.body().string());
@@ -1650,8 +1658,10 @@ public final class CacheTest {
     server.enqueue(new MockResponse()
         .setBody("B"));
 
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(NULL_HOSTNAME_VERIFIER)
+        .build();
 
     HttpUrl url = server.url("/");
     Request request1 = new Request.Builder()
@@ -1671,7 +1681,9 @@ public final class CacheTest {
 
   @Test public void cachePlusCookies() throws Exception {
     RecordingCookieJar cookieJar = new RecordingCookieJar();
-    client.setCookieJar(cookieJar);
+    client = client.newBuilder()
+        .setCookieJar(cookieJar)
+        .build();
 
     server.enqueue(new MockResponse()
         .addHeader("Set-Cookie: a=FIRST")
@@ -1924,7 +1936,9 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -1971,7 +1985,9 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2018,7 +2034,9 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2052,7 +2070,9 @@ public final class CacheTest {
     writeFile(cache.getDirectory(), "journal", journalBody);
     cache.close();
     cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
-    client.setCache(cache);
+    client = client.newBuilder()
+        .setCache(cache)
+        .build();
 
     Response response = get(url);
     assertEquals(entryBody, response.body().string());
@@ -2085,12 +2105,13 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
 
     final AtomicReference<String> ifNoneMatch = new AtomicReference<>();
-    client.networkInterceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
-        return chain.proceed(chain.request());
-      }
-    });
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            ifNoneMatch.compareAndSet(null, chain.request().header("If-None-Match"));
+            return chain.proceed(chain.request());
+          }
+        }).build();
 
     // Confirm the value is cached and intercepted.
     assertEquals("A", get(url).body().string());
@@ -2107,11 +2128,12 @@ public final class CacheTest {
     assertEquals("A", get(url).body().string());
 
     // Confirm the interceptor isn't exercised.
-    client.networkInterceptors().add(new Interceptor() {
-      @Override public Response intercept(Chain chain) throws IOException {
-        throw new AssertionError();
-      }
-    });
+    client = client.newBuilder()
+        .addNetworkInterceptor(new Interceptor() {
+          @Override public Response intercept(Chain chain) throws IOException {
+            throw new AssertionError();
+          }
+        }).build();
     assertEquals("A", get(url).body().string());
   }
 

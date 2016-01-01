@@ -30,7 +30,7 @@ import okhttp3.internal.huc.HttpsURLConnectionImpl;
  * {@link HttpURLConnection} or upgrade to OkHttp's Request/Response API.
  */
 public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
-  private final OkHttpClient client;
+  private OkHttpClient client;
 
   public OkUrlFactory(OkHttpClient client) {
     this.client = client;
@@ -40,12 +40,17 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
     return client;
   }
 
+  public OkUrlFactory setClient(OkHttpClient client) {
+    this.client = client;
+    return this;
+  }
+
   /**
    * Returns a copy of this stream handler factory that includes a shallow copy of the internal
    * {@linkplain OkHttpClient HTTP client}.
    */
   @Override public OkUrlFactory clone() {
-    return new OkUrlFactory(client.clone());
+    return new OkUrlFactory(client);
   }
 
   public HttpURLConnection open(URL url) {
@@ -54,8 +59,9 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
 
   HttpURLConnection open(URL url, Proxy proxy) {
     String protocol = url.getProtocol();
-    OkHttpClient copy = client.copyWithDefaults();
-    copy.setProxy(proxy);
+    OkHttpClient copy = client.newBuilder()
+        .setProxy(proxy)
+        .build();
 
     if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);
     if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy);

@@ -35,8 +35,9 @@ class OkHttp extends SynchronousHttpClient {
 
   @Override public void prepare(Benchmark benchmark) {
     super.prepare(benchmark);
-    client = new OkHttpClient();
-    client.setProtocols(benchmark.protocols);
+    client = new OkHttpClient.Builder()
+        .setProtocols(benchmark.protocols)
+        .build();
 
     if (benchmark.tls) {
       SSLContext sslContext = SslContextBuilder.localhost();
@@ -46,8 +47,10 @@ class OkHttp extends SynchronousHttpClient {
           return true;
         }
       };
-      client.setSslSocketFactory(socketFactory);
-      client.setHostnameVerifier(hostnameVerifier);
+      client = new OkHttpClient.Builder()
+          .setSslSocketFactory(socketFactory)
+          .setHostnameVerifier(hostnameVerifier)
+          .build();
     }
   }
 

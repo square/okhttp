@@ -64,8 +64,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
         builder.addLenient(name, value);
       }
 
-      @Override public void setCache(OkHttpClient client, InternalCache internalCache) {
-        client.setInternalCache(internalCache);
+      @Override public void setCache(OkHttpClient.Builder builder, InternalCache internalCache) {
+        builder.setInternalCache(internalCache);
       }
 
       @Override public InternalCache internalCache(OkHttpClient client) {
@@ -111,85 +111,66 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     };
   }
 
-  /** Lazily-initialized. */
-  private static SSLSocketFactory defaultSslSocketFactory;
+  private final Dispatcher dispatcher;
+  private final Proxy proxy;
+  private final List<Protocol> protocols;
+  private final List<ConnectionSpec> connectionSpecs;
+  private final List<Interceptor> interceptors;
+  private final List<Interceptor> networkInterceptors;
+  private final ProxySelector proxySelector;
+  private final CookieJar cookieJar;
+  private final Cache cache;
+  private final InternalCache internalCache;
+  private final SocketFactory socketFactory;
+  private final SSLSocketFactory sslSocketFactory;
+  private final HostnameVerifier hostnameVerifier;
+  private final CertificatePinner certificatePinner;
+  private final Authenticator proxyAuthenticator;
+  private final Authenticator authenticator;
+  private final ConnectionPool connectionPool;
+  private final Dns dns;
+  private final boolean followSslRedirects;
+  private final boolean followRedirects;
+  private final boolean retryOnConnectionFailure;
+  private final int connectTimeout;
+  private final int readTimeout;
+  private final int writeTimeout;
 
-  private final RouteDatabase routeDatabase;
-  private Dispatcher dispatcher;
-  private Proxy proxy;
-  private List<Protocol> protocols;
-  private List<ConnectionSpec> connectionSpecs;
-  private final List<Interceptor> interceptors = new ArrayList<>();
-  private final List<Interceptor> networkInterceptors = new ArrayList<>();
-  private ProxySelector proxySelector;
-  private CookieJar cookieJar;
-
-  /** Non-null if this client is caching; possibly by {@code cache}. */
-  private InternalCache internalCache;
-  private Cache cache;
-
-  private SocketFactory socketFactory;
-  private SSLSocketFactory sslSocketFactory;
-  private HostnameVerifier hostnameVerifier;
-  private CertificatePinner certificatePinner;
-  private Authenticator proxyAuthenticator;
-  private Authenticator authenticator;
-  private ConnectionPool connectionPool = new ConnectionPool();
-  private Dns dns;
-  private boolean followSslRedirects = true;
-  private boolean followRedirects = true;
-  private boolean retryOnConnectionFailure = true;
-  private int connectTimeout = 10_000;
-  private int readTimeout = 10_000;
-  private int writeTimeout = 10_000;
-
-  public OkHttpClient() {
-    routeDatabase = new RouteDatabase();
-    dispatcher = new Dispatcher();
-  }
-
-  private OkHttpClient(OkHttpClient okHttpClient) {
-    this.routeDatabase = okHttpClient.routeDatabase;
-    this.dispatcher = okHttpClient.dispatcher;
-    this.proxy = okHttpClient.proxy;
-    this.protocols = okHttpClient.protocols;
-    this.connectionSpecs = okHttpClient.connectionSpecs;
-    this.interceptors.addAll(okHttpClient.interceptors);
-    this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
-    this.proxySelector = okHttpClient.proxySelector;
-    this.cookieJar = okHttpClient.cookieJar;
-    this.cache = okHttpClient.cache;
-    this.internalCache = cache != null ? cache.internalCache : okHttpClient.internalCache;
-    this.socketFactory = okHttpClient.socketFactory;
-    this.sslSocketFactory = okHttpClient.sslSocketFactory;
-    this.hostnameVerifier = okHttpClient.hostnameVerifier;
-    this.certificatePinner = okHttpClient.certificatePinner;
-    this.proxyAuthenticator = okHttpClient.proxyAuthenticator;
-    this.authenticator = okHttpClient.authenticator;
-    this.connectionPool = okHttpClient.connectionPool;
-    this.dns = okHttpClient.dns;
-    this.followSslRedirects = okHttpClient.followSslRedirects;
-    this.followRedirects = okHttpClient.followRedirects;
-    this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
-    this.connectTimeout = okHttpClient.connectTimeout;
-    this.readTimeout = okHttpClient.readTimeout;
-    this.writeTimeout = okHttpClient.writeTimeout;
-  }
-
-  /**
-   * Sets the default connect timeout for new connections. A value of 0 means no timeout, otherwise
-   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-   *
-   * @see URLConnection#setConnectTimeout(int)
-   */
-  public OkHttpClient setConnectTimeout(long timeout, TimeUnit unit) {
-    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-    if (unit == null) throw new IllegalArgumentException("unit == null");
-    long millis = unit.toMillis(timeout);
-    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
-    if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
-    connectTimeout = (int) millis;
-    return this;
+  private OkHttpClient(Builder builder) {
+    this.dispatcher = builder.dispatcher;
+    this.proxy = builder.proxy;
+    this.protocols = builder.protocols;
+    this.connectionSpecs = builder.connectionSpecs;
+    this.interceptors = Util.immutableList(builder.interceptors);
+    this.networkInterceptors = Util.immutableList(builder.networkInterceptors);
+    this.proxySelector = builder.proxySelector;
+    this.cookieJar = builder.cookieJar;
+    this.cache = builder.cache;
+    this.internalCache = builder.internalCache;
+    this.socketFactory = builder.socketFactory;
+    if (builder.sslSocketFactory != null) {
+      this.sslSocketFactory = builder.sslSocketFactory;
+    } else {
+      try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, null, null);
+        this.sslSocketFactory = sslContext.getSocketFactory();
+      } catch (GeneralSecurityException e) {
+        throw new AssertionError(); // The system has no TLS. Just give up.
+      }
+    }
+    this.hostnameVerifier = builder.hostnameVerifier;
+    this.certificatePinner = builder.certificatePinner;
+    this.proxyAuthenticator = builder.proxyAuthenticator;
+    this.authenticator = builder.authenticator;
+    this.connectionPool = builder.connectionPool;
+    this.dns = builder.dns;
+    this.followSslRedirects = builder.followSslRedirects;
+    this.followRedirects = builder.followRedirects;
+    this.retryOnConnectionFailure = builder.retryOnConnectionFailure;
+    this.connectTimeout = builder.connectTimeout;
+    this.readTimeout = builder.readTimeout;
+    this.writeTimeout = builder.writeTimeout;
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -197,39 +178,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     return connectTimeout;
   }
 
-  /**
-   * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
-   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-   *
-   * @see URLConnection#setReadTimeout(int)
-   */
-  public OkHttpClient setReadTimeout(long timeout, TimeUnit unit) {
-    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-    if (unit == null) throw new IllegalArgumentException("unit == null");
-    long millis = unit.toMillis(timeout);
-    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
-    if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
-    readTimeout = (int) millis;
-    return this;
-  }
-
   /** Default read timeout (in milliseconds). */
   public int getReadTimeout() {
     return readTimeout;
-  }
-
-  /**
-   * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
-   * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
-   */
-  public OkHttpClient setWriteTimeout(long timeout, TimeUnit unit) {
-    if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-    if (unit == null) throw new IllegalArgumentException("unit == null");
-    long millis = unit.toMillis(timeout);
-    if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
-    if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
-    writeTimeout = (int) millis;
-    return this;
   }
 
   /** Default write timeout (in milliseconds). */
@@ -237,310 +188,76 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     return writeTimeout;
   }
 
-  /**
-   * Sets the HTTP proxy that will be used by connections created by this client. This takes
-   * precedence over {@link #setProxySelector}, which is only honored when this proxy is null (which
-   * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
-   */
-  public OkHttpClient setProxy(Proxy proxy) {
-    this.proxy = proxy;
-    return this;
-  }
-
   public Proxy getProxy() {
     return proxy;
-  }
-
-  /**
-   * Sets the proxy selection policy to be used if no {@link #setProxy proxy} is specified
-   * explicitly. The proxy selector may return multiple proxies; in that case they will be tried in
-   * sequence until a successful connection is established.
-   *
-   * <p>If unset, the {@link ProxySelector#getDefault() system-wide default} proxy selector will be
-   * used.
-   */
-  public OkHttpClient setProxySelector(ProxySelector proxySelector) {
-    this.proxySelector = proxySelector;
-    return this;
   }
 
   public ProxySelector getProxySelector() {
     return proxySelector;
   }
 
-  /**
-   * Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to
-   * outgoing HTTP requests.
-   *
-   * <p>If unset, {@linkplain CookieJar#NO_COOKIES no cookies} will be accepted nor provided.
-   */
-  public OkHttpClient setCookieJar(CookieJar cookieJar) {
-    this.cookieJar = cookieJar;
-    return this;
-  }
-
   public CookieJar getCookieJar() {
     return cookieJar;
-  }
-
-  /** Sets the response cache to be used to read and write cached responses. */
-  void setInternalCache(InternalCache internalCache) {
-    this.internalCache = internalCache;
-    this.cache = null;
-  }
-
-  InternalCache internalCache() {
-    return internalCache;
-  }
-
-  public OkHttpClient setCache(Cache cache) {
-    this.cache = cache;
-    this.internalCache = null;
-    return this;
   }
 
   public Cache getCache() {
     return cache;
   }
 
-  /**
-   * Sets the DNS service used to lookup IP addresses for hostnames.
-   *
-   * <p>If unset, the {@link Dns#SYSTEM system-wide default} DNS will be used.
-   */
-  public OkHttpClient setDns(Dns dns) {
-    this.dns = dns;
-    return this;
+  InternalCache internalCache() {
+    return cache != null ? cache.internalCache : internalCache;
   }
 
   public Dns getDns() {
     return dns;
   }
 
-  /**
-   * Sets the socket factory used to create connections. OkHttp only uses the parameterless {@link
-   * SocketFactory#createSocket() createSocket()} method to create unconnected sockets. Overriding
-   * this method, e. g., allows the socket to be bound to a specific local address.
-   *
-   * <p>If unset, the {@link SocketFactory#getDefault() system-wide default} socket factory will be
-   * used.
-   */
-  public OkHttpClient setSocketFactory(SocketFactory socketFactory) {
-    this.socketFactory = socketFactory;
-    return this;
-  }
-
   public SocketFactory getSocketFactory() {
     return socketFactory;
-  }
-
-  /**
-   * Sets the socket factory used to secure HTTPS connections.
-   *
-   * <p>If unset, a lazily created SSL socket factory will be used.
-   */
-  public OkHttpClient setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
-    this.sslSocketFactory = sslSocketFactory;
-    return this;
   }
 
   public SSLSocketFactory getSslSocketFactory() {
     return sslSocketFactory;
   }
 
-  /**
-   * Sets the verifier used to confirm that response certificates apply to requested hostnames for
-   * HTTPS connections.
-   *
-   * <p>If unset, a default hostname verifier will be used.
-   */
-  public OkHttpClient setHostnameVerifier(HostnameVerifier hostnameVerifier) {
-    this.hostnameVerifier = hostnameVerifier;
-    return this;
-  }
-
   public HostnameVerifier getHostnameVerifier() {
     return hostnameVerifier;
-  }
-
-  /**
-   * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
-   * connections rely on only the {@link #setSslSocketFactory SSL socket factory} to establish
-   * trust. Pinning certificates avoids the need to trust certificate authorities.
-   */
-  public OkHttpClient setCertificatePinner(CertificatePinner certificatePinner) {
-    this.certificatePinner = certificatePinner;
-    return this;
   }
 
   public CertificatePinner getCertificatePinner() {
     return certificatePinner;
   }
 
-  /**
-   * Sets the authenticator used to respond to challenges from origin servers. Use {@link
-   * #setProxyAuthenticator} to set the authenticator for proxy servers.
-   *
-   * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
-   */
-  public OkHttpClient setAuthenticator(Authenticator authenticator) {
-    this.authenticator = authenticator;
-    return this;
-  }
-
   public Authenticator getAuthenticator() {
     return authenticator;
-  }
-
-  /**
-   * Sets the authenticator used to respond to challenges from proxy servers. Use {@link
-   * #setAuthenticator} to set the authenticator for origin servers.
-   *
-   * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
-   */
-  public OkHttpClient setProxyAuthenticator(Authenticator proxyAuthenticator) {
-    this.proxyAuthenticator = proxyAuthenticator;
-    return this;
   }
 
   public Authenticator getProxyAuthenticator() {
     return proxyAuthenticator;
   }
 
-  /**
-   * Sets the connection pool used to recycle HTTP and HTTPS connections.
-   *
-   * <p>If unset, a new connection pool will be used.
-   */
-  public OkHttpClient setConnectionPool(ConnectionPool connectionPool) {
-    if (connectionPool == null) throw new NullPointerException("connectionPool == null");
-    this.connectionPool = connectionPool;
-    return this;
-  }
-
   public ConnectionPool getConnectionPool() {
     return connectionPool;
-  }
-
-  /**
-   * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
-   *
-   * <p>If unset, protocol redirects will be followed. This is different than the built-in {@code
-   * HttpURLConnection}'s default.
-   */
-  public OkHttpClient setFollowSslRedirects(boolean followProtocolRedirects) {
-    this.followSslRedirects = followProtocolRedirects;
-    return this;
   }
 
   public boolean getFollowSslRedirects() {
     return followSslRedirects;
   }
 
-  /** Configure this client to follow redirects. If unset, redirects be followed. */
-  public OkHttpClient setFollowRedirects(boolean followRedirects) {
-    this.followRedirects = followRedirects;
-    return this;
-  }
-
   public boolean getFollowRedirects() {
     return followRedirects;
-  }
-
-  /**
-   * Configure this client to retry or not when a connectivity problem is encountered. By default,
-   * this client silently recovers from the following problems:
-   *
-   * <ul>
-   *   <li><strong>Unreachable IP addresses.</strong> If the URL's host has multiple IP addresses,
-   *       failure to reach any individual IP address doesn't fail the overall request. This can
-   *       increase availability of multi-homed services.
-   *   <li><strong>Stale pooled connections.</strong> The {@link ConnectionPool} reuses sockets
-   *       to decrease request latency, but these connections will occasionally time out.
-   *   <li><strong>Unreachable proxy servers.</strong> A {@link ProxySelector} can be used to
-   *       attempt multiple proxy servers in sequence, eventually falling back to a direct
-   *       connection.
-   * </ul>
-   *
-   * Set this to false to avoid retrying requests when doing so is destructive. In this case the
-   * calling application should do its own recovery of connectivity failures.
-   */
-  public OkHttpClient setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
-    this.retryOnConnectionFailure = retryOnConnectionFailure;
-    return this;
   }
 
   public boolean getRetryOnConnectionFailure() {
     return retryOnConnectionFailure;
   }
 
-  RouteDatabase routeDatabase() {
-    return routeDatabase;
-  }
-
-  /**
-   * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
-   */
-  public OkHttpClient setDispatcher(Dispatcher dispatcher) {
-    if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
-    this.dispatcher = dispatcher;
-    return this;
-  }
-
   public Dispatcher getDispatcher() {
     return dispatcher;
   }
 
-  /**
-   * Configure the protocols used by this client to communicate with remote servers. By default this
-   * client will prefer the most efficient transport available, falling back to more ubiquitous
-   * protocols. Applications should only call this method to avoid specific compatibility problems,
-   * such as web servers that behave incorrectly when SPDY is enabled.
-   *
-   * <p>The following protocols are currently supported:
-   *
-   * <ul>
-   *   <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
-   *   <li><a href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
-   *   <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-17">h2</a>
-   * </ul>
-   *
-   * <p><strong>This is an evolving set.</strong> Future releases include support for transitional
-   * protocols. The http/1.1 transport will never be dropped.
-   *
-   * <p>If multiple protocols are specified, <a
-   * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> will be used to
-   * negotiate a transport.
-   *
-   * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are initiated with {@code
-   * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
-   * Response#protocol()}.
-   *
-   * @param protocols the protocols to use, in order of preference. The list must contain {@link
-   * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
-   */
-  public OkHttpClient setProtocols(List<Protocol> protocols) {
-    protocols = Util.immutableList(protocols);
-    if (!protocols.contains(Protocol.HTTP_1_1)) {
-      throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
-    }
-    if (protocols.contains(Protocol.HTTP_1_0)) {
-      throw new IllegalArgumentException("protocols must not contain http/1.0: " + protocols);
-    }
-    if (protocols.contains(null)) {
-      throw new IllegalArgumentException("protocols must not contain null");
-    }
-    this.protocols = Util.immutableList(protocols);
-    return this;
-  }
-
   public List<Protocol> getProtocols() {
     return protocols;
-  }
-
-  public OkHttpClient setConnectionSpecs(List<ConnectionSpec> connectionSpecs) {
-    this.connectionSpecs = Util.immutableList(connectionSpecs);
-    return this;
   }
 
   public List<ConnectionSpec> getConnectionSpecs() {
@@ -581,72 +298,375 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     return this;
   }
 
-  /**
-   * Returns a shallow copy of this OkHttpClient that uses the system-wide default for each field
-   * that hasn't been explicitly configured.
-   */
-  OkHttpClient copyWithDefaults() {
-    OkHttpClient result = new OkHttpClient(this);
-    if (result.proxySelector == null) {
-      result.proxySelector = ProxySelector.getDefault();
-    }
-    if (result.cookieJar == null) {
-      result.cookieJar = CookieJar.NO_COOKIES;
-    }
-    if (result.socketFactory == null) {
-      result.socketFactory = SocketFactory.getDefault();
-    }
-    if (result.sslSocketFactory == null) {
-      result.sslSocketFactory = getDefaultSSLSocketFactory();
-    }
-    if (result.hostnameVerifier == null) {
-      result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
-    }
-    if (result.certificatePinner == null) {
-      result.certificatePinner = CertificatePinner.DEFAULT;
-    }
-    if (result.authenticator == null) {
-      result.authenticator = Authenticator.NONE;
-    }
-    if (result.proxyAuthenticator == null) {
-      result.proxyAuthenticator = Authenticator.NONE;
-    }
-    if (result.protocols == null) {
-      result.protocols = DEFAULT_PROTOCOLS;
-    }
-    if (result.connectionSpecs == null) {
-      result.connectionSpecs = DEFAULT_CONNECTION_SPECS;
-    }
-    if (result.dns == null) {
-      result.dns = Dns.SYSTEM;
-    }
-    return result;
+  public Builder newBuilder() {
+    return new Builder(this);
   }
 
-  /**
-   * Java and Android programs default to using a single global SSL context, accessible to HTTP
-   * clients as {@link SSLSocketFactory#getDefault()}. If we used the shared SSL context, when
-   * OkHttp enables ALPN for its SPDY-related stuff, it would also enable ALPN for other usages,
-   * which might crash them because ALPN is enabled when it isn't expected to be.
-   *
-   * <p>This code avoids that by defaulting to an OkHttp-created SSL context. The drawback of this
-   * approach is that apps that customize the global SSL context will lose these customizations.
-   */
-  private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
-    if (defaultSslSocketFactory == null) {
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, null);
-        defaultSslSocketFactory = sslContext.getSocketFactory();
-      } catch (GeneralSecurityException e) {
-        throw new AssertionError(); // The system has no TLS. Just give up.
+  public static final class Builder {
+    private Dispatcher dispatcher;
+    private Proxy proxy;
+    private List<Protocol> protocols;
+    private List<ConnectionSpec> connectionSpecs;
+    private final List<Interceptor> interceptors = new ArrayList<>();
+    private final List<Interceptor> networkInterceptors = new ArrayList<>();
+    private ProxySelector proxySelector;
+    private CookieJar cookieJar;
+    private Cache cache;
+    private InternalCache internalCache;
+    private SocketFactory socketFactory;
+    private SSLSocketFactory sslSocketFactory;
+    private HostnameVerifier hostnameVerifier;
+    private CertificatePinner certificatePinner;
+    private Authenticator proxyAuthenticator;
+    private Authenticator authenticator;
+    private ConnectionPool connectionPool;
+    private Dns dns;
+    private boolean followSslRedirects;
+    private boolean followRedirects;
+    private boolean retryOnConnectionFailure;
+    private int connectTimeout;
+    private int readTimeout;
+    private int writeTimeout;
+
+    public Builder() {
+      dispatcher = new Dispatcher();
+      protocols = DEFAULT_PROTOCOLS;
+      connectionSpecs = DEFAULT_CONNECTION_SPECS;
+      proxySelector = ProxySelector.getDefault();
+      cookieJar = CookieJar.NO_COOKIES;
+      socketFactory = SocketFactory.getDefault();
+      hostnameVerifier = OkHostnameVerifier.INSTANCE;
+      certificatePinner = CertificatePinner.DEFAULT;
+      proxyAuthenticator = Authenticator.NONE;
+      authenticator = Authenticator.NONE;
+      connectionPool = new ConnectionPool();
+      dns = Dns.SYSTEM;
+      followSslRedirects = true;
+      followRedirects = true;
+      retryOnConnectionFailure = true;
+      connectTimeout = 10_000;
+      readTimeout = 10_000;
+      writeTimeout = 10_000;
+    }
+
+    Builder(OkHttpClient okHttpClient) {
+      this.dispatcher = okHttpClient.dispatcher;
+      this.proxy = okHttpClient.proxy;
+      this.protocols = okHttpClient.protocols;
+      this.connectionSpecs = okHttpClient.connectionSpecs;
+      this.interceptors.addAll(okHttpClient.interceptors);
+      this.networkInterceptors.addAll(okHttpClient.networkInterceptors);
+      this.proxySelector = okHttpClient.proxySelector;
+      this.cookieJar = okHttpClient.cookieJar;
+      this.internalCache = okHttpClient.internalCache;
+      this.cache = okHttpClient.cache;
+      this.socketFactory = okHttpClient.socketFactory;
+      this.sslSocketFactory = okHttpClient.sslSocketFactory;
+      this.hostnameVerifier = okHttpClient.hostnameVerifier;
+      this.certificatePinner = okHttpClient.certificatePinner;
+      this.proxyAuthenticator = okHttpClient.proxyAuthenticator;
+      this.authenticator = okHttpClient.authenticator;
+      this.connectionPool = okHttpClient.connectionPool;
+      this.dns = okHttpClient.dns;
+      this.followSslRedirects = okHttpClient.followSslRedirects;
+      this.followRedirects = okHttpClient.followRedirects;
+      this.retryOnConnectionFailure = okHttpClient.retryOnConnectionFailure;
+      this.connectTimeout = okHttpClient.connectTimeout;
+      this.readTimeout = okHttpClient.readTimeout;
+      this.writeTimeout = okHttpClient.writeTimeout;
+    }
+
+    /**
+     * Sets the default connect timeout for new connections. A value of 0 means no timeout,
+     * otherwise values must be between 1 and {@link Integer#MAX_VALUE} when converted to
+     * milliseconds.
+     *
+     * @see URLConnection#setConnectTimeout(int)
+     */
+    public Builder setConnectTimeout(long timeout, TimeUnit unit) {
+      if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+      if (unit == null) throw new IllegalArgumentException("unit == null");
+      long millis = unit.toMillis(timeout);
+      if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
+      if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
+      connectTimeout = (int) millis;
+      return this;
+    }
+
+    /**
+     * Sets the default read timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     *
+     * @see URLConnection#setReadTimeout(int)
+     */
+    public Builder setReadTimeout(long timeout, TimeUnit unit) {
+      if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+      if (unit == null) throw new IllegalArgumentException("unit == null");
+      long millis = unit.toMillis(timeout);
+      if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
+      if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
+      readTimeout = (int) millis;
+      return this;
+    }
+
+    /**
+     * Sets the default write timeout for new connections. A value of 0 means no timeout, otherwise
+     * values must be between 1 and {@link Integer#MAX_VALUE} when converted to milliseconds.
+     */
+    public Builder setWriteTimeout(long timeout, TimeUnit unit) {
+      if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
+      if (unit == null) throw new IllegalArgumentException("unit == null");
+      long millis = unit.toMillis(timeout);
+      if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
+      if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
+      writeTimeout = (int) millis;
+      return this;
+    }
+
+    /**
+     * Sets the HTTP proxy that will be used by connections created by this client. This takes
+     * precedence over {@link #setProxySelector}, which is only honored when this proxy is null
+     * (which it is by default). To disable proxy use completely, call {@code
+     * setProxy(Proxy.NO_PROXY)}.
+     */
+    public Builder setProxy(Proxy proxy) {
+      this.proxy = proxy;
+      return this;
+    }
+
+    /**
+     * Sets the proxy selection policy to be used if no {@link #setProxy proxy} is specified
+     * explicitly. The proxy selector may return multiple proxies; in that case they will be tried
+     * in sequence until a successful connection is established.
+     *
+     * <p>If unset, the {@link ProxySelector#getDefault() system-wide default} proxy selector will
+     * be used.
+     */
+    public Builder setProxySelector(ProxySelector proxySelector) {
+      this.proxySelector = proxySelector;
+      return this;
+    }
+
+    /**
+     * Sets the handler that can accept cookies from incoming HTTP responses and provides cookies to
+     * outgoing HTTP requests.
+     *
+     * <p>If unset, {@linkplain CookieJar#NO_COOKIES no cookies} will be accepted nor provided.
+     */
+    public Builder setCookieJar(CookieJar cookieJar) {
+      this.cookieJar = cookieJar;
+      return this;
+    }
+
+    /** Sets the response cache to be used to read and write cached responses. */
+    void setInternalCache(InternalCache internalCache) {
+      this.internalCache = internalCache;
+      this.cache = null;
+    }
+
+    public Builder setCache(Cache cache) {
+      this.cache = cache;
+      this.internalCache = null;
+      return this;
+    }
+
+    /**
+     * Sets the DNS service used to lookup IP addresses for hostnames.
+     *
+     * <p>If unset, the {@link Dns#SYSTEM system-wide default} DNS will be used.
+     */
+    public Builder setDns(Dns dns) {
+      this.dns = dns;
+      return this;
+    }
+
+    /**
+     * Sets the socket factory used to create connections. OkHttp only uses the parameterless {@link
+     * SocketFactory#createSocket() createSocket()} method to create unconnected sockets. Overriding
+     * this method, e. g., allows the socket to be bound to a specific local address.
+     *
+     * <p>If unset, the {@link SocketFactory#getDefault() system-wide default} socket factory will
+     * be used.
+     */
+    public Builder setSocketFactory(SocketFactory socketFactory) {
+      this.socketFactory = socketFactory;
+      return this;
+    }
+
+    /**
+     * Sets the socket factory used to secure HTTPS connections.
+     *
+     * <p>If unset, a lazily created SSL socket factory will be used.
+     */
+    public Builder setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
+      this.sslSocketFactory = sslSocketFactory;
+      return this;
+    }
+
+    /**
+     * Sets the verifier used to confirm that response certificates apply to requested hostnames for
+     * HTTPS connections.
+     *
+     * <p>If unset, a default hostname verifier will be used.
+     */
+    public Builder setHostnameVerifier(HostnameVerifier hostnameVerifier) {
+      this.hostnameVerifier = hostnameVerifier;
+      return this;
+    }
+
+    /**
+     * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
+     * connections rely on only the {@link #setSslSocketFactory SSL socket factory} to establish
+     * trust. Pinning certificates avoids the need to trust certificate authorities.
+     */
+    public Builder setCertificatePinner(CertificatePinner certificatePinner) {
+      this.certificatePinner = certificatePinner;
+      return this;
+    }
+
+    /**
+     * Sets the authenticator used to respond to challenges from origin servers. Use {@link
+     * #setProxyAuthenticator} to set the authenticator for proxy servers.
+     *
+     * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
+     */
+    public Builder setAuthenticator(Authenticator authenticator) {
+      this.authenticator = authenticator;
+      return this;
+    }
+
+    /**
+     * Sets the authenticator used to respond to challenges from proxy servers. Use {@link
+     * #setAuthenticator} to set the authenticator for origin servers.
+     *
+     * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
+     */
+    public Builder setProxyAuthenticator(Authenticator proxyAuthenticator) {
+      this.proxyAuthenticator = proxyAuthenticator;
+      return this;
+    }
+
+    /**
+     * Sets the connection pool used to recycle HTTP and HTTPS connections.
+     *
+     * <p>If unset, a new connection pool will be used.
+     */
+    public Builder setConnectionPool(ConnectionPool connectionPool) {
+      if (connectionPool == null) throw new NullPointerException("connectionPool == null");
+      this.connectionPool = connectionPool;
+      return this;
+    }
+
+    /**
+     * Configure this client to follow redirects from HTTPS to HTTP and from HTTP to HTTPS.
+     *
+     * <p>If unset, protocol redirects will be followed. This is different than the built-in {@code
+     * HttpURLConnection}'s default.
+     */
+    public Builder setFollowSslRedirects(boolean followProtocolRedirects) {
+      this.followSslRedirects = followProtocolRedirects;
+      return this;
+    }
+
+    /** Configure this client to follow redirects. If unset, redirects be followed. */
+    public Builder setFollowRedirects(boolean followRedirects) {
+      this.followRedirects = followRedirects;
+      return this;
+    }
+
+    /**
+     * Configure this client to retry or not when a connectivity problem is encountered. By default,
+     * this client silently recovers from the following problems:
+     *
+     * <ul>
+     *   <li><strong>Unreachable IP addresses.</strong> If the URL's host has multiple IP addresses,
+     *       failure to reach any individual IP address doesn't fail the overall request. This can
+     *       increase availability of multi-homed services.
+     *   <li><strong>Stale pooled connections.</strong> The {@link ConnectionPool} reuses sockets
+     *       to decrease request latency, but these connections will occasionally time out.
+     *   <li><strong>Unreachable proxy servers.</strong> A {@link ProxySelector} can be used to
+     *       attempt multiple proxy servers in sequence, eventually falling back to a direct
+     *       connection.
+     * </ul>
+     *
+     * Set this to false to avoid retrying requests when doing so is destructive. In this case the
+     * calling application should do its own recovery of connectivity failures.
+     */
+    public Builder setRetryOnConnectionFailure(boolean retryOnConnectionFailure) {
+      this.retryOnConnectionFailure = retryOnConnectionFailure;
+      return this;
+    }
+
+    /**
+     * Sets the dispatcher used to set policy and execute asynchronous requests. Must not be null.
+     */
+    public Builder setDispatcher(Dispatcher dispatcher) {
+      if (dispatcher == null) throw new IllegalArgumentException("dispatcher == null");
+      this.dispatcher = dispatcher;
+      return this;
+    }
+
+    /**
+     * Configure the protocols used by this client to communicate with remote servers. By default
+     * this client will prefer the most efficient transport available, falling back to more
+     * ubiquitous protocols. Applications should only call this method to avoid specific
+     * compatibility problems, such as web servers that behave incorrectly when SPDY is enabled.
+     *
+     * <p>The following protocols are currently supported:
+     *
+     * <ul>
+     *     <li><a href="http://www.w3.org/Protocols/rfc2616/rfc2616.html">http/1.1</a>
+     *     <li><a
+     *         href="http://www.chromium.org/spdy/spdy-protocol/spdy-protocol-draft3-1">spdy/3.1</a>
+     *     <li><a href="http://tools.ietf.org/html/draft-ietf-httpbis-http2-17">h2</a>
+     * </ul>
+     *
+     * <p><strong>This is an evolving set.</strong> Future releases include support for transitional
+     * protocols. The http/1.1 transport will never be dropped.
+     *
+     * <p>If multiple protocols are specified, <a
+     * href="http://tools.ietf.org/html/draft-ietf-tls-applayerprotoneg">ALPN</a> will be used to
+     * negotiate a transport.
+     *
+     * <p>{@link Protocol#HTTP_1_0} is not supported in this set. Requests are initiated with {@code
+     * HTTP/1.1} only. If the server responds with {@code HTTP/1.0}, that will be exposed by {@link
+     * Response#protocol()}.
+     *
+     * @param protocols the protocols to use, in order of preference. The list must contain {@link
+     * Protocol#HTTP_1_1}. It must not contain null or {@link Protocol#HTTP_1_0}.
+     */
+    public Builder setProtocols(List<Protocol> protocols) {
+      protocols = Util.immutableList(protocols);
+      if (!protocols.contains(Protocol.HTTP_1_1)) {
+        throw new IllegalArgumentException("protocols doesn't contain http/1.1: " + protocols);
       }
+      if (protocols.contains(Protocol.HTTP_1_0)) {
+        throw new IllegalArgumentException("protocols must not contain http/1.0: " + protocols);
+      }
+      if (protocols.contains(null)) {
+        throw new IllegalArgumentException("protocols must not contain null");
+      }
+      this.protocols = Util.immutableList(protocols);
+      return this;
     }
-    return defaultSslSocketFactory;
-  }
 
-  /** Returns a shallow copy of this OkHttpClient. */
-  @Override public OkHttpClient clone() {
-    return new OkHttpClient(this);
+    public Builder setConnectionSpecs(List<ConnectionSpec> connectionSpecs) {
+      this.connectionSpecs = Util.immutableList(connectionSpecs);
+      return this;
+    }
+
+    public Builder addInterceptor(Interceptor interceptor) {
+      interceptors.add(interceptor);
+      return this;
+    }
+
+    public Builder addNetworkInterceptor(Interceptor interceptor) {
+      networkInterceptors.add(interceptor);
+      return this;
+    }
+
+    public OkHttpClient build() {
+      return new OkHttpClient(this);
+    }
   }
 }

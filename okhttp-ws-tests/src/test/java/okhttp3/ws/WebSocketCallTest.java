@@ -43,8 +43,8 @@ public final class WebSocketCallTest {
 
   private final SSLContext sslContext = SslContextBuilder.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
-  private final OkHttpClient client = new OkHttpClient();
   private final Random random = new Random(0);
+  private OkHttpClient client = new OkHttpClient.Builder().build();
 
   @After public void tearDown() {
     listener.assertExhausted();
@@ -174,16 +174,20 @@ public final class WebSocketCallTest {
 
   @Test public void wssScheme() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .build();
 
     websocketScheme("wss");
   }
 
   @Test public void httpsScheme() throws IOException {
     server.useHttps(sslContext.getSocketFactory(), false);
-    client.setSslSocketFactory(sslContext.getSocketFactory());
-    client.setHostnameVerifier(new RecordingHostnameVerifier());
+    client = client.newBuilder()
+        .setSslSocketFactory(sslContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .build();
 
     websocketScheme("https");
   }

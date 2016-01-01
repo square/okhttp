@@ -26,14 +26,15 @@ public final class CertificatePinning {
   private final OkHttpClient client;
 
   public CertificatePinning() {
-    client = new OkHttpClient();
-    client.setCertificatePinner(
-        new CertificatePinner.Builder()
-            .add("publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
-            .add("publicobject.com", "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")
-            .add("publicobject.com", "sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=")
-            .add("publicobject.com", "sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=")
-            .build());
+    client = new OkHttpClient.Builder()
+        .setCertificatePinner(
+            new CertificatePinner.Builder()
+                .add("publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
+                .add("publicobject.com", "sha1/SXxoaOSEzPC6BgGmxAt/EAcsajw=")
+                .add("publicobject.com", "sha1/blhOM3W9V/bVQhsWAcLYwPU6n24=")
+                .add("publicobject.com", "sha1/T5x9IXmcrQ7YuQxXnxoCmeeQ84c=")
+                .build())
+        .build();
   }
 
   public void run() throws Exception {

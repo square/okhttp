@@ -41,11 +41,9 @@ public final class CheckHandshake {
     }
   };
 
-  private final OkHttpClient client = new OkHttpClient();
-
-  public CheckHandshake() {
-    client.networkInterceptors().add(CHECK_HANDSHAKE_INTERCEPTOR);
-  }
+  private final OkHttpClient client = new OkHttpClient.Builder()
+      .addNetworkInterceptor(CHECK_HANDSHAKE_INTERCEPTOR)
+      .build();
 
   public void run() throws Exception {
     Request request = new Request.Builder()
