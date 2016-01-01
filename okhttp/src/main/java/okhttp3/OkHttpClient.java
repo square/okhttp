@@ -37,16 +37,24 @@ import okhttp3.internal.io.RealConnection;
 import okhttp3.internal.tls.OkHostnameVerifier;
 
 /**
- * Configures and creates HTTP connections. Most applications can use a single OkHttpClient for all
- * of their HTTP requests - benefiting from a shared response cache, thread pool, connection re-use,
- * etc.
+ * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
+ * responses. Most applications can use a single OkHttpClient for all of their HTTP requests,
+ * benefiting from a shared response cache, thread pool, connection re-use, etc.
  *
- * <p>Instances of OkHttpClient are intended to be fully configured before they're shared - once
- * shared they should be treated as immutable and can safely be used to concurrently open new
- * connections. If required, threads can call {@link #clone()} to make a shallow copy of the
- * OkHttpClient that can be safely modified with further configuration changes.
+ * <p>To create an {@code OkHttpClient} with the default settings, use the {@linkplain
+ * #OkHttpClient() default constructor}. Or create a configured instance with {@link
+ * OkHttpClient.Builder}. To adjust an existing client before making a request, use {@link
+ * #newBuilder()}. This example shows a call with a 30 second timeout:
+ * <pre>   {@code
+ *
+ *   OkHttpClient client = ...
+ *   OkHttpClient clientWith30sTimeout = client.newBuilder()
+ *       .readTimeout(30, TimeUnit.SECONDS)
+ *       .build();
+ *   Response response = clientWith30sTimeout.newCall(request).execute();
+ * }</pre>
  */
-public class OkHttpClient implements Cloneable, Call.Factory {
+public final class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
@@ -292,15 +300,6 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     return new RealCall(this, request);
   }
 
-  /**
-   * Cancels all scheduled or in-flight calls tagged with {@code tag}. Requests that are already
-   * complete cannot be canceled.
-   */
-  public OkHttpClient cancel(Object tag) {
-    dispatcher().cancel(tag);
-    return this;
-  }
-
   public Builder newBuilder() {
     return new Builder(this);
   }
@@ -424,9 +423,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
     /**
      * Sets the HTTP proxy that will be used by connections created by this client. This takes
-     * precedence over {@link #proxySelector}, which is only honored when this proxy is null
-     * (which it is by default). To disable proxy use completely, call {@code
-     * setProxy(Proxy.NO_PROXY)}.
+     * precedence over {@link #proxySelector}, which is only honored when this proxy is null (which
+     * it is by default). To disable proxy use completely, call {@code setProxy(Proxy.NO_PROXY)}.
      */
     public Builder proxy(Proxy proxy) {
       this.proxy = proxy;
@@ -515,8 +513,8 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
     /**
      * Sets the certificate pinner that constrains which certificates are trusted. By default HTTPS
-     * connections rely on only the {@link #sslSocketFactory SSL socket factory} to establish
-     * trust. Pinning certificates avoids the need to trust certificate authorities.
+     * connections rely on only the {@link #sslSocketFactory SSL socket factory} to establish trust.
+     * Pinning certificates avoids the need to trust certificate authorities.
      */
     public Builder certificatePinner(CertificatePinner certificatePinner) {
       this.certificatePinner = certificatePinner;

@@ -1,16 +1,23 @@
 package okhttp3;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import okhttp3.RealCall.AsyncCall;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class DispatcherTest {
@@ -116,12 +123,116 @@ public final class DispatcherTest {
 
   @Test public void cancelingRunningJobTakesNoEffectUntilJobFinishes() throws Exception {
     dispatcher.setMaxRequests(1);
-    client.newCall(newRequest("http://a/1", "tag1")).enqueue(callback);
-    client.newCall(newRequest("http://a/2")).enqueue(callback);
-    dispatcher.cancel("tag1");
+    Call c1 = client.newCall(newRequest("http://a/1", "tag1"));
+    Call c2 = client.newCall(newRequest("http://a/2"));
+    c1.enqueue(callback);
+    c2.enqueue(callback);
+    c1.cancel();
     executor.assertJobs("http://a/1");
     executor.finishJob("http://a/1");
     executor.assertJobs("http://a/2");
+  }
+
+  @Test public void asyncCallAccessors() throws Exception {
+    dispatcher.setMaxRequests(3);
+    Call a1 = client.newCall(newRequest("http://a/1"));
+    Call a2 = client.newCall(newRequest("http://a/2"));
+    Call a3 = client.newCall(newRequest("http://a/3"));
+    Call a4 = client.newCall(newRequest("http://a/4"));
+    Call a5 = client.newCall(newRequest("http://a/5"));
+    a1.enqueue(callback);
+    a2.enqueue(callback);
+    a3.enqueue(callback);
+    a4.enqueue(callback);
+    a5.enqueue(callback);
+    assertEquals(3, dispatcher.runningCallsCount());
+    assertEquals(2, dispatcher.queuedCallsCount());
+    assertEquals(set(a1, a2, a3), set(dispatcher.runningCalls()));
+    assertEquals(set(a4, a5), set(dispatcher.queuedCalls()));
+  }
+
+  @Test public void synchronousCallAccessors() throws Exception {
+    final CountDownLatch ready = new CountDownLatch(2);
+    final CountDownLatch waiting = new CountDownLatch(1);
+    client = client.newBuilder()
+        .addInterceptor(
+            new Interceptor() {
+              @Override public Response intercept(Chain chain) throws IOException {
+                try {
+                  ready.countDown();
+                  waiting.await();
+                } catch (InterruptedException e) {
+                  throw new AssertionError();
+                }
+                throw new IOException();
+              }
+            })
+        .build();
+
+    Call a1 = client.newCall(newRequest("http://a/1"));
+    Call a2 = client.newCall(newRequest("http://a/2"));
+    Call a3 = client.newCall(newRequest("http://a/3"));
+    Call a4 = client.newCall(newRequest("http://a/4"));
+    Thread t1 = makeSynchronousCall(a1);
+    Thread t2 = makeSynchronousCall(a2);
+
+    // We created 4 calls and started 2 of them. That's 2 running calls and 0 queued.
+    ready.await();
+    assertEquals(2, dispatcher.runningCallsCount());
+    assertEquals(0, dispatcher.queuedCallsCount());
+    assertEquals(set(a1, a2), set(dispatcher.runningCalls()));
+    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+
+    // Cancel some calls. That doesn't impact running or queued.
+    a2.cancel();
+    a3.cancel();
+    assertEquals(set(a1, a2), set(dispatcher.runningCalls()));
+    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+
+    // Let the calls finish.
+    waiting.countDown();
+    t1.join();
+    t2.join();
+
+    // Now we should have 0 running calls and 0 queued calls.
+    assertEquals(0, dispatcher.runningCallsCount());
+    assertEquals(0, dispatcher.queuedCallsCount());
+    assertEquals(Collections.emptyList(), dispatcher.runningCalls());
+    assertEquals(Collections.emptyList(), dispatcher.queuedCalls());
+
+    assertTrue(a1.isExecuted());
+    assertFalse(a1.isCanceled());
+
+    assertTrue(a2.isExecuted());
+    assertTrue(a2.isCanceled());
+
+    assertFalse(a3.isExecuted());
+    assertTrue(a3.isCanceled());
+
+    assertFalse(a4.isExecuted());
+    assertFalse(a4.isCanceled());
+  }
+
+  private <T> Set<T> set(T... values) {
+    return set(Arrays.asList(values));
+  }
+
+  private <T> Set<T> set(List<T> list) {
+    return new LinkedHashSet<>(list);
+  }
+
+  private Thread makeSynchronousCall(final Call call) {
+    Thread thread = new Thread() {
+      @Override public void run() {
+        try {
+          call.execute();
+          throw new AssertionError();
+        } catch (IOException expected) {
+        }
+      }
+    };
+    thread.start();
+    return thread;
   }
 
   class RecordingExecutor extends AbstractExecutorService {

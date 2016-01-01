@@ -1733,15 +1733,23 @@ public final class CallTest {
     return new InetSocketAddress(address.getAddress(), nullServer.getLocalPort());
   }
 
-  @Test public void cancelTagImmediatelyAfterEnqueue() throws Exception {
+  @Test public void cancelImmediatelyAfterEnqueue() throws Exception {
     server.enqueue(new MockResponse());
     Call call = client.newCall(new Request.Builder()
         .url(server.url("/a"))
-        .tag("request")
         .build());
     call.enqueue(callback);
-    client.cancel("request");
+    call.cancel();
     callback.await(server.url("/a")).assertFailure("Canceled");
+  }
+
+  @Test public void cancelAll() throws Exception {
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    call.enqueue(callback);
+    client.dispatcher().cancelAll();
+    callback.await(server.url("/")).assertFailure("Canceled");
   }
 
   @Test public void cancelBeforeBodyIsRead() throws Exception {
@@ -1767,16 +1775,18 @@ public final class CallTest {
   }
 
   @Test public void cancelInFlightBeforeResponseReadThrowsIOE() throws Exception {
+    Request request = new Request.Builder().url(server.url("/a")).build();
+    final Call call = client.newCall(request);
+
     server.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
-        client.cancel("request");
+        call.cancel();
         return new MockResponse().setBody("A");
       }
     });
 
-    Request request = new Request.Builder().url(server.url("/a")).tag("request").build();
     try {
-      client.newCall(request).execute();
+      call.execute();
       fail();
     } catch (IOException expected) {
     }
@@ -1803,21 +1813,24 @@ public final class CallTest {
    */
   @Test public void canceledBeforeIOSignalsOnFailure() throws Exception {
     client.dispatcher().setMaxRequests(1); // Force requests to be executed serially.
+
+    Request requestA = new Request.Builder().url(server.url("/a")).build();
+    Request requestB = new Request.Builder().url(server.url("/b")).build();
+    final Call callA = client.newCall(requestA);
+    final Call callB = client.newCall(requestB);
+
     server.setDispatcher(new Dispatcher() {
       char nextResponse = 'A';
 
       @Override public MockResponse dispatch(RecordedRequest request) {
-        client.cancel("request B");
+        callB.cancel();
         return new MockResponse().setBody(Character.toString(nextResponse++));
       }
     });
 
-    Request requestA = new Request.Builder().url(server.url("/a")).tag("request A").build();
-    client.newCall(requestA).enqueue(callback);
+    callA.enqueue(callback);
+    callB.enqueue(callback);
     assertEquals("/a", server.takeRequest().getPath());
-
-    Request requestB = new Request.Builder().url(server.url("/b")).tag("request B").build();
-    client.newCall(requestB).enqueue(callback);
 
     callback.await(requestA.url()).assertBody("A");
     // At this point we know the callback is ready, and that it will receive a cancel failure.
@@ -1840,7 +1853,7 @@ public final class CallTest {
   }
 
   @Test public void canceledBeforeResponseReadSignalsOnFailure() throws Exception {
-    Request requestA = new Request.Builder().url(server.url("/a")).tag("request A").build();
+    Request requestA = new Request.Builder().url(server.url("/a")).build();
     final Call call = client.newCall(requestA);
     server.setDispatcher(new Dispatcher() {
       @Override public MockResponse dispatch(RecordedRequest request) {
@@ -1882,7 +1895,7 @@ public final class CallTest {
     final AtomicReference<String> bodyRef = new AtomicReference<>();
     final AtomicBoolean failureRef = new AtomicBoolean();
 
-    Request request = new Request.Builder().url(server.url("/a")).tag("request A").build();
+    Request request = new Request.Builder().url(server.url("/a")).build();
     final Call call = client.newCall(request);
     call.enqueue(new Callback() {
       @Override public void onFailure(Request request, IOException e) {
