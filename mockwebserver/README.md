@@ -143,7 +143,7 @@ server.setDispatcher(dispatcher);
 Get MockWebServer via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
   <version>(insert latest version)</version>
   <scope>test</scope>

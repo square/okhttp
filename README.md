@@ -9,14 +9,14 @@ Download
 Download [the latest JAR][3] or grab via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
-  <version>2.7.0</version>
+  <version>3.0.0-RC1</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'com.squareup.okhttp:okhttp:2.7.0'
+compile 'com.squareup.okhttp3:okhttp:3.0.0-RC1'
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -34,15 +34,15 @@ MockWebServer coupling with OkHttp is essential for proper testing of SPDY and H
 Download [the latest JAR][4] or grab via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
-  <version>2.7.0</version>
+  <version>3.0.0-RC1</version>
   <scope>test</scope>
 </dependency>
 ```
 or Gradle:
 ```groovy
-testCompile 'com.squareup.okhttp:mockwebserver:2.7.0'
+testCompile 'com.squareup.okhttp3:mockwebserver:3.0.0-RC1'
 ```
 
 
@@ -65,6 +65,6 @@ License
 
  [1]: http://square.github.io/okhttp
  [2]: https://github.com/square/okhttp/wiki
- [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=okhttp&v=LATEST
- [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp&a=mockwebserver&v=LATEST
+ [3]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=okhttp&v=LATEST
+ [4]: https://search.maven.org/remote_content?g=com.squareup.okhttp3&a=mockwebserver&v=LATEST
  [snap]: https://oss.sonatype.org/content/repositories/snapshots/

@@ -24,18 +24,22 @@ import okhttp3.Response;
 import okhttp3.Route;
 
 public final class Authenticate {
-  private final OkHttpClient client = new OkHttpClient.Builder()
-      .authenticator(new Authenticator() {
-        @Override public Request authenticate(Route route, Response response) throws IOException {
-          System.out.println("Authenticating for response: " + response);
-          System.out.println("Challenges: " + response.challenges());
-          String credential = Credentials.basic("jesse", "password1");
-          return response.request().newBuilder()
-              .header("Authorization", credential)
-              .build();
-        }
-      })
-      .build();
+  private final OkHttpClient client;
+
+  public Authenticate() {
+    client = new OkHttpClient.Builder()
+        .authenticator(new Authenticator() {
+          @Override public Request authenticate(Route route, Response response) throws IOException {
+            System.out.println("Authenticating for response: " + response);
+            System.out.println("Challenges: " + response.challenges());
+            String credential = Credentials.basic("jesse", "password1");
+            return response.request().newBuilder()
+                .header("Authorization", credential)
+                .build();
+          }
+        })
+        .build();
+  }
 
   public void run() throws Exception {
     Request request = new Request.Builder()
