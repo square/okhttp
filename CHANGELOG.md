@@ -75,8 +75,9 @@ stuck on the old version.
  *  **Canceling batches of calls is now the application's responsibility.**
     The API to cancel calls by tag has been removed and replaced with a more
     general mechanism. The dispatcher now exposes all in-flight calls via its
-    `runningCalls()` and `queuedCalls()` methods. You can write code to cancel
-    calls by tag, by host, or whatever other criteria is appropriate.
+    `runningCalls()` and `queuedCalls()` methods. You can write code that
+    selects calls by tag, host, or whatever, and invokes `Call.cancel()` on the
+    ones that are no longer necessary.
 
  *  **OkHttp no longer uses the global `java.net.Authenticator` by default.**
     We've changed our `Authenticator` interface to authenticate web and proxy
