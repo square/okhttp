@@ -24,9 +24,9 @@ import java.net.Proxy;
 import java.util.List;
 
 /**
- * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use
- * {@link java.net.Authenticator} with {@link OkHttpClient#setAuthenticator} or {@link
- * OkHttpClient#setProxyAuthenticator(Authenticator)}.
+ * Adapts {@link java.net.Authenticator} to {@link Authenticator}. Configure OkHttp to use {@link
+ * java.net.Authenticator} with {@link OkHttpClient.Builder#authenticator} or {@link
+ * OkHttpClient.Builder#proxyAuthenticator(Authenticator)}.
  */
 public final class JavaNetAuthenticator implements Authenticator {
   @Override public Request authenticate(Route route, Response response) throws IOException {

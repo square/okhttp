@@ -16,15 +16,17 @@
 package okhttp3;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import okhttp3.RealCall.AsyncCall;
 import okhttp3.internal.Util;
-import okhttp3.internal.http.HttpEngine;
 
 /**
  * Policy on when async requests are executed.
@@ -40,14 +42,14 @@ public final class Dispatcher {
   /** Executes calls. Created lazily. */
   private ExecutorService executorService;
 
-  /** Ready calls in the order they'll be run. */
-  private final Deque<AsyncCall> readyCalls = new ArrayDeque<>();
+  /** Ready async calls in the order they'll be run. */
+  private final Deque<AsyncCall> readyAsyncCalls = new ArrayDeque<>();
 
-  /** Running calls. Includes canceled calls that haven't finished yet. */
-  private final Deque<AsyncCall> runningCalls = new ArrayDeque<>();
+  /** Running asynchronous calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<AsyncCall> runningAsyncCalls = new ArrayDeque<>();
 
-  /** In-flight synchronous calls. Includes canceled calls that haven't finished yet. */
-  private final Deque<RealCall> executedCalls = new ArrayDeque<>();
+  /** Running synchronous calls. Includes canceled calls that haven't finished yet. */
+  private final Deque<RealCall> runningSyncCalls = new ArrayDeque<>();
 
   public Dispatcher(ExecutorService executorService) {
     this.executorService = executorService;
@@ -105,64 +107,59 @@ public final class Dispatcher {
   }
 
   synchronized void enqueue(AsyncCall call) {
-    if (runningCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
-      runningCalls.add(call);
+    if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
+      runningAsyncCalls.add(call);
       getExecutorService().execute(call);
     } else {
-      readyCalls.add(call);
+      readyAsyncCalls.add(call);
     }
   }
 
-  /** Cancel all calls with the tag {@code tag}. */
-  public synchronized void cancel(Object tag) {
-    for (AsyncCall call : readyCalls) {
-      if (Util.equal(tag, call.tag())) {
-        call.cancel();
-      }
+  /**
+   * Cancel all calls currently enqueued or executing. Includes calls executed both {@linkplain
+   * Call#execute() synchronously} and {@linkplain Call#enqueue asynchronously}.
+   */
+  public synchronized void cancelAll() {
+    for (AsyncCall call : readyAsyncCalls) {
+      call.cancel();
     }
 
-    for (AsyncCall call : runningCalls) {
-      if (Util.equal(tag, call.tag())) {
-        call.get().canceled = true;
-        HttpEngine engine = call.get().engine;
-        if (engine != null) engine.cancel();
-      }
+    for (AsyncCall call : runningAsyncCalls) {
+      call.cancel();
     }
 
-    for (RealCall call : executedCalls) {
-      if (Util.equal(tag, call.tag())) {
-        call.cancel();
-      }
+    for (RealCall call : runningSyncCalls) {
+      call.cancel();
     }
   }
 
   /** Used by {@code AsyncCall#run} to signal completion. */
   synchronized void finished(AsyncCall call) {
-    if (!runningCalls.remove(call)) throw new AssertionError("AsyncCall wasn't running!");
+    if (!runningAsyncCalls.remove(call)) throw new AssertionError("AsyncCall wasn't running!");
     promoteCalls();
   }
 
   private void promoteCalls() {
-    if (runningCalls.size() >= maxRequests) return; // Already running max capacity.
-    if (readyCalls.isEmpty()) return; // No ready calls to promote.
+    if (runningAsyncCalls.size() >= maxRequests) return; // Already running max capacity.
+    if (readyAsyncCalls.isEmpty()) return; // No ready calls to promote.
 
-    for (Iterator<AsyncCall> i = readyCalls.iterator(); i.hasNext(); ) {
+    for (Iterator<AsyncCall> i = readyAsyncCalls.iterator(); i.hasNext(); ) {
       AsyncCall call = i.next();
 
       if (runningCallsForHost(call) < maxRequestsPerHost) {
         i.remove();
-        runningCalls.add(call);
+        runningAsyncCalls.add(call);
         getExecutorService().execute(call);
       }
 
-      if (runningCalls.size() >= maxRequests) return; // Reached max capacity.
+      if (runningAsyncCalls.size() >= maxRequests) return; // Reached max capacity.
     }
   }
 
   /** Returns the number of running calls that share a host with {@code call}. */
   private int runningCallsForHost(AsyncCall call) {
     int result = 0;
-    for (AsyncCall c : runningCalls) {
+    for (AsyncCall c : runningAsyncCalls) {
       if (c.host().equals(call.host())) result++;
     }
     return result;
@@ -170,19 +167,38 @@ public final class Dispatcher {
 
   /** Used by {@code Call#execute} to signal it is in-flight. */
   synchronized void executed(RealCall call) {
-    executedCalls.add(call);
+    runningSyncCalls.add(call);
   }
 
   /** Used by {@code Call#execute} to signal completion. */
   synchronized void finished(Call call) {
-    if (!executedCalls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
+    if (!runningSyncCalls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
   }
 
-  public synchronized int getRunningCallCount() {
-    return runningCalls.size();
+  /** Returns a snapshot of the calls currently awaiting execution. */
+  public synchronized List<Call> queuedCalls() {
+    List<Call> result = new ArrayList<>();
+    for (AsyncCall asyncCall : readyAsyncCalls) {
+      result.add(asyncCall.get());
+    }
+    return Collections.unmodifiableList(result);
   }
 
-  public synchronized int getQueuedCallCount() {
-    return readyCalls.size();
+  /** Returns a snapshot of the calls currently being executed. */
+  public synchronized List<Call> runningCalls() {
+    List<Call> result = new ArrayList<>();
+    result.addAll(runningSyncCalls);
+    for (AsyncCall asyncCall : runningAsyncCalls) {
+      result.add(asyncCall.get());
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  public synchronized int queuedCallsCount() {
+    return readyAsyncCalls.size();
+  }
+
+  public synchronized int runningCallsCount() {
+    return runningAsyncCalls.size() + runningSyncCalls.size();
   }
 }
