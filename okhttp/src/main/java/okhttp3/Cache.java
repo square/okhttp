@@ -54,11 +54,11 @@ import okio.Source;
  *
  * <p>To measure cache effectiveness, this class tracks three statistics:
  * <ul>
- *     <li><strong>{@linkplain #getRequestCount() Request Count:}</strong> the number of HTTP
+ *     <li><strong>{@linkplain #requestCount() Request Count:}</strong> the number of HTTP
  *         requests issued since this cache was created.
- *     <li><strong>{@linkplain #getNetworkCount() Network Count:}</strong> the number of those
+ *     <li><strong>{@linkplain #networkCount() Network Count:}</strong> the number of those
  *         requests that required network use.
- *     <li><strong>{@linkplain #getHitCount() Hit Count:}</strong> the number of those requests
+ *     <li><strong>{@linkplain #hitCount() Hit Count:}</strong> the number of those requests
  *         whose responses were served by the cache.
  * </ul>
  *
@@ -364,19 +364,19 @@ public final class Cache {
     };
   }
 
-  public synchronized int getWriteAbortCount() {
+  public synchronized int writeAbortCount() {
     return writeAbortCount;
   }
 
-  public synchronized int getWriteSuccessCount() {
+  public synchronized int writeSuccessCount() {
     return writeSuccessCount;
   }
 
-  public long getSize() throws IOException {
+  public long size() throws IOException {
     return cache.size();
   }
 
-  public long getMaxSize() {
+  public long maxSize() {
     return cache.getMaxSize();
   }
 
@@ -388,7 +388,7 @@ public final class Cache {
     cache.close();
   }
 
-  public File getDirectory() {
+  public File directory() {
     return cache.getDirectory();
   }
 
@@ -412,15 +412,15 @@ public final class Cache {
     hitCount++;
   }
 
-  public synchronized int getNetworkCount() {
+  public synchronized int networkCount() {
     return networkCount;
   }
 
-  public synchronized int getHitCount() {
+  public synchronized int hitCount() {
     return hitCount;
   }
 
-  public synchronized int getRequestCount() {
+  public synchronized int requestCount() {
     return requestCount;
   }
 

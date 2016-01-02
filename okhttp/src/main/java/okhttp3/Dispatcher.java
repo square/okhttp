@@ -58,7 +58,7 @@ public final class Dispatcher {
   public Dispatcher() {
   }
 
-  public synchronized ExecutorService getExecutorService() {
+  public synchronized ExecutorService executorService() {
     if (executorService == null) {
       executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60, TimeUnit.SECONDS,
           new SynchronousQueue<Runnable>(), Util.threadFactory("OkHttp Dispatcher", false));
@@ -109,7 +109,7 @@ public final class Dispatcher {
   synchronized void enqueue(AsyncCall call) {
     if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
       runningAsyncCalls.add(call);
-      getExecutorService().execute(call);
+      executorService().execute(call);
     } else {
       readyAsyncCalls.add(call);
     }
@@ -149,7 +149,7 @@ public final class Dispatcher {
       if (runningCallsForHost(call) < maxRequestsPerHost) {
         i.remove();
         runningAsyncCalls.add(call);
-        getExecutorService().execute(call);
+        executorService().execute(call);
       }
 
       if (runningAsyncCalls.size() >= maxRequests) return; // Reached max capacity.

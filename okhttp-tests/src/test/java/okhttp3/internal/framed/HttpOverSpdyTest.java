@@ -330,14 +330,14 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().addHeader("cache-control: max-age=60").setBody("A"));
 
     assertContent("A", urlFactory.open(server.url("/").url()), Integer.MAX_VALUE);
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertContent("A", urlFactory.open(server.url("/").url()), Integer.MAX_VALUE);
     assertContent("A", urlFactory.open(server.url("/").url()), Integer.MAX_VALUE);
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void conditionalCache() throws IOException {
@@ -349,13 +349,13 @@ public abstract class HttpOverSpdyTest {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     assertContent("A", urlFactory.open(server.url("/").url()), Integer.MAX_VALUE);
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertContent("A", urlFactory.open(server.url("/").url()), Integer.MAX_VALUE);
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(2, cache.getNetworkCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(2, cache.networkCount());
+    assertEquals(1, cache.hitCount());
   }
 
   @Test public void responseCachedWithoutConsumingFullBody() throws IOException {
@@ -422,7 +422,7 @@ public abstract class HttpOverSpdyTest {
     connection1.disconnect();
 
     // That connection is pooled, and it works.
-    assertEquals(1, urlFactory.client().connectionPool().getMultiplexedConnectionCount());
+    assertEquals(1, urlFactory.client().connectionPool().connectionCount());
     HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
     assertContent("abc", connection2, 3);
     assertEquals(0, server.takeRequest().getSequenceNumber());
