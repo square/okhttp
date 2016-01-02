@@ -45,8 +45,8 @@ public class AndroidShimResponseCache extends ResponseCache {
 
   public boolean isEquivalent(File directory, long maxSize) {
     Cache installedCache = getCache();
-    return (installedCache.getDirectory().equals(directory)
-        && installedCache.getMaxSize() == maxSize
+    return (installedCache.directory().equals(directory)
+        && installedCache.maxSize() == maxSize
         && !installedCache.isClosed());
   }
 
@@ -83,14 +83,14 @@ public class AndroidShimResponseCache extends ResponseCache {
    * greater than the {@link #maxSize} if a background deletion is pending.
    */
   public long size() throws IOException {
-    return delegate.getSize();
+    return delegate.size();
   }
 
   /**
    * Returns the maximum number of bytes that this cache should use to store its data.
    */
   public long maxSize() {
-    return delegate.getMaxSize();
+    return delegate.maxSize();
   }
 
   /**
@@ -106,7 +106,7 @@ public class AndroidShimResponseCache extends ResponseCache {
    * validate a locally cached response.
    */
   public int getNetworkCount() {
-    return delegate.getNetworkCount();
+    return delegate.networkCount();
   }
 
   /**
@@ -114,7 +114,7 @@ public class AndroidShimResponseCache extends ResponseCache {
    * conditional {@code GET} requests that were validated over the network.
    */
   public int getHitCount() {
-    return delegate.getHitCount();
+    return delegate.hitCount();
   }
 
   /**
@@ -122,7 +122,7 @@ public class AndroidShimResponseCache extends ResponseCache {
    * and requests that were made on the client's behalf to handle a redirects and retries.
    */
   public int getRequestCount() {
-    return delegate.getRequestCount();
+    return delegate.requestCount();
   }
 
   /**

@@ -95,7 +95,7 @@ public final class ConnectionPool {
   }
 
   /** Returns the number of idle connections in the pool. */
-  public synchronized int getIdleConnectionCount() {
+  public synchronized int idleConnectionCount() {
     int total = 0;
     for (RealConnection connection : connections) {
       if (connection.allocations.isEmpty()) total++;
@@ -105,26 +105,12 @@ public final class ConnectionPool {
 
   /**
    * Returns total number of connections in the pool. Note that prior to OkHttp 2.7 this included
-   * only idle connections and SPDY connections. In OkHttp 2.7 this includes all connections, both
-   * active and inactive. Use {@link #getIdleConnectionCount()} to count connections not currently
+   * only idle connections and SPDY connections. Since OkHttp 2.7 this includes all connections,
+   * both active and inactive. Use {@link #idleConnectionCount()} to count connections not currently
    * in use.
    */
-  public synchronized int getConnectionCount() {
+  public synchronized int connectionCount() {
     return connections.size();
-  }
-
-  /** Returns total number of multiplexed connections in the pool. */
-  public synchronized int getMultiplexedConnectionCount() {
-    int total = 0;
-    for (RealConnection connection : connections) {
-      if (connection.isMultiplexed()) total++;
-    }
-    return total;
-  }
-
-  /** Returns total number of http connections in the pool. */
-  public synchronized int getHttpConnectionCount() {
-    return connections.size() - getMultiplexedConnectionCount();
   }
 
   /** Returns a recycled connection to {@code address}, or null if no such connection exists. */

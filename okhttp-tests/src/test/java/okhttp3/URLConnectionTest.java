@@ -1356,7 +1356,7 @@ public final class URLConnectionTest {
 
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     assertContent("{}", connection);
-    assertEquals(0, urlFactory.client().connectionPool().getIdleConnectionCount());
+    assertEquals(0, urlFactory.client().connectionPool().idleConnectionCount());
   }
 
   @Test public void earlyDisconnectDoesntHarmPoolingWithChunkedEncoding() throws Exception {

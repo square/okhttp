@@ -226,8 +226,8 @@ public final class CacheTest {
     assertEquals("spiders", in1.readUtf8("spiders".length()));
     assertTrue(in1.exhausted());
     in1.close();
-    assertEquals(1, cache.getWriteSuccessCount());
-    assertEquals(0, cache.getWriteAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
+    assertEquals(0, cache.writeAbortCount());
 
     Response response2 = client.newCall(request).execute();
     BufferedSource in2 = response2.body().source();
@@ -238,10 +238,10 @@ public final class CacheTest {
 
     assertTrue(in2.exhausted());
     in2.close();
-    assertEquals(1, cache.getWriteSuccessCount());
-    assertEquals(0, cache.getWriteAbortCount());
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(1, cache.writeSuccessCount());
+    assertEquals(0, cache.writeAbortCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.hitCount());
   }
 
   @Test public void secureResponseCaching() throws IOException {
@@ -271,9 +271,9 @@ public final class CacheTest {
     Response response2 = client.newCall(request).execute(); // Cached!
     assertEquals("ABC", response2.body().string());
 
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(1, cache.hitCount());
 
     assertEquals(cipherSuite, response2.handshake().cipherSuite());
     assertEquals(localCerts, response2.handshake().localCertificates());
@@ -302,9 +302,9 @@ public final class CacheTest {
     Response response2 = client.newCall(request).execute(); // Cached!
     assertEquals("ABC", response2.body().string());
 
-    assertEquals(4, cache.getRequestCount()); // 2 requests + 2 redirects
-    assertEquals(2, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 requests + 2 redirects
+    assertEquals(2, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void redirectToCachedResult() throws Exception {
@@ -368,8 +368,8 @@ public final class CacheTest {
     assertEquals("ABC", response2.body().string());
     assertNotNull(response2.handshake().cipherSuite());
 
-    assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
+    assertEquals(2, cache.hitCount());
     assertEquals(response1.handshake().cipherSuite(), response2.handshake().cipherSuite());
   }
 
@@ -407,8 +407,8 @@ public final class CacheTest {
     Response response2 = get(server.url("/"));
     assertEquals("ABC", response2.body().string());
 
-    assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void foundCachedWithExpiresHeader() throws Exception {
@@ -499,12 +499,12 @@ public final class CacheTest {
       bodySource.close();
     }
 
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(0, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(0, cache.writeSuccessCount());
     Response response = get(server.url("/"));
     assertEquals("Request #2", response.body().string());
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(1, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
   }
 
   @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException {
@@ -538,12 +538,12 @@ public final class CacheTest {
     } catch (IllegalStateException expected) {
     }
 
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(0, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(0, cache.writeSuccessCount());
     Response response2 = get(server.url("/"));
     assertEquals("Request #2", response2.body().string());
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(1, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
   }
 
   @Test public void defaultExpirationDateFullyCachedForLessThan24Hours() throws Exception {
@@ -1009,7 +1009,7 @@ public final class CacheTest {
 
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, client.connectionPool().getIdleConnectionCount());
+    assertEquals(1, client.connectionPool().idleConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
@@ -1123,9 +1123,9 @@ public final class CacheTest {
     Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(0, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(0, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
@@ -1141,9 +1141,9 @@ public final class CacheTest {
         .build();
     Response response = client.newCall(request).execute();
     assertEquals("A", response.body().string());
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(1, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
@@ -1160,9 +1160,9 @@ public final class CacheTest {
     Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
@@ -1177,9 +1177,9 @@ public final class CacheTest {
     Response response = client.newCall(request).execute();
     assertTrue(response.body().source().exhausted());
     assertEquals(504, response.code());
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestCacheControlNoCache() throws Exception {
@@ -1368,14 +1368,14 @@ public final class CacheTest {
         .setBody("C"));
 
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("B", get(server.url("/")).body().string());
     assertEquals("C", get(server.url("/")).body().string());
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(3, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(3, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void statisticsConditionalCacheHit() throws Exception {
@@ -1389,14 +1389,14 @@ public final class CacheTest {
         .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(3, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(3, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void statisticsFullCacheHit() throws Exception {
@@ -1405,14 +1405,14 @@ public final class CacheTest {
         .setBody("A"));
 
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("A", get(server.url("/")).body().string());
     assertEquals("A", get(server.url("/")).body().string());
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void varyMatchesChangedRequestHeaderField() throws Exception {
@@ -1932,10 +1932,10 @@ public final class CacheTest {
         + "2\n"
         + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
-    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
-    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
-    writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    writeFile(cache.directory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.directory(), urlKey + ".1", entryBody);
+    writeFile(cache.directory(), "journal", journalBody);
+    cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
         .cache(cache)
         .build();
@@ -1980,11 +1980,11 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
-    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
-    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
-    writeFile(cache.getDirectory(), "journal", journalBody);
+    writeFile(cache.directory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.directory(), urlKey + ".1", entryBody);
+    writeFile(cache.directory(), "journal", journalBody);
     cache.close();
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
         .cache(cache)
         .build();
@@ -2029,11 +2029,11 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
-    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
-    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
-    writeFile(cache.getDirectory(), "journal", journalBody);
+    writeFile(cache.directory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.directory(), urlKey + ".1", entryBody);
+    writeFile(cache.directory(), "journal", journalBody);
     cache.close();
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
         .cache(cache)
         .build();
@@ -2065,11 +2065,11 @@ public final class CacheTest {
         + "\n"
         + "DIRTY " + urlKey + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
-    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
-    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
-    writeFile(cache.getDirectory(), "journal", journalBody);
+    writeFile(cache.directory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.directory(), urlKey + ".1", entryBody);
+    writeFile(cache.directory(), "journal", journalBody);
     cache.close();
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
     client = client.newBuilder()
         .cache(cache)
         .build();
@@ -2089,7 +2089,7 @@ public final class CacheTest {
     HttpUrl url = server.url("/");
     assertEquals("A", get(url).body().string());
     client.cache().evictAll();
-    assertEquals(0, client.cache().getSize());
+    assertEquals(0, client.cache().size());
     assertEquals("B", get(url).body().string());
   }
 

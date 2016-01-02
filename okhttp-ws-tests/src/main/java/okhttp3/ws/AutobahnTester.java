@@ -63,7 +63,7 @@ public final class AutobahnTester {
 
       updateReports();
     } finally {
-      client.dispatcher().getExecutorService().shutdown();
+      client.dispatcher().executorService().shutdown();
     }
   }
 

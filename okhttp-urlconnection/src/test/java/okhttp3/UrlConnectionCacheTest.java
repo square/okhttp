@@ -226,8 +226,8 @@ public final class UrlConnectionCacheTest {
     assertEquals("spiders", readAscii(urlConnection, "spiders".length()));
     assertEquals(-1, in.read());
     in.close();
-    assertEquals(1, cache.getWriteSuccessCount());
-    assertEquals(0, cache.getWriteAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
+    assertEquals(0, cache.writeAbortCount());
 
     urlConnection = urlFactory.open(server.url("/").url()); // cached!
     in = urlConnection.getInputStream();
@@ -238,10 +238,10 @@ public final class UrlConnectionCacheTest {
 
     assertEquals(-1, in.read());
     in.close();
-    assertEquals(1, cache.getWriteSuccessCount());
-    assertEquals(0, cache.getWriteAbortCount());
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(1, cache.writeSuccessCount());
+    assertEquals(0, cache.writeAbortCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.hitCount());
   }
 
   @Test public void secureResponseCaching() throws IOException {
@@ -267,9 +267,9 @@ public final class UrlConnectionCacheTest {
     c2.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
     assertEquals("ABC", readAscii(c2));
 
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(1, cache.hitCount());
 
     assertEquals(suite, c2.getCipherSuite());
     assertEquals(localCerts, toListOrNull(c2.getLocalCertificates()));
@@ -294,9 +294,9 @@ public final class UrlConnectionCacheTest {
     connection = urlFactory.open(server.url("/").url()); // cached!
     assertEquals("ABC", readAscii(connection));
 
-    assertEquals(4, cache.getRequestCount()); // 2 requests + 2 redirects
-    assertEquals(2, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 requests + 2 redirects
+    assertEquals(2, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void redirectToCachedResult() throws Exception {
@@ -347,8 +347,8 @@ public final class UrlConnectionCacheTest {
     assertEquals("ABC", readAscii(connection2));
     assertNotNull(connection2.getCipherSuite());
 
-    assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
+    assertEquals(2, cache.hitCount());
     assertEquals(connection1.getCipherSuite(), connection2.getCipherSuite());
   }
 
@@ -383,8 +383,8 @@ public final class UrlConnectionCacheTest {
     HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
     assertEquals("ABC", readAscii(connection2));
 
-    assertEquals(4, cache.getRequestCount()); // 2 direct + 2 redirect = 4
-    assertEquals(2, cache.getHitCount());
+    assertEquals(4, cache.requestCount()); // 2 direct + 2 redirect = 4
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
@@ -418,12 +418,12 @@ public final class UrlConnectionCacheTest {
       reader.close();
     }
 
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(0, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(0, cache.writeSuccessCount());
     URLConnection connection = urlFactory.open(server.url("/").url());
     assertEquals("Request #2", readAscii(connection));
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(1, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
   }
 
   @Test public void clientPrematureDisconnectWithContentLengthHeader() throws IOException {
@@ -455,12 +455,12 @@ public final class UrlConnectionCacheTest {
     } catch (IOException expected) {
     }
 
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(0, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(0, cache.writeSuccessCount());
     connection = urlFactory.open(server.url("/").url());
     assertEquals("Request #2", readAscii(connection));
-    assertEquals(1, cache.getWriteAbortCount());
-    assertEquals(1, cache.getWriteSuccessCount());
+    assertEquals(1, cache.writeAbortCount());
+    assertEquals(1, cache.writeSuccessCount());
   }
 
   @Test public void defaultExpirationDateFullyCachedForLessThan24Hours() throws Exception {
@@ -853,7 +853,7 @@ public final class UrlConnectionCacheTest {
 
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(1, urlFactory.client().connectionPool().getIdleConnectionCount());
+    assertEquals(1, urlFactory.client().connectionPool().idleConnectionCount());
   }
 
   @Test public void expiresDateBeforeModifiedDate() throws Exception {
@@ -923,9 +923,9 @@ public final class UrlConnectionCacheTest {
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(0, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(0, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithFullResponseCached() throws IOException {
@@ -937,9 +937,9 @@ public final class UrlConnectionCacheTest {
     URLConnection connection = urlFactory.open(server.url("/").url());
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertEquals("A", readAscii(connection));
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(1, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(1, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithConditionalResponseCached() throws IOException {
@@ -951,9 +951,9 @@ public final class UrlConnectionCacheTest {
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestOnlyIfCachedWithUnhelpfulResponseCached() throws IOException {
@@ -963,9 +963,9 @@ public final class UrlConnectionCacheTest {
     HttpURLConnection connection = urlFactory.open(server.url("/").url());
     connection.addRequestProperty("Cache-Control", "only-if-cached");
     assertGatewayTimeout(connection);
-    assertEquals(2, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(2, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void requestCacheControlNoCache() throws Exception {
@@ -1179,14 +1179,14 @@ public final class UrlConnectionCacheTest {
     server.enqueue(new MockResponse().setBody("C"));
 
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("B", readAscii(urlFactory.open(server.url("/").url())));
     assertEquals("C", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(3, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(3, cache.networkCount());
+    assertEquals(0, cache.hitCount());
   }
 
   @Test public void statisticsConditionalCacheHit() throws Exception {
@@ -1197,28 +1197,28 @@ public final class UrlConnectionCacheTest {
     server.enqueue(new MockResponse().setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
 
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(3, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(3, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void statisticsFullCacheHit() throws Exception {
     server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60").setBody("A"));
 
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(1, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(0, cache.getHitCount());
+    assertEquals(1, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(0, cache.hitCount());
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
     assertEquals("A", readAscii(urlFactory.open(server.url("/").url())));
-    assertEquals(3, cache.getRequestCount());
-    assertEquals(1, cache.getNetworkCount());
-    assertEquals(2, cache.getHitCount());
+    assertEquals(3, cache.requestCount());
+    assertEquals(1, cache.networkCount());
+    assertEquals(2, cache.hitCount());
   }
 
   @Test public void varyMatchesChangedRequestHeaderField() throws Exception {
@@ -1632,10 +1632,10 @@ public final class UrlConnectionCacheTest {
         + "2\n"
         + "\n"
         + "CLEAN " + urlKey + " " + entryMetadata.length() + " " + entryBody.length() + "\n";
-    writeFile(cache.getDirectory(), urlKey + ".0", entryMetadata);
-    writeFile(cache.getDirectory(), urlKey + ".1", entryBody);
-    writeFile(cache.getDirectory(), "journal", journalBody);
-    cache = new Cache(cache.getDirectory(), Integer.MAX_VALUE, fileSystem);
+    writeFile(cache.directory(), urlKey + ".0", entryMetadata);
+    writeFile(cache.directory(), urlKey + ".1", entryBody);
+    writeFile(cache.directory(), "journal", journalBody);
+    cache = new Cache(cache.directory(), Integer.MAX_VALUE, fileSystem);
     urlFactory.setClient(urlFactory.client().newBuilder()
         .cache(cache)
         .build());
