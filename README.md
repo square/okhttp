@@ -1,7 +1,7 @@
 OkHttp
 ======
 
-An HTTP & SPDY client for Android and Java applications. For more information see [the website][1] and [the wiki][2].
+An HTTP & HTTP/2 client for Android and Java applications. For more information see [the website][1] and [the wiki][2].
 
 Download
 --------
@@ -27,7 +27,7 @@ MockWebServer
 
 A library for testing HTTP, HTTPS, HTTP/2.0, and SPDY clients.
 
-MockWebServer coupling with OkHttp is essential for proper testing of SPDY and HTTP/2.0 so that code can be shared.
+MockWebServer coupling with OkHttp is essential for proper testing of HTTP/2.0 so that code can be shared.
 
 ### Download
 
