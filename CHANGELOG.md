@@ -1,6 +1,104 @@
 Change Log
 ==========
 
+## Version 3.0.0-RC1
+
+_2016-01-02_
+
+OkHttp 3 is a major release focused on API simplicity and consistency. The API
+changes are numerous but most are cosmetic. Applications should be able to
+upgrade from the 2.x API to the 3.x API mechanically and without risk.
+
+Because the release includes breaking API changes, we're changing the project's
+package name from `com.squareup.okhttp` to `okhttp3`. This should make it
+possible for large applications to migrate incrementally. The Maven group ID
+is now `com.squareup.okhttp3`. For an explanation of this strategy, see Jake
+Wharton's post, [Java Interoperability Policy for Major Version
+Updates][major_versions].
+
+This release obsoletes OkHttp 2.x, and all code that uses OkHttp's
+`com.squareup.okhttp` package should upgrade to the `okhttp3` package. Libraries
+that depend on OkHttp should upgrade quickly to prevent applications from being
+stuck on the old version.
+
+ *  **There is no longer a global singleton connection pool.** In OkHttp 2.x,
+    all `OkHttpClient` instances shared a common connection pool by default.
+    In OkHttp 3.x, each new `OkHttpClient` gets its own private connection pool.
+    Applications should avoid creating many connection pools as doing so
+    prevents connection reuse. Each connection pool holds its own set of
+    connections alive so applications that have many pools also risk exhausting
+    memory!
+
+    The best practice in OkHttp 3 is to create a single OkHttpClient instance
+    and share it throughout the application. Requests that needs a customized
+    client should call `OkHttpClient.newBuilder()` on that shared instance.
+    This allows customization without the drawbacks of separate connection
+    pools.
+
+ *  **OkHttpClient is now stateless.** In the 2.x API `OkHttpClient` had getters
+    and setters. Internally each request was forced to make its own complete
+    snapshot of the `OkHttpClient` instance to defend against racy configuration
+    changes. In 3.x, `OkHttpClient` is now stateless and has a builder. Note
+    that this class is not strictly immutable as it has stateful members like
+    the connection pool and cache.
+
+ *  **Get and Set prefixes are now avoided.** With ubiquitous builders
+    throughout OkHttp these accessor prefixes aren't necessary. Previously
+    OkHttp used _get_ and _set_ prefixes sporadically which make the API
+    inconsistent and awkward to explore.
+
+ *  **OkHttpClient now implements the new `Call.Factory` interface.** This
+    interface will make your code easier to test. When you test code that makes
+    HTTP requests, you can use this interface to replace the real `OkHttpClient`
+    with your own mocks or fakes.
+
+    The interface will also let you use OkHttp's API with another HTTP client's
+    implementation. This is useful in sandboxed environments like Google App
+    Engine.
+
+ *  **OkHttp now does cookies.** We've replaced `java.net.CookieHandler` with
+    a new interface, `CookieJar` and added our own `Cookie` model class. This
+    new cookie follows the latest RFC and supports the same cookie attributes
+    as modern web browsers.
+
+ *  **Form and Multipart bodies are now modeled.** We've replaced the opaque
+    `FormEncodingBuilder` with the more powerful `FormBody` and
+    `FormBody.Builder` combo. Similarly we've upgraded `MultipartBuilder` into
+    `MultipartBody`, `MultipartBody.Part`, and `MultipartBody.Builder`.
+
+ *  **The Apache HTTP client and HttpURLConnection APIs are deprecated.** They
+    continue to work as they always have, but we're moving everything to the new
+    OkHttp 3 API. The `okhttp-apache` and `okhttp-urlconnection` modules should
+    be only be used to accelerate a transition to OkHttp's request/response API.
+    These deprecated modules will be dropped in an upcoming OkHttp 3.x release.
+
+ *  **Canceling batches of calls is now the application's responsibility.**
+    The API to cancel calls by tag has been removed and replaced with a more
+    general mechanism. The dispatcher now exposes all in-flight calls via its
+    `runningCalls()` and `queuedCalls()` methods. You can write code to cancel
+    calls by tag, by host, or whatever other criteria is appropriate.
+
+ *  **OkHttp no longer uses the global `java.net.Authenticator` by default.**
+    We've changed our `Authenticator` interface to authenticate web and proxy
+    authentication failures through a single method. An adapter for the old
+    authenticator is available in the `okhttp-urlconnection` module.
+
+ *  Fix: Don't throw `IOException` on `ResponseBody.contentLength()` or `close()`.
+ *  Fix: Never throw converting an `HttpUrl` to a `java.net.URI`. This changes
+    the `uri()` method to handle malformed percent-escapes and characters
+    forbidden by `URI`.
+ *  Fix: When a connect times out, attempt an alternate route. Previously route
+    selection was less efficient when differentiating failures.
+ *  New: `Response.peekBody()` lets you access the response body without
+    consuming it. This may be handy for interceptors!
+ *  New: `HttpUrl.newBuilder()` resolves a link to a builder.
+ *  New: Add the TLS version to the `Handshake`.
+ *  New: Drop `Request.uri()` and `Request#urlString()`. Just use
+    `Request.url().uri()` and `Request.url().toString()`.
+ *  New: Add URL to HTTP response logging.
+ *  New: Make `HttpUrl` the blessed URL method of `Request`.
+
+
 ## Version 2.7.1
 
 _2016-01-01_
@@ -781,3 +879,4 @@ Initial release.
 
  [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
  [webdav]: https://tools.ietf.org/html/rfc4918
+ [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
