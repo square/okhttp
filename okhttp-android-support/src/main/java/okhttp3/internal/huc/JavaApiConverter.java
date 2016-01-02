@@ -633,7 +633,7 @@ public final class JavaApiConverter {
       if (position < 0) {
         throw new IllegalArgumentException("Invalid header index: " + position);
       }
-      if (position == 0) {
+      if (position == 0 || position > response.headers().size()) {
         return null;
       }
       return response.headers().name(position - 1);
@@ -647,6 +647,9 @@ public final class JavaApiConverter {
       }
       if (position == 0) {
         return StatusLine.get(response).toString();
+      }
+      if (position > response.headers().size()) {
+        return null;
       }
       return response.headers().value(position - 1);
     }

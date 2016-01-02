@@ -451,6 +451,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, {@linkplain CookieJar#NO_COOKIES no cookies} will be accepted nor provided.
      */
     public Builder cookieJar(CookieJar cookieJar) {
+      if (cookieJar == null) throw new NullPointerException("cookieJar == null");
       this.cookieJar = cookieJar;
       return this;
     }
@@ -473,6 +474,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, the {@link Dns#SYSTEM system-wide default} DNS will be used.
      */
     public Builder dns(Dns dns) {
+      if (dns == null) throw new NullPointerException("dns == null");
       this.dns = dns;
       return this;
     }
@@ -486,6 +488,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * be used.
      */
     public Builder socketFactory(SocketFactory socketFactory) {
+      if (socketFactory == null) throw new NullPointerException("socketFactory == null");
       this.socketFactory = socketFactory;
       return this;
     }
@@ -496,6 +499,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, a lazily created SSL socket factory will be used.
      */
     public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory) {
+      if (sslSocketFactory == null) throw new NullPointerException("sslSocketFactory == null");
       this.sslSocketFactory = sslSocketFactory;
       return this;
     }
@@ -507,6 +511,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, a default hostname verifier will be used.
      */
     public Builder hostnameVerifier(HostnameVerifier hostnameVerifier) {
+      if (hostnameVerifier == null) throw new NullPointerException("hostnameVerifier == null");
       this.hostnameVerifier = hostnameVerifier;
       return this;
     }
@@ -517,6 +522,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * Pinning certificates avoids the need to trust certificate authorities.
      */
     public Builder certificatePinner(CertificatePinner certificatePinner) {
+      if (certificatePinner == null) throw new NullPointerException("certificatePinner == null");
       this.certificatePinner = certificatePinner;
       return this;
     }
@@ -528,6 +534,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
      */
     public Builder authenticator(Authenticator authenticator) {
+      if (authenticator == null) throw new NullPointerException("authenticator == null");
       this.authenticator = authenticator;
       return this;
     }
@@ -539,6 +546,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If unset, the {@linkplain Authenticator#NONE no authentication will be attempted}.
      */
     public Builder proxyAuthenticator(Authenticator proxyAuthenticator) {
+      if (proxyAuthenticator == null) throw new NullPointerException("proxyAuthenticator == null");
       this.proxyAuthenticator = proxyAuthenticator;
       return this;
     }
@@ -652,9 +660,27 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
       return this;
     }
 
+    /**
+     * Returns a modifiable list of interceptors that observe the full span of each call: from
+     * before the connection is established (if any) until after the response source is selected
+     * (either the origin server, cache, or both).
+     */
+    public List<Interceptor> interceptors() {
+      return interceptors;
+    }
+
     public Builder addInterceptor(Interceptor interceptor) {
       interceptors.add(interceptor);
       return this;
+    }
+
+    /**
+     * Returns a modifiable list of interceptors that observe a single network request and response.
+     * These interceptors must call {@link Interceptor.Chain#proceed} exactly once: it is an error
+     * for a network interceptor to short-circuit or repeat a network request.
+     */
+    public List<Interceptor> networkInterceptors() {
+      return networkInterceptors;
     }
 
     public Builder addNetworkInterceptor(Interceptor interceptor) {
