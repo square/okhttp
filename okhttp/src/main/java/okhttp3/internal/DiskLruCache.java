@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.Flushable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,7 +82,7 @@ import okio.Timeout;
  * value, the edit will fail silently. Callers should handle other problems by catching {@code
  * IOException} and responding appropriately.
  */
-public final class DiskLruCache implements Closeable {
+public final class DiskLruCache implements Closeable, Flushable {
   static final String JOURNAL_FILE = "journal";
   static final String JOURNAL_FILE_TEMP = "journal.tmp";
   static final String JOURNAL_FILE_BACKUP = "journal.bkp";
@@ -623,7 +624,7 @@ public final class DiskLruCache implements Closeable {
   }
 
   /** Force buffered operations to the filesystem. */
-  public synchronized void flush() throws IOException {
+  @Override public synchronized void flush() throws IOException {
     if (!initialized) return;
 
     checkNotClosed();
@@ -632,7 +633,7 @@ public final class DiskLruCache implements Closeable {
   }
 
   /** Closes this cache. Stored values will remain on the filesystem. */
-  public synchronized void close() throws IOException {
+  @Override public synchronized void close() throws IOException {
     if (!initialized || closed) {
       closed = true;
       return;
