@@ -16,7 +16,9 @@
 
 package okhttp3;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.Flushable;
 import java.io.IOException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -131,7 +133,7 @@ import okio.Source;
  * caching directives. It even offers convenient constants {@link CacheControl#FORCE_NETWORK} and
  * {@link CacheControl#FORCE_CACHE} that address the use cases above.
  */
-public final class Cache {
+public final class Cache implements Closeable, Flushable {
   private static final int VERSION = 201105;
   private static final int ENTRY_METADATA = 0;
   private static final int ENTRY_BODY = 1;
@@ -380,11 +382,11 @@ public final class Cache {
     return cache.getMaxSize();
   }
 
-  public void flush() throws IOException {
+  @Override public void flush() throws IOException {
     cache.flush();
   }
 
-  public void close() throws IOException {
+  @Override public void close() throws IOException {
     cache.close();
   }
 
