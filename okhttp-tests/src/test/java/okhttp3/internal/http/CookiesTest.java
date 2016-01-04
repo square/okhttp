@@ -30,7 +30,7 @@ import java.util.Map;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
-import okhttp3.internal.JavaNetCookieJar;
+import okhttp3.JavaNetCookieJar;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
