@@ -204,9 +204,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
     ResponseBody responseBody = response.body();
+    long contentLength = responseBody.contentLength();
+    String bodySize = contentLength != -1 ? contentLength + "-byte" : "unknown-length";
     logger.log("<-- " + response.code() + ' ' + response.message() + ' '
         + response.request().url() + " (" + tookMs + "ms" + (!logHeaders ? ", "
-        + responseBody.contentLength() + "-byte body" : "") + ')');
+        + bodySize + " body" : "") + ')');
 
     if (logHeaders) {
       Headers headers = response.headers();
@@ -229,7 +231,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
           charset = contentType.charset(UTF8);
         }
 
-        if (responseBody.contentLength() != 0) {
+        if (contentLength != 0) {
           logger.log("");
           logger.log(buffer.clone().readString(charset));
         }
