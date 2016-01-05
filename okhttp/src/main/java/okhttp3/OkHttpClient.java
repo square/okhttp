@@ -276,7 +276,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Returns a modifiable list of interceptors that observe the full span of each call: from before
+   * Returns an immutable list of interceptors that observe the full span of each call: from before
    * the connection is established (if any) until after the response source is selected (either the
    * origin server, cache, or both).
    */
@@ -285,7 +285,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
   }
 
   /**
-   * Returns a modifiable list of interceptors that observe a single network request and response.
+   * Returns an immutable list of interceptors that observe a single network request and response.
    * These interceptors must call {@link Interceptor.Chain#proceed} exactly once: it is an error for
    * a network interceptor to short-circuit or repeat a network request.
    */
