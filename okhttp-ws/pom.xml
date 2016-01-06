@@ -9,6 +9,7 @@
     <version>3.0.0-SNAPSHOT</version>
   </parent>
 
+  <packaging>bundle</packaging>
   <artifactId>okhttp-ws</artifactId>
   <name>OkHttp Web Sockets</name>
 
@@ -30,6 +31,23 @@
           <links>
             <link>http://square.github.io/okhttp/javadoc/</link>
           </links>
+        </configuration>
+      </plugin>
+
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <instructions>
+            <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+            <Bundle-Version>${project.version}</Bundle-Version>
+            <Export-Package>
+              !okhttp3.internal.ws.*,
+              okhttp3.ws.*;-noimport:=true
+            </Export-Package>
+          </instructions>
         </configuration>
       </plugin>
     </plugins>
