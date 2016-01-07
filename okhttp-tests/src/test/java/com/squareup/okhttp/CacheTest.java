@@ -462,6 +462,26 @@ public final class CacheTest {
     assertEquals("b", get(url).body().string());
   }
 
+  /** https://github.com/square/okhttp/issues/2198 */
+  @Test public void cachedRedirect() throws IOException {
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Cache-Control: max-age=60")
+        .addHeader("Location: /bar"));
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+
+    Request request1 = new Request.Builder().url(server.url("/")).build();
+    Response response1 = client.newCall(request1).execute();
+    assertEquals("ABC", response1.body().string());
+
+    Request request2 = new Request.Builder().url(server.url("/")).build();
+    Response response2 = client.newCall(request2).execute();
+    assertEquals("ABC", response2.body().string());
+  }
+
   @Test public void serverDisconnectsPrematurelyWithContentLengthHeader() throws IOException {
     testServerPrematureDisconnect(TransferKind.FIXED_LENGTH);
   }
