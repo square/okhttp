@@ -243,8 +243,6 @@ public final class HttpEngine {
         }
       }
     } else {
-      streamAllocation.release();
-
       if (cacheResponse != null) {
         // We have a valid cached response. Promote it to the user response immediately.
         this.userResponse = cacheResponse.newBuilder()
