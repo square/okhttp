@@ -163,6 +163,28 @@ public class CookiesTest {
     assertEquals("a=android; b=banana", request.getHeader("Cookie"));
   }
 
+  @Test public void receiveAndSendMultipleCookies() throws Exception {
+    MockWebServer server = new MockWebServer();
+    server.enqueue(new MockResponse()
+        .addHeader("Set-Cookie", "a=android")
+        .addHeader("Set-Cookie", "b=banana"));
+    server.enqueue(new MockResponse());
+    server.start();
+
+    CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
+    client = client.newBuilder()
+        .cookieJar(new JavaNetCookieJar(cookieManager))
+        .build();
+
+    get(urlWithIpAddress(server, "/"));
+    RecordedRequest request1 = server.takeRequest();
+    assertNull(request1.getHeader("Cookie"));
+
+    get(urlWithIpAddress(server, "/"));
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("a=android; b=banana", request2.getHeader("Cookie"));
+  }
+
   @Test public void testRedirectsDoNotIncludeTooManyCookies() throws Exception {
     MockWebServer redirectTarget = new MockWebServer();
     redirectTarget.enqueue(new MockResponse().setBody("A"));
