@@ -4,10 +4,11 @@ Logging Interceptor
 An [OkHttp interceptor][1] which logs HTTP request and response data.
 
 ```java
-OkHttpClient client = new OkHttpClient();
 HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
 logging.setLevel(Level.BASIC);
-client.interceptors().add(logging);
+OkHttpClient client = new OkHttpClient.Builder()
+  .addInterceptor(logging)
+  .build();
 ```
 
 You can change the log level at any time by calling `setLevel`.
