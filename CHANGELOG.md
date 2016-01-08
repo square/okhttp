@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 2.7.2
+
+_2016-01-07_
+
+ *  Fix: Don't eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.
+
+
 ## Version 2.7.1
 
 _2016-01-01_
