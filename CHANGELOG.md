@@ -109,6 +109,14 @@ _2016-01-01_
     health check fails.
 
 
+## Version 2.7.2
+
+_2016-01-07_
+
+ *  Fix: Don't eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.
+
+
 ## Version 2.7.0
 
 _2015-12-13_
