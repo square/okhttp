@@ -100,6 +100,14 @@ stuck on the old version.
  *  New: Make `HttpUrl` the blessed URL method of `Request`.
 
 
+## Version 2.7.2
+
+_2016-01-07_
+
+ *  Fix: Don't eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.
+
+
 ## Version 2.7.1
 
 _2016-01-01_
@@ -107,14 +115,6 @@ _2016-01-01_
  *  Fix: Don't do a health check on newly-created connections. This is
     unnecessary work that could put the client in an inconsistent state if the
     health check fails.
-
-
-## Version 2.7.2
-
-_2016-01-07_
-
- *  Fix: Don't eagerly release stream allocations on cache hits. We might still
-    need them to handle redirects.
 
 
 ## Version 2.7.0
