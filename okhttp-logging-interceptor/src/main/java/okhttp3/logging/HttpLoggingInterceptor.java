@@ -188,7 +188,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         Charset charset = UTF8;
         MediaType contentType = requestBody.contentType();
         if (contentType != null) {
-          contentType.charset(UTF8);
+          charset = contentType.charset(UTF8);
         }
 
         logger.log("");
