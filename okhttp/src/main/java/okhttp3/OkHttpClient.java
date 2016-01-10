@@ -162,10 +162,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
 
     boolean isTLS = true;
     for (ConnectionSpec spec : connectionSpecs) {
-      if (connectionSpecs.equals(DEFAULT_CONNECTION_SPECS)) {
-        break;
-      }
-      isTLS = spec.isTls();
+      isTLS = isTLS || spec.isTls();
     }
 
     if (builder.sslSocketFactory != null || !isTLS) {
