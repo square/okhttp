@@ -657,11 +657,11 @@ public final class CallTest {
         .build();
 
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         fail();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         throw new IOException("a");
       }
     });
@@ -714,11 +714,11 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.url("/a")).build();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         throw new AssertionError();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         InputStream bytes = response.body().byteStream();
         assertEquals('a', bytes.read());
         assertEquals('b', bytes.read());
@@ -1613,7 +1613,7 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.url("/a")).build();
     client.newCall(request).enqueue(callback);
 
-    callback.await(server.url("/c"))
+    callback.await(server.url("/a"))
         .assertCode(200)
         .assertBody("C")
         .priorResponse()
@@ -1653,7 +1653,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.url("/0")).build();
     client.newCall(request).enqueue(callback);
-    callback.await(server.url("/20"))
+    callback.await(server.url("/0"))
         .assertCode(200)
         .assertBody("Success!");
   }
@@ -1684,7 +1684,7 @@ public final class CallTest {
 
     Request request = new Request.Builder().url(server.url("/0")).build();
     client.newCall(request).enqueue(callback);
-    callback.await(server.url("/20")).assertFailure("Too many follow-up requests: 21");
+    callback.await(server.url("/0")).assertFailure("Too many follow-up requests: 21");
   }
 
   @Test public void http204WithBodyDisallowed() throws IOException {
@@ -1929,12 +1929,12 @@ public final class CallTest {
     Request request = new Request.Builder().url(server.url("/a")).build();
     final Call call = client.newCall(request);
     call.enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         failureRef.set(true);
         latch.countDown();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         call.cancel();
         try {
           bodyRef.set(response.body().string());
@@ -2047,11 +2047,11 @@ public final class CallTest {
 
     final BlockingQueue<Response> responseRef = new SynchronousQueue<>();
     client.newCall(request).enqueue(new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         throw new AssertionError();
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         try {
           responseRef.put(response);
         } catch (InterruptedException e) {

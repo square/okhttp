@@ -92,7 +92,7 @@ public final class WebSocketCall {
    */
   public void enqueue(final WebSocketListener listener) {
     Callback responseCallback = new Callback() {
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         try {
           createWebSocket(response, listener);
         } catch (IOException e) {
@@ -100,7 +100,7 @@ public final class WebSocketCall {
         }
       }
 
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         listener.onFailure(e, null);
       }
     };

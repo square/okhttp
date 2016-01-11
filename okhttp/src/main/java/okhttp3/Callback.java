@@ -23,7 +23,7 @@ public interface Callback {
    * timeout. Because networks can fail during an exchange, it is possible that the remote server
    * accepted the request before the failure.
    */
-  void onFailure(Request request, IOException e);
+  void onFailure(Call call, IOException e);
 
   /**
    * Called when the HTTP response was successfully returned by the remote server. The callback may
@@ -35,5 +35,5 @@ public interface Callback {
    * not necessarily indicate application-layer success: {@code response} may still indicate an
    * unhappy HTTP response code like 404 or 500.
    */
-  void onResponse(Response response) throws IOException;
+  void onResponse(Call call, Response response) throws IOException;
 }
