@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ServerSocket;
+import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -1397,6 +1398,37 @@ public final class CallTest {
         .assertBody("")
         .assertNoNetworkResponse()
         .assertNoCacheResponse();
+  }
+
+  @Test public void networkDropsOnConditionalGet() throws IOException {
+    client = client.newBuilder()
+        .cache(cache)
+        .build();
+
+    // Seed the cache.
+    server.enqueue(new MockResponse()
+        .addHeader("ETag: v1")
+        .setBody("A"));
+    Request cacheStoreRequest = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    executeSynchronously(cacheStoreRequest)
+        .assertCode(200)
+        .assertBody("A");
+
+    // Attempt conditional cache validation and a DNS miss.
+    client.connectionPool().evictAll();
+    client = client.newBuilder()
+        .dns(new FakeDns().unknownHost())
+        .build();
+    Request conditionalGetRequest = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    try {
+      executeSynchronously(conditionalGetRequest);
+      fail();
+    } catch (UnknownHostException expected) {
+    }
   }
 
   @Test public void redirect() throws Exception {

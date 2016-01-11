@@ -211,15 +211,37 @@ public final class HttpEngine {
       closeQuietly(cacheCandidate.body()); // The cache candidate wasn't applicable. Close it.
     }
 
-    if (networkRequest != null) {
+    // If we're forbidden from using the network and the cache is insufficient, fail.
+    if (networkRequest == null && cacheResponse == null) {
+      userResponse = new Response.Builder()
+          .request(userRequest)
+          .priorResponse(stripBody(priorResponse))
+          .protocol(Protocol.HTTP_1_1)
+          .code(504)
+          .message("Unsatisfiable Request (only-if-cached)")
+          .body(EMPTY_BODY)
+          .build();
+      return;
+    }
+
+    // If we don't need the network, we're done.
+    if (networkRequest == null) {
+      userResponse = cacheResponse.newBuilder()
+          .request(userRequest)
+          .priorResponse(stripBody(priorResponse))
+          .cacheResponse(stripBody(cacheResponse))
+          .build();
+      userResponse = unzip(userResponse);
+      return;
+    }
+
+    // We need the network to satisfy this request. Possibly for validating a conditional GET.
+    boolean success = false;
+    try {
       httpStream = connect();
       httpStream.setHttpEngine(this);
 
-      // If the caller's control flow writes the request body, we need to create that stream
-      // immediately. And that means we need to immediately write the request headers, so we can
-      // start streaming the request body. (We may already have a request body if we're retrying a
-      // failed POST.)
-      if (callerWritesRequestBody && permitsRequestBody(networkRequest) && requestBodyOut == null) {
+      if (writeRequestHeadersEagerly()) {
         long contentLength = OkHeaders.contentLength(request);
         if (bufferRequestBody) {
           if (contentLength > Integer.MAX_VALUE) {
@@ -232,9 +254,8 @@ public final class HttpEngine {
             httpStream.writeRequestHeaders(networkRequest);
             requestBodyOut = new RetryableSink((int) contentLength);
           } else {
-            // Buffer a request body of an unknown length. Don't write request
-            // headers until the entire body is ready; otherwise we can't set the
-            // Content-Length header correctly.
+            // Buffer a request body of an unknown length. Don't write request headers until the
+            // entire body is ready; otherwise we can't set the Content-Length header correctly.
             requestBodyOut = new RetryableSink();
           }
         } else {
@@ -242,28 +263,25 @@ public final class HttpEngine {
           requestBodyOut = httpStream.createRequestBody(networkRequest, contentLength);
         }
       }
-    } else {
-      if (cacheResponse != null) {
-        // We have a valid cached response. Promote it to the user response immediately.
-        this.userResponse = cacheResponse.newBuilder()
-            .request(userRequest)
-            .priorResponse(stripBody(priorResponse))
-            .cacheResponse(stripBody(cacheResponse))
-            .build();
-      } else {
-        // We're forbidden from using the network, and the cache is insufficient.
-        this.userResponse = new Response.Builder()
-            .request(userRequest)
-            .priorResponse(stripBody(priorResponse))
-            .protocol(Protocol.HTTP_1_1)
-            .code(504)
-            .message("Unsatisfiable Request (only-if-cached)")
-            .body(EMPTY_BODY)
-            .build();
+      success = true;
+    } finally {
+      // If we're crashing on I/O or otherwise, don't leak the cache body.
+      if (!success && cacheCandidate != null) {
+        closeQuietly(cacheCandidate.body());
       }
-
-      userResponse = unzip(userResponse);
     }
+  }
+
+  /**
+   * If the caller's control flow writes the request body, we need to create that stream
+   * immediately. And that means we need to immediately write the request headers, so we can
+   * start streaming the request body. (We may already have a request body if we're retrying a
+   * failed POST.)
+   */
+  private boolean writeRequestHeadersEagerly() {
+    return callerWritesRequestBody
+        && permitsRequestBody(networkRequest)
+        && requestBodyOut == null;
   }
 
   private HttpStream connect() throws RouteException, RequestException, IOException {
