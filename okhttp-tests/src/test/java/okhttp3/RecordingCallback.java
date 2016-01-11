@@ -29,14 +29,14 @@ public class RecordingCallback implements Callback {
 
   private final List<RecordedResponse> responses = new ArrayList<>();
 
-  @Override public synchronized void onFailure(Request request, IOException e) {
-    responses.add(new RecordedResponse(request, null, null, null, e));
+  @Override public synchronized void onFailure(Call call, IOException e) {
+    responses.add(new RecordedResponse(call.request(), null, null, null, e));
     notifyAll();
   }
 
-  @Override public synchronized void onResponse(Response response) throws IOException {
+  @Override public synchronized void onResponse(Call call, Response response) throws IOException {
     String body = response.body().string();
-    responses.add(new RecordedResponse(response.request(), response, null, body, null));
+    responses.add(new RecordedResponse(call.request(), response, null, body, null));
     notifyAll();
   }
 

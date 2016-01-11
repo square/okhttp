@@ -127,18 +127,17 @@ final class RealCall implements Call {
         Response response = getResponseWithInterceptorChain(forWebSocket);
         if (canceled) {
           signalledCallback = true;
-          responseCallback.onFailure(originalRequest, new IOException("Canceled"));
+          responseCallback.onFailure(RealCall.this, new IOException("Canceled"));
         } else {
           signalledCallback = true;
-          responseCallback.onResponse(response);
+          responseCallback.onResponse(RealCall.this, response);
         }
       } catch (IOException e) {
         if (signalledCallback) {
           // Do not signal the callback twice!
           logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
         } else {
-          Request request = engine == null ? originalRequest : engine.getRequest();
-          responseCallback.onFailure(request, e);
+          responseCallback.onFailure(RealCall.this, e);
         }
       } finally {
         client.dispatcher().finished(this);

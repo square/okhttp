@@ -24,6 +24,7 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
+import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Dispatcher;
 import okhttp3.HttpUrl;
@@ -68,11 +69,11 @@ class OkHttpAsync implements HttpClient {
     }
 
     callback = new Callback() {
-      @Override public void onFailure(Request request, IOException e) {
+      @Override public void onFailure(Call call, IOException e) {
         System.out.println("Failed: " + e);
       }
 
-      @Override public void onResponse(Response response) throws IOException {
+      @Override public void onResponse(Call call, Response response) throws IOException {
         ResponseBody body = response.body();
         long total = SynchronousHttpClient.readAllAndClose(body.byteStream());
         long finish = System.nanoTime();
