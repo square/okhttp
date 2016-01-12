@@ -89,7 +89,7 @@ public final class WebSocketCallTest {
   }
 
   @Test public void okButNotOk() {
-    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse().setResponseCode(200));
     awaitWebSocket();
     listener.assertFailure(ProtocolException.class, "Expected HTTP 101 response but was '200 OK'");
   }

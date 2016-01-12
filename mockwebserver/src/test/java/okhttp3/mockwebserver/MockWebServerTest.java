@@ -55,11 +55,34 @@ public final class MockWebServerTest {
     assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 
+  @Test public void setResponseMockReason() {
+    String[] reasons = {
+        "Mock Response",
+        "Informational",
+        "OK",
+        "Redirection",
+        "Client Error",
+        "Server Error",
+        "Mock Response"
+    };
+    for (int i = 0; i < 600; i++) {
+      MockResponse response = new MockResponse().setResponseCode(i);
+      String expectedReason = reasons[i / 100];
+      assertEquals("HTTP/1.1 " + i + " " + expectedReason, response.getStatus());
+      assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
+    }
+  }
+
+  @Test public void setStatusControlsWholeStatusLine() {
+    MockResponse response = new MockResponse().setStatus("HTTP/1.1 202 That'll do pig");
+    assertEquals(Arrays.asList("Content-Length: 0"), headersToList(response));
+    assertEquals("HTTP/1.1 202 That'll do pig", response.getStatus());
+  }
+
   @Test public void setBodyAdjustsHeaders() throws IOException {
     MockResponse response = new MockResponse().setBody("ABC");
     assertEquals(Arrays.asList("Content-Length: 3"), headersToList(response));
     assertEquals("ABC", response.getBody().readUtf8());
-    assertEquals("HTTP/1.1 200 OK", response.getStatus());
   }
 
   @Test public void mockResponseAddHeader() {

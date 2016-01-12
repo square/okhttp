@@ -28,7 +28,7 @@ import okio.Buffer;
 public final class MockResponse implements Cloneable {
   private static final String CHUNKED_BODY_HEADER = "Transfer-encoding: chunked";
 
-  private String status = "HTTP/1.1 200 OK";
+  private String status;
   private Headers.Builder headers = new Headers.Builder();
 
   private Buffer body;
@@ -48,6 +48,7 @@ public final class MockResponse implements Cloneable {
 
   /** Creates a new mock response with an empty body. */
   public MockResponse() {
+    setResponseCode(200);
     setHeader("Content-Length", 0);
   }
 
@@ -68,7 +69,19 @@ public final class MockResponse implements Cloneable {
   }
 
   public MockResponse setResponseCode(int code) {
-    return setStatus("HTTP/1.1 " + code + " OK");
+    String reason = "Mock Response";
+    if (code >= 100 && code < 200) {
+      reason = "Informational";
+    } else if (code >= 200 && code < 300) {
+      reason = "OK";
+    } else if (code >= 300 && code < 400) {
+      reason = "Redirection";
+    } else if (code >= 400 && code < 500) {
+      reason = "Client Error";
+    } else if (code >= 500 && code < 600) {
+      reason = "Server Error";
+    }
+    return setStatus("HTTP/1.1 " + code + " " + reason);
   }
 
   public MockResponse setStatus(String status) {
