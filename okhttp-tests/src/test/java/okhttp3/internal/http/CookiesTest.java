@@ -17,6 +17,7 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
+import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
@@ -28,9 +29,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import okhttp3.HttpUrl;
+import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
 import okhttp3.OkUrlFactory;
-import okhttp3.JavaNetCookieJar;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -143,21 +144,50 @@ public class CookiesTest {
     MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse());
     server.start();
+    HttpUrl serverUrl = urlWithIpAddress(server, "/");
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookieA = new HttpCookie("a", "android");
-    cookieA.setDomain(server.getHostName());
+    cookieA.setDomain(serverUrl.host());
     cookieA.setPath("/");
-    cookieManager.getCookieStore().add(server.url("/").uri(), cookieA);
+    cookieManager.getCookieStore().add(serverUrl.uri(), cookieA);
     HttpCookie cookieB = new HttpCookie("b", "banana");
-    cookieB.setDomain(server.getHostName());
+    cookieB.setDomain(serverUrl.host());
     cookieB.setPath("/");
-    cookieManager.getCookieStore().add(server.url("/").uri(), cookieB);
+    cookieManager.getCookieStore().add(serverUrl.uri(), cookieB);
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
 
-    get(server.url("/"));
+    get(serverUrl);
+    RecordedRequest request = server.takeRequest();
+
+    assertEquals("a=android; b=banana", request.getHeader("Cookie"));
+  }
+
+  @Test public void cookieHandlerLikeAndroid() throws Exception {
+    final MockWebServer server = new MockWebServer();
+    server.enqueue(new MockResponse());
+    server.start();
+    final HttpUrl serverUrl = urlWithIpAddress(server, "/");
+
+    CookieHandler androidCookieHandler = new CookieHandler() {
+      @Override public Map<String, List<String>> get(URI uri, Map<String, List<String>> map)
+          throws IOException {
+        return Collections.singletonMap("Cookie", Collections.singletonList("$Version=\"1\"; "
+            + "a=\"android\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\"; "
+            + "b=\"banana\";$Path=\"/\";$Domain=\"" + serverUrl.host() + "\""));
+      }
+
+      @Override public void put(URI uri, Map<String, List<String>> map) throws IOException {
+      }
+    };
+
+    client = client.newBuilder()
+        .cookieJar(new JavaNetCookieJar(androidCookieHandler))
+        .build();
+
+    get(serverUrl);
     RecordedRequest request = server.takeRequest();
 
     assertEquals("a=android; b=banana", request.getHeader("Cookie"));
@@ -167,25 +197,27 @@ public class CookiesTest {
     MockWebServer redirectTarget = new MockWebServer();
     redirectTarget.enqueue(new MockResponse().setBody("A"));
     redirectTarget.start();
+    HttpUrl redirectTargetUrl = urlWithIpAddress(redirectTarget, "/");
 
     MockWebServer redirectSource = new MockWebServer();
     redirectSource.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
-        .addHeader("Location: " + redirectTarget.url("/")));
+        .addHeader("Location: " + redirectTargetUrl));
     redirectSource.start();
+    HttpUrl redirectSourceUrl = urlWithIpAddress(redirectSource, "/");
 
     CookieManager cookieManager = new CookieManager(null, ACCEPT_ORIGINAL_SERVER);
     HttpCookie cookie = new HttpCookie("c", "cookie");
-    cookie.setDomain(redirectSource.getHostName());
+    cookie.setDomain(redirectSourceUrl.host());
     cookie.setPath("/");
     String portList = Integer.toString(redirectSource.getPort());
     cookie.setPortlist(portList);
-    cookieManager.getCookieStore().add(redirectSource.url("/").uri(), cookie);
+    cookieManager.getCookieStore().add(redirectSourceUrl.uri(), cookie);
     client = client.newBuilder()
         .cookieJar(new JavaNetCookieJar(cookieManager))
         .build();
 
-    get(redirectSource.url("/"));
+    get(redirectSourceUrl);
     RecordedRequest request = redirectSource.takeRequest();
 
     assertEquals("c=cookie", request.getHeader("Cookie"));
