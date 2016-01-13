@@ -25,6 +25,8 @@ import java.util.Map;
 import okhttp3.internal.Internal;
 
 import static java.util.logging.Level.WARNING;
+import static okhttp3.internal.Util.delimiterOffset;
+import static okhttp3.internal.Util.trimSubstring;
 
 /** A cookie jar that delegates to a {@link java.net.CookieHandler}. */
 public final class JavaNetCookieJar implements CookieJar {
@@ -82,19 +84,26 @@ public final class JavaNetCookieJar implements CookieJar {
    * multiple cookies in a single request header, which {@link Cookie#parse} doesn't support.
    */
   private List<Cookie> decodeHeaderAsJavaNetCookies(HttpUrl url, String header) {
-    List<HttpCookie> javaNetCookies;
-    try {
-      javaNetCookies = HttpCookie.parse(header);
-    } catch (IllegalArgumentException e) {
-      // Unfortunately sometimes java.net gives a Cookie like "$Version=1" which it can't parse!
-      Internal.logger.log(WARNING, "Parsing request cookie failed for " + url.resolve("/..."), e);
-      return Collections.emptyList();
-    }
     List<Cookie> result = new ArrayList<>();
-    for (HttpCookie javaNetCookie : javaNetCookies) {
+    for (int pos = 0, limit = header.length(), pairEnd; pos < limit; pos = pairEnd + 1) {
+      pairEnd = delimiterOffset(header, pos, limit, ";,");
+      int equalsSign = delimiterOffset(header, pos, pairEnd, '=');
+      String name = trimSubstring(header, pos, equalsSign);
+      if (name.startsWith("$")) continue;
+
+      // We have either name=value or just a name.
+      String value = equalsSign < pairEnd
+          ? trimSubstring(header, equalsSign + 1, pairEnd)
+          : "";
+
+      // If the value is "quoted", drop the quotes.
+      if (value.startsWith("\"") && value.endsWith("\"")) {
+        value = value.substring(1, value.length() - 1);
+      }
+
       result.add(new Cookie.Builder()
-          .name(javaNetCookie.getName())
-          .value(javaNetCookie.getValue())
+          .name(name)
+          .value(value)
           .domain(url.host())
           .build());
     }
