@@ -281,7 +281,7 @@ public final class Headers {
         char c = value.charAt(i);
         if (c <= '\u001f' || c >= '\u007f') {
           throw new IllegalArgumentException(String.format(
-              "Unexpected char %#04x at %d in header value: %s", (int) c, i, value));
+              "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
         }
       }
     }
