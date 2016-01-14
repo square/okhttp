@@ -58,9 +58,6 @@
 
     <!-- Test Dependencies -->
     <junit.version>4.11</junit.version>
-
-    <!-- Plugin Dependencies -->
-    <maven.bundle.plugin.version>3.0.1</maven.bundle.plugin.version>
   </properties>
 
   <scm>
@@ -171,21 +168,6 @@
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>2.9</version>
         </plugin>
-
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>${maven.bundle.plugin.version}</version>
-          <extensions>true</extensions>
-          <executions>
-            <execution>
-              <goals>
-                <goal>manifest</goal>
-              </goals>
-            </execution>
-          </executions>
-        </plugin>
-
       </plugins>
     </pluginManagement>
 
