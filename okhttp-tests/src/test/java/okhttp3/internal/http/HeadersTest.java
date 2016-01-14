@@ -334,4 +334,24 @@ public final class HeadersTest {
     } catch (IndexOutOfBoundsException expected) {
     }
   }
+
+  @Test public void builderRejectsUnicodeInHeaderName() {
+    try {
+      new Headers.Builder().add("héader1", "value1");
+      fail("Should have complained about invalid name");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 1 in header name: héader1",
+          expected.getMessage());
+    }
+  }
+
+  @Test public void builderRejectsUnicodeInHeaderValue() {
+    try {
+      new Headers.Builder().add("header1", "valué1");
+      fail("Should have complained about invalid value");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
+          expected.getMessage());
+    }
+  }
 }
