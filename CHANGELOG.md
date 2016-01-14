@@ -1,6 +1,26 @@
 Change Log
 ==========
 
+## Version 3.0.0
+
+_2016-01-13_
+
+This release commits to a stable 3.0 API. Read the 3.0.0-RC1 changes for advice
+on upgrading from 2.x to 3.x.
+
+ *  **The `Callback` interface now takes a `Call`**. This makes it easier to
+    check if the call was canceled from within the callback. When migrating
+    async calls to this new API, `Call` is now the first parameter for both
+    `onResponse()` and `onFailure()`.
+ *  Fix: handle multiple cookies in `JavaNetCookieJar` on Android.
+ *  Fix: improve the default HTTP message in MockWebServer responses.
+ *  Fix: don't leak file handles when a conditional GET throws.
+ *  Fix: Use charset specified by the request body content type in OkHttp's
+    logging interceptor.
+ *  Fix: Don't eagerly release pools on cache hits.
+ *  New: Make OkHttp OSGi ready.
+ *  New: Add already-implemented interfaces Closeable and Flushable to the cache.
+
 ## Version 3.0.0-RC1
 
 _2016-01-02_
