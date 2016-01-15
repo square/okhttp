@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+## Version 3.0.1
+
+_2016-01-14_
+
+ *  Rollback OSGi support. This was causing library jars to include more classes
+    than expected, which interfered with Gradle builds.
+
+
 ## Version 3.0.0
 
 _2016-01-13_
