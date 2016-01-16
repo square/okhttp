@@ -51,9 +51,9 @@ public final class HttpLoggingInterceptor implements Interceptor {
      *
      * <p>Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1 (3-byte body)
+     * --> POST /greeting http/1.1 (3-byte body)
      *
-     * <-- HTTP/1.1 200 OK (22ms, 6-byte body)
+     * <-- 200 OK (22ms, 6-byte body)
      * }</pre>
      */
     BASIC,
@@ -62,13 +62,13 @@ public final class HttpLoggingInterceptor implements Interceptor {
      *
      * <p>Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1
+     * --> POST /greeting http/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
      * --> END POST
      *
-     * <-- HTTP/1.1 200 OK (22ms)
+     * <-- 200 OK (22ms)
      * Content-Type: plain/text
      * Content-Length: 6
      * <-- END HTTP
@@ -80,7 +80,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      *
      * <p>Example:
      * <pre>{@code
-     * --> POST /greeting HTTP/1.1
+     * --> POST /greeting http/1.1
      * Host: example.com
      * Content-Type: plain/text
      * Content-Length: 3
@@ -88,7 +88,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
      * Hi?
      * --> END GET
      *
-     * <-- HTTP/1.1 200 OK (22ms)
+     * <-- 200 OK (22ms)
      * Content-Type: plain/text
      * Content-Length: 6
      *
@@ -149,8 +149,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
     Connection connection = chain.connection();
     Protocol protocol = connection != null ? connection.protocol() : Protocol.HTTP_1_1;
-    String requestStartMessage =
-        "--> " + request.method() + ' ' + request.url() + ' ' + protocol(protocol);
+    String requestStartMessage = "--> " + request.method() + ' ' + request.url() + ' ' + protocol;
     if (!logHeaders && hasRequestBody) {
       requestStartMessage += " (" + requestBody.contentLength() + "-byte body)";
     }
@@ -246,9 +245,5 @@ public final class HttpLoggingInterceptor implements Interceptor {
   private boolean bodyEncoded(Headers headers) {
     String contentEncoding = headers.get("Content-Encoding");
     return contentEncoding != null && !contentEncoding.equalsIgnoreCase("identity");
-  }
-
-  private static String protocol(Protocol protocol) {
-    return protocol == Protocol.HTTP_1_0 ? "HTTP/1.0" : "HTTP/1.1";
   }
 }

@@ -2305,6 +2305,29 @@ public final class CallTest {
     assertEquals("password", get.getHeader("Proxy-Authorization"));
   }
 
+  @Test public void interceptorGetsFramedProtocol() throws Exception {
+    enableProtocol(Protocol.HTTP_2);
+
+    // Capture the protocol as it is observed by the interceptor.
+    final AtomicReference<Protocol> protocolRef = new AtomicReference<>();
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        protocolRef.set(chain.connection().protocol());
+        return chain.proceed(chain.request());
+      }
+    };
+    client = client.newBuilder()
+        .addNetworkInterceptor(interceptor)
+        .build();
+
+    // Make an HTTP/2 request and confirm that the protocol matches.
+    server.enqueue(new MockResponse());
+    executeSynchronously(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    assertEquals(Protocol.HTTP_2, protocolRef.get());
+  }
+
   private void makeFailingCall() {
     RequestBody requestBody = new RequestBody() {
       @Override public MediaType contentType() {
