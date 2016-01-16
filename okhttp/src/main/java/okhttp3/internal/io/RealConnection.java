@@ -360,7 +360,11 @@ public final class RealConnection implements Connection {
   }
 
   @Override public Protocol protocol() {
-    return protocol != null ? protocol : Protocol.HTTP_1_1;
+    if (framedConnection == null) {
+      return protocol != null ? protocol : Protocol.HTTP_1_1;
+    } else {
+      return framedConnection.getProtocol();
+    }
   }
 
   @Override public String toString() {
