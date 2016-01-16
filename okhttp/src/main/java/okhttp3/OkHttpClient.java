@@ -159,7 +159,13 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
     this.cache = builder.cache;
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
-    if (builder.sslSocketFactory != null) {
+
+    boolean isTLS = true;
+    for (ConnectionSpec spec : connectionSpecs) {
+      isTLS = isTLS || spec.isTls();
+    }
+
+    if (builder.sslSocketFactory != null || !isTLS) {
       this.sslSocketFactory = builder.sslSocketFactory;
     } else {
       try {
