@@ -117,9 +117,7 @@ public final class ConnectionPool {
   RealConnection get(Address address, StreamAllocation streamAllocation) {
     assert (Thread.holdsLock(this));
     for (RealConnection connection : connections) {
-      // TODO(jwilson): this is awkward. We're already holding a lock on 'this', and
-      //     connection.allocationLimit() may also lock the FramedConnection.
-      if (connection.allocations.size() < connection.allocationLimit()
+      if (connection.allocations.size() < connection.allocationLimit
           && address.equals(connection.route().address)
           && !connection.noNewStreams) {
         streamAllocation.acquire(connection);

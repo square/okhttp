@@ -44,7 +44,9 @@ import okhttp3.internal.ConnectionSpecSelector;
 import okhttp3.internal.Platform;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
+import okhttp3.internal.framed.ErrorCode;
 import okhttp3.internal.framed.FramedConnection;
+import okhttp3.internal.framed.FramedStream;
 import okhttp3.internal.http.Http1xStream;
 import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.http.RouteException;
@@ -60,7 +62,7 @@ import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static okhttp3.internal.Util.closeQuietly;
 
-public final class RealConnection implements Connection {
+public final class RealConnection extends FramedConnection.Listener implements Connection {
   private final Route route;
 
   /** The low-level TCP socket. */
@@ -77,6 +79,7 @@ public final class RealConnection implements Connection {
   public int successCount;
   public BufferedSource source;
   public BufferedSink sink;
+  public int allocationLimit;
   public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
   public boolean noNewStreams;
   public long idleAtNanos = Long.MAX_VALUE;
@@ -154,11 +157,15 @@ public final class RealConnection implements Connection {
       FramedConnection framedConnection = new FramedConnection.Builder(true)
           .socket(socket, route.address().url().host(), source, sink)
           .protocol(protocol)
+          .listener(this)
           .build();
       framedConnection.sendConnectionPreface();
 
       // Only assign the framed connection once the preface has been sent successfully.
+      this.allocationLimit = framedConnection.maxConcurrentStreams();
       this.framedConnection = framedConnection;
+    } else {
+      this.allocationLimit = 1;
     }
   }
 
@@ -308,13 +315,6 @@ public final class RealConnection implements Connection {
     return socket;
   }
 
-  public int allocationLimit() {
-    FramedConnection framedConnection = this.framedConnection;
-    return framedConnection != null
-        ? framedConnection.maxConcurrentStreams()
-        : 1;
-  }
-
   /** Returns true if this connection is ready to host new streams. */
   public boolean isHealthy(boolean doExtensiveChecks) {
     if (socket.isClosed() || socket.isInputShutdown() || socket.isOutputShutdown()) {
@@ -345,6 +345,16 @@ public final class RealConnection implements Connection {
     }
 
     return true;
+  }
+
+  /** Refuse incoming streams. */
+  @Override public void onStream(FramedStream stream) throws IOException {
+    stream.close(ErrorCode.REFUSED_STREAM);
+  }
+
+  /** When settings are received, adjust the allocation limit. */
+  @Override public void onSettings(FramedConnection connection) {
+    allocationLimit = connection.maxConcurrentStreams();
   }
 
   @Override public Handshake handshake() {
