@@ -34,6 +34,8 @@ public final class ParseResponseWithGson {
     if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
     Gist gist = gson.fromJson(response.body().charStream(), Gist.class);
+    response.body().close();
+
     for (Map.Entry<String, GistFile> entry : gist.files.entrySet()) {
       System.out.println(entry.getKey());
       System.out.println(entry.getValue().content);
