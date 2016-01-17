@@ -598,6 +598,46 @@ public final class HttpLoggingInterceptorTest {
         .assertNoMoreLogs();
   }
 
+  @Test public void bodyGetMalformedCharset() throws IOException {
+    setLevel(Level.BODY);
+
+    server.enqueue(new MockResponse()
+        .setHeader("Content-Type", "text/html; charset=0")
+        .setBody("Ignore This"));
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Type: text/html; charset=0")
+        .assertLogMatch("Content-Length: \\d+")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogMatch("")
+        .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Type: text/html; charset=0")
+        .assertLogMatch("Content-Length: \\d+")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("")
+        .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
+        .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
   private Request.Builder request() {
     return new Request.Builder().url(url);
   }
