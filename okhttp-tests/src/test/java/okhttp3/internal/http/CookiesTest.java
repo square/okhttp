@@ -23,15 +23,16 @@ import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URI;
-import java.net.URLConnection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.JavaNetCookieJar;
 import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -44,7 +45,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/** Android's CookiesTest. */
+/** Derived from Android's CookiesTest. */
 public class CookiesTest {
   private OkHttpClient client = defaultClient();
 
@@ -283,10 +284,11 @@ public class CookiesTest {
         .build();
   }
 
-  private Map<String, List<String>> get(HttpUrl url) throws Exception {
-    URLConnection connection = new OkUrlFactory(client).open(url.url());
-    Map<String, List<String>> headers = connection.getHeaderFields();
-    connection.getInputStream().close();
-    return headers;
+  private void get(HttpUrl url) throws Exception {
+    Call call = client.newCall(new Request.Builder()
+        .url(url)
+        .build());
+    Response response = call.execute();
+    response.body().close();
   }
 }
