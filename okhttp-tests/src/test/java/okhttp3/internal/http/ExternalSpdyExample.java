@@ -16,49 +16,36 @@
 
 package okhttp3.internal.http;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.List;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
-import okhttp3.OkUrlFactory;
 import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.internal.Util;
-
-import static okhttp3.internal.http.OkHeaders.SELECTED_PROTOCOL;
 
 public final class ExternalSpdyExample {
   public static void main(String[] args) throws Exception {
-    URL url = new URL("https://www.google.ca/");
     OkHttpClient client = new OkHttpClient.Builder()
         .protocols(Util.immutableList(Protocol.SPDY_3, Protocol.HTTP_1_1))
         .build();
-    HttpsURLConnection connection = (HttpsURLConnection) new OkUrlFactory(client)
-        .open(url);
 
-    connection.setHostnameVerifier(new HostnameVerifier() {
-      @Override public boolean verify(String s, SSLSession sslSession) {
-        System.out.println("VERIFYING " + s);
-        return true;
+    Call call = client.newCall(new Request.Builder()
+        .url("https://www.google.ca/")
+        .build());
+
+    Response response = call.execute();
+    try {
+      System.out.println(response.code());
+      System.out.println("PROTOCOL " + response.protocol());
+
+      String line;
+      while ((line = response.body().source().readUtf8Line()) != null) {
+        System.out.println(line);
       }
-    });
-
-    int responseCode = connection.getResponseCode();
-    System.out.println(responseCode);
-    List<String> protocolValues = connection.getHeaderFields().get(SELECTED_PROTOCOL);
-    // If null, probably you didn't add jetty's alpn jar to your boot classpath!
-    if (protocolValues != null && !protocolValues.isEmpty()) {
-      System.out.println("PROTOCOL " + protocolValues.get(0));
+    } finally {
+      response.body().close();
     }
 
-    BufferedReader reader =
-        new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-    String line;
-    while ((line = reader.readLine()) != null) {
-      System.out.println(line);
-    }
+    client.connectionPool().evictAll();
   }
 }

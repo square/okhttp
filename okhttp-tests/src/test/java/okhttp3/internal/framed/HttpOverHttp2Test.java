@@ -15,9 +15,11 @@
  */
 package okhttp3.internal.framed;
 
-import java.net.HttpURLConnection;
+import okhttp3.Call;
 import okhttp3.Headers;
 import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.PushPromise;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -35,16 +37,19 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
   @Test public void serverSendsPushPromise_GET() throws Exception {
     PushPromise pushPromise = new PushPromise("GET", "/foo/bar", Headers.of("foo", "bar"),
         new MockResponse().setBody("bar").setStatus("HTTP/1.1 200 Sweet"));
-    MockResponse response = new MockResponse()
+    server.enqueue(new MockResponse()
         .setBody("ABCDE")
         .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise);
-    server.enqueue(response);
+        .withPush(pushPromise));
 
-    connection = urlFactory.open(server.url("/foo").url());
-    assertContent("ABCDE", connection, Integer.MAX_VALUE);
-    assertEquals(200, connection.getResponseCode());
-    assertEquals("Sweet", connection.getResponseMessage());
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/foo"))
+        .build());
+    Response response = call.execute();
+
+    assertEquals("ABCDE", response.body().string());
+    assertEquals(200, response.code());
+    assertEquals("Sweet", response.message());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
@@ -59,16 +64,18 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
   @Test public void serverSendsPushPromise_HEAD() throws Exception {
     PushPromise pushPromise = new PushPromise("HEAD", "/foo/bar", Headers.of("foo", "bar"),
         new MockResponse().setStatus("HTTP/1.1 204 Sweet"));
-    MockResponse response = new MockResponse()
+    server.enqueue(new MockResponse()
         .setBody("ABCDE")
         .setStatus("HTTP/1.1 200 Sweet")
-        .withPush(pushPromise);
-    server.enqueue(response);
+        .withPush(pushPromise));
 
-    connection = urlFactory.open(server.url("/foo").url());
-    assertContent("ABCDE", connection, Integer.MAX_VALUE);
-    assertEquals(200, connection.getResponseCode());
-    assertEquals("Sweet", connection.getResponseMessage());
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/foo"))
+        .build());
+    Response response = call.execute();
+    assertEquals("ABCDE", response.body().string());
+    assertEquals(200, response.code());
+    assertEquals("Sweet", response.message());
 
     RecordedRequest request = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
@@ -90,22 +97,38 @@ public class HttpOverHttp2Test extends HttpOverSpdyTest {
 
     // Read & write a full request to confirm settings are accepted.
     server.enqueue(new MockResponse().withSettings(settings));
-    HttpURLConnection settingsConnection = urlFactory.open(server.url("/").url());
-    assertContent("", settingsConnection, Integer.MAX_VALUE);
 
-    server.enqueue(new MockResponse().setBody("ABC"));
-    server.enqueue(new MockResponse().setBody("DEF"));
-    server.enqueue(new MockResponse().setBody("GHI"));
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("", response.body().string());
 
-    HttpURLConnection connection1 = urlFactory.open(server.url("/").url());
-    connection1.connect();
-    HttpURLConnection connection2 = urlFactory.open(server.url("/").url());
-    connection2.connect();
-    HttpURLConnection connection3 = urlFactory.open(server.url("/").url());
-    connection3.connect();
-    assertContent("ABC", connection1, Integer.MAX_VALUE);
-    assertContent("DEF", connection2, Integer.MAX_VALUE);
-    assertContent("GHI", connection3, Integer.MAX_VALUE);
+    server.enqueue(new MockResponse()
+        .setBody("ABC"));
+    server.enqueue(new MockResponse()
+        .setBody("DEF"));
+    server.enqueue(new MockResponse()
+        .setBody("GHI"));
+
+    Call call1 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response1 = call1.execute();
+
+    Call call2 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response2 = call2.execute();
+
+    Call call3 = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response3 = call3.execute();
+
+    assertEquals("ABC", response1.body().string());
+    assertEquals("DEF", response2.body().string());
+    assertEquals("GHI", response3.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber()); // Settings connection.
     assertEquals(1, server.takeRequest().getSequenceNumber()); // Reuse settings connection.
     assertEquals(2, server.takeRequest().getSequenceNumber()); // Reuse settings connection.

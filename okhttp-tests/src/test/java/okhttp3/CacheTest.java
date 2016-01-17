@@ -64,7 +64,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-/** Test caching with {@link OkUrlFactory}. */
 public final class CacheTest {
   private static final HostnameVerifier NULL_HOSTNAME_VERIFIER = new HostnameVerifier() {
     @Override public boolean verify(String s, SSLSession sslSession) {
