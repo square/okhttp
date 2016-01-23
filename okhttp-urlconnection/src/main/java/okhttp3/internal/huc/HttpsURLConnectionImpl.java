@@ -21,12 +21,17 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Handshake;
 import okhttp3.OkHttpClient;
+import okhttp3.internal.URLFilter;
 
 public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   private final HttpURLConnectionImpl delegate;
 
   public HttpsURLConnectionImpl(URL url, OkHttpClient client) {
     this(new HttpURLConnectionImpl(url, client));
+  }
+
+  public HttpsURLConnectionImpl(URL url, OkHttpClient client, URLFilter filter) {
+    this(new HttpURLConnectionImpl(url, client, filter));
   }
 
   public HttpsURLConnectionImpl(HttpURLConnectionImpl delegate) {

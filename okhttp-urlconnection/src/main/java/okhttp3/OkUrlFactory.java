@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
 import java.net.URLStreamHandlerFactory;
+import okhttp3.internal.URLFilter;
 import okhttp3.internal.huc.HttpURLConnectionImpl;
 import okhttp3.internal.huc.HttpsURLConnectionImpl;
 
@@ -31,6 +32,7 @@ import okhttp3.internal.huc.HttpsURLConnectionImpl;
  */
 public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   private OkHttpClient client;
+  private URLFilter urlFilter;
 
   public OkUrlFactory(OkHttpClient client) {
     this.client = client;
@@ -43,6 +45,10 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
   public OkUrlFactory setClient(OkHttpClient client) {
     this.client = client;
     return this;
+  }
+
+  void setUrlFilter(URLFilter filter) {
+    urlFilter = filter;
   }
 
   /**
@@ -63,8 +69,8 @@ public final class OkUrlFactory implements URLStreamHandlerFactory, Cloneable {
         .proxy(proxy)
         .build();
 
-    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy);
-    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy);
+    if (protocol.equals("http")) return new HttpURLConnectionImpl(url, copy, urlFilter);
+    if (protocol.equals("https")) return new HttpsURLConnectionImpl(url, copy, urlFilter);
     throw new IllegalArgumentException("Unexpected protocol: " + protocol);
   }
 
