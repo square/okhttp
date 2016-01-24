@@ -137,8 +137,14 @@ public final class RecordedResponse {
     return new RecordedResponse(cacheResponse.request(), cacheResponse, null, null, null);
   }
 
-  public void assertFailure(String... messages) {
+  public RecordedResponse assertFailure(Class<?> exceptionClass) {
+    assertTrue(exceptionClass.isInstance(failure));
+    return this;
+  }
+
+  public RecordedResponse assertFailure(String... messages) {
     assertNotNull(failure);
     assertTrue(failure.getMessage(), Arrays.asList(messages).contains(failure.getMessage()));
+    return this;
   }
 }

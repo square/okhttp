@@ -30,7 +30,7 @@ import okhttp3.ResponseBody;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.testing.RecordingHostnameVerifier;
+import okhttp3.RecordingHostnameVerifier;
 import okio.Buffer;
 import org.junit.After;
 import org.junit.Rule;

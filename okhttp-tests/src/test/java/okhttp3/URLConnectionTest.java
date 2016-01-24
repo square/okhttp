@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package okhttp3;
 
 import java.io.IOException;
@@ -69,7 +68,6 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.testing.RecordingHostnameVerifier;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -306,10 +304,9 @@ public final class URLConnectionTest {
     server.enqueue(new MockResponse().setBody("abc"));
 
     // Use a misconfigured proxy to guarantee that the request is retried.
-    FakeProxySelector proxySelector = new FakeProxySelector();
-    proxySelector.proxies.add(server2.toProxyAddress());
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .proxySelector(proxySelector)
+        .proxySelector(new FakeProxySelector()
+            .addProxy(server2.toProxyAddress()))
         .build());
     server2.shutdown();
 
@@ -616,6 +613,8 @@ public final class URLConnectionTest {
     } catch (SSLException expected) {
     }
   }
+
+  // TODO(jwilson): tests below this marker need to be migrated to OkHttp's request/response API.
 
   @Test public void connectViaHttpsWithSSLFallback() throws Exception {
     server.useHttps(sslContext.getSocketFactory(), false);
@@ -3557,19 +3556,6 @@ public final class URLConnectionTest {
         result.add(certificate.getSubjectDN() + " " + certificate.getSerialNumber());
       }
       return result.toString();
-    }
-  }
-
-  private static class FakeProxySelector extends ProxySelector {
-    List<Proxy> proxies = new ArrayList<>();
-
-    @Override public List<Proxy> select(URI uri) {
-      // Don't handle 'socket' schemes, which the RI's Socket class may request (for SOCKS).
-      return uri.getScheme().equals("http") || uri.getScheme().equals("https") ? proxies
-          : Collections.singletonList(Proxy.NO_PROXY);
-    }
-
-    @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     }
   }
 

@@ -14,7 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package okhttp3.internal.tls;
+package okhttp3;
 
 import java.security.Principal;
 import java.security.cert.Certificate;
@@ -23,7 +23,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSessionContext;
 import javax.security.cert.X509Certificate;
 
-final class FakeSSLSession implements SSLSession {
+public final class FakeSSLSession implements SSLSession {
   private final Certificate[] certificates;
 
   public FakeSSLSession(Certificate... certificates) throws Exception {
