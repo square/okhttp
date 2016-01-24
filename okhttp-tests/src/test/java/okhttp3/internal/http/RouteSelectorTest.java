@@ -35,6 +35,7 @@ import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Authenticator;
 import okhttp3.ConnectionSpec;
+import okhttp3.FakeDns;
 import okhttp3.Protocol;
 import okhttp3.Route;
 import okhttp3.internal.RouteDatabase;

@@ -23,6 +23,7 @@ import java.security.cert.X509Certificate;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 import javax.security.auth.x500.X500Principal;
+import okhttp3.FakeSSLSession;
 import okhttp3.internal.Util;
 import org.junit.Ignore;
 import org.junit.Test;
