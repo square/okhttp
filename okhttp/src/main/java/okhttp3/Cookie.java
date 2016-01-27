@@ -559,4 +559,32 @@ public final class Cookie {
 
     return result.toString();
   }
+
+  @Override public boolean equals(Object other) {
+    if (!(other instanceof Cookie)) return false;
+    Cookie that = (Cookie) other;
+    return that.name.equals(name)
+        && that.value.equals(value)
+        && that.domain.equals(domain)
+        && that.path.equals(path)
+        && that.expiresAt == expiresAt
+        && that.secure == secure
+        && that.httpOnly == httpOnly
+        && that.persistent == persistent
+        && that.hostOnly == hostOnly;
+  }
+
+  @Override public int hashCode() {
+    int hash = 17;
+    hash = 31 * hash + name.hashCode();
+    hash = 31 * hash + value.hashCode();
+    hash = 31 * hash + domain.hashCode();
+    hash = 31 * hash + path.hashCode();
+    hash = 31 * hash + (int) (expiresAt ^ (expiresAt >>> 32));
+    hash = 31 * hash + (secure ? 0 : 1);
+    hash = 31 * hash + (httpOnly ? 0 : 1);
+    hash = 31 * hash + (persistent ? 0 : 1);
+    hash = 31 * hash + (hostOnly ? 0 : 1);
+    return hash;
+  }
 }
