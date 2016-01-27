@@ -53,6 +53,7 @@ import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Platform;
+import okhttp3.internal.URLFilter;
 import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.HttpDate;
@@ -107,9 +108,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   Handshake handshake;
 
+  private URLFilter urlFilter;
+
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
     this.client = client;
+  }
+
+  public HttpURLConnectionImpl(URL url, OkHttpClient client, URLFilter urlFilter) {
+    this(url, client);
+    this.urlFilter = urlFilter;
   }
 
   @Override public final void connect() throws IOException {
@@ -456,6 +464,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   private boolean execute(boolean readResponse) throws IOException {
     boolean releaseConnection = true;
+    if (urlFilter != null) {
+      urlFilter.checkURLPermitted(httpEngine.getRequest().url().url());
+    }
     try {
       httpEngine.sendRequest();
       Connection connection = httpEngine.getConnection();
