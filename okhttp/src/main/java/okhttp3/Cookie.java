@@ -583,11 +583,11 @@ public final class Cookie {
     hash = 31 * hash + value.hashCode();
     hash = 31 * hash + domain.hashCode();
     hash = 31 * hash + path.hashCode();
-    hash = hash + Long.hashCode(expiresAt);
-    hash = hash + Boolean.hashCode(secure);
-    hash = hash + Boolean.hashCode(httpOnly);
-    hash = hash + Boolean.hashCode(persistent);
-    hash = hash + Boolean.hashCode(hostOnly);
+    hash = hash + Long.valueOf(expiresAt).hashCode();
+    hash = hash + Boolean.valueOf(secure).hashCode();
+    hash = hash + Boolean.valueOf(httpOnly).hashCode();
+    hash = hash + Boolean.valueOf(persistent).hashCode();
+    hash = hash + Boolean.valueOf(hostOnly).hashCode();
 
     return hash;
   }
