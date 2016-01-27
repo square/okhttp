@@ -19,7 +19,7 @@ awkward-to-reproduce situations like 500 errors or slow-loading responses.
 ### Example
 
 Use MockWebServer the same way that you use mocking frameworks like
-[Mockito](https://code.google.com/p/mockito/):
+[Mockito](https://github.com/mockito/mockito):
 
 1. Script the mocks.
 2. Run application code.
