@@ -34,51 +34,43 @@ public class DelegatingSSLSocketFactory extends SSLSocketFactory {
     this.delegate = delegate;
   }
 
-  @Override
-  public SSLSocket createSocket() throws IOException {
+  @Override public SSLSocket createSocket() throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket();
     return configureSocket(sslSocket);
   }
 
-  @Override
-  public SSLSocket createSocket(String host, int port) throws IOException, UnknownHostException {
+  @Override public SSLSocket createSocket(String host, int port) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port);
     return configureSocket(sslSocket);
   }
 
-  @Override
-  public SSLSocket createSocket(String host, int port, InetAddress localAddress, int localPort)
-      throws IOException, UnknownHostException {
+  @Override public SSLSocket createSocket(
+      String host, int port, InetAddress localAddress, int localPort) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port, localAddress, localPort);
     return configureSocket(sslSocket);
   }
 
-  @Override
-  public SSLSocket createSocket(InetAddress host, int port) throws IOException {
+  @Override public SSLSocket createSocket(InetAddress host, int port) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port);
     return configureSocket(sslSocket);
   }
 
-  @Override
-  public SSLSocket createSocket(InetAddress host, int port, InetAddress localAddress, int localPort)
-      throws IOException {
+  @Override public SSLSocket createSocket(
+      InetAddress host, int port, InetAddress localAddress, int localPort) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(host, port, localAddress, localPort);
     return configureSocket(sslSocket);
   }
 
-  @Override
-  public String[] getDefaultCipherSuites() {
+  @Override public String[] getDefaultCipherSuites() {
     return delegate.getDefaultCipherSuites();
   }
 
-  @Override
-  public String[] getSupportedCipherSuites() {
+  @Override public String[] getSupportedCipherSuites() {
     return delegate.getSupportedCipherSuites();
   }
 
-  @Override
-  public SSLSocket createSocket(Socket socket, String host, int port, boolean autoClose)
-      throws IOException {
+  @Override public SSLSocket createSocket(
+      Socket socket, String host, int port, boolean autoClose) throws IOException {
     SSLSocket sslSocket = (SSLSocket) delegate.createSocket(socket, host, port, autoClose);
     return configureSocket(sslSocket);
   }
