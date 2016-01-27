@@ -559,4 +559,24 @@ public final class Cookie {
 
     return result.toString();
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof Cookie)) return false;
+
+    Cookie cookie = (Cookie) o;
+    return cookie.name().equalsIgnoreCase(name)
+            && cookie.domain().equalsIgnoreCase(domain)
+            && cookie.path().equalsIgnoreCase(path);
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 7;
+    hash = 31 * hash + name.toLowerCase().hashCode();
+    hash = 31 * hash + domain.toLowerCase().hashCode();
+    hash = 31 * hash + path.toLowerCase().hashCode();
+
+    return hash;
+  }
 }
