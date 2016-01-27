@@ -28,8 +28,10 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
+import okhttp3.internal.Platform;
 import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.StreamAllocation;
@@ -130,6 +132,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
   final InternalCache internalCache;
   final SocketFactory socketFactory;
   final SSLSocketFactory sslSocketFactory;
+  final X509TrustManager trustManager;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
   final Authenticator proxyAuthenticator;
@@ -160,7 +163,7 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
     this.internalCache = builder.internalCache;
     this.socketFactory = builder.socketFactory;
 
-    boolean isTLS = true;
+    boolean isTLS = false;
     for (ConnectionSpec spec : connectionSpecs) {
       isTLS = isTLS || spec.isTls();
     }
@@ -176,6 +179,16 @@ public final class OkHttpClient implements Cloneable, Call.Factory {
         throw new AssertionError(); // The system has no TLS. Just give up.
       }
     }
+    if (this.sslSocketFactory != null) {
+      this.trustManager = Platform.get().trustManager(sslSocketFactory);
+      if (trustManager == null) {
+        throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
+            + ", sslSocketFactory is " + sslSocketFactory.getClass());
+      }
+    } else {
+      this.trustManager = null;
+    }
+
     this.hostnameVerifier = builder.hostnameVerifier;
     this.certificatePinner = builder.certificatePinner;
     this.proxyAuthenticator = builder.proxyAuthenticator;
