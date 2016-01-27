@@ -565,17 +565,29 @@ public final class Cookie {
     if (!(o instanceof Cookie)) return false;
 
     Cookie cookie = (Cookie) o;
-    return cookie.name().equalsIgnoreCase(name)
-            && cookie.domain().equalsIgnoreCase(domain)
-            && cookie.path().equalsIgnoreCase(path);
+    return cookie.name.equals(name)
+            && cookie.value.equals(value)
+            && cookie.domain.equals(domain)
+            && cookie.path.equals(path)
+            && cookie.expiresAt == expiresAt
+            && cookie.secure == secure
+            && cookie.httpOnly == httpOnly
+            && cookie.persistent == persistent
+            && cookie.hostOnly == hostOnly;
   }
 
   @Override
   public int hashCode() {
     int hash = 7;
-    hash = 31 * hash + name.toLowerCase().hashCode();
-    hash = 31 * hash + domain.toLowerCase().hashCode();
-    hash = 31 * hash + path.toLowerCase().hashCode();
+    hash = 31 * hash + name.hashCode();
+    hash = 31 * hash + value.hashCode();
+    hash = 31 * hash + domain.hashCode();
+    hash = 31 * hash + path.hashCode();
+    hash = hash + Long.hashCode(expiresAt);
+    hash = hash + Boolean.hashCode(secure);
+    hash = hash + Boolean.hashCode(httpOnly);
+    hash = hash + Boolean.hashCode(persistent);
+    hash = hash + Boolean.hashCode(hostOnly);
 
     return hash;
   }
