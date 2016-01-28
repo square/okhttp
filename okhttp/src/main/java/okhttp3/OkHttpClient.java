@@ -56,7 +56,7 @@ import okhttp3.internal.tls.OkHostnameVerifier;
  *   Response response = clientWith30sTimeout.newCall(request).execute();
  * }</pre>
  */
-public final class OkHttpClient implements Cloneable, Call.Factory {
+public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
