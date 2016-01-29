@@ -18,6 +18,7 @@ package okhttp3.internal.framed;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
@@ -268,7 +269,7 @@ public class Http2Test {
     }
   }
 
-  @Test public void readSettingsFrameInvalidSettingId() throws IOException {
+  @Test public void readSettingsFrameUnknownSettingId() throws IOException {
     writeMedium(frame, 6); // 2 for the code and 4 for the value
     frame.writeByte(Http2.TYPE_SETTINGS);
     frame.writeByte(Http2.FLAG_NONE);
@@ -276,12 +277,13 @@ public class Http2Test {
     frame.writeShort(7); // old number for SETTINGS_INITIAL_WINDOW_SIZE
     frame.writeInt(1);
 
-    try {
-      fr.nextFrame(new BaseTestHandler());
-      fail();
-    } catch (IOException e) {
-      assertEquals("PROTOCOL_ERROR invalid settings id: 7", e.getMessage());
-    }
+    final AtomicInteger settingValue = new AtomicInteger();
+    fr.nextFrame(new BaseTestHandler() {
+      @Override public void settings(boolean clearPrevious, Settings settings) {
+        settingValue.set(settings.get(7));
+      }
+    });
+    assertEquals(settingValue.intValue(), 1);
   }
 
   @Test public void readSettingsFrameNegativeWindowSize() throws IOException {
