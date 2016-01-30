@@ -178,6 +178,8 @@ public final class ResponseCacheTest {
   }
 
   private void assertCached(boolean shouldPut, int responseCode) throws Exception {
+    int expectedResponseCode = responseCode;
+
     server = new MockWebServer();
     MockResponse mockResponse = new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -191,11 +193,22 @@ public final class ResponseCacheTest {
       mockResponse.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
     }
     server.enqueue(mockResponse);
+
+    if (responseCode == HttpURLConnection.HTTP_CLIENT_TIMEOUT) {
+      // 408's are a bit of an outlier because we may repeat the request if we encounter this
+      // response code. In this scenario, there are 2 responses: the initial 408 and then the 200
+      // because of the retry. We just want to ensure the initial 408 isn't cached.
+      expectedResponseCode = 200;
+      server.enqueue(new MockResponse()
+          .setHeader("Cache-Control", "no-store")
+          .setBody("FGHIJ"));
+    }
+
     server.start();
 
     URL url = server.url("/").url();
     HttpURLConnection connection = openConnection(url);
-    assertEquals(responseCode, connection.getResponseCode());
+    assertEquals(expectedResponseCode, connection.getResponseCode());
 
     // Exhaust the content stream.
     readAscii(connection);
