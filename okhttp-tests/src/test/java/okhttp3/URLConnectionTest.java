@@ -2327,6 +2327,53 @@ public final class URLConnectionTest {
         trustManager.calls);
   }
 
+  @Test public void getClientRequestTimeout() throws Exception {
+    enqueueClientRequestTimeoutResponses();
+
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+
+    assertEquals(200, connection.getResponseCode());
+    assertEquals("Body", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+  }
+
+  private void enqueueClientRequestTimeoutResponses() {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse().setBody("Body"));
+  }
+
+  @Test public void bufferedBodyWithClientRequestTimeout() throws Exception {
+    enqueueClientRequestTimeoutResponses();
+
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+    connection.setRequestMethod("POST");
+    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+
+    assertEquals(200, connection.getResponseCode());
+    assertEquals("Body", readAscii(connection.getInputStream(), Integer.MAX_VALUE));
+
+    RecordedRequest request1 = server.takeRequest();
+    assertEquals("Hello", request1.getBody().readUtf8());
+
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("Hello", request2.getBody().readUtf8());
+  }
+
+  @Test public void streamedBodyWithClientRequestTimeout() throws Exception {
+    enqueueClientRequestTimeoutResponses();
+
+    HttpURLConnection connection = urlFactory.open(server.url("/").url());
+    connection.setRequestMethod("POST");
+    connection.setChunkedStreamingMode(0);
+    connection.getOutputStream().write("Hello".getBytes("UTF-8"));
+
+    assertEquals(408, connection.getResponseCode());
+    assertEquals(1, server.getRequestCount());
+  }
+
   @Test public void readTimeouts() throws IOException {
     // This relies on the fact that MockWebServer doesn't close the
     // connection after a response has been sent. This causes the client to

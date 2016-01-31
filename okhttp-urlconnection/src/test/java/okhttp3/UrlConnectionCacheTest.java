@@ -161,6 +161,8 @@ public final class UrlConnectionCacheTest {
   }
 
   private void assertCached(boolean shouldPut, int responseCode) throws Exception {
+    int expectedResponseCode = responseCode;
+
     server = new MockWebServer();
     MockResponse response = new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
@@ -174,11 +176,22 @@ public final class UrlConnectionCacheTest {
       response.addHeader("WWW-Authenticate: Basic realm=\"protected area\"");
     }
     server.enqueue(response);
+
+    if (responseCode == HttpURLConnection.HTTP_CLIENT_TIMEOUT) {
+      // 408's are a bit of an outlier because we may repeat the request if we encounter this
+      // response code. In this scenario, there are 2 responses: the initial 408 and then the 200
+      // because of the retry. We just want to ensure the initial 408 isn't cached.
+      expectedResponseCode = 200;
+      server.enqueue(new MockResponse()
+          .addHeader("Cache-Control", "no-store")
+          .setBody("FGHIJ"));
+    }
+
     server.start();
 
     URL url = server.url("/").url();
     HttpURLConnection conn = urlFactory.open(url);
-    assertEquals(responseCode, conn.getResponseCode());
+    assertEquals(expectedResponseCode, conn.getResponseCode());
 
     // exhaust the content stream
     readAscii(conn);

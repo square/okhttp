@@ -1400,6 +1400,41 @@ public final class CallTest {
     assertEquals("GET /page2 HTTP/1.1", page2.getRequestLine());
   }
 
+  @Test public void getClientRequestTimeout() throws Exception {
+    enqueueRequestTimeoutResponses();
+
+    Response response = client.newCall(new Request.Builder()
+        .url(server.url("/")).build()).execute();
+
+    assertEquals("Body", response.body().string());
+  }
+
+  private void enqueueRequestTimeoutResponses() {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .setResponseCode(HttpURLConnection.HTTP_CLIENT_TIMEOUT)
+        .setHeader("Connection", "Close")
+        .setBody("You took too long!"));
+    server.enqueue(new MockResponse().setBody("Body"));
+  }
+
+  @Test public void requestBodyRetransmittedOnClientRequestTimeout() throws Exception {
+    enqueueRequestTimeoutResponses();
+
+    Response response = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .post(RequestBody.create(MediaType.parse("text/plain"), "Hello"))
+        .build()).execute();
+
+    assertEquals("Body", response.body().string());
+
+    RecordedRequest request1 = server.takeRequest();
+    assertEquals("Hello", request1.getBody().readUtf8());
+
+    RecordedRequest request2 = server.takeRequest();
+    assertEquals("Hello", request2.getBody().readUtf8());
+  }
+
   @Test public void propfindRedirectsToPropfind() throws Exception {
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
