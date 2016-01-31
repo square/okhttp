@@ -34,6 +34,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.Internal;
+import okhttp3.internal.Platform;
 import okhttp3.internal.RecordingAuthenticator;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
@@ -2303,9 +2305,9 @@ public final class URLConnectionTest {
 
   @Test public void httpsWithCustomTrustManager() throws Exception {
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-    RecordingTrustManager trustManager = new RecordingTrustManager();
+    RecordingTrustManager trustManager = new RecordingTrustManager(sslContext);
     SSLContext sc = SSLContext.getInstance("TLS");
-    sc.init(null, new TrustManager[] {trustManager}, new java.security.SecureRandom());
+    sc.init(null, new TrustManager[] {trustManager}, new SecureRandom());
 
     urlFactory.setClient(urlFactory.client().newBuilder()
         .hostnameVerifier(hostnameVerifier)
@@ -2321,8 +2323,7 @@ public final class URLConnectionTest {
     assertContent("DEF", urlFactory.open(url));
     assertContent("GHI", urlFactory.open(url));
 
-    assertEquals(Arrays.asList("verify " + server.getHostName()),
-        hostnameVerifier.calls);
+    assertEquals(Arrays.asList("verify " + server.getHostName()), hostnameVerifier.calls);
     assertEquals(Arrays.asList("checkServerTrusted [CN=" + server.getHostName() + " 1]"),
         trustManager.calls);
   }
@@ -3535,9 +3536,14 @@ public final class URLConnectionTest {
 
   private static class RecordingTrustManager implements X509TrustManager {
     private final List<String> calls = new ArrayList<String>();
+    private final X509TrustManager delegate;
+
+    public RecordingTrustManager(SSLContext sslContext) {
+      this.delegate = Platform.get().trustManager(sslContext.getSocketFactory());
+    }
 
     public X509Certificate[] getAcceptedIssuers() {
-      return new X509Certificate[] {};
+      return delegate.getAcceptedIssuers();
     }
 
     public void checkClientTrusted(X509Certificate[] chain, String authType)
