@@ -18,24 +18,16 @@ package com.squareup.okhttp.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.security.Security;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
-import java.util.Date;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.security.auth.x500.X500Principal;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.x509.X509V3CertificateGenerator;
+import okhttp3.internal.HeldCertificate;
 
 /**
  * Constructs an SSL context for testing. This uses Bouncy Castle to generate a
@@ -45,16 +37,8 @@ import org.bouncycastle.x509.X509V3CertificateGenerator;
  * reuse SSL context instances where possible.
  */
 public final class SslContextBuilder {
-  static {
-    Security.addProvider(new BouncyCastleProvider());
-  }
-
-  private static final long ONE_DAY_MILLIS = 1000L * 60 * 60 * 24;
   private static SSLContext localhost; // Lazily initialized.
-
   private final String hostName;
-  private long notBefore = System.currentTimeMillis();
-  private long notAfter = System.currentTimeMillis() + ONE_DAY_MILLIS;
 
   /**
    * @param hostName the subject of the host. For TLS this should be the
@@ -79,17 +63,19 @@ public final class SslContextBuilder {
   }
 
   public SSLContext build() throws GeneralSecurityException {
+    // Generate a self-signed cert for the server to serve and the client to trust.
+    HeldCertificate heldCertificate = new HeldCertificate.Builder()
+        .serialNumber("1")
+        .hostname(hostName)
+        .build();
+
+    // Put the certificate in a key store.
     char[] password = "password".toCharArray();
-
-    // Generate public and private keys and use them to make a self-signed certificate.
-    KeyPair keyPair = generateKeyPair();
-    X509Certificate certificate = selfSignedCertificate(keyPair, "1");
-
-    // Put 'em in a key store.
     KeyStore keyStore = newEmptyKeyStore(password);
-    Certificate[] certificateChain = { certificate };
-    keyStore.setKeyEntry("private", keyPair.getPrivate(), password, certificateChain);
-    keyStore.setCertificateEntry("cert", certificate);
+    Certificate[] certificateChain = {heldCertificate.certificate};
+    keyStore.setKeyEntry("private",
+        heldCertificate.keyPair.getPrivate(), password, certificateChain);
+    keyStore.setCertificateEntry("cert", heldCertificate.certificate);
 
     // Wrap it up in an SSL context.
     KeyManagerFactory keyManagerFactory =
@@ -102,32 +88,6 @@ public final class SslContextBuilder {
     sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
         new SecureRandom());
     return sslContext;
-  }
-
-  public KeyPair generateKeyPair() throws GeneralSecurityException {
-    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA", "BC");
-    keyPairGenerator.initialize(1024, new SecureRandom());
-    return keyPairGenerator.generateKeyPair();
-  }
-
-  /**
-   * Generates a certificate for {@code hostName} containing {@code keyPair}'s
-   * public key, signed by {@code keyPair}'s private key.
-   */
-  @SuppressWarnings("deprecation") // use the old Bouncy Castle APIs to reduce dependencies.
-  public X509Certificate selfSignedCertificate(KeyPair keyPair, String serialNumber)
-      throws GeneralSecurityException {
-    X509V3CertificateGenerator generator = new X509V3CertificateGenerator();
-    X500Principal issuer = new X500Principal("CN=" + hostName);
-    X500Principal subject = new X500Principal("CN=" + hostName);
-    generator.setSerialNumber(new BigInteger(serialNumber));
-    generator.setIssuerDN(issuer);
-    generator.setNotBefore(new Date(notBefore));
-    generator.setNotAfter(new Date(notAfter));
-    generator.setSubjectDN(subject);
-    generator.setPublicKey(keyPair.getPublic());
-    generator.setSignatureAlgorithm("SHA256WithRSAEncryption");
-    return generator.generateX509Certificate(keyPair.getPrivate(), "BC");
   }
 
   private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
