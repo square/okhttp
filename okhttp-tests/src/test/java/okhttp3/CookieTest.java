@@ -17,8 +17,10 @@ package okhttp3;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 import org.junit.Test;
@@ -457,6 +459,32 @@ public final class CookieTest {
         .httpOnly()
         .build();
     assertEquals(true, cookie.httpOnly());
+  }
+
+  @Test public void equalsAndHashCode() throws Exception {
+    List<String> cookieStrings = Arrays.asList(
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a= ; Path=/c; Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a=b;          Domain=example.com; Max-Age=5; Secure; HttpOnly",
+        "a=b; Path=/c;                     Max-Age=5; Secure; HttpOnly",
+        "a=b; Path=/c; Domain=example.com;            Secure; HttpOnly",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5;         HttpOnly",
+        "a=b; Path=/c; Domain=example.com; Max-Age=5; Secure;         "
+    );
+    for (String stringA : cookieStrings) {
+      Cookie cookieA = Cookie.parse(0, url, stringA);
+      for (String stringB : cookieStrings) {
+        Cookie cookieB = Cookie.parse(0, url, stringB);
+        if (Objects.equals(stringA, stringB)) {
+          assertEquals(cookieA.hashCode(), cookieB.hashCode());
+          assertEquals(cookieA, cookieB);
+        } else {
+          assertFalse(cookieA.hashCode() == cookieB.hashCode());
+          assertFalse(cookieA.equals(cookieB));
+        }
+      }
+      assertFalse(cookieA.equals(null));
+    }
   }
 
   private Date date(String s) throws ParseException {
