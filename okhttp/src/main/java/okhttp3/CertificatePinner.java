@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.CertificateAuthorityCouncil;
 import okio.ByteString;
 
 import static java.util.Collections.unmodifiableSet;
@@ -128,9 +129,11 @@ public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
   private final Map<String, Set<ByteString>> hostnameToPins;
+  private final CertificateAuthorityCouncil certificateAuthorityCouncil;
 
   private CertificatePinner(Builder builder) {
-    hostnameToPins = Util.immutableMap(builder.hostnameToPins);
+    this.hostnameToPins = Util.immutableMap(builder.hostnameToPins);
+    this.certificateAuthorityCouncil = builder.certificateAuthorityCouncil;
   }
 
   /**
@@ -143,6 +146,9 @@ public final class CertificatePinner {
    */
   public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
+    if (certificateAuthorityCouncil != null) {
+      peerCertificates = certificateAuthorityCouncil.normalizeCertificateChain(peerCertificates);
+    }
 
     Set<ByteString> pins = findMatchingPins(hostname);
 
@@ -208,6 +214,10 @@ public final class CertificatePinner {
     return wildcardPins;
   }
 
+  Builder newBuilder() {
+    return new Builder(this);
+  }
+
   /**
    * Returns the SHA-1 of {@code certificate}'s public key. This uses the mechanism Moxie
    * Marlinspike describes in <a href="https://github.com/moxie0/AndroidPinning">Android
@@ -227,6 +237,20 @@ public final class CertificatePinner {
   /** Builds a configured certificate pinner. */
   public static final class Builder {
     private final Map<String, Set<ByteString>> hostnameToPins = new LinkedHashMap<>();
+    private CertificateAuthorityCouncil certificateAuthorityCouncil;
+
+    public Builder() {
+    }
+
+    Builder(CertificatePinner certificatePinner) {
+      this.hostnameToPins.putAll(certificatePinner.hostnameToPins);
+      this.certificateAuthorityCouncil = certificatePinner.certificateAuthorityCouncil;
+    }
+
+    Builder certificateAuthorityCouncil(CertificateAuthorityCouncil certificateAuthorityCouncil) {
+      this.certificateAuthorityCouncil = certificateAuthorityCouncil;
+      return this;
+    }
 
     /**
      * Pins certificates for {@code hostname}.
