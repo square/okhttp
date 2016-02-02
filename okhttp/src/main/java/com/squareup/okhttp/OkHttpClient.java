@@ -17,7 +17,6 @@ package com.squareup.okhttp;
 
 import com.squareup.okhttp.internal.Internal;
 import com.squareup.okhttp.internal.InternalCache;
-import com.squareup.okhttp.internal.Platform;
 import com.squareup.okhttp.internal.RouteDatabase;
 import com.squareup.okhttp.internal.Util;
 import com.squareup.okhttp.internal.http.AuthenticatorAdapter;
@@ -39,7 +38,6 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.X509TrustManager;
 
 /**
  * Configures and creates HTTP connections. Most applications can use a single
@@ -118,7 +116,6 @@ public class OkHttpClient implements Cloneable {
 
   /** Lazily-initialized. */
   private static SSLSocketFactory defaultSslSocketFactory;
-  private static X509TrustManager defaultTrustManager;
 
   private final RouteDatabase routeDatabase;
   private Dispatcher dispatcher;
@@ -136,7 +133,6 @@ public class OkHttpClient implements Cloneable {
 
   private SocketFactory socketFactory;
   private SSLSocketFactory sslSocketFactory;
-  private X509TrustManager trustManager;
   private HostnameVerifier hostnameVerifier;
   private CertificatePinner certificatePinner;
   private Authenticator authenticator;
@@ -168,7 +164,6 @@ public class OkHttpClient implements Cloneable {
     this.internalCache = cache != null ? cache.internalCache : okHttpClient.internalCache;
     this.socketFactory = okHttpClient.socketFactory;
     this.sslSocketFactory = okHttpClient.sslSocketFactory;
-    this.trustManager = okHttpClient.trustManager;
     this.hostnameVerifier = okHttpClient.hostnameVerifier;
     this.certificatePinner = okHttpClient.certificatePinner;
     this.authenticator = okHttpClient.authenticator;
@@ -348,11 +343,6 @@ public class OkHttpClient implements Cloneable {
    */
   public OkHttpClient setSslSocketFactory(SSLSocketFactory sslSocketFactory) {
     this.sslSocketFactory = sslSocketFactory;
-    this.trustManager = Platform.get().trustManager(sslSocketFactory);
-    if (this.trustManager == null) {
-      throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
-          + ", sslSocketFactory is " + sslSocketFactory.getClass());
-    }
     return this;
   }
 
@@ -599,7 +589,6 @@ public class OkHttpClient implements Cloneable {
     }
     if (result.sslSocketFactory == null) {
       result.sslSocketFactory = getDefaultSSLSocketFactory();
-      result.trustManager = getDefaultTrustManager();
     }
     if (result.hostnameVerifier == null) {
       result.hostnameVerifier = OkHostnameVerifier.INSTANCE;
@@ -647,17 +636,6 @@ public class OkHttpClient implements Cloneable {
       }
     }
     return defaultSslSocketFactory;
-  }
-
-  private synchronized X509TrustManager getDefaultTrustManager() {
-    if (defaultTrustManager == null) {
-      defaultTrustManager = Platform.get().trustManager(defaultSslSocketFactory);
-      if (defaultTrustManager == null) {
-        throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
-            + ", sslSocketFactory is " + defaultSslSocketFactory.getClass());
-      }
-    }
-    return defaultTrustManager;
   }
 
   /** Returns a shallow copy of this OkHttpClient. */

@@ -35,6 +35,7 @@ import com.squareup.okhttp.internal.http.Http1xStream;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.StreamAllocation;
+import com.squareup.okhttp.internal.tls.CertificateAuthorityCouncil;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
 import java.io.IOException;
 import java.lang.ref.Reference;
@@ -43,6 +44,7 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownServiceException;
+import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
@@ -198,8 +201,11 @@ public final class RealConnection implements Connection {
       }
 
       // Check that the certificate pinner is satisfied by the certificates presented.
-      address.getCertificatePinner().check(address.getUriHost(),
-          unverifiedHandshake.peerCertificates());
+      if (address.getCertificatePinner() != CertificatePinner.DEFAULT) {
+        List<Certificate> certificates = certificateAuthorityCouncil(address.getSslSocketFactory())
+            .normalizeCertificateChain(unverifiedHandshake.peerCertificates());
+        address.getCertificatePinner().check(address.getUriHost(), certificates);
+      }
 
       // Success! Save the handshake and the ALPN protocol.
       String maybeProtocol = connectionSpec.supportsTlsExtensions()
@@ -224,6 +230,25 @@ public final class RealConnection implements Connection {
         closeQuietly(sslSocket);
       }
     }
+  }
+
+  private static SSLSocketFactory lastSslSocketFactory;
+  private static CertificateAuthorityCouncil lastCertificateAuthorityCouncil;
+
+  /**
+   * Returns a certificate authority council for {@code sslSocketFactory}. This uses a static,
+   * single-element cache to avoid redoing reflection and SSL indexing in the common case where most
+   * SSL connections use the same SSL socket factory.
+   */
+  private static synchronized CertificateAuthorityCouncil certificateAuthorityCouncil(
+      SSLSocketFactory sslSocketFactory) {
+    if (sslSocketFactory != lastSslSocketFactory) {
+      X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
+      lastCertificateAuthorityCouncil = new CertificateAuthorityCouncil(
+          trustManager.getAcceptedIssuers());
+      lastSslSocketFactory = sslSocketFactory;
+    }
+    return lastCertificateAuthorityCouncil;
   }
 
   /**
