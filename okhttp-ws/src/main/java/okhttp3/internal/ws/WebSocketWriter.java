@@ -156,7 +156,7 @@ public final class WebSocketWriter {
    * Stream a message payload as a series of frames. This allows control frames to be interleaved
    * between parts of the message.
    */
-  public Sink newMessageSink(int formatOpcode) {
+  public Sink newMessageSink(int formatOpcode, long contentLength) {
     if (activeWriter) {
       throw new IllegalStateException("Another message writer is active. Did you call close()?");
     }
@@ -164,6 +164,7 @@ public final class WebSocketWriter {
 
     // Reset FrameSink state for a new writer.
     frameSink.formatOpcode = formatOpcode;
+    frameSink.contentLength = contentLength;
     frameSink.isFirstFrame = true;
     frameSink.closed = false;
 
@@ -226,6 +227,7 @@ public final class WebSocketWriter {
 
   private final class FrameSink implements Sink {
     private int formatOpcode;
+    private long contentLength;
     private boolean isFirstFrame;
     private boolean closed;
 
@@ -234,8 +236,13 @@ public final class WebSocketWriter {
 
       buffer.write(source, byteCount);
 
+      // Determine if this is a buffered write which we can defer until close() flushes.
+      boolean deferWrite = isFirstFrame
+          && contentLength != -1
+          && buffer.size() > contentLength - 2048 /* segment size */;
+
       long emitCount = buffer.completeSegmentByteCount();
-      if (emitCount > 0) {
+      if (emitCount > 0 && !deferWrite) {
         synchronized (WebSocketWriter.this) {
           writeMessageFrameSynchronized(formatOpcode, emitCount, isFirstFrame, false /* final */);
         }

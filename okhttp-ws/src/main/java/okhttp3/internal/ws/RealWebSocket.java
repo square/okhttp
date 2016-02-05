@@ -125,7 +125,7 @@ public abstract class RealWebSocket implements WebSocket {
           + ". Must use WebSocket.TEXT or WebSocket.BINARY.");
     }
 
-    BufferedSink sink = Okio.buffer(writer.newMessageSink(formatOpcode));
+    BufferedSink sink = Okio.buffer(writer.newMessageSink(formatOpcode, message.contentLength()));
     try {
       message.writeTo(sink);
       sink.close();
