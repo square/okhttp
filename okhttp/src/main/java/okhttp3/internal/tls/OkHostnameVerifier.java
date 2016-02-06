@@ -14,7 +14,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package okhttp3.internal.tls;
 
 import java.security.cert.Certificate;
@@ -57,7 +56,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   public boolean verify(String host, X509Certificate certificate) {
     return verifyAsIpAddress(host)
         ? verifyIpAddress(host, certificate)
-        : verifyHostName(host, certificate);
+        : verifyHostname(host, certificate);
   }
 
   /** Returns true if {@code certificate} matches {@code ipAddress}. */
@@ -71,14 +70,14 @@ public final class OkHostnameVerifier implements HostnameVerifier {
     return false;
   }
 
-  /** Returns true if {@code certificate} matches {@code hostName}. */
-  private boolean verifyHostName(String hostName, X509Certificate certificate) {
-    hostName = hostName.toLowerCase(Locale.US);
+  /** Returns true if {@code certificate} matches {@code hostname}. */
+  private boolean verifyHostname(String hostname, X509Certificate certificate) {
+    hostname = hostname.toLowerCase(Locale.US);
     boolean hasDns = false;
     List<String> altNames = getSubjectAltNames(certificate, ALT_DNS_NAME);
     for (int i = 0, size = altNames.size(); i < size; i++) {
       hasDns = true;
-      if (verifyHostName(hostName, altNames.get(i))) {
+      if (verifyHostname(hostname, altNames.get(i))) {
         return true;
       }
     }
@@ -88,7 +87,7 @@ public final class OkHostnameVerifier implements HostnameVerifier {
       // RFC 2818 advises using the most specific name for matching.
       String cn = new DistinguishedNameParser(principal).findMostSpecific("cn");
       if (cn != null) {
-        return verifyHostName(hostName, cn);
+        return verifyHostname(hostname, cn);
       }
     }
 
@@ -134,17 +133,17 @@ public final class OkHostnameVerifier implements HostnameVerifier {
   }
 
   /**
-   * Returns {@code true} iff {@code hostName} matches the domain name {@code pattern}.
+   * Returns {@code true} iff {@code hostname} matches the domain name {@code pattern}.
    *
-   * @param hostName lower-case host name.
+   * @param hostname lower-case host name.
    * @param pattern domain name pattern from certificate. May be a wildcard pattern such as {@code
    * *.android.com}.
    */
-  private boolean verifyHostName(String hostName, String pattern) {
+  private boolean verifyHostname(String hostname, String pattern) {
     // Basic sanity checks
     // Check length == 0 instead of .isEmpty() to support Java 5.
-    if ((hostName == null) || (hostName.length() == 0) || (hostName.startsWith("."))
-        || (hostName.endsWith(".."))) {
+    if ((hostname == null) || (hostname.length() == 0) || (hostname.startsWith("."))
+        || (hostname.endsWith(".."))) {
       // Invalid domain name
       return false;
     }
@@ -154,29 +153,29 @@ public final class OkHostnameVerifier implements HostnameVerifier {
       return false;
     }
 
-    // Normalize hostName and pattern by turning them into absolute domain names if they are not
+    // Normalize hostname and pattern by turning them into absolute domain names if they are not
     // yet absolute. This is needed because server certificates do not normally contain absolute
-    // names or patterns, but they should be treated as absolute. At the same time, any hostName
+    // names or patterns, but they should be treated as absolute. At the same time, any hostname
     // presented to this method should also be treated as absolute for the purposes of matching
     // to the server certificate.
     //   www.android.com  matches www.android.com
     //   www.android.com  matches www.android.com.
     //   www.android.com. matches www.android.com.
     //   www.android.com. matches www.android.com
-    if (!hostName.endsWith(".")) {
-      hostName += '.';
+    if (!hostname.endsWith(".")) {
+      hostname += '.';
     }
     if (!pattern.endsWith(".")) {
       pattern += '.';
     }
-    // hostName and pattern are now absolute domain names.
+    // hostname and pattern are now absolute domain names.
 
     pattern = pattern.toLowerCase(Locale.US);
-    // hostName and pattern are now in lower case -- domain names are case-insensitive.
+    // hostname and pattern are now in lower case -- domain names are case-insensitive.
 
     if (!pattern.contains("*")) {
-      // Not a wildcard pattern -- hostName and pattern must match exactly.
-      return hostName.equals(pattern);
+      // Not a wildcard pattern -- hostname and pattern must match exactly.
+      return hostname.equals(pattern);
     }
     // Wildcard pattern
 
@@ -196,11 +195,11 @@ public final class OkHostnameVerifier implements HostnameVerifier {
       return false;
     }
 
-    // Optimization: check whether hostName is too short to match the pattern. hostName must be at
+    // Optimization: check whether hostname is too short to match the pattern. hostName must be at
     // least as long as the pattern because asterisk must match the whole left-most label and
-    // hostName starts with a non-empty label. Thus, asterisk has to match one or more characters.
-    if (hostName.length() < pattern.length()) {
-      // hostName too short to match the pattern.
+    // hostname starts with a non-empty label. Thus, asterisk has to match one or more characters.
+    if (hostname.length() < pattern.length()) {
+      // hostname too short to match the pattern.
       return false;
     }
 
@@ -209,22 +208,22 @@ public final class OkHostnameVerifier implements HostnameVerifier {
       return false;
     }
 
-    // hostName must end with the region of pattern following the asterisk.
+    // hostname must end with the region of pattern following the asterisk.
     String suffix = pattern.substring(1);
-    if (!hostName.endsWith(suffix)) {
-      // hostName does not end with the suffix
+    if (!hostname.endsWith(suffix)) {
+      // hostname does not end with the suffix
       return false;
     }
 
     // Check that asterisk did not match across domain name labels.
-    int suffixStartIndexInHostName = hostName.length() - suffix.length();
-    if ((suffixStartIndexInHostName > 0)
-        && (hostName.lastIndexOf('.', suffixStartIndexInHostName - 1) != -1)) {
+    int suffixStartIndexInHostname = hostname.length() - suffix.length();
+    if ((suffixStartIndexInHostname > 0)
+        && (hostname.lastIndexOf('.', suffixStartIndexInHostname - 1) != -1)) {
       // Asterisk is matching across domain name labels -- not permitted.
       return false;
     }
 
-    // hostName matches pattern
+    // hostname matches pattern
     return true;
   }
 }

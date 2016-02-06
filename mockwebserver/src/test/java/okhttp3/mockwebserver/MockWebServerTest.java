@@ -349,7 +349,7 @@ public final class MockWebServerTest {
     assertTrue(server.getPort() > 0);
   }
 
-  @Test public void hostNameImplicitlyStarts() throws IOException {
+  @Test public void hostnameImplicitlyStarts() throws IOException {
     assertNotNull(server.getHostName());
   }
 

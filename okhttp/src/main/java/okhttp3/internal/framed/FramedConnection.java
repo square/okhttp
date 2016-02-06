@@ -82,7 +82,7 @@ public final class FramedConnection implements Closeable {
    */
   private final Listener listener;
   private final Map<Integer, FramedStream> streams = new HashMap<>();
-  private final String hostName;
+  private final String hostname;
   private int lastGoodStreamId;
   private int nextStreamId;
   private boolean shutdown;
@@ -148,14 +148,14 @@ public final class FramedConnection implements Closeable {
       okHttpSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, OKHTTP_CLIENT_WINDOW_SIZE);
     }
 
-    hostName = builder.hostName;
+    hostname = builder.hostname;
 
     if (protocol == Protocol.HTTP_2) {
       variant = new Http2();
       // Like newSingleThreadExecutor, except lazy creates the thread.
       pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>(),
-          Util.threadFactory(String.format("OkHttp %s Push Observer", hostName), true));
+          Util.threadFactory(String.format("OkHttp %s Push Observer", hostname), true));
       // 1 less than SPDY http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-6.9.2
       peerSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
       peerSettings.set(Settings.MAX_FRAME_SIZE, 0, Http2.INITIAL_MAX_FRAME_SIZE);
@@ -342,7 +342,7 @@ public final class FramedConnection implements Closeable {
   }
 
   void writeSynResetLater(final int streamId, final ErrorCode errorCode) {
-    executor.submit(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
+    executor.submit(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
       @Override public void execute() {
         try {
           writeSynReset(streamId, errorCode);
@@ -357,7 +357,7 @@ public final class FramedConnection implements Closeable {
   }
 
   void writeWindowUpdateLater(final int streamId, final long unacknowledgedBytesRead) {
-    executor.execute(new NamedRunnable("OkHttp Window Update %s stream %d", hostName, streamId) {
+    executor.execute(new NamedRunnable("OkHttp Window Update %s stream %d", hostname, streamId) {
       @Override public void execute() {
         try {
           frameWriter.windowUpdate(streamId, unacknowledgedBytesRead);
@@ -390,7 +390,7 @@ public final class FramedConnection implements Closeable {
   private void writePingLater(
       final boolean reply, final int payload1, final int payload2, final Ping ping) {
     executor.execute(new NamedRunnable("OkHttp %s ping %08x%08x",
-        hostName, payload1, payload2) {
+        hostname, payload1, payload2) {
       @Override public void execute() {
         try {
           writePing(reply, payload1, payload2, ping);
@@ -528,7 +528,7 @@ public final class FramedConnection implements Closeable {
 
   public static class Builder {
     private Socket socket;
-    private String hostName;
+    private String hostname;
     private BufferedSource source;
     private BufferedSink sink;
     private Listener listener = Listener.REFUSE_INCOMING_STREAMS;
@@ -550,9 +550,9 @@ public final class FramedConnection implements Closeable {
     }
 
     public Builder socket(
-        Socket socket, String hostName, BufferedSource source, BufferedSink sink) {
+        Socket socket, String hostname, BufferedSource source, BufferedSink sink) {
       this.socket = socket;
-      this.hostName = hostName;
+      this.hostname = hostname;
       this.source = source;
       this.sink = sink;
       return this;
@@ -586,7 +586,7 @@ public final class FramedConnection implements Closeable {
     final FrameReader frameReader;
 
     private Reader(FrameReader frameReader) {
-      super("OkHttp %s", hostName);
+      super("OkHttp %s", hostname);
       this.frameReader = frameReader;
     }
 
@@ -663,12 +663,12 @@ public final class FramedConnection implements Closeable {
               inFinished, headerBlock);
           lastGoodStreamId = streamId;
           streams.put(streamId, newStream);
-          executor.execute(new NamedRunnable("OkHttp %s stream %d", hostName, streamId) {
+          executor.execute(new NamedRunnable("OkHttp %s stream %d", hostname, streamId) {
             @Override public void execute() {
               try {
                 listener.onStream(newStream);
               } catch (IOException e) {
-                logger.log(Level.INFO, "FramedConnection.Listener failure for " + hostName, e);
+                logger.log(Level.INFO, "FramedConnection.Listener failure for " + hostname, e);
                 try {
                   newStream.close(ErrorCode.PROTOCOL_ERROR);
                 } catch (IOException ignored) {
@@ -724,7 +724,7 @@ public final class FramedConnection implements Closeable {
             streamsToNotify = streams.values().toArray(new FramedStream[streams.size()]);
           }
         }
-        executor.execute(new NamedRunnable("OkHttp %s settings", hostName) {
+        executor.execute(new NamedRunnable("OkHttp %s settings", hostname) {
           @Override public void execute() {
             listener.onSettings(FramedConnection.this);
           }
@@ -740,7 +740,7 @@ public final class FramedConnection implements Closeable {
     }
 
     private void ackSettingsLater(final Settings peerSettings) {
-      executor.execute(new NamedRunnable("OkHttp %s ACK Settings", hostName) {
+      executor.execute(new NamedRunnable("OkHttp %s ACK Settings", hostname) {
         @Override public void execute() {
           try {
             frameWriter.ackSettings(peerSettings);
@@ -834,7 +834,7 @@ public final class FramedConnection implements Closeable {
       }
       currentPushRequests.add(streamId);
     }
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Request[%s]", hostName, streamId) {
+    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Request[%s]", hostname, streamId) {
       @Override public void execute() {
         boolean cancel = pushObserver.onRequest(streamId, requestHeaders);
         try {
@@ -852,7 +852,7 @@ public final class FramedConnection implements Closeable {
 
   private void pushHeadersLater(final int streamId, final List<Header> requestHeaders,
       final boolean inFinished) {
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostName, streamId) {
+    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Headers[%s]", hostname, streamId) {
       @Override public void execute() {
         boolean cancel = pushObserver.onHeaders(streamId, requestHeaders, inFinished);
         try {
@@ -878,7 +878,7 @@ public final class FramedConnection implements Closeable {
     source.require(byteCount); // Eagerly read the frame before firing client thread.
     source.read(buffer, byteCount);
     if (buffer.size() != byteCount) throw new IOException(buffer.size() + " != " + byteCount);
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Data[%s]", hostName, streamId) {
+    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Data[%s]", hostname, streamId) {
       @Override public void execute() {
         try {
           boolean cancel = pushObserver.onData(streamId, buffer, byteCount, inFinished);
@@ -895,7 +895,7 @@ public final class FramedConnection implements Closeable {
   }
 
   private void pushResetLater(final int streamId, final ErrorCode errorCode) {
-    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Reset[%s]", hostName, streamId) {
+    pushExecutor.execute(new NamedRunnable("OkHttp %s Push Reset[%s]", hostname, streamId) {
       @Override public void execute() {
         pushObserver.onReset(streamId, errorCode);
         synchronized (FramedConnection.this) {

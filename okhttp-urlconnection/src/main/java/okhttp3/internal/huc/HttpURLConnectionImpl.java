@@ -272,16 +272,16 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   @Override public final Permission getPermission() throws IOException {
     URL url = getURL();
-    String hostName = url.getHost();
+    String hostname = url.getHost();
     int hostPort = url.getPort() != -1
         ? url.getPort()
         : HttpUrl.defaultPort(url.getProtocol());
     if (usingProxy()) {
       InetSocketAddress proxyAddress = (InetSocketAddress) client.proxy().address();
-      hostName = proxyAddress.getHostName();
+      hostname = proxyAddress.getHostName();
       hostPort = proxyAddress.getPort();
     }
-    return new SocketPermission(hostName + ":" + hostPort, "connect, resolve");
+    return new SocketPermission(hostname + ":" + hostPort, "connect, resolve");
   }
 
   @Override public final String getRequestProperty(String field) {

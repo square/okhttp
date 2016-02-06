@@ -16,6 +16,7 @@
  */
 package okhttp3.internal.tls;
 
+import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -78,7 +79,7 @@ public final class CertificateAuthorityCouncil {
       // certificate to the end of the chain, unless it's already present. (That would happen if the
       // first certificate in the chain is itself a self-signed and trusted CA certificate.)
       X509Certificate caCert = findByIssuerAndSignature(toVerify);
-      if (caCert != null) {
+      if (caCert != null && verifySignature(toVerify, caCert)) {
         if (result.size() > 1 || !toVerify.equals(caCert)) {
           result.add(caCert);
         }
@@ -88,8 +89,9 @@ public final class CertificateAuthorityCouncil {
       // Search for the certificate in the chain that signed this certificate. This is typically the
       // next element in the chain, but it could be any element.
       for (Iterator<Certificate> i = queue.iterator(); i.hasNext(); ) {
-        Certificate signingCert = i.next();
-        if (toVerify.getIssuerDN().equals(((X509Certificate) signingCert).getSubjectDN())) {
+        X509Certificate signingCert = (X509Certificate) i.next();
+        if (toVerify.getIssuerDN().equals(signingCert.getSubjectDN())
+            && verifySignature(toVerify, signingCert)) {
           i.remove();
           result.add(signingCert);
           continue followIssuerChain;
@@ -97,6 +99,16 @@ public final class CertificateAuthorityCouncil {
       }
 
       throw new SSLPeerUnverifiedException("Failed to find a cert that signed " + toVerify);
+    }
+  }
+
+  /** Returns true if {@code toVerify} was signed by {@code signingCert}'s public key. */
+  private boolean verifySignature(X509Certificate toVerify, X509Certificate signingCert) {
+    try {
+      toVerify.verify(signingCert.getPublicKey());
+      return true;
+    } catch (GeneralSecurityException verifyFailed) {
+      return false;
     }
   }
 

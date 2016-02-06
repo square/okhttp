@@ -14,7 +14,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package okhttp3.internal.tls;
 
 import javax.security.auth.x500.X500Principal;
