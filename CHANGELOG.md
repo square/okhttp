@@ -1,6 +1,29 @@
 Change Log
 ==========
 
+## Version 3.1.0
+
+_2016-02-06_
+
+ *  New: WebSockets now defer some writes. This should improve performance for
+    some applications.
+ *  New: Override `equals()` and `hashCode()` in our new cookie class. This
+    class now defines equality by value rather than by reference.
+ *  New: Handle 408 responses by retrying the request. This allows servers to
+    direct clients to retry rather than failing permanently.
+ *  New: Expose the framed protocol in `Connection`. Previously this would
+    return the application-layer protocol (HTTP/1.1 or HTTP/1.0); now it always
+    returns the wire-layer protocol (HTTP/2, SPDY/3.1, or HTTP/1.1).
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+ *  Fix: Silently ignore unknown HTTP/2 settings. Previously this would cause
+    the entire connection to fail.
+ *  Fix: Don’t crash on unexpected charsets in the logging interceptor.
+ *  Fix: `OkHttpClient` is now non-final for the benefit of mocking frameworks.
+    Mocking sophisticated classes like `OkHttpClient` is fragile and you
+    shouldn’t do it. But if that’s how you want to live your life we won’t stand
+    in your way!
+
+
 ## Version 3.0.1
 
 _2016-01-14_
