@@ -18,7 +18,7 @@ package com.squareup.okhttp;
 import java.security.GeneralSecurityException;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.internal.HeldCertificate;
+import com.squareup.okhttp.internal.HeldCertificate;
 import okio.ByteString;
 import org.junit.Test;
 

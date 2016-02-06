@@ -24,10 +24,12 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
+import java.util.List;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import okhttp3.internal.HeldCertificate;
 
 /**
  * Constructs an SSL context for testing. This uses Bouncy Castle to generate a
@@ -38,44 +40,69 @@ import okhttp3.internal.HeldCertificate;
  */
 public final class SslContextBuilder {
   private static SSLContext localhost; // Lazily initialized.
-  private final String hostName;
-
-  /**
-   * @param hostName the subject of the host. For TLS this should be the
-   * domain name that the client uses to identify the server.
-   */
-  public SslContextBuilder(String hostName) {
-    this.hostName = hostName;
-  }
 
   /** Returns a new SSL context for this host's current localhost address. */
   public static synchronized SSLContext localhost() {
-    if (localhost == null) {
-      try {
-        localhost = new SslContextBuilder(InetAddress.getByName("localhost").getHostName()).build();
-      } catch (GeneralSecurityException e) {
-        throw new RuntimeException(e);
-      } catch (UnknownHostException e) {
-        throw new RuntimeException(e);
-      }
+    if (localhost != null) return localhost;
+
+    try {
+      // Generate a self-signed cert for the server to serve and the client to trust.
+      HeldCertificate heldCertificate = new HeldCertificate.Builder()
+          .serialNumber("1")
+          .commonName(InetAddress.getByName("localhost").getHostName())
+          .build();
+
+      localhost = new SslContextBuilder()
+          .certificateChain(heldCertificate)
+          .addTrustedCertificate(heldCertificate.certificate)
+          .build();
+
+      return localhost;
+    } catch (GeneralSecurityException e) {
+      throw new RuntimeException(e);
+    } catch (UnknownHostException e) {
+      throw new RuntimeException(e);
     }
-    return localhost;
+  }
+
+  private HeldCertificate[] chain;
+  private List<X509Certificate> trustedCertificates = new ArrayList<>();
+
+  /**
+   * Configure the certificate chain to use when serving HTTPS responses. The first certificate
+   * in this chain is the server's certificate, further certificates are included in the handshake
+   * so the client can build a trusted path to a CA certificate.
+   */
+  public SslContextBuilder certificateChain(HeldCertificate... chain) {
+    this.chain = chain;
+    return this;
+  }
+
+  /**
+   * Add a certificate authority that this client trusts. Servers that provide certificate chains
+   * signed by these roots (or their intermediates) will be accepted.
+   */
+  public SslContextBuilder addTrustedCertificate(X509Certificate certificate) {
+    trustedCertificates.add(certificate);
+    return this;
   }
 
   public SSLContext build() throws GeneralSecurityException {
-    // Generate a self-signed cert for the server to serve and the client to trust.
-    HeldCertificate heldCertificate = new HeldCertificate.Builder()
-        .serialNumber("1")
-        .hostname(hostName)
-        .build();
-
     // Put the certificate in a key store.
     char[] password = "password".toCharArray();
     KeyStore keyStore = newEmptyKeyStore(password);
-    Certificate[] certificateChain = {heldCertificate.certificate};
-    keyStore.setKeyEntry("private",
-        heldCertificate.keyPair.getPrivate(), password, certificateChain);
-    keyStore.setCertificateEntry("cert", heldCertificate.certificate);
+
+    if (chain != null) {
+      Certificate[] certificates = new Certificate[chain.length];
+      for (int i = 0; i < chain.length; i++) {
+        certificates[i] = chain[i].certificate;
+      }
+      keyStore.setKeyEntry("private", chain[0].keyPair.getPrivate(), password, certificates);
+    }
+
+    for (int i = 0; i < trustedCertificates.size(); i++) {
+      keyStore.setCertificateEntry("cert_" + i, trustedCertificates.get(i));
+    }
 
     // Wrap it up in an SSL context.
     KeyManagerFactory keyManagerFactory =

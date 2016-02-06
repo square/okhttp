@@ -19,7 +19,7 @@ import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.internal.HeldCertificate;
+import com.squareup.okhttp.internal.HeldCertificate;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

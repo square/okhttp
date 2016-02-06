@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal;
+package com.squareup.okhttp.internal;
 
 import java.math.BigInteger;
 import java.security.GeneralSecurityException;
@@ -25,6 +25,8 @@ import java.security.cert.X509Certificate;
 import java.util.Date;
 import java.util.UUID;
 import javax.security.auth.x500.X500Principal;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.X509Extensions;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.x509.X509V3CertificateGenerator;
 
@@ -52,6 +54,7 @@ public final class HeldCertificate {
     private String serialNumber = "1";
     private KeyPair keyPair;
     private HeldCertificate issuedBy;
+    private int maxIntermediateCas;
 
     public Builder serialNumber(String serialNumber) {
       this.serialNumber = serialNumber;
@@ -59,10 +62,10 @@ public final class HeldCertificate {
     }
 
     /**
-     * Set this certificate's hostname. This is the CN (common name) in the certificate. Will be a
-     * random string if no value is provided.
+     * Set this certificate's name. Typically this is the URL hostname for TLS certificates. This is
+     * the CN (common name) in the certificate. Will be a random string if no value is provided.
      */
-    public Builder hostname(String hostname) {
+    public Builder commonName(String hostname) {
       this.hostname = hostname;
       return this;
     }
@@ -78,6 +81,15 @@ public final class HeldCertificate {
      */
     public Builder issuedBy(HeldCertificate signedBy) {
       this.issuedBy = signedBy;
+      return this;
+    }
+
+    /**
+     * Set this certificate to be a certificate authority, with up to {@code maxIntermediateCas}
+     * intermediate certificate authorities beneath it.
+     */
+    public Builder ca(int maxIntermediateCas) {
+      this.maxIntermediateCas = maxIntermediateCas;
       return this;
     }
 
@@ -111,6 +123,12 @@ public final class HeldCertificate {
       generator.setSubjectDN(subject);
       generator.setPublicKey(heldKeyPair.getPublic());
       generator.setSignatureAlgorithm("SHA256WithRSAEncryption");
+
+      if (maxIntermediateCas > 0) {
+        generator.addExtension(X509Extensions.BasicConstraints, true,
+            new BasicConstraints(maxIntermediateCas));
+      }
+
       X509Certificate certificate = generator.generateX509Certificate(
           signedByKeyPair.getPrivate(), "BC");
       return new HeldCertificate(certificate, heldKeyPair);
