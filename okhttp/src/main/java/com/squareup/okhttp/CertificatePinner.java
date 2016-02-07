@@ -135,7 +135,7 @@ public final class CertificatePinner {
   private final Map<String, Set<ByteString>> hostnameToPins;
 
   private CertificatePinner(Builder builder) {
-    hostnameToPins = Util.immutableMap(builder.hostnameToPins);
+    this.hostnameToPins = Util.immutableMap(builder.hostnameToPins);
   }
 
   /**
