@@ -1,6 +1,13 @@
 Change Log
 ==========
 
+## Version 2.7.3
+
+_2016-02-06_
+
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+
+
 ## Version 2.7.2
 
 _2016-01-07_
