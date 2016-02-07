@@ -25,7 +25,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.Util;
-import okhttp3.internal.tls.CertificateAuthorityCouncil;
+import okhttp3.internal.tls.CertificateChainCleaner;
+import okhttp3.internal.tls.TrustRootIndex;
 import okio.ByteString;
 
 import static java.util.Collections.unmodifiableSet;
@@ -129,11 +130,11 @@ public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
   private final Map<String, Set<ByteString>> hostnameToPins;
-  private final CertificateAuthorityCouncil certificateAuthorityCouncil;
+  private final TrustRootIndex trustRootIndex;
 
   private CertificatePinner(Builder builder) {
     this.hostnameToPins = Util.immutableMap(builder.hostnameToPins);
-    this.certificateAuthorityCouncil = builder.certificateAuthorityCouncil;
+    this.trustRootIndex = builder.trustRootIndex;
   }
 
   /**
@@ -146,8 +147,8 @@ public final class CertificatePinner {
    */
   public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
-    if (certificateAuthorityCouncil != null) {
-      peerCertificates = certificateAuthorityCouncil.normalizeCertificateChain(peerCertificates);
+    if (trustRootIndex != null) {
+      peerCertificates = new CertificateChainCleaner(trustRootIndex).clean(peerCertificates);
     }
 
     Set<ByteString> pins = findMatchingPins(hostname);
@@ -237,18 +238,18 @@ public final class CertificatePinner {
   /** Builds a configured certificate pinner. */
   public static final class Builder {
     private final Map<String, Set<ByteString>> hostnameToPins = new LinkedHashMap<>();
-    private CertificateAuthorityCouncil certificateAuthorityCouncil;
+    private TrustRootIndex trustRootIndex;
 
     public Builder() {
     }
 
     Builder(CertificatePinner certificatePinner) {
       this.hostnameToPins.putAll(certificatePinner.hostnameToPins);
-      this.certificateAuthorityCouncil = certificatePinner.certificateAuthorityCouncil;
+      this.trustRootIndex = certificatePinner.trustRootIndex;
     }
 
-    Builder certificateAuthorityCouncil(CertificateAuthorityCouncil certificateAuthorityCouncil) {
-      this.certificateAuthorityCouncil = certificateAuthorityCouncil;
+    public Builder trustRootIndex(TrustRootIndex trustRootIndex) {
+      this.trustRootIndex = trustRootIndex;
       return this;
     }
 

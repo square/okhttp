@@ -36,8 +36,8 @@ import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
-import okhttp3.internal.tls.CertificateAuthorityCouncil;
 import okhttp3.internal.tls.OkHostnameVerifier;
+import okhttp3.internal.tls.TrustRootIndex;
 
 /**
  * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
@@ -133,7 +133,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   final InternalCache internalCache;
   final SocketFactory socketFactory;
   final SSLSocketFactory sslSocketFactory;
-  final CertificateAuthorityCouncil certificateAuthorityCouncil;
+  final TrustRootIndex trustRootIndex;
   final HostnameVerifier hostnameVerifier;
   final CertificatePinner certificatePinner;
   final Authenticator proxyAuthenticator;
@@ -180,19 +180,18 @@ public class OkHttpClient implements Cloneable, Call.Factory {
         throw new AssertionError(); // The system has no TLS. Just give up.
       }
     }
-    if (sslSocketFactory != null && builder.certificateAuthorityCouncil == null) {
+    if (sslSocketFactory != null && builder.trustRootIndex == null) {
       X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
       if (trustManager == null) {
         throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
             + ", sslSocketFactory is " + sslSocketFactory.getClass());
       }
-      this.certificateAuthorityCouncil
-          = new CertificateAuthorityCouncil(trustManager.getAcceptedIssuers());
+      this.trustRootIndex = Platform.get().trustRootIndex(trustManager);
       this.certificatePinner = builder.certificatePinner.newBuilder()
-          .certificateAuthorityCouncil(certificateAuthorityCouncil)
+          .trustRootIndex(trustRootIndex)
           .build();
     } else {
-      this.certificateAuthorityCouncil = builder.certificateAuthorityCouncil;
+      this.trustRootIndex = builder.trustRootIndex;
       this.certificatePinner = builder.certificatePinner;
     }
     this.hostnameVerifier = builder.hostnameVerifier;
@@ -341,7 +340,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     InternalCache internalCache;
     SocketFactory socketFactory;
     SSLSocketFactory sslSocketFactory;
-    CertificateAuthorityCouncil certificateAuthorityCouncil;
+    TrustRootIndex trustRootIndex;
     HostnameVerifier hostnameVerifier;
     CertificatePinner certificatePinner;
     Authenticator proxyAuthenticator;
@@ -389,7 +388,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       this.cache = okHttpClient.cache;
       this.socketFactory = okHttpClient.socketFactory;
       this.sslSocketFactory = okHttpClient.sslSocketFactory;
-      this.certificateAuthorityCouncil = okHttpClient.certificateAuthorityCouncil;
+      this.trustRootIndex = okHttpClient.trustRootIndex;
       this.hostnameVerifier = okHttpClient.hostnameVerifier;
       this.certificatePinner = okHttpClient.certificatePinner;
       this.proxyAuthenticator = okHttpClient.proxyAuthenticator;
@@ -527,7 +526,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory) {
       if (sslSocketFactory == null) throw new NullPointerException("sslSocketFactory == null");
       this.sslSocketFactory = sslSocketFactory;
-      this.certificateAuthorityCouncil = null;
+      this.trustRootIndex = null;
       return this;
     }
 
