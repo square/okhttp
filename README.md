@@ -11,12 +11,12 @@ Download [the latest JAR][3] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
-  <version>3.0.1</version>
+  <version>3.1.0</version>
 </dependency>
 ```
 or Gradle:
 ```groovy
-compile 'com.squareup.okhttp3:okhttp:3.0.1'
+compile 'com.squareup.okhttp3:okhttp:3.1.0'
 ```
 
 Snapshots of the development version are available in [Sonatype's `snapshots` repository][snap].
@@ -36,13 +36,13 @@ Download [the latest JAR][4] or grab via Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
-  <version>3.0.1</version>
+  <version>3.1.0</version>
   <scope>test</scope>
 </dependency>
 ```
 or Gradle:
 ```groovy
-testCompile 'com.squareup.okhttp3:mockwebserver:3.0.1'
+testCompile 'com.squareup.okhttp3:mockwebserver:3.1.0'
 ```
 
 
