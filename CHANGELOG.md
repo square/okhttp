@@ -151,6 +151,13 @@ stuck on the old version.
  *  New: Make `HttpUrl` the blessed URL method of `Request`.
 
 
+## Version 2.7.3
+
+_2016-02-06_
+
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+
+
 ## Version 2.7.2
 
 _2016-01-07_
