@@ -15,33 +15,34 @@
  */
 package com.squareup.okhttp.internal.tls;
 
+import com.squareup.okhttp.internal.HeldCertificate;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import com.squareup.okhttp.internal.HeldCertificate;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public final class CertificateAuthorityCouncilTest {
+public final class CertificateChainCleanerTest {
   @Test public void normalizeSingleSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber("1")
         .build();
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
-    assertEquals(list(root), council.normalizeCertificateChain(list(root)));
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
+    assertEquals(list(root), council.clean(list(root)));
   }
 
   @Test public void normalizeUnknownSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber("1")
         .build();
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil();
+    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex());
 
     try {
-      council.normalizeCertificateChain(list(root));
+      council.clean(list(root));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
@@ -60,9 +61,9 @@ public final class CertificateAuthorityCouncilTest {
         .issuedBy(certA)
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
-    assertEquals(list(certB, certA, root),
-        council.normalizeCertificateChain(list(certB, certA, root)));
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
+    assertEquals(list(certB, certA, root), council.clean(list(certB, certA, root)));
   }
 
   @Test public void orderedChainOfCertificatesWithoutRoot() throws Exception {
@@ -78,9 +79,9 @@ public final class CertificateAuthorityCouncilTest {
         .issuedBy(certA)
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
-    assertEquals(list(certB, certA, root),
-        council.normalizeCertificateChain(list(certB, certA))); // Root is added!
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
+    assertEquals(list(certB, certA, root), council.clean(list(certB, certA))); // Root is added!
   }
 
   @Test public void unorderedChainOfCertificatesWithRoot() throws Exception {
@@ -100,9 +101,9 @@ public final class CertificateAuthorityCouncilTest {
         .issuedBy(certB)
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
-    assertEquals(list(certC, certB, certA, root),
-        council.normalizeCertificateChain(list(certC, certA, root, certB)));
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
+    assertEquals(list(certC, certB, certA, root), council.clean(list(certC, certA, root, certB)));
   }
 
   @Test public void unorderedChainOfCertificatesWithoutRoot() throws Exception {
@@ -122,9 +123,9 @@ public final class CertificateAuthorityCouncilTest {
         .issuedBy(certB)
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
-    assertEquals(list(certC, certB, certA, root),
-        council.normalizeCertificateChain(list(certC, certA, certB)));
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
+    assertEquals(list(certC, certB, certA, root), council.clean(list(certC, certA, certB)));
   }
 
   @Test public void unrelatedCertificatesAreOmitted() throws Exception {
@@ -143,9 +144,10 @@ public final class CertificateAuthorityCouncilTest {
         .serialNumber("4")
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(root.certificate);
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(root.certificate));
     assertEquals(list(certB, certA, root),
-        council.normalizeCertificateChain(list(certB, certUnnecessary, certA, root)));
+        council.clean(list(certB, certUnnecessary, certA, root)));
   }
 
   @Test public void unnecessaryTrustedCertificatesAreOmitted() throws Exception {
@@ -165,10 +167,9 @@ public final class CertificateAuthorityCouncilTest {
         .issuedBy(certA)
         .build();
 
-    CertificateAuthorityCouncil council = new CertificateAuthorityCouncil(
-        superRoot.certificate, root.certificate);
-    assertEquals(list(certB, certA, root),
-        council.normalizeCertificateChain(list(certB, certA, root, superRoot)));
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(superRoot.certificate, root.certificate));
+    assertEquals(list(certB, certA, root), council.clean(list(certB, certA, root, superRoot)));
   }
 
   private List<Certificate> list(HeldCertificate... heldCertificates) {

@@ -18,6 +18,9 @@ package com.squareup.okhttp.internal;
 
 import android.util.Log;
 import com.squareup.okhttp.Protocol;
+import com.squareup.okhttp.internal.tls.AndroidTrustRootIndex;
+import com.squareup.okhttp.internal.tls.RealTrustRootIndex;
+import com.squareup.okhttp.internal.tls.TrustRootIndex;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -84,6 +87,10 @@ public class Platform {
 
   public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
     return null;
+  }
+
+  public TrustRootIndex trustRootIndex(X509TrustManager trustManager) {
+    return new RealTrustRootIndex(trustManager.getAcceptedIssuers());
   }
 
   /**
@@ -235,13 +242,30 @@ public class Platform {
 
     @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
       Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
-      if (context == null) return null;
+      if (context == null) {
+        // If that didn't work, try the Google Play Services SSL provider before giving up. This
+        // must be loaded by the SSLSocketFactory's class loader.
+        try {
+          Class<?> gmsSslParametersClass = Class.forName(
+              "com.google.android.gms.org.conscrypt.SSLParametersImpl", false,
+              sslSocketFactory.getClass().getClassLoader());
+          context = readFieldOrNull(sslSocketFactory, gmsSslParametersClass, "sslParameters");
+        } catch (ClassNotFoundException e) {
+          return null;
+        }
+      }
 
       X509TrustManager x509TrustManager = readFieldOrNull(
           context, X509TrustManager.class, "x509TrustManager");
       if (x509TrustManager != null) return x509TrustManager;
 
       return readFieldOrNull(context, X509TrustManager.class, "trustManager");
+    }
+
+    @Override public TrustRootIndex trustRootIndex(X509TrustManager trustManager) {
+      TrustRootIndex result = AndroidTrustRootIndex.get(trustManager);
+      if (result != null) return result;
+      return super.trustRootIndex(trustManager);
     }
 
     @Override public void configureTlsExtensions(

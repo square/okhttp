@@ -35,8 +35,9 @@ import com.squareup.okhttp.internal.http.Http1xStream;
 import com.squareup.okhttp.internal.http.OkHeaders;
 import com.squareup.okhttp.internal.http.RouteException;
 import com.squareup.okhttp.internal.http.StreamAllocation;
-import com.squareup.okhttp.internal.tls.CertificateAuthorityCouncil;
+import com.squareup.okhttp.internal.tls.CertificateChainCleaner;
 import com.squareup.okhttp.internal.tls.OkHostnameVerifier;
+import com.squareup.okhttp.internal.tls.TrustRootIndex;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.ConnectException;
@@ -202,8 +203,9 @@ public final class RealConnection implements Connection {
 
       // Check that the certificate pinner is satisfied by the certificates presented.
       if (address.getCertificatePinner() != CertificatePinner.DEFAULT) {
-        List<Certificate> certificates = certificateAuthorityCouncil(address.getSslSocketFactory())
-            .normalizeCertificateChain(unverifiedHandshake.peerCertificates());
+        TrustRootIndex trustRootIndex = trustRootIndex(address.getSslSocketFactory());
+        List<Certificate> certificates = new CertificateChainCleaner(trustRootIndex)
+            .clean(unverifiedHandshake.peerCertificates());
         address.getCertificatePinner().check(address.getUriHost(), certificates);
       }
 
@@ -233,22 +235,20 @@ public final class RealConnection implements Connection {
   }
 
   private static SSLSocketFactory lastSslSocketFactory;
-  private static CertificateAuthorityCouncil lastCertificateAuthorityCouncil;
+  private static TrustRootIndex lastTrustRootIndex;
 
   /**
-   * Returns a certificate authority council for {@code sslSocketFactory}. This uses a static,
-   * single-element cache to avoid redoing reflection and SSL indexing in the common case where most
-   * SSL connections use the same SSL socket factory.
+   * Returns a trust root index for {@code sslSocketFactory}. This uses a static, single-element
+   * cache to avoid redoing reflection and SSL indexing in the common case where most SSL
+   * connections use the same SSL socket factory.
    */
-  private static synchronized CertificateAuthorityCouncil certificateAuthorityCouncil(
-      SSLSocketFactory sslSocketFactory) {
+  private static synchronized TrustRootIndex trustRootIndex(SSLSocketFactory sslSocketFactory) {
     if (sslSocketFactory != lastSslSocketFactory) {
       X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
-      lastCertificateAuthorityCouncil = new CertificateAuthorityCouncil(
-          trustManager.getAcceptedIssuers());
+      lastTrustRootIndex = Platform.get().trustRootIndex(trustManager);
       lastSslSocketFactory = sslSocketFactory;
     }
-    return lastCertificateAuthorityCouncil;
+    return lastTrustRootIndex;
   }
 
   /**
