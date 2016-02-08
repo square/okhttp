@@ -238,7 +238,18 @@ public class Platform {
 
     @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
       Object context = readFieldOrNull(sslSocketFactory, sslParametersClass, "sslParameters");
-      if (context == null) return null;
+      if (context == null) {
+        // If that didn't work, try the Google Play Services SSL provider before giving up. This
+        // must be loaded by the SSLSocketFactory's class loader.
+        try {
+          Class<?> gmsSslParametersClass = Class.forName(
+              "com.google.android.gms.org.conscrypt.SSLParametersImpl", false,
+              sslSocketFactory.getClass().getClassLoader());
+          context = readFieldOrNull(sslSocketFactory, gmsSslParametersClass, "sslParameters");
+        } catch (ClassNotFoundException e) {
+          return null;
+        }
+      }
 
       X509TrustManager x509TrustManager = readFieldOrNull(
           context, X509TrustManager.class, "x509TrustManager");
