@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+## Version 3.1.1
+
+_2016-02-07_
+
+ *  Fix: Don't crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.
+ *  Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.
+
+
 ## Version 3.1.0
 
 _2016-02-06_
