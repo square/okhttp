@@ -147,13 +147,13 @@ public final class CertificatePinner {
    */
   public void check(String hostname, List<Certificate> peerCertificates)
       throws SSLPeerUnverifiedException {
-    if (trustRootIndex != null) {
-      peerCertificates = new CertificateChainCleaner(trustRootIndex).clean(peerCertificates);
-    }
-
     Set<ByteString> pins = findMatchingPins(hostname);
 
     if (pins == null) return;
+
+    if (trustRootIndex != null) {
+      peerCertificates = new CertificateChainCleaner(trustRootIndex).clean(peerCertificates);
+    }
 
     for (int i = 0, size = peerCertificates.size(); i < size; i++) {
       X509Certificate x509Certificate = (X509Certificate) peerCertificates.get(i);
