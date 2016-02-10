@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -83,14 +82,18 @@ public class Platform {
     System.out.println(warning);
   }
 
-  public void tagSocket(Socket socket) throws SocketException {
-  }
-
-  public void untagSocket(Socket socket) throws SocketException {
-  }
-
   public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-    return null;
+    // Attempt to get the trust manager from an OpenJDK socket factory. We attempt this on all
+    // platforms in order to support Robolectric, which mixes classes from both Android and the
+    // Oracle JDK. Note that we don't support HTTP/2 or other nice features on Robolectric.
+    try {
+      Class<?> sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl");
+      Object context = readFieldOrNull(sslSocketFactory, sslContextClass, "context");
+      if (context == null) return null;
+      return readFieldOrNull(context, X509TrustManager.class, "trustManager");
+    } catch (ClassNotFoundException e) {
+      return null;
+    }
   }
 
   public TrustRootIndex trustRootIndex(X509TrustManager trustManager) {
@@ -140,61 +143,43 @@ public class Platform {
             "org.apache.harmony.xnet.provider.jsse.SSLParametersImpl");
       }
 
-      OptionalMethod<Socket> setUseSessionTickets
-          = new OptionalMethod<>(null, "setUseSessionTickets", boolean.class);
-      OptionalMethod<Socket> setHostname
-          = new OptionalMethod<>(null, "setHostname", String.class);
-      Method trafficStatsTagSocket = null;
-      Method trafficStatsUntagSocket = null;
+      OptionalMethod<Socket> setUseSessionTickets = new OptionalMethod<>(
+          null, "setUseSessionTickets", boolean.class);
+      OptionalMethod<Socket> setHostname = new OptionalMethod<>(
+          null, "setHostname", String.class);
       OptionalMethod<Socket> getAlpnSelectedProtocol = null;
       OptionalMethod<Socket> setAlpnProtocols = null;
 
-      // Attempt to find Android 4.0+ APIs.
+      // Attempt to find Android 5.0+ APIs.
       try {
-        Class<?> trafficStats = Class.forName("android.net.TrafficStats");
-        trafficStatsTagSocket = trafficStats.getMethod("tagSocket", Socket.class);
-        trafficStatsUntagSocket = trafficStats.getMethod("untagSocket", Socket.class);
-
-        // Attempt to find Android 5.0+ APIs.
-        try {
-          Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
-          getAlpnSelectedProtocol = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
-          setAlpnProtocols = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
-        } catch (ClassNotFoundException ignored) {
-        }
-      } catch (ClassNotFoundException | NoSuchMethodException ignored) {
+        Class.forName("android.net.Network"); // Arbitrary class added in Android 5.0.
+        getAlpnSelectedProtocol = new OptionalMethod<>(byte[].class, "getAlpnSelectedProtocol");
+        setAlpnProtocols = new OptionalMethod<>(null, "setAlpnProtocols", byte[].class);
+      } catch (ClassNotFoundException ignored) {
       }
 
       return new Android(sslParametersClass, setUseSessionTickets, setHostname,
-          trafficStatsTagSocket, trafficStatsUntagSocket, getAlpnSelectedProtocol,
-          setAlpnProtocols);
+          getAlpnSelectedProtocol, setAlpnProtocols);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
     }
 
-    // Find an Oracle JDK.
+    // Find Jetty's ALPN extension for OpenJDK.
     try {
-      Class<?> sslContextClass = Class.forName("sun.security.ssl.SSLContextImpl");
-
-      // Find Jetty's ALPN extension for OpenJDK.
-      try {
-        String negoClassName = "org.eclipse.jetty.alpn.ALPN";
-        Class<?> negoClass = Class.forName(negoClassName);
-        Class<?> providerClass = Class.forName(negoClassName + "$Provider");
-        Class<?> clientProviderClass = Class.forName(negoClassName + "$ClientProvider");
-        Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
-        Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
-        Method getMethod = negoClass.getMethod("get", SSLSocket.class);
-        Method removeMethod = negoClass.getMethod("remove", SSLSocket.class);
-        return new JdkWithJettyBootPlatform(sslContextClass,
-            putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass);
-      } catch (ClassNotFoundException | NoSuchMethodException ignored) {
-      }
-
-      return new JdkPlatform(sslContextClass);
-    } catch (ClassNotFoundException ignored) {
+      String negoClassName = "org.eclipse.jetty.alpn.ALPN";
+      Class<?> negoClass = Class.forName(negoClassName);
+      Class<?> providerClass = Class.forName(negoClassName + "$Provider");
+      Class<?> clientProviderClass = Class.forName(negoClassName + "$ClientProvider");
+      Class<?> serverProviderClass = Class.forName(negoClassName + "$ServerProvider");
+      Method putMethod = negoClass.getMethod("put", SSLSocket.class, providerClass);
+      Method getMethod = negoClass.getMethod("get", SSLSocket.class);
+      Method removeMethod = negoClass.getMethod("remove", SSLSocket.class);
+      return new JdkWithJettyBootPlatform(
+          putMethod, getMethod, removeMethod, clientProviderClass, serverProviderClass);
+    } catch (ClassNotFoundException | NoSuchMethodException ignored) {
     }
 
+    // Probably an Oracle JDK like OpenJDK.
     return new Platform();
   }
 
@@ -206,23 +191,16 @@ public class Platform {
     private final OptionalMethod<Socket> setUseSessionTickets;
     private final OptionalMethod<Socket> setHostname;
 
-    // Non-null on Android 4.0+.
-    private final Method trafficStatsTagSocket;
-    private final Method trafficStatsUntagSocket;
-
     // Non-null on Android 5.0+.
     private final OptionalMethod<Socket> getAlpnSelectedProtocol;
     private final OptionalMethod<Socket> setAlpnProtocols;
 
     public Android(Class<?> sslParametersClass, OptionalMethod<Socket> setUseSessionTickets,
-        OptionalMethod<Socket> setHostname, Method trafficStatsTagSocket,
-        Method trafficStatsUntagSocket, OptionalMethod<Socket> getAlpnSelectedProtocol,
+        OptionalMethod<Socket> setHostname, OptionalMethod<Socket> getAlpnSelectedProtocol,
         OptionalMethod<Socket> setAlpnProtocols) {
       this.sslParametersClass = sslParametersClass;
       this.setUseSessionTickets = setUseSessionTickets;
       this.setHostname = setHostname;
-      this.trafficStatsTagSocket = trafficStatsTagSocket;
-      this.trafficStatsUntagSocket = trafficStatsUntagSocket;
       this.getAlpnSelectedProtocol = getAlpnSelectedProtocol;
       this.setAlpnProtocols = setAlpnProtocols;
     }
@@ -254,7 +232,7 @@ public class Platform {
               sslSocketFactory.getClass().getClassLoader());
           context = readFieldOrNull(sslSocketFactory, gmsSslParametersClass, "sslParameters");
         } catch (ClassNotFoundException e) {
-          return null;
+          return super.trustManager(sslSocketFactory);
         }
       }
 
@@ -294,30 +272,6 @@ public class Platform {
       return alpnResult != null ? new String(alpnResult, Util.UTF_8) : null;
     }
 
-    @Override public void tagSocket(Socket socket) throws SocketException {
-      if (trafficStatsTagSocket == null) return;
-
-      try {
-        trafficStatsTagSocket.invoke(null, socket);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e.getCause());
-      }
-    }
-
-    @Override public void untagSocket(Socket socket) throws SocketException {
-      if (trafficStatsUntagSocket == null) return;
-
-      try {
-        trafficStatsUntagSocket.invoke(null, socket);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      } catch (InvocationTargetException e) {
-        throw new RuntimeException(e.getCause());
-      }
-    }
-
     @Override public void log(String message) {
       // Split by line, then ensure each line can fit into Log's maximum length.
       for (int i = 0, length = message.length(); i < length; i++) {
@@ -332,34 +286,18 @@ public class Platform {
     }
   }
 
-  /** JDK 1.7 or better. */
-  private static class JdkPlatform extends Platform {
-    private final Class<?> sslContextClass;
-
-    public JdkPlatform(Class<?> sslContextClass) {
-      this.sslContextClass = sslContextClass;
-    }
-
-    @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
-      Object context = readFieldOrNull(sslSocketFactory, sslContextClass, "context");
-      if (context == null) return null;
-      return readFieldOrNull(context, X509TrustManager.class, "trustManager");
-    }
-  }
-
   /**
    * OpenJDK 7+ with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
    */
-  private static class JdkWithJettyBootPlatform extends JdkPlatform {
+  private static class JdkWithJettyBootPlatform extends Platform {
     private final Method putMethod;
     private final Method getMethod;
     private final Method removeMethod;
     private final Class<?> clientProviderClass;
     private final Class<?> serverProviderClass;
 
-    public JdkWithJettyBootPlatform(Class<?> sslContextClass, Method putMethod, Method getMethod,
-        Method removeMethod, Class<?> clientProviderClass, Class<?> serverProviderClass) {
-      super(sslContextClass);
+    public JdkWithJettyBootPlatform(Method putMethod, Method getMethod, Method removeMethod,
+        Class<?> clientProviderClass, Class<?> serverProviderClass) {
       this.putMethod = putMethod;
       this.getMethod = getMethod;
       this.removeMethod = removeMethod;
