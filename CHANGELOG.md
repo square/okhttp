@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+## Version 3.1.2
+
+_2016-02-10_
+
+ *  Fix: Don’t crash when finding the trust manager on Robolectric. We attempted
+    to detect the host platform and got confused because Robolectric looks like
+    Android but isn’t!
+ *  Fix: Change `CertificatePinner` to skip sanitizing the certificate chain
+    when no certificates were pinned. This avoids an SSL failure in insecure
+    “trust everyone” configurations, such as when talking to a development
+    HTTPS server that has a self-signed certificate.
+
+
 ## Version 3.1.1
 
 _2016-02-07_
