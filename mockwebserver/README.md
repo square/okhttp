@@ -108,7 +108,7 @@ Verify requests by their method, path, HTTP version, body, and headers.
 RecordedRequest request = server.takeRequest();
 assertEquals("POST /v1/chat/send HTTP/1.1", request.getRequestLine());
 assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"));
-assertEquals("{}", request.getUtf8Body());
+assertEquals("{}", request.getBody().readUtf8());
 ```
 
 #### Dispatcher
