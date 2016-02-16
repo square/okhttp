@@ -52,7 +52,7 @@
     <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
-    <airlift.version>0.6</airlift.version>
+    <airlift.version>0.7</airlift.version>
     <guava.version>16.0</guava.version>
     <android.version>4.1.1.4</android.version>
 
