@@ -16,11 +16,11 @@
 package okhttp3.curl;
 
 import com.google.common.base.Joiner;
-import io.airlift.command.Arguments;
-import io.airlift.command.Command;
-import io.airlift.command.HelpOption;
-import io.airlift.command.Option;
-import io.airlift.command.SingleCommand;
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
+import io.airlift.airline.HelpOption;
+import io.airlift.airline.Option;
+import io.airlift.airline.SingleCommand;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.cert.CertificateException;
