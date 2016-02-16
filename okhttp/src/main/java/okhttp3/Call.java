@@ -51,8 +51,7 @@ public interface Call {
    * immediately unless there are several other requests currently being executed.
    *
    * <p>This client will later call back {@code responseCallback} with either an HTTP response or a
-   * failure exception. If you {@link #cancel} a request before it completes the callback will not
-   * be invoked.
+   * failure exception.
    *
    * @throws IllegalStateException when the call has already been executed.
    */
