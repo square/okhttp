@@ -772,11 +772,43 @@ public final class HttpUrl {
       return this;
     }
 
+    /**
+     * Adds a set of path segments separated by a slash (either {@code \} or {@code /}). If
+     * {@code pathSegments} starts with a slash, the resulting URL will have empty path segment.
+     */
+    public Builder addPathSegments(String pathSegments) {
+      if (pathSegments == null) throw new IllegalArgumentException("pathSegments == null");
+      return addPathSegments(pathSegments, false);
+    }
+
     public Builder addEncodedPathSegment(String encodedPathSegment) {
       if (encodedPathSegment == null) {
         throw new IllegalArgumentException("encodedPathSegment == null");
       }
       push(encodedPathSegment, 0, encodedPathSegment.length(), false, true);
+      return this;
+    }
+
+    /**
+     * Adds a set of encoded path segments separated by a slash (either {@code \} or {@code /}). If
+     * {@code encodedPathSegments} starts with a slash, the resulting URL will have empty path
+     * segment.
+     */
+    public Builder addEncodedPathSegments(String encodedPathSegments) {
+      if (encodedPathSegments == null) {
+        throw new IllegalArgumentException("encodedPathSegments == null");
+      }
+      return addPathSegments(encodedPathSegments, true);
+    }
+
+    private Builder addPathSegments(String pathSegments, boolean alreadyEncoded) {
+      int offset = 0;
+      do {
+        int segmentEnd = delimiterOffset(pathSegments, offset, pathSegments.length(), "/\\");
+        boolean addTrailingSlash = segmentEnd < pathSegments.length();
+        push(pathSegments, offset, segmentEnd, addTrailingSlash, alreadyEncoded);
+        offset = segmentEnd + 1;
+      } while (offset <= pathSegments.length());
       return this;
     }
 
