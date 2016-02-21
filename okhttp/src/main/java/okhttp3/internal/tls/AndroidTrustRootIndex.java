@@ -40,7 +40,9 @@ public final class AndroidTrustRootIndex implements TrustRootIndex {
     try {
       TrustAnchor trustAnchor = (TrustAnchor) findByIssuerAndSignatureMethod.invoke(
           trustManager, cert);
-      return trustAnchor.getTrustedCert();
+      return trustAnchor != null
+          ? trustAnchor.getTrustedCert()
+          : null;
     } catch (IllegalAccessException e) {
       throw new AssertionError();
     } catch (InvocationTargetException e) {
