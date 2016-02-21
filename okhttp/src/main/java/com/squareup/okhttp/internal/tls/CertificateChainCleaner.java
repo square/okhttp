@@ -62,23 +62,27 @@ public final class CertificateChainCleaner {
     while (true) {
       X509Certificate toVerify = (X509Certificate) result.get(result.size() - 1);
 
-      // If this cert has been signed by a trusted CA cert, we're done. Add the trusted CA
-      // certificate to the end of the chain, unless it's already present. (That would happen if the
-      // first certificate in the chain is itself a self-signed and trusted CA certificate.)
-      X509Certificate caCert = trustRootIndex.findByIssuerAndSignature(toVerify);
-      if (caCert != null) {
-        if (result.size() > 1 || !toVerify.equals(caCert)) {
-          result.add(caCert);
+      // If this cert has been signed by a trusted cert, use that. If that's also a self-signed
+      // cert, it's the root CA and we're done. Otherwise it might be a cached intermediate CA.
+      // Add the trusted certificate to the end of the chain, unless it's already present. (That
+      // would happen if the first certificate in the chain is itself a self-signed and trusted CA
+      // certificate.)
+      X509Certificate trustedCert = trustRootIndex.findByIssuerAndSignature(toVerify);
+      if (trustedCert != null) {
+        if (result.size() > 1 || !toVerify.equals(trustedCert)) {
+          result.add(trustedCert);
         }
-        return result;
+        if (verifySignature(trustedCert, trustedCert)) {
+          return result; // The self-signed cert is the root CA. We're done.
+        }
+        continue; // Trusted cert, but not a root.
       }
 
       // Search for the certificate in the chain that signed this certificate. This is typically the
       // next element in the chain, but it could be any element.
       for (Iterator<Certificate> i = queue.iterator(); i.hasNext(); ) {
         X509Certificate signingCert = (X509Certificate) i.next();
-        if (toVerify.getIssuerDN().equals(signingCert.getSubjectDN())
-            && verifySignature(toVerify, signingCert)) {
+        if (verifySignature(toVerify, signingCert)) {
           i.remove();
           result.add(signingCert);
           continue followIssuerChain;
@@ -91,6 +95,7 @@ public final class CertificateChainCleaner {
 
   /** Returns true if {@code toVerify} was signed by {@code signingCert}'s public key. */
   private boolean verifySignature(X509Certificate toVerify, X509Certificate signingCert) {
+    if (!toVerify.getIssuerDN().equals(signingCert.getSubjectDN())) return false;
     try {
       toVerify.verify(signingCert.getPublicKey());
       return true;

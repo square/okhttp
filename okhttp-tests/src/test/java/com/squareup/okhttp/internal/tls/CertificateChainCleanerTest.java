@@ -150,17 +150,17 @@ public final class CertificateChainCleanerTest {
         council.clean(list(certB, certUnnecessary, certA, root)));
   }
 
-  @Test public void unnecessaryTrustedCertificatesAreOmitted() throws Exception {
-    HeldCertificate superRoot = new HeldCertificate.Builder()
+  @Test public void chainGoesAllTheWayToSelfSignedRoot() throws Exception {
+    HeldCertificate selfSigned = new HeldCertificate.Builder()
         .serialNumber("1")
         .build();
-    HeldCertificate root = new HeldCertificate.Builder()
+    HeldCertificate trusted = new HeldCertificate.Builder()
         .serialNumber("2")
-        .issuedBy(superRoot)
+        .issuedBy(selfSigned)
         .build();
     HeldCertificate certA = new HeldCertificate.Builder()
         .serialNumber("3")
-        .issuedBy(root)
+        .issuedBy(trusted)
         .build();
     HeldCertificate certB = new HeldCertificate.Builder()
         .serialNumber("4")
@@ -168,8 +168,13 @@ public final class CertificateChainCleanerTest {
         .build();
 
     CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(superRoot.certificate, root.certificate));
-    assertEquals(list(certB, certA, root), council.clean(list(certB, certA, root, superRoot)));
+        new RealTrustRootIndex(selfSigned.certificate, trusted.certificate));
+    assertEquals(list(certB, certA, trusted, selfSigned),
+        council.clean(list(certB, certA)));
+    assertEquals(list(certB, certA, trusted, selfSigned),
+        council.clean(list(certB, certA, trusted)));
+    assertEquals(list(certB, certA, trusted, selfSigned),
+        council.clean(list(certB, certA, trusted, selfSigned)));
   }
 
   private List<Certificate> list(HeldCertificate... heldCertificates) {
