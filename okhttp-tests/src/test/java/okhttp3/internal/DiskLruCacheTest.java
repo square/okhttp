@@ -1073,11 +1073,11 @@ public final class DiskLruCacheTest {
     set("b", "b", "b");
 
     // We can't begin the edit if writing 'DIRTY' fails.
-    fileSystem.setFaulty(journalFile, true);
+    fileSystem.setFaultyWrite(journalFile, true);
     assertNull(cache.edit("c"));
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaulty(journalFile, false);
+    fileSystem.setFaultyWrite(journalFile, false);
     assertNull(cache.edit("d"));
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
@@ -1101,11 +1101,11 @@ public final class DiskLruCacheTest {
     DiskLruCache.Editor editor = cache.edit("c");
     setString(editor, 0, "c");
     setString(editor, 1, "c");
-    fileSystem.setFaulty(journalFile, true);
+    fileSystem.setFaultyWrite(journalFile, true);
     editor.commit();
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaulty(journalFile, false);
+    fileSystem.setFaultyWrite(journalFile, false);
     assertNull(cache.edit("d"));
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
@@ -1125,11 +1125,11 @@ public final class DiskLruCacheTest {
     DiskLruCache.Editor editor = cache.edit("c");
     setString(editor, 0, "c");
     setString(editor, 1, "c");
-    fileSystem.setFaulty(journalFile, true);
+    fileSystem.setFaultyWrite(journalFile, true);
     editor.abort();
 
     // Once the journal has a failure, subsequent writes aren't permitted.
-    fileSystem.setFaulty(journalFile, false);
+    fileSystem.setFaultyWrite(journalFile, false);
     assertNull(cache.edit("d"));
 
     // Confirm that the fault didn't corrupt entries stored before the fault was introduced.
@@ -1146,15 +1146,200 @@ public final class DiskLruCacheTest {
     set("b", "b", "b");
 
     // Remove, but the journal write will fail.
-    fileSystem.setFaulty(journalFile, true);
+    fileSystem.setFaultyWrite(journalFile, true);
     assertTrue(cache.remove("a"));
 
     // Confirm that the entry was still removed.
-    fileSystem.setFaulty(journalFile, false);
+    fileSystem.setFaultyWrite(journalFile, false);
     cache.close();
     cache = new DiskLruCache(fileSystem, cacheDir, appVersion, 2, Integer.MAX_VALUE, executor);
     assertAbsent("a");
     assertValue("b", "b", "b");
+  }
+
+  @Test public void cleanupTrimFailurePreventsNewEditors() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm that edits are prevented after a cache trim failure.
+    assertNull(cache.edit("a"));
+    assertNull(cache.edit("b"));
+    assertNull(cache.edit("c"));
+
+    // Allow the test to clean up.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+  }
+
+  @Test public void cleanupTrimFailureRetriedOnEditors() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // An edit should now add a job to clean up if the most recent trim failed.
+    assertNull(cache.edit("b"));
+    executor.jobs.pop().run();
+
+    // Confirm a successful cache trim now allows edits.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+    assertNull(cache.edit("c"));
+    executor.jobs.pop().run();
+    set("c", "cc", "cc");
+    assertValue("c", "cc", "cc");
+  }
+
+  @Test public void cleanupTrimFailureWithInFlightEditor() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aaa");
+    set("b", "bb", "bb");
+    DiskLruCache.Editor inFlightEditor = cache.edit("c");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // The in-flight editor can still write after a trim failure.
+    setString(inFlightEditor, 0, "cc");
+    setString(inFlightEditor, 1, "cc");
+    inFlightEditor.commit();
+
+    // Confirm the committed values are present after a successful cache trim.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+    executor.jobs.pop().run();
+    assertValue("c", "cc", "cc");
+  }
+
+  @Test public void cleanupTrimFailureAllowsSnapshotReads() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm we still allow snapshot reads after a trim failure.
+    assertValue("a", "aa", "aa");
+    assertValue("b", "bb", "bbb");
+
+    // Allow the test to clean up.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+  }
+
+  @Test public void cleanupTrimFailurePreventsSnapshotWrites() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm snapshot writes are prevented after a trim failure.
+    DiskLruCache.Snapshot snapshot1 = cache.get("a");
+    assertNull(snapshot1.edit());
+    snapshot1.close();
+    DiskLruCache.Snapshot snapshot2 = cache.get("b");
+    assertNull(snapshot2.edit());
+    snapshot2.close();
+
+    // Allow the test to clean up.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+  }
+
+  @Test public void evictAllAfterCleanupTrimFailure() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm we prevent edits after a trim failure.
+    assertNull(cache.edit("c"));
+
+    // A successful eviction should allow new writes.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+    cache.evictAll();
+    set("c", "cc", "cc");
+    assertValue("c", "cc", "cc");
+  }
+
+  @Test public void manualRemovalAfterCleanupTrimFailure() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm we prevent edits after a trim failure.
+    assertNull(cache.edit("c"));
+
+    // A successful removal which trims the cache should allow new writes.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+    cache.remove("a");
+    set("c", "cc", "cc");
+    assertValue("c", "cc", "cc");
+  }
+
+  @Test public void flushingAfterCleanupTrimFailure() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim job to fail.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), true);
+    executor.jobs.pop().run();
+
+    // Confirm we prevent edits after a trim failure.
+    assertNull(cache.edit("c"));
+
+    // A successful flush trims the cache and should allow new writes.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.0"), false);
+    cache.flush();
+    set("c", "cc", "cc");
+    assertValue("c", "cc", "cc");
+  }
+
+  @Test public void cleanupTrimFailureWithPartialSnapshot() throws Exception {
+    cache.setMaxSize(8);
+    executor.jobs.pop();
+    set("a", "aa", "aa");
+    set("b", "bb", "bbb");
+
+    // Cause the cache trim to fail on the second value leaving a partial snapshot.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.1"), true);
+    executor.jobs.pop().run();
+
+    // Confirm the partial snapshot is not returned.
+    assertNull(cache.get("a"));
+
+    // Confirm we prevent edits after a trim failure.
+    assertNull(cache.edit("a"));
+
+    // Confirm the partial snapshot is not returned after a successful trim.
+    fileSystem.setFaultyDelete(new File(cacheDir, "a.1"), false);
+    executor.jobs.pop().run();
+    assertNull(cache.get("a"));
   }
 
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {

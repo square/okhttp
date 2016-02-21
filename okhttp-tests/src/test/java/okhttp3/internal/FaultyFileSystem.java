@@ -29,16 +29,25 @@ import okio.Source;
 public final class FaultyFileSystem implements FileSystem {
   private final FileSystem delegate;
   private final Set<File> writeFaults = new LinkedHashSet<>();
+  private final Set<File> deleteFaults = new LinkedHashSet<>();
 
   public FaultyFileSystem(FileSystem delegate) {
     this.delegate = delegate;
   }
 
-  public void setFaulty(File file, boolean faulty) {
+  public void setFaultyWrite(File file, boolean faulty) {
     if (faulty) {
       writeFaults.add(file);
     } else {
       writeFaults.remove(file);
+    }
+  }
+
+  public void setFaultyDelete(File file, boolean faulty) {
+    if (faulty) {
+      deleteFaults.add(file);
+    } else {
+      deleteFaults.remove(file);
     }
   }
 
@@ -55,6 +64,7 @@ public final class FaultyFileSystem implements FileSystem {
   }
 
   @Override public void delete(File file) throws IOException {
+    if (deleteFaults.contains(file)) throw new IOException("boom!");
     delegate.delete(file);
   }
 
