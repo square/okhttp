@@ -223,6 +223,17 @@ public final class Util {
     }
   }
 
+  /** Returns a SHA-256 hash of {@code s}. */
+  public static ByteString sha256(ByteString s) {
+    try {
+      MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+      byte[] sha1Bytes = messageDigest.digest(s.toByteArray());
+      return ByteString.of(sha1Bytes);
+    } catch (NoSuchAlgorithmException e) {
+      throw new AssertionError(e);
+    }
+  }
+
   /** Returns an immutable copy of {@code list}. */
   public static <T> List<T> immutableList(List<T> list) {
     return Collections.unmodifiableList(new ArrayList<>(list));
