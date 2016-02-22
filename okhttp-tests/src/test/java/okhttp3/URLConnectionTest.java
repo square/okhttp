@@ -915,7 +915,7 @@ public final class URLConnectionTest {
     RecordedRequest connect = server.takeRequest();
     assertEquals("Connect line failure on proxy", "CONNECT android.com:443 HTTP/1.1",
         connect.getRequestLine());
-    assertEquals("android.com", connect.getHeader("Host"));
+    assertEquals("android.com:443", connect.getHeader("Host"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("GET /foo HTTP/1.1", get.getRequestLine());
@@ -951,7 +951,7 @@ public final class URLConnectionTest {
 
     RecordedRequest connect = server.takeRequest();
     assertEquals("CONNECT android.com:443 HTTP/1.1", connect.getRequestLine());
-    assertEquals("android.com", connect.getHeader("Host"));
+    assertEquals("android.com:443", connect.getHeader("Host"));
   }
 
   private void initResponseCache() throws IOException {
@@ -988,7 +988,7 @@ public final class URLConnectionTest {
     assertNull(connect.getHeader("Private"));
     assertNull(connect.getHeader("Proxy-Authorization"));
     assertEquals(Version.userAgent(), connect.getHeader("User-Agent"));
-    assertEquals("android.com", connect.getHeader("Host"));
+    assertEquals("android.com:443", connect.getHeader("Host"));
     assertEquals("Keep-Alive", connect.getHeader("Proxy-Connection"));
 
     RecordedRequest get = server.takeRequest();

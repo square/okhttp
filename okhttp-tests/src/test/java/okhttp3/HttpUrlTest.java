@@ -438,6 +438,15 @@ public final class HttpUrlTest {
     assertEquals("::", HttpUrl.parse("http://[0:0:0:0:0:0:0:0]/").host());
   }
 
+  /** The builder permits square braces but does not require them. */
+  @Test public void hostIPv6Builder() throws Exception {
+    HttpUrl base = HttpUrl.parse("http://example.com/");
+    assertEquals("http://[::1]/", base.newBuilder().host("[::1]").build().toString());
+    assertEquals("http://[::1]/", base.newBuilder().host("[::0001]").build().toString());
+    assertEquals("http://[::1]/", base.newBuilder().host("::1").build().toString());
+    assertEquals("http://[::1]/", base.newBuilder().host("::0001").build().toString());
+  }
+
   @Test public void hostIpv4CanonicalForm() throws Exception {
     assertEquals("255.255.255.255", HttpUrl.parse("http://255.255.255.255/").host());
     assertEquals("1.2.3.4", HttpUrl.parse("http://1.2.3.4/").host());

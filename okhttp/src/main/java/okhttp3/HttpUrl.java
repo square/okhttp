@@ -1302,9 +1302,12 @@ public final class HttpUrl {
       // checked for IPv6 square braces. But Chrome does it first, and that's more lenient.
       String percentDecoded = percentDecode(input, pos, limit, false);
 
-      // If the input is encased in square braces "[...]", drop 'em. We have an IPv6 address.
-      if (percentDecoded.startsWith("[") && percentDecoded.endsWith("]")) {
-        InetAddress inetAddress = decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1);
+      // If the input contains a :, it’s an IPv6 address.
+      if (percentDecoded.contains(":")) {
+        // If the input is encased in square braces "[...]", drop 'em.
+        InetAddress inetAddress = percentDecoded.startsWith("[") && percentDecoded.endsWith("]")
+            ? decodeIpv6(percentDecoded, 1, percentDecoded.length() - 1)
+            : decodeIpv6(percentDecoded, 0, percentDecoded.length());
         if (inetAddress == null) return null;
         byte[] address = inetAddress.getAddress();
         if (address.length == 16) return inet6AddressToAscii(address);
