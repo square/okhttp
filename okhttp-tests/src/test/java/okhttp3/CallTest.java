@@ -31,6 +31,7 @@ import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -2149,7 +2150,7 @@ public final class CallTest {
     assertNull(connect.getHeader("Private"));
     assertEquals(Version.userAgent(), connect.getHeader("User-Agent"));
     assertEquals("Keep-Alive", connect.getHeader("Proxy-Connection"));
-    assertEquals("android.com", connect.getHeader("Host"));
+    assertEquals("android.com:443", connect.getHeader("Host"));
 
     RecordedRequest get = server.takeRequest();
     assertEquals("Secret", get.getHeader("Private"));
@@ -2353,6 +2354,38 @@ public final class CallTest {
         .url(server.url("/"))
         .post(requestBody(chunked, size, writeSize))
         .build());
+  }
+
+  /** https://github.com/square/okhttp/issues/2344 */
+  @Test public void ipv6HostHasSquareBraces() throws Exception {
+    // Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6.
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client = client.newBuilder()
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .proxy(server.toProxyAddress())
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://[::1]/")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    RecordedRequest connect = server.takeRequest();
+    assertEquals("CONNECT [::1]:443 HTTP/1.1", connect.getRequestLine());
+    assertEquals("[::1]:443", connect.getHeader("Host"));
+
+    RecordedRequest get = server.takeRequest();
+    assertEquals("GET / HTTP/1.1", get.getRequestLine());
+    assertEquals("[::1]", get.getHeader("Host"));
   }
 
   private RequestBody requestBody(final boolean chunked, final long size, final int writeSize) {

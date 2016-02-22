@@ -241,7 +241,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     Request tunnelRequest = createTunnelRequest();
     HttpUrl url = tunnelRequest.url();
-    String requestLine = "CONNECT " + url.host() + ":" + url.port() + " HTTP/1.1";
+    String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
       Http1xStream tunnelConnection = new Http1xStream(null, source, sink);
       source.timeout().timeout(readTimeout, MILLISECONDS);
@@ -291,7 +291,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
   private Request createTunnelRequest() throws IOException {
     return new Request.Builder()
         .url(route.address().url())
-        .header("Host", Util.hostHeader(route.address().url()))
+        .header("Host", Util.hostHeader(route.address().url(), true))
         .header("Proxy-Connection", "Keep-Alive")
         .header("User-Agent", Version.userAgent()) // For HTTP/1.0 proxies like Squid.
         .build();

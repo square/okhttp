@@ -286,11 +286,13 @@ public final class Util {
     return result;
   }
 
-  public static String hostHeader(HttpUrl url) {
-    // TODO: square braces for IPv6 ?
-    return url.port() != HttpUrl.defaultPort(url.scheme())
-        ? url.host() + ":" + url.port()
+  public static String hostHeader(HttpUrl url, boolean includeDefaultPort) {
+    String host = url.host().contains(":")
+        ? "[" + url.host() + "]"
         : url.host();
+    return includeDefaultPort || url.port() != HttpUrl.defaultPort(url.scheme())
+        ? host + ":" + url.port()
+        : host;
   }
 
   /** Returns {@code s} with control characters and non-ASCII characters replaced with '?'. */

@@ -502,7 +502,7 @@ public final class HttpEngine {
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {
-      result.header("Host", hostHeader(request.url()));
+      result.header("Host", hostHeader(request.url(), false));
     }
 
     if (request.header("Connection") == null) {
