@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.tls;
+package com.squareup.okhttp.internal.tls;
 
+import com.squareup.okhttp.Call;
+import com.squareup.okhttp.CertificatePinner;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+import com.squareup.okhttp.internal.HeldCertificate;
+import com.squareup.okhttp.internal.SslContextBuilder;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.SocketPolicy;
+import com.squareup.okhttp.testing.RecordingHostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.Call;
-import okhttp3.CertificatePinner;
-import okhttp3.OkHttpClient;
-import okhttp3.RecordingHostnameVerifier;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.internal.HeldCertificate;
-import okhttp3.internal.SslContextBuilder;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -63,11 +63,10 @@ public final class CertificatePinnerChainValidationTest {
     SSLContext clientContext = new SslContextBuilder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .certificatePinner(certificatePinner)
-        .build();
+    OkHttpClient client = new OkHttpClient()
+        .setSslSocketFactory(clientContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setCertificatePinner(certificatePinner);
 
     SSLContext serverSslContext = new SslContextBuilder()
         .certificateChain(certificate, intermediateCa)
@@ -119,11 +118,10 @@ public final class CertificatePinnerChainValidationTest {
     SSLContext clientContext = new SslContextBuilder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .certificatePinner(certificatePinner)
-        .build();
+    OkHttpClient client = new OkHttpClient()
+        .setSslSocketFactory(clientContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setCertificatePinner(certificatePinner);
 
     SSLContext serverSslContext = new SslContextBuilder()
         .certificateChain(certificate, intermediateCa)
@@ -179,11 +177,10 @@ public final class CertificatePinnerChainValidationTest {
     SSLContext clientContext = new SslContextBuilder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .certificatePinner(certificatePinner)
-        .build();
+    OkHttpClient client = new OkHttpClient()
+        .setSslSocketFactory(clientContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setCertificatePinner(certificatePinner);
 
     // Add a bad intermediate CA and have that issue a rogue certificate for localhost. Prepare
     // an SSL context for an attacking webserver. It includes both these rogue certificates plus the
@@ -253,11 +250,10 @@ public final class CertificatePinnerChainValidationTest {
         .addTrustedCertificate(rootCa.certificate)
         .addTrustedCertificate(compromisedRootCa.certificate)
         .build();
-    OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
-        .hostnameVerifier(new RecordingHostnameVerifier())
-        .certificatePinner(certificatePinner)
-        .build();
+    OkHttpClient client = new OkHttpClient()
+        .setSslSocketFactory(clientContext.getSocketFactory())
+        .setHostnameVerifier(new RecordingHostnameVerifier())
+        .setCertificatePinner(certificatePinner);
 
     // The attacker compromises the root CA, issues an intermediate with the same common name
     // "intermediate_ca" as the good CA. This signs a rogue certificate for localhost. The server
