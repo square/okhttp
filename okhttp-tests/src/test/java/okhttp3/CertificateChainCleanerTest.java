@@ -15,7 +15,9 @@
  */
 package okhttp3;
 
+import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
@@ -177,6 +179,72 @@ public final class CertificateChainCleanerTest {
         council.clean(list(certB, certA, trusted)));
     assertEquals(list(certB, certA, trusted, selfSigned),
         council.clean(list(certB, certA, trusted, selfSigned)));
+  }
+
+  @Test public void trustedRootNotSelfSigned() throws Exception {
+    HeldCertificate unknownSigner = new HeldCertificate.Builder()
+        .serialNumber("1")
+        .build();
+    HeldCertificate trusted = new HeldCertificate.Builder()
+        .issuedBy(unknownSigner)
+        .serialNumber("2")
+        .build();
+    HeldCertificate intermediateCa = new HeldCertificate.Builder()
+        .issuedBy(trusted)
+        .serialNumber("3")
+        .build();
+    HeldCertificate certificate = new HeldCertificate.Builder()
+        .issuedBy(intermediateCa)
+        .serialNumber("4")
+        .build();
+
+    CertificateChainCleaner council = new CertificateChainCleaner(
+        new RealTrustRootIndex(trusted.certificate));
+    assertEquals(list(certificate, intermediateCa, trusted),
+        council.clean(list(certificate, intermediateCa)));
+    assertEquals(list(certificate, intermediateCa, trusted),
+        council.clean(list(certificate, intermediateCa, trusted)));
+  }
+
+  @Test public void chainMaxLength() throws Exception {
+    List<HeldCertificate> heldCertificates = chainOfLength(10);
+    List<Certificate> certificates = new ArrayList<>();
+    for (HeldCertificate heldCertificate : heldCertificates) {
+      certificates.add(heldCertificate.certificate);
+    }
+
+    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
+    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex(root));
+    assertEquals(certificates, council.clean(certificates));
+    assertEquals(certificates, council.clean(certificates.subList(0, 9)));
+  }
+
+  @Test public void chainTooLong() throws Exception {
+    List<HeldCertificate> heldCertificates = chainOfLength(11);
+    List<Certificate> certificates = new ArrayList<>();
+    for (HeldCertificate heldCertificate : heldCertificates) {
+      certificates.add(heldCertificate.certificate);
+    }
+
+    X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
+    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex(root));
+    try {
+      council.clean(certificates);
+      fail();
+    } catch (SSLPeerUnverifiedException expected) {
+    }
+  }
+
+  /** Returns a chain starting at the leaf certificate and progressing to the root. */
+  private List<HeldCertificate> chainOfLength(int length) throws GeneralSecurityException {
+    List<HeldCertificate> result = new ArrayList<>();
+    for (int i = 1; i <= length; i++) {
+      result.add(0, new HeldCertificate.Builder()
+          .issuedBy(!result.isEmpty() ? result.get(0) : null)
+          .serialNumber(Integer.toString(i))
+          .build());
+    }
+    return result;
   }
 
   private List<Certificate> list(HeldCertificate... heldCertificates) {
