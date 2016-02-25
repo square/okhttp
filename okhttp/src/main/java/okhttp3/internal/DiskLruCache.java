@@ -151,6 +151,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   // Must be read and written when synchronized on 'this'.
   private boolean initialized;
   private boolean closed;
+  private boolean mostRecentTrimFailed;
 
   /**
    * To differentiate between old and current snapshots, each entry is given a sequence number each
@@ -167,8 +168,14 @@ public final class DiskLruCache implements Closeable, Flushable {
         if (!initialized | closed) {
           return; // Nothing to do
         }
+
         try {
           trimToSize();
+        } catch (IOException ignored) {
+          mostRecentTrimFailed = true;
+        }
+
+        try {
           if (journalRebuildRequired()) {
             rebuildJournal();
             redundantOpCount = 0;
@@ -453,6 +460,11 @@ public final class DiskLruCache implements Closeable, Flushable {
     if (entry != null && entry.currentEditor != null) {
       return null; // Another edit is in progress.
     }
+    if (mostRecentTrimFailed) {
+      // Prevent new writes so the cache doesn't grow any further and retry the clean up operation.
+      executor.execute(cleanupRunnable);
+      return null;
+    }
 
     // Flush the journal before creating files to prevent file leaks.
     journalWriter.writeUtf8(DIRTY).writeByte(' ').writeUtf8(key).writeByte('\n');
@@ -586,7 +598,9 @@ public final class DiskLruCache implements Closeable, Flushable {
     validateKey(key);
     Entry entry = lruEntries.get(key);
     if (entry == null) return false;
-    return removeEntry(entry);
+    boolean removed = removeEntry(entry);
+    if (removed && size <= maxSize) mostRecentTrimFailed = false;
+    return removed;
   }
 
   private boolean removeEntry(Entry entry) throws IOException {
@@ -654,6 +668,7 @@ public final class DiskLruCache implements Closeable, Flushable {
       Entry toEvict = lruEntries.values().iterator().next();
       removeEntry(toEvict);
     }
+    mostRecentTrimFailed = false;
   }
 
   /**
@@ -675,6 +690,7 @@ public final class DiskLruCache implements Closeable, Flushable {
     for (Entry entry : lruEntries.values().toArray(new Entry[lruEntries.size()])) {
       removeEntry(entry);
     }
+    mostRecentTrimFailed = false;
   }
 
   private void validateKey(String key) {
