@@ -71,7 +71,7 @@ public interface FileSystem {
       }
     }
 
-    @Override public boolean exists(File file) throws IOException {
+    @Override public boolean exists(File file) {
       return file.exists();
     }
 
@@ -121,7 +121,7 @@ public interface FileSystem {
   void delete(File file) throws IOException;
 
   /** Returns true if {@code file} exists on the file system. */
-  boolean exists(File file) throws IOException;
+  boolean exists(File file);
 
   /** Returns the number of bytes stored in {@code file}, or 0 if it does not exist. */
   long size(File file);

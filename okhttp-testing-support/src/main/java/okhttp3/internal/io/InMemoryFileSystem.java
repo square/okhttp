@@ -113,7 +113,7 @@ public final class InMemoryFileSystem implements FileSystem, TestRule {
     files.remove(file);
   }
 
-  @Override public boolean exists(File file) throws IOException {
+  @Override public boolean exists(File file) {
     return files.containsKey(file);
   }
 
