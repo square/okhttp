@@ -68,7 +68,7 @@ public final class FaultyFileSystem implements FileSystem {
     delegate.delete(file);
   }
 
-  @Override public boolean exists(File file) throws IOException {
+  @Override public boolean exists(File file) {
     return delegate.exists(file);
   }
 
