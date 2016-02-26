@@ -1,6 +1,15 @@
 Change Log
 ==========
 
+## Version 2.7.5
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+
+
 ## Version 2.7.4
 
 _2016-02-07_
