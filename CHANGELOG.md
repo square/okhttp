@@ -1,6 +1,19 @@
 Change Log
 ==========
 
+## Version 3.2.0
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+ *  Fix: Make IPv6 request lines consistent with Firefox and Chrome.
+ *  Fix: Recover gracefully when trimming the response cache fails.
+ *  New: Add multiple path segments using a single string in `HttpUrl.Builder`.
+ *  New: Support SHA-256 pins in certificate pinner.
+
+
 ## Version 3.1.2
 
 _2016-02-10_
