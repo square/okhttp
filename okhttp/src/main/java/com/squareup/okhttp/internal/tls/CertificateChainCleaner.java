@@ -40,6 +40,9 @@ import javax.net.ssl.SSLPeerUnverifiedException;
  * TrustManagerImpl} and {@code TrustedCertificateIndex}.
  */
 public final class CertificateChainCleaner {
+  /** The maximum number of signers in a chain. We use 9 for consistency with OpenSSL. */
+  private static final int MAX_SIGNERS = 9;
+
   private final TrustRootIndex trustRootIndex;
 
   public CertificateChainCleaner(TrustRootIndex trustRootIndex) {
@@ -57,40 +60,53 @@ public final class CertificateChainCleaner {
     Deque<Certificate> queue = new ArrayDeque<>(chain);
     List<Certificate> result = new ArrayList<>();
     result.add(queue.removeFirst());
+    boolean foundTrustedCertificate = false;
 
     followIssuerChain:
-    while (true) {
+    for (int c = 0; c < MAX_SIGNERS; c++) {
       X509Certificate toVerify = (X509Certificate) result.get(result.size() - 1);
 
-      // If this cert has been signed by a trusted CA cert, we're done. Add the trusted CA
-      // certificate to the end of the chain, unless it's already present. (That would happen if the
-      // first certificate in the chain is itself a self-signed and trusted CA certificate.)
-      X509Certificate caCert = trustRootIndex.findByIssuerAndSignature(toVerify);
-      if (caCert != null) {
-        if (result.size() > 1 || !toVerify.equals(caCert)) {
-          result.add(caCert);
+      // If this cert has been signed by a trusted cert, use that. Add the trusted certificate to
+      // the end of the chain unless it's already present. (That would happen if the first
+      // certificate in the chain is itself a self-signed and trusted CA certificate.)
+      X509Certificate trustedCert = trustRootIndex.findByIssuerAndSignature(toVerify);
+      if (trustedCert != null) {
+        if (result.size() > 1 || !toVerify.equals(trustedCert)) {
+          result.add(trustedCert);
         }
-        return result;
+        if (verifySignature(trustedCert, trustedCert)) {
+          return result; // The self-signed cert is a root CA. We're done.
+        }
+        foundTrustedCertificate = true;
+        continue;
       }
 
       // Search for the certificate in the chain that signed this certificate. This is typically the
       // next element in the chain, but it could be any element.
       for (Iterator<Certificate> i = queue.iterator(); i.hasNext(); ) {
         X509Certificate signingCert = (X509Certificate) i.next();
-        if (toVerify.getIssuerDN().equals(signingCert.getSubjectDN())
-            && verifySignature(toVerify, signingCert)) {
+        if (verifySignature(toVerify, signingCert)) {
           i.remove();
           result.add(signingCert);
           continue followIssuerChain;
         }
       }
 
-      throw new SSLPeerUnverifiedException("Failed to find a cert that signed " + toVerify);
+      // We've reached the end of the chain. If any cert in the chain is trusted, we're done.
+      if (foundTrustedCertificate) {
+        return result;
+      }
+
+      // The last link isn't trusted. Fail.
+      throw new SSLPeerUnverifiedException("Failed to find a trusted cert that signed " + toVerify);
     }
+
+    throw new SSLPeerUnverifiedException("Certificate chain too long: " + result);
   }
 
   /** Returns true if {@code toVerify} was signed by {@code signingCert}'s public key. */
   private boolean verifySignature(X509Certificate toVerify, X509Certificate signingCert) {
+    if (!toVerify.getIssuerDN().equals(signingCert.getSubjectDN())) return false;
     try {
       toVerify.verify(signingCert.getPublicKey());
       return true;
