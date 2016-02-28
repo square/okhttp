@@ -245,7 +245,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          if (isPlainText(buffer.clone())) {
+          if (isPlainText(buffer)) {
             logger.log(buffer.clone().readString(charset));
           } else {
             logger.log("binary body omitted.");
@@ -260,12 +260,15 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   private boolean isPlainText(Buffer buffer) throws IOException {
+    Buffer out = new Buffer();
+    long bytes = buffer.size() < 64 ? buffer.size() : 64;
+    buffer.copyTo(out, 0, bytes);
     int charCount = 0;
     for (int i = 0; i < 16; i++) {
-      if (buffer.exhausted()) {
+      if (out.exhausted()) {
         break;
       }
-      if (isNonPrintableCharacter(buffer.readUtf8CodePoint())) {
+      if (isNonPrintableCharacter(out.readUtf8CodePoint())) {
         charCount++;
       }
     }
