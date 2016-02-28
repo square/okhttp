@@ -273,7 +273,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
   }
 
   private boolean isNonPrintableCharacter(int codePoint) {
-    return codePoint == '\ufffd' || ('\u0000' <= codePoint && codePoint <= '\u001f') || ('\u007f' <= codePoint && codePoint <= '\u009f');
+    return codePoint == '\ufffd' || ('\u0000' <= codePoint && codePoint <= '\u001f')
+        || ('\u007f' <= codePoint && codePoint <= '\u009f');
   }
 
   private boolean bodyEncoded(Headers headers) {
