@@ -192,7 +192,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
 
         logger.log("");
-        if (isPlainText(buffer.clone())) {
+        if (isPlainText(buffer)) {
           logger.log(buffer.readString(charset));
         } else {
           logger.log("binary body omitted.");
