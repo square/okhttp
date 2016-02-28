@@ -192,7 +192,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
 
         logger.log("");
-        logger.log(buffer.readString(charset));
+        if (isPlainText(buffer.clone())) {
+          logger.log(buffer.readString(charset));
+        } else {
+          logger.log("binary body omitted.");
+        }
 
         logger.log("--> END " + request.method()
             + " (" + requestBody.contentLength() + "-byte body)");
@@ -241,7 +245,11 @@ public final class HttpLoggingInterceptor implements Interceptor {
 
         if (contentLength != 0) {
           logger.log("");
-          logger.log(buffer.clone().readString(charset));
+          if (isPlainText(buffer.clone())) {
+            logger.log(buffer.clone().readString(charset));
+          } else {
+            logger.log("binary body omitted.");
+          }
         }
 
         logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
@@ -249,6 +257,23 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  private boolean isPlainText(Buffer buffer) throws IOException {
+    int charCount = 0;
+    for (int i = 0; i < 16; i++) {
+      if (buffer.exhausted()) {
+        break;
+      }
+      if (isNonPrintableCharacter(buffer.readUtf8CodePoint())) {
+        charCount++;
+      }
+    }
+    return charCount < 2;
+  }
+
+  private boolean isNonPrintableCharacter(int codePoint) {
+    return codePoint == '\ufffd' || ('\u0000' <= codePoint && codePoint <= '\u001f') || ('\u007f' <= codePoint && codePoint <= '\u009f');
   }
 
   private boolean bodyEncoded(Headers headers) {
