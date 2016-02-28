@@ -732,7 +732,12 @@ public final class HttpEngine {
           .body(httpStream.openResponseBody(networkResponse))
           .build();
     }
-
+    else if (networkResponse.code()!=101){
+      networkResponse = networkResponse.newBuilder()
+    	   .body(httpStream.openResponseBody(networkResponse))
+    	   .build();
+    }
+    
     if ("close".equalsIgnoreCase(networkResponse.request().header("Connection"))
         || "close".equalsIgnoreCase(networkResponse.header("Connection"))) {
       streamAllocation.noNewStreams();
