@@ -37,6 +37,7 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -635,6 +636,60 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("")
         .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
         .assertLogEqual("<-- END HTTP")
+        .assertNoMoreLogs();
+  }
+
+  @Test public void isPlaintext() throws IOException {
+    assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer()));
+    assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc")));
+    assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x80)));
+    assertFalse(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x00)));
+    assertFalse(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0xc0)));
+  }
+
+  @Test public void responseBodyIsBinary() throws IOException {
+    setLevel(Level.BODY);
+    Buffer buffer = new Buffer();
+    buffer.writeUtf8CodePoint(0x89);
+    buffer.writeUtf8CodePoint(0x50);
+    buffer.writeUtf8CodePoint(0x4e);
+    buffer.writeUtf8CodePoint(0x47);
+    buffer.writeUtf8CodePoint(0x0d);
+    buffer.writeUtf8CodePoint(0x0a);
+    buffer.writeUtf8CodePoint(0x1a);
+    buffer.writeUtf8CodePoint(0x0a);
+    server.enqueue(new MockResponse()
+        .setBody(buffer)
+        .setHeader("Content-Type", "image/png; charset=utf-8"));
+    Response response = client.newCall(request().build()).execute();
+    response.body().close();
+
+    applicationLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 9")
+        .assertLogEqual("Content-Type: image/png; charset=utf-8")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("")
+        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
+        .assertNoMoreLogs();
+
+    networkLogs
+        .assertLogEqual("--> GET " + url + " http/1.1")
+        .assertLogEqual("Host: " + host)
+        .assertLogEqual("Connection: Keep-Alive")
+        .assertLogEqual("Accept-Encoding: gzip")
+        .assertLogMatch("User-Agent: okhttp/.+")
+        .assertLogEqual("--> END GET")
+        .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
+        .assertLogEqual("Content-Length: 9")
+        .assertLogEqual("Content-Type: image/png; charset=utf-8")
+        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
+        .assertLogMatch("OkHttp-Received-Millis: \\d+")
+        .assertLogEqual("")
+        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();
   }
 
