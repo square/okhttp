@@ -50,7 +50,7 @@ import static org.junit.Assert.fail;
 
 public final class DiskLruCacheTest {
   @Rule public final TemporaryFolder tempDir = new TemporaryFolder();
-  @Rule public final Timeout timeout = new Timeout(30 * 1000);
+  @Rule public final Timeout timeout = new Timeout(60 * 1000);
 
   private final FaultyFileSystem fileSystem = new FaultyFileSystem(FileSystem.SYSTEM);
   private final int appVersion = 100;
