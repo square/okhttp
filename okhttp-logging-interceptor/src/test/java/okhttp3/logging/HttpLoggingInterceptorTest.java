@@ -664,8 +664,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("OkHttp-Sent-Millis: \\d+")
         .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
-        .assertLogEqual("binary body omitted.")
-        .assertLogEqual("<-- END HTTP (9-byte body)")
+        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();
 
     networkLogs
@@ -681,8 +680,7 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("OkHttp-Sent-Millis: \\d+")
         .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
-        .assertLogEqual("binary body omitted.")
-        .assertLogEqual("<-- END HTTP (9-byte body)")
+        .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();
   }
 

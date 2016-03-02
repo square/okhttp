@@ -194,12 +194,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
         logger.log("");
         if (isPlainText(buffer)) {
           logger.log(buffer.readString(charset));
+          logger.log("--> END " + request.method()
+              + " (" + requestBody.contentLength() + "-byte body)");
         } else {
-          logger.log("binary body omitted.");
+          logger.log("--> END " + request.method() + " (binary "
+              + requestBody.contentLength() + "-byte body omitted)");
         }
-
-        logger.log("--> END " + request.method()
-            + " (" + requestBody.contentLength() + "-byte body)");
       }
     }
 
@@ -243,13 +243,15 @@ public final class HttpLoggingInterceptor implements Interceptor {
           }
         }
 
+        if (!isPlainText(buffer)) {
+          logger.log("");
+          logger.log("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
+          return response;
+        }
+
         if (contentLength != 0) {
           logger.log("");
-          if (isPlainText(buffer)) {
-            logger.log(buffer.clone().readString(charset));
-          } else {
-            logger.log("binary body omitted.");
-          }
+          logger.log(buffer.clone().readString(charset));
         }
 
         logger.log("<-- END HTTP (" + buffer.size() + "-byte body)");
@@ -259,25 +261,25 @@ public final class HttpLoggingInterceptor implements Interceptor {
     return response;
   }
 
+  // Returns true if the body in question contains human readable text.
+  // Uses a small sample of code points to detect unicode control characters
+  // commonly used in binary file signatures.
   private boolean isPlainText(Buffer buffer) throws IOException {
+    if (buffer.size() == 0) {
+      return true;
+    }
     Buffer out = new Buffer();
-    long bytes = buffer.size() < 64 ? buffer.size() : 64;
-    buffer.copyTo(out, 0, bytes);
-    int charCount = 0;
+    long byteCount = buffer.size() < 64 ? buffer.size() : 64;
+    buffer.copyTo(out, 0, byteCount);
     for (int i = 0; i < 16; i++) {
       if (out.exhausted()) {
         break;
       }
-      if (isNonPrintableCharacter(out.readUtf8CodePoint())) {
-        charCount++;
+      if (Character.isISOControl(out.readUtf8CodePoint())) {
+        return false;
       }
     }
-    return charCount < 2;
-  }
-
-  private boolean isNonPrintableCharacter(int codePoint) {
-    return codePoint == '\ufffd' || ('\u0000' <= codePoint && codePoint <= '\u001f')
-        || ('\u007f' <= codePoint && codePoint <= '\u009f');
+    return true;
   }
 
   private boolean bodyEncoded(Headers headers) {
