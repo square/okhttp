@@ -727,11 +727,7 @@ public final class HttpEngine {
         .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
         .build();
 
-    if (!forWebSocket) {
-      networkResponse = networkResponse.newBuilder()
-          .body(httpStream.openResponseBody(networkResponse))
-          .build();
-    } else if (networkResponse.code() != 101) {
+    if (!forWebSocket || networkResponse.code() != 101) {
       networkResponse = networkResponse.newBuilder()
           .body(httpStream.openResponseBody(networkResponse))
           .build();
