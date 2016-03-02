@@ -192,10 +192,14 @@ public final class HttpLoggingInterceptor implements Interceptor {
         }
 
         logger.log("");
-        logger.log(buffer.readString(charset));
-
-        logger.log("--> END " + request.method()
-            + " (" + requestBody.contentLength() + "-byte body)");
+        if (isPlainText(buffer)) {
+          logger.log(buffer.readString(charset));
+          logger.log("--> END " + request.method()
+              + " (" + requestBody.contentLength() + "-byte body)");
+        } else {
+          logger.log("--> END " + request.method() + " (binary "
+              + requestBody.contentLength() + "-byte body omitted)");
+        }
       }
     }
 
@@ -239,6 +243,12 @@ public final class HttpLoggingInterceptor implements Interceptor {
           }
         }
 
+        if (!isPlainText(buffer)) {
+          logger.log("");
+          logger.log("<-- END HTTP (binary " + buffer.size() + "-byte body omitted)");
+          return response;
+        }
+
         if (contentLength != 0) {
           logger.log("");
           logger.log(buffer.clone().readString(charset));
@@ -249,6 +259,27 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
 
     return response;
+  }
+
+  // Returns true if the body in question contains human readable text.
+  // Uses a small sample of code points to detect unicode control characters
+  // commonly used in binary file signatures.
+  private boolean isPlainText(Buffer buffer) throws IOException {
+    if (buffer.size() == 0) {
+      return true;
+    }
+    Buffer out = new Buffer();
+    long byteCount = buffer.size() < 64 ? buffer.size() : 64;
+    buffer.copyTo(out, 0, byteCount);
+    for (int i = 0; i < 16; i++) {
+      if (out.exhausted()) {
+        break;
+      }
+      if (Character.isISOControl(out.readUtf8CodePoint())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private boolean bodyEncoded(Headers headers) {
