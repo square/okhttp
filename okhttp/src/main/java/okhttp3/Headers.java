@@ -148,7 +148,7 @@ public final class Headers {
    * arguments, and they must alternate between header names and values.
    */
   public static Headers of(String... namesAndValues) {
-    if (namesAndValues == null ) throw new NullPointerException("namesAndValues == null");
+    if (namesAndValues == null) throw new NullPointerException("namesAndValues == null");
     if (namesAndValues.length % 2 != 0) {
       throw new IllegalArgumentException("Expected alternating header names and values");
     }
