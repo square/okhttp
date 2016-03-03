@@ -174,8 +174,31 @@ public final class RequestTest {
     }
   }
 
+  @Test public void headerForbidsNullArguments() throws Exception {
+    Request.Builder builder = new Request.Builder();
+    try {
+      builder.header(null, "Value");
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.addHeader(null, "Value");
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.header("Name", null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.addHeader("Name", null);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+  }
+
   @Test public void headerForbidsControlCharacters() throws Exception {
-    assertForbiddenHeader(null);
     assertForbiddenHeader("\u0000");
     assertForbiddenHeader("\r");
     assertForbiddenHeader("\n");
