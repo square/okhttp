@@ -399,7 +399,7 @@ public final class CookieTest {
     try {
       new Cookie.Builder().hostOnlyDomain(null);
       fail();
-    } catch (IllegalArgumentException expected) {
+    } catch (NullPointerException expected) {
     }
     try {
       new Cookie.Builder().hostOnlyDomain("a/b");

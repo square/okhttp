@@ -175,7 +175,7 @@ public final class RequestTest {
   }
 
   @Test public void headerForbidsControlCharacters() throws Exception {
-    assertForbiddenHeader(null);
+    assertNullHeader(null);
     assertForbiddenHeader("\u0000");
     assertForbiddenHeader("\r");
     assertForbiddenHeader("\n");
@@ -184,6 +184,30 @@ public final class RequestTest {
     assertForbiddenHeader("\u007f");
     assertForbiddenHeader("\u0080");
     assertForbiddenHeader("\ud83c\udf69");
+  }
+
+  private void assertNullHeader(String s) {
+    Request.Builder builder = new Request.Builder();
+    try {
+      builder.header(s, "Value");
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.addHeader(s, "Value");
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.header("Name", s);
+      fail();
+    } catch (NullPointerException expected) {
+    }
+    try {
+      builder.addHeader("Name", s);
+      fail();
+    } catch (NullPointerException expected) {
+    }
   }
 
   private void assertForbiddenHeader(String s) {

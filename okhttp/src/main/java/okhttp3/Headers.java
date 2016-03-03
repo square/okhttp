@@ -148,7 +148,8 @@ public final class Headers {
    * arguments, and they must alternate between header names and values.
    */
   public static Headers of(String... namesAndValues) {
-    if (namesAndValues == null || namesAndValues.length % 2 != 0) {
+    if (namesAndValues == null ) throw new NullPointerException("namesAndValues == null");
+    if (namesAndValues.length % 2 != 0) {
       throw new IllegalArgumentException("Expected alternating header names and values");
     }
 
@@ -175,9 +176,7 @@ public final class Headers {
    * Returns headers for the header names and values in the {@link Map}.
    */
   public static Headers of(Map<String, String> headers) {
-    if (headers == null) {
-      throw new IllegalArgumentException("Expected map with header names and values");
-    }
+    if (headers == null) throw new NullPointerException("headers == null");
 
     // Make a defensive copy and clean it up.
     String[] namesAndValues = new String[headers.size() * 2];
@@ -267,7 +266,7 @@ public final class Headers {
     }
 
     private void checkNameAndValue(String name, String value) {
-      if (name == null) throw new IllegalArgumentException("name == null");
+      if (name == null) throw new NullPointerException("name == null");
       if (name.isEmpty()) throw new IllegalArgumentException("name is empty");
       for (int i = 0, length = name.length(); i < length; i++) {
         char c = name.charAt(i);
@@ -276,7 +275,7 @@ public final class Headers {
               "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
         }
       }
-      if (value == null) throw new IllegalArgumentException("value == null");
+      if (value == null) throw new NullPointerException("value == null");
       for (int i = 0, length = value.length(); i < length; i++) {
         char c = value.charAt(i);
         if (c <= '\u001f' || c >= '\u007f') {

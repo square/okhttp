@@ -75,9 +75,9 @@ public final class Cookie {
   }
 
   private Cookie(Builder builder) {
-    if (builder.name == null) throw new IllegalArgumentException("builder.name == null");
-    if (builder.value == null) throw new IllegalArgumentException("builder.value == null");
-    if (builder.domain == null) throw new IllegalArgumentException("builder.domain == null");
+    if (builder.name == null) throw new NullPointerException("builder.name == null");
+    if (builder.value == null) throw new NullPointerException("builder.value == null");
+    if (builder.domain == null) throw new NullPointerException("builder.domain == null");
 
     this.name = builder.name;
     this.value = builder.value;
@@ -498,7 +498,7 @@ public final class Cookie {
     }
 
     private Builder domain(String domain, boolean hostOnly) {
-      if (domain == null) throw new IllegalArgumentException("domain == null");
+      if (domain == null) throw new NullPointerException("domain == null");
       String canonicalDomain = Util.domainToAscii(domain);
       if (canonicalDomain == null) {
         throw new IllegalArgumentException("unexpected domain: " + domain);
