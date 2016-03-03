@@ -235,7 +235,7 @@ public final class Request {
         throw new IllegalArgumentException("method " + method + " must not have a request body.");
       }
       if (body == null && HttpMethod.requiresRequestBody(method)) {
-        throw new NullPointerException("method " + method + " must have a request body.");
+        throw new IllegalArgumentException("method " + method + " must have a request body.");
       }
       this.method = method;
       this.body = body;
