@@ -410,7 +410,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      */
     public Builder connectTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-      if (unit == null) throw new IllegalArgumentException("unit == null");
+      if (unit == null) throw new NullPointerException("unit == null");
       long millis = unit.toMillis(timeout);
       if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
       if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
@@ -424,7 +424,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      */
     public Builder readTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-      if (unit == null) throw new IllegalArgumentException("unit == null");
+      if (unit == null) throw new NullPointerException("unit == null");
       long millis = unit.toMillis(timeout);
       if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
       if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
@@ -438,7 +438,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      */
     public Builder writeTimeout(long timeout, TimeUnit unit) {
       if (timeout < 0) throw new IllegalArgumentException("timeout < 0");
-      if (unit == null) throw new IllegalArgumentException("unit == null");
+      if (unit == null) throw new NullPointerException("unit == null");
       long millis = unit.toMillis(timeout);
       if (millis > Integer.MAX_VALUE) throw new IllegalArgumentException("Timeout too large.");
       if (millis == 0 && timeout > 0) throw new IllegalArgumentException("Timeout too small.");
