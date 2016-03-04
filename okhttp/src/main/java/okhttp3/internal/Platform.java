@@ -279,7 +279,7 @@ public class Platform {
         newline = newline != -1 ? newline : length;
         do {
           int end = Math.min(newline, i + MAX_LOG_LENGTH);
-          Log.d("OkHttp", message.substring(i, end));
+          Log.d("OkHttp", message.substring(i, end).replace("\r", "\\r").replace("\n", "\\n"));
           i = end;
         } while (i < newline);
       }
