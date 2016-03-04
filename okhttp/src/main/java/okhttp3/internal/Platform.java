@@ -276,10 +276,10 @@ public class Platform {
       // Split by line, then ensure each line can fit into Log's maximum length.
       for (int i = 0, length = message.length(); i < length; i++) {
         int newline = message.indexOf('\n', i);
-        newline = newline != -1 ? newline : length;
+        newline = newline != -1 ? newline + 1 : length;
         do {
           int end = Math.min(newline, i + MAX_LOG_LENGTH);
-          Log.d("OkHttp", message.substring(i, end));
+          Log.d("OkHttp", message.substring(i, end).replace("\r", "\\r").replace("\n", "\\n"));
           i = end;
         } while (i < newline);
       }
