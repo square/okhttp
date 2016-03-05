@@ -697,6 +697,199 @@ public final class DiskLruCacheTest {
     }
   }
 
+  @Test public void rebuildJournalFailurePreventsEditors() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    // Don't allow edits under any circumstances.
+    assertNull(cache.edit("a"));
+    assertNull(cache.edit("c"));
+    DiskLruCache.Snapshot snapshot = cache.get("a");
+    assertNull(snapshot.edit());
+    snapshot.close();
+  }
+
+  @Test public void rebuildJournalFailureIsRetried() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    // The rebuild is retried on cache hits and on cache edits.
+    DiskLruCache.Snapshot snapshot = cache.get("b");
+    snapshot.close();
+    assertNull(cache.edit("d"));
+    assertEquals(2, executor.jobs.size());
+
+    // On cache misses, no retry job is queued.
+    assertNull(cache.get("c"));
+    assertEquals(2, executor.jobs.size());
+
+    // Let the rebuild complete successfully.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
+    executor.jobs.removeFirst().run();
+    assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1");
+  }
+
+  @Test public void rebuildJournalFailureWithInFlightEditors() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+    DiskLruCache.Editor commitEditor = cache.edit("c");
+    DiskLruCache.Editor abortEditor = cache.edit("d");
+    cache.edit("e"); // Grab an editor, but don't do anything with it.
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    // In-flight editors can commit and have their values retained.
+    setString(commitEditor, 0, "c");
+    setString(commitEditor, 1, "c");
+    commitEditor.commit();
+    assertValue("c", "c", "c");
+
+    abortEditor.abort();
+
+    // Let the rebuild complete successfully.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
+    executor.jobs.removeFirst().run();
+    assertJournalEquals("CLEAN a 1 1", "CLEAN b 1 1", "DIRTY e", "CLEAN c 1 1");
+  }
+
+  @Test public void rebuildJournalFailureWithEditorsInFlightThenClose() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+    DiskLruCache.Editor commitEditor = cache.edit("c");
+    DiskLruCache.Editor abortEditor = cache.edit("d");
+    cache.edit("e"); // Grab an editor, but don't do anything with it.
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    setString(commitEditor, 0, "c");
+    setString(commitEditor, 1, "c");
+    commitEditor.commit();
+    assertValue("c", "c", "c");
+
+    abortEditor.abort();
+
+    cache.close();
+    createNewCache();
+
+    // Although 'c' successfully committed above, the journal wasn't available to issue a CLEAN op.
+    // Because the last state of 'c' was DIRTY before the journal failed, it should be removed
+    // entirely on a subsequent open.
+    assertEquals(4, cache.size());
+    assertAbsent("c");
+    assertAbsent("d");
+    assertAbsent("e");
+  }
+
+  @Test public void rebuildJournalFailureAllowsRemovals() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    assertTrue(cache.remove("a"));
+    assertAbsent("a");
+
+    // Let the rebuild complete successfully.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), false);
+    executor.jobs.removeFirst().run();
+
+    assertJournalEquals("CLEAN b 1 1");
+  }
+
+  @Test public void rebuildJournalFailureWithRemovalThenClose() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    assertTrue(cache.remove("a"));
+    assertAbsent("a");
+
+    cache.close();
+    createNewCache();
+
+    // The journal will have no record that 'a' was removed. It will have an entry for 'a', but when
+    // it tries to read the cache files, it will find they were deleted. Once it encounters an entry
+    // with missing cache files, it should remove it from the cache entirely.
+    assertEquals(4, cache.size());
+    assertNull(cache.get("a"));
+    assertEquals(2, cache.size());
+  }
+
+  @Test public void rebuildJournalFailureAllowsEvictAll() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "a", "a");
+      set("b", "b", "b");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    cache.evictAll();
+
+    assertEquals(0, cache.size());
+    assertAbsent("a");
+    assertAbsent("b");
+
+    cache.close();
+    createNewCache();
+
+    // The journal has no record that 'a' and 'b' were removed. It will have an entry for both, but
+    // when it tries to read the cache files for either entry, it will discover the cache files are
+    // missing and remove the entries from the cache.
+    assertEquals(4, cache.size());
+    assertNull(cache.get("a"));
+    assertNull(cache.get("b"));
+    assertEquals(0, cache.size());
+  }
+
+  @Test public void rebuildJournalFailureWithCacheTrim() throws Exception {
+    while (executor.jobs.isEmpty()) {
+      set("a", "aa", "aa");
+      set("b", "bb", "bb");
+    }
+
+    // Cause the rebuild action to fail.
+    fileSystem.setFaultyRename(new File(cacheDir, DiskLruCache.JOURNAL_FILE_BACKUP), true);
+    executor.jobs.removeFirst().run();
+
+    // Trigger a job to trim the cache.
+    cache.setMaxSize(4);
+    executor.jobs.removeFirst().run();
+
+    assertAbsent("a");
+    assertValue("b", "bb", "bb");
+  }
+
   @Test public void restoreBackupFile() throws Exception {
     DiskLruCache.Editor creator = cache.edit("k1");
     setString(creator, 0, "ABC");
@@ -763,6 +956,7 @@ public final class DiskLruCacheTest {
     set("a", "a", "a");
     fileSystem.delete(getCleanFile("a", 1));
     assertNull(cache.get("a"));
+    assertEquals(0, cache.size());
   }
 
   @Test public void editSameVersion() throws Exception {
