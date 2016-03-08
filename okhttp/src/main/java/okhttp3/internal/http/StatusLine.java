@@ -26,6 +26,7 @@ public final class StatusLine {
   public static final int HTTP_TEMP_REDIRECT = 307;
   public static final int HTTP_PERM_REDIRECT = 308;
   public static final int HTTP_CONTINUE = 100;
+  public static final int HTTP_PROCESSING = 102;
 
   public final Protocol protocol;
   public final int code;

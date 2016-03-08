@@ -2040,8 +2040,8 @@ public final class CallTest {
         .build();
 
     executeSynchronously(request)
-        .assertCode(200)
-        .assertSuccessful();
+        .assertCode(100)
+        .assertNotSuccessful();
 
     assertEquals("abc", server.takeRequest().getBody().readUtf8());
   }
@@ -2056,8 +2056,8 @@ public final class CallTest {
         .build();
 
     executeSynchronously(request)
-        .assertCode(200)
-        .assertSuccessful();
+        .assertCode(100)
+        .assertNotSuccessful();
   }
 
   /** We forbid non-ASCII characters in outgoing request headers, but accept UTF-8. */
