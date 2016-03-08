@@ -84,6 +84,8 @@ public enum SocketPolicy {
    */
   SHUTDOWN_OUTPUT_AT_END,
 
+  REQUIRE_CLIENT_CERTIFICATE,
+
   /**
    * Don't respond to the request but keep the socket open. For testing read response header timeout
    * issue.

@@ -91,6 +91,7 @@ import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
+import static okhttp3.mockwebserver.SocketPolicy.REQUIRE_CLIENT_CERTIFICATE;
 
 /**
  * A scriptable web server. Callers supply canned responses and the server replays them upon request
@@ -425,6 +426,9 @@ public final class MockWebServer implements TestRule {
               raw.getPort(), true);
           SSLSocket sslSocket = (SSLSocket) socket;
           sslSocket.setUseClientMode(false);
+          if (socketPolicy == REQUIRE_CLIENT_CERTIFICATE) {
+            sslSocket.setNeedClientAuth(true);
+          }
           openClientSockets.add(socket);
 
           if (protocolNegotiationEnabled) {
