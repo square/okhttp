@@ -1503,17 +1503,21 @@ public final class CallTest {
     assertEquals("Hello", request2.getBody().readUtf8());
   }
 
-  @Test public void propfindRedirectsToPropfind() throws Exception {
+  @Test public void propfindRedirectsToPropfindAndMaintainsRequestBody() throws Exception {
+    // given
     server.enqueue(new MockResponse()
         .setResponseCode(HttpURLConnection.HTTP_MOVED_TEMP)
         .addHeader("Location: /page2")
         .setBody("This page has moved!"));
     server.enqueue(new MockResponse().setBody("Page 2"));
 
+    // when
     Response response = client.newCall(new Request.Builder()
         .url(server.url("/page1"))
         .method("PROPFIND", RequestBody.create(MediaType.parse("text/plain"), "Request Body"))
         .build()).execute();
+
+    // then
     assertEquals("Page 2", response.body().string());
 
     RecordedRequest page1 = server.takeRequest();
@@ -1522,6 +1526,7 @@ public final class CallTest {
 
     RecordedRequest page2 = server.takeRequest();
     assertEquals("PROPFIND /page2 HTTP/1.1", page2.getRequestLine());
+    assertEquals("Request Body", page2.getBody().readUtf8());
   }
 
   @Test public void responseCookies() throws Exception {
