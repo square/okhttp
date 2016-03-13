@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ForwardingSink;
@@ -628,6 +629,31 @@ public final class InterceptorTest {
     } catch (NullPointerException expected) {
       assertEquals("network interceptor " + interceptor + " returned null", expected.getMessage());
     }
+  }
+
+  @Test public void networkInterceptorReturnsConnectionOnEmptyBody() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.DISCONNECT_AT_END)
+        .addHeader("Connection", "Close"));
+
+    Interceptor interceptor = new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        Response response = chain.proceed(chain.request());
+        assertNotNull(chain.connection());
+        return response;
+      }
+    };
+
+    client = client.newBuilder()
+        .addNetworkInterceptor(interceptor)
+        .build();
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+
+    Response response = client.newCall(request).execute();
+    response.body().close();
   }
 
   private RequestBody uppercase(final RequestBody original) {

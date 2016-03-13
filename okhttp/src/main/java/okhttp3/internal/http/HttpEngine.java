@@ -560,7 +560,8 @@ public final class HttpEngine {
       httpStream.writeRequestHeaders(networkRequest);
       networkResponse = readNetworkResponse();
     } else if (!callerWritesRequestBody) {
-      networkResponse = new NetworkInterceptorChain(0, networkRequest).proceed(networkRequest);
+      networkResponse = new NetworkInterceptorChain(0, networkRequest,
+          streamAllocation.connection()).proceed(networkRequest);
     } else {
       // Emit the request body's buffer so that everything is in requestBodyOut.
       if (bufferedRequestBody != null && bufferedRequestBody.buffer().size() > 0) {
@@ -638,15 +639,17 @@ public final class HttpEngine {
   class NetworkInterceptorChain implements Interceptor.Chain {
     private final int index;
     private final Request request;
+    private final Connection connection;
     private int calls;
 
-    NetworkInterceptorChain(int index, Request request) {
+    NetworkInterceptorChain(int index, Request request, Connection connection) {
       this.index = index;
       this.request = request;
+      this.connection = connection;
     }
 
     @Override public Connection connection() {
-      return streamAllocation.connection();
+      return connection;
     }
 
     @Override public Request request() {
@@ -676,7 +679,7 @@ public final class HttpEngine {
 
       if (index < client.networkInterceptors().size()) {
         // There's another interceptor in the chain. Call that.
-        NetworkInterceptorChain chain = new NetworkInterceptorChain(index + 1, request);
+        NetworkInterceptorChain chain = new NetworkInterceptorChain(index + 1, request, connection);
         Interceptor interceptor = client.networkInterceptors().get(index);
         Response interceptedResponse = interceptor.intercept(chain);
 
