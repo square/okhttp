@@ -152,6 +152,7 @@ public final class DiskLruCache implements Closeable, Flushable {
   private boolean initialized;
   private boolean closed;
   private boolean mostRecentTrimFailed;
+  private boolean mostRecentRebuildFailed;
 
   /**
    * To differentiate between old and current snapshots, each entry is given a sequence number each
@@ -181,7 +182,8 @@ public final class DiskLruCache implements Closeable, Flushable {
             redundantOpCount = 0;
           }
         } catch (IOException e) {
-          throw new RuntimeException(e);
+          mostRecentRebuildFailed = true;
+          journalWriter = Okio.buffer(NULL_SINK);
         }
       }
     }
@@ -414,6 +416,7 @@ public final class DiskLruCache implements Closeable, Flushable {
 
     journalWriter = newJournalWriter();
     hasJournalErrors = false;
+    mostRecentRebuildFailed = false;
   }
 
   /**
@@ -460,8 +463,12 @@ public final class DiskLruCache implements Closeable, Flushable {
     if (entry != null && entry.currentEditor != null) {
       return null; // Another edit is in progress.
     }
-    if (mostRecentTrimFailed) {
-      // Prevent new writes so the cache doesn't grow any further and retry the clean up operation.
+    if (mostRecentTrimFailed || mostRecentRebuildFailed) {
+      // The OS has become our enemy! If the trim job failed, it means we are storing more data than
+      // requested by the user. Do not allow edits so we do not go over that limit any further. If
+      // the journal rebuild failed, the journal writer will not be active, meaning we will not be
+      // able to record the edit, causing file leaks. In both cases, we want to retry the clean up
+      // so we can get out of this state!
       executor.execute(cleanupRunnable);
       return null;
     }
@@ -1012,6 +1019,12 @@ public final class DiskLruCache implements Closeable, Flushable {
           } else {
             break;
           }
+        }
+        // Since the entry is no longer valid, remove it so the metadata is accurate (i.e. the cache
+        // size.)
+        try {
+          removeEntry(this);
+        } catch (IOException ignored) {
         }
         return null;
       }

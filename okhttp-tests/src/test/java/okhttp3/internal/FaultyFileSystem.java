@@ -30,6 +30,7 @@ public final class FaultyFileSystem implements FileSystem {
   private final FileSystem delegate;
   private final Set<File> writeFaults = new LinkedHashSet<>();
   private final Set<File> deleteFaults = new LinkedHashSet<>();
+  private final Set<File> renameFaults = new LinkedHashSet<>();
 
   public FaultyFileSystem(FileSystem delegate) {
     this.delegate = delegate;
@@ -48,6 +49,14 @@ public final class FaultyFileSystem implements FileSystem {
       deleteFaults.add(file);
     } else {
       deleteFaults.remove(file);
+    }
+  }
+
+  public void setFaultyRename(File file, boolean faulty) {
+    if (faulty) {
+      renameFaults.add(file);
+    } else {
+      renameFaults.remove(file);
     }
   }
 
@@ -77,6 +86,7 @@ public final class FaultyFileSystem implements FileSystem {
   }
 
   @Override public void rename(File from, File to) throws IOException {
+    if (renameFaults.contains(from) || renameFaults.contains(to)) throw new IOException("boom!");
     delegate.rename(from, to);
   }
 
