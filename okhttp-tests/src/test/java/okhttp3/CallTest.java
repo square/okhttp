@@ -2197,6 +2197,34 @@ public final class CallTest {
     assertNull(get.getHeader("Proxy-Authorization"));
   }
 
+  /** Confirm that the proxy authenticator works for unencrypted HTTP proxies. */
+  @Test public void httpProxyAuthenticate() throws Exception {
+    server.enqueue(new MockResponse()
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client = client.newBuilder()
+        .proxy(server.toProxyAddress())
+        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .build();
+
+    Request request = new Request.Builder()
+        .url("http://android.com/foo")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    RecordedRequest get1 = server.takeRequest();
+    assertEquals("GET http://android.com/foo HTTP/1.1", get1.getRequestLine());
+    assertNull(get1.getHeader("Proxy-Authorization"));
+
+    RecordedRequest get2 = server.takeRequest();
+    assertEquals("GET http://android.com/foo HTTP/1.1", get2.getRequestLine());
+    assertEquals("password", get2.getHeader("Proxy-Authorization"));
+  }
+
   /**
    * Confirm that we don't send the Proxy-Authorization header from the request to the proxy server.
    * We used to have that behavior but it is problematic because unrelated requests end up sharing
