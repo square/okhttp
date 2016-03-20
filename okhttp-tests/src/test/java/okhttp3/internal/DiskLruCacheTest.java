@@ -1536,6 +1536,80 @@ public final class DiskLruCacheTest {
     assertNull(cache.get("a"));
   }
 
+  @Test public void noSizeCorruptionAfterCreatorDetached() throws Exception {
+    // Create an editor for k1. Detach it by clearing the cache.
+    DiskLruCache.Editor editor = cache.edit("k1");
+    setString(editor, 0, "a");
+    setString(editor, 1, "a");
+    cache.evictAll();
+
+    // Create a new value in its place.
+    set("k1", "bb", "bb");
+    assertEquals(4, cache.size());
+
+    // Committing the detached editor should not change the cache's size.
+    editor.commit();
+    assertEquals(4, cache.size());
+    assertValue("k1", "bb", "bb");
+  }
+
+  @Test public void noSizeCorruptionAfterEditorDetached() throws Exception {
+    set("k1", "a", "a");
+
+    // Create an editor for k1. Detach it by clearing the cache.
+    DiskLruCache.Editor editor = cache.edit("k1");
+    setString(editor, 0, "bb");
+    setString(editor, 1, "bb");
+    cache.evictAll();
+
+    // Create a new value in its place.
+    set("k1", "ccc", "ccc");
+    assertEquals(6, cache.size());
+
+    // Committing the detached editor should not change the cache's size.
+    editor.commit();
+    assertEquals(6, cache.size());
+    assertValue("k1", "ccc", "ccc");
+  }
+
+  @Test public void noNewSourceAfterEditorDetached() throws Exception {
+    set("k1", "a", "a");
+
+    DiskLruCache.Editor editor = cache.edit("k1");
+    cache.evictAll();
+
+    assertNull(editor.newSource(0));
+  }
+
+  @Test public void editsDiscardedAfterEditorDetached() throws Exception {
+    set("k1", "a", "a");
+
+    // Create an editor, then detach it.
+    DiskLruCache.Editor editor = cache.edit("k1");
+    BufferedSink sink = Okio.buffer(editor.newSink(0));
+    cache.evictAll();
+
+    // Create another value in its place.
+    set("k1", "ccc", "ccc");
+
+    // Complete the original edit. It goes into a black hole.
+    sink.writeUtf8("bb");
+    sink.close();
+
+    assertValue("k1", "ccc", "ccc");
+  }
+
+  @Test public void abortAfterDetach() throws Exception {
+    set("k1", "a", "a");
+
+    DiskLruCache.Editor editor = cache.edit("k1");
+    cache.evictAll();
+
+    editor.abort();
+    assertEquals(0, cache.size());
+    assertAbsent("k1");
+  }
+
   private void assertJournalEquals(String... expectedBodyLines) throws Exception {
     List<String> expectedLines = new ArrayList<>();
     expectedLines.add(MAGIC);
