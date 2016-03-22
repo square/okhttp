@@ -1596,15 +1596,16 @@ public final class URLConnectionTest {
         .setBody("Please authenticate.");
     server.enqueue(pleaseAuthenticate);
 
-    urlFactory.setClient(urlFactory.client().newBuilder()
-        .authenticator(new JavaNetAuthenticator())
-        .build());
     if (proxy) {
       urlFactory.setClient(urlFactory.client().newBuilder()
           .proxy(server.toProxyAddress())
+          .proxyAuthenticator(new JavaNetAuthenticator())
           .build());
-      connection = urlFactory.open(new URL("http://android.com"));
+      connection = urlFactory.open(new URL("http://android.com/"));
     } else {
+      urlFactory.setClient(urlFactory.client().newBuilder()
+          .authenticator(new JavaNetAuthenticator())
+          .build());
       connection = urlFactory.open(server.url("/").url());
     }
     assertEquals(responseCode, connection.getResponseCode());

@@ -612,7 +612,7 @@ public final class DiskLruCache implements Closeable, Flushable {
 
   private boolean removeEntry(Entry entry) throws IOException {
     if (entry.currentEditor != null) {
-      entry.currentEditor.hasErrors = true; // Prevent the edit from completing normally.
+      entry.currentEditor.detach(); // Prevent the edit from completing normally.
     }
 
     for (int i = 0; i < valueCount; i++) {
@@ -838,12 +838,30 @@ public final class DiskLruCache implements Closeable, Flushable {
   public final class Editor {
     private final Entry entry;
     private final boolean[] written;
-    private boolean hasErrors;
-    private boolean committed;
+    private boolean done;
 
     private Editor(Entry entry) {
       this.entry = entry;
       this.written = (entry.readable) ? null : new boolean[valueCount];
+    }
+
+    /**
+     * Prevents this editor from completing normally. This is necessary either when the edit causes
+     * an I/O error, or if the target entry is evicted while this editor is active. In either case
+     * we delete the editor's created files and prevent new files from being created. Note that once
+     * an editor has been detached it is possible for another editor to edit the entry.
+     */
+    void detach() {
+      if (entry.currentEditor == this) {
+        for (int i = 0; i < valueCount; i++) {
+          try {
+            fileSystem.delete(entry.dirtyFiles[i]);
+          } catch (IOException e) {
+            // This file is potentially leaked. Not much we can do about that.
+          }
+        }
+        entry.currentEditor = null;
+      }
     }
 
     /**
@@ -852,10 +870,10 @@ public final class DiskLruCache implements Closeable, Flushable {
      */
     public Source newSource(int index) throws IOException {
       synchronized (DiskLruCache.this) {
-        if (entry.currentEditor != this) {
+        if (done) {
           throw new IllegalStateException();
         }
-        if (!entry.readable) {
+        if (!entry.readable || entry.currentEditor != this) {
           return null;
         }
         try {
@@ -873,8 +891,11 @@ public final class DiskLruCache implements Closeable, Flushable {
      */
     public Sink newSink(int index) throws IOException {
       synchronized (DiskLruCache.this) {
-        if (entry.currentEditor != this) {
+        if (done) {
           throw new IllegalStateException();
+        }
+        if (entry.currentEditor != this) {
+          return NULL_SINK;
         }
         if (!entry.readable) {
           written[index] = true;
@@ -889,7 +910,7 @@ public final class DiskLruCache implements Closeable, Flushable {
         return new FaultHidingSink(sink) {
           @Override protected void onException(IOException e) {
             synchronized (DiskLruCache.this) {
-              hasErrors = true;
+              detach();
             }
           }
         };
@@ -902,13 +923,13 @@ public final class DiskLruCache implements Closeable, Flushable {
      */
     public void commit() throws IOException {
       synchronized (DiskLruCache.this) {
-        if (hasErrors) {
-          completeEdit(this, false);
-          removeEntry(entry); // The previous entry is stale.
-        } else {
+        if (done) {
+          throw new IllegalStateException();
+        }
+        if (entry.currentEditor == this) {
           completeEdit(this, true);
         }
-        committed = true;
+        done = true;
       }
     }
 
@@ -918,13 +939,19 @@ public final class DiskLruCache implements Closeable, Flushable {
      */
     public void abort() throws IOException {
       synchronized (DiskLruCache.this) {
-        completeEdit(this, false);
+        if (done) {
+          throw new IllegalStateException();
+        }
+        if (entry.currentEditor == this) {
+          completeEdit(this, false);
+        }
+        done = true;
       }
     }
 
     public void abortUnlessCommitted() {
       synchronized (DiskLruCache.this) {
-        if (!committed) {
+        if (!done && entry.currentEditor == this) {
           try {
             completeEdit(this, false);
           } catch (IOException ignored) {

@@ -891,7 +891,8 @@ public final class HttpEngine {
         if (selectedProxy.type() != Proxy.Type.HTTP) {
           throw new ProtocolException("Received HTTP_PROXY_AUTH (407) code while not using proxy");
         }
-        // fall-through
+        return client.proxyAuthenticator().authenticate(route, userResponse);
+
       case HTTP_UNAUTHORIZED:
         return client.authenticator().authenticate(route, userResponse);
 
