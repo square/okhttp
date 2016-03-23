@@ -2226,6 +2226,47 @@ public final class CallTest {
   }
 
   /**
+   * OkHttp has a bug where a `Connection: close` response header is not honored when establishing
+   * a TLS tunnel. https://github.com/square/okhttp/issues/2426
+   */
+  @Ignore("currently broken")
+  @Test public void proxyAuthenticateOnConnectWithConnectionClose() throws Exception {
+    server.useHttps(sslContext.getSocketFactory(), true);
+    server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
+    server.enqueue(new MockResponse()
+        .setResponseCode(407)
+        .addHeader("Proxy-Authenticate: Basic realm=\"localhost\"")
+        .addHeader("Connection: close"));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
+        .clearHeaders());
+    server.enqueue(new MockResponse()
+        .setBody("response body"));
+
+    client = client.newBuilder()
+        .sslSocketFactory(sslContext.getSocketFactory())
+        .proxy(server.toProxyAddress())
+        .proxyAuthenticator(new RecordingOkAuthenticator("password"))
+        .hostnameVerifier(new RecordingHostnameVerifier())
+        .build();
+
+    Request request = new Request.Builder()
+        .url("https://android.com/foo")
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("response body", response.body().string());
+
+    // First CONNECT call needs a new connection.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+
+    // Second CONNECT call needs a new connection.
+    assertEquals(0, server.takeRequest().getSequenceNumber());
+
+    // GET reuses the connection from the second connect.
+    assertEquals(1, server.takeRequest().getSequenceNumber());
+  }
+
+  /**
    * Confirm that we don't send the Proxy-Authorization header from the request to the proxy server.
    * We used to have that behavior but it is problematic because unrelated requests end up sharing
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
