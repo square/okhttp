@@ -15,7 +15,6 @@
  */
 package okhttp3;
 
-import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import okhttp3.internal.http.HttpMethod;
@@ -31,7 +30,6 @@ public final class Request {
   private final RequestBody body;
   private final Object tag;
 
-  private volatile URI javaNetUri; // Lazily initialized.
   private volatile CacheControl cacheControl; // Lazily initialized.
 
   private Request(Builder builder) {
