@@ -181,7 +181,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       }
     }
     if (sslSocketFactory != null && builder.trustRootIndex == null) {
-      X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
+      X509TrustManager trustManager = builder.x509TrustManager == null
+          ? Platform.get().trustManager(sslSocketFactory)
+          : builder.x509TrustManager;
       if (trustManager == null) {
         throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
             + ", sslSocketFactory is " + sslSocketFactory.getClass());
@@ -353,6 +355,7 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     int connectTimeout;
     int readTimeout;
     int writeTimeout;
+    X509TrustManager x509TrustManager;
 
     public Builder() {
       dispatcher = new Dispatcher();
@@ -711,6 +714,11 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
     public Builder addNetworkInterceptor(Interceptor interceptor) {
       networkInterceptors.add(interceptor);
+      return this;
+    }
+
+    public Builder x509TrustManager(X509TrustManager x509TrustManager) {
+      this.x509TrustManager = x509TrustManager;
       return this;
     }
 
