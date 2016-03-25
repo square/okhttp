@@ -24,7 +24,6 @@ import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.Util;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.internal.tls.TrustRootIndex;
 import okio.ByteString;
 
 /**
@@ -125,11 +124,11 @@ public final class CertificatePinner {
   public static final CertificatePinner DEFAULT = new Builder().build();
 
   private final List<Pin> pins;
-  private final TrustRootIndex trustRootIndex;
+  private final CertificateChainCleaner certificateChainCleaner;
 
   private CertificatePinner(Builder builder) {
     this.pins = Util.immutableList(builder.pins);
-    this.trustRootIndex = builder.trustRootIndex;
+    this.certificateChainCleaner = builder.certificateChainCleaner;
   }
 
   /**
@@ -145,8 +144,8 @@ public final class CertificatePinner {
     List<Pin> pins = findMatchingPins(hostname);
     if (pins.isEmpty()) return;
 
-    if (trustRootIndex != null) {
-      peerCertificates = new CertificateChainCleaner(trustRootIndex).clean(peerCertificates);
+    if (certificateChainCleaner != null) {
+      peerCertificates = certificateChainCleaner.clean(peerCertificates);
     }
 
     for (int c = 0, certsSize = peerCertificates.size(); c < certsSize; c++) {
@@ -289,18 +288,18 @@ public final class CertificatePinner {
   /** Builds a configured certificate pinner. */
   public static final class Builder {
     private final List<Pin> pins = new ArrayList<>();
-    private TrustRootIndex trustRootIndex;
+    private CertificateChainCleaner certificateChainCleaner;
 
     public Builder() {
     }
 
     Builder(CertificatePinner certificatePinner) {
       this.pins.addAll(certificatePinner.pins);
-      this.trustRootIndex = certificatePinner.trustRootIndex;
+      this.certificateChainCleaner = certificatePinner.certificateChainCleaner;
     }
 
-    public Builder trustRootIndex(TrustRootIndex trustRootIndex) {
-      this.trustRootIndex = trustRootIndex;
+    public Builder certificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
+      this.certificateChainCleaner = certificateChainCleaner;
       return this;
     }
 

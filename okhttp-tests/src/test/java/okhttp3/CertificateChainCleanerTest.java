@@ -23,7 +23,6 @@ import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.internal.HeldCertificate;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.internal.tls.RealTrustRootIndex;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -34,19 +33,18 @@ public final class CertificateChainCleanerTest {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber("1")
         .build();
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
-    assertEquals(list(root), council.clean(list(root)));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    assertEquals(list(root), cleaner.clean(list(root)));
   }
 
   @Test public void normalizeUnknownSelfSignedCertificate() throws Exception {
     HeldCertificate root = new HeldCertificate.Builder()
         .serialNumber("1")
         .build();
-    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex());
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get();
 
     try {
-      council.clean(list(root));
+      cleaner.clean(list(root));
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }
@@ -65,9 +63,8 @@ public final class CertificateChainCleanerTest {
         .issuedBy(certA)
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
-    assertEquals(list(certB, certA, root), council.clean(list(certB, certA, root)));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    assertEquals(list(certB, certA, root), cleaner.clean(list(certB, certA, root)));
   }
 
   @Test public void orderedChainOfCertificatesWithoutRoot() throws Exception {
@@ -83,9 +80,8 @@ public final class CertificateChainCleanerTest {
         .issuedBy(certA)
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
-    assertEquals(list(certB, certA, root), council.clean(list(certB, certA))); // Root is added!
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    assertEquals(list(certB, certA, root), cleaner.clean(list(certB, certA))); // Root is added!
   }
 
   @Test public void unorderedChainOfCertificatesWithRoot() throws Exception {
@@ -105,9 +101,8 @@ public final class CertificateChainCleanerTest {
         .issuedBy(certB)
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
-    assertEquals(list(certC, certB, certA, root), council.clean(list(certC, certA, root, certB)));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    assertEquals(list(certC, certB, certA, root), cleaner.clean(list(certC, certA, root, certB)));
   }
 
   @Test public void unorderedChainOfCertificatesWithoutRoot() throws Exception {
@@ -127,9 +122,8 @@ public final class CertificateChainCleanerTest {
         .issuedBy(certB)
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
-    assertEquals(list(certC, certB, certA, root), council.clean(list(certC, certA, certB)));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
+    assertEquals(list(certC, certB, certA, root), cleaner.clean(list(certC, certA, certB)));
   }
 
   @Test public void unrelatedCertificatesAreOmitted() throws Exception {
@@ -148,10 +142,9 @@ public final class CertificateChainCleanerTest {
         .serialNumber("4")
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(root.certificate));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root.certificate);
     assertEquals(list(certB, certA, root),
-        council.clean(list(certB, certUnnecessary, certA, root)));
+        cleaner.clean(list(certB, certUnnecessary, certA, root)));
   }
 
   @Test public void chainGoesAllTheWayToSelfSignedRoot() throws Exception {
@@ -171,14 +164,14 @@ public final class CertificateChainCleanerTest {
         .issuedBy(certA)
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(selfSigned.certificate, trusted.certificate));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(
+        selfSigned.certificate, trusted.certificate);
     assertEquals(list(certB, certA, trusted, selfSigned),
-        council.clean(list(certB, certA)));
+        cleaner.clean(list(certB, certA)));
     assertEquals(list(certB, certA, trusted, selfSigned),
-        council.clean(list(certB, certA, trusted)));
+        cleaner.clean(list(certB, certA, trusted)));
     assertEquals(list(certB, certA, trusted, selfSigned),
-        council.clean(list(certB, certA, trusted, selfSigned)));
+        cleaner.clean(list(certB, certA, trusted, selfSigned)));
   }
 
   @Test public void trustedRootNotSelfSigned() throws Exception {
@@ -198,12 +191,11 @@ public final class CertificateChainCleanerTest {
         .serialNumber("4")
         .build();
 
-    CertificateChainCleaner council = new CertificateChainCleaner(
-        new RealTrustRootIndex(trusted.certificate));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(trusted.certificate);
     assertEquals(list(certificate, intermediateCa, trusted),
-        council.clean(list(certificate, intermediateCa)));
+        cleaner.clean(list(certificate, intermediateCa)));
     assertEquals(list(certificate, intermediateCa, trusted),
-        council.clean(list(certificate, intermediateCa, trusted)));
+        cleaner.clean(list(certificate, intermediateCa, trusted)));
   }
 
   @Test public void chainMaxLength() throws Exception {
@@ -214,9 +206,9 @@ public final class CertificateChainCleanerTest {
     }
 
     X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
-    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex(root));
-    assertEquals(certificates, council.clean(certificates));
-    assertEquals(certificates, council.clean(certificates.subList(0, 9)));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
+    assertEquals(certificates, cleaner.clean(certificates));
+    assertEquals(certificates, cleaner.clean(certificates.subList(0, 9)));
   }
 
   @Test public void chainTooLong() throws Exception {
@@ -227,9 +219,9 @@ public final class CertificateChainCleanerTest {
     }
 
     X509Certificate root = heldCertificates.get(heldCertificates.size() - 1).certificate;
-    CertificateChainCleaner council = new CertificateChainCleaner(new RealTrustRootIndex(root));
+    CertificateChainCleaner cleaner = CertificateChainCleaner.get(root);
     try {
-      council.clean(certificates);
+      cleaner.clean(certificates);
       fail();
     } catch (SSLPeerUnverifiedException expected) {
     }

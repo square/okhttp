@@ -32,9 +32,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
-import okhttp3.internal.tls.AndroidTrustRootIndex;
-import okhttp3.internal.tls.RealTrustRootIndex;
-import okhttp3.internal.tls.TrustRootIndex;
 import okio.Buffer;
 
 import static okhttp3.internal.Internal.logger;
@@ -94,10 +91,6 @@ public class Platform {
     } catch (ClassNotFoundException e) {
       return null;
     }
-  }
-
-  public TrustRootIndex trustRootIndex(X509TrustManager trustManager) {
-    return new RealTrustRootIndex(trustManager.getAcceptedIssuers());
   }
 
   /**
@@ -241,12 +234,6 @@ public class Platform {
       if (x509TrustManager != null) return x509TrustManager;
 
       return readFieldOrNull(context, X509TrustManager.class, "trustManager");
-    }
-
-    @Override public TrustRootIndex trustRootIndex(X509TrustManager trustManager) {
-      TrustRootIndex result = AndroidTrustRootIndex.get(trustManager);
-      if (result != null) return result;
-      return super.trustRootIndex(trustManager);
     }
 
     @Override public void configureTlsExtensions(
