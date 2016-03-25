@@ -219,7 +219,9 @@ public final class CacheStrategy {
         maxStaleMillis = SECONDS.toMillis(requestCaching.maxStaleSeconds());
       }
 
-      if (!responseCaching.noCache() && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
+      if (nowMillis > receivedResponseMillis // in case user adjust system time(fall back),we don't request network timely
+          && !responseCaching.noCache()
+          && ageMillis + minFreshMillis < freshMillis + maxStaleMillis) {
         Response.Builder builder = cacheResponse.newBuilder();
         if (ageMillis + minFreshMillis >= freshMillis) {
           builder.addHeader("Warning", "110 HttpURLConnection \"Response is stale\"");
