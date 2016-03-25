@@ -1,5 +1,7 @@
 OkHttp
 ======
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.squareup.okhttp3/okhttp/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.squareup.okhttp3/okhttp)
+[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.squareup.okhttp3/okhttp/badge.svg)](http://www.javadoc.io/doc/com.squareup.okhttp3/okhttp)
 
 An HTTP & HTTP/2 client for Android and Java applications. For more information see [the website][1] and [the wiki][2].
 
