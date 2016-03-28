@@ -16,6 +16,9 @@
  */
 package okhttp3.internal.tls;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.GeneralSecurityException;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -38,11 +41,20 @@ import javax.net.ssl.X509TrustManager;
  * pinning.
  */
 public abstract class CertificateChainCleaner {
-  public abstract List<Certificate> clean(List<Certificate> chain)
+  public abstract List<Certificate> clean(List<Certificate> chain, String hostname)
       throws SSLPeerUnverifiedException;
 
   public static CertificateChainCleaner get(X509TrustManager trustManager) {
-    return new BasicCertificateChainCleaner(TrustRootIndex.get(trustManager));
+    try {
+      Class<?> extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions");
+      Constructor<?> constructor = extensionsClass.getConstructor(X509TrustManager.class);
+      Object extensions = constructor.newInstance(trustManager);
+      Method checkServerTrusted = extensionsClass.getMethod(
+          "checkServerTrusted", X509Certificate[].class, String.class, String.class);
+      return new AndroidCertificateChainCleaner(extensions, checkServerTrusted);
+    } catch (Exception e) {
+      return new BasicCertificateChainCleaner(TrustRootIndex.get(trustManager));
+    }
   }
 
   public static CertificateChainCleaner get(X509Certificate... caCerts) {
@@ -51,7 +63,8 @@ public abstract class CertificateChainCleaner {
 
   /**
    * A certificate chain cleaner that uses a set of trusted root certificates to build the trusted
-   * chain.
+   * chain. This class duplicates the clean chain building performed during the TLS handshake. We
+   * prefer other mechanisms where they exist, such as with {@link AndroidCertificateChainCleaner}.
    *
    * <p>This class includes code from <a href="https://conscrypt.org/">Conscrypt's</a> {@code
    * TrustManagerImpl} and {@code TrustedCertificateIndex}.
@@ -73,7 +86,7 @@ public abstract class CertificateChainCleaner {
      * constructed. This is unexpected unless the trust root index in this class has a different
      * trust manager than what was used to establish {@code chain}.
      */
-    @Override public List<Certificate> clean(List<Certificate> chain)
+    @Override public List<Certificate> clean(List<Certificate> chain, String hostname)
         throws SSLPeerUnverifiedException {
       Deque<Certificate> queue = new ArrayDeque<>(chain);
       List<Certificate> result = new ArrayList<>();
@@ -131,6 +144,37 @@ public abstract class CertificateChainCleaner {
         return true;
       } catch (GeneralSecurityException verifyFailed) {
         return false;
+      }
+    }
+  }
+
+  /**
+   * X509TrustManagerExtensions was added to Android in API 17 (Android 4.2, released in late 2012).
+   * This is the best way to get a clean chain on Android because it uses the same code as the TLS
+   * handshake.
+   */
+  static final class AndroidCertificateChainCleaner extends CertificateChainCleaner {
+    private final Object x509TrustManagerExtensions;
+    private final Method checkServerTrusted;
+
+    AndroidCertificateChainCleaner(Object x509TrustManagerExtensions, Method checkServerTrusted) {
+      this.x509TrustManagerExtensions = x509TrustManagerExtensions;
+      this.checkServerTrusted = checkServerTrusted;
+    }
+
+    @SuppressWarnings({"unchecked", "SuspiciousToArrayCall"}) // Reflection on List<Certificate>.
+    @Override public List<Certificate> clean(List<Certificate> chain, String hostname)
+        throws SSLPeerUnverifiedException {
+      try {
+        X509Certificate[] certificates = chain.toArray(new X509Certificate[chain.size()]);
+        return (List<Certificate>) checkServerTrusted.invoke(
+            x509TrustManagerExtensions, certificates, "RSA", hostname);
+      } catch (InvocationTargetException e) {
+        SSLPeerUnverifiedException exception = new SSLPeerUnverifiedException(e.getMessage());
+        exception.initCause(e);
+        throw exception;
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
       }
     }
   }

@@ -52,6 +52,10 @@ public abstract class TrustRootIndex {
    * An index of trusted root certificates that exploits knowledge of Android implementation
    * details. This class is potentially much faster to initialize than {@link BasicTrustRootIndex}
    * because it doesn't need to load and index trusted CA certificates.
+   *
+   * <p>This class uses APIs added to Android in API 14 (Android 4.0, released October 2011). This
+   * class shouldn't be used in Android API 17 or better because those releases are better served by
+   * {@link CertificateChainCleaner.AndroidCertificateChainCleaner}.
    */
   static final class AndroidTrustRootIndex extends TrustRootIndex {
     private final X509TrustManager trustManager;
