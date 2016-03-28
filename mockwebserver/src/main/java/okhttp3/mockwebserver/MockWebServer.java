@@ -17,10 +17,6 @@
 
 package okhttp3.mockwebserver;
 
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -50,14 +46,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
@@ -82,6 +76,9 @@ import okio.ByteString;
 import okio.Okio;
 import okio.Sink;
 import okio.Timeout;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_AFTER_REQUEST;
@@ -120,9 +117,9 @@ public final class MockWebServer implements TestRule {
   private final BlockingQueue<RecordedRequest> requestQueue = new LinkedBlockingQueue<>();
 
   private final Set<Socket> openClientSockets =
-          Collections.newSetFromMap(new ConcurrentHashMap<>());
+      Collections.newSetFromMap(new ConcurrentHashMap<Socket, Boolean>());
   private final Set<FramedConnection> openFramedConnections =
-          Collections.newSetFromMap(new ConcurrentHashMap<>());
+      Collections.newSetFromMap(new ConcurrentHashMap<FramedConnection, Boolean>());
   private final AtomicInteger requestCount = new AtomicInteger();
   private long bodyLimit = Long.MAX_VALUE;
   private ServerSocketFactory serverSocketFactory = ServerSocketFactory.getDefault();
@@ -151,8 +148,7 @@ public final class MockWebServer implements TestRule {
 
   @Override public Statement apply(final Statement base, Description description) {
     return new Statement() {
-      @Override
-      public void evaluate() {
+      @Override public void evaluate() throws Throwable {
         maybeStart();
         try {
           base.evaluate();
@@ -314,7 +310,7 @@ public final class MockWebServer implements TestRule {
    * @param port the port to listen to, or 0 for any available port. Automated tests should always
    * use port 0 to avoid flakiness when a specific port is unavailable.
    */
-  private void start(InetAddress inetAddress, int port) throws IOException {
+  public void start(InetAddress inetAddress, int port) throws IOException {
     start(new InetSocketAddress(inetAddress, port));
   }
 
@@ -557,7 +553,7 @@ public final class MockWebServer implements TestRule {
     try {
       socket.startHandshake(); // we're testing a handshake failure
       throw new AssertionError();
-    } catch (IOException ignored) {
+    } catch (IOException expected) {
     }
     socket.close();
   }
@@ -651,7 +647,7 @@ public final class MockWebServer implements TestRule {
     final CountDownLatch connectionClose = new CountDownLatch(1);
 
     ThreadPoolExecutor replyExecutor =
-            new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<>(),
+        new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
             Util.threadFactory(String.format("MockWebServer %s WebSocket", request.getPath()),
                 true));
     replyExecutor.allowCoreThreadTimeOut(true);
@@ -780,7 +776,7 @@ public final class MockWebServer implements TestRule {
     }
   }
 
-  private void readEmptyLine(BufferedSource source) {
+  private void readEmptyLine(BufferedSource source) throws IOException {
     String line = source.readUtf8LineStrict();
     if (line.length() != 0) throw new IllegalStateException("Expected empty but was: " + line);
   }
@@ -809,8 +805,7 @@ public final class MockWebServer implements TestRule {
       remainingByteCount = bodyLimit;
     }
 
-    @Override
-    public void write(Buffer source, long byteCount) {
+    @Override public void write(Buffer source, long byteCount) throws IOException {
       long toRead = Math.min(remainingByteCount, byteCount);
       if (toRead > 0) {
         source.read(buffer, toRead);
@@ -823,15 +818,15 @@ public final class MockWebServer implements TestRule {
       receivedByteCount += byteCount;
     }
 
-    @Override
-    public void flush() { }
+    @Override public void flush() throws IOException {
+    }
 
     @Override public Timeout timeout() {
       return Timeout.NONE;
     }
 
-    @Override
-    public void close() { }
+    @Override public void close() throws IOException {
+    }
   }
 
   /** Processes HTTP requests layered over framed protocols. */
@@ -861,7 +856,7 @@ public final class MockWebServer implements TestRule {
       }
     }
 
-    private RecordedRequest readRequest(FramedStream stream) {
+    private RecordedRequest readRequest(FramedStream stream) throws IOException {
       List<Header> streamHeaders = stream.getRequestHeaders();
       Headers.Builder httpHeaders = new Headers.Builder();
       String method = "<:method omitted>";
