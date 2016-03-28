@@ -145,7 +145,7 @@ public final class CertificatePinner {
     if (pins.isEmpty()) return;
 
     if (certificateChainCleaner != null) {
-      peerCertificates = certificateChainCleaner.clean(peerCertificates);
+      peerCertificates = certificateChainCleaner.clean(peerCertificates, hostname);
     }
 
     for (int c = 0, certsSize = peerCertificates.size(); c < certsSize; c++) {
