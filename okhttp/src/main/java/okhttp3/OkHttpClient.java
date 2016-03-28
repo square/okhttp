@@ -20,7 +20,9 @@ import java.net.Proxy;
 import java.net.ProxySelector;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.SocketFactory;
@@ -28,6 +30,8 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
@@ -171,30 +175,16 @@ public class OkHttpClient implements Cloneable, Call.Factory {
 
     if (builder.sslSocketFactory != null || !isTLS) {
       this.sslSocketFactory = builder.sslSocketFactory;
-    } else {
-      try {
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null, null, null);
-        this.sslSocketFactory = sslContext.getSocketFactory();
-      } catch (GeneralSecurityException e) {
-        throw new AssertionError(); // The system has no TLS. Just give up.
-      }
-    }
-    if (sslSocketFactory != null && builder.certificateChainCleaner == null) {
-      X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
-      if (trustManager == null) {
-        throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
-            + ", sslSocketFactory is " + sslSocketFactory.getClass());
-      }
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
-      this.certificatePinner = builder.certificatePinner.newBuilder()
-          .certificateChainCleaner(certificateChainCleaner)
-          .build();
-    } else {
       this.certificateChainCleaner = builder.certificateChainCleaner;
-      this.certificatePinner = builder.certificatePinner;
+    } else {
+      X509TrustManager trustManager = systemDefaultTrustManager();
+      this.sslSocketFactory = systemDefaultSslSocketFactory(trustManager);
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
     }
+
     this.hostnameVerifier = builder.hostnameVerifier;
+    this.certificatePinner = builder.certificatePinner.withCertificateChainCleaner(
+        certificateChainCleaner);
     this.proxyAuthenticator = builder.proxyAuthenticator;
     this.authenticator = builder.authenticator;
     this.connectionPool = builder.connectionPool;
@@ -205,6 +195,32 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     this.connectTimeout = builder.connectTimeout;
     this.readTimeout = builder.readTimeout;
     this.writeTimeout = builder.writeTimeout;
+  }
+
+  private X509TrustManager systemDefaultTrustManager() {
+    try {
+      TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+          TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init((KeyStore) null);
+      TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+      if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+        throw new IllegalStateException("Unexpected default trust managers:"
+            + Arrays.toString(trustManagers));
+      }
+      return (X509TrustManager) trustManagers[0];
+    } catch (GeneralSecurityException e) {
+      throw new AssertionError(); // The system has no TLS. Just give up.
+    }
+  }
+
+  private SSLSocketFactory systemDefaultSslSocketFactory(X509TrustManager trustManager) {
+    try {
+      SSLContext sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(null, new TrustManager[] { trustManager }, null);
+      return sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+      throw new AssertionError(); // The system has no TLS. Just give up.
+    }
   }
 
   /** Default connect timeout (in milliseconds). */
@@ -519,14 +535,62 @@ public class OkHttpClient implements Cloneable, Call.Factory {
     }
 
     /**
-     * Sets the socket factory used to secure HTTPS connections.
+     * Sets the socket factory used to secure HTTPS connections. If unset, the system default will
+     * be used.
      *
-     * <p>If unset, a lazily created SSL socket factory will be used.
+     * @deprecated {@code SSLSocketFactory} does not expose its {@link X509TrustManager}, which is
+     *     a field that OkHttp needs to build a clean certificate chain. This method instead must
+     *     use reflection to extract the trust manager. Applications should prefer to call {@link
+     *     #sslSocketFactory(SSLSocketFactory, X509TrustManager)}, which avoids such reflection.
      */
     public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory) {
       if (sslSocketFactory == null) throw new NullPointerException("sslSocketFactory == null");
+      X509TrustManager trustManager = Platform.get().trustManager(sslSocketFactory);
+      if (trustManager == null) {
+        throw new IllegalStateException("Unable to extract the trust manager on " + Platform.get()
+            + ", sslSocketFactory is " + sslSocketFactory.getClass());
+      }
       this.sslSocketFactory = sslSocketFactory;
-      this.certificateChainCleaner = null;
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
+      return this;
+    }
+
+    /**
+     * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
+     * system defaults will be used.
+     *
+     * <p>Most applications should not call this method, and instead use the system defaults. Those
+     * classes include special optimizations that can be lost if the implementations are decorated.
+     *
+     * <p>If necessary, you can create and configure the defaults yourself with the following code:
+     *
+     * <pre>   {@code
+     *
+     *   TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
+     *       TrustManagerFactory.getDefaultAlgorithm());
+     *   trustManagerFactory.init((KeyStore) null);
+     *   TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+     *   if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
+     *     throw new IllegalStateException("Unexpected default trust managers:"
+     *         + Arrays.toString(trustManagers));
+     *   }
+     *   X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
+     *
+     *   SSLContext sslContext = SSLContext.getInstance("TLS");
+     *   sslContext.init(null, new TrustManager[] { trustManager }, null);
+     *   SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+     *
+     *   OkHttpClient client = new OkHttpClient.Builder()
+     *       .sslSocketFactory(sslSocketFactory, trustManager);
+     *       .build();
+     * }</pre>
+     */
+    public Builder sslSocketFactory(
+        SSLSocketFactory sslSocketFactory, X509TrustManager trustManager) {
+      if (sslSocketFactory == null) throw new NullPointerException("sslSocketFactory == null");
+      if (trustManager == null) throw new NullPointerException("trustManager == null");
+      this.sslSocketFactory = sslSocketFactory;
+      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
       return this;
     }
 
