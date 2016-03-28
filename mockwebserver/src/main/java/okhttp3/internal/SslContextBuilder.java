@@ -116,7 +116,7 @@ public final class SslContextBuilder {
     return sslContext;
   }
 
-  private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
+  public static KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
     try {
       KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
       InputStream in = null; // By convention, 'null' creates an empty key store.
