@@ -222,7 +222,7 @@ public final class MockWebServer implements TestRule {
 
   /**
    * Indicates the protocols supported by ALPN on incoming HTTPS connections. This list is ignored
-   * when {@link #setProtocolNegotiationEnabled} negotiation is disabled.
+   * when {@linkplain #setProtocolNegotiationEnabled negotiation is disabled}.
    *
    * @param protocols the protocols to use, in order of preference. The list must contain
    * {@linkplain Protocol#HTTP_1_1}. It must not contain null.
