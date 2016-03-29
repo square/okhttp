@@ -126,9 +126,9 @@ public final class CertificatePinner {
   private final List<Pin> pins;
   private final CertificateChainCleaner certificateChainCleaner;
 
-  private CertificatePinner(Builder builder) {
-    this.pins = Util.immutableList(builder.pins);
-    this.certificateChainCleaner = builder.certificateChainCleaner;
+  private CertificatePinner(List<Pin> pins, CertificateChainCleaner certificateChainCleaner) {
+    this.pins = pins;
+    this.certificateChainCleaner = certificateChainCleaner;
   }
 
   /**
@@ -207,8 +207,11 @@ public final class CertificatePinner {
     return result;
   }
 
-  Builder newBuilder() {
-    return new Builder(this);
+  /** Returns a certificate pinner that uses {@code certificateChainCleaner}. */
+  CertificatePinner withCertificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
+    return this.certificateChainCleaner != certificateChainCleaner
+        ? new CertificatePinner(pins, certificateChainCleaner)
+        : this;
   }
 
   /**
@@ -288,20 +291,6 @@ public final class CertificatePinner {
   /** Builds a configured certificate pinner. */
   public static final class Builder {
     private final List<Pin> pins = new ArrayList<>();
-    private CertificateChainCleaner certificateChainCleaner;
-
-    public Builder() {
-    }
-
-    Builder(CertificatePinner certificatePinner) {
-      this.pins.addAll(certificatePinner.pins);
-      this.certificateChainCleaner = certificatePinner.certificateChainCleaner;
-    }
-
-    public Builder certificateChainCleaner(CertificateChainCleaner certificateChainCleaner) {
-      this.certificateChainCleaner = certificateChainCleaner;
-      return this;
-    }
 
     /**
      * Pins certificates for {@code pattern}.
@@ -321,7 +310,7 @@ public final class CertificatePinner {
     }
 
     public CertificatePinner build() {
-      return new CertificatePinner(this);
+      return new CertificatePinner(Util.immutableList(pins), null);
     }
   }
 }
