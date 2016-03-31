@@ -157,6 +157,9 @@ public final class Response {
     return ResponseBody.create(body.contentType(), result.size(), result);
   }
 
+  /**
+   * Never {@code null}, must be closed after consumption, can be consumed only once.
+   */
   public ResponseBody body() {
     return body;
   }
