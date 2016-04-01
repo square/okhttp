@@ -240,6 +240,12 @@ public final class RealConnection extends FramedConnection.Listener implements C
   private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     Request tunnelRequest = createTunnelRequest();
+    
+    if (route.address().proxyAuthenticator() != null && route.address().proxyAuthenticator().isPreemptive())
+    {
+      tunnelRequest = route.address().proxyAuthenticator().authenticate(route, tunnelRequest);
+    }
+    
     HttpUrl url = tunnelRequest.url();
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {

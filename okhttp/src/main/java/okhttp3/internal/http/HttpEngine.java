@@ -499,6 +499,14 @@ public final class HttpEngine {
    * content types the application is interested in.
    */
   private Request networkRequest(Request request) throws IOException {
+    if (!request.isHttps())
+    {
+      if (client.proxyAuthenticator() != null && client.proxyAuthenticator().isPreemptive())
+      {
+        request = client.proxyAuthenticator().authenticate(null, request);
+      }
+    }	  
+	  
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {

@@ -52,6 +52,16 @@ public interface Authenticator {
     @Override public Request authenticate(Route route, Response response) {
       return null;
     }
+
+	@Override
+	public Request authenticate(Route route, Request request) throws IOException {
+		return null;
+	}
+
+	@Override
+	public boolean isPreemptive() {
+		return false;
+	}
   };
 
   /**
@@ -59,4 +69,8 @@ public interface Authenticator {
    * response}. Returns null if the challenge cannot be satisfied.
    */
   Request authenticate(Route route, Response response) throws IOException;
+  
+  Request authenticate(Route route, Request request) throws IOException;
+  
+  boolean isPreemptive();  
 }
