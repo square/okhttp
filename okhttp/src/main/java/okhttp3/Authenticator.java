@@ -54,7 +54,7 @@ public interface Authenticator {
     }
 
 	@Override
-	public Request authenticate(Route route, Request request) throws IOException {
+	public Request authenticatePreemptive(Route route, Request request) throws IOException {
 		return null;
 	}
 
@@ -70,7 +70,15 @@ public interface Authenticator {
    */
   Request authenticate(Route route, Response response) throws IOException;
   
-  Request authenticate(Route route, Request request) throws IOException;
+  /**
+   * Return a request that is a copy of the original request plus authentication header.
+   * isPreemptive method must return true.
+   * 
+   */
+  Request authenticatePreemptive(Route route, Request request) throws IOException;
   
+  /**
+   *  If preemptive authentication is needed, implement this return true.
+   */
   boolean isPreemptive();  
 }

@@ -243,7 +243,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
     
     if (route.address().proxyAuthenticator() != null && route.address().proxyAuthenticator().isPreemptive())
     {
-      tunnelRequest = route.address().proxyAuthenticator().authenticate(route, tunnelRequest);
+      tunnelRequest = route.address().proxyAuthenticator().authenticatePreemptive(route, tunnelRequest);
     }
     
     HttpUrl url = tunnelRequest.url();

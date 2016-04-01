@@ -53,7 +53,7 @@ public final class RecordingOkAuthenticator implements Authenticator {
   }
 
   @Override
-  public Request authenticate(Route route, Request request) throws IOException {
+  public Request authenticatePreemptive(Route route, Request request) throws IOException {
 	// TODO Auto-generated method stub
 	return null;
   }

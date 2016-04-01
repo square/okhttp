@@ -503,7 +503,7 @@ public final class HttpEngine {
     {
       if (client.proxyAuthenticator() != null && client.proxyAuthenticator().isPreemptive())
       {
-        request = client.proxyAuthenticator().authenticate(null, request);
+        request = client.proxyAuthenticator().authenticatePreemptive(null, request);
       }
     }	  
 	  
