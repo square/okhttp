@@ -506,7 +506,7 @@ public final class HttpEngine {
         request = client.proxyAuthenticator().authenticatePreemptive(null, request);
       }
     }
-  
+
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {
