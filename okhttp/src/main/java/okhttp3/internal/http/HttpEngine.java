@@ -501,12 +501,12 @@ public final class HttpEngine {
    */
   private Request networkRequest(Request request) throws IOException {
     if (!request.isHttps()) {
-      Authenticator authenticator = client.proxyAuthenticator(); 
+      Authenticator authenticator = client.proxyAuthenticator();
       if (authenticator != null && authenticator.isPreemptive()) {
         request = client.proxyAuthenticator().authenticatePreemptive(null, request);
       }
     }
-	  
+  
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {

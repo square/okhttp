@@ -69,16 +69,16 @@ public interface Authenticator {
    * response}. Returns null if the challenge cannot be satisfied.
    */
   Request authenticate(Route route, Response response) throws IOException;
-  
+
   /**
    * Return a request that is a copy of the original request plus authentication header.
    * isPreemptive method must return true.
-   * 
+   *
    */
   Request authenticatePreemptive(Route route, Request request) throws IOException;
-  
+
   /**
    *  If preemptive authentication is needed, implement this return true.
    */
-  boolean isPreemptive();  
+  boolean isPreemptive();
 }

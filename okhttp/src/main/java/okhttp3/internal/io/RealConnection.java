@@ -242,11 +242,11 @@ public final class RealConnection extends FramedConnection.Listener implements C
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     Request tunnelRequest = createTunnelRequest();
 
-    Authenticator authenticator = route.address().proxyAuthenticator(); 
+    Authenticator authenticator = route.address().proxyAuthenticator();
     if (authenticator != null && authenticator.isPreemptive()) {
       tunnelRequest = authenticator.authenticatePreemptive(route, tunnelRequest);
     }
-    
+
     HttpUrl url = tunnelRequest.url();
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
