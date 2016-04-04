@@ -38,17 +38,15 @@ public final class Authenticate {
                 .build();
           }
 
-		  @Override
-		  public Request authenticatePreemptive(Route route, Request request) throws IOException {
-			// TODO Auto-generated method stub
-			return null;
-		  }
+          @Override
+          public Request authenticatePreemptive(Route route, Request request) throws IOException {
+            return null;
+          }
 
-		  @Override
-		  public boolean isPreemptive() {
-			// TODO Auto-generated method stub
-			return false;
-		  }
+          @Override
+          public boolean isPreemptive() {
+            return false;
+          }
         })
         .build();
   }
