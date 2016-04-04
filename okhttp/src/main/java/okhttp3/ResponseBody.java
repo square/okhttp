@@ -116,6 +116,13 @@ public abstract class ResponseBody implements Closeable {
 
   public abstract BufferedSource source();
 
+  /**
+   * Returns the response as a byte array.
+   *
+   * <p>This method loads entire response body into memory. If the response body is very large this
+   * may trigger an {@link OutOfMemoryError}. Prefer to stream the response body if this is a
+   * possibility for your response.
+   */
   public final byte[] bytes() throws IOException {
     long contentLength = contentLength();
     if (contentLength > Integer.MAX_VALUE) {
@@ -148,7 +155,11 @@ public abstract class ResponseBody implements Closeable {
   /**
    * Returns the response as a string decoded with the charset of the Content-Type header. If that
    * header is either absent or lacks a charset, this will attempt to decode the response body as
-   * UTF-8.
+   * UTF-8. Closes {@link ResponseBody} automatically.
+   *
+   * <p>This method loads entire response body into memory. If the response body is very large this
+   * may trigger an {@link OutOfMemoryError}. Prefer to stream the response body if this is a
+   * possibility for your response.
    */
   public final String string() throws IOException {
     return new String(bytes(), charset().name());
