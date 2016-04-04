@@ -72,13 +72,11 @@ public final class JavaNetAuthenticator implements Authenticator {
 
   @Override
   public Request authenticatePreemptive(Route route, Request request) throws IOException {
-	// TODO Auto-generated method stub
-	return null;
+    return null;
   }
 
   @Override
   public boolean isPreemptive() {
-	// TODO Auto-generated method stub
-	return false;
+    return false;
   }
 }
