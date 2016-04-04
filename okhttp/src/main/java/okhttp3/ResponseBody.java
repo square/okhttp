@@ -103,7 +103,10 @@ public abstract class ResponseBody implements Closeable {
   /**
    * Returns the response as a string decoded with the charset of the Content-Type header. If that
    * header is either absent or lacks a charset, this will attempt to decode the response body as
-   * UTF-8.
+   * UTF-8. Closes {@link ResponseBody} automatically.
+   *
+   * <p>Warning: this method loads whole response body into memory and may cause
+   * {@link OutOfMemoryError}.
    */
   public final String string() throws IOException {
     return new String(bytes(), charset().name());
