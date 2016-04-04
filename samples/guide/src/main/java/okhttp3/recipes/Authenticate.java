@@ -37,6 +37,16 @@ public final class Authenticate {
                 .header("Authorization", credential)
                 .build();
           }
+
+          @Override
+          public Request authenticatePreemptive(Route route, Request request) throws IOException {
+            return null;
+          }
+
+          @Override
+          public boolean isPreemptive() {
+            return false;
+          }
         })
         .build();
   }

@@ -69,4 +69,14 @@ public final class JavaNetAuthenticator implements Authenticator {
         ? ((InetSocketAddress) proxy.address()).getAddress()
         : InetAddress.getByName(url.host());
   }
+
+  @Override
+  public Request authenticatePreemptive(Route route, Request request) throws IOException {
+    return null;
+  }
+
+  @Override
+  public boolean isPreemptive() {
+    return false;
+  }
 }

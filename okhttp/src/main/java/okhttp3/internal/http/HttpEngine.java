@@ -24,6 +24,7 @@ import java.util.List;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
+import okhttp3.Authenticator;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
 import okhttp3.Cookie;
@@ -499,6 +500,13 @@ public final class HttpEngine {
    * content types the application is interested in.
    */
   private Request networkRequest(Request request) throws IOException {
+    if (!request.isHttps()) {
+      Authenticator authenticator = client.proxyAuthenticator();
+      if (authenticator != null && authenticator.isPreemptive()) {
+        request = client.proxyAuthenticator().authenticatePreemptive(null, request);
+      }
+    }
+
     Request.Builder result = request.newBuilder();
 
     if (request.header("Host") == null) {
