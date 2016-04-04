@@ -31,6 +31,7 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
+import okhttp3.Authenticator;
 import okhttp3.CertificatePinner;
 import okhttp3.Connection;
 import okhttp3.ConnectionSpec;
@@ -240,10 +241,10 @@ public final class RealConnection extends FramedConnection.Listener implements C
   private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
     Request tunnelRequest = createTunnelRequest();
-    
-    if (route.address().proxyAuthenticator() != null && route.address().proxyAuthenticator().isPreemptive())
-    {
-      tunnelRequest = route.address().proxyAuthenticator().authenticatePreemptive(route, tunnelRequest);
+
+    Authenticator authenticator = route.address().proxyAuthenticator(); 
+    if (authenticator != null && authenticator.isPreemptive()) {
+      tunnelRequest = authenticator.authenticatePreemptive(route, tunnelRequest);
     }
     
     HttpUrl url = tunnelRequest.url();

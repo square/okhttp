@@ -53,15 +53,15 @@ public interface Authenticator {
       return null;
     }
 
-	@Override
-	public Request authenticatePreemptive(Route route, Request request) throws IOException {
-		return null;
-	}
+    @Override
+    public Request authenticatePreemptive(Route route, Request request) throws IOException {
+      return null;
+    }
 
-	@Override
-	public boolean isPreemptive() {
-		return false;
-	}
+    @Override
+    public boolean isPreemptive() {
+	  return false;
+    }
   };
 
   /**
