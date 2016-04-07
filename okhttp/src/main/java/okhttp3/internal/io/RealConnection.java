@@ -19,6 +19,7 @@ package okhttp3.internal.io;
 import java.io.IOException;
 import java.lang.ref.Reference;
 import java.net.ConnectException;
+import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
@@ -94,8 +95,6 @@ public final class RealConnection extends FramedConnection.Listener implements C
 
     RouteException routeException = null;
     ConnectionSpecSelector connectionSpecSelector = new ConnectionSpecSelector(connectionSpecs);
-    Proxy proxy = route.proxy();
-    Address address = route.address();
 
     if (route.address().sslSocketFactory() == null
         && !connectionSpecs.contains(ConnectionSpec.CLEARTEXT)) {
@@ -105,10 +104,12 @@ public final class RealConnection extends FramedConnection.Listener implements C
 
     while (protocol == null) {
       try {
-        rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
-            ? address.socketFactory().createSocket()
-            : new Socket(proxy);
-        connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+        if (route.requiresTunnel()) {
+          buildTunneledConnection(connectTimeout, readTimeout, writeTimeout,
+              connectionSpecSelector);
+        } else {
+          buildConnection(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+        }
       } catch (IOException e) {
         closeQuietly(socket);
         closeQuietly(rawSocket);
@@ -132,9 +133,53 @@ public final class RealConnection extends FramedConnection.Listener implements C
     }
   }
 
+  /**
+   * Does all the work to build an HTTPS connection over a proxy tunnel. The catch here is that a
+   * proxy server can issue an auth challenge and then close the connection.
+   */
+  private void buildTunneledConnection(int connectTimeout, int readTimeout, int writeTimeout,
+      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+    Request tunnelRequest = createTunnelRequest();
+    HttpUrl url = tunnelRequest.url();
+    int attemptedConnections = 0;
+    int maxAttempts = 21;
+    while (true) {
+      if (++attemptedConnections > maxAttempts) {
+        throw new ProtocolException("Too many tunnel connections attempted: " + maxAttempts);
+      }
+
+      connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+      tunnelRequest = createTunnel(readTimeout, writeTimeout, tunnelRequest, url);
+
+      if (tunnelRequest == null) break; // Tunnel successfully created.
+
+      // The proxy decided to close the connection after an auth challenge. We need to create a new
+      // connection, but this time with the auth credentials.
+      closeQuietly(rawSocket);
+      rawSocket = null;
+      sink = null;
+      source = null;
+    }
+
+    establishProtocol(readTimeout, writeTimeout, connectionSpecSelector);
+  }
+
   /** Does all the work necessary to build a full HTTP or HTTPS connection on a raw socket. */
+  private void buildConnection(int connectTimeout, int readTimeout, int writeTimeout,
+      ConnectionSpecSelector connectionSpecSelector) throws IOException {
+    connectSocket(connectTimeout, readTimeout, writeTimeout, connectionSpecSelector);
+    establishProtocol(readTimeout, writeTimeout, connectionSpecSelector);
+  }
+
   private void connectSocket(int connectTimeout, int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
+    Proxy proxy = route.proxy();
+    Address address = route.address();
+
+    rawSocket = proxy.type() == Proxy.Type.DIRECT || proxy.type() == Proxy.Type.HTTP
+        ? address.socketFactory().createSocket()
+        : new Socket(proxy);
+
     rawSocket.setSoTimeout(readTimeout);
     try {
       Platform.get().connectSocket(rawSocket, route.socketAddress(), connectTimeout);
@@ -143,7 +188,10 @@ public final class RealConnection extends FramedConnection.Listener implements C
     }
     source = Okio.buffer(Okio.source(rawSocket));
     sink = Okio.buffer(Okio.sink(rawSocket));
+  }
 
+  private void establishProtocol(int readTimeout, int writeTimeout,
+      ConnectionSpecSelector connectionSpecSelector) throws IOException {
     if (route.address().sslSocketFactory() != null) {
       connectTls(readTimeout, writeTimeout, connectionSpecSelector);
     } else {
@@ -171,10 +219,6 @@ public final class RealConnection extends FramedConnection.Listener implements C
 
   private void connectTls(int readTimeout, int writeTimeout,
       ConnectionSpecSelector connectionSpecSelector) throws IOException {
-    if (route.requiresTunnel()) {
-      createTunnel(readTimeout, writeTimeout);
-    }
-
     Address address = route.address();
     SSLSocketFactory sslSocketFactory = address.sslSocketFactory();
     boolean success = false;
@@ -237,10 +281,9 @@ public final class RealConnection extends FramedConnection.Listener implements C
    * To make an HTTPS connection over an HTTP proxy, send an unencrypted CONNECT request to create
    * the proxy connection. This may need to be retried if the proxy requires authorization.
    */
-  private void createTunnel(int readTimeout, int writeTimeout) throws IOException {
+  private Request createTunnel(int readTimeout, int writeTimeout, Request tunnelRequest,
+      HttpUrl url) throws IOException {
     // Make an SSL Tunnel on the first message pair of each SSL + proxy connection.
-    Request tunnelRequest = createTunnelRequest();
-    HttpUrl url = tunnelRequest.url();
     String requestLine = "CONNECT " + Util.hostHeader(url, true) + " HTTP/1.1";
     while (true) {
       Http1xStream tunnelConnection = new Http1xStream(null, source, sink);
@@ -268,12 +311,16 @@ public final class RealConnection extends FramedConnection.Listener implements C
           if (!source.buffer().exhausted() || !sink.buffer().exhausted()) {
             throw new IOException("TLS tunnel buffered too many bytes!");
           }
-          return;
+          return null;
 
         case HTTP_PROXY_AUTH:
           tunnelRequest = route.address().proxyAuthenticator().authenticate(route, response);
-          if (tunnelRequest != null) continue;
-          throw new IOException("Failed to authenticate with proxy");
+          if (tunnelRequest == null) throw new IOException("Failed to authenticate with proxy");
+
+          if ("close".equalsIgnoreCase(response.header("Connection"))) {
+            return tunnelRequest;
+          }
+          break;
 
         default:
           throw new IOException(
@@ -283,10 +330,9 @@ public final class RealConnection extends FramedConnection.Listener implements C
   }
 
   /**
-   * Returns a request that creates a TLS tunnel via an HTTP proxy, or null if no tunnel is
-   * necessary. Everything in the tunnel request is sent unencrypted to the proxy server, so tunnels
-   * include only the minimum set of headers. This avoids sending potentially sensitive data like
-   * HTTP cookies to the proxy unencrypted.
+   * Returns a request that creates a TLS tunnel via an HTTP proxy. Everything in the tunnel request
+   * is sent unencrypted to the proxy server, so tunnels include only the minimum set of headers.
+   * This avoids sending potentially sensitive data like HTTP cookies to the proxy unencrypted.
    */
   private Request createTunnelRequest() throws IOException {
     return new Request.Builder()
