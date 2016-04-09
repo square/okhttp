@@ -2,6 +2,9 @@
 
 set -e
 
+# Rebuild only if something that could change the behaviour has changed
+# otherwise reuse the jar we built last time
+
 codesha() {
   find ./*/pom.xml ./*/src -type f | sort | xargs shasum | shasum | cut -f 1 -d ' '
 }
@@ -15,6 +18,9 @@ fi
 
 JAVA_CMD=java
 BCP=
+
+# If we are on OSX, then hunt down JDK 1.8 so we can use ALPN
+# n.b. may still fail if an older version of JDK 1.8 is used
 
 if [ -x /usr/libexec/java_home ]; then
   JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
