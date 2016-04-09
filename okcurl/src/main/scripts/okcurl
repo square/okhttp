@@ -1,0 +1,16 @@
+#!/bin/sh
+
+JAVA_CMD=java
+INSTALLDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
+
+if [ -x /usr/libexec/java_home ]; then
+  JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+
+  if [ $? -eq 0 ]; then
+    JAVA_CMD="$JAVA_HOME/bin/java"
+    ALPN=$(ls $INSTALLDIR/alpn/alpn-boot-*.jar)
+    BCP="-Xbootclasspath/p:$ALPN"
+  fi
+fi
+
+$JAVA_CMD $BCP -classpath $INSTALLDIR/lib/\* okhttp3.curl.Main "$@"
