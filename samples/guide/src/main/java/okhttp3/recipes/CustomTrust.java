@@ -171,7 +171,7 @@ public final class CustomTrust {
    * not use custom trusted certificates in production without the blessing of your server's TLS
    * administrator.
    */
-  private X509TrustManager trustManagerForCertificates(InputStream in)
+  static X509TrustManager trustManagerForCertificates(InputStream in)
       throws GeneralSecurityException {
     CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
     Collection<? extends Certificate> certificates = certificateFactory.generateCertificates(in);
@@ -203,7 +203,7 @@ public final class CustomTrust {
     return (X509TrustManager) trustManagers[0];
   }
 
-  private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
+  static KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
     try {
       KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
       InputStream in = null; // By convention, 'null' creates an empty key store.
