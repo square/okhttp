@@ -162,10 +162,11 @@ public final class Spdy3ConnectionTest {
         stream.reply(headerEntries("b", "banana"), true);
       }
     };
-    new FramedConnection.Builder(true)
+    FramedConnection connection = new FramedConnection.Builder(true)
         .socket(peer.openSocket())
         .listener(handler)
         .build();
+    connection.start(false);
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
@@ -192,7 +193,10 @@ public final class Spdy3ConnectionTest {
       }
     };
 
-    connectionBuilder(peer, SPDY3).listener(listener).build();
+    FramedConnection connection = connectionBuilder(peer, SPDY3)
+        .listener(listener)
+        .build();
+    connection.start(false);
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
@@ -282,6 +286,7 @@ public final class Spdy3ConnectionTest {
     FramedConnection connection = connectionBuilder(peer, SPDY3)
         .listener(listener)
         .build();
+    connection.start(false);
 
     peer.takeFrame(); // Guarantees that the peer Settings frame has been processed.
     synchronized (connection) {
@@ -639,10 +644,11 @@ public final class Spdy3ConnectionTest {
         stream.reply(headerEntries("c", "cola"), true);
       }
     };
-    new FramedConnection.Builder(true)
+    FramedConnection connection = new FramedConnection.Builder(true)
         .socket(peer.openSocket())
         .listener(listener)
         .build();
+    connection.start(false);
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame reply = peer.takeFrame();
@@ -1340,6 +1346,7 @@ public final class Spdy3ConnectionTest {
         .socket(socket)
         .protocol(SPDY3.getProtocol())
         .build();
+    connection.start(false);
     socket.shutdownOutput();
     try {
       connection.newStream(headerEntries("a", longString), false, true);
@@ -1360,7 +1367,9 @@ public final class Spdy3ConnectionTest {
   }
 
   private FramedConnection connection(MockSpdyPeer peer, Variant variant) throws IOException {
-    return connectionBuilder(peer, variant).build();
+    FramedConnection connection = connectionBuilder(peer, variant).build();
+    connection.start(false);
+    return connection;
   }
 
   private FramedConnection.Builder connectionBuilder(MockSpdyPeer peer, Variant variant)

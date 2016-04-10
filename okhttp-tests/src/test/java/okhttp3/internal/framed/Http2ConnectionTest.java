@@ -376,7 +376,9 @@ public final class Http2ConnectionTest {
 
     // play it back
     FramedConnection connection = connectionBuilder(peer, HTTP_2)
-        .pushObserver(observer).build();
+        .pushObserver(observer)
+        .build();
+    connection.start(false);
     FramedStream client = connection.newStream(headerEntries("b", "banana"), false, true);
     assertEquals(-1, client.getSource().read(new Buffer(), 1));
 
@@ -399,6 +401,7 @@ public final class Http2ConnectionTest {
 
     // play it back
     FramedConnection connection = connectionBuilder(peer, HTTP_2).build();
+    connection.start(false);
     connection.newStream(headerEntries("b", "banana"), false, true);
 
     // verify the peer received what was expected
@@ -423,8 +426,10 @@ public final class Http2ConnectionTest {
     peer.play();
 
     // play it back
-    connectionBuilder(peer, HTTP_2)
-        .pushObserver(PushObserver.CANCEL).build();
+    FramedConnection connection = connectionBuilder(peer, HTTP_2)
+        .pushObserver(PushObserver.CANCEL)
+        .build();
+    connection.start(false);
 
     // verify the peer received what was expected
     MockSpdyPeer.InFrame rstStream = peer.takeFrame();
@@ -452,6 +457,7 @@ public final class Http2ConnectionTest {
         .pushObserver(IGNORE)
         .protocol(HTTP_2.getProtocol())
         .build();
+    connection.start(false);
     socket.shutdownOutput();
     try {
       connection.newStream(headerEntries("a", longString), false, true);
@@ -488,7 +494,9 @@ public final class Http2ConnectionTest {
   }
 
   private FramedConnection connection(MockSpdyPeer peer, Variant variant) throws IOException {
-    return connectionBuilder(peer, variant).build();
+    FramedConnection connection = connectionBuilder(peer, variant).build();
+    connection.start(false);
+    return connection;
   }
 
   private FramedConnection.Builder connectionBuilder(MockSpdyPeer peer, Variant variant)

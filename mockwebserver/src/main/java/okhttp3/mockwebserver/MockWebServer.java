@@ -449,6 +449,7 @@ public final class MockWebServer implements TestRule {
               .protocol(protocol)
               .listener(framedSocketListener)
               .build();
+          framedConnection.start();
           openFramedConnections.add(framedConnection);
           openClientSockets.remove(socket);
           return;
