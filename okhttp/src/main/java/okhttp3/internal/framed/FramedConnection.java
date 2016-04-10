@@ -170,7 +170,6 @@ public final class FramedConnection implements Closeable {
     frameWriter = variant.newWriter(builder.sink, client);
 
     readerRunnable = new Reader(variant.newReader(builder.source, client));
-    new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
   /** The protocol as selected using ALPN. */
@@ -501,16 +500,27 @@ public final class FramedConnection implements Closeable {
   }
 
   /**
-   * Sends a connection header if the current variant requires it. This should be called after
-   * {@link Builder#build} for all new connections.
+   * Sends any initial frames and starts reading frames from the remote peer. This should be called
+   * after {@link Builder#build} for all new connections.
    */
-  public void sendConnectionPreface() throws IOException {
-    frameWriter.connectionPreface();
-    frameWriter.settings(okHttpSettings);
-    int windowSize = okHttpSettings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
-    if (windowSize != Settings.DEFAULT_INITIAL_WINDOW_SIZE) {
-      frameWriter.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+  public void start() throws IOException {
+    start(true);
+  }
+
+  /**
+   * @param sendConnectionPreface true to send connection preface frames. This should always be true
+   *     except for in tests that don't check for a connection preface.
+   */
+  void start(boolean sendConnectionPreface) throws IOException {
+    if (sendConnectionPreface) {
+      frameWriter.connectionPreface();
+      frameWriter.settings(okHttpSettings);
+      int windowSize = okHttpSettings.getInitialWindowSize(Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+      if (windowSize != Settings.DEFAULT_INITIAL_WINDOW_SIZE) {
+        frameWriter.windowUpdate(0, windowSize - Settings.DEFAULT_INITIAL_WINDOW_SIZE);
+      }
     }
+    new Thread(readerRunnable).start(); // Not a daemon thread.
   }
 
   /** Merges {@code settings} into this peer's settings and sends them to the remote peer. */

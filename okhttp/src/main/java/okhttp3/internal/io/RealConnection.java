@@ -159,7 +159,7 @@ public final class RealConnection extends FramedConnection.Listener implements C
           .protocol(protocol)
           .listener(this)
           .build();
-      framedConnection.sendConnectionPreface();
+      framedConnection.start();
 
       // Only assign the framed connection once the preface has been sent successfully.
       this.allocationLimit = framedConnection.maxConcurrentStreams();

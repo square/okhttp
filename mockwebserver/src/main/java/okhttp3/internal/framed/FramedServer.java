@@ -70,7 +70,7 @@ public final class FramedServer extends FramedConnection.Listener {
             .protocol(protocol)
             .listener(this)
             .build();
-        framedConnection.sendConnectionPreface();
+        framedConnection.start();
       } catch (IOException e) {
         logger.log(Level.INFO, "FramedServer connection failure: " + e);
         Util.closeQuietly(socket);
