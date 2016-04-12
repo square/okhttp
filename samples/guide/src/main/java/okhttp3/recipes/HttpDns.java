@@ -11,11 +11,10 @@ import java.io.IOException;
  * using httpdns ,not using localdns sample
  * Created by lizhangqu on 16/4/12.
  */
-public class HttpDns {
-    public static void main(String[] args) throws IOException {
-
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().addInterceptor(new HttpDnsInterceptor()).build();
-
+public final class HttpDns {
+    public void run() throws Exception {
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new HttpDnsInterceptor()).build();
 
         Request request = new Request.Builder()
                 .url(HttpDnsInterceptor.BAIDU_URL)
@@ -25,6 +24,10 @@ public class HttpDns {
         Response execute = okHttpClient.newCall(request).execute();
 
         System.out.println(execute.body().string());
+    }
+
+    public static void main(String... args) throws Exception {
+        new HttpDns().run();
     }
 
     static class HttpDnsInterceptor implements Interceptor {
