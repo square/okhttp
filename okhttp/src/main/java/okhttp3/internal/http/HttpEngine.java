@@ -16,11 +16,32 @@
  */
 package okhttp3.internal.http;
 
-import okhttp3.*;
+import okhttp3.Address;
+import okhttp3.CertificatePinner;
+import okhttp3.Connection;
+import okhttp3.Cookie;
+import okhttp3.CookieJar;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.InternalCache;
 import okhttp3.internal.Version;
-import okio.*;
+import okio.Buffer;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.GzipSource;
+import okio.Okio;
+import okio.Sink;
+import okio.Source;
+import okio.Timeout;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
@@ -30,10 +51,22 @@ import java.net.Proxy;
 import java.util.Date;
 import java.util.List;
 
-import static java.net.HttpURLConnection.*;
+import static java.net.HttpURLConnection.HTTP_CLIENT_TIMEOUT;
+import static java.net.HttpURLConnection.HTTP_MOVED_PERM;
+import static java.net.HttpURLConnection.HTTP_MOVED_TEMP;
+import static java.net.HttpURLConnection.HTTP_MULT_CHOICE;
+import static java.net.HttpURLConnection.HTTP_NOT_MODIFIED;
+import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
+import static java.net.HttpURLConnection.HTTP_PROXY_AUTH;
+import static java.net.HttpURLConnection.HTTP_SEE_OTHER;
+import static java.net.HttpURLConnection.HTTP_UNAUTHORIZED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static okhttp3.internal.Util.*;
-import static okhttp3.internal.http.StatusLine.*;
+import static okhttp3.internal.Util.closeQuietly;
+import static okhttp3.internal.Util.discard;
+import static okhttp3.internal.Util.hostHeader;
+import static okhttp3.internal.http.StatusLine.HTTP_CONTINUE;
+import static okhttp3.internal.http.StatusLine.HTTP_PERM_REDIRECT;
+import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
  * Handles a single HTTP request/response pair. Each HTTP engine follows this lifecycle: <ol> <li>It
@@ -951,11 +984,10 @@ public final class HttpEngine {
 
     String host = request.url().host();
     String headerHost = request.header("Host");
-    // if host is set in header,then replace host by the value in header(named headerHost).
-    // when using https and httpdns
-    // if get the host from url it will get an Exception (javax.net.ssl.SSLPeerUnverifiedException)
-    // what is the httpdns ,see https://www.dnspod.cn/httpdns
-    // more see the recipes named HttpDns in okhttp-sample
+    //if host is set in header,then replace host by the value in header(named headerHost).
+    //when using https and httpdns,if get the host from url it will get an Exception (javax.net.ssl.SSLPeerUnverifiedException)
+    //what is the httpdns ,see https://www.dnspod.cn/httpdns
+    //more see the recipes named HttpDns in okhttp-sample
     if (headerHost != null && !headerHost.equals("")) {
       host = headerHost;
     }
