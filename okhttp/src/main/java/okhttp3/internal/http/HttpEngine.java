@@ -981,7 +981,16 @@ public final class HttpEngine {
       certificatePinner = client.certificatePinner();
     }
 
-    return new Address(request.url().host(), request.url().port(), client.dns(),
+    String host = request.url().host();
+    String headerHost = request.header("Host");
+    //if host is set in header,then replace host by the value in header(named headerHost).
+    //when using https and httpdns,if get the host from url it will get an Exception (javax.net.ssl.SSLPeerUnverifiedException)
+    //what is the httpdns ,see https://www.dnspod.cn/httpdns
+    //more see the recipes named HttpDns in okhttp-sample
+    if (headerHost != null && !headerHost.equals("")) {
+      host = headerHost;
+    }
+    return new Address(host, request.url().port(), client.dns(),
         client.socketFactory(), sslSocketFactory, hostnameVerifier, certificatePinner,
         client.proxyAuthenticator(), client.proxy(), client.protocols(),
         client.connectionSpecs(), client.proxySelector());
