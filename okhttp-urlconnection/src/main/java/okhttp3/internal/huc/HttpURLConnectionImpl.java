@@ -490,7 +490,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw toThrow;
     } catch (RouteException e) {
       // The attempt to connect via a route failed. The request will not have been sent.
-      HttpEngine retryEngine = httpEngine.recover(e.getLastConnectException());
+      HttpEngine retryEngine = httpEngine.recover(e.getLastConnectException(), true);
       if (retryEngine != null) {
         releaseConnection = false;
         httpEngine = retryEngine;
@@ -503,7 +503,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw toThrow;
     } catch (IOException e) {
       // An attempt to communicate with a server failed. The request may have been sent.
-      HttpEngine retryEngine = httpEngine.recover(e);
+      HttpEngine retryEngine = httpEngine.recover(e, false);
       if (retryEngine != null) {
         releaseConnection = false;
         httpEngine = retryEngine;

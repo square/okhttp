@@ -185,7 +185,7 @@ public final class HttpEngine {
    * @throws RouteException if the was a problem during connection via a specific route. Sometimes
    * recoverable. See {@link #recover}.
    * @throws IOException if there was a problem while making a request. Sometimes recoverable. See
-   * {@link #recover(IOException)}.
+   * {@link #recover(IOException, boolean)}.
    */
   public void sendRequest() throws RequestException, RouteException, IOException {
     if (cacheStrategy != null) return; // Already sent.
@@ -349,8 +349,8 @@ public final class HttpEngine {
    * engine that should be used for the retry if {@code e} is recoverable, or null if the failure is
    * permanent. Requests with a body can only be recovered if the body is buffered.
    */
-  public HttpEngine recover(IOException e, Sink requestBodyOut) {
-    if (!streamAllocation.recover(e, requestBodyOut)) {
+  public HttpEngine recover(IOException e, boolean routeException, Sink requestBodyOut) {
+    if (!streamAllocation.recover(e, routeException, requestBodyOut)) {
       return null;
     }
 
@@ -365,8 +365,8 @@ public final class HttpEngine {
         forWebSocket, streamAllocation, (RetryableSink) requestBodyOut, priorResponse);
   }
 
-  public HttpEngine recover(IOException e) {
-    return recover(e, requestBodyOut);
+  public HttpEngine recover(IOException e, boolean routeException) {
+    return recover(e, routeException, requestBodyOut);
   }
 
   private void maybeCache() throws IOException {

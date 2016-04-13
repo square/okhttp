@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.ServerSocket;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.net.UnknownServiceException;
 import java.security.cert.Certificate;
@@ -761,10 +762,36 @@ public final class CallTest {
   }
 
   /**
-   * Make a request with two routes. The first route will time out because it's connecting via a
-   * null proxy server. The second will succeed.
+   * Make a request with two routes. The first route will time out because it's connecting to a
+   * special address that never connects. The automatic retry will succeed.
    */
   @Test public void connectTimeoutsAttemptsAlternateRoute() throws Exception {
+    InetSocketAddress unreachableAddress = new InetSocketAddress("10.255.255.1", 8080);
+
+    RecordingProxySelector proxySelector = new RecordingProxySelector();
+    proxySelector.proxies.add(new Proxy(Proxy.Type.HTTP, unreachableAddress));
+    proxySelector.proxies.add(server.toProxyAddress());
+
+    server.enqueue(new MockResponse()
+        .setBody("success!"));
+
+    client = client.newBuilder()
+        .proxySelector(proxySelector)
+        .readTimeout(100, TimeUnit.MILLISECONDS)
+        .connectTimeout(100, TimeUnit.MILLISECONDS)
+        .build();
+
+    Request request = new Request.Builder().url("http://android.com/").build();
+    executeSynchronously(request)
+        .assertCode(200)
+        .assertBody("success!");
+  }
+
+  /**
+   * Make a request with two routes. The first route will fail because the null server connects but
+   * never responds. The manual retry will succeed.
+   */
+  @Test public void readTimeoutFails() throws Exception {
     InetSocketAddress nullServerAddress = startNullServer();
 
     RecordingProxySelector proxySelector = new RecordingProxySelector();
@@ -780,6 +807,8 @@ public final class CallTest {
         .build();
 
     Request request = new Request.Builder().url("http://android.com/").build();
+    executeSynchronously(request)
+        .assertFailure(SocketTimeoutException.class);
     executeSynchronously(request)
         .assertCode(200)
         .assertBody("success!");
