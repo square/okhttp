@@ -309,14 +309,14 @@ public final class StreamAllocation {
     throw new IllegalStateException();
   }
 
-  public boolean recover(IOException e, Sink requestBodyOut) {
+  public boolean recover(IOException e, boolean routeException, Sink requestBodyOut) {
     if (connection != null) {
       connectionFailed(e);
     }
 
     boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
     if ((routeSelector != null && !routeSelector.hasNext()) // No more routes to attempt.
-        || !isRecoverable(e)
+        || !isRecoverable(e, routeException)
         || !canRetryRequestBody) {
       return false;
     }
@@ -324,16 +324,16 @@ public final class StreamAllocation {
     return true;
   }
 
-  private boolean isRecoverable(IOException e) {
+  private boolean isRecoverable(IOException e, boolean routeException) {
     // If there was a protocol problem, don't recover.
     if (e instanceof ProtocolException) {
       return false;
     }
 
-    // If there was an interruption don't recover, but if there was a timeout
+    // If there was an interruption don't recover, but if there was a timeout connecting to a route
     // we should try the next route (if there is one).
     if (e instanceof InterruptedIOException) {
-      return e instanceof SocketTimeoutException;
+      return e instanceof SocketTimeoutException && routeException;
     }
 
     // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
