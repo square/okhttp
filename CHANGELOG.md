@@ -1,6 +1,322 @@
 Change Log
 ==========
 
+## Version 3.2.0
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+ *  Fix: Make IPv6 request lines consistent with Firefox and Chrome.
+ *  Fix: Recover gracefully when trimming the response cache fails.
+ *  New: Add multiple path segments using a single string in `HttpUrl.Builder`.
+ *  New: Support SHA-256 pins in certificate pinner.
+
+
+## Version 3.1.2
+
+_2016-02-10_
+
+ *  Fix: Don’t crash when finding the trust manager on Robolectric. We attempted
+    to detect the host platform and got confused because Robolectric looks like
+    Android but isn’t!
+ *  Fix: Change `CertificatePinner` to skip sanitizing the certificate chain
+    when no certificates were pinned. This avoids an SSL failure in insecure
+    “trust everyone” configurations, such as when talking to a development
+    HTTPS server that has a self-signed certificate.
+
+
+## Version 3.1.1
+
+_2016-02-07_
+
+ *  Fix: Don't crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.
+ *  Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.
+
+
+## Version 3.1.0
+
+_2016-02-06_
+
+ *  New: WebSockets now defer some writes. This should improve performance for
+    some applications.
+ *  New: Override `equals()` and `hashCode()` in our new cookie class. This
+    class now defines equality by value rather than by reference.
+ *  New: Handle 408 responses by retrying the request. This allows servers to
+    direct clients to retry rather than failing permanently.
+ *  New: Expose the framed protocol in `Connection`. Previously this would
+    return the application-layer protocol (HTTP/1.1 or HTTP/1.0); now it always
+    returns the wire-layer protocol (HTTP/2, SPDY/3.1, or HTTP/1.1).
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+ *  Fix: Silently ignore unknown HTTP/2 settings. Previously this would cause
+    the entire connection to fail.
+ *  Fix: Don’t crash on unexpected charsets in the logging interceptor.
+ *  Fix: `OkHttpClient` is now non-final for the benefit of mocking frameworks.
+    Mocking sophisticated classes like `OkHttpClient` is fragile and you
+    shouldn’t do it. But if that’s how you want to live your life we won’t stand
+    in your way!
+
+
+## Version 3.0.1
+
+_2016-01-14_
+
+ *  Rollback OSGi support. This was causing library jars to include more classes
+    than expected, which interfered with Gradle builds.
+
+
+## Version 3.0.0
+
+_2016-01-13_
+
+This release commits to a stable 3.0 API. Read the 3.0.0-RC1 changes for advice
+on upgrading from 2.x to 3.x.
+
+ *  **The `Callback` interface now takes a `Call`**. This makes it easier to
+    check if the call was canceled from within the callback. When migrating
+    async calls to this new API, `Call` is now the first parameter for both
+    `onResponse()` and `onFailure()`.
+ *  Fix: handle multiple cookies in `JavaNetCookieJar` on Android.
+ *  Fix: improve the default HTTP message in MockWebServer responses.
+ *  Fix: don't leak file handles when a conditional GET throws.
+ *  Fix: Use charset specified by the request body content type in OkHttp's
+    logging interceptor.
+ *  Fix: Don't eagerly release pools on cache hits.
+ *  New: Make OkHttp OSGi ready.
+ *  New: Add already-implemented interfaces Closeable and Flushable to the cache.
+
+## Version 3.0.0-RC1
+
+_2016-01-02_
+
+OkHttp 3 is a major release focused on API simplicity and consistency. The API
+changes are numerous but most are cosmetic. Applications should be able to
+upgrade from the 2.x API to the 3.x API mechanically and without risk.
+
+Because the release includes breaking API changes, we're changing the project's
+package name from `com.squareup.okhttp` to `okhttp3`. This should make it
+possible for large applications to migrate incrementally. The Maven group ID
+is now `com.squareup.okhttp3`. For an explanation of this strategy, see Jake
+Wharton's post, [Java Interoperability Policy for Major Version
+Updates][major_versions].
+
+This release obsoletes OkHttp 2.x, and all code that uses OkHttp's
+`com.squareup.okhttp` package should upgrade to the `okhttp3` package. Libraries
+that depend on OkHttp should upgrade quickly to prevent applications from being
+stuck on the old version.
+
+ *  **There is no longer a global singleton connection pool.** In OkHttp 2.x,
+    all `OkHttpClient` instances shared a common connection pool by default.
+    In OkHttp 3.x, each new `OkHttpClient` gets its own private connection pool.
+    Applications should avoid creating many connection pools as doing so
+    prevents connection reuse. Each connection pool holds its own set of
+    connections alive so applications that have many pools also risk exhausting
+    memory!
+
+    The best practice in OkHttp 3 is to create a single OkHttpClient instance
+    and share it throughout the application. Requests that needs a customized
+    client should call `OkHttpClient.newBuilder()` on that shared instance.
+    This allows customization without the drawbacks of separate connection
+    pools.
+
+ *  **OkHttpClient is now stateless.** In the 2.x API `OkHttpClient` had getters
+    and setters. Internally each request was forced to make its own complete
+    snapshot of the `OkHttpClient` instance to defend against racy configuration
+    changes. In 3.x, `OkHttpClient` is now stateless and has a builder. Note
+    that this class is not strictly immutable as it has stateful members like
+    the connection pool and cache.
+
+ *  **Get and Set prefixes are now avoided.** With ubiquitous builders
+    throughout OkHttp these accessor prefixes aren't necessary. Previously
+    OkHttp used _get_ and _set_ prefixes sporadically which make the API
+    inconsistent and awkward to explore.
+
+ *  **OkHttpClient now implements the new `Call.Factory` interface.** This
+    interface will make your code easier to test. When you test code that makes
+    HTTP requests, you can use this interface to replace the real `OkHttpClient`
+    with your own mocks or fakes.
+
+    The interface will also let you use OkHttp's API with another HTTP client's
+    implementation. This is useful in sandboxed environments like Google App
+    Engine.
+
+ *  **OkHttp now does cookies.** We've replaced `java.net.CookieHandler` with
+    a new interface, `CookieJar` and added our own `Cookie` model class. This
+    new cookie follows the latest RFC and supports the same cookie attributes
+    as modern web browsers.
+
+ *  **Form and Multipart bodies are now modeled.** We've replaced the opaque
+    `FormEncodingBuilder` with the more powerful `FormBody` and
+    `FormBody.Builder` combo. Similarly we've upgraded `MultipartBuilder` into
+    `MultipartBody`, `MultipartBody.Part`, and `MultipartBody.Builder`.
+
+ *  **The Apache HTTP client and HttpURLConnection APIs are deprecated.** They
+    continue to work as they always have, but we're moving everything to the new
+    OkHttp 3 API. The `okhttp-apache` and `okhttp-urlconnection` modules should
+    be only be used to accelerate a transition to OkHttp's request/response API.
+    These deprecated modules will be dropped in an upcoming OkHttp 3.x release.
+
+ *  **Canceling batches of calls is now the application's responsibility.**
+    The API to cancel calls by tag has been removed and replaced with a more
+    general mechanism. The dispatcher now exposes all in-flight calls via its
+    `runningCalls()` and `queuedCalls()` methods. You can write code that
+    selects calls by tag, host, or whatever, and invokes `Call.cancel()` on the
+    ones that are no longer necessary.
+
+ *  **OkHttp no longer uses the global `java.net.Authenticator` by default.**
+    We've changed our `Authenticator` interface to authenticate web and proxy
+    authentication failures through a single method. An adapter for the old
+    authenticator is available in the `okhttp-urlconnection` module.
+
+ *  Fix: Don't throw `IOException` on `ResponseBody.contentLength()` or `close()`.
+ *  Fix: Never throw converting an `HttpUrl` to a `java.net.URI`. This changes
+    the `uri()` method to handle malformed percent-escapes and characters
+    forbidden by `URI`.
+ *  Fix: When a connect times out, attempt an alternate route. Previously route
+    selection was less efficient when differentiating failures.
+ *  New: `Response.peekBody()` lets you access the response body without
+    consuming it. This may be handy for interceptors!
+ *  New: `HttpUrl.newBuilder()` resolves a link to a builder.
+ *  New: Add the TLS version to the `Handshake`.
+ *  New: Drop `Request.uri()` and `Request#urlString()`. Just use
+    `Request.url().uri()` and `Request.url().toString()`.
+ *  New: Add URL to HTTP response logging.
+ *  New: Make `HttpUrl` the blessed URL method of `Request`.
+
+
+## Version 2.7.5
+
+_2016-02-25_
+
+ *  Fix: Change the certificate pinner to always build full chains. This
+    prevents a potential crash when using certificate pinning with the Google
+    Play Services security provider.
+
+
+## Version 2.7.4
+
+_2016-02-07_
+
+ *  Fix: Don't crash when finding the trust manager if the Play Services (GMS)
+    security provider is installed.
+ *  Fix: The previous release introduced a performance regression on Android,
+    caused by looking up CA certificates. This is now fixed.
+
+
+## Version 2.7.3
+
+_2016-02-06_
+
+ *  Fix: Permit the trusted CA root to be pinned by `CertificatePinner`.
+
+
+## Version 2.7.2
+
+_2016-01-07_
+
+ *  Fix: Don't eagerly release stream allocations on cache hits. We might still
+    need them to handle redirects.
+
+
+## Version 2.7.1
+
+_2016-01-01_
+
+ *  Fix: Don't do a health check on newly-created connections. This is
+    unnecessary work that could put the client in an inconsistent state if the
+    health check fails.
+
+
+## Version 2.7.0
+
+_2015-12-13_
+
+ *  **Rewritten connection management.** Previously OkHttp's connection pool
+    managed both idle and active connections for HTTP/2, but only idle
+    connections for HTTP/1.x. With this update the connection pool manages both
+    idle and active connections for everything. OkHttp now detects and warns on
+    connections that were allocated but never released, and will enforce HTTP/2
+    stream limits. This update also fixes `Call.cancel()` to not do I/O on the
+    calling thread.
+ *  Fix: Don't log gzipped data in the logging interceptor.
+ *  Fix: Don't resolve DNS addresses when connecting through a SOCKS proxy.
+ *  Fix: Drop the synthetic `OkHttp-Selected-Protocol` response header.
+ *  Fix: Support 204 and 205 'No Content' replies in the logging interceptor.
+ *  New: Add `Call.isExecuted()`.
+
+
+## Version 2.6.0
+
+_2015-11-22_
+
+ *  **New Logging Interceptor.** The `logging-interceptor` subproject offers
+    simple request and response logging. It may be configured to log headers and
+    bodies for debugging. It requires this Maven dependency:
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okhttp</groupId>
+       <artifactId>logging-interceptor</artifactId>
+       <version>2.6.0</version>
+     </dependency>
+     ```
+
+    Configure basic logging like this:
+
+    ```java
+    HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor();
+    loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
+    client.networkInterceptors().add(loggingInterceptor);
+    ```
+
+    **Warning:** Avoid `Level.HEADERS` and `Level.BODY` in production because
+    they could leak passwords and other authentication credentials to insecure
+    logs.
+
+ *  **WebSocket API now uses `RequestBody` and `ResponseBody` for messages.**
+    This is a backwards-incompatible API change.
+
+ *  **The DNS service is now pluggable.** In some situations this may be useful
+    to manually prioritize specific IP addresses.
+
+ *  Fix: Don't throw when converting an `HttpUrl` to a `java.net.URI`.
+    Previously URLs with special characters like `|` and `[` would break when
+    subjected to URI’s overly-strict validation.
+ *  Fix: Don't re-encode `+` as `%20` in encoded URL query strings. OkHttp
+    prefers `%20` when doing its own encoding, but will retain `+` when that is
+    provided.
+ *  Fix: Enforce that callers call `WebSocket.close()` on IO errors. Error
+    handling in WebSockets is significantly improved.
+ *  Fix: Don't use SPDY/3 style header concatenation for HTTP/2 request headers.
+    This could have corrupted requests where multiple headers had the same name,
+    as in cookies.
+ *  Fix: Reject bad characters in the URL hostname. Previously characters like
+    `\0` would cause a late crash when building the request.
+ *  Fix: Allow interceptors to change the request method.
+ *  Fix: Don’t use the request's `User-Agent` or `Proxy-Authorization` when
+    connecting to an HTTPS server via an HTTP tunnel. The `Proxy-Authorization`
+    header was being leaked to the origin server.
+ *  Fix: Digits may be used in a URL scheme.
+ *  Fix: Improve connection timeout recovery.
+ *  Fix: Recover from `getsockname` crashes impacting Android releases prior to
+    4.2.2.
+ *  Fix: Drop partial support for HTTP/1.0. Previously OkHttp would send
+    `HTTP/1.0` on connections after seeing a response with `HTTP/1.0`. The fixed
+    behavior is consistent with Firefox and Chrome.
+ *  Fix: Allow a body in `OPTIONS` requests.
+ *  Fix: Don't percent-encode non-ASCII characters in URL fragments.
+ *  Fix: Handle null fragments.
+ *  Fix: Don’t crash on interceptors that throw `IOException` before a
+    connection is attempted.
+ *  New: Support [WebDAV][webdav] HTTP methods.
+ *  New: Buffer WebSocket frames for better performance.
+ *  New: Drop support for `TLS_DHE_DSS_WITH_AES_128_CBC_SHA`, our only remaining
+    DSS cipher suite. This is consistent with Firefox and Chrome which have also
+    dropped these cipher suite.
+
 ## Version 2.5.0
 
 _2015-08-25_
@@ -22,7 +338,7 @@ _2015-08-25_
     where changing a URL from `http` to `https` would leave it on port 80.
 
  *  **Okio has been updated to 1.6.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -81,7 +397,7 @@ _2015-05-16_
     Both are permitted-by-spec, but `%20` requires fewer special cases.
 
  *  **Okio has been updated to 1.4.0.**
-     ```
+     ```xml
      <dependency>
        <groupId>com.squareup.okio</groupId>
        <artifactId>okio</artifactId>
@@ -93,7 +409,7 @@ _2015-05-16_
     Passing null will now fail for request methods that require a body. Instead
     use an empty body such as this one:
 
-    ```
+    ```java
         RequestBody.create(null, new byte[0]);
     ```
 
@@ -102,7 +418,7 @@ _2015-05-16_
    your app. You'll need to pin both the top-level domain and the `*.` domain
    for full coverage.
 
-    ```
+    ```java
      client.setCertificatePinner(new CertificatePinner.Builder()
          .add("publicobject.com",   "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
          .add("*.publicobject.com", "sha1/DmxUShsZuNiqPQsX2Oi9uv2sCnw=")
@@ -159,7 +475,7 @@ _2015-03-16_
 
  *  **Okio updated to 1.3.0.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -264,14 +580,14 @@ _2014-11-04_
 
     To disable TLS fallback:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT));
     ```
 
     To disable cleartext connections, permitting `https` URLs only:
 
-    ```
+    ```java
     client.setConnectionSpecs(Arrays.asList(
         ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
     ```
@@ -305,7 +621,7 @@ _2014-11-04_
 
  *  **Okio updated to 1.0.1.**
 
-    ```
+    ```xml
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
@@ -385,7 +701,7 @@ advice on upgrading from 1.x to 2.x.
     agent.
  *  New: Guava-like API to create headers:
 
-    ```
+    ```java
     Headers headers = Headers.of(name1, value1, name2, value2, ...).
     ```
 
@@ -428,7 +744,7 @@ in addition to synchronous blocking calls.
     add the `okhttp-urlconnection` module to your project and use the
     `OkUrlFactory` to create new instances of `HttpURLConnection`:
 
-    ```
+    ```java
     // OkHttp 1.x:
     HttpURLConnection connection = client.open(url);
 
@@ -683,4 +999,6 @@ _2013-05-06_
 
 Initial release.
 
- [brick]: (https://noncombatant.org/2015/05/01/about-http-public-key-pinning/)
+ [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
+ [webdav]: https://tools.ietf.org/html/rfc4918
+ [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/

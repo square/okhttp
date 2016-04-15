@@ -9,9 +9,9 @@
     <version>7</version>
   </parent>
 
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>2.6.0-SNAPSHOT</version>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -52,7 +52,7 @@
     <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
     <apache.http.version>4.2.2</apache.http.version>
-    <airlift.version>0.6</airlift.version>
+    <airlift.version>0.7</airlift.version>
     <guava.version>16.0</guava.version>
     <android.version>4.1.1.4</android.version>
 
@@ -150,7 +150,7 @@
                 -->
               <property>
                 <name>listener</name>
-                <value>com.squareup.okhttp.testing.InstallUncaughtExceptionHandlerListener</value>
+                <value>okhttp3.testing.InstallUncaughtExceptionHandlerListener</value>
               </property>
             </properties>
           </configuration>
@@ -237,7 +237,9 @@
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar
+        </bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
@@ -266,7 +268,9 @@
         <jdk>1.8</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar
+        </bootclasspathPrefix>
       </properties>
       <build>
         <pluginManagement>
