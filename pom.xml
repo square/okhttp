@@ -51,6 +51,7 @@
     <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
     <bouncycastle.version>1.50</bouncycastle.version>
     <gson.version>2.2.3</gson.version>
+    <fastjson.version>1.2.9</fastjson.version>
     <apache.http.version>4.2.2</apache.http.version>
     <airlift.version>0.7</airlift.version>
     <guava.version>16.0</guava.version>
@@ -100,6 +101,11 @@
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>${gson.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.alibaba</groupId>
+        <artifactId>fastjson</artifactId>
+        <version>${fastjson.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
