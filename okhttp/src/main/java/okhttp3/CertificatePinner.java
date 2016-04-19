@@ -50,8 +50,9 @@ import okio.ByteString;
  *     CertificatePinner certificatePinner = new CertificatePinner.Builder()
  *         .add(hostname, "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
  *         .build();
- *     OkHttpClient client = new OkHttpClient();
- *     client.setCertificatePinner(certificatePinner);
+ *     OkHttpClient client = OkHttpClient.Builder()
+ *         .certificatePinner(certificatePinner)
+ *         .build();
  *
  *     Request request = new Request.Builder()
  *         .url("https://" + hostname)
