@@ -57,6 +57,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class Main extends HelpOption implements Runnable {
   static final String NAME = "okcurl";
   static final int DEFAULT_TIMEOUT = -1;
+  private static Logger frameLogger;
 
   static Main fromArgs(String... args) {
     return SingleCommand.singleCommand(Main.class).parse(args);
@@ -270,8 +271,8 @@ public class Main extends HelpOption implements Runnable {
   }
 
   private static void enableHttp2FrameLogging() {
-    Logger logger = Logger.getLogger(Http2.class.getName() + "$FrameLogger");
-    logger.setLevel(Level.FINE);
+    frameLogger = Logger.getLogger(Http2.class.getName() + "$FrameLogger");
+    frameLogger.setLevel(Level.FINE);
     ConsoleHandler handler = new ConsoleHandler();
     handler.setLevel(Level.FINE);
     handler.setFormatter(new SimpleFormatter() {
@@ -279,6 +280,6 @@ public class Main extends HelpOption implements Runnable {
         return String.format("%s%n", record.getMessage());
       }
     });
-    logger.addHandler(handler);
+    frameLogger.addHandler(handler);
   }
 }
