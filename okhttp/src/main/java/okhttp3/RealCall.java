@@ -96,7 +96,7 @@ final class RealCall implements Call {
     private final boolean forWebSocket;
 
     private AsyncCall(Callback responseCallback, boolean forWebSocket) {
-      super("OkHttp %s", originalRequest.url().toString());
+      super("OkHttp %s", redactedUrl().toString());
       this.responseCallback = responseCallback;
       this.forWebSocket = forWebSocket;
     }
@@ -151,8 +151,11 @@ final class RealCall implements Call {
    */
   private String toLoggableString() {
     String string = canceled ? "canceled call" : "call";
-    HttpUrl redactedUrl = originalRequest.url().resolve("/...");
-    return string + " to " + redactedUrl;
+    return string + " to " + redactedUrl();
+  }
+
+  HttpUrl redactedUrl() {
+    return originalRequest.url().resolve("/...");
   }
 
   private Response getResponseWithInterceptorChain(boolean forWebSocket) throws IOException {
