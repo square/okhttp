@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy.hpackjson;
+package okhttp3.internal.framed.hpackjson;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import okio.Okio;
 
 /**
  * Utilities for reading HPACK tests.
@@ -36,20 +35,25 @@ public final class HpackJsonUtil {
 
   private static final String STORY_RESOURCE_FORMAT = "/hpack-test-case/%s/story_%02d.json";
 
-  private static final Gson GSON = new GsonBuilder().create();
+  private static final Moshi MOSHI = new Moshi.Builder().build();
+  private static final JsonAdapter<Story> STORY_JSON_ADAPTER = MOSHI.adapter(Story.class);
 
   private static Story readStory(InputStream jsonResource) throws IOException {
-    return GSON.fromJson(new InputStreamReader(jsonResource, "UTF-8"), Story.class);
+    return STORY_JSON_ADAPTER.fromJson(Okio.buffer(Okio.source(jsonResource)));
+  }
+
+  private static Story readStory(File file) throws IOException {
+    return STORY_JSON_ADAPTER.fromJson(Okio.buffer(Okio.source(file)));
   }
 
   /** Iterate through the hpack-test-case resources, only picking stories for the current draft. */
   public static String[] storiesForCurrentDraft() throws URISyntaxException {
     File testCaseDirectory = new File(HpackJsonUtil.class.getResource("/hpack-test-case").toURI());
-    List<String> storyNames = new ArrayList<String>();
+    List<String> storyNames = new ArrayList<>();
     for (File path : testCaseDirectory.listFiles()) {
       if (path.isDirectory() && Arrays.asList(path.list()).contains("story_00.json")) {
         try {
-          Story firstStory = readStory(new FileInputStream(new File(path, "story_00.json")));
+          Story firstStory = readStory(new File(path, "story_00.json"));
           if (firstStory.getDraft() >= BASE_DRAFT) {
             storyNames.add(path.getName());
           }

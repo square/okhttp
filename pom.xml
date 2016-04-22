@@ -43,18 +43,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <java.version>1.7</java.version>
-    <okio.version>1.6.0</okio.version>
+    <airlift.version>0.7</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
     <!-- ALPN library targeted to Java 8 update 25. -->
     <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
-    <bouncycastle.version>1.50</bouncycastle.version>
-    <gson.version>2.2.3</gson.version>
-    <apache.http.version>4.2.2</apache.http.version>
-    <airlift.version>0.7</airlift.version>
-    <guava.version>16.0</guava.version>
     <android.version>4.1.1.4</android.version>
+    <apache.http.version>4.2.2</apache.http.version>
+    <bouncycastle.version>1.50</bouncycastle.version>
+    <guava.version>16.0</guava.version>
+    <java.version>1.7</java.version>
+    <moshi.version>1.1.0</moshi.version>
+    <okio.version>1.6.0</okio.version>
 
     <!-- Test Dependencies -->
     <junit.version>4.11</junit.version>
@@ -97,11 +97,6 @@
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${apache.http.version}</version>
@@ -120,6 +115,11 @@
         <groupId>com.google.android</groupId>
         <artifactId>android</artifactId>
         <version>${android.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.moshi</groupId>
+        <artifactId>moshi</artifactId>
+        <version>${moshi.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

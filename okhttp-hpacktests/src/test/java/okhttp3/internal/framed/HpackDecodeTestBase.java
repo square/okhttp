@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy;
+package okhttp3.internal.framed;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import okhttp3.internal.spdy.hpackjson.Case;
-import okhttp3.internal.spdy.hpackjson.HpackJsonUtil;
-import okhttp3.internal.spdy.hpackjson.Story;
+import okhttp3.internal.framed.hpackjson.Case;
+import okhttp3.internal.framed.hpackjson.HpackJsonUtil;
+import okhttp3.internal.framed.hpackjson.Story;
 import okio.Buffer;
 
 import static org.junit.Assert.assertEquals;

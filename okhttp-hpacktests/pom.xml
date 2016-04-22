@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.squareup.okhttp3</groupId>
     <artifactId>parent</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>okhttp-hpacktests</artifactId>
@@ -18,6 +18,10 @@
     <dependency>
       <groupId>com.squareup.okio</groupId>
       <artifactId>okio</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.moshi</groupId>
+      <artifactId>moshi</artifactId>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -40,12 +44,6 @@
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-    </dependency>
-    <!--  Gson: Java to Json conversion -->
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
 

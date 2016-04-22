@@ -15,7 +15,9 @@
  */
 package okhttp3.recipes;
 
-import com.google.gson.Gson;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import com.squareup.moshi.Types;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,12 +44,15 @@ public final class RequestBodyCompression {
   private final OkHttpClient client = new OkHttpClient.Builder()
       .addInterceptor(new GzipRequestInterceptor())
       .build();
+  private final Moshi moshi = new Moshi.Builder().build();
+  private final JsonAdapter<Map<String, String>> mapJsonAdapter = moshi.adapter(
+      Types.newParameterizedType(Map.class, String.class, String.class));
 
   public void run() throws Exception {
     Map<String, String> requestBody = new LinkedHashMap<>();
     requestBody.put("longUrl", "https://publicobject.com/2014/12/04/html-formatting-javadocs/");
     RequestBody jsonRequestBody = RequestBody.create(
-        MEDIA_TYPE_JSON, new Gson().toJson(requestBody));
+        MEDIA_TYPE_JSON, mapJsonAdapter.toJson(requestBody));
     Request request = new Request.Builder()
         .url("https://www.googleapis.com/urlshortener/v1/url?key=" + GOOGLE_API_KEY)
         .post(jsonRequestBody)
