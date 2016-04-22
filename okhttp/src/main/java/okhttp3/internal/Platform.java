@@ -28,6 +28,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
+import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
@@ -59,6 +60,8 @@ import static okhttp3.internal.Internal.logger;
  * unstable.
  *
  * Supported on OpenJDK 7 and 8 (via the JettyALPN-boot library).
+ *
+ * Supported on OpenJDK 9 via SSLParameters and SSLSocket features.
  *
  * <h3>Trust Manager Extraction</h3>
  *
@@ -125,6 +128,16 @@ public class Platform {
     System.out.println(message);
   }
 
+  public static List<String> alpnProtocolNames(List<Protocol> protocols) {
+    List<String> names = new ArrayList<>(protocols.size());
+    for (int i = 0, size = protocols.size(); i < size; i++) {
+      Protocol protocol = protocols.get(i);
+      if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
+      names.add(protocol.toString());
+    }
+    return names;
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     // Attempt to find Android 2.3+ APIs.
@@ -157,6 +170,18 @@ public class Platform {
           getAlpnSelectedProtocol, setAlpnProtocols);
     } catch (ClassNotFoundException ignored) {
       // This isn't an Android runtime.
+    }
+
+
+    // Find JDK 9 new methods
+    try {
+      Method setProtocolMethod =
+          SSLParameters.class.getMethod("setApplicationProtocols", String[].class);
+      Method getProtocolMethod = SSLSocket.class.getMethod("getApplicationProtocol");
+
+      return new Jdk9Platform(setProtocolMethod, getProtocolMethod);
+    } catch (NoSuchMethodException ignored) {
+      // pre JDK 9
     }
 
     // Find Jetty's ALPN extension for OpenJDK.
@@ -276,6 +301,54 @@ public class Platform {
   }
 
   /**
+   * OpenJDK 9+.
+   */
+  private static final class Jdk9Platform extends Platform {
+    private final Method setProtocolMethod;
+    private final Method getProtocolMethod;
+
+    public Jdk9Platform(Method setProtocolMethod, Method getProtocolMethod) {
+      this.setProtocolMethod = setProtocolMethod;
+      this.getProtocolMethod = getProtocolMethod;
+    }
+
+    @Override
+    public void configureTlsExtensions(SSLSocket sslSocket, String hostname,
+                                       List<Protocol> protocols) {
+      try {
+        SSLParameters sslParameters = sslSocket.getSSLParameters();
+
+        List<String> names = alpnProtocolNames(protocols);
+
+        setProtocolMethod.invoke(sslParameters,
+            new Object[]{names.toArray(new String[names.size()])});
+
+        sslSocket.setSSLParameters(sslParameters);
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw new AssertionError();
+      }
+    }
+
+    @Override
+    public String getSelectedProtocol(SSLSocket socket) {
+      try {
+        String protocol = (String) getProtocolMethod.invoke(socket);
+
+        // SSLSocket.getApplicationProtocol returns "" if application protocols values will not
+        // be used. Observed if you didn't specify SSLParameters.setApplicationProtocols
+        if (protocol == null || protocol.equals("")) {
+          return null;
+        }
+
+        return protocol;
+      } catch (IllegalAccessException | InvocationTargetException e) {
+        throw new AssertionError();
+      }
+    }
+  }
+
+
+  /**
    * OpenJDK 7+ with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
    */
   private static class JdkWithJettyBootPlatform extends Platform {
@@ -296,12 +369,8 @@ public class Platform {
 
     @Override public void configureTlsExtensions(
         SSLSocket sslSocket, String hostname, List<Protocol> protocols) {
-      List<String> names = new ArrayList<>(protocols.size());
-      for (int i = 0, size = protocols.size(); i < size; i++) {
-        Protocol protocol = protocols.get(i);
-        if (protocol == Protocol.HTTP_1_0) continue; // No HTTP/1.0 for ALPN.
-        names.add(protocol.toString());
-      }
+      List<String> names = alpnProtocolNames(protocols);
+
       try {
         Object provider = Proxy.newProxyInstance(Platform.class.getClassLoader(),
             new Class[] {clientProviderClass, serverProviderClass}, new JettyNegoProvider(names));
