@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy;
+package okhttp3.internal.framed;
 
 import java.util.Collection;
-import okhttp3.internal.spdy.hpackjson.Case;
-import okhttp3.internal.spdy.hpackjson.Story;
+import okhttp3.internal.framed.hpackjson.Case;
+import okhttp3.internal.framed.hpackjson.Story;
 import okio.Buffer;
 import org.junit.Test;
 import org.junit.runner.RunWith;

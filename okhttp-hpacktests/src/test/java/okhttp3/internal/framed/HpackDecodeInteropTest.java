@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy;
+package okhttp3.internal.framed;
 
 import java.util.Collection;
-import okhttp3.internal.spdy.hpackjson.Story;
+import okhttp3.internal.framed.hpackjson.Story;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static okhttp3.internal.spdy.hpackjson.HpackJsonUtil.storiesForCurrentDraft;
+import static okhttp3.internal.framed.hpackjson.HpackJsonUtil.storiesForCurrentDraft;
 
 @RunWith(Parameterized.class)
 public class HpackDecodeInteropTest extends HpackDecodeTestBase {

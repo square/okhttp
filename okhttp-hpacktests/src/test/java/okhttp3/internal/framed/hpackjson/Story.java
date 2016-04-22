@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy.hpackjson;
+package okhttp3.internal.framed.hpackjson;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Representation of one story, a set of request headers to encode or decode. This class is used
- * reflectively with Gson to parse stories from files.
+ * reflectively with Moshi to parse stories from files.
  */
 public class Story implements Cloneable {
 

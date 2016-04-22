@@ -15,16 +15,18 @@
  */
 package okhttp3.recipes;
 
-import com.google.gson.Gson;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import java.io.IOException;
 import java.util.Map;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public final class ParseResponseWithGson {
+public final class ParseResponseWithMoshi {
   private final OkHttpClient client = new OkHttpClient();
-  private final Gson gson = new Gson();
+  private final Moshi moshi = new Moshi.Builder().build();
+  private final JsonAdapter<Gist> gistJsonAdapter = moshi.adapter(Gist.class);
 
   public void run() throws Exception {
     Request request = new Request.Builder()
@@ -33,7 +35,7 @@ public final class ParseResponseWithGson {
     Response response = client.newCall(request).execute();
     if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-    Gist gist = gson.fromJson(response.body().charStream(), Gist.class);
+    Gist gist = gistJsonAdapter.fromJson(response.body().source());
     response.body().close();
 
     for (Map.Entry<String, GistFile> entry : gist.files.entrySet()) {
@@ -51,6 +53,6 @@ public final class ParseResponseWithGson {
   }
 
   public static void main(String... args) throws Exception {
-    new ParseResponseWithGson().run();
+    new ParseResponseWithMoshi().run();
   }
 }

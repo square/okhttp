@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package okhttp3.internal.spdy.hpackjson;
+package okhttp3.internal.framed.hpackjson;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -24,7 +24,7 @@ import okio.ByteString;
 
 /**
  * Representation of an individual case (set of headers and wire format). There are many cases for a
- * single story.  This class is used reflectively with Gson to parse stories.
+ * single story.  This class is used reflectively with Moshi to parse stories.
  */
 public class Case implements Cloneable {
 

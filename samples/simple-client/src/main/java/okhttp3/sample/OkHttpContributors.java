@@ -1,8 +1,8 @@
 package okhttp3.sample;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import java.io.Reader;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
+import com.squareup.moshi.Types;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -13,10 +13,9 @@ import okhttp3.ResponseBody;
 
 public class OkHttpContributors {
   private static final String ENDPOINT = "https://api.github.com/repos/square/okhttp/contributors";
-  private static final Gson GSON = new Gson();
-  private static final TypeToken<List<Contributor>> CONTRIBUTORS =
-      new TypeToken<List<Contributor>>() {
-      };
+  private static final Moshi MOSHI = new Moshi.Builder().build();
+  private static final JsonAdapter<List<Contributor>> CONTRIBUTORS_JSON_ADAPTER = MOSHI.adapter(
+      Types.newParameterizedType(List.class, Contributor.class));
 
   static class Contributor {
     String login;
@@ -36,8 +35,7 @@ public class OkHttpContributors {
 
     // Deserialize HTTP response to concrete type.
     ResponseBody body = response.body();
-    Reader charStream = body.charStream();
-    List<Contributor> contributors = GSON.fromJson(charStream, CONTRIBUTORS.getType());
+    List<Contributor> contributors = CONTRIBUTORS_JSON_ADAPTER.fromJson(body.source());
     body.close();
 
     // Sort list by the most contributions.
