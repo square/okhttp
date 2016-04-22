@@ -43,6 +43,8 @@ import static okhttp3.internal.Internal.logger;
  *
  * <p>Supported on Android 2.3+.
  *
+ * Supported on OpenJDK 7+
+ *
  * <h3>Session Tickets</h3>
  *
  * <p>Supported on Android 2.3+.
