@@ -67,6 +67,10 @@ import static okhttp3.internal.Internal.logger;
  *
  * <p>Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
  * manager that was used to create an {@link SSLSocketFactory}.
+ *
+ * <h3>Android Cleartext Permit Detection</h3>
+ *
+ * <p>Supported on Android 6.0+ via {@code NetworkSecurityPolicy}.
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
@@ -126,6 +130,10 @@ public class Platform {
 
   public void log(String message) {
     System.out.println(message);
+  }
+
+  public boolean isCleartextTrafficPermitted() {
+    return true;
   }
 
   public static List<String> alpnProtocolNames(List<Protocol> protocols) {
@@ -298,6 +306,25 @@ public class Platform {
         } while (i < newline);
       }
     }
+
+    @Override public boolean isCleartextTrafficPermitted() {
+      try {
+        Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
+        Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
+        Object networkSecurityPolicy = getInstanceMethod.invoke(null);
+        Method isCleartextTrafficPermittedMethod = networkPolicyClass
+            .getMethod("isCleartextTrafficPermitted");
+        boolean cleartextPermitted = (boolean) isCleartextTrafficPermittedMethod
+            .invoke(networkSecurityPolicy);
+        return cleartextPermitted;
+      } catch (ClassNotFoundException e) {
+        return super.isCleartextTrafficPermitted();
+      } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException e) {
+        throw new AssertionError();
+      }
+    }
+
   }
 
   /**
