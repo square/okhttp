@@ -67,6 +67,10 @@ import static okhttp3.internal.Internal.logger;
  *
  * <p>Supported on Android 2.3+ and OpenJDK 7+. There are no public APIs to recover the trust
  * manager that was used to create an {@link SSLSocketFactory}.
+ *
+ * <h3>Android Cleartext Permit Detection</h3>
+ *
+ * <p>Supported on Android 6.0+ via {@code NetworkSecurityPolicy}.
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
