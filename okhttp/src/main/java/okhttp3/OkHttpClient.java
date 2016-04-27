@@ -65,10 +65,16 @@ public class OkHttpClient implements Cloneable, Call.Factory {
   private static final List<Protocol> DEFAULT_PROTOCOLS = Util.immutableList(
       Protocol.HTTP_2, Protocol.SPDY_3, Protocol.HTTP_1_1);
 
-  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS = Util.immutableList(
-      ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT);
+  private static final List<ConnectionSpec> DEFAULT_CONNECTION_SPECS;
 
   static {
+    List<ConnectionSpec> connSpecs = new ArrayList<>(Arrays.asList(ConnectionSpec.MODERN_TLS,
+        ConnectionSpec.COMPATIBLE_TLS));
+    if (Platform.get().isCleartextTrafficPermitted()) {
+      connSpecs.add(ConnectionSpec.CLEARTEXT);
+    }
+    DEFAULT_CONNECTION_SPECS = Util.immutableList(connSpecs);
+
     Internal.instance = new Internal() {
       @Override public void addLenient(Headers.Builder builder, String line) {
         builder.addLenient(line);

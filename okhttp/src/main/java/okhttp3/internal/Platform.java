@@ -128,6 +128,10 @@ public class Platform {
     System.out.println(message);
   }
 
+  public boolean isCleartextTrafficPermitted() {
+    return true;
+  }
+
   public static List<String> alpnProtocolNames(List<Protocol> protocols) {
     List<String> names = new ArrayList<>(protocols.size());
     for (int i = 0, size = protocols.size(); i < size; i++) {
@@ -298,6 +302,24 @@ public class Platform {
         } while (i < newline);
       }
     }
+
+    @Override public boolean isCleartextTrafficPermitted() {
+      try {
+        Class<?> networkPolicyClass = Class.forName("android.security.NetworkSecurityPolicy");
+        Method getInstanceMethod = networkPolicyClass.getMethod("getInstance");
+        Object networkSecurityPolicy = getInstanceMethod.invoke(null);
+        Method isCleartextTrafficPermittedMethod = networkPolicyClass
+            .getMethod("isCleartextTrafficPermitted");
+        boolean cleartextPermitted = (boolean) isCleartextTrafficPermittedMethod
+            .invoke(networkSecurityPolicy);
+        return cleartextPermitted;
+      } catch (ClassNotFoundException | NoSuchMethodException e) {
+        return super.isCleartextTrafficPermitted();
+      } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        throw new AssertionError();
+      }
+    }
+
   }
 
   /**
