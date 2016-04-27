@@ -317,9 +317,10 @@ public class Platform {
         boolean cleartextPermitted = (boolean) isCleartextTrafficPermittedMethod
             .invoke(networkSecurityPolicy);
         return cleartextPermitted;
-      } catch (ClassNotFoundException | NoSuchMethodException e) {
+      } catch (ClassNotFoundException e) {
         return super.isCleartextTrafficPermitted();
-      } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+      } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
+          | InvocationTargetException e) {
         throw new AssertionError();
       }
     }
