@@ -45,6 +45,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 import okhttp3.internal.framed.Http2;
 import okhttp3.internal.http.StatusLine;
 import okio.BufferedSource;
@@ -277,7 +278,7 @@ public class Main extends HelpOption implements Runnable {
     handler.setLevel(Level.FINE);
     handler.setFormatter(new SimpleFormatter() {
       @Override public String format(LogRecord record) {
-        return String.format("%s%n", record.getMessage());
+        return Util.format("%s%n", record.getMessage());
       }
     });
     frameLogger.addHandler(handler);

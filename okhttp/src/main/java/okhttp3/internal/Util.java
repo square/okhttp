@@ -446,4 +446,9 @@ public final class Util {
   public static boolean verifyAsIpAddress(String host) {
     return VERIFY_AS_IP_ADDRESS.matcher(host).matches();
   }
+
+  /** Returns a {@link Locale#US} formatted {@link String}. */
+  public static String format(String format, Object... args) {
+    return String.format(Locale.US, format, args);
+  }
 }

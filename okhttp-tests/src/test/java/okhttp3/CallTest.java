@@ -734,7 +734,7 @@ public final class CallTest {
       // Timed out as expected.
       long elapsedNanos = System.nanoTime() - startNanos;
       long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanos);
-      assertTrue(String.format("Timed out: %sms", elapsedMillis), elapsedMillis < 500);
+      assertTrue(Util.format("Timed out: %sms", elapsedMillis), elapsedMillis < 500);
     } finally {
       bodySource.close();
     }

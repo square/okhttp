@@ -20,6 +20,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.ByteString;
 
@@ -231,7 +232,7 @@ class UrlComponentEncodingTester {
     String urlString = component.urlString(encoded);
     HttpUrl url = HttpUrl.parse(urlString);
     if (!component.encodedValue(url).equals(encoded)) {
-      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
 
@@ -242,7 +243,7 @@ class UrlComponentEncodingTester {
     HttpUrl url = builder.build();
     String actual = component.get(url);
     if (!expected.equals(actual)) {
-      fail(String.format("Roundtrip %s %#x %s", component, codePoint, url));
+      fail(Util.format("Roundtrip %s %#x %s", component, codePoint, url));
     }
   }
 
@@ -255,7 +256,7 @@ class UrlComponentEncodingTester {
 
     String s = component.encodedValue(url);
     if (!s.equals(encoded)) {
-      fail(String.format("Encoding %s %#02x using %s", component, codePoint, encoding));
+      fail(Util.format("Encoding %s %#02x using %s", component, codePoint, encoding));
     }
   }
 
@@ -264,7 +265,7 @@ class UrlComponentEncodingTester {
     HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
     URL javaNetUrl = httpUrl.url();
     if (!javaNetUrl.toString().equals(javaNetUrl.toString())) {
-      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
 
@@ -273,7 +274,7 @@ class UrlComponentEncodingTester {
     HttpUrl httpUrl = HttpUrl.parse(component.urlString(encoded));
     HttpUrl toAndFromJavaNetUrl = HttpUrl.get(httpUrl.url());
     if (!toAndFromJavaNetUrl.equals(httpUrl)) {
-      fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+      fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
     }
   }
 
@@ -287,18 +288,18 @@ class UrlComponentEncodingTester {
     if (uriEscaped) {
       // The URI has more escaping than the HttpURL. Check that the decoded values still match.
       if (uri.toString().equals(httpUrl.toString())) {
-        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
       if (!component.get(toAndFromUri).equals(string)) {
-        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
     } else {
       // Check that the URI and HttpURL have the exact same escaping.
       if (!toAndFromUri.equals(httpUrl)) {
-        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
       if (!uri.toString().equals(httpUrl.toString())) {
-        fail(String.format("Encoding %s %#x using %s", component, codePoint, encoding));
+        fail(Util.format("Encoding %s %#x using %s", component, codePoint, encoding));
       }
     }
   }
@@ -315,7 +316,7 @@ class UrlComponentEncodingTester {
         ByteString utf8 = ByteString.encodeUtf8(IDENTITY.encode(codePoint));
         Buffer percentEncoded = new Buffer();
         for (int i = 0; i < utf8.size(); i++) {
-          percentEncoded.writeUtf8(String.format("%%%02X", utf8.getByte(i) & 0xff));
+          percentEncoded.writeUtf8(Util.format("%%%02X", utf8.getByte(i) & 0xff));
         }
         return percentEncoded.readUtf8();
       }

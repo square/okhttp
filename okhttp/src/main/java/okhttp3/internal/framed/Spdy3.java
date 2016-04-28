@@ -275,7 +275,7 @@ public final class Spdy3 implements Variant {
     }
 
     private static IOException ioException(String message, Object... args) throws IOException {
-      throw new IOException(String.format(message, args));
+      throw new IOException(Util.format(message, args));
     }
 
     @Override public void close() throws IOException {

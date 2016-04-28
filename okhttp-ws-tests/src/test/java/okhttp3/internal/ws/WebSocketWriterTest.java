@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.Random;
 import okhttp3.RequestBody;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.ByteString;
@@ -99,7 +100,7 @@ public final class WebSocketWriterTest {
     sink.close();
 
     assertData("817e");
-    assertData(String.format("%04x", length));
+    assertData(Util.format("%04x", length));
     assertData(bytes);
     assertTrue(data.exhausted());
   }
@@ -199,7 +200,7 @@ public final class WebSocketWriterTest {
     // Write directly to the unbuffered sink. This ensures it will become single frame.
     sink.write(payload.clone(), byteCount);
     assertData("027e"); // 'e' == 4-byte follow-up length.
-    assertData(String.format("%04X", payload.completeSegmentByteCount()));
+    assertData(Util.format("%04X", payload.completeSegmentByteCount()));
     assertData(payload.readByteArray());
 
     sink.close();
@@ -219,7 +220,7 @@ public final class WebSocketWriterTest {
     // Write directly to the unbuffered sink. This ensures it will become single frame.
     sink.write(payload.clone(), byteCount);
     assertData("027f"); // 'f' == 16-byte follow-up length.
-    assertData(String.format("%016X", byteCount));
+    assertData(Util.format("%016X", byteCount));
     assertData(payload.readByteArray(byteCount));
 
     sink.close();

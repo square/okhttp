@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import okhttp3.internal.Util;
 import okhttp3.internal.http.HttpDate;
 
 /**
@@ -271,7 +272,7 @@ public final class Headers {
       for (int i = 0, length = name.length(); i < length; i++) {
         char c = name.charAt(i);
         if (c <= '\u001f' || c >= '\u007f') {
-          throw new IllegalArgumentException(String.format(
+          throw new IllegalArgumentException(Util.format(
               "Unexpected char %#04x at %d in header name: %s", (int) c, i, name));
         }
       }
@@ -279,7 +280,7 @@ public final class Headers {
       for (int i = 0, length = value.length(); i < length; i++) {
         char c = value.charAt(i);
         if (c <= '\u001f' || c >= '\u007f') {
-          throw new IllegalArgumentException(String.format(
+          throw new IllegalArgumentException(Util.format(
               "Unexpected char %#04x at %d in %s value: %s", (int) c, i, name, value));
         }
       }

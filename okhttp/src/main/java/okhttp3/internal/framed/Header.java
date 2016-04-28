@@ -15,6 +15,7 @@
  */
 package okhttp3.internal.framed;
 
+import okhttp3.internal.Util;
 import okio.ByteString;
 
 /** HTTP header: the name is an ASCII string, but the value can be UTF-8. */
@@ -66,6 +67,6 @@ public final class Header {
   }
 
   @Override public String toString() {
-    return String.format("%s: %s", name.utf8(), value.utf8());
+    return Util.format("%s: %s", name.utf8(), value.utf8());
   }
 }

@@ -160,7 +160,7 @@ public final class WebSocketCall {
       String url = response.request().url().toString();
       ThreadPoolExecutor replyExecutor =
           new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
-              Util.threadFactory(String.format("OkHttp %s WebSocket", url), true));
+              Util.threadFactory(Util.format("OkHttp %s WebSocket", url), true));
       replyExecutor.allowCoreThreadTimeOut(true);
 
       return new StreamWebSocket(streamAllocation, random, replyExecutor, listener, url);
