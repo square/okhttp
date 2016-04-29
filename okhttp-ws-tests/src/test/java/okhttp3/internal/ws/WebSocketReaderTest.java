@@ -22,6 +22,7 @@ import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Util;
 import okhttp3.ws.WebSocketRecorder;
 import okhttp3.ws.WebSocketRecorder.MessageDelegate;
 import okio.Buffer;
@@ -385,7 +386,7 @@ public final class WebSocketReaderTest {
     data.write(ByteString.decodeHex("880203ed")); // Close with code 1005
     data.write(ByteString.decodeHex("880203ee")); // Close with code 1006
     for (int i = 1012; i <= 2999; i++) {
-      data.write(ByteString.decodeHex("8802" + String.format("%04X", i))); // Close with code 'i'
+      data.write(ByteString.decodeHex("8802" + Util.format("%04X", i))); // Close with code 'i'
     }
 
     int count = 0;

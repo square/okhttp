@@ -1412,7 +1412,7 @@ public final class URLConnectionTest {
     // If we're working correctly, this should be greater than 100ms, but less than double that.
     // Previously we had a bug where we would download the entire response body as long as no
     // individual read took longer than 100ms.
-    assertTrue(String.format("Time to close: %sms", elapsedMillis), elapsedMillis < 500);
+    assertTrue(Util.format("Time to close: %sms", elapsedMillis), elapsedMillis < 500);
 
     // Do another request to confirm that the discarded connection was not pooled.
     assertContent("A", urlFactory.open(server.url("/").url()));

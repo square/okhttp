@@ -155,7 +155,7 @@ public final class FramedConnection implements Closeable {
       // Like newSingleThreadExecutor, except lazy creates the thread.
       pushExecutor = new ThreadPoolExecutor(0, 1, 60, TimeUnit.SECONDS,
           new LinkedBlockingQueue<Runnable>(),
-          Util.threadFactory(String.format("OkHttp %s Push Observer", hostname), true));
+          Util.threadFactory(Util.format("OkHttp %s Push Observer", hostname), true));
       // 1 less than SPDY http://tools.ietf.org/html/draft-ietf-httpbis-http2-17#section-6.9.2
       peerSettings.set(Settings.INITIAL_WINDOW_SIZE, 0, 65535);
       peerSettings.set(Settings.MAX_FRAME_SIZE, 0, Http2.INITIAL_MAX_FRAME_SIZE);

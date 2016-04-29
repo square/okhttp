@@ -649,7 +649,7 @@ public final class MockWebServer implements TestRule {
 
     ThreadPoolExecutor replyExecutor =
         new ThreadPoolExecutor(1, 1, 1, SECONDS, new LinkedBlockingDeque<Runnable>(),
-            Util.threadFactory(String.format("MockWebServer %s WebSocket", request.getPath()),
+            Util.threadFactory(Util.format("MockWebServer %s WebSocket", request.getPath()),
                 true));
     replyExecutor.allowCoreThreadTimeOut(true);
     final RealWebSocket webSocket =

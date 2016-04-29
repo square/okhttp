@@ -19,6 +19,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import okhttp3.internal.Util;
 import okio.Buffer;
 import okio.BufferedSource;
 
@@ -81,7 +82,7 @@ public final class WebPlatformUrlTestData {
   }
 
   @Override public String toString() {
-    return String.format("Parsing: <%s> against <%s>", input, base);
+    return Util.format("Parsing: <%s> against <%s>", input, base);
   }
 
   public static List<WebPlatformUrlTestData> load(BufferedSource source) throws IOException {

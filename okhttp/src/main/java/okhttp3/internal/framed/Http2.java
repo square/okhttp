@@ -26,8 +26,8 @@ import okio.ByteString;
 import okio.Source;
 import okio.Timeout;
 
-import static java.lang.String.format;
 import static java.util.logging.Level.FINE;
+import static okhttp3.internal.Util.format;
 import static okhttp3.internal.framed.Http2.FrameLogger.formatHeader;
 import static okio.ByteString.EMPTY;
 

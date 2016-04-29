@@ -22,7 +22,7 @@ public abstract class NamedRunnable implements Runnable {
   protected final String name;
 
   public NamedRunnable(String format, Object... args) {
-    this.name = String.format(format, args);
+    this.name = Util.format(format, args);
   }
 
   @Override public final void run() {

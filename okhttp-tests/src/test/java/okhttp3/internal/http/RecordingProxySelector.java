@@ -24,6 +24,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import okhttp3.internal.Util;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,7 +46,7 @@ public final class RecordingProxySelector extends ProxySelector {
   @Override public void connectFailed(URI uri, SocketAddress sa, IOException ioe) {
     InetSocketAddress socketAddress = (InetSocketAddress) sa;
     failures.add(
-        String.format("%s %s:%d %s", uri, socketAddress.getHostName(), socketAddress.getPort(),
+        Util.format("%s %s:%d %s", uri, socketAddress.getHostName(), socketAddress.getPort(),
             ioe.getMessage()));
   }
 }
