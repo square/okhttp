@@ -57,7 +57,7 @@
     <okio.version>1.6.0</okio.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
   </properties>
 
   <scm>
