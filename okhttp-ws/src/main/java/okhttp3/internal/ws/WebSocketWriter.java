@@ -70,7 +70,7 @@ public final class WebSocketWriter {
 
     // Masks are only a concern for client writers.
     maskKey = isClient ? new byte[4] : null;
-    maskBuffer = isClient ? new byte[2048] : null;
+    maskBuffer = isClient ? new byte[8192] : null;
   }
 
   /** Send a ping with the supplied {@code payload}. Payload may be {@code null} */
@@ -239,7 +239,7 @@ public final class WebSocketWriter {
       // Determine if this is a buffered write which we can defer until close() flushes.
       boolean deferWrite = isFirstFrame
           && contentLength != -1
-          && buffer.size() > contentLength - 2048 /* segment size */;
+          && buffer.size() > contentLength - 8192 /* segment size */;
 
       long emitCount = buffer.completeSegmentByteCount();
       if (emitCount > 0 && !deferWrite) {

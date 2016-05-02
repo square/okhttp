@@ -80,7 +80,7 @@ public final class WebSocketReader {
   private boolean isMasked;
 
   private final byte[] maskKey = new byte[4];
-  private final byte[] maskBuffer = new byte[2048];
+  private final byte[] maskBuffer = new byte[8192];
 
   public WebSocketReader(boolean isClient, BufferedSource source, FrameCallback frameCallback) {
     if (source == null) throw new NullPointerException("source == null");

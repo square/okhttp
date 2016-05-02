@@ -118,16 +118,16 @@ public final class WebSocketWriterTest {
     sink.write(body.readByteString(20_000));
     sink.close();
 
-    assertData("017e4800");
-    assertData(bytes.readByteArray(18_432));
-    assertData("007e5000");
-    assertData(bytes.readByteArray(20_480));
-    assertData("007e5000");
-    assertData(bytes.readByteArray(20_480));
-    assertData("007e5000");
-    assertData(bytes.readByteArray(20_480));
-    assertData("007e4800");
-    assertData(bytes.readByteArray(18_432));
+    assertData("017e4000");
+    assertData(bytes.readByteArray(16_384));
+    assertData("007e4000");
+    assertData(bytes.readByteArray(16_384));
+    assertData("007e6000");
+    assertData(bytes.readByteArray(24_576));
+    assertData("007e4000");
+    assertData(bytes.readByteArray(16_384));
+    assertData("007e6000");
+    assertData(bytes.readByteArray(24_576));
     assertData("807e06a0");
     assertData(bytes.readByteArray(1_696));
     assertTrue(data.exhausted());

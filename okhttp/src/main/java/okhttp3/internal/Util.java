@@ -175,7 +175,7 @@ public final class Util {
     source.timeout().deadlineNanoTime(now + Math.min(originalDuration, timeUnit.toNanos(duration)));
     try {
       Buffer skipBuffer = new Buffer();
-      while (source.read(skipBuffer, 2048) != -1) {
+      while (source.read(skipBuffer, 8192) != -1) {
         skipBuffer.clear();
       }
       return true; // Success! The source has been exhausted.
