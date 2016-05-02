@@ -208,7 +208,7 @@ public final class SocksProxy {
         Buffer buffer = new Buffer();
         try {
           while (true) {
-            long byteCount = source.read(buffer, 2048L);
+            long byteCount = source.read(buffer, 8192L);
             if (byteCount == -1L) break;
             sink.write(buffer, byteCount);
             sink.emit();
