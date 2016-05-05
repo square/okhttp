@@ -58,6 +58,9 @@
 
     <!-- Test Dependencies -->
     <junit.version>4.12</junit.version>
+
+    <!-- platform test mode -->
+    <okhttp.platform>platform</okhttp.platform>
   </properties>
 
   <scm>
@@ -142,6 +145,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.17</version>
           <configuration>
+            <systemPropertyVariables>
+              <okhttp.platform>${okhttp.platform}</okhttp.platform>
+            </systemPropertyVariables>
             <properties>
               <!--
                 Configure a listener for enforcing that no uncaught exceptions issue from OkHttp
@@ -240,6 +246,7 @@
         <bootclasspathPrefix>
           ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar
         </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -271,6 +278,7 @@
         <bootclasspathPrefix>
           ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar
         </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -296,9 +304,11 @@
     <profile>
       <id>jdk9</id>
       <activation>
-        <jdk>9</jdk>
+        <jdk>1.9</jdk>
       </activation>
-      <!-- Not currently used, but visible in Intellij etc -->
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
     </profile>
   </profiles>
 </project>
