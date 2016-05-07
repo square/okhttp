@@ -350,6 +350,7 @@ public final class MockWebServer implements TestRule {
           Util.closeQuietly(s.next());
           s.remove();
         }
+        dispatcher.shutdown();
         executor.shutdown();
       }
 

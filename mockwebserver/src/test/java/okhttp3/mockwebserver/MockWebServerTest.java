@@ -382,4 +382,18 @@ public final class MockWebServerTest {
     } catch (ConnectException expected) {
     }
   }
+
+  @Test public void shutdownWhileBlockedDispatching() throws Exception {
+    // Enqueue a request that'll cause MockWebServer to hang on QueueDispatcher.dispatch().
+    HttpURLConnection connection = (HttpURLConnection) server.url("/").url().openConnection();
+    connection.setReadTimeout(500);
+    try {
+      connection.getResponseCode();
+      fail();
+    } catch (SocketTimeoutException expected) {
+    }
+
+    // Shutting down the server should unblock the dispatcher.
+    server.shutdown();
+  }
 }
