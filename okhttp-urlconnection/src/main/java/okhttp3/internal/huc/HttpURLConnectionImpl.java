@@ -68,6 +68,8 @@ import okhttp3.internal.http.StreamAllocation;
 import okio.BufferedSink;
 import okio.Sink;
 
+import static okhttp3.internal.Platform.WARN;
+
 /**
  * This implementation uses HttpEngine to send requests and receive responses. This class may use
  * multiple HttpEngines to follow redirects, authentication retries, etc. to retrieve the final
@@ -562,7 +564,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       //
       // Some implementations send a malformed HTTP header when faced with
       // such requests, we respect the spec and ignore the header.
-      Platform.get().logW("Ignoring header " + field + " because its value was null.");
+      Platform.get().log(WARN, "Ignoring header " + field + " because its value was null.", null);
       return;
     }
 
@@ -596,7 +598,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       //
       // Some implementations send a malformed HTTP header when faced with
       // such requests, we respect the spec and ignore the header.
-      Platform.get().logW("Ignoring header " + field + " because its value was null.");
+      Platform.get().log(WARN, "Ignoring header " + field + " because its value was null.", null);
       return;
     }
 

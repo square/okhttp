@@ -26,12 +26,13 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import okhttp3.internal.Internal;
+import okhttp3.internal.Platform;
 import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
 
+import static okhttp3.internal.Platform.WARN;
 import static okhttp3.internal.Util.closeQuietly;
 
 /**
@@ -245,8 +246,8 @@ public final class ConnectionPool {
       }
 
       // We've discovered a leaked allocation. This is an application bug.
-      Internal.logger.warning("A connection to " + connection.route().address().url()
-          + " was leaked. Did you forget to close a response body?");
+      Platform.get().log(WARN, "A connection to " + connection.route().address().url()
+          + " was leaked. Did you forget to close a response body?", null);
       references.remove(i);
       connection.noNewStreams = true;
 

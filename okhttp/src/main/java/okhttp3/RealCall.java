@@ -17,14 +17,14 @@ package okhttp3;
 
 import java.io.IOException;
 import java.net.ProtocolException;
-import java.util.logging.Level;
 import okhttp3.internal.NamedRunnable;
+import okhttp3.internal.Platform;
 import okhttp3.internal.http.HttpEngine;
 import okhttp3.internal.http.RequestException;
 import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StreamAllocation;
 
-import static okhttp3.internal.Internal.logger;
+import static okhttp3.internal.Platform.INFO;
 import static okhttp3.internal.http.HttpEngine.MAX_FOLLOW_UPS;
 
 final class RealCall implements Call {
@@ -135,7 +135,7 @@ final class RealCall implements Call {
       } catch (IOException e) {
         if (signalledCallback) {
           // Do not signal the callback twice!
-          logger.log(Level.INFO, "Callback failure for " + toLoggableString(), e);
+          Platform.get().log(INFO, "Callback failure for " + toLoggableString(), e);
         } else {
           responseCallback.onFailure(RealCall.this, e);
         }

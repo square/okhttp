@@ -20,11 +20,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
-import java.util.logging.Level;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Protocol;
-
-import static okhttp3.internal.Internal.logger;
 
 /**
  * OpenJDK 7 or OpenJDK 8 with {@code org.mortbay.jetty.alpn/alpn-boot} in the boot class path.
@@ -71,8 +68,8 @@ class JdkWithJettyBootPlatform extends Platform {
       JettyNegoProvider provider =
           (JettyNegoProvider) Proxy.getInvocationHandler(getMethod.invoke(null, socket));
       if (!provider.unsupported && provider.selected == null) {
-        logger.log(Level.INFO, "ALPN callback dropped: SPDY and HTTP/2 are disabled. "
-            + "Is alpn-boot on the boot class path?");
+        Platform.get().log(INFO, "ALPN callback dropped: SPDY and HTTP/2 are disabled. "
+            + "Is alpn-boot on the boot class path?", null);
         return null;
       }
       return provider.unsupported ? null : provider.selected;
