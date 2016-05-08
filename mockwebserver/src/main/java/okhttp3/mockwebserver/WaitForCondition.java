@@ -21,6 +21,8 @@ import static java.lang.System.currentTimeMillis;
 public class WaitForCondition {
     public static final int POLLING_INTERVAL = 500;
 
+    private WaitForCondition() { }
+
     /**
      * Waits until the condition is satisfied.
      * Polling interval is 500 millis
