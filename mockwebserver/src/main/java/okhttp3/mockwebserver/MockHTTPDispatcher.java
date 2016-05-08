@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2016 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package okhttp3.mockwebserver;
 
 import okhttp3.mockwebserver.WaitForCondition.Condition;
@@ -22,6 +38,9 @@ public class MockHTTPDispatcher extends Dispatcher {
         servedRequests = new HashMap<MockRequest, List<RecordedRequest>>();
     }
 
+    /**
+     * Mocks a request
+     */
     public MockHTTPDispatcher mock(MockRequest mockRequest) throws IOException {
         MockResponse mockResponse = new MockResponse().addHeader("Content-Type", mockRequest.responseContentType.toString());
         if (mockRequest.response != null)
@@ -34,6 +53,9 @@ public class MockHTTPDispatcher extends Dispatcher {
         return this;
     }
 
+    /**
+     * Check if a request is served for x number of times
+     */
     public boolean isRequestServedForTimes(MockRequest mockRequest, Integer times) {
         synchronized (this) {
             List<RecordedRequest> recordedRequests = servedRequests.get(mockRequest);
@@ -41,14 +63,24 @@ public class MockHTTPDispatcher extends Dispatcher {
         }
     }
 
+    /**
+     * Interrupt dispatcher to respond to request immediately
+     */
     public void interrupt() {
         interrupted = true;
     }
 
+    /**
+     * Returns the list of actual served requests for a mock request
+     */
     public List<RecordedRequest> actualRequestsServedFor(MockRequest mockRequest) {
         return servedRequests.get(mockRequest);
     }
 
+    /**
+     * Waits for shouldRespond flag to be true and dispatches a recorded request. Default wait time is 10000 millis.
+     * Returns 404 response when recorded request is not mocked
+     */
     @Override
     public MockResponse dispatch(RecordedRequest recordedRequest) {
         synchronized (this) {
