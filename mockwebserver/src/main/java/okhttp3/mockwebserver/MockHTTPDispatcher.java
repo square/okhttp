@@ -39,10 +39,11 @@ public class MockHTTPDispatcher extends Dispatcher {
     }
 
     /**
-     * Mocks a request
+     * Mocks a request.
      */
     public MockHTTPDispatcher mock(MockRequest mockRequest) throws IOException {
-        MockResponse mockResponse = new MockResponse().addHeader("Content-Type", mockRequest.responseContentType.toString());
+        MockResponse mockResponse = new MockResponse()
+                .addHeader("Content-Type", mockRequest.responseContentType.toString());
         if (mockRequest.response != null)
             mockResponse.setBody(mockRequest.response);
         else if (mockRequest.responseStream != null)
@@ -54,7 +55,7 @@ public class MockHTTPDispatcher extends Dispatcher {
     }
 
     /**
-     * Check if a request is served for x number of times
+     * Check if a request is served for x number of times.
      */
     public boolean isRequestServedForTimes(MockRequest mockRequest, Integer times) {
         synchronized (this) {
@@ -64,22 +65,23 @@ public class MockHTTPDispatcher extends Dispatcher {
     }
 
     /**
-     * Interrupt dispatcher to respond to request immediately
+     * Interrupt dispatcher to respond to request immediately.
      */
     public void interrupt() {
         interrupted = true;
     }
 
     /**
-     * Returns the list of actual served requests for a mock request
+     * Returns the list of actual served requests for a mock request.
      */
     public List<RecordedRequest> actualRequestsServedFor(MockRequest mockRequest) {
         return servedRequests.get(mockRequest);
     }
 
     /**
-     * Waits for shouldRespond flag to be true and dispatches a recorded request. Default wait time is 10000 millis.
-     * Returns 404 response when recorded request is not mocked
+     * Waits for shouldRespond flag to be true and dispatches a recorded request.
+     * Default wait time is 10000 millis.
+     * Returns 404 response when recorded request is not mocked.
      */
     @Override
     public MockResponse dispatch(RecordedRequest recordedRequest) {

@@ -48,7 +48,8 @@ public class MockRequest {
         this.responseContentType = MediaType.parse("application/json");
     }
 
-    public MockRequest(String path, String httpMethod, InputStream responseStream, MediaType responseContentType) {
+    public MockRequest(String path, String httpMethod, InputStream responseStream,
+                       MediaType responseContentType) {
         this.path = path;
         this.httpMethod = httpMethod;
         this.responseStream = responseStream;
@@ -84,27 +85,29 @@ public class MockRequest {
     }
 
     /**
-     * Allows to control the respond time of a request, Respond the response with {@link #respondNow()}
+     * Allows to control the respond time of a request.
+     * Respond to request by calling {@link #respondNow()}
      */
     public void respondOnDemand() {
         this.shouldRespond = false;
     }
 
     /**
-     * Tells dispatcher to dispatch the response immediately
+     * Tells dispatcher to dispatch the response immediately.
      */
     public void respondNow() {
         this.shouldRespond = true;
     }
 
     /**
-     * Check if a recorded request matchers this mock request
+     * Check if a recorded request matchers this mock request.
      */
     boolean matches(RecordedRequest r) {
         String actualRequestBody = getRequestBodyString(r);
         return r.getPath().equals(path)
                 && r.getMethod().equalsIgnoreCase(httpMethod)
-                && (requestBody==null || (actualRequestBody !=null && actualRequestBody.contains(requestBody)));
+                && (requestBody == null || (actualRequestBody != null
+                && actualRequestBody.contains(requestBody)));
     }
 
     @Override
@@ -115,7 +118,8 @@ public class MockRequest {
         if (path != null ? !path.equals(that.path) : that.path != null) return false;
         if (httpMethod != null ? !httpMethod.equals(that.httpMethod) : that.httpMethod != null)
             return false;
-        return !(requestBody != null ? !requestBody.equals(that.requestBody) : that.requestBody != null);
+        return !(requestBody != null ? !requestBody.equals(that.requestBody)
+                                     : that.requestBody != null);
     }
 
     @Override
@@ -133,7 +137,7 @@ public class MockRequest {
     public static String getRequestBodyString(RecordedRequest recordedRequest) {
         Buffer actualRequestBody = recordedRequest.getBody();
         String actualRequestBodyString = null;
-        if(actualRequestBody!=null) {
+        if (actualRequestBody != null) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             try {
                 actualRequestBody.copyTo(out);

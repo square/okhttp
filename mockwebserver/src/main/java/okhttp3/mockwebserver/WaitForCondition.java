@@ -21,9 +21,13 @@ import static java.lang.System.currentTimeMillis;
 public class WaitForCondition {
     public static final int POLLING_INTERVAL = 500;
 
+    /**
+     * Waits until the condition is satisfied.
+     * Polling interval is 500 millis
+     */
     public static void waitFor(Condition condition, long maxWaitInMillis) {
         long startTime = currentTimeMillis();
-        while(!condition.isSatisfied() && currentTimeMillis() - startTime < maxWaitInMillis) {
+        while (!condition.isSatisfied() && currentTimeMillis() - startTime < maxWaitInMillis) {
             try {
                 Thread.sleep(POLLING_INTERVAL);
             } catch (InterruptedException ignored) {
@@ -31,7 +35,8 @@ public class WaitForCondition {
             }
         }
 
-        if(!condition.isSatisfied()) throw new RuntimeException("Timed out waiting for condition to be satisfied!");
+        if (!condition.isSatisfied())
+            throw new RuntimeException("Timed out waiting for condition to be satisfied!");
     }
 
     public interface Condition {
