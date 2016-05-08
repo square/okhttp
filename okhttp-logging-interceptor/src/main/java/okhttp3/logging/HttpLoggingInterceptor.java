@@ -35,6 +35,8 @@ import okhttp3.internal.http.HttpEngine;
 import okio.Buffer;
 import okio.BufferedSource;
 
+import static okhttp3.internal.Platform.INFO;
+
 /**
  * An OkHttp interceptor which logs request and response information. Can be applied as an
  * {@linkplain OkHttpClient#interceptors() application interceptor} or as a {@linkplain
@@ -107,7 +109,7 @@ public final class HttpLoggingInterceptor implements Interceptor {
     /** A {@link Logger} defaults output appropriate for the current platform. */
     Logger DEFAULT = new Logger() {
       @Override public void log(String message) {
-        Platform.get().log(message);
+        Platform.get().log(INFO, message, null);
       }
     };
   }

@@ -41,6 +41,8 @@ import okio.Sink;
 import okio.Source;
 import okio.Timeout;
 
+import static okhttp3.internal.Platform.WARN;
+
 /**
  * A cache that uses a bounded amount of space on a filesystem. Each cache entry has a string key
  * and a fixed number of values. Each key must match the regex <strong>[a-z0-9_-]{1,64}</strong>.
@@ -227,8 +229,8 @@ public final class DiskLruCache implements Closeable, Flushable {
         initialized = true;
         return;
       } catch (IOException journalIsCorrupt) {
-        Platform.get().logW("DiskLruCache " + directory + " is corrupt: "
-            + journalIsCorrupt.getMessage() + ", removing");
+        Platform.get().log(WARN, "DiskLruCache " + directory + " is corrupt: "
+            + journalIsCorrupt.getMessage() + ", removing", journalIsCorrupt);
         delete();
         closed = false;
       }

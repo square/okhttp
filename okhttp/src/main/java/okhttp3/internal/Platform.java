@@ -22,9 +22,12 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
+import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okio.Buffer;
 
@@ -65,6 +68,9 @@ import okio.Buffer;
  */
 public class Platform {
   private static final Platform PLATFORM = findPlatform();
+  public static final int INFO = 4;
+  public static final int WARN = 5;
+  private static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   public static Platform get() {
     return PLATFORM;
@@ -73,10 +79,6 @@ public class Platform {
   /** Prefix used on custom headers. */
   public String getPrefix() {
     return "OkHttp";
-  }
-
-  public void logW(String warning) {
-    System.out.println(warning);
   }
 
   public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
@@ -119,8 +121,9 @@ public class Platform {
     socket.connect(address, connectTimeout);
   }
 
-  public void log(String message) {
-    System.out.println(message);
+  public void log(int level, String message, Throwable t) {
+    Level logLevel = level == WARN ? Level.WARNING : Level.INFO;
+    logger.log(logLevel, message, t);
   }
 
   public boolean isCleartextTrafficPermitted() {

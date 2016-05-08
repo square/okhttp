@@ -17,7 +17,6 @@ package okhttp3.internal;
 
 import java.net.MalformedURLException;
 import java.net.UnknownHostException;
-import java.util.logging.Logger;
 import javax.net.ssl.SSLSocket;
 import okhttp3.Address;
 import okhttp3.Call;
@@ -35,7 +34,6 @@ import okhttp3.internal.io.RealConnection;
  * packages. The only implementation of this interface is in {@link OkHttpClient}.
  */
 public abstract class Internal {
-  public static final Logger logger = Logger.getLogger(OkHttpClient.class.getName());
 
   public static void initializeInstanceForTests() {
     // Needed in tests to ensure that the instance is actually pointing to something.

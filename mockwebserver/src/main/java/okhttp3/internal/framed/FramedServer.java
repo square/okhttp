@@ -35,6 +35,8 @@ import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
 
+import static okhttp3.internal.Platform.INFO;
+
 /** A basic SPDY/HTTP_2 server that serves the contents of a local directory. */
 public final class FramedServer extends FramedConnection.Listener {
   static final Logger logger = Logger.getLogger(FramedServer.class.getName());
@@ -116,7 +118,7 @@ public final class FramedServer extends FramedConnection.Listener {
         send404(stream, path);
       }
     } catch (IOException e) {
-      System.out.println(e.getMessage());
+      Platform.get().log(INFO, "Failure serving FramedStream: " + e.getMessage(), null);
     }
   }
 
