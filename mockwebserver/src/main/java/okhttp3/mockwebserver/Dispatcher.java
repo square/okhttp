@@ -32,4 +32,12 @@ public abstract class Dispatcher {
   public MockResponse peek() {
     return new MockResponse().setSocketPolicy(SocketPolicy.KEEP_OPEN);
   }
+
+  /**
+   * Release any resources held by this dispatcher. Any requests that are currently being dispatched
+   * should return immediately. Responses returned after shutdown will not be transmitted: their
+   * socket connections have already been closed.
+   */
+  public void shutdown() {
+  }
 }

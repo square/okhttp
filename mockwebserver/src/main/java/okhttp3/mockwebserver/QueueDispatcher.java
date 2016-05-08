@@ -25,6 +25,13 @@ import java.util.logging.Logger;
  * #enqueueResponse(MockResponse)}.
  */
 public class QueueDispatcher extends Dispatcher {
+  /**
+   * Enqueued on shutdown to release threads waiting on {@link #dispatch}. Note that this response
+   * isn't transmitted because the connection is closed before this response is returned.
+   */
+  private static final MockResponse DEAD_LETTER = new MockResponse()
+      .setStatus("HTTP/1.1 " + 503 + " shutting down");
+
   private static final Logger logger = Logger.getLogger(QueueDispatcher.class.getName());
   protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<>();
   private MockResponse failFastResponse;
@@ -42,7 +49,13 @@ public class QueueDispatcher extends Dispatcher {
       return failFastResponse;
     }
 
-    return responseQueue.take();
+    MockResponse result = responseQueue.take();
+
+    // If take() returned because we're shutting down, then enqueue another dead letter so that any
+    // other threads waiting on take() will also return.
+    if (result == DEAD_LETTER) responseQueue.add(DEAD_LETTER);
+
+    return result;
   }
 
   @Override public MockResponse peek() {
@@ -54,6 +67,10 @@ public class QueueDispatcher extends Dispatcher {
 
   public void enqueueResponse(MockResponse response) {
     responseQueue.add(response);
+  }
+
+  @Override public void shutdown() {
+    responseQueue.add(DEAD_LETTER);
   }
 
   public void setFailFast(boolean failFast) {
