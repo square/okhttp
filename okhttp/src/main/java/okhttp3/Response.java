@@ -46,6 +46,8 @@ public final class Response {
   private Response networkResponse;
   private Response cacheResponse;
   private final Response priorResponse;
+  private final long sentRequestAtMillis;
+  private final long receivedResponseAtMillis;
 
   private volatile CacheControl cacheControl; // Lazily initialized.
 
@@ -60,6 +62,8 @@ public final class Response {
     this.networkResponse = builder.networkResponse;
     this.cacheResponse = builder.cacheResponse;
     this.priorResponse = builder.priorResponse;
+    this.sentRequestAtMillis = builder.sentRequestAtMillis;
+    this.receivedResponseAtMillis = builder.receivedResponseAtMillis;
   }
 
   /**
@@ -238,6 +242,24 @@ public final class Response {
     return result != null ? result : (cacheControl = CacheControl.parse(headers));
   }
 
+  /**
+   * Returns a {@linkplain System#currentTimeMillis() timestamp} taken immediately before OkHttp
+   * transmitted the initiating request over the network. If this response is being served from the
+   * cache then this is the timestamp of the original request.
+   */
+  public long sentRequestAtMillis() {
+    return sentRequestAtMillis;
+  }
+
+  /**
+   * Returns a {@linkplain System#currentTimeMillis() timestamp} taken immediately after OkHttp
+   * received this response's headers from the network. If this response is being served from the
+   * cache then this is the timestamp of the original response.
+   */
+  public long receivedResponseAtMillis() {
+    return receivedResponseAtMillis;
+  }
+
   @Override public String toString() {
     return "Response{protocol="
         + protocol
@@ -261,6 +283,8 @@ public final class Response {
     private Response networkResponse;
     private Response cacheResponse;
     private Response priorResponse;
+    private long sentRequestAtMillis;
+    private long receivedResponseAtMillis;
 
     public Builder() {
       headers = new Headers.Builder();
@@ -277,6 +301,8 @@ public final class Response {
       this.networkResponse = response.networkResponse;
       this.cacheResponse = response.cacheResponse;
       this.priorResponse = response.priorResponse;
+      this.sentRequestAtMillis = response.sentRequestAtMillis;
+      this.receivedResponseAtMillis = response.receivedResponseAtMillis;
     }
 
     public Builder request(Request request) {
@@ -372,6 +398,16 @@ public final class Response {
       if (response.body != null) {
         throw new IllegalArgumentException("priorResponse.body != null");
       }
+    }
+
+    public Builder sentRequestAtMillis(long sentRequestAtMillis) {
+      this.sentRequestAtMillis = sentRequestAtMillis;
+      return this;
+    }
+
+    public Builder receivedResponseAtMillis(long receivedResponseAtMillis) {
+      this.receivedResponseAtMillis = receivedResponseAtMillis;
+      return this;
     }
 
     public Response build() {

@@ -597,7 +597,7 @@ public class JavaApiConverterTest {
     javaResponseHeaders.put("key1", Arrays.asList("value1_1", "value1_2"));
     javaResponseHeaders.put("key2", Arrays.asList("value2"));
 
-    Headers okHeaders = JavaApiConverter.extractOkHeaders(javaResponseHeaders);
+    Headers okHeaders = JavaApiConverter.extractOkHeaders(javaResponseHeaders, null);
     assertEquals(3, okHeaders.size()); // null entry should be stripped out
     assertEquals(Arrays.asList("value1_1", "value1_2"), okHeaders.values("key1"));
     assertEquals(Arrays.asList("value2"), okHeaders.values("key2"));

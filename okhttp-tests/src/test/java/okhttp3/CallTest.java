@@ -112,13 +112,25 @@ public final class CallTest {
   }
 
   @Test public void get() throws Exception {
-    server.enqueue(new MockResponse().setBody("abc").addHeader("Content-Type: text/plain"));
+    server.enqueue(new MockResponse()
+        .setBody("abc")
+        .clearHeaders()
+        .addHeader("content-type: text/plain")
+        .addHeader("content-length", "3"));
 
-    executeSynchronously("/", "User-Agent", "SyncApiTest")
-        .assertCode(200)
+    long sentAt = System.currentTimeMillis();
+    RecordedResponse recordedResponse = executeSynchronously("/", "User-Agent", "SyncApiTest");
+    long receivedAt = System.currentTimeMillis();
+
+    recordedResponse.assertCode(200)
         .assertSuccessful()
-        .assertHeader("Content-Type", "text/plain")
-        .assertBody("abc");
+        .assertHeaders(new Headers.Builder()
+            .add("content-type", "text/plain")
+            .add("content-length", "3")
+            .build())
+        .assertBody("abc")
+        .assertSentRequestAtMillis(sentAt, receivedAt)
+        .assertReceivedResponseAtMillis(sentAt, receivedAt);
 
     RecordedRequest recordedRequest = server.takeRequest();
     assertEquals("GET", recordedRequest.getMethod());
@@ -1177,31 +1189,48 @@ public final class CallTest {
 
     // Store a response in the cache.
     HttpUrl url = server.url("/");
+    long request1SentAt = System.currentTimeMillis();
     executeSynchronously("/", "Accept-Language", "fr-CA", "Accept-Charset", "UTF-8")
         .assertCode(200)
         .assertBody("A");
+    long request1ReceivedAt = System.currentTimeMillis();
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
+    Thread.sleep(10); // Make sure the timestamps are unique.
     RecordedResponse cacheHit = executeSynchronously(
         "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8");
 
     // Check the merged response. The request is the application's original request.
     cacheHit.assertCode(200)
         .assertBody("A")
-        .assertHeader("ETag", "v1")
+        .assertHeaders(new Headers.Builder()
+            .add("ETag", "v1")
+            .add("Cache-Control", "max-age=60")
+            .add("Vary", "Accept-Charset")
+            .add("Content-Length", "1")
+            .build())
         .assertRequestUrl(url)
         .assertRequestHeader("Accept-Language", "en-US")
-        .assertRequestHeader("Accept-Charset", "UTF-8");
+        .assertRequestHeader("Accept-Charset", "UTF-8")
+        .assertSentRequestAtMillis(request1SentAt, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1SentAt, request1ReceivedAt);
 
     // Check the cached response. Its request contains only the saved Vary headers.
     cacheHit.cacheResponse()
         .assertCode(200)
-        .assertHeader("ETag", "v1")
+        .assertHeaders(new Headers.Builder()
+            .add("ETag", "v1")
+            .add("Cache-Control", "max-age=60")
+            .add("Vary", "Accept-Charset")
+            .add("Content-Length", "1")
+            .build())
         .assertRequestMethod("GET")
         .assertRequestUrl(url)
         .assertRequestHeader("Accept-Language")
-        .assertRequestHeader("Accept-Charset", "UTF-8");
+        .assertRequestHeader("Accept-Charset", "UTF-8")
+        .assertSentRequestAtMillis(request1SentAt, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1SentAt, request1ReceivedAt);
 
     cacheHit.assertNoNetworkResponse();
   }
@@ -1221,15 +1250,20 @@ public final class CallTest {
         .build();
 
     // Store a response in the cache.
+    long request1At = System.currentTimeMillis();
     executeSynchronously("/", "Accept-Language", "fr-CA", "Accept-Charset", "UTF-8")
         .assertCode(200)
         .assertHeader("Donut", "a")
         .assertBody("A");
+    long request1ReceivedAt = System.currentTimeMillis();
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     // Hit that stored response. It's different, but Vary says it doesn't matter.
+    Thread.sleep(10); // Make sure the timestamps are unique.
+    long request2SentAt = System.currentTimeMillis();
     RecordedResponse cacheHit = executeSynchronously(
         "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8");
+    long request2ReceivedAt = System.currentTimeMillis();
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
 
     // Check the merged response. The request is the application's original request.
@@ -1239,7 +1273,9 @@ public final class CallTest {
         .assertRequestUrl(server.url("/"))
         .assertRequestHeader("Accept-Language", "en-US")
         .assertRequestHeader("Accept-Charset", "UTF-8")
-        .assertRequestHeader("If-None-Match"); // No If-None-Match on the user's request.
+        .assertRequestHeader("If-None-Match") // No If-None-Match on the user's request.
+        .assertSentRequestAtMillis(request1At, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1At, request1ReceivedAt);
 
     // Check the cached response. Its request contains only the saved Vary headers.
     cacheHit.cacheResponse()
@@ -1249,7 +1285,9 @@ public final class CallTest {
         .assertRequestUrl(server.url("/"))
         .assertRequestHeader("Accept-Language") // No Vary on Accept-Language.
         .assertRequestHeader("Accept-Charset", "UTF-8") // Because of Vary on Accept-Charset.
-        .assertRequestHeader("If-None-Match"); // This wasn't present in the original request.
+        .assertRequestHeader("If-None-Match") // This wasn't present in the original request.
+        .assertSentRequestAtMillis(request1At, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1At, request1ReceivedAt);
 
     // Check the network response. It has the caller's request, plus some caching headers.
     cacheHit.networkResponse()
@@ -1257,7 +1295,9 @@ public final class CallTest {
         .assertHeader("Donut", "b")
         .assertRequestHeader("Accept-Language", "en-US")
         .assertRequestHeader("Accept-Charset", "UTF-8")
-        .assertRequestHeader("If-None-Match", "v1"); // If-None-Match in the validation request.
+        .assertRequestHeader("If-None-Match", "v1") // If-None-Match in the validation request.
+        .assertSentRequestAtMillis(request2SentAt, request2ReceivedAt)
+        .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt);
   }
 
   @Test public void conditionalCacheHit_Async() throws Exception {
@@ -1299,35 +1339,46 @@ public final class CallTest {
         .cache(cache)
         .build();
 
+    long request1SentAt = System.currentTimeMillis();
     executeSynchronously("/", "Accept-Language", "fr-CA", "Accept-Charset", "UTF-8")
         .assertCode(200)
         .assertBody("A");
+    long request1ReceivedAt = System.currentTimeMillis();
     assertNull(server.takeRequest().getHeader("If-None-Match"));
 
     // Different request, but Vary says it doesn't matter.
-    RecordedResponse cacheHit = executeSynchronously(
+    Thread.sleep(10); // Make sure the timestamps are unique.
+    long request2SentAt = System.currentTimeMillis();
+    RecordedResponse cacheMiss = executeSynchronously(
         "/", "Accept-Language", "en-US", "Accept-Charset", "UTF-8");
+    long request2ReceivedAt = System.currentTimeMillis();
     assertEquals("v1", server.takeRequest().getHeader("If-None-Match"));
 
     // Check the user response. It has the application's original request.
-    cacheHit.assertCode(200)
+    cacheMiss.assertCode(200)
         .assertBody("B")
         .assertHeader("Donut", "b")
-        .assertRequestUrl(server.url("/"));
+        .assertRequestUrl(server.url("/"))
+        .assertSentRequestAtMillis(request2SentAt, request2ReceivedAt)
+        .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt);
 
     // Check the cache response. Even though it's a miss, we used the cache.
-    cacheHit.cacheResponse()
+    cacheMiss.cacheResponse()
         .assertCode(200)
         .assertHeader("Donut", "a")
         .assertHeader("ETag", "v1")
-        .assertRequestUrl(server.url("/"));
+        .assertRequestUrl(server.url("/"))
+        .assertSentRequestAtMillis(request1SentAt, request1ReceivedAt)
+        .assertReceivedResponseAtMillis(request1SentAt, request1ReceivedAt);
 
     // Check the network response. It has the network request, plus caching headers.
-    cacheHit.networkResponse()
+    cacheMiss.networkResponse()
         .assertCode(200)
         .assertHeader("Donut", "b")
         .assertRequestHeader("If-None-Match", "v1")  // If-None-Match in the validation request.
-        .assertRequestUrl(server.url("/"));
+        .assertRequestUrl(server.url("/"))
+        .assertSentRequestAtMillis(request2SentAt, request2ReceivedAt)
+        .assertReceivedResponseAtMillis(request2SentAt, request2ReceivedAt);
   }
 
   @Test public void conditionalCacheMiss_Async() throws Exception {

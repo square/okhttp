@@ -220,6 +220,8 @@ public final class HttpEngine {
           .code(504)
           .message("Unsatisfiable Request (only-if-cached)")
           .body(EMPTY_BODY)
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(System.currentTimeMillis())
           .build();
       return;
     }
@@ -386,7 +388,7 @@ public final class HttpEngine {
     }
 
     // Offer this request to the cache.
-    storeRequest = responseCache.put(stripBody(userResponse));
+    storeRequest = responseCache.put(userResponse);
   }
 
   /**
@@ -615,7 +617,7 @@ public final class HttpEngine {
         // Content-Encoding header (as performed by initContentStream()).
         InternalCache responseCache = Internal.instance.internalCache(client);
         responseCache.trackConditionalCacheHit();
-        responseCache.update(cacheResponse, stripBody(userResponse));
+        responseCache.update(cacheResponse, userResponse);
         userResponse = unzip(userResponse);
         return;
       } else {
@@ -726,8 +728,8 @@ public final class HttpEngine {
     Response networkResponse = httpStream.readResponseHeaders()
         .request(networkRequest)
         .handshake(streamAllocation.connection().handshake())
-        .header(OkHeaders.SENT_MILLIS, Long.toString(sentRequestMillis))
-        .header(OkHeaders.RECEIVED_MILLIS, Long.toString(System.currentTimeMillis()))
+        .sentRequestAtMillis(sentRequestMillis)
+        .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
 
     if (!forWebSocket) {

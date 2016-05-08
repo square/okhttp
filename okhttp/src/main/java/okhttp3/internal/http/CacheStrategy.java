@@ -138,6 +138,8 @@ public final class CacheStrategy {
       this.cacheResponse = cacheResponse;
 
       if (cacheResponse != null) {
+        this.sentRequestMillis = cacheResponse.sentRequestAtMillis();
+        this.receivedResponseMillis = cacheResponse.receivedResponseAtMillis();
         Headers headers = cacheResponse.headers();
         for (int i = 0, size = headers.size(); i < size; i++) {
           String fieldName = headers.name(i);
@@ -154,10 +156,6 @@ public final class CacheStrategy {
             etag = value;
           } else if ("Age".equalsIgnoreCase(fieldName)) {
             ageSeconds = HeaderParser.parseSeconds(value, -1);
-          } else if (OkHeaders.SENT_MILLIS.equalsIgnoreCase(fieldName)) {
-            sentRequestMillis = Long.parseLong(value);
-          } else if (OkHeaders.RECEIVED_MILLIS.equalsIgnoreCase(fieldName)) {
-            receivedResponseMillis = Long.parseLong(value);
           }
         }
       }
