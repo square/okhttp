@@ -18,10 +18,12 @@
 package okhttp3;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -113,6 +115,41 @@ public final class Headers {
     return result;
   }
 
+  /**
+   * Returns true if {@code other} is a {@code Headers} object with the same headers, with the same
+   * casing, in the same order. Note that two headers instances may be <i>semantically</i> equal
+   * but not equal according to this method. In particular, none of the following sets of headers
+   * are equal according to this method: <pre>   {@code
+   *
+   *   1. Original
+   *   Content-Type: text/html
+   *   Content-Length: 50
+   *
+   *   2. Different order
+   *   Content-Length: 50
+   *   Content-Type: text/html
+   *
+   *   3. Different case
+   *   content-type: text/html
+   *   content-length: 50
+   *
+   *   4. Different values
+   *   Content-Type: text/html
+   *   Content-Length: 050
+   * }</pre>
+   *
+   * Applications that require semantically equal headers should convert them into a canonical form
+   * before comparing them for equality.
+   */
+  @Override public boolean equals(Object other) {
+    return other instanceof Headers
+        && Arrays.equals(((Headers) other).namesAndValues, namesAndValues);
+  }
+
+  @Override public int hashCode() {
+    return Arrays.hashCode(namesAndValues);
+  }
+
   @Override public String toString() {
     StringBuilder result = new StringBuilder();
     for (int i = 0, size = size(); i < size; i++) {
@@ -122,9 +159,9 @@ public final class Headers {
   }
 
   public Map<String, List<String>> toMultimap() {
-    Map<String, List<String>> result = new LinkedHashMap<String, List<String>>();
+    Map<String, List<String>> result = new LinkedHashMap<>();
     for (int i = 0, size = size(); i < size; i++) {
-      String name = name(i);
+      String name = name(i).toLowerCase(Locale.US);
       List<String> values = result.get(name);
       if (values == null) {
         values = new ArrayList<>(2);

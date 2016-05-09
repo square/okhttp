@@ -193,8 +193,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
@@ -207,8 +205,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
@@ -228,8 +224,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
@@ -244,8 +238,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
@@ -264,8 +256,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
@@ -279,8 +269,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
@@ -307,8 +295,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
@@ -323,8 +309,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
@@ -344,8 +328,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
 
@@ -359,8 +341,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP")
         .assertNoMoreLogs();
   }
@@ -377,8 +357,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
 
@@ -391,8 +369,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
@@ -418,8 +394,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
 
@@ -432,8 +406,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- " + code + " No Content " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
@@ -455,8 +427,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST (3-byte body)")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
 
@@ -473,8 +443,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END POST (3-byte body)")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 0")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (0-byte body)")
         .assertNoMoreLogs();
   }
@@ -494,8 +462,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
@@ -511,8 +477,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 6")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
@@ -534,8 +498,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Transfer-encoding: chunked")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
@@ -551,8 +513,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Transfer-encoding: chunked")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello!")
         .assertLogEqual("<-- END HTTP (6-byte body)")
@@ -581,8 +541,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("Content-Encoding: gzip")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("<-- END HTTP (encoded body omitted)")
         .assertNoMoreLogs();
 
@@ -591,8 +549,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("--> END GET")
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/plain; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Hello, Hello, Hello")
         .assertLogEqual("<-- END HTTP (19-byte body)")
@@ -618,8 +574,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/html; charset=0")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogMatch("")
         .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
         .assertLogEqual("<-- END HTTP")
@@ -631,8 +585,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Type: text/html; charset=0")
         .assertLogMatch("Content-Length: \\d+")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("Couldn't decode the response body; charset is likely malformed.")
         .assertLogEqual("<-- END HTTP")
@@ -670,8 +622,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 9")
         .assertLogEqual("Content-Type: image/png; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();
@@ -686,8 +636,6 @@ public final class HttpLoggingInterceptorTest {
         .assertLogMatch("<-- 200 OK " + url + " \\(\\d+ms\\)")
         .assertLogEqual("Content-Length: 9")
         .assertLogEqual("Content-Type: image/png; charset=utf-8")
-        .assertLogMatch("OkHttp-Sent-Millis: \\d+")
-        .assertLogMatch("OkHttp-Received-Millis: \\d+")
         .assertLogEqual("")
         .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();

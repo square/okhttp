@@ -31,7 +31,9 @@ import org.junit.Test;
 
 import static okhttp3.TestUtil.headerEntries;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class HeadersTest {
@@ -303,6 +305,16 @@ public final class HeadersTest {
     assertEquals(1, headerMap.get("user-agent").size());
   }
 
+  @Test public void toMultimapUsesCanonicalCase() {
+    Headers headers = Headers.of(
+        "cache-control", "no-store",
+        "Cache-Control", "no-cache",
+        "User-Agent", "OkHttp");
+    Map<String, List<String>> headerMap = headers.toMultimap();
+    assertEquals(2, headerMap.get("cache-control").size());
+    assertEquals(1, headerMap.get("user-agent").size());
+  }
+
   @Test public void nameIndexesAreStrict() {
     Headers headers = Headers.of("a", "b", "c", "d");
     try {
@@ -353,5 +365,31 @@ public final class HeadersTest {
       assertEquals("Unexpected char 0xe9 at 4 in header1 value: valué1",
           expected.getMessage());
     }
+  }
+
+  @Test public void headersEquals() {
+    Headers headers1 = new Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build();
+    Headers headers2 = new Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build();
+    assertTrue(headers1.equals(headers2));
+    assertEquals(headers1.hashCode(), headers2.hashCode());
+  }
+
+  @Test public void headersNotEquals() {
+    Headers headers1 = new Headers.Builder()
+        .add("Connection", "close")
+        .add("Transfer-Encoding", "chunked")
+        .build();
+    Headers headers2 = new Headers.Builder()
+        .add("Connection", "keep-alive")
+        .add("Transfer-Encoding", "chunked")
+        .build();
+    assertFalse(headers1.equals(headers2));
+    assertFalse(headers1.hashCode() == headers2.hashCode());
   }
 }

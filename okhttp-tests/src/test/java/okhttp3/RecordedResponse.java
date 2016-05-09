@@ -16,7 +16,9 @@
 package okhttp3;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import okhttp3.ws.WebSocket;
 
 import static org.junit.Assert.assertEquals;
@@ -76,6 +78,11 @@ public final class RecordedResponse {
 
   public RecordedResponse assertHeader(String name, String... values) {
     assertEquals(Arrays.asList(values), response.headers(name));
+    return this;
+  }
+
+  public RecordedResponse assertHeaders(Headers headers) {
+    assertEquals(headers, response.headers());
     return this;
   }
 
@@ -146,5 +153,24 @@ public final class RecordedResponse {
     assertNotNull(failure);
     assertTrue(failure.getMessage(), Arrays.asList(messages).contains(failure.getMessage()));
     return this;
+  }
+
+  public RecordedResponse assertSentRequestAtMillis(long minimum, long maximum) {
+    assertDateInRange(minimum, response.sentRequestAtMillis(), maximum);
+    return this;
+  }
+
+  public RecordedResponse assertReceivedResponseAtMillis(long minimum, long maximum) {
+    assertDateInRange(minimum, response.receivedResponseAtMillis(), maximum);
+    return this;
+  }
+
+  private void assertDateInRange(long minimum, long actual, long maximum) {
+    assertTrue("actual " + format(actual) + " < minimum " + format(maximum), actual >= minimum);
+    assertTrue("actual " + format(actual) + " > maximum " + format(minimum), actual <= maximum);
+  }
+
+  private String format(long time) {
+    return new SimpleDateFormat("HH:mm:ss.SSS").format(new Date(time));
   }
 }

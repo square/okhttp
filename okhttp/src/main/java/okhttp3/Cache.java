@@ -478,6 +478,8 @@ public final class Cache implements Closeable, Flushable {
     private final String message;
     private final Headers responseHeaders;
     private final Handshake handshake;
+    private final long sentRequestMillis;
+    private final long receivedResponseMillis;
 
     /**
      * Reads an entry from an input stream. A typical entry looks like this:
@@ -548,6 +550,16 @@ public final class Cache implements Closeable, Flushable {
         for (int i = 0; i < responseHeaderLineCount; i++) {
           responseHeadersBuilder.addLenient(source.readUtf8LineStrict());
         }
+        String sendRequestMillisString = responseHeadersBuilder.get(OkHeaders.SENT_MILLIS);
+        String receivedResponseMillisString = responseHeadersBuilder.get(OkHeaders.RECEIVED_MILLIS);
+        responseHeadersBuilder.removeAll(OkHeaders.SENT_MILLIS);
+        responseHeadersBuilder.removeAll(OkHeaders.RECEIVED_MILLIS);
+        sentRequestMillis = sendRequestMillisString != null
+            ? Long.parseLong(sendRequestMillisString)
+            : 0L;
+        receivedResponseMillis = receivedResponseMillisString != null
+            ? Long.parseLong(receivedResponseMillisString)
+            : 0L;
         responseHeaders = responseHeadersBuilder.build();
 
         if (isHttps()) {
@@ -580,45 +592,55 @@ public final class Cache implements Closeable, Flushable {
       this.message = response.message();
       this.responseHeaders = response.headers();
       this.handshake = response.handshake();
+      this.sentRequestMillis = response.sentRequestAtMillis();
+      this.receivedResponseMillis = response.receivedResponseAtMillis();
     }
 
     public void writeTo(DiskLruCache.Editor editor) throws IOException {
       BufferedSink sink = Okio.buffer(editor.newSink(ENTRY_METADATA));
 
-      sink.writeUtf8(url);
-      sink.writeByte('\n');
-      sink.writeUtf8(requestMethod);
-      sink.writeByte('\n');
-      sink.writeDecimalLong(varyHeaders.size());
-      sink.writeByte('\n');
+      sink.writeUtf8(url)
+          .writeByte('\n');
+      sink.writeUtf8(requestMethod)
+          .writeByte('\n');
+      sink.writeDecimalLong(varyHeaders.size())
+          .writeByte('\n');
       for (int i = 0, size = varyHeaders.size(); i < size; i++) {
-        sink.writeUtf8(varyHeaders.name(i));
-        sink.writeUtf8(": ");
-        sink.writeUtf8(varyHeaders.value(i));
-        sink.writeByte('\n');
+        sink.writeUtf8(varyHeaders.name(i))
+            .writeUtf8(": ")
+            .writeUtf8(varyHeaders.value(i))
+            .writeByte('\n');
       }
 
-      sink.writeUtf8(new StatusLine(protocol, code, message).toString());
-      sink.writeByte('\n');
-      sink.writeDecimalLong(responseHeaders.size());
-      sink.writeByte('\n');
+      sink.writeUtf8(new StatusLine(protocol, code, message).toString())
+          .writeByte('\n');
+      sink.writeDecimalLong(responseHeaders.size() + 2)
+          .writeByte('\n');
       for (int i = 0, size = responseHeaders.size(); i < size; i++) {
-        sink.writeUtf8(responseHeaders.name(i));
-        sink.writeUtf8(": ");
-        sink.writeUtf8(responseHeaders.value(i));
-        sink.writeByte('\n');
+        sink.writeUtf8(responseHeaders.name(i))
+            .writeUtf8(": ")
+            .writeUtf8(responseHeaders.value(i))
+            .writeByte('\n');
       }
+      sink.writeUtf8(OkHeaders.SENT_MILLIS)
+          .writeUtf8(": ")
+          .writeDecimalLong(sentRequestMillis)
+          .writeByte('\n');
+      sink.writeUtf8(OkHeaders.RECEIVED_MILLIS)
+          .writeUtf8(": ")
+          .writeDecimalLong(receivedResponseMillis)
+          .writeByte('\n');
 
       if (isHttps()) {
         sink.writeByte('\n');
-        sink.writeUtf8(handshake.cipherSuite().javaName());
-        sink.writeByte('\n');
+        sink.writeUtf8(handshake.cipherSuite().javaName())
+            .writeByte('\n');
         writeCertList(sink, handshake.peerCertificates());
         writeCertList(sink, handshake.localCertificates());
         // The handshake’s TLS version is null on HttpsURLConnection and on older cached responses.
         if (handshake.tlsVersion() != null) {
-          sink.writeUtf8(handshake.tlsVersion().javaName());
-          sink.writeByte('\n');
+          sink.writeUtf8(handshake.tlsVersion().javaName())
+              .writeByte('\n');
         }
       }
       sink.close();
@@ -650,13 +672,13 @@ public final class Cache implements Closeable, Flushable {
     private void writeCertList(BufferedSink sink, List<Certificate> certificates)
         throws IOException {
       try {
-        sink.writeDecimalLong(certificates.size());
-        sink.writeByte('\n');
+        sink.writeDecimalLong(certificates.size())
+            .writeByte('\n');
         for (int i = 0, size = certificates.size(); i < size; i++) {
           byte[] bytes = certificates.get(i).getEncoded();
           String line = ByteString.of(bytes).base64();
-          sink.writeUtf8(line);
-          sink.writeByte('\n');
+          sink.writeUtf8(line)
+              .writeByte('\n');
         }
       } catch (CertificateEncodingException e) {
         throw new IOException(e.getMessage());
@@ -685,6 +707,8 @@ public final class Cache implements Closeable, Flushable {
           .headers(responseHeaders)
           .body(new CacheResponseBody(snapshot, contentType, contentLength))
           .handshake(handshake)
+          .sentRequestAtMillis(sentRequestMillis)
+          .receivedResponseAtMillis(receivedResponseMillis)
           .build();
     }
   }
