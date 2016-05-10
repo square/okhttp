@@ -16,6 +16,7 @@
 package okhttp3.logging;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -640,6 +641,26 @@ public final class HttpLoggingInterceptorTest {
         .assertLogEqual("<-- END HTTP (binary 9-byte body omitted)")
         .assertNoMoreLogs();
   }
+
+    @Test public void connectFail() throws IOException {
+        setLevel(Level.BASIC);
+        url = new HttpUrl.Builder()
+            .scheme("http")
+            .host("okhttp-notfound.com")
+            .port(80)
+            .build()
+            .resolve("/");
+
+        try {
+            client.newCall(request().build()).execute();
+        } catch (UnknownHostException ignored) {
+        }
+
+        applicationLogs
+            .assertLogEqual("--> GET " + url + " http/1.1")
+            .assertLogEqual("<-- Failed to send: java.net.UnknownHostException: okhttp-notfound.com")
+            .assertNoMoreLogs();
+    }
 
   private Request.Builder request() {
     return new Request.Builder().url(url);
