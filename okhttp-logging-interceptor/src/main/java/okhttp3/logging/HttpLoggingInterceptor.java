@@ -207,7 +207,13 @@ public final class HttpLoggingInterceptor implements Interceptor {
     }
 
     long startNs = System.nanoTime();
-    Response response = chain.proceed(request);
+    Response response;
+    try {
+      response = chain.proceed(request);
+    } catch (Exception e) {
+      logger.log("<-- HTTP FAILED: " + e);
+      throw e;
+    }
     long tookMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
 
     ResponseBody responseBody = response.body();
