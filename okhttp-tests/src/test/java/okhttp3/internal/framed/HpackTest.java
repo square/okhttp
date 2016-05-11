@@ -215,9 +215,6 @@ public class HpackTest {
     bytesIn.writeByte(0x0d); // Literal value (len = 13)
     bytesIn.writeUtf8("custom-header");
 
-    hpackWriter.writeHeaders(headerBlock);
-    assertEquals(bytesIn, bytesOut);
-
     hpackReader.readHeaders();
 
     assertEquals(0, hpackReader.headerCount);
@@ -239,6 +236,8 @@ public class HpackTest {
   }
 
   @Test public void literalHeaderFieldNeverIndexedNewName() throws IOException {
+    List<Header> headerBlock = headerEntries("custom-key", "custom-header");
+
     bytesIn.writeByte(0x10); // Never indexed
     bytesIn.writeByte(0x0a); // Literal name (len = 10)
     bytesIn.writeUtf8("custom-key");
@@ -674,7 +673,7 @@ public class HpackTest {
 
   @Test public void lowercaseHeaderNameBeforeEmit() throws IOException {
     hpackWriter.writeHeaders(Arrays.asList(new Header("FoO", "BaR")));
-    assertBytes(0, 3, 'f', 'o', 'o', 3, 'B', 'a', 'R');
+    assertBytes(0x40, 3, 'f', 'o', 'o', 3, 'B', 'a', 'R');
   }
 
   @Test public void mixedCaseHeaderNameIsMalformed() throws IOException {

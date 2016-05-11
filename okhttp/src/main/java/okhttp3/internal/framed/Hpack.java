@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -367,10 +368,97 @@ final class Hpack {
   }
 
   static final class Writer {
+    private static final byte SEPARATED_TOKEN = ':';
+    private static final int SETTINGS_HEADER_TABLE_SIZE = 4096;
+
     private final Buffer out;
+    private final Map<ByteString, Integer> headerStringToDynamicIndex =
+        new HashMap<ByteString, Integer>();
+
+    private int headerTableSizeSetting;
+    private int maxDynamicTableByteCount;
+    // Visible for testing.
+    Header[] dynamicTable = new Header[8];
+    // Array is populated back to front, so new entries always have lowest index.
+    int nextHeaderIndex = dynamicTable.length - 1;
+    int headerCount = 0;
+    int dynamicTableByteCount = 0;
 
     Writer(Buffer out) {
+      this(SETTINGS_HEADER_TABLE_SIZE, out);
+    }
+
+    Writer(int headerTableSizeSetting, Buffer out) {
+      this.headerTableSizeSetting = headerTableSizeSetting;
+      this.maxDynamicTableByteCount = headerTableSizeSetting;
       this.out = out;
+    }
+
+    ByteString getHeaderString(Header entry) {
+      byte[] ret = new byte[entry.name.size() + 1 + entry.value.size()];
+      System.arraycopy(entry.name.toByteArray(), 0, ret, 0, entry.name.size());
+      ret[entry.name.size()] = SEPARATED_TOKEN;
+      System.arraycopy(entry.value.toByteArray(), 0, ret, entry.name.size() + 1,
+          entry.value.size());
+      return ByteString.of(ret);
+    }
+
+    private void clearDynamicTable() {
+      Arrays.fill(dynamicTable, null);
+      headerStringToDynamicIndex.clear();
+      nextHeaderIndex = dynamicTable.length - 1;
+      headerCount = 0;
+      dynamicTableByteCount = 0;
+    }
+
+    /** Returns the count of entries evicted. */
+    private int evictToRecoverBytes(int bytesToRecover) {
+      int entriesToEvict = 0;
+      if (bytesToRecover > 0) {
+        // determine how many headers need to be evicted.
+        for (int j = dynamicTable.length - 1; j >= nextHeaderIndex && bytesToRecover > 0; j--) {
+          bytesToRecover -= dynamicTable[j].hpackSize;
+          dynamicTableByteCount -= dynamicTable[j].hpackSize;
+          headerCount--;
+          entriesToEvict++;
+        }
+        System.arraycopy(dynamicTable, nextHeaderIndex + 1, dynamicTable,
+            nextHeaderIndex + 1 + entriesToEvict, headerCount);
+        for (Map.Entry<ByteString, Integer> p : headerStringToDynamicIndex.entrySet()) {
+          p.setValue(p.getValue() + entriesToEvict);
+        }
+        nextHeaderIndex += entriesToEvict;
+      }
+      return entriesToEvict;
+    }
+
+    private void insertIntoDynamicTable(Header entry) {
+      int delta = entry.hpackSize;
+
+      // if the new or replacement header is too big, drop all entries.
+      if (delta > maxDynamicTableByteCount) {
+        clearDynamicTable();
+        return;
+      }
+
+      // Evict headers to the required length.
+      int bytesToRecover = (dynamicTableByteCount + delta) - maxDynamicTableByteCount;
+      evictToRecoverBytes(bytesToRecover);
+
+      if (headerCount + 1 > dynamicTable.length) { // Need to grow the dynamic table.
+        Header[] doubled = new Header[dynamicTable.length * 2];
+        System.arraycopy(dynamicTable, 0, doubled, dynamicTable.length, dynamicTable.length);
+        for (Map.Entry<ByteString, Integer> p : headerStringToDynamicIndex.entrySet()) {
+          p.setValue(p.getValue() + dynamicTable.length);
+        }
+        nextHeaderIndex = dynamicTable.length - 1;
+        dynamicTable = doubled;
+      }
+      int index = nextHeaderIndex--;
+      dynamicTable[index] = entry;
+      headerStringToDynamicIndex.put(getHeaderString(entry), index);
+      headerCount++;
+      dynamicTableByteCount += delta;
     }
 
     /** This does not use "never indexed" semantics for sensitive headers. */
@@ -379,15 +467,26 @@ final class Hpack {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
         ByteString name = headerBlock.get(i).name.toAsciiLowercase();
+        ByteString value = headerBlock.get(i).value;
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
         if (staticIndex != null) {
           // Literal Header Field without Indexing - Indexed Name.
           writeInt(staticIndex + 1, PREFIX_4_BITS, 0);
-          writeByteString(headerBlock.get(i).value);
+          writeByteString(value);
         } else {
-          out.writeByte(0x00); // Literal Header without Indexing - New Name.
-          writeByteString(name);
-          writeByteString(headerBlock.get(i).value);
+          ByteString headerString = getHeaderString(headerBlock.get(i));
+          Integer dynamicIndex = headerStringToDynamicIndex.get(headerString);
+          if (dynamicIndex != null) {
+            // Indexed Header.
+            writeInt(dynamicTable.length - dynamicIndex + STATIC_HEADER_TABLE.length, PREFIX_7_BITS,
+                0);
+          } else {
+            // Literal Header Field with Incremental Indexing — New Name
+            out.writeByte(0x40);
+            writeByteString(name);
+            writeByteString(value);
+            insertIntoDynamicTable(headerBlock.get(i));
+          }
         }
       }
     }
