@@ -15,7 +15,10 @@
  */
 package okhttp3;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
@@ -285,6 +288,46 @@ public final class ConnectionReuseTest {
 
     assertEquals(0, server.takeRequest().getSequenceNumber());
     assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  /**
+   * Regression test for an edge case where closing response body in the HTTP engine doesn't release
+   * the corresponding stream allocation. This test keeps those response bodies alive and reads
+   * them after the redirect has completed. This forces a connection to not be reused where it would
+   * be otherwise.
+   *
+   * https://github.com/square/okhttp/issues/2409
+   */
+  @Test public void connectionsAreNotReusedIfNetworkInterceptorInterferes() throws Exception {
+    final List<ResponseBody> responseBodies = new ArrayList<>();
+
+    client = client.newBuilder().addNetworkInterceptor(new Interceptor() {
+      @Override public Response intercept(Chain chain) throws IOException {
+        Response response = chain.proceed(chain.request());
+        responseBodies.add(response.body());
+        return response.newBuilder()
+            .body(ResponseBody.create(null, "unrelated response body!"))
+            .build();
+      }
+    }).build();
+
+    server.enqueue(new MockResponse()
+        .setResponseCode(301)
+        .addHeader("Location: /b")
+        .setBody("/a has moved!"));
+    server.enqueue(new MockResponse()
+        .setBody("/b is here"));
+
+    Request request = new Request.Builder()
+        .url(server.url("/"))
+        .build();
+    Response response = client.newCall(request).execute();
+    assertEquals("unrelated response body!", response.body().string());
+    assertEquals("/a has moved!", responseBodies.get(0).string());
+    assertEquals("/b is here", responseBodies.get(1).string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
   }
 
   private void enableHttps() {
