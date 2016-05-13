@@ -292,7 +292,7 @@ final class RealCall implements Call {
         throw new ProtocolException("Too many follow-up requests: " + followUpCount);
       }
 
-      if (!engine.sameConnection(followUp.url())) {
+      if (!engine.sameConnection(followUp.url()) || streamAllocation.stream() != null) {
         streamAllocation.release();
         streamAllocation = null;
       }
