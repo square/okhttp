@@ -658,7 +658,7 @@ public final class HttpLoggingInterceptorTest {
 
         applicationLogs
             .assertLogEqual("--> GET " + url + " http/1.1")
-            .assertLogEqual("<-- Failed to send: java.net.UnknownHostException: okhttp-notfound.com")
+            .assertLogMatch("<-- Failed to send: java.net.UnknownHostException: okhttp-notfound.com.*")
             .assertNoMoreLogs();
     }
 
