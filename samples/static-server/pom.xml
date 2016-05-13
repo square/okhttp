@@ -4,9 +4,9 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>com.squareup.okhttp.sample</groupId>
+    <groupId>com.squareup.okhttp3.sample</groupId>
     <artifactId>sample-parent</artifactId>
-    <version>2.5.0-SNAPSHOT</version>
+    <version>3.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>static-server</artifactId>
@@ -14,7 +14,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.squareup.okhttp</groupId>
+      <groupId>com.squareup.okhttp3</groupId>
       <artifactId>mockwebserver</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -33,7 +33,7 @@
           <transformers>
             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
               <manifestEntries>
-                <Main-Class>com.squareup.okhttp.sample.SampleServer</Main-Class>
+                <Main-Class>okhttp3.sample.SampleServer</Main-Class>
               </manifestEntries>
             </transformer>
           </transformers>
@@ -51,7 +51,9 @@
         <executions>
           <execution>
             <phase>package</phase>
-            <goals><goal>shade</goal></goals>
+            <goals>
+              <goal>shade</goal>
+            </goals>
           </execution>
         </executions>
       </plugin>

@@ -19,7 +19,7 @@ awkward-to-reproduce situations like 500 errors or slow-loading responses.
 ### Example
 
 Use MockWebServer the same way that you use mocking frameworks like
-[Mockito](https://code.google.com/p/mockito/):
+[Mockito](https://github.com/mockito/mockito):
 
 1. Script the mocks.
 2. Run application code.
@@ -42,7 +42,7 @@ public void test() throws Exception {
   server.start();
 
   // Ask the server for its URL. You'll need this to make HTTP requests.
-  URL baseUrl = server.getUrl("/v1/chat/");
+  HttpUrl baseUrl = server.url("/v1/chat/");
 
   // Exercise your application code, which should make those HTTP requests.
   // Responses are returned in the same order that they are enqueued.
@@ -108,7 +108,7 @@ Verify requests by their method, path, HTTP version, body, and headers.
 RecordedRequest request = server.takeRequest();
 assertEquals("POST /v1/chat/send HTTP/1.1", request.getRequestLine());
 assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"));
-assertEquals("{}", request.getUtf8Body());
+assertEquals("{}", request.getBody().readUtf8());
 ```
 
 #### Dispatcher
@@ -143,7 +143,7 @@ server.setDispatcher(dispatcher);
 Get MockWebServer via Maven:
 ```xml
 <dependency>
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>mockwebserver</artifactId>
   <version>(insert latest version)</version>
   <scope>test</scope>
@@ -152,7 +152,7 @@ Get MockWebServer via Maven:
 
 or via Gradle 
 ```groovy
-testCompile 'com.squareup.okhttp:mockwebserver:(insert latest version)'
+testCompile 'com.squareup.okhttp3:mockwebserver:(insert latest version)'
 ```
 
 ### License

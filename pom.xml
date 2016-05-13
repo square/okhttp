@@ -9,9 +9,9 @@
     <version>7</version>
   </parent>
 
-  <groupId>com.squareup.okhttp</groupId>
+  <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>2.5.0-SNAPSHOT</version>
+  <version>3.3.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>
@@ -31,6 +31,8 @@
     <module>okhttp-ws</module>
     <module>okhttp-ws-tests</module>
 
+    <module>okhttp-logging-interceptor</module>
+
     <module>okcurl</module>
     <module>mockwebserver</module>
     <module>samples</module>
@@ -41,20 +43,24 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Compilation -->
-    <java.version>1.7</java.version>
-    <okio.version>1.5.0</okio.version>
+    <airlift.version>0.7</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
-    <!-- ALPN library targeted to Java 8 update 25. -->
-    <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
-    <bouncycastle.version>1.50</bouncycastle.version>
-    <gson.version>2.2.3</gson.version>
+    <!-- ALPN library targeted to Java 8 update 71 - 74 -->
+    <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+    <android.version>4.1.1.4</android.version>
     <apache.http.version>4.2.2</apache.http.version>
-    <airlift.version>0.6</airlift.version>
+    <bouncycastle.version>1.50</bouncycastle.version>
     <guava.version>16.0</guava.version>
+    <java.version>1.7</java.version>
+    <moshi.version>1.1.0</moshi.version>
+    <okio.version>1.8.0</okio.version>
 
     <!-- Test Dependencies -->
-    <junit.version>4.11</junit.version>
+    <junit.version>4.12</junit.version>
+
+    <!-- platform test mode -->
+    <okhttp.platform>platform</okhttp.platform>
   </properties>
 
   <scm>
@@ -94,11 +100,6 @@
         <version>${bouncycastle.version}</version>
       </dependency>
       <dependency>
-        <groupId>com.google.code.gson</groupId>
-        <artifactId>gson</artifactId>
-        <version>${gson.version}</version>
-      </dependency>
-      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpclient</artifactId>
         <version>${apache.http.version}</version>
@@ -112,6 +113,16 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.android</groupId>
+        <artifactId>android</artifactId>
+        <version>${android.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.squareup.moshi</groupId>
+        <artifactId>moshi</artifactId>
+        <version>${moshi.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -134,6 +145,9 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>2.17</version>
           <configuration>
+            <systemPropertyVariables>
+              <okhttp.platform>${okhttp.platform}</okhttp.platform>
+            </systemPropertyVariables>
             <properties>
               <!--
                 Configure a listener for enforcing that no uncaught exceptions issue from OkHttp
@@ -142,7 +156,7 @@
                 -->
               <property>
                 <name>listener</name>
-                <value>com.squareup.okhttp.testing.InstallUncaughtExceptionHandlerListener</value>
+                <value>okhttp3.testing.InstallUncaughtExceptionHandlerListener</value>
               </property>
             </properties>
           </configuration>
@@ -229,7 +243,10 @@
         <jdk>1.7</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk7.version}/alpn-boot-${alpn.jdk7.version}.jar
+        </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -258,7 +275,10 @@
         <jdk>1.8</jdk>
       </activation>
       <properties>
-        <bootclasspathPrefix>${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar</bootclasspathPrefix>
+        <bootclasspathPrefix>
+          ${settings.localRepository}/org/mortbay/jetty/alpn/alpn-boot/${alpn.jdk8.version}/alpn-boot-${alpn.jdk8.version}.jar
+        </bootclasspathPrefix>
+        <okhttp.platform>jdk-with-jetty-boot</okhttp.platform>
       </properties>
       <build>
         <pluginManagement>
@@ -280,6 +300,15 @@
           </plugins>
         </pluginManagement>
       </build>
+    </profile>
+    <profile>
+      <id>jdk9</id>
+      <activation>
+        <jdk>1.9</jdk>
+      </activation>
+      <properties>
+        <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
     </profile>
   </profiles>
 </project>
