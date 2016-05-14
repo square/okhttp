@@ -23,6 +23,7 @@ import java.net.ProxySelector;
 import java.net.SocketAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -68,8 +69,8 @@ public final class RouteSelectorTest {
   private int uriPort = 1003;
 
   private SocketFactory socketFactory;
-  private final SSLContext sslContext = SslContextBuilder.localhost();
-  private final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+  private final SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  private final SSLSocketFactory sslSocketFactory = sslContextBuilder.socketFactory();
   private HostnameVerifier hostnameVerifier;
 
   private final Authenticator authenticator = Authenticator.NONE;
@@ -77,6 +78,9 @@ public final class RouteSelectorTest {
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
   private RouteDatabase routeDatabase = new RouteDatabase();
+
+  public RouteSelectorTest() throws GeneralSecurityException {
+  }
 
   @Before public void setUp() throws Exception {
     socketFactory = SocketFactory.getDefault();

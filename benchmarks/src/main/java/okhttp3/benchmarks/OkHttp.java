@@ -18,7 +18,6 @@ package okhttp3.benchmarks;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Call;
@@ -40,15 +39,15 @@ class OkHttp extends SynchronousHttpClient {
         .build();
 
     if (benchmark.tls) {
-      SSLContext sslContext = SslContextBuilder.localhost();
-      SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+      SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+      SSLSocketFactory socketFactory = sslContextBuilder.socketFactory();
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = new OkHttpClient.Builder()
-          .sslSocketFactory(socketFactory)
+          .sslSocketFactory(socketFactory, sslContextBuilder.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

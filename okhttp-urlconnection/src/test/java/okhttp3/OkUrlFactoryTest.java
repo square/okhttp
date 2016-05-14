@@ -184,10 +184,10 @@ public class OkUrlFactoryTest {
         .setBody("Blocked!"));
     final URL blockedURL = cleartextServer.url("/").url();
 
-    SSLContext context = SslContextBuilder.localhost();
-    server.useHttps(context.getSocketFactory(), false);
+    SslContextBuilder contextBuilder = SslContextBuilder.localhost();
+    server.useHttps(contextBuilder.socketFactory(), false);
     factory.setClient(factory.client().newBuilder()
-        .sslSocketFactory(context.getSocketFactory())
+        .sslSocketFactory(contextBuilder.socketFactory(), contextBuilder.trustManager())
         .followSslRedirects(true)
         .build());
     factory.setUrlFilter(new URLFilter() {

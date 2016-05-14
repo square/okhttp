@@ -28,7 +28,10 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Constructs an SSL context for testing. This uses Bouncy Castle to generate a self-signed
@@ -38,10 +41,14 @@ import javax.net.ssl.TrustManagerFactory;
  * instances where possible.
  */
 public final class SslContextBuilder {
-  private static SSLContext localhost; // Lazily initialized.
+  private static SslContextBuilder localhost; // Lazily initialized.
+
+  // available after build
+  private TrustManager[] trustManagers;
+  private SSLContext sslContext;
 
   /** Returns a new SSL context for this host's current localhost address. */
-  public static synchronized SSLContext localhost() {
+  public static synchronized SslContextBuilder localhost() {
     if (localhost != null) return localhost;
 
     try {
@@ -53,8 +60,7 @@ public final class SslContextBuilder {
 
       localhost = new SslContextBuilder()
           .certificateChain(heldCertificate)
-          .addTrustedCertificate(heldCertificate.certificate)
-          .build();
+          .addTrustedCertificate(heldCertificate.certificate);
 
       return localhost;
     } catch (GeneralSecurityException e) {
@@ -86,34 +92,40 @@ public final class SslContextBuilder {
     return this;
   }
 
-  public SSLContext build() throws GeneralSecurityException {
-    // Put the certificate in a key store.
-    char[] password = "password".toCharArray();
-    KeyStore keyStore = newEmptyKeyStore(password);
+  public SSLContext build() {
+    try {
+      // Put the certificate in a key store.
+      char[] password = "password".toCharArray();
+      KeyStore keyStore = newEmptyKeyStore(password);
 
-    if (chain != null) {
-      Certificate[] certificates = new Certificate[chain.length];
-      for (int i = 0; i < chain.length; i++) {
-        certificates[i] = chain[i].certificate;
+      if (chain != null) {
+        Certificate[] certificates = new Certificate[chain.length];
+        for (int i = 0; i < chain.length; i++) {
+          certificates[i] = chain[i].certificate;
+        }
+        keyStore.setKeyEntry("private", chain[0].keyPair.getPrivate(), password, certificates);
       }
-      keyStore.setKeyEntry("private", chain[0].keyPair.getPrivate(), password, certificates);
-    }
 
-    for (int i = 0; i < trustedCertificates.size(); i++) {
-      keyStore.setCertificateEntry("cert_" + i, trustedCertificates.get(i));
-    }
+      for (int i = 0; i < trustedCertificates.size(); i++) {
+        keyStore.setCertificateEntry("cert_" + i, trustedCertificates.get(i));
+      }
 
-    // Wrap it up in an SSL context.
-    KeyManagerFactory keyManagerFactory =
-        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    keyManagerFactory.init(keyStore, password);
-    TrustManagerFactory trustManagerFactory =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    trustManagerFactory.init(keyStore);
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
-        new SecureRandom());
-    return sslContext;
+      // Wrap it up in an SSL context.
+      KeyManagerFactory keyManagerFactory =
+          KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+      keyManagerFactory.init(keyStore, password);
+      TrustManagerFactory trustManagerFactory =
+          TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+      trustManagerFactory.init(keyStore);
+      trustManagers = trustManagerFactory.getTrustManagers();
+
+      sslContext = SSLContext.getInstance("TLS");
+      sslContext.init(keyManagerFactory.getKeyManagers(), trustManagers,
+          new SecureRandom());
+      return sslContext;
+    } catch (GeneralSecurityException gse) {
+      throw new AssertionError(gse);
+    }
   }
 
   private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
@@ -125,5 +137,21 @@ public final class SslContextBuilder {
     } catch (IOException e) {
       throw new AssertionError(e);
     }
+  }
+
+  public SSLSocketFactory socketFactory() {
+    if (sslContext == null) {
+      build();
+    }
+
+    return sslContext.getSocketFactory();
+  }
+
+  public X509TrustManager trustManager() {
+    if (trustManagers == null) {
+      build();
+    }
+
+    return (X509TrustManager) trustManagers[0];
   }
 }

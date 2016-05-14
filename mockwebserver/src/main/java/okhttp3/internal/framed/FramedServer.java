@@ -184,7 +184,7 @@ public final class FramedServer extends FramedConnection.Listener {
     }
 
     FramedServer server = new FramedServer(new File(args[0]),
-        SslContextBuilder.localhost().getSocketFactory());
+        SslContextBuilder.localhost().socketFactory());
     server.run();
   }
 }

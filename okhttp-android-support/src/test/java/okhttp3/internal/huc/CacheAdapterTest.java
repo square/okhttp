@@ -59,7 +59,7 @@ import static org.junit.Assert.assertTrue;
  * </ul>
  */
 public class CacheAdapterTest {
-  private SSLContext sslContext = SslContextBuilder.localhost();
+  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   private MockWebServer server;
   private OkHttpClient client;
@@ -116,7 +116,7 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -234,7 +234,7 @@ public class CacheAdapterTest {
     };
     setInternalCache(new CacheAdapter(responseCache));
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
 
@@ -262,7 +262,7 @@ public class CacheAdapterTest {
   }
 
   private URL configureHttpsServer(MockResponse mockResponse) throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false /* tunnelProxy */);
+    server.useHttps(sslContextBuilder.socketFactory(), false /* tunnelProxy */);
     server.enqueue(mockResponse);
     server.start();
     return server.url("/").url();

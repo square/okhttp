@@ -37,6 +37,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class CertificatePinnerChainValidationTest {
+  //static {
+  //  SecurityManager sm = new ;
+  //  System.setSecurityManager(sm);
+  //}
+
   @Rule public final MockWebServer server = new MockWebServer();
 
   /** The pinner should pull the root certificate from the trust manager. */
@@ -60,11 +65,10 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(rootCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
-        .addTrustedCertificate(rootCa.certificate)
-        .build();
+    SslContextBuilder clientContextBuilder = new SslContextBuilder()
+        .addTrustedCertificate(rootCa.certificate);
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory(), clientContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -116,11 +120,10 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(intermediateCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
-        .addTrustedCertificate(rootCa.certificate)
-        .build();
+    SslContextBuilder contextBuilder = new SslContextBuilder()
+        .addTrustedCertificate(rootCa.certificate);
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(contextBuilder.socketFactory(), contextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -176,11 +179,10 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodCertificate.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
-        .addTrustedCertificate(rootCa.certificate)
-        .build();
+    SslContextBuilder clientContextBuilder = new SslContextBuilder()
+        .addTrustedCertificate(rootCa.certificate);
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory(), clientContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -249,12 +251,11 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodIntermediateCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
+    SslContextBuilder clientContextBuilder = new SslContextBuilder()
         .addTrustedCertificate(rootCa.certificate)
-        .addTrustedCertificate(compromisedRootCa.certificate)
-        .build();
+        .addTrustedCertificate(compromisedRootCa.certificate);
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory(), clientContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();

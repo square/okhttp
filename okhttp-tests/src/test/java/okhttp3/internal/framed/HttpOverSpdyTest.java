@@ -72,7 +72,7 @@ public abstract class HttpOverSpdyTest {
   private final Protocol protocol;
   protected String hostHeader = ":host";
 
-  protected SSLContext sslContext = SslContextBuilder.localhost();
+  protected SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   protected OkHttpClient client;
   protected Cache cache;
@@ -82,11 +82,11 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Before public void setUp() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client = new OkHttpClient.Builder()
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build();
   }

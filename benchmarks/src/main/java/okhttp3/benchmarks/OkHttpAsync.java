@@ -21,7 +21,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Call;
@@ -55,15 +54,15 @@ class OkHttpAsync implements HttpClient {
         .build();
 
     if (benchmark.tls) {
-      SSLContext sslContext = SslContextBuilder.localhost();
-      SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+      SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+      SSLSocketFactory socketFactory = sslContextBuilder.socketFactory();
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = client.newBuilder()
-          .sslSocketFactory(socketFactory)
+          .sslSocketFactory(socketFactory, sslContextBuilder.trustManager())
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

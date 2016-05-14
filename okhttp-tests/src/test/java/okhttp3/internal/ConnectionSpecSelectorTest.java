@@ -39,7 +39,7 @@ public class ConnectionSpecSelectorTest {
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
 
-  private SSLContext sslContext = SslContextBuilder.localhost();
+  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
 
   @Test
   public void nonRetryableIOException() throws Exception {
@@ -120,7 +120,7 @@ public class ConnectionSpecSelectorTest {
   }
 
   private SSLSocket createSocketWithEnabledProtocols(TlsVersion... tlsVersions) throws IOException {
-    SSLSocket socket = (SSLSocket) sslContext.getSocketFactory().createSocket();
+    SSLSocket socket = (SSLSocket) sslContextBuilder.socketFactory().createSocket();
     socket.setEnabledProtocols(javaNames(tlsVersions));
     return socket;
   }

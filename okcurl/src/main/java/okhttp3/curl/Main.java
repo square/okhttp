@@ -33,10 +33,7 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Headers;
 import okhttp3.MediaType;
@@ -48,6 +45,7 @@ import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.framed.Http2;
 import okhttp3.internal.http.StatusLine;
+import okhttp3.internal.tls.DefaultSecurity;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -179,7 +177,9 @@ public class Main extends HelpOption implements Runnable {
       builder.readTimeout(readTimeout, SECONDS);
     }
     if (allowInsecure) {
-      builder.sslSocketFactory(createInsecureSslSocketFactory());
+      X509TrustManager trustManager = createInsecureTrustManager();
+      builder.sslSocketFactory(DefaultSecurity.systemDefaultSslSocketFactory(trustManager),
+          trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
     }
     return builder.build();
@@ -240,27 +240,20 @@ public class Main extends HelpOption implements Runnable {
     client.connectionPool().evictAll(); // Close any persistent connections.
   }
 
-  private static SSLSocketFactory createInsecureSslSocketFactory() {
-    try {
-      SSLContext context = SSLContext.getInstance("TLS");
-      TrustManager permissive = new X509TrustManager() {
-        @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
-            throws CertificateException {
-        }
+  private static X509TrustManager createInsecureTrustManager() {
+    return new X509TrustManager() {
+      @Override public void checkClientTrusted(X509Certificate[] chain, String authType)
+          throws CertificateException {
+      }
 
-        @Override public void checkServerTrusted(X509Certificate[] chain, String authType)
-            throws CertificateException {
-        }
+      @Override public void checkServerTrusted(X509Certificate[] chain, String authType)
+          throws CertificateException {
+      }
 
-        @Override public X509Certificate[] getAcceptedIssuers() {
-          return new X509Certificate[0];
-        }
-      };
-      context.init(null, new TrustManager[] {permissive}, null);
-      return context.getSocketFactory();
-    } catch (Exception e) {
-      throw new AssertionError(e);
-    }
+      @Override public X509Certificate[] getAcceptedIssuers() {
+        return new X509Certificate[0];
+      }
+    };
   }
 
   private static HostnameVerifier createInsecureHostnameVerifier() {

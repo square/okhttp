@@ -22,6 +22,7 @@ import java.net.CookieManager;
 import java.net.HttpCookie;
 import java.net.HttpURLConnection;
 import java.net.ResponseCache;
+import java.security.GeneralSecurityException;
 import java.security.Principal;
 import java.security.cert.Certificate;
 import java.text.DateFormat;
@@ -75,7 +76,7 @@ public final class CacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
   @Rule public InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  private final SSLContext sslContext = SslContextBuilder.localhost();
+  private final SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   private OkHttpClient client;
   private Cache cache;
   private final CookieManager cookieManager = new CookieManager();
@@ -255,15 +256,15 @@ public final class CacheTest {
     assertEquals(1, cache.hitCount());
   }
 
-  @Test public void secureResponseCaching() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+  @Test public void secureResponseCaching() throws IOException, GeneralSecurityException {
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -351,8 +352,9 @@ public final class CacheTest {
     assertEquals(2, recordedRequest3.getSequenceNumber());
   }
 
-  @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+  @Test public void secureResponseCachingAndRedirects() throws IOException,
+      GeneralSecurityException {
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -366,7 +368,7 @@ public final class CacheTest {
         .setBody("DEF"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -391,8 +393,9 @@ public final class CacheTest {
    *
    * https://github.com/square/okhttp/issues/214
    */
-  @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(sslContext.getSocketFactory(), false);
+  @Test public void secureResponseCachingAndProtocolRedirects()
+      throws IOException, GeneralSecurityException {
+    server2.useHttps(sslContextBuilder.socketFactory(), false);
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -407,7 +410,7 @@ public final class CacheTest {
         .addHeader("Location: " + server2.url("/")));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 
@@ -1681,7 +1684,7 @@ public final class CacheTest {
   }
 
   @Test public void varyAndHttps() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
@@ -1690,7 +1693,7 @@ public final class CacheTest {
         .setBody("B"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(NULL_HOSTNAME_VERIFIER)
         .build();
 

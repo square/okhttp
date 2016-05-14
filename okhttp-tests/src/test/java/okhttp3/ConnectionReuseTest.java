@@ -20,10 +20,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.DefaultSecurity;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -40,7 +41,7 @@ public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SSLContext sslContext = SslContextBuilder.localhost();
+  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
@@ -251,11 +252,10 @@ public final class ConnectionReuseTest {
     response.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    SSLContext sslContext2 = SSLContext.getInstance("TLS");
-    sslContext2.init(null, null, null);
-    SSLSocketFactory sslSocketFactory2 = sslContext2.getSocketFactory();
+    X509TrustManager trustManager = DefaultSecurity.systemDefaultTrustManager();
+    SSLSocketFactory sslSocketFactory2 = DefaultSecurity.systemDefaultSslSocketFactory(trustManager);
     OkHttpClient anotherClient = client.newBuilder()
-        .sslSocketFactory(sslSocketFactory2)
+        .sslSocketFactory(sslSocketFactory2, trustManager)
         .build();
 
     // This client fails to connect because the new SSL socket factory refuses.
@@ -340,11 +340,11 @@ public final class ConnectionReuseTest {
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocols))
         .build();
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.setProtocols(client.protocols());
   }
 

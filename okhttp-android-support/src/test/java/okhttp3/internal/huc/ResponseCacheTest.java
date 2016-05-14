@@ -96,7 +96,7 @@ public final class ResponseCacheTest {
   @Rule public MockWebServer server2 = new MockWebServer();
 
   private HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
-  private SSLContext sslContext = SslContextBuilder.localhost();
+  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   private ResponseCache cache;
   private CookieManager cookieManager;
   private OkUrlFactory urlFactory;
@@ -267,14 +267,14 @@ public final class ResponseCacheTest {
   }
 
   @Test public void secureResponseCaching() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
         .setBody("ABC"));
 
     HttpsURLConnection c1 = (HttpsURLConnection) openConnection(server.url("/").url());
-    c1.setSSLSocketFactory(sslContext.getSocketFactory());
+    c1.setSSLSocketFactory(sslContextBuilder.socketFactory());
     c1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c1));
 
@@ -286,7 +286,7 @@ public final class ResponseCacheTest {
     Principal localPrincipal = c1.getLocalPrincipal();
 
     HttpsURLConnection c2 = (HttpsURLConnection) openConnection(server.url("/").url()); // cached!
-    c2.setSSLSocketFactory(sslContext.getSocketFactory());
+    c2.setSSLSocketFactory(sslContextBuilder.socketFactory());
     c2.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(c2));
 
@@ -345,7 +345,7 @@ public final class ResponseCacheTest {
   }
 
   @Test public void secureResponseCachingAndRedirects() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -359,7 +359,7 @@ public final class ResponseCacheTest {
         .setBody("DEF"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -383,7 +383,7 @@ public final class ResponseCacheTest {
    * https://github.com/square/okhttp/issues/214
    */
   @Test public void secureResponseCachingAndProtocolRedirects() throws IOException {
-    server2.useHttps(sslContext.getSocketFactory(), false);
+    server2.useHttps(sslContextBuilder.socketFactory(), false);
     server2.enqueue(new MockResponse()
         .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
         .addHeader("Expires: " + formatDate(1, TimeUnit.HOURS))
@@ -398,7 +398,7 @@ public final class ResponseCacheTest {
         .addHeader("Location: " + server2.url("/").url()));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -1461,7 +1461,7 @@ public final class ResponseCacheTest {
   }
 
   @Test public void varyAndHttps() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse()
         .addHeader("Cache-Control: max-age=60")
         .addHeader("Vary: Accept-Language")
@@ -1470,7 +1470,7 @@ public final class ResponseCacheTest {
         .setBody("B"));
 
     urlFactory.setClient(urlFactory.client().newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(hostnameVerifier)
         .build());
 
@@ -1981,20 +1981,20 @@ public final class ResponseCacheTest {
   }
 
   @Test public void cacheReturnsInsecureResponseForSecureRequest() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     server.enqueue(new MockResponse().setBody("ABC"));
     server.enqueue(new MockResponse().setBody("DEF"));
 
     AndroidInternal.setResponseCache(urlFactory, new InsecureResponseCache(cache));
 
     HttpsURLConnection connection1 = (HttpsURLConnection) openConnection(server.url("/").url());
-    connection1.setSSLSocketFactory(sslContext.getSocketFactory());
+    connection1.setSSLSocketFactory(sslContextBuilder.socketFactory());
     connection1.setHostnameVerifier(hostnameVerifier);
     assertEquals("ABC", readAscii(connection1));
 
     // Not cached!
     HttpsURLConnection connection2 = (HttpsURLConnection) openConnection(server.url("/").url());
-    connection2.setSSLSocketFactory(sslContext.getSocketFactory());
+    connection2.setSSLSocketFactory(sslContextBuilder.socketFactory());
     connection2.setHostnameVerifier(hostnameVerifier);
     assertEquals("DEF", readAscii(connection2));
   }

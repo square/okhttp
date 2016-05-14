@@ -17,6 +17,7 @@ package okhttp3.ws;
 
 import java.io.IOException;
 import java.net.ProtocolException;
+import java.security.GeneralSecurityException;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ import static okhttp3.ws.WebSocket.TEXT;
 public final class WebSocketCallTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final SSLContext sslContext = SslContextBuilder.localhost();
+  private final SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final Random random = new Random(0);
   private OkHttpClient client = new OkHttpClient();
@@ -172,20 +173,20 @@ public final class WebSocketCallTest {
     websocketScheme("WS");
   }
 
-  @Test public void wssScheme() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+  @Test public void wssScheme() throws IOException, GeneralSecurityException {
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
     websocketScheme("wss");
   }
 
-  @Test public void httpsScheme() throws IOException {
-    server.useHttps(sslContext.getSocketFactory(), false);
+  @Test public void httpsScheme() throws IOException, GeneralSecurityException {
+    server.useHttps(sslContextBuilder.socketFactory(), false);
     client = client.newBuilder()
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
