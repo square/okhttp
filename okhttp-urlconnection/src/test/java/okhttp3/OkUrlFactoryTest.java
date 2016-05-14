@@ -11,11 +11,10 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.URLFilter;
 import okhttp3.internal.http.OkHeaders;
 import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okio.BufferedSource;
@@ -184,10 +183,10 @@ public class OkUrlFactoryTest {
         .setBody("Blocked!"));
     final URL blockedURL = cleartextServer.url("/").url();
 
-    SSLContext context = SslContextBuilder.localhost();
-    server.useHttps(context.getSocketFactory(), false);
+    SslClient contextBuilder = SslClient.localhost();
+    server.useHttps(contextBuilder.socketFactory, false);
     factory.setClient(factory.client().newBuilder()
-        .sslSocketFactory(context.getSocketFactory())
+        .sslSocketFactory(contextBuilder.socketFactory, contextBuilder.trustManager)
         .followSslRedirects(true)
         .build());
     factory.setUrlFilter(new URLFilter() {

@@ -21,7 +21,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
-import okhttp3.internal.HeldCertificate;
+import okhttp3.internal.tls.HeldCertificate;
 import okhttp3.internal.tls.CertificateChainCleaner;
 import org.junit.Test;
 

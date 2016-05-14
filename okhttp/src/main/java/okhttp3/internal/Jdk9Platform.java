@@ -20,6 +20,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
 
 /**
@@ -36,14 +38,14 @@ final class Jdk9Platform extends Platform {
 
   @Override
   public void configureTlsExtensions(SSLSocket sslSocket, String hostname,
-                                     List<Protocol> protocols) {
+      List<Protocol> protocols) {
     try {
       SSLParameters sslParameters = sslSocket.getSSLParameters();
 
       List<String> names = alpnProtocolNames(protocols);
 
       setProtocolMethod.invoke(sslParameters,
-          new Object[]{names.toArray(new String[names.size()])});
+          new Object[] {names.toArray(new String[names.size()])});
 
       sslSocket.setSSLParameters(sslParameters);
     } catch (IllegalAccessException | InvocationTargetException e) {
@@ -66,6 +68,15 @@ final class Jdk9Platform extends Platform {
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new AssertionError();
     }
+  }
+
+  @Override public X509TrustManager trustManager(SSLSocketFactory sslSocketFactory) {
+    // Not supported due to access checks on JDK 9+:
+    // java.lang.reflect.InaccessibleObjectException: Unable to make member of class
+    // sun.security.ssl.SSLSocketFactoryImpl accessible:  module java.base does not export
+    // sun.security.ssl to unnamed module @xxx
+    throw new UnsupportedOperationException(
+        "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 9+");
   }
 
   public static Jdk9Platform buildIfSupported() {
