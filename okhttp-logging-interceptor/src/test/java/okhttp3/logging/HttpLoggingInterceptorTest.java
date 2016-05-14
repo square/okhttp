@@ -16,16 +16,13 @@
 package okhttp3.logging;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
+
+import okhttp3.*;
 import okhttp3.logging.HttpLoggingInterceptor.Level;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -643,13 +640,17 @@ public final class HttpLoggingInterceptorTest {
   }
 
     @Test public void connectFail() throws IOException {
-        setLevel(Level.BASIC);
-        url = new HttpUrl.Builder()
-            .scheme("http")
-            .host("okhttp-notfound.com")
-            .port(80)
-            .build()
-            .resolve("/");
+      setLevel(Level.BASIC);
+      final String failMessage = "reason";
+      client = new OkHttpClient.Builder()
+              .dns(new Dns() {
+                @Override
+                public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+                  throw new UnknownHostException(failMessage);
+                }
+              })
+              .addInterceptor(applicationInterceptor)
+              .build();
 
         try {
             client.newCall(request().build()).execute();
@@ -658,7 +659,7 @@ public final class HttpLoggingInterceptorTest {
 
         applicationLogs
             .assertLogEqual("--> GET " + url + " http/1.1")
-            .assertLogMatch("<-- Failed to send: java.net.UnknownHostException: okhttp-notfound.com.*")
+            .assertLogEqual("<-- Failed to send: java.net.UnknownHostException: " +  failMessage)
             .assertNoMoreLogs();
     }
 
