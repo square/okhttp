@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+# Rebuild only if something that could change the behaviour has changed
+# otherwise reuse the jar we built last time
+
+codesha() {
+  find ./*/pom.xml ./*/src -type f | sort | xargs shasum | shasum | cut -f 1 -d ' '
+}
+
+SHA=$(codesha)
+
+if [ ! -f "./okcurl/target/cached-$SHA.jar" ]; then
+  mvn -pl okcurl -am -DskipTests clean package dependency:copy-dependencies
+  mv ./okcurl/target/okcurl-*SNAPSHOT.jar "./okcurl/target/cached-$SHA.jar"
+fi
+
+JAVA_CMD=java
+BCP=
+
+# If we are on OSX, then hunt down JDK 1.8 so we can use ALPN
+# n.b. may still fail if an older version of JDK 1.8 is used
+
+if [ -x /usr/libexec/java_home ]; then
+  JAVA_HOME=$(/usr/libexec/java_home -v 1.8)
+
+  if [ $? -eq 0 ]; then
+    JAVA_CMD="$JAVA_HOME/bin/java"
+    ALPN=$(ls ./okcurl/target/alpn/alpn-boot-*.jar)
+    BCP="-Xbootclasspath/p:$ALPN"
+  fi
+fi
+
+MAIN_JAR=$(ls "./okcurl/target/cached-$SHA.jar")
+$JAVA_CMD "$BCP" -classpath "$MAIN_JAR:okcurl/target/dependency/*" okhttp3.curl.Main "$@"
+
