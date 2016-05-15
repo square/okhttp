@@ -40,6 +40,7 @@ import okhttp3.Response;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -72,7 +73,7 @@ public abstract class HttpOverSpdyTest {
   private final Protocol protocol;
   protected String hostHeader = ":host";
 
-  protected SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  protected SslClient sslContextBuilder = SslContextBuilder.localhost();
   protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   protected OkHttpClient client;
   protected Cache cache;
@@ -82,11 +83,11 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Before public void setUp() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory, false);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client = new OkHttpClient.Builder()
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build();
   }

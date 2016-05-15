@@ -36,8 +36,8 @@ import okhttp3.internal.Util;
 import okhttp3.internal.http.StreamAllocation;
 import okhttp3.internal.io.RealConnection;
 import okhttp3.internal.tls.CertificateChainCleaner;
-import okhttp3.internal.tls.DefaultSecurity;
 import okhttp3.internal.tls.OkHostnameVerifier;
+import okhttp3.internal.tls.SslClient;
 
 /**
  * Factory for {@linkplain Call calls}, which can be used to send HTTP requests and read their
@@ -179,9 +179,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       this.sslSocketFactory = builder.sslSocketFactory;
       this.certificateChainCleaner = builder.certificateChainCleaner;
     } else {
-      X509TrustManager trustManager = DefaultSecurity.systemDefaultTrustManager();
-      this.sslSocketFactory = DefaultSecurity.systemDefaultSslSocketFactory(trustManager);
-      this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
+      SslClient sslClient = SslClient.systemDefault();
+      this.sslSocketFactory = sslClient.sslContext.getSocketFactory();
+      this.certificateChainCleaner = CertificateChainCleaner.get(sslClient.trustManager);
     }
 
     this.hostnameVerifier = builder.hostnameVerifier;

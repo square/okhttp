@@ -45,7 +45,7 @@ import okhttp3.Response;
 import okhttp3.internal.Util;
 import okhttp3.internal.framed.Http2;
 import okhttp3.internal.http.StatusLine;
-import okhttp3.internal.tls.DefaultSecurity;
+import okhttp3.internal.tls.SslClient;
 import okio.BufferedSource;
 import okio.Okio;
 import okio.Sink;
@@ -178,7 +178,7 @@ public class Main extends HelpOption implements Runnable {
     }
     if (allowInsecure) {
       X509TrustManager trustManager = createInsecureTrustManager();
-      builder.sslSocketFactory(DefaultSecurity.systemDefaultSslSocketFactory(trustManager),
+      builder.sslSocketFactory(SslClient.systemDefaultSSLContext(trustManager).getSocketFactory(),
           trustManager);
       builder.hostnameVerifier(createInsecureHostnameVerifier());
     }

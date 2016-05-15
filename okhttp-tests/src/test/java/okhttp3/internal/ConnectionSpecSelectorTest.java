@@ -20,11 +20,11 @@ import java.security.cert.CertificateException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import okhttp3.ConnectionSpec;
 import okhttp3.TlsVersion;
+import okhttp3.internal.tls.SslClient;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -39,7 +39,7 @@ public class ConnectionSpecSelectorTest {
   public static final SSLHandshakeException RETRYABLE_EXCEPTION = new SSLHandshakeException(
       "Simulated handshake exception");
 
-  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  private SslClient sslContextBuilder = SslContextBuilder.localhost();
 
   @Test
   public void nonRetryableIOException() throws Exception {
@@ -120,7 +120,7 @@ public class ConnectionSpecSelectorTest {
   }
 
   private SSLSocket createSocketWithEnabledProtocols(TlsVersion... tlsVersions) throws IOException {
-    SSLSocket socket = (SSLSocket) sslContextBuilder.socketFactory().createSocket();
+    SSLSocket socket = (SSLSocket) sslContextBuilder.socketFactory.createSocket();
     socket.setEnabledProtocols(javaNames(tlsVersions));
     return socket;
   }

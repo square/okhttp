@@ -24,7 +24,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.internal.SslContextBuilder;
-import okhttp3.internal.tls.DefaultSecurity;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.SocketPolicy;
@@ -41,7 +41,7 @@ public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  private SslClient sslContextBuilder = SslContextBuilder.localhost();
   private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
@@ -252,8 +252,9 @@ public final class ConnectionReuseTest {
     response.body().close();
 
     // This client shares a connection pool but has a different SSL socket factory.
-    X509TrustManager trustManager = DefaultSecurity.systemDefaultTrustManager();
-    SSLSocketFactory sslSocketFactory2 = DefaultSecurity.systemDefaultSslSocketFactory(trustManager);
+    SslClient local = SslClient.systemDefault();
+    X509TrustManager trustManager = local.trustManager;
+    SSLSocketFactory sslSocketFactory2 = local.socketFactory;
     OkHttpClient anotherClient = client.newBuilder()
         .sslSocketFactory(sslSocketFactory2, trustManager)
         .build();
@@ -340,11 +341,11 @@ public final class ConnectionReuseTest {
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocols))
         .build();
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory, false);
     server.setProtocols(client.protocols());
   }
 

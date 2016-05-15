@@ -22,16 +22,16 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.net.ssl.SSLContext;
 import okhttp3.OkHttpClient;
+import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.RecordingHostnameVerifier;
 import okio.Buffer;
 import org.junit.After;
 import org.junit.Rule;
@@ -42,7 +42,7 @@ import static okhttp3.ws.WebSocket.TEXT;
 public final class WebSocketCallTest {
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private final SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  private final SslClient sslContextBuilder = SslContextBuilder.localhost();
   private final WebSocketRecorder listener = new WebSocketRecorder();
   private final Random random = new Random(0);
   private OkHttpClient client = new OkHttpClient();
@@ -174,9 +174,9 @@ public final class WebSocketCallTest {
   }
 
   @Test public void wssScheme() throws IOException, GeneralSecurityException {
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory, false);
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
@@ -184,9 +184,9 @@ public final class WebSocketCallTest {
   }
 
   @Test public void httpsScheme() throws IOException, GeneralSecurityException {
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslContextBuilder.socketFactory, false);
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
 
