@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -373,7 +372,7 @@ final class Hpack {
 
     private final Buffer out;
     private final Map<ByteString, Integer> headerStringToDynamicIndex =
-        new HashMap<ByteString, Integer>();
+        new LinkedHashMap<ByteString, Integer>();
 
     private int headerTableSizeSetting;
     private int maxDynamicTableByteCount;
@@ -388,6 +387,8 @@ final class Hpack {
       this(SETTINGS_HEADER_TABLE_SIZE, out);
     }
 
+    // This is the only method to set the dynamic table size.
+    // Don't support to change the dynamic table size after Writer constructed.
     Writer(int headerTableSizeSetting, Buffer out) {
       this.headerTableSizeSetting = headerTableSizeSetting;
       this.maxDynamicTableByteCount = headerTableSizeSetting;
@@ -466,26 +467,27 @@ final class Hpack {
     void writeHeaders(List<Header> headerBlock) throws IOException {
       // TODO: implement index tracking
       for (int i = 0, size = headerBlock.size(); i < size; i++) {
-        ByteString name = headerBlock.get(i).name.toAsciiLowercase();
-        ByteString value = headerBlock.get(i).value;
+        Header header = headerBlock.get(i);
+        ByteString name = header.name.toAsciiLowercase();
+        ByteString value = header.value;
         Integer staticIndex = NAME_TO_FIRST_INDEX.get(name);
         if (staticIndex != null) {
           // Literal Header Field without Indexing - Indexed Name.
           writeInt(staticIndex + 1, PREFIX_4_BITS, 0);
           writeByteString(value);
         } else {
-          ByteString headerString = getHeaderString(headerBlock.get(i));
+          ByteString headerString = getHeaderString(header);
           Integer dynamicIndex = headerStringToDynamicIndex.get(headerString);
           if (dynamicIndex != null) {
             // Indexed Header.
             writeInt(dynamicTable.length - dynamicIndex + STATIC_HEADER_TABLE.length, PREFIX_7_BITS,
-                0);
+                0x80);
           } else {
-            // Literal Header Field with Incremental Indexing — New Name
+            // Literal Header Field with Incremental Indexing - New Name
             out.writeByte(0x40);
             writeByteString(name);
             writeByteString(value);
-            insertIntoDynamicTable(headerBlock.get(i));
+            insertIntoDynamicTable(header);
           }
         }
       }

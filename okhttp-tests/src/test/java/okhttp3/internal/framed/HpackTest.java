@@ -82,6 +82,12 @@ public class HpackTest {
 
   /** Oldest entries are evicted to support newer ones. */
   @Test public void testEviction() throws IOException {
+    List<Header> headerBlock =
+        headerEntries(
+            "custom-foo", "custom-header",
+            "custom-bar", "custom-header",
+            "custom-baz", "custom-header");
+
     bytesIn.writeByte(0x40); // Literal indexed
     bytesIn.writeByte(0x0a); // Literal name (len = 10)
     bytesIn.writeUtf8("custom-foo");
@@ -104,25 +110,36 @@ public class HpackTest {
     bytesIn.writeUtf8("custom-header");
 
     // Set to only support 110 bytes (enough for 2 headers).
+    // Use a new Writer because we don't support change the dynamic table
+    // size after Writer constructed.
+    Hpack.Writer writer = new Hpack.Writer(110, bytesOut);
+    writer.writeHeaders(headerBlock);
+
+    assertEquals(bytesIn, bytesOut);
+    assertEquals(2, writer.headerCount);
+
+    int tableLength = writer.dynamicTable.length;
+    Header entry = writer.dynamicTable[tableLength - 1];
+    checkEntry(entry, "custom-bar", "custom-header", 55);
+
+    entry = writer.dynamicTable[tableLength - 2];
+    checkEntry(entry, "custom-baz", "custom-header", 55);
+
+    // Set to only support 110 bytes (enough for 2 headers).
     hpackReader.headerTableSizeSetting(110);
     hpackReader.readHeaders();
 
     assertEquals(2, hpackReader.headerCount);
 
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, "custom-bar", "custom-header", 55);
 
-    entry = hpackReader.dynamicTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
     checkEntry(entry, "custom-baz", "custom-header", 55);
 
     // Once a header field is decoded and added to the reconstructed header
     // list, it cannot be removed from it. Hence, foo is here.
-    assertEquals(
-        headerEntries(
-            "custom-foo", "custom-header",
-            "custom-bar", "custom-header",
-            "custom-baz", "custom-header"),
-        hpackReader.getAndResetHeaderList());
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
 
     // Simulate receiving a small settings frame, that implies eviction.
     hpackReader.headerTableSizeSetting(55);
@@ -158,7 +175,7 @@ public class HpackTest {
     assertEquals(1, hpackReader.headerCount);
     assertEquals(52, hpackReader.dynamicTableByteCount);
 
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":path", "www.example.com", 52);
   }
 
@@ -178,7 +195,7 @@ public class HpackTest {
     assertEquals(1, hpackReader.headerCount);
     assertEquals(55, hpackReader.dynamicTableByteCount);
 
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, "custom-key", "custom-header", 55);
 
     assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
@@ -249,7 +266,76 @@ public class HpackTest {
 
     assertEquals(0, hpackReader.headerCount);
 
-    assertEquals(headerEntries("custom-key", "custom-header"), hpackReader.getAndResetHeaderList());
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+  }
+
+  @Test public void literalHeaderFieldWithIncrementalIndexingIndexedName() throws IOException {
+    List<Header> headerBlock = headerEntries(":path", "/sample/path");
+
+    bytesIn.writeByte(0x44); // Indexed name (idx = 4) -> :path
+    bytesIn.writeByte(0x0c); // Literal value (len = 12)
+    bytesIn.writeUtf8("/sample/path");
+
+    hpackReader.readHeaders();
+
+    assertEquals(1, hpackReader.headerCount);
+
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+  }
+
+  @Test public void literalHeaderFieldWithIncrementalIndexingNewName() throws IOException {
+    List<Header> headerBlock = headerEntries("custom-key", "custom-header");
+
+    bytesIn.writeByte(0x40); // Never indexed
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-key");
+
+    bytesIn.writeByte(0x0d); // Literal value (len = 13)
+    bytesIn.writeUtf8("custom-header");
+
+    hpackWriter.writeHeaders(headerBlock);
+    assertEquals(bytesIn, bytesOut);
+
+    assertEquals(1, hpackWriter.headerCount);
+
+    Header entry = hpackWriter.dynamicTable[hpackWriter.dynamicTable.length - 1];
+    checkEntry(entry, "custom-key", "custom-header", 55);
+
+    hpackReader.readHeaders();
+
+    assertEquals(1, hpackReader.headerCount);
+
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
+  }
+
+  @Test public void theSameHeaderAfterOneIncrementalIndexed() throws IOException {
+    List<Header> headerBlock =
+        headerEntries(
+            "custom-key", "custom-header",
+            "custom-key", "custom-header");
+
+    bytesIn.writeByte(0x40); // Never indexed
+    bytesIn.writeByte(0x0a); // Literal name (len = 10)
+    bytesIn.writeUtf8("custom-key");
+
+    bytesIn.writeByte(0x0d); // Literal value (len = 13)
+    bytesIn.writeUtf8("custom-header");
+
+    bytesIn.writeByte(0xbe); // Indexed name and value (idx = 63)
+
+    hpackWriter.writeHeaders(headerBlock);
+    assertEquals(bytesIn, bytesOut);
+
+    assertEquals(1, hpackWriter.headerCount);
+
+    Header entry = hpackWriter.dynamicTable[hpackWriter.dynamicTable.length - 1];
+    checkEntry(entry, "custom-key", "custom-header", 55);
+
+    hpackReader.readHeaders();
+
+    assertEquals(1, hpackReader.headerCount);
+
+    assertEquals(headerBlock, hpackReader.getAndResetHeaderList());
   }
 
   @Test public void staticHeaderIsNotCopiedIntoTheIndexedTable() throws IOException {
@@ -261,7 +347,7 @@ public class HpackTest {
     assertEquals(0, hpackReader.headerCount);
     assertEquals(0, hpackReader.dynamicTableByteCount);
 
-    assertEquals(null, hpackReader.dynamicTable[headerTableLength() - 1]);
+    assertEquals(null, hpackReader.dynamicTable[readerHeaderTableLength() - 1]);
 
     assertEquals(headerEntries(":method", "GET"), hpackReader.getAndResetHeaderList());
   }
@@ -395,7 +481,7 @@ public class HpackTest {
     assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
@@ -428,11 +514,11 @@ public class HpackTest {
     assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 2];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
@@ -467,15 +553,15 @@ public class HpackTest {
     assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 3];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
 
     // [  2] (s =  53) cache-control: no-cache
-    entry = hpackReader.dynamicTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  3] (s =  57) :authority: www.example.com
-    entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
@@ -525,7 +611,7 @@ public class HpackTest {
     assertEquals(1, hpackReader.headerCount);
 
     // [  1] (s =  57) :authority: www.example.com
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 57
@@ -559,11 +645,11 @@ public class HpackTest {
     assertEquals(2, hpackReader.headerCount);
 
     // [  1] (s =  53) cache-control: no-cache
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 2];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  2] (s =  57) :authority: www.example.com
-    entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 110
@@ -600,15 +686,15 @@ public class HpackTest {
     assertEquals(3, hpackReader.headerCount);
 
     // [  1] (s =  54) custom-key: custom-value
-    Header entry = hpackReader.dynamicTable[headerTableLength() - 3];
+    Header entry = hpackReader.dynamicTable[readerHeaderTableLength() - 3];
     checkEntry(entry, "custom-key", "custom-value", 54);
 
     // [  2] (s =  53) cache-control: no-cache
-    entry = hpackReader.dynamicTable[headerTableLength() - 2];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 2];
     checkEntry(entry, "cache-control", "no-cache", 53);
 
     // [  3] (s =  57) :authority: www.example.com
-    entry = hpackReader.dynamicTable[headerTableLength() - 1];
+    entry = hpackReader.dynamicTable[readerHeaderTableLength() - 1];
     checkEntry(entry, ":authority", "www.example.com", 57);
 
     // Table size: 164
@@ -719,7 +805,7 @@ public class HpackTest {
     return ByteString.of(data);
   }
 
-  private int headerTableLength() {
+  private int readerHeaderTableLength() {
     return hpackReader.dynamicTable.length;
   }
 }
