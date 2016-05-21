@@ -52,7 +52,7 @@ public final class CustomTrust {
     }
 
     client = new OkHttpClient.Builder()
-        .sslSocketFactory(sslSocketFactory, trustManager)
+        .sslSocketFactory(sslSocketFactory)
         .build();
   }
 
