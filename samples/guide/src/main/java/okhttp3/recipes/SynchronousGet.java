@@ -29,15 +29,16 @@ public final class SynchronousGet {
         .url("https://publicobject.com/helloworld.txt")
         .build();
 
-    Response response = client.newCall(request).execute();
-    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+    try (Response response = client.newCall(request).execute()) {
+      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-    Headers responseHeaders = response.headers();
-    for (int i = 0; i < responseHeaders.size(); i++) {
-      System.out.println(responseHeaders.name(i) + ": " + responseHeaders.value(i));
+      Headers responseHeaders = response.headers();
+      for (int i = 0; i < responseHeaders.size(); i++) {
+        System.out.println(responseHeaders.name(i) + ": " + responseHeaders.value(i));
+      }
+
+      System.out.println(response.body().string());
     }
-
-    System.out.println(response.body().string());
   }
 
   public static void main(String... args) throws Exception {

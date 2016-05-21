@@ -36,8 +36,9 @@ public final class ConfigureTimeouts {
         .url("http://httpbin.org/delay/2") // This URL is served with a 2 second delay.
         .build();
 
-    Response response = client.newCall(request).execute();
-    System.out.println("Response completed: " + response);
+    try (Response response = client.newCall(request).execute()) {
+      System.out.println("Response completed: " + response);
+    }
   }
 
   public static void main(String... args) throws Exception {

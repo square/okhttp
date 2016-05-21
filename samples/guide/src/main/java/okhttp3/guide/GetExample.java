@@ -13,8 +13,9 @@ public class GetExample {
         .url(url)
         .build();
 
-    Response response = client.newCall(request).execute();
-    return response.body().string();
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
+    }
   }
 
   public static void main(String[] args) throws IOException {

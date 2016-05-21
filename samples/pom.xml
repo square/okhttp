@@ -20,4 +20,19 @@
     <module>simple-client</module>
     <module>static-server</module>
   </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <!-- Fails on Throwable.addSuppressed() in ARM blocks. -->
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>animal-sniffer-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>none</phase>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
