@@ -17,11 +17,16 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.SocketTimeoutException;
+import java.security.cert.CertificateException;
 import java.util.Date;
 import java.util.List;
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.CertificatePinner;
@@ -352,12 +357,22 @@ public final class HttpEngine {
    * permanent. Requests with a body can only be recovered if the body is buffered.
    */
   public HttpEngine recover(IOException e, boolean routeException, Sink requestBodyOut) {
-    if (!streamAllocation.recover(e, routeException, requestBodyOut)) {
-      return null;
-    }
+    streamAllocation.streamFailed(e);
 
     if (!client.retryOnConnectionFailure()) {
-      return null;
+      return null; // The application layer has forbidden retries.
+    }
+
+    if (requestBodyOut != null && !(requestBodyOut instanceof RetryableSink)) {
+      return null; // The body on this request cannot be retried.
+    }
+
+    if (!isRecoverable(e, routeException)) {
+      return null; // This exception is fatal.
+    }
+
+    if (!streamAllocation.hasMoreRoutes()) {
+      return null; // No more routes to attempt.
     }
 
     StreamAllocation streamAllocation = close();
@@ -369,6 +384,38 @@ public final class HttpEngine {
 
   public HttpEngine recover(IOException e, boolean routeException) {
     return recover(e, routeException, requestBodyOut);
+  }
+
+  private boolean isRecoverable(IOException e, boolean routeException) {
+    // If there was a protocol problem, don't recover.
+    if (e instanceof ProtocolException) {
+      return false;
+    }
+
+    // If there was an interruption don't recover, but if there was a timeout connecting to a route
+    // we should try the next route (if there is one).
+    if (e instanceof InterruptedIOException) {
+      return e instanceof SocketTimeoutException && routeException;
+    }
+
+    // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
+    // again with a different route.
+    if (e instanceof SSLHandshakeException) {
+      // If the problem was a CertificateException from the X509TrustManager,
+      // do not retry.
+      if (e.getCause() instanceof CertificateException) {
+        return false;
+      }
+    }
+    if (e instanceof SSLPeerUnverifiedException) {
+      // e.g. a certificate pinning error.
+      return false;
+    }
+
+    // An example of one we might want to retry with a different route is a problem connecting to a
+    // proxy and would manifest as a standard IOException. Unless it is one we know we should not
+    // retry, we return true and try a new route.
+    return true;
   }
 
   private void maybeCache() throws IOException {
@@ -428,7 +475,7 @@ public final class HttpEngine {
       closeQuietly(userResponse.body());
     } else {
       // If this engine never achieved a response body, its stream allocation is dead.
-      streamAllocation.connectionFailed(null);
+      streamAllocation.streamFailed(null);
     }
 
     return streamAllocation;

@@ -34,17 +34,19 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.RecordingCookieJar;
+import okhttp3.RecordingHostnameVerifier;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
+import okhttp3.internal.SingleInetAddressDns;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import okhttp3.mockwebserver.SocketPolicy;
-import okhttp3.RecordingHostnameVerifier;
 import okio.Buffer;
 import okio.BufferedSink;
 import okio.GzipSink;
@@ -86,6 +88,7 @@ public abstract class HttpOverSpdyTest {
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client = new OkHttpClient.Builder()
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
+        .dns(new SingleInetAddressDns())
         .sslSocketFactory(sslContext.getSocketFactory())
         .hostnameVerifier(hostnameVerifier)
         .build();
@@ -580,6 +583,99 @@ public abstract class HttpOverSpdyTest {
     Response response2 = call2.execute();
     assertEquals("def", response2.body().string());
     assertEquals(0, server.takeRequest().getSequenceNumber());
+  }
+
+  @Test public void recoverFromOneRefusedStreamReusesConnection() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
+  }
+
+  @Test public void recoverFromOneInternalErrorRequiresNewConnection() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.INTERNAL_ERROR.httpCode));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    client = client.newBuilder()
+        .dns(new DoubleInetAddressDns())
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+  }
+
+  @Test public void recoverFromMultipleRefusedStreamsRequiresNewConnection() throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(ErrorCode.REFUSED_STREAM.httpCode));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    client = client.newBuilder()
+        .dns(new DoubleInetAddressDns())
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+    assertEquals("abc", response.body().string());
+
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    assertEquals(1, server.takeRequest().getSequenceNumber()); // Reused connection.
+    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+  }
+
+  @Test public void noRecoveryFromRefusedStreamWithRetryDisabled() throws Exception {
+    noRecoveryFromErrorWithRetryDisabled(ErrorCode.REFUSED_STREAM);
+  }
+
+  @Test public void noRecoveryFromInternalErrorWithRetryDisabled() throws Exception {
+    noRecoveryFromErrorWithRetryDisabled(ErrorCode.INTERNAL_ERROR);
+  }
+
+  private void noRecoveryFromErrorWithRetryDisabled(ErrorCode errorCode) throws Exception {
+    server.enqueue(new MockResponse()
+        .setSocketPolicy(SocketPolicy.RESET_STREAM_AT_START)
+        .setHttp2ErrorCode(errorCode.httpCode));
+    server.enqueue(new MockResponse()
+        .setBody("abc"));
+
+    client = client.newBuilder()
+        .retryOnConnectionFailure(false)
+        .build();
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    try {
+      call.execute();
+      fail();
+    } catch (StreamResetException expected) {
+      assertEquals(errorCode, expected.errorCode);
+    }
   }
 
   public Buffer gzip(String bytes) throws IOException {

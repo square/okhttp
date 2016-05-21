@@ -16,22 +16,17 @@
 package okhttp3.internal.http;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.net.ProtocolException;
-import java.net.SocketTimeoutException;
-import java.security.cert.CertificateException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.Address;
 import okhttp3.ConnectionPool;
 import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.Util;
+import okhttp3.internal.framed.ErrorCode;
+import okhttp3.internal.framed.StreamResetException;
 import okhttp3.internal.io.RealConnection;
-import okio.Sink;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -78,7 +73,8 @@ public final class StreamAllocation {
   private final ConnectionPool connectionPool;
 
   // State guarded by connectionPool.
-  private RouteSelector routeSelector;
+  private final RouteSelector routeSelector;
+  private int refusedStreamCount;
   private RealConnection connection;
   private boolean released;
   private boolean canceled;
@@ -134,12 +130,14 @@ public final class StreamAllocation {
         }
       }
 
-      // Otherwise do a potentially-slow check to confirm that the pooled connection is still good.
-      if (candidate.isHealthy(doExtensiveHealthChecks)) {
-        return candidate;
+      // Do a (potentially slow) check to confirm that the pooled connection is still good. If it
+      // isn't, take it out of the pool and start again.
+      if (!candidate.isHealthy(doExtensiveHealthChecks)) {
+        noNewStreams();
+        continue;
       }
 
-      connectionFailed(new IOException());
+      return candidate;
     }
   }
 
@@ -174,6 +172,7 @@ public final class StreamAllocation {
       selectedRoute = routeSelector.next();
       synchronized (connectionPool) {
         route = selectedRoute;
+        refusedStreamCount = 0;
       }
     }
     RealConnection newConnection = new RealConnection(selectedRoute);
@@ -276,17 +275,35 @@ public final class StreamAllocation {
     }
   }
 
-  public void connectionFailed(IOException e) {
+  public void streamFailed(IOException e) {
+    boolean noNewStreams = false;
+
     synchronized (connectionPool) {
-      // Avoid this route if it's never seen a successful call.
-      if (connection != null && connection.successCount == 0) {
-        if (route != null && e != null) {
-          routeSelector.connectFailed(route, e);
+      if (e instanceof StreamResetException) {
+        StreamResetException streamResetException = (StreamResetException) e;
+        if (streamResetException.errorCode == ErrorCode.REFUSED_STREAM) {
+          refusedStreamCount++;
         }
-        route = null;
+        // On HTTP/2 stream errors, retry REFUSED_STREAM errors once on the same connection. All
+        // other errors must be retried on a new connection.
+        if (streamResetException.errorCode != ErrorCode.REFUSED_STREAM || refusedStreamCount > 1) {
+          noNewStreams = true;
+          route = null;
+        }
+      } else if (connection != null && !connection.isMultiplexed()) {
+        noNewStreams = true;
+
+        // If this route hasn't completed a call, avoid it for new connections.
+        if (connection.successCount == 0) {
+          if (route != null && e != null) {
+            routeSelector.connectFailed(route, e);
+          }
+          route = null;
+        }
       }
     }
-    deallocate(true, false, true);
+
+    deallocate(noNewStreams, false, true);
   }
 
   /**
@@ -309,51 +326,8 @@ public final class StreamAllocation {
     throw new IllegalStateException();
   }
 
-  public boolean recover(IOException e, boolean routeException, Sink requestBodyOut) {
-    if (connection != null) {
-      connectionFailed(e);
-    }
-
-    boolean canRetryRequestBody = requestBodyOut == null || requestBodyOut instanceof RetryableSink;
-    if ((routeSelector != null && !routeSelector.hasNext()) // No more routes to attempt.
-        || !isRecoverable(e, routeException)
-        || !canRetryRequestBody) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean isRecoverable(IOException e, boolean routeException) {
-    // If there was a protocol problem, don't recover.
-    if (e instanceof ProtocolException) {
-      return false;
-    }
-
-    // If there was an interruption don't recover, but if there was a timeout connecting to a route
-    // we should try the next route (if there is one).
-    if (e instanceof InterruptedIOException) {
-      return e instanceof SocketTimeoutException && routeException;
-    }
-
-    // Look for known client-side or negotiation errors that are unlikely to be fixed by trying
-    // again with a different route.
-    if (e instanceof SSLHandshakeException) {
-      // If the problem was a CertificateException from the X509TrustManager,
-      // do not retry.
-      if (e.getCause() instanceof CertificateException) {
-        return false;
-      }
-    }
-    if (e instanceof SSLPeerUnverifiedException) {
-      // e.g. a certificate pinning error.
-      return false;
-    }
-
-    // An example of one we might want to retry with a different route is a problem connecting to a
-    // proxy and would manifest as a standard IOException. Unless it is one we know we should not
-    // retry, we return true and try a new route.
-    return true;
+  public boolean hasMoreRoutes() {
+    return route != null || routeSelector.hasNext();
   }
 
   @Override public String toString() {
