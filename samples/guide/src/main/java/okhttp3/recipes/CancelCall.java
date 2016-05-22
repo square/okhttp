@@ -45,9 +45,8 @@ public class CancelCall {
       }
     }, 1, TimeUnit.SECONDS);
 
-    try {
-      System.out.printf("%.2f Executing call.%n", (System.nanoTime() - startNanos) / 1e9f);
-      Response response = call.execute();
+    System.out.printf("%.2f Executing call.%n", (System.nanoTime() - startNanos) / 1e9f);
+    try (Response response = call.execute()) {
       System.out.printf("%.2f Call was expected to fail, but completed: %s%n",
           (System.nanoTime() - startNanos) / 1e9f, response);
     } catch (IOException e) {

@@ -15,6 +15,7 @@
  */
 package okhttp3;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -33,9 +34,12 @@ import static okhttp3.internal.http.StatusLine.HTTP_TEMP_REDIRECT;
 
 /**
  * An HTTP response. Instances of this class are not immutable: the response body is a one-shot
- * value that may be consumed only once. All other properties are immutable.
+ * value that may be consumed only once and then closed. All other properties are immutable.
+ *
+ * <p>This class implements {@link Closeable}. Closing it simply closes its response body. See
+ * {@link ResponseBody} for an explanation and examples.
  */
-public final class Response {
+public final class Response implements Closeable {
   private final Request request;
   private final Protocol protocol;
   private final int code;
@@ -43,8 +47,8 @@ public final class Response {
   private final Handshake handshake;
   private final Headers headers;
   private final ResponseBody body;
-  private Response networkResponse;
-  private Response cacheResponse;
+  private final Response networkResponse;
+  private final Response cacheResponse;
   private final Response priorResponse;
   private final long sentRequestAtMillis;
   private final long receivedResponseAtMillis;
@@ -258,6 +262,11 @@ public final class Response {
    */
   public long receivedResponseAtMillis() {
     return receivedResponseAtMillis;
+  }
+
+  /** Closes the response body. Equivalent to {@code body().close()}. */
+  @Override public void close() {
+    body.close();
   }
 
   @Override public String toString() {

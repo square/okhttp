@@ -34,12 +34,57 @@ import static okhttp3.internal.Util.UTF_8;
  *
  * <h3>The response body must be closed.</h3>
  *
- * <p>Each response body is backed by a limited resource like a socket (live network responses) or
- * an open file (for cached responses). Failing to close the response body will leak these resources
- * and may ultimately cause the application to slow down or crash. Close the response body by
- * calling either {@link ResponseBody#close close()}, {@link InputStream#close()
- * byteStream().close()}, or {@link Reader#close() reader().close()}. The {@link #bytes()} and
- * {@link #string()} methods both close the response body automatically.
+ * Each response body is backed by a limited resource like a socket (live network responses) or
+ * an open file (for cached responses). Failing to close the response body will leak resources and
+ * may ultimately cause the application to slow down or crash.
+ *
+ * <p>Both this class and {@link Response} implement {@link Closeable}. Closing a response simply
+ * closes its response body. If you invoke {@link Call#execute()} or implement {@link
+ * Callback#onResponse} you must close this body by calling any of the following methods:
+ *
+ * <ul>
+ *   <li>Response.close()</li>
+ *   <li>Response.body().close()</li>
+ *   <li>Response.body().source().close()</li>
+ *   <li>Response.body().charStream().close()</li>
+ *   <li>Response.body().byteString().close()</li>
+ *   <li>Response.body().bytes()</li>
+ *   <li>Response.body().string()</li>
+ * </ul>
+ *
+ * <p>There is no benefit to invoking multiple {@code close()} methods for the same response body.
+ *
+ * <p>For synchronous calls, the easiest way to make sure a response body is closed is with a {@code
+ * try} block. With this structure the compiler inserts an implicit {@code finally} clause that
+ * calls {@code close()} for you.
+ *
+ * <pre>   {@code
+ *
+ *   Call call = client.newCall(request);
+ *   try (Response response = call.execute()) {
+ *     ... // Use the response.
+ *   }
+ * }</pre>
+ *
+ * You can use a similar block for asynchronous calls: <pre>   {@code
+ *
+ *   Call call = client.newCall(request);
+ *   call.enqueue(new Callback() {
+ *     public void onResponse(Call call, Response response) throws IOException {
+ *       try (ResponseBody responseBody = response.body()) {
+ *         ... // Use the response.
+ *       }
+ *     }
+ *
+ *     public void onFailure(Call call, IOException e) {
+ *       ... // Handle the failure.
+ *     }
+ *   });
+ * }</pre>
+ *
+ * These examples will not work if you're consuming the response body on another thread. In such
+ * cases the consuming thread must call {@link #close} when it has finished reading the response
+ * body.
  *
  * <h3>The response body can be consumed only once.</h3>
  *

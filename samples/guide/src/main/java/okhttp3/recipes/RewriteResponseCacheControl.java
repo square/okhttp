@@ -66,12 +66,12 @@ public final class RewriteResponseCacheControl {
         clientForCall = client;
       }
 
-      Response response = clientForCall.newCall(request).execute();
-      response.body().close();
-      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+      try (Response response = clientForCall.newCall(request).execute()) {
+        if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-      System.out.println("    Network: " + (response.networkResponse() != null));
-      System.out.println();
+        System.out.println("    Network: " + (response.networkResponse() != null));
+        System.out.println();
+      }
     }
   }
 

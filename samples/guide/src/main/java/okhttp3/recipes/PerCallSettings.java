@@ -29,25 +29,21 @@ public final class PerCallSettings {
         .url("http://httpbin.org/delay/1") // This URL is served with a 1 second delay.
         .build();
 
-    try {
-      // Copy to customize OkHttp for this request.
-      OkHttpClient copy = client.newBuilder()
-          .readTimeout(500, TimeUnit.MILLISECONDS)
-          .build();
-
-      Response response = copy.newCall(request).execute();
+    // Copy to customize OkHttp for this request.
+    OkHttpClient client1 = client.newBuilder()
+        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .build();
+    try (Response response = client1.newCall(request).execute()) {
       System.out.println("Response 1 succeeded: " + response);
     } catch (IOException e) {
       System.out.println("Response 1 failed: " + e);
     }
 
-    try {
-      // Copy to customize OkHttp for this request.
-      OkHttpClient copy = client.newBuilder()
-          .readTimeout(3000, TimeUnit.MILLISECONDS)
-          .build();
-
-      Response response = copy.newCall(request).execute();
+    // Copy to customize OkHttp for this request.
+    OkHttpClient client2 = client.newBuilder()
+        .readTimeout(3000, TimeUnit.MILLISECONDS)
+        .build();
+    try (Response response = client2.newCall(request).execute()) {
       System.out.println("Response 2 succeeded: " + response);
     } catch (IOException e) {
       System.out.println("Response 2 failed: " + e);
