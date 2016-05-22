@@ -249,6 +249,7 @@ public final class FramedConnection implements Closeable {
       boolean in) throws IOException {
     boolean outFinished = !out;
     boolean inFinished = !in;
+    boolean flushHeaders;
     FramedStream stream;
     int streamId;
 
@@ -260,6 +261,7 @@ public final class FramedConnection implements Closeable {
         streamId = nextStreamId;
         nextStreamId += 2;
         stream = new FramedStream(streamId, this, outFinished, inFinished, requestHeaders);
+        flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
           setIdle(false);
@@ -275,7 +277,7 @@ public final class FramedConnection implements Closeable {
       }
     }
 
-    if (!out) {
+    if (flushHeaders) {
       frameWriter.flush();
     }
 
