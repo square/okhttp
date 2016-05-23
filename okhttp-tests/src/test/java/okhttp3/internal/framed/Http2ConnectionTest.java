@@ -177,6 +177,50 @@ public final class Http2ConnectionTest {
     assertEquals(newMaxFrameSize, connection.frameWriter.maxDataLength());
   }
 
+  /**
+   * Webservers may set the initial window size to zero, which is a special case because it means
+   * that we have to flush headers immediately before any request body can be sent.
+   * https://github.com/square/okhttp/issues/2543
+   */
+  @Test public void peerSetsZeroFlowControl() throws Exception {
+    peer.setVariantAndClient(HTTP_2, true);
+
+    // Write the mocking script.
+    peer.sendFrame().settings(new Settings().set(INITIAL_WINDOW_SIZE, 0, 0));
+    peer.sendFrame().windowUpdate(0, 10); // Increase the connection window size.
+    peer.acceptFrame(); // PING or SETTINGS ACK
+    peer.acceptFrame(); // PING or SETTINGS ACK
+    peer.sendFrame().ping(true, 1, 0);
+    peer.acceptFrame(); // HEADERS STREAM 3
+    peer.sendFrame().windowUpdate(3, 5);
+    peer.acceptFrame(); // DATA STREAM 3 "abcde"
+    peer.sendFrame().windowUpdate(3, 5);
+    peer.acceptFrame(); // DATA STREAM 3 "fghi"
+    peer.play();
+
+    // Play it back.
+    FramedConnection connection = connection(peer, HTTP_2);
+    connection.ping().roundTripTime(); // Ensure the SETTINGS have been received.
+    FramedStream stream = connection.newStream(headerEntries("a", "android"), true, true);
+    BufferedSink sink = Okio.buffer(stream.getSink());
+    sink.writeUtf8("abcdefghi");
+    sink.flush();
+
+    // Verify the peer received what was expected.
+    peer.takeFrame(); // PING or SETTINGS ACK
+    peer.takeFrame(); // PING or SETTINGS ACK
+    MockSpdyPeer.InFrame headers = peer.takeFrame();
+    assertEquals(TYPE_HEADERS, headers.type);
+    MockSpdyPeer.InFrame data1 = peer.takeFrame();
+    assertEquals(TYPE_DATA, data1.type);
+    assertEquals(3, data1.streamId);
+    assertTrue(Arrays.equals("abcde".getBytes("UTF-8"), data1.data));
+    MockSpdyPeer.InFrame data2 = peer.takeFrame();
+    assertEquals(TYPE_DATA, data2.type);
+    assertEquals(3, data2.streamId);
+    assertTrue(Arrays.equals("fghi".getBytes("UTF-8"), data2.data));
+  }
+
   @Test public void receiveGoAwayHttp2() throws Exception {
     peer.setVariantAndClient(HTTP_2, false);
 
