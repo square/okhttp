@@ -18,6 +18,7 @@
 package okhttp3.mockwebserver;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolException;
@@ -88,6 +89,7 @@ import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_REQUEST_BODY;
 import static okhttp3.mockwebserver.SocketPolicy.DISCONNECT_DURING_RESPONSE_BODY;
 import static okhttp3.mockwebserver.SocketPolicy.FAIL_HANDSHAKE;
 import static okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE;
+import static okhttp3.mockwebserver.SocketPolicy.RESET_STREAM_AT_START;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.SHUTDOWN_OUTPUT_AT_END;
 import static okhttp3.mockwebserver.SocketPolicy.UPGRADE_TO_SSL_AT_END;
@@ -562,8 +564,11 @@ public final class MockWebServer implements TestRule {
 
   private void dispatchBookkeepingRequest(int sequenceNumber, Socket socket)
       throws InterruptedException {
+    RecordedRequest request = new RecordedRequest(
+        null, null, null, -1, null, sequenceNumber, socket);
     requestCount.incrementAndGet();
-    dispatcher.dispatch(new RecordedRequest(null, null, null, -1, null, sequenceNumber, socket));
+    requestQueue.add(request);
+    dispatcher.dispatch(request);
   }
 
   /** @param sequenceNumber the index of this request on this connection. */
@@ -843,7 +848,19 @@ public final class MockWebServer implements TestRule {
     }
 
     @Override public void onStream(FramedStream stream) throws IOException {
+      MockResponse peekedResponse = dispatcher.peek();
+      if (peekedResponse.getSocketPolicy() == RESET_STREAM_AT_START) {
+        try {
+          dispatchBookkeepingRequest(sequenceNumber.getAndIncrement(), socket);
+          stream.close(ErrorCode.fromHttp2(peekedResponse.getHttp2ErrorCode()));
+          return;
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
+      }
+
       RecordedRequest request = readRequest(stream);
+      requestCount.incrementAndGet();
       requestQueue.add(request);
       MockResponse response;
       try {
