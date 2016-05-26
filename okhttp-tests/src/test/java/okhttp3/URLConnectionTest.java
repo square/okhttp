@@ -629,9 +629,12 @@ public final class URLConnectionTest {
 
     assertContent("this response comes via SSL", connection);
 
-    RecordedRequest request = server.takeRequest();
-    assertEquals("GET /foo HTTP/1.1", request.getRequestLine());
-    assertEquals(TlsVersion.TLS_1_0, request.getTlsVersion());
+    RecordedRequest failHandshakeRequest = server.takeRequest();
+    assertNull(failHandshakeRequest.getRequestLine());
+
+    RecordedRequest fallbackRequest = server.takeRequest();
+    assertEquals("GET /foo HTTP/1.1", fallbackRequest.getRequestLine());
+    assertEquals(TlsVersion.TLS_1_0, fallbackRequest.getTlsVersion());
   }
 
   @Test public void connectViaHttpsWithSSLFallbackFailuresRecorded() throws Exception {

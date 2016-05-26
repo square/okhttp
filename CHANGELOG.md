@@ -1,6 +1,55 @@
 Change Log
 ==========
 
+## Version 3.3.0
+
+_2016-05-24_
+
+ *  New: `Response.sentRequestAtMillis()` and `receivedResponseAtMillis()`
+    methods track the system's local time when network calls are made. These
+    replace the `OkHttp-Sent-Millis` and `OkHttp-Sent-Millis` headers that were
+    present in earlier versions of OkHttp.
+ *  New: Accept user-provided trust managers in `OkHttpClient.Builder`. This
+    allows OkHttp to satisfy its TLS requirements directly. Otherwise OkHttp
+    will use reflection to extract the `TrustManager` from the
+    `SSLSocketFactory`.
+ *  New: Support prerelease Java 9. This gets ALPN from the platform rather than
+    relying on the alpn-boot bootclasspath override.
+ *  New: `HttpLoggingInterceptor` now logs connection failures.
+ *  New: Upgrade to Okio 1.8.0.
+
+     ```xml
+     <dependency>
+       <groupId>com.squareup.okio</groupId>
+       <artifactId>okio</artifactId>
+       <version>1.8.0</version>
+     </dependency>
+     ```
+
+ *  Fix: Gracefully recover from a failure to rebuild the cache journal.
+ *  Fix: Don't corrupt cache entries when a cache entry is evicted while it is
+    being updated.
+ *  Fix: Make logging more consistent throughout OkHttp.
+ *  Fix: Log plaintext bodies only. This uses simple heuristics to differentiate
+    text from other data.
+ *  Fix: Recover from `REFUSED_STREAM` errors in HTTP/2. This should improve
+    interoperability with Nginx 1.10.0, which [refuses][nginx_959] streams
+    created before HTTP/2 settings have been acknowledged.
+ *  Fix: Improve recovery from failed routes.
+ *  Fix: Accommodate tunneling proxies that close the connection after an auth
+    challenge.
+ *  Fix: Use the proxy authenticator when authenticating HTTP proxies. This
+    regression was introduced in OkHttp 3.0.
+ *  Fix: Fail fast if network interceptors transform the response body such that
+    closing it doesn't also close the underlying stream. We had a bug where
+    OkHttp would attempt to reuse a connection but couldn't because it was still
+    held by a prior request.
+ *  Fix: Ensure network interceptors always have access to the underlying
+    connection.
+ *  Fix: Use `X509TrustManagerExtensions` on Android 17+.
+ *  Fix: Unblock waiting dispatchers on MockWebServer shutdown.
+
+
 ## Version 3.2.0
 
 _2016-02-25_
@@ -1002,3 +1051,4 @@ Initial release.
  [brick]: https://noncombatant.org/2015/05/01/about-http-public-key-pinning/
  [webdav]: https://tools.ietf.org/html/rfc4918
  [major_versions]: http://jakewharton.com/java-interoperability-policy-for-major-version-updates/
+ [nginx_959]: https://trac.nginx.org/nginx/ticket/959

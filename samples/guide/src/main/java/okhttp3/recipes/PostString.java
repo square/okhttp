@@ -42,10 +42,11 @@ public final class PostString {
         .post(RequestBody.create(MEDIA_TYPE_MARKDOWN, postBody))
         .build();
 
-    Response response = client.newCall(request).execute();
-    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+    try (Response response = client.newCall(request).execute()) {
+      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-    System.out.println(response.body().string());
+      System.out.println(response.body().string());
+    }
   }
 
   public static void main(String... args) throws Exception {

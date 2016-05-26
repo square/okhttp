@@ -16,9 +16,7 @@
 package okhttp3;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocketFactory;
@@ -35,6 +33,7 @@ import org.junit.rules.Timeout;
 
 import static okhttp3.TestUtil.defaultClient;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public final class ConnectionReuseTest {
@@ -300,12 +299,9 @@ public final class ConnectionReuseTest {
    * https://github.com/square/okhttp/issues/2409
    */
   @Test public void connectionsAreNotReusedIfNetworkInterceptorInterferes() throws Exception {
-    final List<ResponseBody> responseBodies = new ArrayList<>();
-
     client = client.newBuilder().addNetworkInterceptor(new Interceptor() {
       @Override public Response intercept(Chain chain) throws IOException {
         Response response = chain.proceed(chain.request());
-        responseBodies.add(response.body());
         return response.newBuilder()
             .body(ResponseBody.create(null, "unrelated response body!"))
             .build();
@@ -322,13 +318,12 @@ public final class ConnectionReuseTest {
     Request request = new Request.Builder()
         .url(server.url("/"))
         .build();
-    Response response = client.newCall(request).execute();
-    assertEquals("unrelated response body!", response.body().string());
-    assertEquals("/a has moved!", responseBodies.get(0).string());
-    assertEquals("/b is here", responseBodies.get(1).string());
-
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
-    assertEquals(0, server.takeRequest().getSequenceNumber()); // New connection.
+    try {
+      client.newCall(request).execute();
+      fail();
+    } catch (IllegalStateException expected) {
+      assertTrue(expected.getMessage().startsWith("Closing the body of"));
+    }
   }
 
   private void enableHttps() {

@@ -29,9 +29,8 @@ public interface Call {
    * Invokes the request immediately, and blocks until the response can be processed or is in
    * error.
    *
-   * <p>The caller may read the response body with the response's {@link Response#body} method.  To
-   * facilitate connection recycling, callers should always {@link ResponseBody#close() close the
-   * response body}.
+   * <p>The caller may read the response body with the response's {@link Response#body} method. To
+   * avoid leaking resources callers must {@linkplain ResponseBody close the response body}.
    *
    * <p>Note that transport-layer success (receiving a HTTP response code, headers and body) does
    * not necessarily indicate application-layer success: {@code response} may still indicate an

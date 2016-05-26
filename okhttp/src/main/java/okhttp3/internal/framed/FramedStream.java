@@ -142,7 +142,7 @@ public final class FramedStream {
       readTimeout.exitAndThrowIfTimedOut();
     }
     if (responseHeaders != null) return responseHeaders;
-    throw new IOException("stream was reset: " + errorCode);
+    throw new StreamResetException(errorCode);
   }
 
   /**
@@ -438,7 +438,7 @@ public final class FramedStream {
         throw new IOException("stream closed");
       }
       if (errorCode != null) {
-        throw new IOException("stream was reset: " + errorCode);
+        throw new StreamResetException(errorCode);
       }
     }
   }
@@ -571,7 +571,7 @@ public final class FramedStream {
     } else if (sink.finished) {
       throw new IOException("stream finished");
     } else if (errorCode != null) {
-      throw new IOException("stream was reset: " + errorCode);
+      throw new StreamResetException(errorCode);
     }
   }
 

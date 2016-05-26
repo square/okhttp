@@ -11,7 +11,7 @@
 
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>parent</artifactId>
-  <version>3.3.0-SNAPSHOT</version>
+  <version>3.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>OkHttp (Parent)</name>

@@ -39,11 +39,12 @@ public final class CertificatePinning {
         .url("https://publicobject.com/robots.txt")
         .build();
 
-    Response response = client.newCall(request).execute();
-    if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+    try (Response response = client.newCall(request).execute()) {
+      if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
 
-    for (Certificate certificate : response.handshake().peerCertificates()) {
-      System.out.println(CertificatePinner.pin(certificate));
+      for (Certificate certificate : response.handshake().peerCertificates()) {
+        System.out.println(CertificatePinner.pin(certificate));
+      }
     }
   }
 

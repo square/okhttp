@@ -19,8 +19,9 @@ public class PostExample {
         .url(url)
         .post(body)
         .build();
-    Response response = client.newCall(request).execute();
-    return response.body().string();
+    try (Response response = client.newCall(request).execute()) {
+      return response.body().string();
+    }
   }
 
   String bowlingJson(String player1, String player2) {

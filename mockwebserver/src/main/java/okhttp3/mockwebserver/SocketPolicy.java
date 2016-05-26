@@ -88,5 +88,11 @@ public enum SocketPolicy {
    * Don't respond to the request but keep the socket open. For testing read response header timeout
    * issue.
    */
-  NO_RESPONSE
+  NO_RESPONSE,
+
+  /**
+   * Fail HTTP/2 requests without processing them by sending an {@linkplain
+   * MockResponse#getHttp2ErrorCode() HTTP/2 error code}.
+   */
+  RESET_STREAM_AT_START
 }
