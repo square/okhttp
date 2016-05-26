@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import okhttp3.HttpUrl;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -41,9 +42,9 @@ class ApacheHttpClient extends SynchronousHttpClient {
     super.prepare(benchmark);
     ClientConnectionManager connectionManager = new PoolingClientConnectionManager();
     if (benchmark.tls) {
-      SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+      SslClient sslClient = SslContextBuilder.localhost();
       connectionManager.getSchemeRegistry().register(
-          new Scheme("https", 443, new SSLSocketFactory(sslContextBuilder.build())));
+          new Scheme("https", 443, new SSLSocketFactory(sslClient.sslContext)));
     }
     client = new DefaultHttpClient(connectionManager);
   }

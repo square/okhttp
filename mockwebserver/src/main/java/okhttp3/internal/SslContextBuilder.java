@@ -102,4 +102,8 @@ public final class SslContextBuilder {
 
     return sslClient.trustManager;
   }
+
+  public static void main(String[] args) {
+    localhost();
+  }
 }

@@ -35,6 +35,9 @@ public class SslClient {
     this.trustManager = trustManager;
   }
 
+  /**
+   * Returns the default X509TrustManager that would be used without prior configuration.
+   */
   public static X509TrustManager systemDefaultTrustManager() {
     try {
       TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
@@ -51,6 +54,11 @@ public class SslClient {
     }
   }
 
+  /**
+   * Returns the default SSLContext that would be used without prior configuration.
+   *
+   * @param trustManager the X509TrustManager with certificates this client will accept.
+   */
   public static SSLContext systemDefaultSSLContext(X509TrustManager trustManager) {
     try {
       SSLContext sslContext = SSLContext.getInstance("TLS");
@@ -61,6 +69,9 @@ public class SslClient {
     }
   }
 
+  /**
+   * Returns the default "unconfigured" SSLContext and X509TrustManager.
+   */
   public static SslClient systemDefault() {
     X509TrustManager trustManager = systemDefaultTrustManager();
     SSLContext sslContext = systemDefaultSSLContext(trustManager);
@@ -127,8 +138,8 @@ public class SslClient {
     public SslClient.Builder certificateChain(KeyPair keyPair, X509Certificate keyCert,
         X509Certificate... certificates) {
       this.keyPair = keyPair;
-      this.certificates = new ArrayList<>();
-      this.certificates.add(keyCert);
+      this.chainCertificates.add(keyCert);
+      this.chainCertificates.addAll(Arrays.asList(certificates));
       this.certificates.addAll(Arrays.asList(certificates));
 
       return this;

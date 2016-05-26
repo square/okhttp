@@ -26,6 +26,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.HttpUrl;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 
 class UrlConnection extends SynchronousHttpClient {
   private static final boolean VERBOSE = false;
@@ -33,8 +34,8 @@ class UrlConnection extends SynchronousHttpClient {
   @Override public void prepare(Benchmark benchmark) {
     super.prepare(benchmark);
     if (benchmark.tls) {
-      SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
-      SSLSocketFactory socketFactory = sslContextBuilder.socketFactory();
+      SslClient sslClient = SslContextBuilder.localhost();
+      SSLSocketFactory socketFactory = sslClient.socketFactory;
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;

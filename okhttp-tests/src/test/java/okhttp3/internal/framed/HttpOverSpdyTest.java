@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Cookie;
@@ -73,7 +72,7 @@ public abstract class HttpOverSpdyTest {
   private final Protocol protocol;
   protected String hostHeader = ":host";
 
-  protected SslClient sslContextBuilder = SslContextBuilder.localhost();
+  protected SslClient sslClient = SslContextBuilder.localhost();
   protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   protected OkHttpClient client;
   protected Cache cache;
@@ -83,11 +82,11 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Before public void setUp() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory, false);
+    server.useHttps(sslClient.socketFactory, false);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client = new OkHttpClient.Builder()
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
-        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build();
   }

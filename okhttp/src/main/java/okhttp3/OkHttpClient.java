@@ -541,20 +541,9 @@ public class OkHttpClient implements Cloneable, Call.Factory {
      * <p>If necessary, you can create and configure the defaults yourself with the following code:
      *
      * <pre>   {@code
+     *   X509TrustManager trustManager = SslClient.systemDefaultTrustManager();
      *
-     *   TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(
-     *       TrustManagerFactory.getDefaultAlgorithm());
-     *   trustManagerFactory.init((KeyStore) null);
-     *   TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
-     *   if (trustManagers.length != 1 || !(trustManagers[0] instanceof X509TrustManager)) {
-     *     throw new IllegalStateException("Unexpected default trust managers:"
-     *         + Arrays.toString(trustManagers));
-     *   }
-     *   X509TrustManager trustManager = (X509TrustManager) trustManagers[0];
-     *
-     *   SSLContext sslContext = SSLContext.getInstance("TLS");
-     *   sslContext.init(null, new TrustManager[] { trustManager }, null);
-     *   SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+     *   SSLContext sslContext = SslClient.systemDefaultSSLContext(trustManager);
      *
      *   OkHttpClient client = new OkHttpClient.Builder()
      *       .sslSocketFactory(sslSocketFactory, trustManager);
@@ -568,6 +557,27 @@ public class OkHttpClient implements Cloneable, Call.Factory {
       this.sslSocketFactory = sslSocketFactory;
       this.certificateChainCleaner = CertificateChainCleaner.get(trustManager);
       return this;
+    }
+
+    /**
+     * Sets the socket factory and trust manager used to secure HTTPS connections. If unset, the
+     * system defaults will be used.
+     *
+     * <p>Most applications should not call this method, and instead use the system defaults. Those
+     * classes include special optimizations that can be lost if the implementations are decorated.
+     *
+     * <p>If necessary, you can create and configure the defaults yourself with the following code:
+     *
+     * <pre>   {@code
+     *   SslClient sslClient = SslClient.systemDefault;
+     *
+     *   OkHttpClient client = new OkHttpClient.Builder()
+     *       .sslSocketFactory(sslClient);
+     *       .build();
+     * }</pre>
+     */
+    public Builder sslSocketFactory(SslClient sslClient) {
+      return this.sslSocketFactory(sslClient.socketFactory, sslClient.trustManager);
     }
 
     /**

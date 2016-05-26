@@ -41,7 +41,7 @@ public final class ConnectionReuseTest {
   @Rule public final TestRule timeout = new Timeout(30_000);
   @Rule public final MockWebServer server = new MockWebServer();
 
-  private SslClient sslContextBuilder = SslContextBuilder.localhost();
+  private SslClient sslClient = SslContextBuilder.localhost();
   private OkHttpClient client = defaultClient();
 
   @Test public void connectionsAreReused() throws Exception {
@@ -341,11 +341,11 @@ public final class ConnectionReuseTest {
 
   private void enableHttpsAndAlpn(Protocol... protocols) {
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory, sslContextBuilder.trustManager)
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .protocols(Arrays.asList(protocols))
         .build();
-    server.useHttps(sslContextBuilder.socketFactory, false);
+    server.useHttps(sslClient.socketFactory, false);
     server.setProtocols(client.protocols());
   }
 

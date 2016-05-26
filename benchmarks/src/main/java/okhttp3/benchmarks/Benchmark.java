@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import okhttp3.HttpUrl;
 import okhttp3.Protocol;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -160,8 +161,8 @@ public class Benchmark extends com.google.caliper.Benchmark {
     MockWebServer server = new MockWebServer();
 
     if (tls) {
-      SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
-      server.useHttps(sslContextBuilder.socketFactory(), false);
+      SslClient sslClient = SslContextBuilder.localhost();
+      server.useHttps(sslClient.socketFactory, false);
       server.setProtocols(protocols);
     }
 

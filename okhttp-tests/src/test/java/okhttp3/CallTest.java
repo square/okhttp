@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
 import javax.net.ServerSocketFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLProtocolException;
@@ -61,6 +60,7 @@ import okhttp3.internal.Util;
 import okhttp3.internal.Version;
 import okhttp3.internal.http.RecordingProxySelector;
 import okhttp3.internal.io.InMemoryFileSystem;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -94,7 +94,7 @@ public final class CallTest {
   @Rule public final MockWebServer server2 = new MockWebServer();
   @Rule public final InMemoryFileSystem fileSystem = new InMemoryFileSystem();
 
-  private SslContextBuilder sslContextBuilder = SslContextBuilder.localhost();
+  private SslClient sslClient = SslContextBuilder.localhost();
   private OkHttpClient client = defaultClient();
   private RecordingCallback callback = new RecordingCallback();
   private TestLogHandler logHandler = new TestLogHandler();
@@ -964,14 +964,14 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build();
 
     executeSynchronously("/").assertBody("abc");
@@ -980,19 +980,19 @@ public final class CallTest {
   @Test public void recoverFromTlsHandshakeFailure_tlsFallbackScsvEnabled() throws Exception {
     final String tlsFallbackScsv = "TLS_FALLBACK_SCSV";
     List<String> supportedCiphers =
-        Arrays.asList(sslContextBuilder.socketFactory().getSupportedCipherSuites());
+        Arrays.asList(sslClient.socketFactory.getSupportedCipherSuites());
     if (!supportedCiphers.contains(tlsFallbackScsv)) {
       // This only works if the client socket supports TLS_FALLBACK_SCSV.
       return;
     }
 
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
     RecordingSSLSocketFactory clientSocketFactory =
-        new RecordingSSLSocketFactory(sslContextBuilder.socketFactory());
+        new RecordingSSLSocketFactory(sslClient.socketFactory);
     client = client.newBuilder()
-        .sslSocketFactory(clientSocketFactory, sslContextBuilder.trustManager())
+        .sslSocketFactory(clientSocketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
         .build();
@@ -1012,13 +1012,13 @@ public final class CallTest {
   }
 
   @Test public void recoverFromTlsHandshakeFailure_Async() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
     server.enqueue(new MockResponse().setBody("abc"));
 
     client = client.newBuilder()
         .hostnameVerifier(new RecordingHostnameVerifier())
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build();
 
     Request request = new Request.Builder()
@@ -1034,10 +1034,10 @@ public final class CallTest {
         .connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.CLEARTEXT))
         .hostnameVerifier(new RecordingHostnameVerifier())
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(suppressTlsFallbackClientSocketFactory(), sslClient.trustManager)
         .build();
 
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
     server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.FAIL_HANDSHAKE));
 
     Request request = new Request.Builder().url(server.url("/")).build();
@@ -2206,7 +2206,7 @@ public final class CallTest {
 
   /** Test which headers are sent unencrypted to the HTTP proxy. */
   @Test public void proxyConnectOmitsApplicationHeaders() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
@@ -2215,7 +2215,7 @@ public final class CallTest {
 
     RecordingHostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .proxy(server.toProxyAddress())
         .hostnameVerifier(hostnameVerifier)
         .build();
@@ -2243,7 +2243,7 @@ public final class CallTest {
 
   /** Respond to a proxy authorization challenge. */
   @Test public void proxyAuthenticateOnConnect() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.enqueue(new MockResponse()
         .setResponseCode(407)
         .addHeader("Proxy-Authenticate: Basic realm=\"localhost\""));
@@ -2254,7 +2254,7 @@ public final class CallTest {
         .setBody("response body"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .proxy(server.toProxyAddress())
         .proxyAuthenticator(new RecordingOkAuthenticator("password"))
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -2312,7 +2312,7 @@ public final class CallTest {
    * a TLS tunnel. https://github.com/square/okhttp/issues/2426
    */
   @Test public void proxyAuthenticateOnConnectWithConnectionClose() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setResponseCode(407)
@@ -2325,7 +2325,7 @@ public final class CallTest {
         .setBody("response body"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .proxy(server.toProxyAddress())
         .proxyAuthenticator(new RecordingOkAuthenticator("password"))
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -2348,7 +2348,7 @@ public final class CallTest {
   }
 
   @Test public void tooManyProxyAuthFailuresWithConnectionClose() throws IOException {
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
     for (int i = 0; i < 21; i++) {
       server.enqueue(new MockResponse()
@@ -2358,7 +2358,7 @@ public final class CallTest {
     }
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .proxy(server.toProxyAddress())
         .proxyAuthenticator(new RecordingOkAuthenticator("password"))
         .hostnameVerifier(new RecordingHostnameVerifier())
@@ -2380,7 +2380,7 @@ public final class CallTest {
    * credentials. Worse, that approach leaks proxy credentials to the origin server.
    */
   @Test public void noProactiveProxyAuthorization() throws Exception {
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
         .clearHeaders());
@@ -2388,7 +2388,7 @@ public final class CallTest {
         .setBody("response body"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .proxy(server.toProxyAddress())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
@@ -2536,7 +2536,7 @@ public final class CallTest {
   /** https://github.com/square/okhttp/issues/2344 */
   @Test public void ipv6HostHasSquareBraces() throws Exception {
     // Use a proxy to fake IPv6 connectivity, even if localhost doesn't have IPv6.
-    server.useHttps(sslContextBuilder.socketFactory(), true);
+    server.useHttps(sslClient.socketFactory, true);
     server.setProtocols(Collections.singletonList(Protocol.HTTP_1_1));
     server.enqueue(new MockResponse()
         .setSocketPolicy(SocketPolicy.UPGRADE_TO_SSL_AT_END)
@@ -2545,7 +2545,7 @@ public final class CallTest {
         .setBody("response body"));
 
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .proxy(server.toProxyAddress())
         .build();
@@ -2658,10 +2658,10 @@ public final class CallTest {
 
   private void enableTls() {
     client = client.newBuilder()
-        .sslSocketFactory(sslContextBuilder.socketFactory(), sslContextBuilder.trustManager())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .build();
-    server.useHttps(sslContextBuilder.socketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
   }
 
   private Buffer gzip(String data) throws IOException {
@@ -2710,6 +2710,6 @@ public final class CallTest {
    * for details.
    */
   private FallbackTestClientSocketFactory suppressTlsFallbackClientSocketFactory() {
-    return new FallbackTestClientSocketFactory(sslContextBuilder.socketFactory());
+    return new FallbackTestClientSocketFactory(sslClient.socketFactory);
   }
 }
