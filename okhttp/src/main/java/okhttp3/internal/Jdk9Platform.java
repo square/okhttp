@@ -76,7 +76,7 @@ final class Jdk9Platform extends Platform {
     // sun.security.ssl.SSLSocketFactoryImpl accessible:  module java.base does not export
     // sun.security.ssl to unnamed module @xxx
     throw new UnsupportedOperationException(
-        "clientBuilder.sslSocketFactory(SSLSocketFactory) unsupported on JDK9");
+        "clientBuilder.sslSocketFactory(SSLSocketFactory) not supported on JDK 9+");
   }
 
   public static Jdk9Platform buildIfSupported() {

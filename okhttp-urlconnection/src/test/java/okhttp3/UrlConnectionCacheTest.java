@@ -1408,22 +1408,26 @@ public final class UrlConnectionCacheTest {
     return System.getProperty("okhttp.platform", "platform");
   }
 
-  @Test(expected = UnsupportedOperationException.class)
+  @Test
   public void failsOnJdk9() throws Exception {
-    assumeTrue(getPlatform().equals("jdk9"));
+    try {
+      assumeTrue(getPlatform().equals("jdk9"));
 
-    server.useHttps(sslClient.socketFactory, false);
-    server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60")
-        .addHeader("Vary: Accept-Language")
-        .setBody("A"));
-    server.enqueue(new MockResponse().setBody("B"));
+      server.useHttps(sslClient.socketFactory, false);
+      server.enqueue(new MockResponse().addHeader("Cache-Control: max-age=60")
+          .addHeader("Vary: Accept-Language")
+          .setBody("A"));
+      server.enqueue(new MockResponse().setBody("B"));
 
-    URL url = server.url("/").url();
-    HttpsURLConnection connection1 = (HttpsURLConnection) urlFactory.open(url);
-    connection1.setSSLSocketFactory(sslClient.socketFactory);
-    connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
-    connection1.addRequestProperty("Accept-Language", "en-US");
-    assertEquals("A", readAscii(connection1));
+      URL url = server.url("/").url();
+      HttpsURLConnection connection1 = (HttpsURLConnection) urlFactory.open(url);
+      connection1.setSSLSocketFactory(sslClient.socketFactory);
+      connection1.setHostnameVerifier(NULL_HOSTNAME_VERIFIER);
+      connection1.addRequestProperty("Accept-Language", "en-US");
+      assertEquals("A", readAscii(connection1));
+      fail();
+    } catch (UnsupportedOperationException expected) {
+    }
   }
 
   @Test public void varyAndHttps() throws Exception {
