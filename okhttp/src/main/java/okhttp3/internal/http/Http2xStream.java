@@ -28,6 +28,7 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import okhttp3.internal.Internal;
 import okhttp3.internal.Util;
 import okhttp3.internal.framed.ErrorCode;
 import okhttp3.internal.framed.FramedConnection;
@@ -233,7 +234,7 @@ public final class Http2xStream implements HttpStream {
         } else if (name.equals(VERSION)) {
           version = value;
         } else if (!SPDY_3_SKIPPED_RESPONSE_HEADERS.contains(name)) {
-          headersBuilder.add(name.utf8(), value);
+          Internal.instance.addLenient(headersBuilder, name.utf8(), value);
         }
         start = end + 1;
       }
@@ -260,7 +261,7 @@ public final class Http2xStream implements HttpStream {
       if (name.equals(RESPONSE_STATUS)) {
         status = value;
       } else if (!HTTP_2_SKIPPED_RESPONSE_HEADERS.contains(name)) {
-        headersBuilder.add(name.utf8(), value);
+        Internal.instance.addLenient(headersBuilder, name.utf8(), value);
       }
     }
     if (status == null) throw new ProtocolException("Expected ':status' header not present");

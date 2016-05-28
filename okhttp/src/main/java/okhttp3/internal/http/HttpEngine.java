@@ -892,7 +892,7 @@ public final class HttpEngine {
         continue; // Drop 100-level freshness warnings.
       }
       if (!OkHeaders.isEndToEnd(fieldName) || networkHeaders.get(fieldName) == null) {
-        result.add(fieldName, value);
+        Internal.instance.addLenient(result, fieldName, value);
       }
     }
 
@@ -902,7 +902,7 @@ public final class HttpEngine {
         continue; // Ignore content-length headers of validating responses.
       }
       if (OkHeaders.isEndToEnd(fieldName)) {
-        result.add(fieldName, networkHeaders.value(i));
+        Internal.instance.addLenient(result, fieldName, networkHeaders.value(i));
       }
     }
 
