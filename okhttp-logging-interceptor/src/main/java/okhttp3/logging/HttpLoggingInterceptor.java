@@ -283,7 +283,8 @@ public final class HttpLoggingInterceptor implements Interceptor {
         if (prefix.exhausted()) {
           break;
         }
-        if (Character.isISOControl(prefix.readUtf8CodePoint())) {
+        int codePoint = prefix.readUtf8CodePoint();
+        if (Character.isISOControl(codePoint) && !Character.isWhitespace(codePoint)) {
           return false;
         }
       }
