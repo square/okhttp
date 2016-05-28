@@ -1,6 +1,18 @@
 Change Log
 ==========
 
+## Version 3.3.1
+
+_2016-05-28_
+
+ *  Fix: The plaintext check in HttpLoggingInterceptor incorrectly classified
+    newline characters as control characters. This is fixed.
+ *  Fix: Don't crash reading non-ASCII characters in HTTP/2 headers or in cached
+    HTTP headers.
+ *  Fix: Retain the response body when an attempt to open a web socket returns a
+    non-101 response code.
+
+
 ## Version 3.3.0
 
 _2016-05-24_
