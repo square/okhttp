@@ -38,6 +38,7 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
 
   private final BlockingQueue<Object> events = new LinkedBlockingQueue<>();
   private MessageDelegate delegate;
+  private Response response;
 
   /** Sets a delegate for the next call to {@link #onMessage}. Cleared after invoked. */
   public void setNextMessageDelegate(MessageDelegate delegate) {
@@ -73,6 +74,7 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
 
   @Override public void onFailure(IOException e, Response response) {
     events.add(e);
+    this.response = response;
   }
 
   private Object nextEvent() {
@@ -142,6 +144,12 @@ public final class WebSocketRecorder implements WebSocketReader.FrameCallback, W
 
   public void assertExhausted() {
     assertTrue("Remaining events: " + events, events.isEmpty());
+  }
+
+  public void assertResponse(int code, String body) throws IOException {
+    assertNotNull(response);
+    assertEquals(code, response.code());
+    assertEquals(body, response.body().string());
   }
 
   private static class Message {

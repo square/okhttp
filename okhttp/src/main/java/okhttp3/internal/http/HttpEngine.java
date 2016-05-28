@@ -779,7 +779,7 @@ public final class HttpEngine {
         .receivedResponseAtMillis(System.currentTimeMillis())
         .build();
 
-    if (!forWebSocket) {
+    if (!forWebSocket || networkResponse.code() != 101) {
       networkResponse = networkResponse.newBuilder()
           .body(httpStream.openResponseBody(networkResponse))
           .build();
