@@ -17,12 +17,10 @@ package okhttp3.recipes;
 
 import java.io.IOException;
 import java.util.Arrays;
-import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
-import okhttp3.internal.Platform;
 
 public final class SynchronousHttp2Get {
   // setting protocols not required, but avoids SPDY
