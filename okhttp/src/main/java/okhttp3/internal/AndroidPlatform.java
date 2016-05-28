@@ -17,15 +17,20 @@ package okhttp3.internal;
 
 import android.util.Log;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.List;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import okhttp3.Protocol;
+import okhttp3.internal.tls.CertificateChainCleaner;
 
 /** Android 2.3 or better. */
 class AndroidPlatform extends Platform {
@@ -144,6 +149,19 @@ class AndroidPlatform extends Platform {
     }
   }
 
+  public CertificateChainCleaner buildCertificateChainCleaner(X509TrustManager trustManager) {
+    try {
+      Class<?> extensionsClass = Class.forName("android.net.http.X509TrustManagerExtensions");
+      Constructor<?> constructor = extensionsClass.getConstructor(X509TrustManager.class);
+      Object extensions = constructor.newInstance(trustManager);
+      Method checkServerTrusted = extensionsClass.getMethod(
+          "checkServerTrusted", X509Certificate[].class, String.class, String.class);
+      return new AndroidCertificateChainCleaner(extensions, checkServerTrusted);
+    } catch (Exception e) {
+      return super.buildCertificateChainCleaner(trustManager);
+    }
+  }
+
   public static Platform buildIfSupported() {
     // Attempt to find Android 2.3+ APIs.
     try {
@@ -178,5 +196,36 @@ class AndroidPlatform extends Platform {
     }
 
     return null;
+  }
+
+  /**
+   * X509TrustManagerExtensions was added to Android in API 17 (Android 4.2, released in late 2012).
+   * This is the best way to get a clean chain on Android because it uses the same code as the TLS
+   * handshake.
+   */
+  static final class AndroidCertificateChainCleaner extends CertificateChainCleaner {
+    private final Object x509TrustManagerExtensions;
+    private final Method checkServerTrusted;
+
+    AndroidCertificateChainCleaner(Object x509TrustManagerExtensions, Method checkServerTrusted) {
+      this.x509TrustManagerExtensions = x509TrustManagerExtensions;
+      this.checkServerTrusted = checkServerTrusted;
+    }
+
+    @SuppressWarnings({"unchecked", "SuspiciousToArrayCall"}) // Reflection on List<Certificate>.
+    @Override public List<Certificate> clean(List<Certificate> chain, String hostname)
+        throws SSLPeerUnverifiedException {
+      try {
+        X509Certificate[] certificates = chain.toArray(new X509Certificate[chain.size()]);
+        return (List<Certificate>) checkServerTrusted.invoke(
+            x509TrustManagerExtensions, certificates, "RSA", hostname);
+      } catch (InvocationTargetException e) {
+        SSLPeerUnverifiedException exception = new SSLPeerUnverifiedException(e.getMessage());
+        exception.initCause(e);
+        throw exception;
+      } catch (IllegalAccessException e) {
+        throw new AssertionError(e);
+      }
+    }
   }
 }
