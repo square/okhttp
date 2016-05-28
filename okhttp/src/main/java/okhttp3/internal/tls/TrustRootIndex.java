@@ -29,7 +29,7 @@ import javax.security.auth.x500.X500Principal;
 
 public abstract class TrustRootIndex {
   /** Returns the trusted CA certificate that signed {@code cert}. */
-  abstract X509Certificate findByIssuerAndSignature(X509Certificate cert);
+  public abstract X509Certificate findByIssuerAndSignature(X509Certificate cert);
 
   public static TrustRootIndex get(X509TrustManager trustManager) {
     try {
@@ -55,7 +55,7 @@ public abstract class TrustRootIndex {
    *
    * <p>This class uses APIs added to Android in API 14 (Android 4.0, released October 2011). This
    * class shouldn't be used in Android API 17 or better because those releases are better served by
-   * {@link CertificateChainCleaner.AndroidCertificateChainCleaner}.
+   * {@link okhttp3.internal.AndroidPlatform.AndroidCertificateChainCleaner}.
    */
   static final class AndroidTrustRootIndex extends TrustRootIndex {
     private final X509TrustManager trustManager;
