@@ -597,6 +597,8 @@ public final class HttpLoggingInterceptorTest {
   @Test public void isPlaintext() throws IOException {
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer()));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("abc")));
+    assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("new\r\nlines")));
+    assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeUtf8("white\t space")));
     assertTrue(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x80)));
     assertFalse(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0x00)));
     assertFalse(HttpLoggingInterceptor.isPlaintext(new Buffer().writeByte(0xc0)));
