@@ -18,10 +18,14 @@ package okhttp3;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
+import java.net.SocketOption;
 import java.nio.channels.SocketChannel;
+import java.util.Set;
 import javax.net.ssl.HandshakeCompletedListener;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSession;
@@ -279,5 +283,56 @@ public abstract class DelegatingSSLSocket extends SSLSocket {
 
   @Override public void setPerformancePreferences(int connectionTime, int latency, int bandwidth) {
     delegate.setPerformancePreferences(connectionTime, latency, bandwidth);
+  }
+
+  // Java 9 methods.
+
+  public SSLSession getHandshakeSession() {
+    try {
+      return (SSLSession) SSLSocket.class.getMethod("getHandshakeSession").invoke(delegate);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
+  }
+
+  public String getApplicationProtocol() {
+    try {
+      return (String) SSLSocket.class.getMethod("getApplicationProtocol").invoke(delegate);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
+  }
+
+  public String getHandshakeApplicationProtocol() {
+    try {
+      return (String) SSLSocket.class.getMethod("getHandshakeApplicationProtocol").invoke(delegate);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
+  }
+
+  public <T> Socket setOption(SocketOption<T> name, T value) throws IOException {
+    try {
+      SSLSocket.class.getMethod("setOption", SocketOption.class, Object.class).invoke(delegate, name, value);
+      return this;
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
+  }
+
+  public <T> T getOption(SocketOption<T> name) throws IOException {
+    try {
+      return (T) SSLSocket.class.getMethod("getOption", SocketOption.class).invoke(delegate, name);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
+  }
+
+  public Set<SocketOption<?>> supportedOptions() {
+    try {
+      return (Set<SocketOption<?>>) SSLSocket.class.getMethod("supportedOptions").invoke(delegate);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      throw new AssertionError();
+    }
   }
 }

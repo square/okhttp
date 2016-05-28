@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import okhttp3.Cache;
 import okhttp3.Call;
 import okhttp3.Cookie;
@@ -41,8 +40,8 @@ import okhttp3.Response;
 import okhttp3.internal.DoubleInetAddressDns;
 import okhttp3.internal.RecordingOkAuthenticator;
 import okhttp3.internal.SingleInetAddressDns;
-import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.SslClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -74,7 +73,7 @@ public abstract class HttpOverSpdyTest {
   private final Protocol protocol;
   protected String hostHeader = ":host";
 
-  protected SSLContext sslContext = SslContextBuilder.localhost();
+  protected SslClient sslClient = SslClient.localhost();
   protected HostnameVerifier hostnameVerifier = new RecordingHostnameVerifier();
   protected OkHttpClient client;
   protected Cache cache;
@@ -84,12 +83,12 @@ public abstract class HttpOverSpdyTest {
   }
 
   @Before public void setUp() throws Exception {
-    server.useHttps(sslContext.getSocketFactory(), false);
+    server.useHttps(sslClient.socketFactory, false);
     cache = new Cache(tempDir.getRoot(), Integer.MAX_VALUE);
     client = new OkHttpClient.Builder()
         .protocols(Arrays.asList(protocol, Protocol.HTTP_1_1))
         .dns(new SingleInetAddressDns())
-        .sslSocketFactory(sslContext.getSocketFactory())
+        .sslSocketFactory(sslClient.socketFactory, sslClient.trustManager)
         .hostnameVerifier(hostnameVerifier)
         .build();
   }

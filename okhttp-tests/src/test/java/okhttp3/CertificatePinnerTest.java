@@ -21,7 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import okhttp3.CertificatePinner.Pin;
-import okhttp3.internal.HeldCertificate;
+import okhttp3.internal.tls.HeldCertificate;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

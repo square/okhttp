@@ -63,6 +63,7 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   }
 
   @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+    // This fails in JDK 9 because OkHttp is unable to extract the trust manager.
     delegate.client = delegate.client.newBuilder()
         .sslSocketFactory(sslSocketFactory)
         .build();

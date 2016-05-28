@@ -29,8 +29,8 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Protocol;
 import okhttp3.internal.Platform;
-import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.SslClient;
 import okio.BufferedSink;
 import okio.Okio;
 import okio.Source;
@@ -184,7 +184,7 @@ public final class FramedServer extends FramedConnection.Listener {
     }
 
     FramedServer server = new FramedServer(new File(args[0]),
-        SslContextBuilder.localhost().getSocketFactory());
+        SslClient.localhost().sslContext.getSocketFactory());
     server.run();
   }
 }
