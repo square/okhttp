@@ -30,7 +30,6 @@ import java.util.NoSuchElementException;
 import javax.net.SocketFactory;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Address;
 import okhttp3.Authenticator;
@@ -41,6 +40,7 @@ import okhttp3.Route;
 import okhttp3.internal.RouteDatabase;
 import okhttp3.internal.SslContextBuilder;
 import okhttp3.internal.Util;
+import okhttp3.internal.tls.SslClient;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -68,8 +68,8 @@ public final class RouteSelectorTest {
   private int uriPort = 1003;
 
   private SocketFactory socketFactory;
-  private final SSLContext sslContext = SslContextBuilder.localhost();
-  private final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+  private final SslClient sslClient = SslContextBuilder.localhost();
+  private final SSLSocketFactory sslSocketFactory = sslClient.socketFactory;
   private HostnameVerifier hostnameVerifier;
 
   private final Authenticator authenticator = Authenticator.NONE;
@@ -77,6 +77,9 @@ public final class RouteSelectorTest {
   private final FakeDns dns = new FakeDns();
   private final RecordingProxySelector proxySelector = new RecordingProxySelector();
   private RouteDatabase routeDatabase = new RouteDatabase();
+
+  public RouteSelectorTest() {
+  }
 
   @Before public void setUp() throws Exception {
     socketFactory = SocketFactory.getDefault();

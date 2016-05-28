@@ -21,7 +21,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 import okhttp3.Call;
@@ -33,6 +32,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 
 class OkHttpAsync implements HttpClient {
   private static final boolean VERBOSE = false;
@@ -55,15 +55,15 @@ class OkHttpAsync implements HttpClient {
         .build();
 
     if (benchmark.tls) {
-      SSLContext sslContext = SslContextBuilder.localhost();
-      SSLSocketFactory socketFactory = sslContext.getSocketFactory();
+      SslClient sslClient = SslContextBuilder.localhost();
+      SSLSocketFactory socketFactory = sslClient.socketFactory;
       HostnameVerifier hostnameVerifier = new HostnameVerifier() {
         @Override public boolean verify(String s, SSLSession session) {
           return true;
         }
       };
       client = client.newBuilder()
-          .sslSocketFactory(socketFactory)
+          .sslSocketFactory(socketFactory, sslClient.trustManager)
           .hostnameVerifier(hostnameVerifier)
           .build();
     }

@@ -63,6 +63,7 @@ public final class HttpsURLConnectionImpl extends DelegatingHttpsURLConnection {
   }
 
   @Override public void setSSLSocketFactory(SSLSocketFactory sslSocketFactory) {
+    // will fail in JDK9
     delegate.client = delegate.client.newBuilder()
         .sslSocketFactory(sslSocketFactory)
         .build();

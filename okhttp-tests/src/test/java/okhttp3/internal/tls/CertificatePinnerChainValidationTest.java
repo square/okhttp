@@ -60,11 +60,10 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(rootCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
-        .addTrustedCertificate(rootCa.certificate)
-        .build();
+    SslContextBuilder clientContextBuilder = new SslContextBuilder()
+        .addTrustedCertificate(rootCa.certificate);
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory(), clientContextBuilder.trustManager())
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -116,19 +115,19 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(intermediateCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
+    SslClient contextBuilder = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(contextBuilder.socketFactory, contextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
 
-    SSLContext serverSslContext = new SslContextBuilder()
-        .certificateChain(certificate, intermediateCa)
+    SslClient serverSslContext = new SslClient.Builder()
+        .certificateChain(certificate.keyPair, certificate.certificate, intermediateCa.certificate)
         .build();
-    server.useHttps(serverSslContext.getSocketFactory(), false);
+    server.useHttps(serverSslContext.socketFactory, false);
 
     // The request should complete successfully.
     server.enqueue(new MockResponse()
@@ -176,11 +175,11 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodCertificate.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
+    SslClient clientContextBuilder = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .build();
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory, clientContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -200,10 +199,10 @@ public final class CertificatePinnerChainValidationTest {
         .issuedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
-    SSLContext serverSslContext = new SslContextBuilder()
-        .certificateChain(rogueCertificate, compromisedIntermediateCa, goodCertificate, rootCa)
+    SslClient serverSslContext = new SslClient.Builder()
+        .certificateChain(rogueCertificate.keyPair, rogueCertificate.certificate, compromisedIntermediateCa.certificate, goodCertificate.certificate, rootCa.certificate)
         .build();
-    server.useHttps(serverSslContext.getSocketFactory(), false);
+    server.useHttps(serverSslContext.socketFactory, false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));
@@ -249,12 +248,12 @@ public final class CertificatePinnerChainValidationTest {
     CertificatePinner certificatePinner = new CertificatePinner.Builder()
         .add(server.getHostName(), CertificatePinner.pin(goodIntermediateCa.certificate))
         .build();
-    SSLContext clientContext = new SslContextBuilder()
+    SslClient clientContextBuilder = new SslClient.Builder()
         .addTrustedCertificate(rootCa.certificate)
         .addTrustedCertificate(compromisedRootCa.certificate)
         .build();
     OkHttpClient client = new OkHttpClient.Builder()
-        .sslSocketFactory(clientContext.getSocketFactory())
+        .sslSocketFactory(clientContextBuilder.socketFactory, clientContextBuilder.trustManager)
         .hostnameVerifier(new RecordingHostnameVerifier())
         .certificatePinner(certificatePinner)
         .build();
@@ -274,11 +273,11 @@ public final class CertificatePinnerChainValidationTest {
         .issuedBy(compromisedIntermediateCa)
         .commonName(server.getHostName())
         .build();
-    SSLContext serverSslContext = new SslContextBuilder()
+    SslClient serverSslContext = new SslClient.Builder()
         .certificateChain(
-            rogueCertificate, goodIntermediateCa, compromisedIntermediateCa, compromisedRootCa)
+            rogueCertificate.keyPair, rogueCertificate.certificate, goodIntermediateCa.certificate, compromisedIntermediateCa.certificate, compromisedRootCa.certificate)
         .build();
-    server.useHttps(serverSslContext.getSocketFactory(), false);
+    server.useHttps(serverSslContext.socketFactory, false);
     server.enqueue(new MockResponse()
         .setBody("abc")
         .addHeader("Content-Type: text/plain"));

@@ -42,10 +42,10 @@ import io.netty.handler.ssl.SslHandler;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.concurrent.TimeUnit;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import okhttp3.HttpUrl;
 import okhttp3.internal.SslContextBuilder;
+import okhttp3.internal.tls.SslClient;
 
 /** Netty isn't an HTTP client, but it's almost one. */
 class NettyHttpClient implements HttpClient {
@@ -69,8 +69,8 @@ class NettyHttpClient implements HttpClient {
         ChannelPipeline pipeline = channel.pipeline();
 
         if (benchmark.tls) {
-          SSLContext sslContext = SslContextBuilder.localhost();
-          SSLEngine engine = sslContext.createSSLEngine();
+          SslClient sslClient = SslContextBuilder.localhost();
+          SSLEngine engine = sslClient.sslContext.createSSLEngine();
           engine.setUseClientMode(true);
           pipeline.addLast("ssl", new SslHandler(engine));
         }

@@ -15,20 +15,14 @@
  */
 package okhttp3.internal;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.List;
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+import okhttp3.internal.tls.SslClient;
 
 /**
  * Constructs an SSL context for testing. This uses Bouncy Castle to generate a self-signed
@@ -38,10 +32,13 @@ import javax.net.ssl.TrustManagerFactory;
  * instances where possible.
  */
 public final class SslContextBuilder {
-  private static SSLContext localhost; // Lazily initialized.
+  private static SslClient localhost; // Lazily initialized.
+
+  private SslClient.Builder sslClientBuilder = new SslClient.Builder();
+  private SslClient sslClient;
 
   /** Returns a new SSL context for this host's current localhost address. */
-  public static synchronized SSLContext localhost() {
+  public static synchronized SslClient localhost() {
     if (localhost != null) return localhost;
 
     try {
@@ -51,29 +48,28 @@ public final class SslContextBuilder {
           .commonName(InetAddress.getByName("localhost").getHostName())
           .build();
 
-      localhost = new SslContextBuilder()
-          .certificateChain(heldCertificate)
+      localhost = new SslClient.Builder()
+          .certificateChain(heldCertificate.keyPair, heldCertificate.certificate)
           .addTrustedCertificate(heldCertificate.certificate)
           .build();
 
       return localhost;
-    } catch (GeneralSecurityException e) {
-      throw new RuntimeException(e);
-    } catch (UnknownHostException e) {
+    } catch (GeneralSecurityException | UnknownHostException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private HeldCertificate[] chain;
-  private List<X509Certificate> trustedCertificates = new ArrayList<>();
-
   /**
    * Configure the certificate chain to use when serving HTTPS responses. The first certificate
-   * in this chain is the server's certificate, further certificates are included in the handshake
+   * is the server's certificate, further certificates are included in the handshake
    * so the client can build a trusted path to a CA certificate.
    */
-  public SslContextBuilder certificateChain(HeldCertificate... chain) {
-    this.chain = chain;
+  public SslContextBuilder certificateChain(HeldCertificate serverCert, HeldCertificate... chain) {
+    X509Certificate[] certificates = new X509Certificate[chain.length];
+    for (int i = 0; i < chain.length; i++) {
+      certificates[i] = chain[i].certificate;
+    }
+    sslClientBuilder.certificateChain(serverCert.keyPair, serverCert.certificate, certificates);
     return this;
   }
 
@@ -82,48 +78,32 @@ public final class SslContextBuilder {
    * signed by these roots (or their intermediates) will be accepted.
    */
   public SslContextBuilder addTrustedCertificate(X509Certificate certificate) {
-    trustedCertificates.add(certificate);
+    sslClientBuilder.addTrustedCertificate(certificate);
     return this;
   }
 
-  public SSLContext build() throws GeneralSecurityException {
-    // Put the certificate in a key store.
-    char[] password = "password".toCharArray();
-    KeyStore keyStore = newEmptyKeyStore(password);
-
-    if (chain != null) {
-      Certificate[] certificates = new Certificate[chain.length];
-      for (int i = 0; i < chain.length; i++) {
-        certificates[i] = chain[i].certificate;
-      }
-      keyStore.setKeyEntry("private", chain[0].keyPair.getPrivate(), password, certificates);
-    }
-
-    for (int i = 0; i < trustedCertificates.size(); i++) {
-      keyStore.setCertificateEntry("cert_" + i, trustedCertificates.get(i));
-    }
-
-    // Wrap it up in an SSL context.
-    KeyManagerFactory keyManagerFactory =
-        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-    keyManagerFactory.init(keyStore, password);
-    TrustManagerFactory trustManagerFactory =
-        TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-    trustManagerFactory.init(keyStore);
-    SSLContext sslContext = SSLContext.getInstance("TLS");
-    sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
-        new SecureRandom());
-    return sslContext;
+  public SSLContext build() {
+    sslClient = sslClientBuilder.build();
+    return sslClient.sslContext;
   }
 
-  private KeyStore newEmptyKeyStore(char[] password) throws GeneralSecurityException {
-    try {
-      KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-      InputStream in = null; // By convention, 'null' creates an empty key store.
-      keyStore.load(in, password);
-      return keyStore;
-    } catch (IOException e) {
-      throw new AssertionError(e);
+  public SSLSocketFactory socketFactory() {
+    if (sslClient == null) {
+      build();
     }
+
+    return sslClient.sslContext.getSocketFactory();
+  }
+
+  public X509TrustManager trustManager() {
+    if (sslClient == null) {
+      build();
+    }
+
+    return sslClient.trustManager;
+  }
+
+  public static void main(String[] args) {
+    localhost();
   }
 }
