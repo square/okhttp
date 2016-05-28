@@ -678,6 +678,20 @@ public abstract class HttpOverSpdyTest {
     }
   }
 
+  @Test public void nonAsciiResponseHeader() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeaderLenient("Alpha", "α")
+        .addHeaderLenient("β", "Beta"));
+
+    Call call = client.newCall(new Request.Builder()
+        .url(server.url("/"))
+        .build());
+    Response response = call.execute();
+
+    assertEquals("α", response.header("Alpha"));
+    assertEquals("Beta", response.header("β"));
+  }
+
   public Buffer gzip(String bytes) throws IOException {
     Buffer bytesOut = new Buffer();
     BufferedSink sink = Okio.buffer(new GzipSink(bytesOut));

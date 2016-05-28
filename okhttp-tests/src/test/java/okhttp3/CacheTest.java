@@ -2320,6 +2320,31 @@ public final class CacheTest {
     assertEquals("v2", server.takeRequest().getHeader("If-None-Match"));
   }
 
+  @Test public void combinedCacheHeadersCanBeNonAscii() throws Exception {
+    server.enqueue(new MockResponse()
+        .addHeader("Last-Modified: " + formatDate(-1, TimeUnit.HOURS))
+        .addHeader("Cache-Control: max-age=0")
+        .addHeaderLenient("Alpha", "α")
+        .addHeaderLenient("β", "Beta")
+        .setBody("abcd"));
+    server.enqueue(new MockResponse()
+        .addHeader("Transfer-Encoding: none")
+        .addHeaderLenient("Gamma", "Γ")
+        .addHeaderLenient("Δ", "Delta")
+        .setResponseCode(HttpURLConnection.HTTP_NOT_MODIFIED));
+
+    Response response1 = get(server.url("/"));
+    assertEquals("α", response1.header("Alpha"));
+    assertEquals("Beta", response1.header("β"));
+    assertEquals("abcd", response1.body().string());
+
+    Response response2 = get(server.url("/"));
+    assertEquals("α", response2.header("Alpha"));
+    assertEquals("Beta", response2.header("β"));
+    assertEquals("Γ", response2.header("Gamma"));
+    assertEquals("Delta", response2.header("Δ"));
+    assertEquals("abcd", response2.body().string());
+  }
   private Response get(HttpUrl url) throws IOException {
     Request request = new Request.Builder()
         .url(url)
