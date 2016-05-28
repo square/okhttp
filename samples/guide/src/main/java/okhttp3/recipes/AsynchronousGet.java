@@ -50,6 +50,9 @@ public final class AsynchronousGet {
         }
       }
     });
+
+    // required for clean shutdown after using enqueue
+    client.dispatcher().executorService().shutdown();
   }
 
   public static void main(String... args) throws Exception {
