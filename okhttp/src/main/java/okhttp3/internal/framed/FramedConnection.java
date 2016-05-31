@@ -86,7 +86,6 @@ public final class FramedConnection implements Closeable {
   private int lastGoodStreamId;
   private int nextStreamId;
   private boolean shutdown;
-  private long idleStartTimeNs = System.nanoTime();
 
   /** Ensures push promise callbacks events are sent in order per stream. */
   private final ExecutorService pushExecutor;
@@ -190,32 +189,12 @@ public final class FramedConnection implements Closeable {
 
   synchronized FramedStream removeStream(int streamId) {
     FramedStream stream = streams.remove(streamId);
-    if (stream != null && streams.isEmpty()) {
-      setIdle(true);
-    }
     notifyAll(); // The removed stream may be blocked on a connection-wide window update.
     return stream;
   }
 
-  private synchronized void setIdle(boolean value) {
-    idleStartTimeNs = value ? System.nanoTime() : Long.MAX_VALUE;
-  }
-
-  /** Returns true if this connection is idle. */
-  public synchronized boolean isIdle() {
-    return idleStartTimeNs != Long.MAX_VALUE;
-  }
-
   public synchronized int maxConcurrentStreams() {
     return peerSettings.getMaxConcurrentStreams(Integer.MAX_VALUE);
-  }
-
-  /**
-   * Returns the time in ns when this connection became idle or Long.MAX_VALUE if connection is not
-   * idle.
-   */
-  public synchronized long getIdleStartTimeNs() {
-    return idleStartTimeNs;
   }
 
   /**
@@ -264,7 +243,6 @@ public final class FramedConnection implements Closeable {
         flushHeaders = !out || bytesLeftInWriteWindow == 0L || stream.bytesLeftInWriteWindow == 0L;
         if (stream.isOpen()) {
           streams.put(streamId, stream);
-          setIdle(false);
         }
       }
       if (associatedStreamId == 0) {
@@ -460,7 +438,6 @@ public final class FramedConnection implements Closeable {
       if (!streams.isEmpty()) {
         streamsToClose = streams.values().toArray(new FramedStream[streams.size()]);
         streams.clear();
-        setIdle(false);
       }
       if (pings != null) {
         pingsToCancel = pings.values().toArray(new Ping[pings.size()]);
