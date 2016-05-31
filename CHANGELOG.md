@@ -19,7 +19,7 @@ _2016-05-24_
 
  *  New: `Response.sentRequestAtMillis()` and `receivedResponseAtMillis()`
     methods track the system's local time when network calls are made. These
-    replace the `OkHttp-Sent-Millis` and `OkHttp-Sent-Millis` headers that were
+    replace the `OkHttp-Sent-Millis` and `OkHttp-Received-Millis` headers that were
     present in earlier versions of OkHttp.
  *  New: Accept user-provided trust managers in `OkHttpClient.Builder`. This
     allows OkHttp to satisfy its TLS requirements directly. Otherwise OkHttp
