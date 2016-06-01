@@ -81,9 +81,13 @@ public final class RealConnection implements Connection {
   public int streamCount;
   public BufferedSource source;
   public BufferedSink sink;
+
+  // State guarded by the owning connectionPool.
   public final List<Reference<StreamAllocation>> allocations = new ArrayList<>();
   public boolean noNewStreams;
-  public long idleAtNanos = Long.MAX_VALUE;
+  // The time the connection became idle. Only valid if allocations.isEmpty(). All reads must check
+  // allocations.isEmpty(), all modifications to allocations must set this if allocations.isEmpty().
+  public long idleAtNanos;
 
   public RealConnection(Route route) {
     this.route = route;
