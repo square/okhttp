@@ -46,8 +46,6 @@
     <airlift.version>0.7</airlift.version>
     <!-- ALPN library targeted to Java 7 -->
     <alpn.jdk7.version>7.1.2.v20141202</alpn.jdk7.version>
-    <!-- ALPN library targeted to Java 8 update 71 - 74 -->
-    <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
     <android.version>4.1.1.4</android.version>
     <apache.http.version>4.2.2</apache.http.version>
     <bouncycastle.version>1.50</bouncycastle.version>
@@ -308,6 +306,171 @@
       </activation>
       <properties>
         <okhttp.platform>jdk9</okhttp.platform>
+      </properties>
+    </profile>
+    <!-- ALPN Versions targeted for each Java 8 minor release -->
+    <!-- Check versions with this page: -->
+    <!-- http://www.eclipse.org/jetty/documentation/current/alpn-chapter.html#alpn-chapterchapterversions -->
+        <profile>
+      <id>alpn-when-jdk8_05</id>
+      <activation>
+        <jdk>1.8.0_05</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_11</id>
+      <activation>
+        <jdk>1.8.0_11</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_20</id>
+      <activation>
+        <jdk>1.8.0_20</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.0.v20141016</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_25</id>
+      <activation>
+        <jdk>1.8.0_25</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.2.v20141202</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_31</id>
+      <activation>
+        <jdk>1.8.0_31</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_40</id>
+      <activation>
+        <jdk>1.8.0_40</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_45</id>
+      <activation>
+        <jdk>1.8.0_45</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.3.v20150130</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_51</id>
+      <activation>
+        <jdk>1.8.0_51</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.4.v20150727</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_60</id>
+      <activation>
+        <jdk>1.8.0_60</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.5.v20150921</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_65</id>
+      <activation>
+        <jdk>1.8.0_65</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.6.v20151105</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_66</id>
+      <activation>
+        <jdk>1.8.0_66</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.6.v20151105</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_71</id>
+      <activation>
+        <jdk>1.8.0_71</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_72</id>
+      <activation>
+        <jdk>1.8.0_72</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_73</id>
+      <activation>
+        <jdk>1.8.0_73</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_74</id>
+      <activation>
+        <jdk>1.8.0_74</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_77</id>
+      <activation>
+        <jdk>1.8.0_77</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_91</id>
+      <activation>
+        <jdk>1.8.0_91</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.7.v20160121</alpn.jdk8.version>
+      </properties>
+    </profile>
+    <profile>
+      <id>alpn-when-jdk8_92</id>
+      <activation>
+        <jdk>1.8.0_92</jdk>
+      </activation>
+      <properties>
+        <alpn.jdk8.version>8.1.8.v20160420</alpn.jdk8.version>
       </properties>
     </profile>
   </profiles>
