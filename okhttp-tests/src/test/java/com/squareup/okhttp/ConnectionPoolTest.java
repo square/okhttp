@@ -48,7 +48,7 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(pool, routeA1, 50L);
+    RealConnection c1 = newIdleConnection(pool, routeA1, 50L /* idleAtNanos */);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
@@ -80,9 +80,8 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(pool, routeA1, 50L);
     StreamAllocation streamAllocation = new StreamAllocation(pool, addressA);
-    streamAllocation.acquire(c1);
+    RealConnection c1 = newActiveConnection(pool, routeA1, streamAllocation);
 
     // Running at time 50, the pool returns that nothing can be evicted until time 150.
     assertEquals(100L, pool.cleanup(50L));
@@ -104,8 +103,8 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(Integer.MAX_VALUE, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(pool, routeA1, 75L);
-    RealConnection c2 = newConnection(pool, routeB1, 50L);
+    RealConnection c1 = newIdleConnection(pool, routeA1, 75L /* idleAtNanos */);
+    RealConnection c2 = newIdleConnection(pool, routeB1, 50L /* idleAtNanos */);
 
     // Running at time 75, the pool returns that nothing can be evicted until time 150.
     assertEquals(75L, pool.cleanup(75L));
@@ -136,8 +135,8 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(pool, routeA1, 50L);
-    RealConnection c2 = newConnection(pool, routeB1, 75L);
+    RealConnection c1 = newIdleConnection(pool, routeA1, 50L /* idleAtNanos */);
+    RealConnection c2 = newIdleConnection(pool, routeB1, 75L /* idleAtNanos */);
 
     // With 2 connections, there's no need to evict until the connections time out.
     assertEquals(50L, pool.cleanup(100L));
@@ -146,7 +145,7 @@ public final class ConnectionPoolTest {
     assertFalse(c2.socket.isClosed());
 
     // Add a third connection
-    RealConnection c3 = newConnection(pool, routeC1, 75L);
+    RealConnection c3 = newIdleConnection(pool, routeC1, 75L /* idleAtNanos */);
 
     // The third connection bounces the first.
     assertEquals(0L, pool.cleanup(100L));
@@ -160,20 +159,13 @@ public final class ConnectionPoolTest {
     ConnectionPool pool = new ConnectionPool(2, 100L, TimeUnit.NANOSECONDS);
     pool.setCleanupRunnableForTest(emptyRunnable);
 
-    RealConnection c1 = newConnection(pool, routeA1, 0L);
-    allocateAndLeakAllocation(pool, c1);
+    RealConnection c1 = newLeakedConnection(pool, routeA1);
 
     awaitGarbageCollection();
     assertEquals(0L, pool.cleanup(100L));
     assertEquals(Collections.emptyList(), c1.allocations);
 
     assertTrue(c1.noNewStreams); // Can't allocate once a leak has been detected.
-  }
-
-  /** Use a helper method so there's no hidden reference remaining on the stack. */
-  private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
-    StreamAllocation leak = new StreamAllocation(pool, connection.getRoute().getAddress());
-    leak.acquire(connection);
   }
 
   /**
@@ -187,13 +179,43 @@ public final class ConnectionPoolTest {
     System.runFinalization();
   }
 
-  private RealConnection newConnection(ConnectionPool pool, Route route, long idleAtNanos) {
-    RealConnection connection = new RealConnection(route);
-    connection.idleAtNanos = idleAtNanos;
-    connection.socket = new Socket();
+  private RealConnection newIdleConnection(ConnectionPool pool, Route route, long idleAtNanos) {
+    RealConnection connection = createStubbedConnection(route);
     synchronized (pool) {
+      connection.idleAtNanos = idleAtNanos;
       pool.put(connection);
     }
+    return connection;
+  }
+
+  private RealConnection newActiveConnection(ConnectionPool pool, Route route,
+      StreamAllocation streamAllocation) {
+    RealConnection connection = createStubbedConnection(route);
+    synchronized (pool) {
+      streamAllocation.acquire(connection);
+      pool.put(connection);
+    }
+    return connection;
+  }
+
+  private RealConnection newLeakedConnection(ConnectionPool pool, Route route) {
+    RealConnection connection = createStubbedConnection(route);
+    synchronized (pool) {
+      allocateAndLeakAllocation(pool, connection);
+      pool.put(connection);
+    }
+    return connection;
+  }
+
+  /** Use a helper method so there's no hidden reference remaining on the stack. */
+  private void allocateAndLeakAllocation(ConnectionPool pool, RealConnection connection) {
+    StreamAllocation leak = new StreamAllocation(pool, connection.getRoute().getAddress());
+    leak.acquire(connection);
+  }
+
+  private RealConnection createStubbedConnection(Route route) {
+    RealConnection connection = new RealConnection(route);
+    connection.socket = new Socket();
     return connection;
   }
 
