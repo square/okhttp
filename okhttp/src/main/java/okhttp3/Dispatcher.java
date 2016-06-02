@@ -38,6 +38,7 @@ import okhttp3.internal.Util;
 public final class Dispatcher {
   private int maxRequests = 64;
   private int maxRequestsPerHost = 5;
+  private Runnable idleCallback;
 
   /** Executes calls. Created lazily. */
   private ExecutorService executorService;
@@ -106,6 +107,22 @@ public final class Dispatcher {
     return maxRequestsPerHost;
   }
 
+  /**
+   * Set a callback to be invoked each time the dispatcher becomes idle (when the number of running
+   * calls returns to zero).
+   *
+   * <p>Note: The time at which a {@linkplain Call call} is considered idle is different depending
+   * on whether it was run {@linkplain Call#enqueue(Callback) asynchronously} or
+   * {@linkplain Call#execute() synchronously}. Asynchronous calls become idle after the
+   * {@link Callback#onResponse onResponse} or {@link Callback#onFailure onFailure} callback has
+   * returned. Synchronous calls become idle once {@link Call#execute() execute()} returns. This
+   * means that if you are doing synchronous calls the network layer will not truly be idle until
+   * every returned {@link Response} has been closed.
+   */
+  public synchronized void setIdleCallback(Runnable idleCallback) {
+    this.idleCallback = idleCallback;
+  }
+
   synchronized void enqueue(AsyncCall call) {
     if (runningAsyncCalls.size() < maxRequests && runningCallsForHost(call) < maxRequestsPerHost) {
       runningAsyncCalls.add(call);
@@ -131,12 +148,6 @@ public final class Dispatcher {
     for (RealCall call : runningSyncCalls) {
       call.cancel();
     }
-  }
-
-  /** Used by {@code AsyncCall#run} to signal completion. */
-  synchronized void finished(AsyncCall call) {
-    if (!runningAsyncCalls.remove(call)) throw new AssertionError("AsyncCall wasn't running!");
-    promoteCalls();
   }
 
   private void promoteCalls() {
@@ -170,9 +181,29 @@ public final class Dispatcher {
     runningSyncCalls.add(call);
   }
 
+  /** Used by {@code AsyncCall#run} to signal completion. */
+  void finished(AsyncCall call) {
+    finished(runningAsyncCalls, call, true);
+  }
+
   /** Used by {@code Call#execute} to signal completion. */
-  synchronized void finished(Call call) {
-    if (!runningSyncCalls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
+  void finished(RealCall call) {
+    finished(runningSyncCalls, call, false);
+  }
+
+  private <T> void finished(Deque<T> calls, T call, boolean promoteCalls) {
+    int runningCallsCount;
+    Runnable idleCallback;
+    synchronized (this) {
+      if (!calls.remove(call)) throw new AssertionError("Call wasn't in-flight!");
+      if (promoteCalls) promoteCalls();
+      runningCallsCount = runningCallsCount();
+      idleCallback = this.idleCallback;
+    }
+
+    if (runningCallsCount == 0 && idleCallback != null) {
+      idleCallback.run();
+    }
   }
 
   /** Returns a snapshot of the calls currently awaiting execution. */
