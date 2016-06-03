@@ -62,10 +62,6 @@ final class RealCall implements Call {
     }
   }
 
-  Object tag() {
-    return originalRequest.tag();
-  }
-
   @Override public void enqueue(Callback responseCallback) {
     enqueue(responseCallback, false);
   }
@@ -107,10 +103,6 @@ final class RealCall implements Call {
 
     Request request() {
       return originalRequest;
-    }
-
-    Object tag() {
-      return originalRequest.tag();
     }
 
     void cancel() {
