@@ -51,7 +51,11 @@ public final class AsynchronousGet {
       }
     });
 
-    // required for clean shutdown after using enqueue
+    // Shutdown OkHttp dispatcher thread pool.
+    //
+    // Required for clean JVM shutdown after using enqueue.
+    // n.b. only call when you are completely finished with this and all derived clients
+    // as the dispatcher is shared with other instances created via client.newBuilder().build()
     client.dispatcher().executorService().shutdown();
   }
 

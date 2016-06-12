@@ -42,7 +42,11 @@ public final class SynchronousHttp2Get {
       System.out.println(response.body().string());
     }
 
-    // shutdown http/2 connection listener
+    // Shutdown http/2 connection listener.
+    //
+    // Required for http/2 connections with correctly configured clients e.g. JDK8 with alpn-boot
+    // n.b. only call when you are completely finished with this and all derived clients
+    // as the connectionPool is shared with other instances created via client.newBuilder().build()
     client.connectionPool().evictAll();
   }
 
