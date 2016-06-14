@@ -237,8 +237,11 @@ public final class CertificatePinner {
   }
 
   static final class Pin {
+    private static final String WILDCARD = "*.";
     /** A hostname like {@code example.com} or a pattern like {@code *.example.com}. */
     final String pattern;
+    /** The canonical hostname, i.e. {@code EXAMPLE.com} becomes {@code example.com}. */
+    final String canonicalHostname;
     /** Either {@code sha1/} or {@code sha256/}. */
     final String hashAlgorithm;
     /** The hash of the pinned certificate using {@link #hashAlgorithm}. */
@@ -246,6 +249,9 @@ public final class CertificatePinner {
 
     Pin(String pattern, String pin) {
       this.pattern = pattern;
+      this.canonicalHostname = pattern.startsWith(WILDCARD)
+          ? HttpUrl.parse("http://" + pattern.substring(WILDCARD.length())).host()
+          : HttpUrl.parse("http://" + pattern).host();
       if (pin.startsWith("sha1/")) {
         this.hashAlgorithm = "sha1/";
         this.hash = ByteString.decodeBase64(pin.substring("sha1/".length()));
@@ -262,11 +268,13 @@ public final class CertificatePinner {
     }
 
     boolean matches(String hostname) {
-      if (pattern.equals(hostname)) return true;
+      if (pattern.startsWith(WILDCARD)) {
+        int firstDot = hostname.indexOf('.');
+        return hostname.regionMatches(false, firstDot + 1, canonicalHostname, 0,
+            canonicalHostname.length());
+      }
 
-      int firstDot = hostname.indexOf('.');
-      return pattern.startsWith("*.")
-          && hostname.regionMatches(false, firstDot + 1, pattern, 2, pattern.length() - 2);
+      return hostname.equals(canonicalHostname);
     }
 
     @Override public boolean equals(Object other) {
