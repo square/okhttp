@@ -230,7 +230,18 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw new ProtocolException("This protocol does not support input");
     }
 
-    HttpEngine response = getResponse();
+    final long startTimeMs = System.currentTimeMillis();
+    HttpEngine response;
+    boolean exceptionThrown = true;
+    int responseCode = 0;
+    try {
+      response = getResponse();
+      responseCode = getResponseCode();
+      exceptionThrown = false;
+    } finally {
+      final long timeDeltaMs = System.currentTimeMillis() - startTimeMs;
+      Platform.get().maybeLogHttpEvent(method, timeDeltaMs, responseCode, exceptionThrown);
+    }
 
     // if the requested file does not exist, throw an exception formerly the
     // Error page from the server was returned if the requested file was

@@ -100,6 +100,11 @@ public class Platform {
     socket.connect(address, connectTimeout);
   }
 
+  /** Maybe log the http latency, method and response code if enabled */
+  public void maybeLogHttpEvent(final String method, long timeDeltaMs, int responseCode,
+      boolean exceptionThrown) {
+  }
+
   /** Attempt to match the host runtime to a capable Platform implementation. */
   private static Platform findPlatform() {
     // Attempt to find Android 2.3+ APIs.
