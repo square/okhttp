@@ -207,8 +207,7 @@ public class OkUrlFactoryTest {
       HttpsURLConnection httpsConnection = (HttpsURLConnection) factory.open(destination);
       httpsConnection.getInputStream();
       fail("Connection was successful");
-    } catch (IOException e) {
-      assertEquals("Blocked", e.getMessage());
+    } catch (IOException expected) {
     }
   }
 

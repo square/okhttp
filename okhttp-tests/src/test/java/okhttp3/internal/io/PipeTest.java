@@ -106,7 +106,7 @@ public final class PipeTest {
 
   @Test public void sinkTimeout() throws Exception {
     Pipe pipe = new Pipe(3);
-    pipe.sink.timeout().timeout(250, TimeUnit.MILLISECONDS);
+    pipe.sink.timeout().timeout(1000, TimeUnit.MILLISECONDS);
     pipe.sink.write(new Buffer().writeUtf8("abc"), 3L);
     double start = now();
     try {
@@ -115,7 +115,7 @@ public final class PipeTest {
     } catch (InterruptedIOException expected) {
       assertEquals("timeout", expected.getMessage());
     }
-    assertElapsed(250.0, start);
+    assertElapsed(1000.0, start);
 
     Buffer readBuffer = new Buffer();
     assertEquals(3L, pipe.source.read(readBuffer, 6L));
@@ -124,7 +124,7 @@ public final class PipeTest {
 
   @Test public void sourceTimeout() throws Exception {
     Pipe pipe = new Pipe(3L);
-    pipe.source.timeout().timeout(250, TimeUnit.MILLISECONDS);
+    pipe.source.timeout().timeout(1000, TimeUnit.MILLISECONDS);
     double start = now();
     Buffer readBuffer = new Buffer();
     try {
@@ -133,18 +133,23 @@ public final class PipeTest {
     } catch (InterruptedIOException expected) {
       assertEquals("timeout", expected.getMessage());
     }
-    assertElapsed(250.0, start);
+    assertElapsed(1000.0, start);
     assertEquals(0, readBuffer.size());
   }
 
   /**
    * The writer is writing 12 bytes as fast as it can to a 3 byte buffer. The reader alternates
-   * sleeping 250 ms, then reading 3 bytes. That should make for an approximate timeline like this:
+   * sleeping 1000 ms, then reading 3 bytes. That should make for an approximate timeline like
+   * this:
    *
-   * 0: writer writes 'abc', blocks 0: reader sleeps until 250 250: reader reads 'abc', sleeps until
-   * 500 250: writer writes 'def', blocks 500: reader reads 'def', sleeps until 750 500: writer
-   * writes 'ghi', blocks 750: reader reads 'ghi', sleeps until 1000 750: writer writes 'jkl',
-   * returns 1000: reader reads 'jkl', returns
+   *    0: writer writes 'abc', blocks 0: reader sleeps until 1000
+   * 1000: reader reads 'abc', sleeps until 2000
+   * 1000: writer writes 'def', blocks
+   * 2000: reader reads 'def', sleeps until 3000
+   * 2000: writer writes 'ghi', blocks
+   * 3000: reader reads 'ghi', sleeps until 4000
+   * 3000: writer writes 'jkl', returns
+   * 24000: reader reads 'jkl', returns
    *
    * Because the writer is writing to a buffer, it finishes before the reader does.
    */
@@ -154,16 +159,16 @@ public final class PipeTest {
       @Override public void run() {
         try {
           Buffer buffer = new Buffer();
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           assertEquals(3, pipe.source.read(buffer, Long.MAX_VALUE));
           assertEquals("abc", buffer.readUtf8());
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           assertEquals(3, pipe.source.read(buffer, Long.MAX_VALUE));
           assertEquals("def", buffer.readUtf8());
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           assertEquals(3, pipe.source.read(buffer, Long.MAX_VALUE));
           assertEquals("ghi", buffer.readUtf8());
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           assertEquals(3, pipe.source.read(buffer, Long.MAX_VALUE));
           assertEquals("jkl", buffer.readUtf8());
         } catch (IOException | InterruptedException e) {
@@ -174,7 +179,7 @@ public final class PipeTest {
 
     double start = now();
     pipe.sink.write(new Buffer().writeUtf8("abcdefghijkl"), 12);
-    assertElapsed(750.0, start);
+    assertElapsed(3000.0, start);
   }
 
   @Test public void sinkWriteFailsByClosedReader() throws Exception {
@@ -187,7 +192,7 @@ public final class PipeTest {
           throw new AssertionError();
         }
       }
-    }, 250, TimeUnit.MILLISECONDS);
+    }, 1000, TimeUnit.MILLISECONDS);
 
     double start = now();
     try {
@@ -195,7 +200,7 @@ public final class PipeTest {
       fail();
     } catch (IOException expected) {
       assertEquals("source is closed", expected.getMessage());
-      assertElapsed(250.0, start);
+      assertElapsed(1000.0, start);
     }
   }
 
@@ -205,9 +210,9 @@ public final class PipeTest {
     executorService.execute(new Runnable() {
       @Override public void run() {
         try {
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.read(readBuffer, 3);
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.read(readBuffer, 3);
         } catch (InterruptedException | IOException e) {
           throw new AssertionError(e);
@@ -218,7 +223,7 @@ public final class PipeTest {
     double start = now();
     pipe.sink.write(new Buffer().writeUtf8("abcdef"), 6);
     pipe.sink.flush();
-    assertElapsed(500.0, start);
+    assertElapsed(2000.0, start);
     assertEquals("abcdef", readBuffer.readUtf8());
   }
 
@@ -227,9 +232,9 @@ public final class PipeTest {
     executorService.execute(new Runnable() {
       @Override public void run() {
         try {
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.read(new Buffer(), 3);
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.close();
         } catch (InterruptedException | IOException e) {
           throw new AssertionError(e);
@@ -244,7 +249,7 @@ public final class PipeTest {
       fail();
     } catch (IOException expected) {
       assertEquals("source is closed", expected.getMessage());
-      assertElapsed(500.0, start);
+      assertElapsed(2000.0, start);
     }
   }
 
@@ -253,9 +258,9 @@ public final class PipeTest {
     executorService.execute(new Runnable() {
       @Override public void run() {
         try {
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.read(new Buffer(), 3);
-          Thread.sleep(250);
+          Thread.sleep(1000);
           pipe.source.close();
         } catch (InterruptedException | IOException e) {
           throw new AssertionError(e);
@@ -270,7 +275,7 @@ public final class PipeTest {
       fail();
     } catch (IOException expected) {
       assertEquals("source is closed", expected.getMessage());
-      assertElapsed(500.0, start);
+      assertElapsed(2000.0, start);
     }
 
     try {
@@ -331,36 +336,42 @@ public final class PipeTest {
           throw new AssertionError();
         }
       }
-    }, 250, TimeUnit.MILLISECONDS);
+    }, 1000, TimeUnit.MILLISECONDS);
 
     double start = now();
     Buffer readBuffer = new Buffer();
     assertEquals(-1, pipe.source.read(readBuffer, Long.MAX_VALUE));
     assertEquals(0, readBuffer.size());
-    assertElapsed(250.0, start);
+    assertElapsed(1000.0, start);
   }
 
   /**
-   * The writer has 12 bytes to write. It alternates sleeping 250 ms, then writing 3 bytes. The
+   * The writer has 12 bytes to write. It alternates sleeping 1000 ms, then writing 3 bytes. The
    * reader is reading as fast as it can. That should make for an approximate timeline like this:
    *
-   * 0: writer sleeps until 250 0: reader blocks 250: writer writes 'abc', sleeps until 500 250:
-   * reader reads 'abc' 500: writer writes 'def', sleeps until 750 500: reader reads 'def' 750:
-   * writer writes 'ghi', sleeps until 1000 750: reader reads 'ghi' 1000: writer writes 'jkl',
-   * returns 1000: reader reads 'jkl', returns
+   *    0: writer sleeps until 1000
+   *    0: reader blocks
+   * 1000: writer writes 'abc', sleeps until 2000
+   * 1000: reader reads 'abc'
+   * 2000: writer writes 'def', sleeps until 3000
+   * 2000: reader reads 'def'
+   * 3000: writer writes 'ghi', sleeps until 4000
+   * 3000: reader reads 'ghi'
+   * 4000: writer writes 'jkl', returns
+   * 4000: reader reads 'jkl', returns
    */
   @Test public void sourceBlocksOnSlowWriter() throws Exception {
     final Pipe pipe = new Pipe(100L);
     executorService.execute(new Runnable() {
       @Override public void run() {
         try {
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           pipe.sink.write(new Buffer().writeUtf8("abc"), 3);
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           pipe.sink.write(new Buffer().writeUtf8("def"), 3);
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           pipe.sink.write(new Buffer().writeUtf8("ghi"), 3);
-          Thread.sleep(250L);
+          Thread.sleep(1000L);
           pipe.sink.write(new Buffer().writeUtf8("jkl"), 3);
         } catch (IOException | InterruptedException e) {
           throw new AssertionError();
@@ -373,19 +384,19 @@ public final class PipeTest {
 
     assertEquals(3, pipe.source.read(readBuffer, Long.MAX_VALUE));
     assertEquals("abc", readBuffer.readUtf8());
-    assertElapsed(250.0, start);
+    assertElapsed(1000.0, start);
 
     assertEquals(3, pipe.source.read(readBuffer, Long.MAX_VALUE));
     assertEquals("def", readBuffer.readUtf8());
-    assertElapsed(500.0, start);
+    assertElapsed(2000.0, start);
 
     assertEquals(3, pipe.source.read(readBuffer, Long.MAX_VALUE));
     assertEquals("ghi", readBuffer.readUtf8());
-    assertElapsed(750.0, start);
+    assertElapsed(3000.0, start);
 
     assertEquals(3, pipe.source.read(readBuffer, Long.MAX_VALUE));
     assertEquals("jkl", readBuffer.readUtf8());
-    assertElapsed(1000.0, start);
+    assertElapsed(4000.0, start);
   }
 
   /** Returns the nanotime in milliseconds as a double for measuring timeouts. */
@@ -395,9 +406,9 @@ public final class PipeTest {
 
   /**
    * Fails the test unless the time from start until now is duration, accepting differences in
-   * -50..+150 milliseconds.
+   * -50..+450 milliseconds.
    */
   private void assertElapsed(double duration, double start) {
-    assertEquals(duration, now() - start + 50d, 100.0);
+    assertEquals(duration, now() - start - 200d, 250.0);
   }
 }

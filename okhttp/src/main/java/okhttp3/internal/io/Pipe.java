@@ -16,7 +16,7 @@
 package okhttp3.internal.io;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import okio.Buffer;
 import okio.Sink;
 import okio.Source;
@@ -136,7 +136,7 @@ public final class Pipe {
   }
 
   /**
-   * Waits on {@code monitor} until it is notified. Throws {@link InterruptedIOException} if either
+   * Waits on {@code monitor} until it is notified. Throws {@link SocketTimeoutException} if either
    * the thread is interrupted or if {@code timeout} elapses before {@code monitor} is notified. The
    * caller must be synchronized on {@code monitor}.
    */
@@ -172,10 +172,10 @@ public final class Pipe {
 
       // Throw if the timeout elapsed before the monitor was notified.
       if (elapsedNanos >= waitNanos) {
-        throw new InterruptedIOException("timeout");
+        throw new SocketTimeoutException("timeout");
       }
     } catch (InterruptedException e) {
-      throw new InterruptedIOException("interrupted");
+      throw new SocketTimeoutException("interrupted");
     }
   }
 }

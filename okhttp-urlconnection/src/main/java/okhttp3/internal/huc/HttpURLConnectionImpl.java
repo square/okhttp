@@ -20,16 +20,14 @@ package okhttp3.internal.huc;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
 import java.net.SocketPermission;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.security.Permission;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,16 +38,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import okhttp3.Connection;
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.Handshake;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
-import okhttp3.Route;
 import okhttp3.internal.Internal;
 import okhttp3.internal.JavaNetHeaders;
 import okhttp3.internal.Platform;
@@ -60,20 +58,12 @@ import okhttp3.internal.http.HttpDate;
 import okhttp3.internal.http.HttpEngine;
 import okhttp3.internal.http.HttpMethod;
 import okhttp3.internal.http.OkHeaders;
-import okhttp3.internal.http.RequestException;
-import okhttp3.internal.http.RetryableSink;
-import okhttp3.internal.http.RouteException;
 import okhttp3.internal.http.StatusLine;
-import okhttp3.internal.http.StreamAllocation;
-import okio.BufferedSink;
-import okio.Sink;
 
 import static okhttp3.internal.Platform.WARN;
 
 /**
- * This implementation uses HttpEngine to send requests and receive responses. This class may use
- * multiple HttpEngines to follow redirects, authentication retries, etc. to retrieve the final
- * response body.
+ * This implementation uses {@linkplain Call} to send requests and receive responses.
  *
  * <h3>What does 'connected' mean?</h3> This class inherits a {@code connected} field from the
  * superclass. That field is <strong>not</strong> used to indicate whether this URLConnection is
@@ -81,36 +71,33 @@ import static okhttp3.internal.Platform.WARN;
  * connection has been attempted, certain properties (request header fields, request method, etc.)
  * are immutable.
  */
-public class HttpURLConnectionImpl extends HttpURLConnection {
+public class HttpURLConnectionImpl extends HttpURLConnection implements Callback {
   private static final Set<String> METHODS = new LinkedHashSet<>(
       Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "PATCH"));
-  private static final RequestBody EMPTY_REQUEST_BODY = RequestBody.create(null, new byte[0]);
+
+  // These fields are confined to the application thread that uses HttpURLConnection.
 
   OkHttpClient client;
-
+  private final NetworkInterceptor networkInterceptor = new NetworkInterceptor();
   private Headers.Builder requestHeaders = new Headers.Builder();
+  private boolean executed;
+  Call call;
+  URLFilter urlFilter;
 
-  /** Like the superclass field of the same name, but a long and available on all platforms. */
-  private long fixedContentLength = -1;
-  private int followUpCount;
-  protected IOException httpEngineFailure;
-  protected HttpEngine httpEngine;
   /** Lazily created (with synthetic headers) on first call to getHeaders(). */
   private Headers responseHeaders;
 
-  /**
-   * The most recently attempted route. This will be null if we haven't sent a request yet, or if
-   * the response comes from a cache.
-   */
-  private Route route;
+  /** Like the superclass field of the same name, but a long and available on all platforms. */
+  private long fixedContentLength = -1L;
 
-  /**
-   * The most recently received TLS handshake. This will be null if we haven't connected yet, or if
-   * the most recent connection was HTTP (and not HTTPS).
-   */
+  // These fields are guarded by lock.
+  private final Object lock = new Object();
+  private Response response;
+  private IOException callFailure;
+  Response networkResponse;
+  boolean connectPending = true;
+  Proxy proxy;
   Handshake handshake;
-
-  private URLFilter urlFilter;
 
   public HttpURLConnectionImpl(URL url, OkHttpClient client) {
     super(url);
@@ -123,24 +110,32 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   }
 
   @Override public final void connect() throws IOException {
-    initHttpEngine();
-    boolean success;
-    do {
-      success = execute(false);
-    } while (!success);
+    if (executed) return;
+
+    Call call = buildCall();
+    executed = true;
+    call.enqueue(this);
+
+    synchronized (lock) {
+      try {
+        while (connectPending && response == null && callFailure == null) {
+          lock.wait(); // Wait 'til the network interceptor is reached or the call fails.
+        }
+        if (callFailure != null) {
+          throw callFailure;
+        }
+      } catch (InterruptedException e) {
+        throw new InterruptedIOException();
+      }
+    }
   }
 
   @Override public final void disconnect() {
     // Calling disconnect() before a connection exists should have no effect.
-    if (httpEngine == null) return;
+    if (call == null) return;
 
-    httpEngine.cancel();
-
-    // This doesn't close the stream because doing so would require all stream
-    // access to be synchronized. It's expected that the thread using the
-    // connection will close its streams directly. If it doesn't, the worst
-    // case is that the GzipSource's Inflater won't be released until it's
-    // finalized. (This logs a warning on Android.)
+    networkInterceptor.proceed(); // Unblock any waiting async thread.
+    call.cancel();
   }
 
   /**
@@ -149,10 +144,9 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    */
   @Override public final InputStream getErrorStream() {
     try {
-      HttpEngine response = getResponse();
-      if (HttpEngine.hasBody(response.getResponse())
-          && response.getResponse().code() >= HTTP_BAD_REQUEST) {
-        return response.getResponse().body().byteStream();
+      Response response = getResponse();
+      if (HttpEngine.hasBody(response) && response.code() >= HTTP_BAD_REQUEST) {
+        return response.body().byteStream();
       }
       return null;
     } catch (IOException e) {
@@ -162,7 +156,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
 
   private Headers getHeaders() throws IOException {
     if (responseHeaders == null) {
-      Response response = getResponse().getResponse();
+      Response response = getResponse();
       Headers headers = response.headers();
       responseHeaders = headers.newBuilder()
           .add(OkHeaders.SELECTED_PROTOCOL, response.protocol().toString())
@@ -206,7 +200,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final String getHeaderField(String fieldName) {
     try {
       return fieldName == null
-          ? StatusLine.get(getResponse().getResponse()).toString()
+          ? StatusLine.get(getResponse()).toString()
           : getHeaders().get(fieldName);
     } catch (IOException e) {
       return null;
@@ -226,7 +220,7 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
   @Override public final Map<String, List<String>> getHeaderFields() {
     try {
       return JavaNetHeaders.toMultimap(getHeaders(),
-          StatusLine.get(getResponse().getResponse()).toString());
+          StatusLine.get(getResponse()).toString());
     } catch (IOException e) {
       return Collections.emptyMap();
     }
@@ -246,30 +240,33 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
       throw new ProtocolException("This protocol does not support input");
     }
 
-    HttpEngine response = getResponse();
+    Response response = getResponse();
 
-    // if the requested file does not exist, throw an exception formerly the
-    // Error page from the server was returned if the requested file was
-    // text/html this has changed to return FileNotFoundException for all
-    // file types
-    if (getResponseCode() >= HTTP_BAD_REQUEST) {
+    if (response.code() >= HTTP_BAD_REQUEST) {
       throw new FileNotFoundException(url.toString());
     }
 
-    return response.getResponse().body().byteStream();
+    return response.body().byteStream();
   }
 
   @Override public final OutputStream getOutputStream() throws IOException {
-    connect();
-
-    BufferedSink sink = httpEngine.getBufferedRequestBody();
-    if (sink == null) {
+    OutputStreamRequestBody requestBody = (OutputStreamRequestBody) buildCall().request().body();
+    if (requestBody == null) {
       throw new ProtocolException("method does not support a request body: " + method);
-    } else if (httpEngine.hasResponse()) {
+    }
+
+    // If this request needs to stream bytes to the server, build a physical connection immediately
+    // and start streaming those bytes over that connection.
+    if (requestBody instanceof StreamedRequestBody) {
+      connect();
+      networkInterceptor.proceed();
+    }
+
+    if (requestBody.isClosed()) {
       throw new ProtocolException("cannot write request body after response has been read");
     }
 
-    return sink.outputStream();
+    return requestBody.outputStream();
   }
 
   @Override public final Permission getPermission() throws IOException {
@@ -322,81 +319,71 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     return client.readTimeoutMillis();
   }
 
-  private void initHttpEngine() throws IOException {
-    if (httpEngineFailure != null) {
-      throw httpEngineFailure;
-    } else if (httpEngine != null) {
-      return;
+  private Call buildCall() throws IOException {
+    if (call != null) {
+      return call;
     }
 
     connected = true;
-    try {
-      if (doOutput) {
-        if (method.equals("GET")) {
-          // they are requesting a stream to write to. This implies a POST method
-          method = "POST";
-        } else if (!HttpMethod.permitsRequestBody(method)) {
-          throw new ProtocolException(method + " does not support writing");
-        }
+    if (doOutput) {
+      if (method.equals("GET")) {
+        // they are requesting a stream to write to. This implies a POST method
+        method = "POST";
+      } else if (!HttpMethod.permitsRequestBody(method)) {
+        throw new ProtocolException(method + " does not support writing");
       }
-      // If the user set content length to zero, we know there will not be a request body.
-      httpEngine = newHttpEngine(method, null, null, null);
-    } catch (IOException e) {
-      httpEngineFailure = e;
-      throw e;
-    }
-  }
-
-  private HttpEngine newHttpEngine(String method, StreamAllocation streamAllocation,
-      RetryableSink requestBody, Response priorResponse)
-      throws MalformedURLException, UnknownHostException {
-    // OkHttp's Call API requires a placeholder body; the real body will be streamed separately.
-    RequestBody placeholderBody = HttpMethod.requiresRequestBody(method)
-        ? EMPTY_REQUEST_BODY
-        : null;
-    URL url = getURL();
-    HttpUrl httpUrl = Internal.instance.getHttpUrlChecked(url.toString());
-    Request.Builder builder = new Request.Builder()
-        .url(httpUrl)
-        .method(method, placeholderBody);
-    Headers headers = requestHeaders.build();
-    for (int i = 0, size = headers.size(); i < size; i++) {
-      builder.addHeader(headers.name(i), headers.value(i));
     }
 
-    boolean bufferRequestBody = false;
+    if (requestHeaders.get("User-Agent") == null) {
+      requestHeaders.add("User-Agent", defaultUserAgent());
+    }
+
+    OutputStreamRequestBody requestBody = null;
     if (HttpMethod.permitsRequestBody(method)) {
-      // Specify how the request body is terminated.
-      if (fixedContentLength != -1) {
-        builder.header("Content-Length", Long.toString(fixedContentLength));
-      } else if (chunkLength > 0) {
-        builder.header("Transfer-Encoding", "chunked");
-      } else {
-        bufferRequestBody = true;
-      }
-
       // Add a content type for the request body, if one isn't already present.
-      if (headers.get("Content-Type") == null) {
-        builder.header("Content-Type", "application/x-www-form-urlencoded");
+      String contentType = requestHeaders.get("Content-Type");
+      if (contentType == null) {
+        contentType = "application/x-www-form-urlencoded";
+        requestHeaders.add("Content-Type", contentType);
       }
+
+      boolean stream = fixedContentLength != -1L || chunkLength > 0;
+
+      long contentLength = -1L;
+      String contentLengthString = requestHeaders.get("Content-Length");
+      if (fixedContentLength != -1L) {
+        contentLength = fixedContentLength;
+      } else if (contentLengthString != null) {
+        contentLength = Long.parseLong(contentLengthString);
+      }
+
+      requestBody = stream
+          ? new StreamedRequestBody(contentLength)
+          : new BufferedRequestBody(contentLength);
+      requestBody.timeout().timeout(client.writeTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
-    if (headers.get("User-Agent") == null) {
-      builder.header("User-Agent", defaultUserAgent());
+    Request request = new Request.Builder()
+        .url(Internal.instance.getHttpUrlChecked(getURL().toString()))
+        .headers(requestHeaders.build())
+        .method(method, requestBody)
+        .build();
+
+    if (urlFilter != null) {
+      urlFilter.checkURLPermitted(request.url().url());
     }
 
-    Request request = builder.build();
+    OkHttpClient.Builder clientBuilder = client.newBuilder();
+    clientBuilder.interceptors().clear();
+    clientBuilder.networkInterceptors().clear();
+    clientBuilder.networkInterceptors().add(networkInterceptor);
 
     // If we're currently not using caches, make sure the engine's client doesn't have one.
-    OkHttpClient engineClient = client;
-    if (Internal.instance.internalCache(engineClient) != null && !getUseCaches()) {
-      engineClient = client.newBuilder()
-          .cache(null)
-          .build();
+    if (!getUseCaches()) {
+      clientBuilder.cache(null);
     }
 
-    return new HttpEngine(engineClient, request, bufferRequestBody, true, false, streamAllocation,
-        requestBody, priorResponse);
+    return call = clientBuilder.build().newCall(request);
   }
 
   private String defaultUserAgent() {
@@ -408,120 +395,46 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * Aggressively tries to get the final HTTP response, potentially making many HTTP requests in the
    * process in order to cope with redirects and authentication.
    */
-  private HttpEngine getResponse() throws IOException {
-    initHttpEngine();
-
-    if (httpEngine.hasResponse()) {
-      return httpEngine;
+  private Response getResponse() throws IOException {
+    if (response != null) {
+      return response;
+    } else if (networkResponse != null) {
+      return networkResponse;
+    } else if (callFailure != null) {
+      throw callFailure;
     }
 
-    while (true) {
-      if (!execute(true)) {
-        continue;
+    Call call = buildCall();
+    networkInterceptor.proceed();
+
+    OutputStreamRequestBody requestBody = (OutputStreamRequestBody) call.request().body();
+    if (requestBody != null) requestBody.outputStream().close();
+
+    if (executed) {
+      synchronized (lock) {
+        try {
+          while (response == null && callFailure == null) {
+            lock.wait(); // Wait until the response is returned or the call fails.
+          }
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
       }
-
-      Response response = httpEngine.getResponse();
-      Request followUp = httpEngine.followUpRequest();
-
-      if (followUp == null) {
-        httpEngine.releaseStreamAllocation();
-        return httpEngine;
-      }
-
-      if (++followUpCount > HttpEngine.MAX_FOLLOW_UPS) {
-        throw new ProtocolException("Too many follow-up requests: " + followUpCount);
-      }
-
-      // The first request was insufficient. Prepare for another...
-      url = followUp.url().url();
-      requestHeaders = followUp.headers().newBuilder();
-
-      // Although RFC 2616 10.3.2 specifies that a HTTP_MOVED_PERM redirect
-      // should keep the same method, Chrome, Firefox and the RI all issue GETs
-      // when following any redirect.
-      Sink requestBody = httpEngine.getRequestBody();
-      if (!followUp.method().equals(method)) {
-        requestBody = null;
-      }
-
-      if (requestBody != null && !(requestBody instanceof RetryableSink)) {
-        throw new HttpRetryException("Cannot retry streamed HTTP body", responseCode);
-      }
-
-      StreamAllocation streamAllocation = httpEngine.close();
-      if (!httpEngine.sameConnection(followUp.url())) {
-        streamAllocation.release();
-        streamAllocation = null;
-      }
-
-      httpEngine = newHttpEngine(followUp.method(), streamAllocation, (RetryableSink) requestBody,
-          response);
-    }
-  }
-
-  /**
-   * Sends a request and optionally reads a response. Returns true if the request was successfully
-   * executed, and false if the request can be retried. Throws an exception if the request failed
-   * permanently.
-   */
-  private boolean execute(boolean readResponse) throws IOException {
-    boolean releaseConnection = true;
-    if (urlFilter != null) {
-      urlFilter.checkURLPermitted(httpEngine.getRequest().url().url());
-    }
-    try {
-      httpEngine.sendRequest();
-      Connection connection = httpEngine.getConnection();
-      if (connection != null) {
-        route = connection.route();
-        handshake = connection.handshake();
-      } else {
-        route = null;
-        handshake = null;
-      }
-      if (readResponse) {
-        httpEngine.readResponse();
-      }
-      releaseConnection = false;
-
-      return true;
-    } catch (RequestException e) {
-      // An attempt to interpret a request failed.
-      IOException toThrow = e.getCause();
-      httpEngineFailure = toThrow;
-      throw toThrow;
-    } catch (RouteException e) {
-      // The attempt to connect via a route failed. The request will not have been sent.
-      HttpEngine retryEngine = httpEngine.recover(e.getLastConnectException(), true);
-      if (retryEngine != null) {
-        releaseConnection = false;
-        httpEngine = retryEngine;
-        return false;
-      }
-
-      // Give up; recovery is not possible.
-      IOException toThrow = e.getLastConnectException();
-      httpEngineFailure = toThrow;
-      throw toThrow;
-    } catch (IOException e) {
-      // An attempt to communicate with a server failed. The request may have been sent.
-      HttpEngine retryEngine = httpEngine.recover(e, false);
-      if (retryEngine != null) {
-        releaseConnection = false;
-        httpEngine = retryEngine;
-        return false;
-      }
-
-      // Give up; recovery is not possible.
-      httpEngineFailure = e;
-      throw e;
-    } finally {
-      // We're throwing an unchecked exception. Release any resources.
-      if (releaseConnection) {
-        StreamAllocation streamAllocation = httpEngine.close();
-        streamAllocation.release();
+    } else {
+      executed = true;
+      try {
+        onResponse(call, call.execute());
+      } catch (IOException e) {
+        onFailure(call, e);
       }
     }
+
+    synchronized (lock) {
+      if (callFailure != null) throw callFailure;
+      if (response != null) return response;
+    }
+
+    throw new AssertionError();
   }
 
   /**
@@ -537,18 +450,17 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
    * afterwards.
    */
   @Override public final boolean usingProxy() {
-    Proxy proxy = route != null
-        ? route.proxy()
-        : client.proxy();
-    return proxy != null && proxy.type() != Proxy.Type.DIRECT;
+    if (proxy != null) return true;
+    Proxy clientProxy = client.proxy();
+    return clientProxy != null && clientProxy.type() != Proxy.Type.DIRECT;
   }
 
   @Override public String getResponseMessage() throws IOException {
-    return getResponse().getResponse().message();
+    return getResponse().message();
   }
 
   @Override public final int getResponseCode() throws IOException {
-    return getResponse().getResponse().code();
+    return getResponse().code();
   }
 
   @Override public final void setRequestProperty(String field, String newValue) {
@@ -650,5 +562,77 @@ public class HttpURLConnectionImpl extends HttpURLConnection {
     if (contentLength < 0) throw new IllegalArgumentException("contentLength < 0");
     this.fixedContentLength = contentLength;
     super.fixedContentLength = (int) Math.min(contentLength, Integer.MAX_VALUE);
+  }
+
+  @Override public void onFailure(Call call, IOException e) {
+    synchronized (lock) {
+      this.callFailure = e;
+      lock.notifyAll();
+    }
+  }
+
+  @Override public void onResponse(Call call, Response response) {
+    synchronized (lock) {
+      this.response = response;
+      this.handshake = response.handshake();
+      this.url = response.request().url().url();
+      lock.notifyAll();
+    }
+  }
+
+  /**
+   * The HttpURLConnection gives the application control between establishing the connection and
+   * transmitting the request body. This interceptor stalls async calls right at this point. The
+   * call will remain stalled until {@link #proceed()} is called.
+   */
+  final class NetworkInterceptor implements Interceptor {
+    // Guarded by HttpUrlConnection.this.
+    private boolean proceed;
+
+    public void proceed() {
+      synchronized (lock) {
+        this.proceed = true;
+        lock.notifyAll();
+      }
+    }
+
+    @Override public Response intercept(Chain chain) throws IOException {
+      Request request = chain.request();
+
+      // Double-check the URL filter to prevent redirects from hitting filtered URLs.
+      if (urlFilter != null) {
+        urlFilter.checkURLPermitted(request.url().url());
+      }
+
+      synchronized (lock) {
+        connectPending = false;
+        proxy = chain.connection().route().proxy();
+        handshake = chain.connection().handshake();
+        lock.notifyAll();
+
+        try {
+          while (!proceed) {
+            lock.wait(); // Wait until proceed() is called.
+          }
+        } catch (InterruptedException e) {
+          throw new InterruptedIOException();
+        }
+      }
+
+      // Try to lock in the Content-Length before transmitting the request body.
+      if (request.body() instanceof OutputStreamRequestBody) {
+        OutputStreamRequestBody requestBody = (OutputStreamRequestBody) request.body();
+        request = requestBody.prepareToSendRequest(request);
+      }
+
+      Response response = chain.proceed(request);
+
+      synchronized (lock) {
+        networkResponse = response;
+        url = response.request().url().url();
+      }
+
+      return response;
+    }
   }
 }
